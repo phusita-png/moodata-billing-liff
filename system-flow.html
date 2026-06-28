@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Moodata Billing Bot — Flow ระบบ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --brand:#1B72E8; --brand2:#3d8bff; --brand-dark:#114a99;
+    --bg:#eef3fb; --card:#ffffff; --ink:#1c2733; --muted:#6b7888;
+    --line:#dde6f3; --ok:#1faa59; --warn:#e8a13a; --soft:#e8f1fd;
+    --shadow:0 6px 24px rgba(20,50,110,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:'IBM Plex Sans Thai',system-ui,sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.6; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px;}
+  section{padding:54px 0;}
+  h2.sec{font-size:26px;font-weight:700;text-align:center;margin-bottom:6px;}
+  h2.sec .em{color:var(--brand);}
+  p.sub{text-align:center;color:var(--muted);max-width:640px;margin:0 auto 38px;font-size:15px;}
+
+  /* ── HERO ── */
+  .hero{
+    background:linear-gradient(135deg,var(--brand-dark),var(--brand) 55%,var(--brand2));
+    color:#fff;padding:70px 20px 64px;text-align:center;position:relative;overflow:hidden;
+  }
+  .hero::after{content:"";position:absolute;inset:0;
+    background:radial-gradient(circle at 80% 10%,rgba(255,255,255,.18),transparent 40%);}
+  .hero .badge{display:inline-block;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);
+    padding:6px 16px;border-radius:999px;font-size:13px;font-weight:500;margin-bottom:18px;backdrop-filter:blur(4px);}
+  .hero h1{font-size:40px;font-weight:700;line-height:1.2;position:relative;}
+  .hero p{font-size:17px;opacity:.95;margin-top:12px;position:relative;}
+  .hero .chips{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:30px;position:relative;}
+  .hero .chip{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);border-radius:14px;
+    padding:14px 20px;min-width:150px;backdrop-filter:blur(6px);}
+  .hero .chip b{font-size:22px;display:block;}
+  .hero .chip span{font-size:13px;opacity:.9;}
+
+  /* ── 3 ขา ── */
+  .pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+  .pillar{background:var(--card);border-radius:18px;padding:26px 22px;box-shadow:var(--shadow);
+    border-top:4px solid var(--brand);transition:transform .2s;}
+  .pillar:hover{transform:translateY(-4px);}
+  .pillar .ic{font-size:34px;}
+  .pillar h3{font-size:18px;margin:10px 0 4px;}
+  .pillar .tag{font-size:12px;color:var(--muted);margin-bottom:14px;}
+  .pillar ul{list-style:none;}
+  .pillar li{padding:7px 0;border-top:1px dashed var(--line);font-size:14px;display:flex;gap:8px;align-items:center;}
+  .pillar li:first-child{border-top:none;}
+  .pillar li .d{color:var(--brand);font-weight:700;}
+
+  /* ── FLOW diagram ── */
+  .flowblock{background:var(--card);border-radius:18px;padding:26px 22px;box-shadow:var(--shadow);margin-bottom:24px;}
+  .flowblock h3{font-size:17px;margin-bottom:20px;display:flex;align-items:center;gap:10px;}
+  .flowblock h3 .pill{background:var(--soft);color:var(--brand);font-size:12px;font-weight:600;padding:3px 10px;border-radius:8px;}
+  .steps{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;}
+  .step{flex:1;min-width:140px;background:#f8fbff;border:1.5px solid var(--line);border-radius:14px;
+    padding:14px 14px;position:relative;text-align:center;}
+  .step .n{position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:var(--brand);color:#fff;
+    width:24px;height:24px;border-radius:50%;font-size:13px;font-weight:700;line-height:24px;}
+  .step .si{font-size:24px;margin-top:8px;}
+  .step .st{font-weight:600;font-size:14px;margin-top:4px;}
+  .step .sd{font-size:12px;color:var(--muted);margin-top:3px;}
+  .arrow{display:flex;align-items:center;justify-content:center;color:var(--brand);font-size:22px;font-weight:700;padding:0 4px;}
+  @media(max-width:760px){ .arrow{transform:rotate(90deg);width:100%;padding:6px 0;} .step{min-width:100%;} }
+
+  /* ── CHAT mockup ── */
+  .chatgrid{display:grid;grid-template-columns:340px 1fr;gap:30px;align-items:start;}
+  .phone{background:#1c2733;border-radius:34px;padding:12px;box-shadow:0 18px 50px rgba(20,40,80,.28);}
+  .phone .screen{background:linear-gradient(#a7c3e6,#b9d0ec);border-radius:24px;overflow:hidden;height:600px;display:flex;flex-direction:column;}
+  .phone .bar{background:var(--brand);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;}
+  .phone .bar .av{width:30px;height:30px;border-radius:50%;background:#fff;color:var(--brand);text-align:center;line-height:30px;font-weight:700;}
+  .phone .msgs{flex:1;overflow-y:auto;padding:16px 12px;display:flex;flex-direction:column;gap:10px;}
+  .bub{max-width:80%;padding:10px 13px;border-radius:16px;font-size:13.5px;box-shadow:0 1px 3px rgba(0,0,0,.08);line-height:1.45;}
+  .bub.me{align-self:flex-end;background:#9be15d;background:#a0e75a;border-bottom-right-radius:4px;}
+  .bub.bot{align-self:flex-start;background:#fff;border-bottom-left-radius:4px;}
+  .bub.card{align-self:flex-start;background:#fff;padding:0;overflow:hidden;width:80%;border-radius:14px;}
+  .bub.card .ch{background:var(--brand);color:#fff;padding:10px 13px;font-weight:600;font-size:13px;display:flex;justify-content:space-between;}
+  .bub.card .cb{padding:11px 13px;font-size:13px;}
+  .bub.card .cb .row{display:flex;justify-content:space-between;padding:2px 0;color:#445;}
+  .bub.card .btn{display:block;margin:6px 13px;padding:9px;border-radius:9px;background:var(--brand);color:#fff;text-align:center;font-size:12.5px;font-weight:600;}
+  .bub.card .btn.sec{background:#eef2f7;color:#445;}
+  .qr{align-self:flex-start;display:flex;gap:6px;flex-wrap:wrap;max-width:90%;}
+  .qr span{background:#fff;color:var(--brand);border:1px solid var(--brand);border-radius:999px;padding:5px 11px;font-size:12px;font-weight:600;}
+  .chatnote h3{font-size:18px;margin-bottom:8px;}
+  .chatnote ol{margin-left:18px;}
+  .chatnote li{margin:10px 0;font-size:14.5px;}
+  .chatnote li b{color:var(--brand);}
+  .chatnote .tipbox{background:var(--soft);border-radius:12px;padding:14px 16px;margin-top:18px;font-size:13.5px;color:#33506f;}
+  @media(max-width:820px){ .chatgrid{grid-template-columns:1fr;} .phone{max-width:340px;margin:0 auto;} }
+
+  /* ── FLASHCARDS ── */
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+  .fc{perspective:1200px;height:200px;cursor:pointer;}
+  .fc-in{position:relative;width:100%;height:100%;transition:transform .55s;transform-style:preserve-3d;}
+  .fc.flip .fc-in{transform:rotateY(180deg);}
+  .fc-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:16px;padding:20px;display:flex;flex-direction:column;box-shadow:var(--shadow);}
+  .fc-front{background:linear-gradient(150deg,#fff,#f2f7ff);border:1px solid var(--line);}
+  .fc-front .ic{font-size:38px;}
+  .fc-front h4{font-size:17px;margin-top:auto;}
+  .fc-front .who{font-size:12px;color:var(--muted);}
+  .fc-front .hint{font-size:11px;color:var(--brand);margin-top:8px;font-weight:600;}
+  .fc-back{background:linear-gradient(150deg,var(--brand),var(--brand-dark));color:#fff;transform:rotateY(180deg);}
+  .fc-back h4{font-size:15px;margin-bottom:8px;}
+  .fc-back ol{margin-left:16px;font-size:12.5px;line-height:1.7;}
+  @media(max-width:820px){ .cards{grid-template-columns:1fr 1fr;} }
+  @media(max-width:540px){ .cards,.pillars{grid-template-columns:1fr;} }
+
+  footer{background:#152a44;color:#aab8cc;text-align:center;padding:30px 20px;font-size:13px;}
+  footer b{color:#fff;}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="badge">🤖 ผู้ช่วยอัตโนมัติบน LINE OA</div>
+  <h1>Moodata Billing Bot</h1>
+  <p>ส่งเอกสาร · รับงานจากลูกค้า · จองนัดประชุม — จบในแชทเดียว</p>
+  <div class="chips">
+    <div class="chip"><b>📤</b><span>ขาส่งออก<br>บิล/เบิก/รายงาน/เอกสาร</span></div>
+    <div class="chip"><b>📥</b><span>ขารับเข้า<br>เอกสาร/แจ้งงาน/สถานะ</span></div>
+    <div class="chip"><b>📅</b><span>จองนัด<br>Calendar + Google Meet</span></div>
+  </div>
+</div>
+
+<!-- 3 ขา -->
+<section>
+  <div class="wrap">
+    <h2 class="sec">ระบบทำงาน <span class="em">3 ขา</span></h2>
+    <p class="sub">1 กลุ่ม LINE = 1 ลูกค้า · ทุกอย่างยึดการจับคู่ในชีต "กลุ่มลูกค้า" กันข้อมูลรั่วข้ามบริษัท</p>
+    <div class="pillars">
+      <div class="pillar">
+        <div class="ic">📤</div>
+        <h3>ขาส่งออก</h3>
+        <div class="tag">Moodata → ลูกค้า</div>
+        <ul>
+          <li><span class="d">›</span> ใบวางบิล (+ แนบสลิป/50ทวิ)</li>
+          <li><span class="d">›</span> ใบตั้งเบิก (+ อนุมัติ/หลักฐาน)</li>
+          <li><span class="d">›</span> รายงาน (หลายลิงก์/การ์ด)</li>
+          <li><span class="d">›</span> เอกสารทั่วไป</li>
+          <li><span class="d">›</span> ประกาศ broadcast ทุกกลุ่ม</li>
+        </ul>
+      </div>
+      <div class="pillar">
+        <div class="ic">📥</div>
+        <h3>ขารับเข้า</h3>
+        <div class="tag">ลูกค้า → Moodata</div>
+        <ul>
+          <li><span class="d">›</span> ส่งเอกสารเข้า Drive</li>
+          <li><span class="d">›</span> แจ้งงาน / สั่งงาน</li>
+          <li><span class="d">›</span> สอบถาม / แจ้งปัญหา</li>
+          <li><span class="d">›</span> เช็คสถานะงาน</li>
+          <li><span class="d">›</span> มอบหมายทีม → ส่งผลงาน</li>
+        </ul>
+      </div>
+      <div class="pillar">
+        <div class="ic">📅</div>
+        <h3>จองนัดประชุม</h3>
+        <div class="tag">ผ่านฟอร์ม LIFF</div>
+        <ul>
+          <li><span class="d">›</span> เลือกลูกค้า + วันเวลา</li>
+          <li><span class="d">›</span> สร้าง Google Meet อัตโนมัติ</li>
+          <li><span class="d">›</span> เชิญทางอีเมล (invite)</li>
+          <li><span class="d">›</span> ส่งการ์ดเข้ากลุ่ม</li>
+          <li><span class="d">›</span> เก็บประวัติในชีต</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FLOW diagrams -->
+<section style="background:#fff;">
+  <div class="wrap">
+    <h2 class="sec">Flow <span class="em">งานหลัก</span></h2>
+    <p class="sub">ลำดับการทำงานทีละขั้นของ flow สำคัญในระบบ</p>
+
+    <div class="flowblock">
+      <h3>📅 จองนัดประชุม <span class="pill">พี่กี้ / ทีม whitelist</span></h3>
+      <div class="steps">
+        <div class="step"><div class="n">1</div><div class="si">💬</div><div class="st">พิมพ์ "ยินดี"</div><div class="sd">ในแชท/กลุ่ม</div></div>
+        <div class="arrow">→</div>
+        <div class="step"><div class="n">2</div><div class="si">📅</div><div class="st">กดปุ่มนัดประชุม</div><div class="sd">เปิดฟอร์ม LIFF</div></div>
+        <div class="arrow">→</div>
+        <div class="step"><div class="n">3</div><div class="si">📝</div><div class="st">กรอกฟอร์ม</div><div class="sd">ลูกค้า/หัวข้อ/เวลา</div></div>
+        <div class="arrow">→</div>
+        <div class="step"><div class="n">4</div><div class="si">🎦</div><div class="st">สร้าง Meet</div><div class="sd">+ เชิญอีเมล</div></div>
+        <div class="arrow">→</div>
+        <div class="step"><div class="n">5</div><div class="si">📤</div><div class="st">ส่งการ์ด</div><div class="sd">เข้ากลุ่มลูกค้า</div></div>
+      </div>
+    </div>
+
+    <div class="flowblock">
+      <h3>🤝 มอบหมายงานทีม → ส่งผลงานลูกค้า <span class="pill">งานลูกค้า</span></h3>
+      <div class="steps">
+        <div class="step"><div class="n">1</div><div class="si">📥</div><div class="st">ลูกค้าแจ้งงาน</div><div class="sd">ได้เลข TK-xxxx</div></div>
+        <div class="arrow">→</div>
+        <div class="step"><div class="n">2</div><div class="si">📧</div><div class="st">แจ้งทีมทางเมล</div><div class="sd">+ CC</div></div>
+        <div class="arrow">→</div>
+        <div class="step"><div class="n">3</div><div class="si">🔍</div><div class="st">ทีมส่งงานตรวจ</div><div class="sd">กรอกฟอร์ม</div></div>
+        <div class="arrow">→</div>
+        <div class="step"><div class="n">4</div><div class="si">✅</div><div class="st">พี่ตรวจ</div><div class="sd">ในชีต</div></div>
+        <div class="arrow">→</div>
+        <div class="step"><div class="n">5</div><div class="si">📨</div><div class="st">ส่งผลงานลูกค้า</div><div class="sd">push เข้ากลุ่ม</div></div>
+      </div>
+    </div>
+
+    <div class="flowblock">
+      <h3>🧾 ส่งบิล + รับสลิป <span class="pill">ขาส่งออก</span></h3>
+      <div class="steps">
+        <div class="step"><div class="n">1</div><div class="si">📝</div><div class="st">กรอกบิลในชีต</div><div class="sd">ลิงก์ TRCloud</div></div>
+        <div class="arrow">→</div>
+        <div class="step"><div class="n">2</div><div class="si">💬</div><div class="st">"ยินดี" → ส่งบิล</div><div class="sd">เลือกใบ</div></div>
+        <div class="arrow">→</div>
+        <div class="step"><div class="n">3</div><div class="si">📤</div><div class="st">การ์ดเข้ากลุ่ม</div><div class="sd">ปุ่มแนบสลิป</div></div>
+        <div class="arrow">→</div>
+        <div class="step"><div class="n">4</div><div class="si">📎</div><div class="st">ลูกค้าแนบสลิป</div><div class="sd">ส่งรูป</div></div>
+        <div class="arrow">→</div>
+        <div class="step"><div class="n">5</div><div class="si">💰</div><div class="st">เก็บ Drive</div><div class="sd">ติ๊กชำระแล้ว</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CHAT mockup -->
+<section>
+  <div class="wrap">
+    <h2 class="sec">ตัวอย่าง<span class="em">การโต้ตอบจริง</span></h2>
+    <p class="sub">หน้าตาการสนทนาในแอป LINE เมื่อจองนัดประชุม</p>
+    <div class="chatgrid">
+      <div class="phone">
+        <div class="screen">
+          <div class="bar"><span class="av">M</span> Moodata Assistant</div>
+          <div class="msgs">
+            <div class="bub me">ยินดี</div>
+            <div class="bub bot">มีอะไรให้ยินดีช่วยค่ะ พี่กี้ 😊<br>เลือกเมนูด้านล่างได้เลยค่ะ</div>
+            <div class="qr">
+              <span>🧾 ส่งใบวางบิล</span><span>📊 ส่งรายงาน</span><span>📅 นัดประชุม</span>
+            </div>
+            <div class="bub me">📅 นัดประชุม</div>
+            <div class="bub bot">เปิดฟอร์มจองนัด… 📝<br><i>(เลือกลูกค้า · หัวข้อ · วันเวลา · กดยืนยัน)</i></div>
+            <div class="bub card">
+              <div class="ch"><span>Moodata</span><span>📅 นัดประชุม</span></div>
+              <div class="cb">
+                <div class="row"><span>เรียน</span><b>บ.ตัวอย่าง</b></div>
+                <div class="row"><span>หัวข้อ</span><b>สรุปงานเดือน</b></div>
+                <div class="row"><span>วันที่</span><b>1/07 14:00</b></div>
+              </div>
+              <a class="btn">🎦 เข้าห้องประชุม (Meet)</a>
+              <a class="btn sec">📅 เพิ่มลงปฏิทิน</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="chatnote">
+        <h3>เกิดอะไรขึ้นเบื้องหลัง</h3>
+        <ol>
+          <li>พี่พิมพ์ <b>"ยินดี"</b> → บอทเช็คว่าเป็นเจ้าของ/ทีม → ส่งเมนู</li>
+          <li>กด <b>📅 นัดประชุม</b> → เปิด LIFF (mini app) พร้อมเลือกลูกค้าของกลุ่มนั้นให้</li>
+          <li>กรอกฟอร์ม → ระบบสร้าง <b>Calendar event + Google Meet</b> ในปฏิทิน moodata.me</li>
+          <li>ผู้เข้าร่วมได้ <b>อีเมลเชิญ (invite)</b> เด้งเข้าปฏิทินอัตโนมัติ</li>
+          <li>บอท <b>push การ์ดนัด + Meet link</b> เข้ากลุ่มลูกค้าทันที</li>
+        </ol>
+        <div class="tipbox">🔒 <b>ปลอดภัย:</b> เฉพาะพี่กี้ + ทีมใน whitelist เท่านั้นที่จองได้ · ลูกค้าในกลุ่มกดสร้างนัดเองไม่ได้</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FLASHCARDS -->
+<section style="background:#fff;">
+  <div class="wrap">
+    <h2 class="sec">แฟลชการ์ด <span class="em">ฟีเจอร์ระบบ</span></h2>
+    <p class="sub">คลิกการ์ดเพื่อพลิกดูขั้นตอน — ครบทุก flow งานของระบบ</p>
+    <div class="cards" id="cards"></div>
+  </div>
+</section>
+
+<footer>
+  <b>Moodata Billing Bot</b> · v0.11 — ผู้ช่วยอัตโนมัติบน LINE OA<br>
+  เอกสารนำเสนอ Flow ระบบ · สร้างเพื่อส่งต่อให้ออกแบบเว็บต่อ
+</footer>
+
+<script>
+  // แฟลชการ์ด — เนื้อหา flow งานของระบบ (แก้/เพิ่มได้ที่นี่)
+  var CARDS = [
+    { ic:'🧾', title:'ส่งใบวางบิล', who:'ขาส่งออก', steps:['กรอกบิลในชีต "ใบวางบิล"','พิมพ์ "ยินดี" → ส่งใบวางบิล','เลือกใบ (หรือส่งทั้งหมด)','การ์ดเข้ากลุ่มลูกค้า + ปุ่มแนบสลิป'] },
+    { ic:'💰', title:'รับสลิป / 50ทวิ', who:'ขาส่งออก', steps:['ลูกค้ากดปุ่มใต้การ์ดบิล','ส่งรูปสลิป/50ทวิ ในกลุ่ม','ระบบเก็บลง Google Drive','ติ๊กสถานะชำระ/50ทวิ ในชีตให้'] },
+    { ic:'💸', title:'ส่งใบตั้งเบิก', who:'ขาส่งออก', steps:['กรอกชีต "ตั้งเบิก"','"ยินดี" → ส่งการเบิกจ่าย','การ์ดมีปุ่มอนุมัติ + แนบหลักฐาน','ติดตามสถานะในชีต'] },
+    { ic:'📊', title:'ส่งรายงาน / เอกสาร', who:'ขาส่งออก', steps:['ใส่หลายลิงก์ "ชื่อ | ลิงก์"','1 การ์ด = หลายปุ่มเอกสาร','"ยินดี" → ส่งรายงาน/เอกสาร','เลือกแล้วส่งเข้ากลุ่ม'] },
+    { ic:'📢', title:'ประกาศทุกกลุ่ม', who:'ขาส่งออก', steps:['"ยินดี" → แจ้งประกาศ','พิมพ์ข้อความประกาศ','ส่งเข้าทุกกลุ่มลูกค้ารวดเดียว'] },
+    { ic:'📨', title:'ลูกค้าส่งเอกสาร', who:'ขารับเข้า', steps:['ลูกค้าพิมพ์ "เมนู" ในกลุ่ม','กดส่งเอกสาร → ส่งรูป/ไฟล์','พิมพ์ "เสร็จ" จบ','เก็บเข้าโฟลเดอร์ลูกค้าใน Drive'] },
+    { ic:'📝', title:'ลูกค้าแจ้งงาน', who:'ขารับเข้า', steps:['"เมนู" → แจ้งงาน/สอบถาม/ปัญหา','พิมพ์รายละเอียด','ได้เลขที่ TK-xxxx','แจ้งทีมภายในอัตโนมัติ'] },
+    { ic:'🤝', title:'มอบหมายทีม', who:'ขารับเข้า', steps:['กรอกอีเมลทีม + CC ในชีตงาน','เมนู 📧 แจ้งทีมทางเมล','ทีมกดปุ่มในเมล "ส่งงานตรวจ"','พี่ตรวจ → 📨 ส่งผลงานลูกค้า'] },
+    { ic:'📅', title:'จองนัดประชุม', who:'พี่/ทีม', steps:['"ยินดี" → 📅 นัดประชุม','กรอกฟอร์ม LIFF','สร้าง Meet + เชิญอีเมล','การ์ดนัดเข้ากลุ่มลูกค้า'] },
+  ];
+  var box = document.getElementById('cards');
+  CARDS.forEach(function(c){
+    var el = document.createElement('div');
+    el.className = 'fc';
+    el.innerHTML =
+      '<div class="fc-in">'+
+        '<div class="fc-face fc-front"><div class="ic">'+c.ic+'</div>'+
+          '<h4>'+c.title+'</h4><div class="who">'+c.who+'</div>'+
+          '<div class="hint">👆 คลิกดูขั้นตอน</div></div>'+
+        '<div class="fc-face fc-back"><h4>'+c.ic+' '+c.title+'</h4><ol>'+
+          c.steps.map(function(s){return '<li>'+s+'</li>';}).join('')+
+        '</ol></div>'+
+      '</div>';
+    el.addEventListener('click', function(){ el.classList.toggle('flip'); });
+    box.appendChild(el);
+  });
+</script>
+</body>
+</html>
