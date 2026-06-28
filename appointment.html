@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>จองนัดประชุม · Moodata</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    :root{
+      --brand:#1B72E8; --brand-dark:#155cba; --bg:#f4f6fb;
+      --line:#e3e8f0; --text:#1f2733; --muted:#8a94a6; --ok:#1faa59; --err:#d8463f;
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    body{
+      margin:0; font-family:'IBM Plex Sans Thai',system-ui,sans-serif;
+      background:var(--bg); color:var(--text); font-size:16px; line-height:1.5;
+    }
+    .wrap{max-width:520px; margin:0 auto; padding:0 0 40px;}
+    .hero{
+      background:linear-gradient(135deg,var(--brand),#3d8bff);
+      color:#fff; padding:22px 20px 26px; border-radius:0 0 22px 22px;
+    }
+    .hero h1{margin:0; font-size:20px; font-weight:700;}
+    .hero p{margin:4px 0 0; font-size:13px; opacity:.92;}
+    .card{
+      background:#fff; margin:16px; padding:18px; border-radius:16px;
+      box-shadow:0 2px 12px rgba(20,40,80,.06);
+    }
+    label{display:block; font-size:13px; font-weight:600; color:#445; margin:14px 0 6px;}
+    label:first-child{margin-top:0;}
+    .req{color:var(--err);}
+    input,select,textarea{
+      width:100%; padding:12px 13px; font-size:16px; font-family:inherit;
+      border:1.5px solid var(--line); border-radius:11px; background:#fff; color:var(--text);
+      outline:none; transition:border-color .15s;
+    }
+    input:focus,select:focus,textarea:focus{border-color:var(--brand);}
+    textarea{resize:vertical; min-height:64px;}
+    .hint{font-size:12px; color:var(--muted); margin:5px 2px 0;}
+    .durations{display:flex; gap:8px;}
+    .durations button{
+      flex:1; padding:11px 0; border:1.5px solid var(--line); background:#fff;
+      border-radius:11px; font-size:15px; font-family:inherit; color:#556; cursor:pointer;
+    }
+    .durations button.active{
+      border-color:var(--brand); background:#eaf2ff; color:var(--brand); font-weight:600;
+    }
+    .btn{
+      width:100%; margin-top:22px; padding:15px; border:none; border-radius:13px;
+      background:var(--brand); color:#fff; font-size:17px; font-weight:600;
+      font-family:inherit; cursor:pointer;
+    }
+    .btn:active{background:var(--brand-dark);}
+    .btn[disabled]{opacity:.55;}
+    .btn.ghost{background:#eef1f6; color:#445;}
+    .status{text-align:center; padding:40px 24px; color:var(--muted);}
+    .spinner{
+      width:34px;height:34px;border:3px solid #d9e2f0;border-top-color:var(--brand);
+      border-radius:50%; animation:spin .8s linear infinite; margin:0 auto 14px;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .result{text-align:center; padding:8px 4px;}
+    .result .ic{font-size:52px; line-height:1;}
+    .result h2{margin:10px 0 4px; font-size:20px;}
+    .result .when{color:var(--brand); font-weight:600; font-size:15px;}
+    .summary{
+      text-align:left; background:#f7f9fc; border-radius:12px; padding:14px; margin:16px 0;
+      font-size:14px;
+    }
+    .summary div{margin:3px 0;}
+    .summary b{color:#445;}
+    .meet{
+      display:block; margin:6px 0 0; padding:14px; border-radius:12px;
+      background:var(--brand); color:#fff !important; text-decoration:none; font-weight:600;
+    }
+    .errbox{background:#fdecea; color:var(--err); border-radius:11px; padding:12px 14px; font-size:14px; margin-top:14px; display:none;}
+    .hide{display:none !important;}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <h1>📅 จองนัดประชุม</h1>
+    <p>สร้างนัด + Google Meet แล้วส่งให้ลูกค้าอัตโนมัติ</p>
+  </div>
+
+  <!-- กำลังโหลด -->
+  <div id="loading" class="status">
+    <div class="spinner"></div>
+    กำลังเตรียมข้อมูล…
+  </div>
+
+  <!-- ฟอร์ม -->
+  <div id="form" class="card hide">
+    <label>ลูกค้า <span class="req">*</span></label>
+    <select id="customer"></select>
+
+    <label>หัวข้อการประชุม <span class="req">*</span></label>
+    <input id="title" type="text" placeholder="เช่น ประชุมสรุปงานประจำเดือน" />
+
+    <label>วันและเวลาเริ่ม <span class="req">*</span></label>
+    <input id="start" type="datetime-local" />
+
+    <label>ระยะเวลา</label>
+    <div class="durations" id="durations">
+      <button data-min="30">30 น.</button>
+      <button data-min="60" class="active">1 ชม.</button>
+      <button data-min="90">1.5 ชม.</button>
+      <button data-min="120">2 ชม.</button>
+    </div>
+
+    <label>อีเมลผู้เข้าร่วม (เชิญทางปฏิทิน)</label>
+    <textarea id="emails" placeholder="คั่นหลายคนด้วย , (เว้นว่างได้)"></textarea>
+    <div class="hint">ดึงจากชีตลูกค้าให้อัตโนมัติ — เพิ่ม/แก้ได้</div>
+
+    <label>โน้ตเพิ่มเติม (ไม่บังคับ)</label>
+    <textarea id="note" placeholder="รายละเอียด/วาระการประชุม"></textarea>
+
+    <div id="formErr" class="errbox"></div>
+
+    <button id="submit" class="btn">✅ ยืนยันสร้างนัด + ส่งให้ลูกค้า</button>
+  </div>
+
+  <!-- กำลังสร้าง -->
+  <div id="creating" class="status hide">
+    <div class="spinner"></div>
+    กำลังสร้างนัด + Google Meet…
+  </div>
+
+  <!-- ผลลัพธ์ -->
+  <div id="done" class="card result hide">
+    <div class="ic">🎉</div>
+    <h2>สร้างนัดเรียบร้อย!</h2>
+    <div class="when" id="doneWhen"></div>
+    <div class="summary" id="doneSummary"></div>
+    <a id="doneMeet" class="meet" target="_blank" rel="noopener">🎦 เข้าห้องประชุม (Meet)</a>
+    <button class="btn ghost" onclick="closeApp()">ปิดหน้าต่าง</button>
+  </div>
+
+  <!-- error เต็มจอ -->
+  <div id="fatal" class="card hide">
+    <div class="errbox" style="display:block" id="fatalMsg"></div>
+    <button class="btn ghost" onclick="location.reload()">ลองใหม่</button>
+  </div>
+</div>
+
+<script>
+  // ═══════════ ตั้งค่า (แก้ 2 ค่านี้ก่อนใช้งานจริง) ═══════════
+  var LIFF_ID  = 'PUT_LIFF_ID_HERE';   // LIFF ID จาก LINE Dev Console
+  var EXEC_URL = 'https://script.google.com/macros/s/AKfycbwdOotltb--WwTuS-ECutq6uFQs536kjz-RyLuq1mm35Pbfnn25EptvIRkfjaZB6iJf/exec';
+  // ════════════════════════════════════════════════════════════
+
+  var UID = '', GID = '', DURATION = 60, CUSTOMERS = [];
+
+  function $(id){ return document.getElementById(id); }
+  function show(id){ $(id).classList.remove('hide'); }
+  function hide(id){ $(id).classList.add('hide'); }
+
+  // JSONP — เลี่ยง CORS จาก GitHub Pages → Apps Script
+  function jsonp(params){
+    return new Promise(function(resolve, reject){
+      var cb = 'cb_' + Date.now() + '_' + Math.floor(Math.random()*1e6);
+      var timer = setTimeout(function(){ cleanup(); reject(new Error('หมดเวลาเชื่อมต่อ')); }, 30000);
+      window[cb] = function(data){ cleanup(); resolve(data); };
+      function cleanup(){ clearTimeout(timer); delete window[cb]; if(s.parentNode) s.parentNode.removeChild(s); }
+      var qs = Object.keys(params).map(function(k){
+        return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
+      }).join('&');
+      var s = document.createElement('script');
+      s.src = EXEC_URL + '?' + qs + '&callback=' + cb;
+      s.onerror = function(){ cleanup(); reject(new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้')); };
+      document.body.appendChild(s);
+    });
+  }
+
+  function getQueryGid(){
+    // LIFF อาจส่ง gid ตรง ๆ ใน query หรือซ้อนใน liff.state
+    try {
+      var sp = new URLSearchParams(location.search);
+      if (sp.get('gid')) return sp.get('gid');
+      var st = sp.get('liff.state');
+      if (st) { var inner = new URLSearchParams(st.charAt(0)==='?'?st.slice(1):st); if(inner.get('gid')) return inner.get('gid'); }
+    } catch(e){}
+    return '';
+  }
+
+  function pad(n){ return (n<10?'0':'')+n; }
+  function defaultStart(){
+    var d = new Date(); d.setMinutes(0,0,0); d.setHours(d.getHours()+1);
+    return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':'+pad(d.getMinutes());
+  }
+
+  function fatal(msg){ hide('loading'); hide('form'); hide('creating'); $('fatalMsg').textContent = '⚠️ ' + msg; show('fatal'); }
+
+  // ───── ปุ่มระยะเวลา ─────
+  Array.prototype.forEach.call($('durations').children, function(btn){
+    btn.addEventListener('click', function(){
+      Array.prototype.forEach.call($('durations').children, function(b){ b.classList.remove('active'); });
+      btn.classList.add('active'); DURATION = parseInt(btn.getAttribute('data-min'),10);
+    });
+  });
+
+  // ───── เลือกลูกค้า → prefill อีเมล ─────
+  $('customer').addEventListener('change', function(){
+    var c = CUSTOMERS[this.value];
+    if (c && c.email && !$('emails').value.trim()) $('emails').value = c.email;
+  });
+
+  // ───── ยืนยัน ─────
+  $('submit').addEventListener('click', function(){
+    $('formErr').style.display = 'none';
+    var idx = $('customer').value;
+    var customer = (CUSTOMERS[idx] && CUSTOMERS[idx].name) || '';
+    var title = $('title').value.trim();
+    var start = $('start').value;
+    if (!customer){ return formError('กรุณาเลือกลูกค้า'); }
+    if (!title){ return formError('กรุณาใส่หัวข้อการประชุม'); }
+    if (!start){ return formError('กรุณาเลือกวันและเวลา'); }
+
+    hide('form'); show('creating');
+    jsonp({
+      action:'apptcreate', uid:UID, customer:customer, title:title,
+      start:start, duration:DURATION, emails:$('emails').value, note:$('note').value
+    }).then(function(r){
+      hide('creating');
+      if (!r || !r.ok){ show('form'); return formError((r&&r.error)||'สร้างนัดไม่สำเร็จ'); }
+      $('doneWhen').textContent = r.when || '';
+      var sum = '<div><b>ลูกค้า:</b> '+escapeHtml(r.customer||customer)+'</div>';
+      sum += '<div><b>หัวข้อ:</b> '+escapeHtml(title)+'</div>';
+      sum += r.groupLinked
+        ? '<div>✅ ส่งการ์ดนัดเข้ากลุ่มลูกค้าแล้ว</div>'
+        : '<div>⚠️ ลูกค้านี้ยังไม่ผูกกลุ่ม LINE — ยังไม่ได้ส่งการ์ด</div>';
+      if (r.invited) sum += '<div>📧 เชิญทางอีเมล '+r.invited+' คน</div>';
+      $('doneSummary').innerHTML = sum;
+      if (r.meetUrl){ $('doneMeet').href = r.meetUrl; $('doneMeet').classList.remove('hide'); }
+      else { $('doneMeet').classList.add('hide'); }
+      show('done');
+    }).catch(function(err){
+      hide('creating'); show('form'); formError(err.message||'เกิดข้อผิดพลาด');
+    });
+  });
+
+  function formError(msg){ var b=$('formErr'); b.textContent='⚠️ '+msg; b.style.display='block'; }
+  function escapeHtml(s){ return String(s||'').replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  function closeApp(){ try{ if(liff.isInClient()) liff.closeWindow(); else location.reload(); }catch(e){ location.reload(); } }
+
+  // ───── เริ่มต้น ─────
+  (function init(){
+    if (LIFF_ID === 'PUT_LIFF_ID_HERE'){ fatal('ยังไม่ได้ตั้ง LIFF_ID ในไฟล์ appointment.html'); return; }
+    liff.init({ liffId: LIFF_ID }).then(function(){
+      if (!liff.isLoggedIn()){ liff.login(); return; }
+      GID = getQueryGid();
+      return liff.getProfile().then(function(profile){
+        UID = profile.userId;
+        return jsonp({ action:'apptmeta', uid:UID, gid:GID });
+      });
+    }).then(function(meta){
+      if (!meta) return;  // กรณี login redirect
+      if (!meta.ok){ fatal(meta.error || 'โหลดข้อมูลไม่สำเร็จ'); return; }
+      CUSTOMERS = meta.customers || [];
+      var sel = $('customer');
+      if (!CUSTOMERS.length){ fatal('ยังไม่มีลูกค้าในชีต "กลุ่มลูกค้า"'); return; }
+      CUSTOMERS.forEach(function(c, i){
+        var o = document.createElement('option');
+        o.value = i; o.textContent = c.name + (c.groupId ? '' : '  (ยังไม่ผูกกลุ่ม)');
+        sel.appendChild(o);
+      });
+      // preselect ลูกค้าของกลุ่มที่กดมา
+      if (GID){
+        for (var i=0;i<CUSTOMERS.length;i++){ if (CUSTOMERS[i].groupId===GID){ sel.value=i; break; } }
+      }
+      // prefill อีเมลของลูกค้าที่เลือกอยู่
+      var cur = CUSTOMERS[sel.value]; if (cur && cur.email) $('emails').value = cur.email;
+      $('start').value = defaultStart();
+      hide('loading'); show('form');
+    }).catch(function(err){
+      fatal((err && err.message) || String(err));
+    });
+  })();
+</script>
+</body>
+</html>
