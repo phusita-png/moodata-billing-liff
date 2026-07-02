@@ -267,9 +267,19 @@
         o.value = i; o.textContent = c.name + (c.groupId ? '' : '  (ยังไม่ผูกกลุ่ม)');
         sel.appendChild(o);
       });
-      // preselect ลูกค้าของกลุ่มที่กดมา
+      // ถ้าเปิดจาก "กลุ่มลูกค้า" จริง (gid ตรงกับลูกค้าคนไหน) → ล็อกลูกค้ากลุ่มนั้น เปลี่ยนไม่ได้
+      // ถ้าเปิดจากกลุ่มทีม/กลุ่มที่ไม่ใช่ลูกค้า (ไม่ตรงใคร) → เลือกลูกค้าเองได้อิสระ
+      var matched = -1;
       if (GID){
-        for (var i=0;i<CUSTOMERS.length;i++){ if (CUSTOMERS[i].groupId===GID){ sel.value=i; break; } }
+        for (var i=0;i<CUSTOMERS.length;i++){ if (CUSTOMERS[i].groupId===GID){ matched=i; break; } }
+      }
+      if (matched >= 0){
+        sel.value = matched;
+        sel.disabled = true;   // ล็อก
+        var lk = document.createElement('div');
+        lk.style.cssText = 'font-size:12px;color:#1E9E5A;margin:-8px 0 6px;font-weight:600';
+        lk.textContent = '🔒 นัดให้ลูกค้ากลุ่มนี้ (ล็อกอัตโนมัติ)';
+        sel.parentNode.insertBefore(lk, sel.nextSibling);
       }
       // prefill อีเมลของลูกค้าที่เลือกอยู่
       var cur = CUSTOMERS[sel.value]; if (cur && cur.email) $('emails').value = cur.email;
