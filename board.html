@@ -25,6 +25,16 @@
   .btn-s{ background:#EAF1FB; color:var(--ink); }
   .btn-g{ background:var(--done); color:#fff; }
   .btn.sm{ padding:6px 12px; font-size:13px; }
+  #fRange{ padding:9px 12px; border:1px solid var(--line); border-radius:10px; font-family:inherit; font-size:14px; background:#fff; color:var(--ink); cursor:pointer; }
+  /* summary stat cards */
+  .stats{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; padding:8px 24px 6px; }
+  .stat{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:16px 18px; box-shadow:0 4px 16px rgba(120,150,200,.10); }
+  .stat .lab{ font-size:13px; color:var(--muted); font-weight:600; display:flex; align-items:center; gap:7px; }
+  .stat .num{ font-size:30px; font-weight:700; margin-top:4px; line-height:1.1; }
+  .stat.all .num{ color:var(--rose); } .stat.doing .num{ color:var(--doing); }
+  .stat.done .num{ color:var(--done); } .stat.over .num{ color:#D6336C; }
+  .stat .sub{ font-size:12px; color:var(--muted); margin-top:2px; }
+  @media(max-width:720px){ .stats{ grid-template-columns:repeat(2,1fr); } .top{ flex-wrap:wrap; } }
   /* view tabs */
   .views{ display:flex; gap:8px; padding:6px 24px; flex-wrap:wrap; }
   .vtab{ padding:7px 16px; border-radius:999px; background:#fff; border:1px solid var(--line); color:var(--muted);
@@ -49,6 +59,7 @@
   tr:last-child td{ border-bottom:none; }
   tr.row:hover{ background:#F3F8FE; cursor:pointer; }
   .tt{ font-weight:600; } .meta{ font-size:12px; color:var(--muted); margin-top:2px; }
+  .ord{ color:var(--muted); font-weight:600; text-align:center; } .tid{ font-family:monospace; font-size:13px; color:var(--rose); font-weight:600; }
   /* cards grid */
   .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:14px; }
   .card{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px; cursor:pointer; box-shadow:0 3px 12px rgba(120,150,200,.10); }
@@ -101,8 +112,16 @@
   <div class="top">
     <h1>กระดานงาน</h1><span id="who" class="assignee"></span>
     <span class="sp"></span>
+    <select id="fRange" title="ช่วงเวลา">
+      <option value="all">📅 ทุกช่วงเวลา</option>
+      <option value="month">เดือนนี้</option>
+      <option value="lastmonth">เดือนที่แล้ว</option>
+      <option value="last7">7 วันล่าสุด</option>
+      <option value="last30">30 วันล่าสุด</option>
+    </select>
     <button class="btn btn-p" onclick="openCreate()">+ เปิดงานใหม่</button>
   </div>
+  <div id="stats" class="stats"></div>
   <div class="views" id="views"></div>
   <div class="tools">
     <select id="fCat"></select>
@@ -125,9 +144,10 @@
   var LIFF_ID='2010533182-66TDQvCu';
   var EXEC_URL='https://script.google.com/macros/s/AKfycbwdOotltb--WwTuS-ECutq6uFQs536kjz-RyLuq1mm35Pbfnn25EptvIRkfjaZB6iJf/exec';
 
+  var DAY=86400000;
   var UID='', TASKS=[], TEAM=[], STATUSES=[], SNOW=0, CATS=[];
-  var VIEW='list', FILTER='', FCAT='', SORT='due', Q='', CAL=null;
-  var VIEWS=[['list','รายการ'],['cards','การ์ด'],['kanban','คอลัมน์'],['calendar','ปฏิทิน'],['person','เลน (ตามคน)']];
+  var VIEW='list', FILTER='', FCAT='', SORT='due', Q='', CAL=null, RANGE='all';
+  var VIEWS=[['list','รายการ'],['cards','การ์ด'],['kanban','คอลัมน์'],['calendar','ปฏิทิน'],['person','งานของแต่ละคน']];
   var THMON=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
   var THMONF=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 
@@ -163,9 +183,33 @@
   }
   function ageHtml(t){ if(isDone(t))return''; var a=ageDays(t); return a>0?'<span class="age">ค้าง '+a+' วัน</span>':''; }
 
+  // ── ช่วงเวลา (ยึดวันที่สร้างงาน) ──
+  function inRange(t){
+    if(RANGE==='all') return true;
+    var ms=t.createdMs||0; if(!ms) return false;
+    var now=new Date(SNOW), y=now.getFullYear(), m=now.getMonth();
+    if(RANGE==='month')     return ms>=new Date(y,m,1).getTime();
+    if(RANGE==='lastmonth') return ms>=new Date(y,m-1,1).getTime() && ms<new Date(y,m,1).getTime();
+    if(RANGE==='last7')     return ms>=SNOW-7*DAY;
+    if(RANGE==='last30')    return ms>=SNOW-30*DAY;
+    return true;
+  }
+
+  // ── การ์ดสรุปด้านบน (ยึดช่วงเวลา ไม่ยึดตัวกรอง/ค้นหา) ──
+  function stat(cls,lab,num){ return '<div class="stat '+cls+'"><div class="lab">'+lab+'</div><div class="num">'+num+'</div></div>'; }
+  function renderStats(){
+    var base=TASKS.filter(function(t){ return inRange(t) && t.status.indexOf('ยกเลิก')<0; });
+    var doing=base.filter(function(t){ return t.status.indexOf('กำลังทำ')>=0 || t.status.indexOf('รอตรวจ')>=0; }).length;
+    var done=base.filter(isDone).length;
+    var over=base.filter(overdue).length;
+    $('stats').innerHTML= stat('all','📋 งานทั้งหมด',base.length)+ stat('doing','🔵 งานระหว่างทำ',doing)+
+      stat('done','✅ งานสำเร็จ',done)+ stat('over','⏰ เกินกำหนด',over);
+  }
+
   // ── filter + sort ──
   function visible(){
     var arr=TASKS.filter(function(t){
+      if(!inRange(t)) return false;
       if(FILTER && t.status!==FILTER) return false;
       if(FCAT && t.category!==FCAT) return false;
       if(Q){ var h=(t.no+' '+t.customer+' '+t.detail+' '+t.assignee).toLowerCase(); if(h.indexOf(Q)<0) return false; }
@@ -185,6 +229,7 @@
 
   // ── views ──
   function render(){
+    renderStats();
     $('views').innerHTML=VIEWS.map(function(v){ return '<div class="vtab'+(v[0]===VIEW?' active':'')+'" onclick="setView(\''+v[0]+'\')">'+v[1]+'</div>'; }).join('');
     var arr=visible();
     var undated=TASKS.filter(function(t){return !t.dueMs;}).length;
@@ -199,16 +244,18 @@
   }
 
   function renderList(arr){
-    var rows=arr.map(function(t){
+    var rows=arr.map(function(t,i){
       return '<tr class="row" onclick="openTask(\''+esc(t.no)+'\')">'+
-        '<td><div class="tt">'+esc(t.detail||t.no)+'</div><div class="meta">'+esc(t.no)+' · '+esc(t.category||'')+'</div></td>'+
+        '<td class="ord">'+(i+1)+'</td>'+
+        '<td><span class="tid">'+esc(t.no)+'</span></td>'+
+        '<td><div class="tt">'+esc(t.detail||'-')+'</div>'+(t.category?'<div class="meta">'+esc(t.category)+'</div>':'')+'</td>'+
         '<td>'+esc(t.customer||'-')+'</td>'+
         '<td><span class="badge '+badgeClass(t.status)+'">'+esc(t.status)+'</span></td>'+
         '<td>'+dueHtml(t)+'<div>'+ageHtml(t)+'</div></td>'+
         '<td>'+(t.assignee?esc(t.assignee):'<span class="assignee none">ยังไม่มอบ</span>')+'</td>'+
         '<td><button class="btn btn-o sm" onclick="event.stopPropagation();openTask(\''+esc(t.no)+'\')">เปิดงาน</button></td></tr>';
     }).join('');
-    $('view').innerHTML='<table><thead><tr><th>งาน</th><th>ลูกค้า</th><th>สถานะ</th><th>กำหนด</th><th>ผู้รับผิดชอบ</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>';
+    $('view').innerHTML='<table><thead><tr><th style="width:44px">ลำดับ</th><th>รหัสงาน</th><th>งาน</th><th>ลูกค้า</th><th>สถานะ</th><th>กำหนด</th><th>ผู้รับผิดชอบ</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>';
   }
 
   function miniCard(t){
@@ -340,6 +387,7 @@
     $('fCat').onchange=function(){ FCAT=this.value; render(); };
     $('fStatus').onchange=function(){ FILTER=this.value; render(); };
     $('fSort').onchange=function(){ SORT=this.value; render(); };
+    $('fRange').onchange=function(){ RANGE=this.value; render(); };
     $('q').oninput=function(){ Q=this.value.trim().toLowerCase(); render(); };
   }
   function uidOverride(){ try{ return new URLSearchParams(location.search).get('uid')||''; }catch(e){ return ''; } }
