@@ -15,6 +15,29 @@
         background:linear-gradient(120deg,var(--bg1),var(--bg2)); min-height:100vh; }
   .hide{ display:none !important; }
   a{ color:var(--rose); }
+  /* layout: sidebar + content */
+  #app{ display:flex; align-items:stretch; min-height:100vh; }
+  .side{ width:230px; flex:0 0 230px; background:#fff; border-right:1px solid var(--line);
+         padding:20px 14px; display:flex; flex-direction:column; gap:6px; }
+  .brand{ padding:4px 10px 16px; } .brand b{ font-size:19px; color:var(--rose); }
+  .brand .logo{ font-size:18px; } .brand-sub{ font-size:12px; color:var(--muted); margin-top:2px; }
+  .nav{ display:flex; flex-direction:column; gap:4px; }
+  .nav-i{ display:flex; align-items:center; gap:10px; padding:11px 14px; border-radius:12px;
+          font-size:15px; font-weight:600; color:var(--ink); cursor:pointer; text-decoration:none; white-space:nowrap; }
+  .nav-i:hover{ background:var(--bg2); }
+  .nav-i.active{ background:linear-gradient(120deg,var(--rose),var(--rose2)); color:#fff; box-shadow:0 4px 14px rgba(27,114,232,.28); }
+  .nav-i.soon{ color:var(--muted); cursor:default; }
+  .nav-i.soon:hover{ background:transparent; }
+  .nav-i .soon-b{ margin-left:auto; font-size:10px; background:#EEF1F6; color:var(--muted); padding:2px 8px; border-radius:999px; font-weight:600; }
+  .side-foot{ margin-top:auto; font-size:12px; color:var(--muted); padding:12px 10px 2px; border-top:1px solid var(--line); }
+  .content{ flex:1; min-width:0; }
+  @media(max-width:820px){
+    #app{ flex-direction:column; }
+    .side{ width:auto; flex:none; flex-direction:row; overflow-x:auto; border-right:none;
+           border-bottom:1px solid var(--line); padding:10px 12px; align-items:center; gap:6px; }
+    .brand{ padding:0 10px 0 4px; } .brand-sub{ display:none; }
+    .nav{ flex-direction:row; } .side-foot{ display:none; }
+  }
   /* header */
   .top{ display:flex; align-items:center; gap:12px; padding:18px 24px 6px; }
   .top h1{ margin:0; font-size:22px; color:var(--rose); font-weight:700; }
@@ -109,34 +132,41 @@
 <div id="fatal" class="center hide" style="color:#D6336C"><div style="font-size:34px">⚠️</div><p id="fatalMsg"></p></div>
 
 <div id="app" class="hide">
-  <div class="top">
-    <h1>กระดานงาน</h1><span id="who" class="assignee"></span>
-    <span class="sp"></span>
-    <select id="fRange" title="ช่วงเวลา">
-      <option value="all">📅 ทุกช่วงเวลา</option>
-      <option value="month">เดือนนี้</option>
-      <option value="lastmonth">เดือนที่แล้ว</option>
-      <option value="last7">7 วันล่าสุด</option>
-      <option value="last30">30 วันล่าสุด</option>
-    </select>
-    <button class="btn btn-p" onclick="openCreate()">+ เปิดงานใหม่</button>
+  <aside class="side">
+    <div class="brand"><span class="logo">🔵</span> <b>Moodata</b><div class="brand-sub">ระบบงานทีม</div></div>
+    <nav id="nav" class="nav"></nav>
+    <div class="side-foot" id="sideFoot"></div>
+  </aside>
+  <div class="content">
+    <div class="top">
+      <h1 id="pageTitle">กระดานงาน</h1><span id="who" class="assignee"></span>
+      <span class="sp"></span>
+      <select id="fRange" title="ช่วงเวลา">
+        <option value="all">📅 ทุกช่วงเวลา</option>
+        <option value="month">เดือนนี้</option>
+        <option value="lastmonth">เดือนที่แล้ว</option>
+        <option value="last7">7 วันล่าสุด</option>
+        <option value="last30">30 วันล่าสุด</option>
+      </select>
+      <button id="btnCreate" class="btn btn-p" onclick="openCreate()">+ เปิดงานใหม่</button>
+    </div>
+    <div id="stats" class="stats"></div>
+    <div class="views" id="views"></div>
+    <div class="tools">
+      <select id="fCat"></select>
+      <select id="fStatus"></select>
+      <select id="fSort">
+        <option value="due">เรียง: กำหนดเสร็จ</option>
+        <option value="customer">เรียง: ลูกค้า</option>
+        <option value="status">เรียง: สถานะ</option>
+        <option value="assignee">เรียง: ผู้รับผิดชอบ</option>
+        <option value="no">เรียง: เลขงาน</option>
+      </select>
+      <input id="q" class="search" placeholder="🔍 ค้นหางาน / ลูกค้า">
+    </div>
+    <div id="hint" class="note hide"></div>
+    <main id="view"></main>
   </div>
-  <div id="stats" class="stats"></div>
-  <div class="views" id="views"></div>
-  <div class="tools">
-    <select id="fCat"></select>
-    <select id="fStatus"></select>
-    <select id="fSort">
-      <option value="due">เรียง: กำหนดเสร็จ</option>
-      <option value="customer">เรียง: ลูกค้า</option>
-      <option value="status">เรียง: สถานะ</option>
-      <option value="assignee">เรียง: ผู้รับผิดชอบ</option>
-      <option value="no">เรียง: เลขงาน</option>
-    </select>
-    <input id="q" class="search" placeholder="🔍 ค้นหางาน / ลูกค้า">
-  </div>
-  <div id="hint" class="note hide"></div>
-  <main id="view"></main>
 </div>
 <div id="toast" class="toast"></div>
 
@@ -146,8 +176,15 @@
 
   var DAY=86400000;
   var UID='', TASKS=[], TEAM=[], STATUSES=[], SNOW=0, CATS=[];
+  var IS_OWNER=false, ME=null;
   var VIEW='list', FILTER='', FCAT='', SORT='due', Q='', CAL=null, RANGE='all';
-  var VIEWS=[['list','รายการ'],['cards','การ์ด'],['kanban','คอลัมน์'],['calendar','ปฏิทิน'],['person','งานของแต่ละคน']];
+  var VIEWS=[['list','รายการ'],['cards','การ์ด'],['kanban','คอลัมน์'],['calendar','ปฏิทิน'],['person','งานของฉัน']];
+  // เมนูซ้าย — เตรียมรับฟังก์ชันอื่นในอนาคต (ready:false = ยังไม่เปิด แสดง "เร็ว ๆ นี้")
+  var PAGE='tasks';
+  var NAV=[
+    { id:'tasks',   icon:'📋', label:'งานทั้งหมด',   ready:true },
+    { id:'profile', icon:'👤', label:'ข้อมูลส่วนตัว', ready:false }
+  ];
   var THMON=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
   var THMONF=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 
@@ -230,7 +267,10 @@
   // ── views ──
   function render(){
     renderStats();
-    $('views').innerHTML=VIEWS.map(function(v){ return '<div class="vtab'+(v[0]===VIEW?' active':'')+'" onclick="setView(\''+v[0]+'\')">'+v[1]+'</div>'; }).join('');
+    $('views').innerHTML=VIEWS.map(function(v){
+      var lab=(v[0]==='person' && IS_OWNER)?'งานของทีม':v[1];
+      return '<div class="vtab'+(v[0]===VIEW?' active':'')+'" onclick="setView(\''+v[0]+'\')">'+lab+'</div>';
+    }).join('');
     var arr=visible();
     var undated=TASKS.filter(function(t){return !t.dueMs;}).length;
     if(VIEW==='calendar' && undated){ $('hint').classList.remove('hide'); $('hint').textContent='มีงานไม่ได้กำหนดวันในเดือนนี้ '+undated+' งาน — ดูที่มุมมอง "รายการ" หรือ "การ์ด"'; }
@@ -302,6 +342,12 @@
   function calMove(d){ CAL=new Date(CAL.getFullYear(),CAL.getMonth()+d,1); render(); }
 
   function renderPerson(arr){
+    if(!IS_OWNER){ // ทีม = เห็นเฉพาะงานตัวเอง (ข้อมูลถูกกรองจาก backend แล้ว)
+      var nm=(ME&&(ME.nick||ME.name))||'ฉัน';
+      $('view').innerHTML='<div class="lane"><h3>งานของฉัน · '+esc(nm)+' ('+arr.length+')</h3>'+
+        '<div class="grid">'+arr.map(miniCard).join('')+'</div></div>';
+      return;
+    }
     var order=[], groups={};
     arr.forEach(function(t){ var k=t.assignee||'ยังไม่มอบหมาย'; if(!groups[k]){groups[k]=[];order.push(k);} groups[k].push(t); });
     // เอา ยังไม่มอบหมาย ไปท้าย
@@ -311,6 +357,18 @@
     }).join('');
   }
 
+  // ── เมนูซ้าย ──
+  function renderNav(){
+    $('nav').innerHTML=NAV.map(function(n){
+      var lab=(n.id==='tasks'&&!IS_OWNER)?'งานของฉัน':n.label;
+      if(n.ready) return '<a class="nav-i'+(n.id===PAGE?' active':'')+'" onclick="go(\''+n.id+'\')">'+n.icon+' '+lab+'</a>';
+      return '<a class="nav-i soon">'+n.icon+' '+lab+'<span class="soon-b">เร็ว ๆ นี้</span></a>';
+    }).join('');
+  }
+  function go(id){ var n=NAV.filter(function(x){return x.id===id;})[0]; if(!n||!n.ready||id===PAGE) return;
+    PAGE=id; renderNav(); /* อนาคต: สลับเนื้อหาแต่ละหน้าที่นี่ */ }
+  window.go=go;
+
   // ── controls ──
   function setView(v){ VIEW=v; render(); }
   window.setView=setView; window.calMove=calMove; window.openTask=openTask; window.openCreate=openCreate;
@@ -318,6 +376,16 @@
   // ── task modal ──
   function openTask(no){
     var t=TASKS.filter(function(x){return x.no===no;})[0]; if(!t) return;
+    if(!IS_OWNER){ // ทีม = ดูอย่างเดียว (จัดการงานผ่านเมนู LINE / แอปทีม)
+      showModal('<h3>'+esc(t.no)+' · '+esc(t.customer||'')+'</h3><div class="sub">'+esc(t.category||'')+(t.dueMs?' · กำหนด '+thDate(t.dueMs)+(overdue(t)?' (เกินกำหนด)':''):'')+'</div>'+
+        '<div class="fld"><label>สถานะ</label><div><span class="badge '+badgeClass(t.status)+'">'+esc(t.status)+'</span></div></div>'+
+        (t.detail?'<div class="fld"><label>รายละเอียด</label><div>'+esc(t.detail)+'</div></div>':'')+
+        (t.worklink?'<div class="fld"><label>ลิงก์งานของฉัน</label><a href="'+esc(t.worklink)+'" target="_blank">'+esc(t.worklink)+'</a></div>':'')+
+        (t.reply?'<div class="fld"><label>คำอธิบายถึงลูกค้า</label><div>'+esc(t.reply)+'</div></div>':'')+
+        '<div class="note" style="margin:6px 0 0">รับงาน/ส่งตรวจ ทำผ่านการ์ดใน LINE ได้เลยค่ะ</div>'+
+        '<div class="frow" style="margin-top:12px"><button class="btn btn-s" onclick="closeModal()">ปิด</button></div>');
+      return;
+    }
     var stOpts=STATUSES.map(function(s){return '<option'+(s===t.status?' selected':'')+'>'+esc(s)+'</option>';}).join('');
     var asgOpts='<option value="">— ยังไม่มอบหมาย —</option>'+TEAM.map(function(mm){var n=mm.name;return '<option value="'+esc(n)+'"'+(n===t.assignee?' selected':'')+'>'+esc(n+(mm.nick&&mm.nick!==mm.name?' ('+mm.nick+')':''))+'</option>';}).join('');
     var dueVal=t.dueMs?(function(){var d=new Date(t.dueMs);return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);})():'';
@@ -376,6 +444,12 @@
   function reload(){ return jsonp({action:'waPmBoard',uid:UID}).then(function(r){
     if(!r||!r.ok){ fatal((r&&r.error)||'โหลดไม่สำเร็จ'); return; }
     TASKS=r.tasks||[]; TEAM=r.team||[]; STATUSES=r.statuses||[]; SNOW=r.now||Date.now();
+    IS_OWNER=!!r.isOwner; ME=r.me||null;
+    // ปรับหน้าตามสิทธิ์: เจ้าของ=จัดการเต็ม · ทีม=ดูงานตัวเอง
+    $('pageTitle').textContent=IS_OWNER?'งานทั้งหมด':'งานของฉัน';
+    $('btnCreate').classList.toggle('hide',!IS_OWNER);
+    $('sideFoot').textContent=(ME&&(ME.nick||ME.name)||(IS_OWNER?'พี่กี้':''))+(IS_OWNER?' · ผู้ดูแล':' · ทีมงาน');
+    renderNav();
     var cs={}; TASKS.forEach(function(t){ if(t.category) cs[t.category]=1; }); CATS=Object.keys(cs);
     $('fCat').innerHTML='<option value="">ประเภท: ทั้งหมด</option>'+CATS.map(function(c){return '<option value="'+esc(c)+'"'+(c===FCAT?' selected':'')+'>'+esc(c)+'</option>';}).join('');
     $('fStatus').innerHTML='<option value="">สถานะ: ทั้งหมด</option>'+STATUSES.map(function(s){return '<option value="'+esc(s)+'"'+(s===FILTER?' selected':'')+'>'+esc(s)+'</option>';}).join('');
