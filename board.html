@@ -209,6 +209,7 @@
   function badgeClass(st){ if(st.indexOf('กำลังทำ')>=0)return'b-doing'; if(st.indexOf('รอตรวจ')>=0)return'b-review'; if(st.indexOf('เสร็จ')>=0)return'b-done'; return'b-new'; }
   function dotColor(st){ if(st.indexOf('กำลังทำ')>=0)return'var(--doing)'; if(st.indexOf('รอตรวจ')>=0)return'var(--review)'; if(st.indexOf('เสร็จ')>=0)return'var(--done)'; return'#D6336C'; }
   function isDone(t){ return t.status.indexOf('เสร็จ')>=0; }
+  function ttl(t){ return t.title||t.detail||t.no; }  // ชื่อที่โชว์ = หัวข้อ · ไม่มีก็ใช้รายละเอียด
   function thDate(ms){ if(!ms)return''; var d=new Date(ms); return d.getDate()+' '+THMON[d.getMonth()]+' '+String((d.getFullYear()+543)%100); }
   function endOfDay(ms){ var d=new Date(ms); d.setHours(23,59,59,999); return d.getTime(); }
   function overdue(t){ return t.dueMs && !isDone(t) && SNOW>endOfDay(t.dueMs); }
@@ -285,7 +286,7 @@
       return '<tr class="row" onclick="openTask(\''+esc(t.no)+'\')">'+
         '<td class="ord">'+(i+1)+'</td>'+
         '<td><span class="tid">'+esc(t.no)+'</span></td>'+
-        '<td><div class="tt">'+esc(t.detail||'-')+'</div>'+(t.category?'<div class="meta">'+esc(t.category)+'</div>':'')+'</td>'+
+        '<td><div class="tt">'+esc(ttl(t))+'</div>'+(t.category?'<div class="meta">'+esc(t.category)+'</div>':'')+'</td>'+
         '<td>'+esc(t.customer||'-')+'</td>'+
         '<td><span class="badge '+badgeClass(t.status)+'">'+esc(t.status)+'</span></td>'+
         '<td>'+dueHtml(t)+'<div>'+ageHtml(t)+'</div></td>'+
@@ -297,7 +298,7 @@
 
   function miniCard(t){
     return '<div class="card" onclick="openTask(\''+esc(t.no)+'\')">'+
-      '<div class="tt">'+esc(t.detail||t.no)+'</div>'+
+      '<div class="tt">'+esc(ttl(t))+'</div>'+
       '<div class="cust">'+esc(t.customer||'-')+' · '+esc(t.no)+'</div>'+
       '<div class="foot"><span class="badge '+badgeClass(t.status)+'">'+esc(t.status)+'</span>'+
       (t.dueMs?'<span class="'+(overdue(t)?'over':'age')+'">'+thDate(t.dueMs)+(overdue(t)?' เกิน':'')+'</span>':'')+
@@ -311,7 +312,7 @@
       var items=arr.filter(function(t){return t.status===st;});
       return '<div class="kcol"><h3><span class="dot" style="background:'+dotColor(st)+'"></span>'+esc(st)+'<span class="cnt">'+items.length+'</span></h3>'+
         items.map(function(t){ return '<div class="kcard" onclick="openTask(\''+esc(t.no)+'\')">'+
-          '<div class="tt">'+esc(t.detail||t.no)+'</div><div class="cust">'+esc(t.customer||'-')+'</div>'+
+          '<div class="tt">'+esc(ttl(t))+'</div><div class="cust">'+esc(t.customer||'-')+'</div>'+
           '<div class="foot">'+(t.dueMs?'<span class="'+(overdue(t)?'over':'age')+'">'+thDate(t.dueMs)+'</span>':'')+
           '<span class="assignee'+(t.assignee?'':' none')+'" style="margin-left:auto">'+(t.assignee?esc(t.assignee):'ยังไม่มอบ')+'</span></div></div>'; }).join('')+
         '</div>';
@@ -329,7 +330,7 @@
     dow.forEach(function(d){ cells+='<div class="dow">'+d+'</div>'; });
     for(var i=0;i<first;i++) cells+='<div class="cell out"></div>';
     for(var day=1;day<=days;day++){
-      var evs=(byDay[day]||[]).map(function(t){ return '<div class="ev'+(overdue(t)?' over':'')+'" onclick="openTask(\''+esc(t.no)+'\')" title="'+esc(t.detail)+'">'+esc(t.detail||t.no)+'</div>'; }).join('');
+      var evs=(byDay[day]||[]).map(function(t){ return '<div class="ev'+(overdue(t)?' over':'')+'" onclick="openTask(\''+esc(t.no)+'\')" title="'+esc(t.detail||t.title)+'">'+esc(ttl(t))+'</div>'; }).join('');
       cells+='<div class="cell"><div class="dnum">'+day+'</div>'+evs+'</div>';
     }
     $('view').innerHTML='<div class="cal-nav"><button class="btn btn-o sm" onclick="calMove(-1)">‹ ก่อนหน้า</button>'+
@@ -371,7 +372,8 @@
     var dueVal=t.dueMs?(function(){var d=new Date(t.dueMs);return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);})():'';
     var body='<h3>'+esc(t.no)+' · '+esc(t.customer||'')+'</h3><div class="sub">'+esc(t.category||'')+(t.dueMs?' · กำหนด '+thDate(t.dueMs)+(overdue(t)?' (เกินกำหนด)':''):'')+'</div>'+
       '<div id="mErr" class="err hide"></div>'+
-      (t.detail?'<div class="fld"><label>รายละเอียด</label><div>'+esc(t.detail)+'</div></div>':'')+
+      '<div class="fld"><label>หัวข้องาน <span class="age">(เว้นว่าง = ตัดจากรายละเอียดให้)</span></label><input id="mTitle" value="'+esc(t.title||'')+'" placeholder="หัวข้อสั้น ๆ"></div>'+
+      (t.detail?'<div class="fld"><label>รายละเอียด</label><div style="white-space:pre-wrap">'+esc(t.detail)+'</div></div>':'')+
       (t.worklink?'<div class="fld"><label>ลิงก์งานจากทีม</label><a href="'+esc(t.worklink)+'" target="_blank">'+esc(t.worklink)+'</a></div>':'')+
       (t.reply?'<div class="fld"><label>คำอธิบายถึงลูกค้า</label><div>'+esc(t.reply)+'</div></div>':'')+
       '<div class="fld"><label>สถานะ</label><select id="mStatus">'+stOpts+'</select></div>'+
@@ -384,8 +386,9 @@
   }
   function saveTask(no){
     var t=TASKS.filter(function(x){return x.no===no;})[0];
-    var st=$('mStatus').value, asg=$('mAsg').value, due=$('mDue').value;
+    var st=$('mStatus').value, asg=$('mAsg').value, due=$('mDue').value, title=$('mTitle').value.trim();
     var jobs=[];
+    if(title!==(t.title||'')) jobs.push(jsonp({action:'waSetTitle',uid:UID,no:no,title:title}));
     if(st!==t.status) jobs.push(jsonp({action:'waSetStatus',uid:UID,no:no,status:st}));
     if(asg!==(t.assignee||'')) jobs.push(jsonp({action:'waAssign',uid:UID,no:no,name:asg||' '}));
     var curDue=t.dueMs?(function(){var d=new Date(t.dueMs);return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);})():'';
@@ -400,6 +403,7 @@
   function openCreate(){
     var asgOpts='<option value="">— ยังไม่มอบหมาย —</option>'+TEAM.map(function(mm){return '<option value="'+esc(mm.name)+'">'+esc(mm.name)+'</option>';}).join('');
     showModal('<h3>+ เปิดงานใหม่</h3><div class="sub">สร้างงานเองในกระดาน</div><div id="mErr" class="err hide"></div>'+
+      '<div class="fld"><label>หัวข้องาน <span class="age">(เว้นว่าง = ตัดจากรายละเอียดให้)</span></label><input id="cTitle" placeholder="หัวข้อสั้น ๆ"></div>'+
       '<div class="fld"><label>ลูกค้า/บริษัท</label><input id="cCust" placeholder="เช่น ร้านกาแฟดีใจ"></div>'+
       '<div class="fld"><label>รายละเอียดงาน</label><textarea id="cDetail" placeholder="สิ่งที่ต้องทำ…"></textarea></div>'+
       '<div class="fld"><label>ผู้รับผิดชอบ</label><select id="cAsg">'+asgOpts+'</select></div>'+
@@ -409,7 +413,7 @@
   function createTask(){
     var cust=$('cCust').value.trim(), detail=$('cDetail').value.trim();
     if(!cust && !detail){ mErr('กรอกลูกค้าหรือรายละเอียดอย่างน้อย 1 ช่อง'); return; }
-    jsonp({action:'waCreateTask',uid:UID,customer:cust,detail:detail,assignee:$('cAsg').value,due:$('cDue').value}).then(function(r){
+    jsonp({action:'waCreateTask',uid:UID,title:$('cTitle').value.trim(),customer:cust,detail:detail,assignee:$('cAsg').value,due:$('cDue').value}).then(function(r){
       if(!r||!r.ok){ mErr((r&&r.error)||'สร้างไม่สำเร็จ'); return; } closeModal(); toast('เปิดงานใหม่แล้ว '+(r.no||'')); reload();
     }).catch(function(e){ mErr(e.message); });
   }
