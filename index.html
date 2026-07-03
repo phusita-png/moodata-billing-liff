@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Moodata</title>
+</head>
+<body style="font-family:sans-serif;text-align:center;padding-top:40vh;color:#1B72E8">
+  กำลังเปิด…
+  <script>
+    // Router LIFF อันเดียว — endpoint = โฟลเดอร์รากนี้
+    // เปิดผ่าน liff.line.me/{id}?p=<page>&... → redirect ไปหน้าจริง (คง query ที่เหลือ)
+    (function () {
+      var q = new URLSearchParams(location.search);
+      var p = (q.get('p') || 'team-app').toLowerCase();
+      var MAP = {
+        'team': 'team-app.html', 'team-app': 'team-app.html', 'work': 'team-app.html',
+        'appt': 'appointment.html', 'appointment': 'appointment.html',
+        'board': 'board.html'
+      };
+      var target = MAP[p] || 'team-app.html';
+      q.delete('p');
+      var rest = q.toString();
+      location.replace(target + (rest ? '?' + rest : ''));
+    })();
+  </script>
+</body>
+</html>
