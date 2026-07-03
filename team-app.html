@@ -117,7 +117,7 @@
   function jsonp(params){
     return new Promise(function(resolve,reject){
       var cb='cb_'+Date.now()+'_'+Math.floor(Math.random()*1e6);
-      var timer=setTimeout(function(){cleanup();reject(new Error('หมดเวลาเชื่อมต่อ'));},30000);
+      var timer=setTimeout(function(){cleanup();reject(new Error('หมดเวลาเชื่อมต่อ'));},60000);
       window[cb]=function(d){cleanup();resolve(d);};
       function cleanup(){clearTimeout(timer);delete window[cb];if(s.parentNode)s.parentNode.removeChild(s);}
       var qs=Object.keys(params).map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(params[k]);}).join('&');
@@ -232,10 +232,12 @@
   }
 
   function doCancel(no){
-    if(!confirm('ยกเลิกงาน '+no+' ใช่ไหมคะ? (งานจะหายจากรายการ)')) return;
-    jsonp({action:'waCancel', uid:UID, no:no}).then(function(r){
-      if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; } toast('❌ ยกเลิกงานแล้ว'); loadAll();
-    }).catch(function(e){ toast(e.message); });
+    askConfirm('ยกเลิกงาน '+no+' ใช่ไหมคะ? (งานจะหายจากรายการ)', function(){
+      toast('กำลังยกเลิก…');
+      jsonp({action:'waCancel', uid:UID, no:no}).then(function(r){
+        if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; } toast('❌ ยกเลิกงานแล้ว'); loadAll();
+      }).catch(function(e){ toast(e.message); });
+    });
   }
 
   // ───── โหลด ภาพรวม (แยกบริษัท · ทีม+พี่ ดูร่วมกัน) ─────
@@ -280,14 +282,28 @@
   }
 
   function doClaim(no){
-    if(!confirm('รับงาน '+no+' มาทำเองเลยไหมคะ?')) return;
-    jsonp({action:'waClaim', uid:UID, no:no}).then(function(r){
-      if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; } toast('🙋 รับงานแล้ว (แจ้งพี่กี้ให้อัตโนมัติ)'); loadBoard();
-    }).catch(function(e){ toast(e.message); });
+    askConfirm('รับงาน '+no+' มาทำเองเลยไหมคะ?', function(){
+      toast('กำลังรับงาน…');
+      jsonp({action:'waClaim', uid:UID, no:no}).then(function(r){
+        if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; } toast('🙋 รับงานแล้ว (แจ้งพี่กี้ให้อัตโนมัติ)'); loadBoard();
+      }).catch(function(e){ toast(e.message); });
+    });
   }
+
+  // ───── กล่องยืนยันในหน้า (confirm ของเบราว์เซอร์ถูก LIFF บล็อก) ─────
+  function askConfirm(msg, onYes){
+    var m=document.createElement('div'); m.className='mask'; m.id='confirmMask';
+    m.innerHTML='<div class="sheet"><div class="sub" style="font-size:15px;margin-bottom:14px">'+esc(msg)+'</div>'+
+      '<div class="acts"><button class="btn btn-s" onclick="closeConfirm()">ยกเลิก</button>'+
+      '<button class="btn btn-p" id="confirmYes">ตกลง</button></div></div>';
+    document.body.appendChild(m);
+    $('confirmYes').onclick=function(){ closeConfirm(); onYes(); };
+  }
+  function closeConfirm(){ var m=$('confirmMask'); if(m) m.parentNode.removeChild(m); }
 
   // ───── actions ─────
   function doDoing(no){
+    toast('กำลังรับงาน…');
     jsonp({action:'waTaskDoing', uid:UID, no:no}).then(function(r){
       if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; } toast('รับงานแล้ว 🔵'); reloadCurrent();
     }).catch(function(e){ toast(e.message); });
@@ -295,16 +311,19 @@
   function doAssign(no){
     var name=$('sel_'+no).value;
     if(!name){ toast('เลือกชื่อทีมก่อนค่ะ'); return; }
+    toast('กำลังมอบหมาย…');
     jsonp({action:'waAssign', uid:UID, no:no, name:name}).then(function(r){
       if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; }
       toast(r.notified?('มอบหมาย '+name+' + แจ้ง LINE แล้ว'):(r.warn||'มอบหมายแล้ว')); loadAll();
     }).catch(function(e){ toast(e.message); });
   }
   function doSend(no){
-    if(!confirm('ส่งผลงานงาน '+no+' ให้ลูกค้าใน LINE เลยไหม?')) return;
-    jsonp({action:'waSendCustomer', uid:UID, no:no}).then(function(r){
-      if(!r||!r.ok){ toast((r&&r.error)||'ส่งไม่สำเร็จ'); return; } toast('✅ ส่งให้ลูกค้าแล้ว'); loadAll();
-    }).catch(function(e){ toast(e.message); });
+    askConfirm('ส่งผลงานงาน '+no+' ให้ลูกค้าใน LINE เลยไหม?', function(){
+      toast('กำลังส่งให้ลูกค้า…');
+      jsonp({action:'waSendCustomer', uid:UID, no:no}).then(function(r){
+        if(!r||!r.ok){ toast((r&&r.error)||'ส่งไม่สำเร็จ'); return; } toast('✅ ส่งให้ลูกค้าแล้ว'); loadAll();
+      }).catch(function(e){ toast(e.message); });
+    });
   }
 
   // ───── modal ส่งงานให้ตรวจ ─────
