@@ -99,8 +99,9 @@
 
 <script>
   // ═══════════ ตั้งค่า ═══════════
-  // NOTE: ใช้ LIFF_ID เดิม (จองนัด) เพื่อดึงโปรไฟล์ได้ทันทีตอนเทส —
-  //       โปรดักชันควรสร้าง LIFF ใหม่ endpoint = team-app.html แล้ววาง ID ที่นี่ (เพื่อผูก Rich Menu)
+  // สถาปัตยกรรม LIFF อันเดียว (Moodata): endpoint LIFF = โฟลเดอร์ราก moodata-billing-liff/
+  //   เปิดหน้านี้ผ่าน  liff.line.me/{LIFF_ID}/team-app.html  (จองนัด = /appointment.html)
+  //   ทุกหน้าใช้ LIFF_ID เดียวกัน → เพิ่มหน้าใหม่ไม่ต้องสร้าง LIFF ใหม่
   var LIFF_ID  = '2010533182-66TDQvCu';
   var EXEC_URL = 'https://script.google.com/macros/s/AKfycbwdOotltb--WwTuS-ECutq6uFQs536kjz-RyLuq1mm35Pbfnn25EptvIRkfjaZB6iJf/exec';
   // ═══════════════════════════════
@@ -342,7 +343,7 @@
     var ov=uidOverride();
     if(ov){ UID=ov; start(); return; }   // เทสนอกไลน์: ?uid=...
     liff.init({liffId:LIFF_ID}).then(function(){
-      if(!liff.isLoggedIn()){ liff.login(); return; }
+      if(!liff.isLoggedIn()){ liff.login({redirectUri:location.href}); return; }
       return liff.getProfile().then(function(p){ UID=p.userId; start(); });
     }).catch(function(e){ fatal('เปิดผ่านไลน์ไม่สำเร็จ: '+(e.message||e)); });
   })();
