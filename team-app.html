@@ -82,8 +82,8 @@
     <h1>🗂️ งานทีม Moodata <span class="who" id="who"></span></h1>
     <div class="tabs">
       <div class="tab" id="tabMine" onclick="switchTab('mine')">งานของฉัน</div>
-      <div class="tab" id="tabBoard" onclick="switchTab('board')">🏢 ภาพรวม</div>
-      <div class="tab" id="tabAll" onclick="switchTab('all')">งานทั้งหมด</div>
+      <div class="tab" id="tabBoard" onclick="switchTab('board')">งานทั้งหมด</div>
+      <div class="tab" id="tabAll" onclick="switchTab('all')">ภาพรวม</div>
     </div>
   </header>
   <main>
@@ -234,7 +234,7 @@
     jsonp({action:'waBoard', uid:UID, status:FILTER_BOARD}).then(function(r){
       if(!r||!r.ok){ listEmpty((r&&r.error)||'โหลดไม่สำเร็จ'); return; }
       var tasks=r.tasks||[];
-      if(!tasks.length){ listEmpty('ยังไม่มีงานในภาพรวม 😊'); return; }
+      if(!tasks.length){ listEmpty('ยังไม่มีงาน 😊'); return; }
       // จัดกลุ่มตามบริษัท (คงลำดับที่เจอครั้งแรก = ใหม่→เก่า)
       var order=[], groups={};
       tasks.forEach(function(t){
