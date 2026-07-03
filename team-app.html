@@ -106,7 +106,7 @@
   var EXEC_URL = 'https://script.google.com/macros/s/AKfycbwdOotltb--WwTuS-ECutq6uFQs536kjz-RyLuq1mm35Pbfnn25EptvIRkfjaZB6iJf/exec';
   // ═══════════════════════════════
 
-  var UID='', ROLE={isOwner:false,isTeam:false}, STATUSES=[], TEAM=[], CUSTOMERS=[];
+  var UID='', ROLE={isOwner:false,isTeam:false}, STATUSES=[], TEAM=[], CUSTOMERS=[], CACHE={};
   var TAB='mine', FILTER_MINE='', FILTER_ALL='', FILTER_BOARD='';
 
   function $(id){ return document.getElementById(id); }
@@ -145,7 +145,10 @@
     $('filterBoard').classList.toggle('hide', t!=='board');
     $('searchAll').classList.toggle('hide', t!=='all');
     $('filterAll').classList.toggle('hide', t!=='all');
-    if(t==='mine') loadMine(); else if(t==='board') loadBoard(); else loadAll();
+    // cache: มีของเดิม → โชว์ทันที แล้วรีเฟรชเงียบเบื้องหลัง (silent)
+    var cached=CACHE[t]!=null;
+    if(cached) $('list').innerHTML=CACHE[t];
+    if(t==='mine') loadMine(cached); else if(t==='board') loadBoard(cached); else loadAll(cached);
   }
 
   function renderChips(container, current, onPick){
@@ -159,17 +162,17 @@
   }
 
   // ───── โหลด งานของฉัน ─────
-  function loadMine(){
+  function loadMine(silent){
     renderChips($('filterMine'), FILTER_MINE, function(v){ FILTER_MINE=v; loadMine(); });
-    listLoading();
+    if(!silent) listLoading();
     jsonp({action:'waMyTasks', uid:UID}).then(function(r){
-      if(!r||!r.ok){ listEmpty((r&&r.error)||'โหลดไม่สำเร็จ'); return; }
+      if(!r||!r.ok){ if(!silent) listEmpty((r&&r.error)||'โหลดไม่สำเร็จ'); return; }
       CUSTOMERS=r.customers||CUSTOMERS;
       var head='<button class="btn btn-p" style="width:100%;margin-bottom:10px" onclick="openCreate()">➕ เปิดงานใหม่</button>';
       var tasks=r.tasks||[]; if(FILTER_MINE) tasks=tasks.filter(function(t){return t.status===FILTER_MINE;});
-      if(!tasks.length){ $('list').innerHTML=head+'<div class="empty">ยังไม่มีงานในหมวดนี้ 😊</div>'; return; }
-      $('list').innerHTML=head+tasks.map(cardMine).join('');
-    }).catch(function(e){ listEmpty(e.message); });
+      var html=head+(tasks.length?tasks.map(cardMine).join(''):'<div class="empty">ยังไม่มีงานในหมวดนี้ 😊</div>');
+      $('list').innerHTML=html; CACHE.mine=html;
+    }).catch(function(e){ if(!silent) listEmpty(e.message); });
   }
 
   function cardMine(t){
@@ -192,16 +195,16 @@
 
   // ───── โหลด งานทั้งหมด (พี่) ─────
   var _dt; function debouncedAll(){ clearTimeout(_dt); _dt=setTimeout(loadAll,350); }
-  function loadAll(){
+  function loadAll(silent){
     renderChips($('filterAll'), FILTER_ALL, function(v){ FILTER_ALL=v; loadAll(); });
-    listLoading();
+    if(!silent) listLoading();
     jsonp({action:'waAllTasks', uid:UID, status:FILTER_ALL, q:$('searchAll').value.trim()}).then(function(r){
-      if(!r||!r.ok){ listEmpty((r&&r.error)||'โหลดไม่สำเร็จ'); return; }
+      if(!r||!r.ok){ if(!silent) listEmpty((r&&r.error)||'โหลดไม่สำเร็จ'); return; }
       TEAM=r.team||[];
       var tasks=r.tasks||[];
-      if(!tasks.length){ listEmpty('ไม่พบงานตามเงื่อนไข'); return; }
-      $('list').innerHTML=tasks.map(cardAll).join('');
-    }).catch(function(e){ listEmpty(e.message); });
+      var html=tasks.length?tasks.map(cardAll).join(''):'<div class="empty">ไม่พบงานตามเงื่อนไข</div>';
+      $('list').innerHTML=html; CACHE.all=html;
+    }).catch(function(e){ if(!silent) listEmpty(e.message); });
   }
 
   function cardAll(t){
@@ -235,19 +238,19 @@
     askConfirm('ยกเลิกงาน '+no+' ใช่ไหมคะ? (งานจะหายจากรายการ)', function(){
       toast('กำลังยกเลิก…');
       jsonp({action:'waCancel', uid:UID, no:no}).then(function(r){
-        if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; } toast('❌ ยกเลิกงานแล้ว'); loadAll();
+        if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; } toast('❌ ยกเลิกงานแล้ว'); loadAll(true);
       }).catch(function(e){ toast(e.message); });
     });
   }
 
   // ───── โหลด ภาพรวม (แยกบริษัท · ทีม+พี่ ดูร่วมกัน) ─────
-  function loadBoard(){
+  function loadBoard(silent){
     renderChips($('filterBoard'), FILTER_BOARD, function(v){ FILTER_BOARD=v; loadBoard(); });
-    listLoading();
+    if(!silent) listLoading();
     jsonp({action:'waBoard', uid:UID, status:FILTER_BOARD}).then(function(r){
-      if(!r||!r.ok){ listEmpty((r&&r.error)||'โหลดไม่สำเร็จ'); return; }
+      if(!r||!r.ok){ if(!silent) listEmpty((r&&r.error)||'โหลดไม่สำเร็จ'); return; }
       var tasks=r.tasks||[];
-      if(!tasks.length){ listEmpty('ยังไม่มีงาน 😊'); return; }
+      if(!tasks.length){ var eh='<div class="empty">ยังไม่มีงาน 😊</div>'; $('list').innerHTML=eh; CACHE.board=eh; return; }
       // จัดกลุ่มตามบริษัท (คงลำดับที่เจอครั้งแรก = ใหม่→เก่า)
       var order=[], groups={};
       tasks.forEach(function(t){
@@ -260,8 +263,8 @@
         html+='<div class="grp">🏢 '+esc(c)+'<span class="cnt">'+groups[c].length+'</span></div>';
         html+=groups[c].map(cardBoard).join('');
       });
-      $('list').innerHTML=html;
-    }).catch(function(e){ listEmpty(e.message); });
+      $('list').innerHTML=html; CACHE.board=html;
+    }).catch(function(e){ if(!silent) listEmpty(e.message); });
   }
 
   function cardBoard(t){
@@ -285,7 +288,7 @@
     askConfirm('รับงาน '+no+' มาทำเองเลยไหมคะ?', function(){
       toast('กำลังรับงาน…');
       jsonp({action:'waClaim', uid:UID, no:no}).then(function(r){
-        if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; } toast('🙋 รับงานแล้ว (แจ้งพี่กี้ให้อัตโนมัติ)'); loadBoard();
+        if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; } toast('🙋 รับงานแล้ว (แจ้งพี่กี้ให้อัตโนมัติ)'); loadBoard(true);
       }).catch(function(e){ toast(e.message); });
     });
   }
@@ -314,14 +317,14 @@
     toast('กำลังมอบหมาย…');
     jsonp({action:'waAssign', uid:UID, no:no, name:name}).then(function(r){
       if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; }
-      toast(r.notified?('มอบหมาย '+name+' + แจ้ง LINE แล้ว'):(r.warn||'มอบหมายแล้ว')); loadAll();
+      toast(r.notified?('มอบหมาย '+name+' + แจ้ง LINE แล้ว'):(r.warn||'มอบหมายแล้ว')); loadAll(true);
     }).catch(function(e){ toast(e.message); });
   }
   function doSend(no){
     askConfirm('ส่งผลงานงาน '+no+' ให้ลูกค้าใน LINE เลยไหม?', function(){
       toast('กำลังส่งให้ลูกค้า…');
       jsonp({action:'waSendCustomer', uid:UID, no:no}).then(function(r){
-        if(!r||!r.ok){ toast((r&&r.error)||'ส่งไม่สำเร็จ'); return; } toast('✅ ส่งให้ลูกค้าแล้ว'); loadAll();
+        if(!r||!r.ok){ toast((r&&r.error)||'ส่งไม่สำเร็จ'); return; } toast('✅ ส่งให้ลูกค้าแล้ว'); loadAll(true);
       }).catch(function(e){ toast(e.message); });
     });
   }
@@ -370,12 +373,12 @@
     if(!detail){ var e=$('crErr'); e.textContent='⚠️ กรอกรายละเอียดงานก่อนค่ะ'; e.classList.remove('hide'); return; }
     jsonp({action:'waTeamCreate', uid:UID, customer:customer, detail:detail, title:title, due:due}).then(function(r){
       if(!r||!r.ok){ var e=$('crErr'); e.textContent='⚠️ '+((r&&r.error)||'เปิดงานไม่สำเร็จ'); e.classList.remove('hide'); return; }
-      closeCreate(); toast('➕ เปิดงาน '+r.no+' แล้ว (แจ้งพี่กี้ให้อัตโนมัติ)'); loadMine();
+      closeCreate(); toast('➕ เปิดงาน '+r.no+' แล้ว (แจ้งพี่กี้ให้อัตโนมัติ)'); loadMine(true);
     }).catch(function(err){ var e=$('crErr'); e.textContent='⚠️ '+err.message; e.classList.remove('hide'); });
   }
 
   // ───── list helpers ─────
-  function reloadCurrent(){ if(TAB==='board') loadBoard(); else if(TAB==='all') loadAll(); else loadMine(); }
+  function reloadCurrent(){ if(TAB==='board') loadBoard(true); else if(TAB==='all') loadAll(true); else loadMine(true); }
   function listLoading(){ $('list').innerHTML='<div class="loading"><div class="spin"></div>กำลังโหลด…</div>'; }
   function listEmpty(m){ $('list').innerHTML='<div class="empty">'+esc(m)+'</div>'; }
 
