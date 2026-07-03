@@ -15,8 +15,8 @@
   header{ background:var(--blue); color:#fff; padding:16px 16px 0; position:sticky; top:0; z-index:10; }
   header h1{ margin:0 0 12px; font-size:18px; font-weight:700; display:flex; align-items:center; gap:8px; }
   header h1 .who{ margin-left:auto; font-size:13px; font-weight:400; opacity:.85; }
-  .tabs{ display:flex; gap:6px; }
-  .tab{ flex:1; text-align:center; padding:10px; background:rgba(255,255,255,.15); color:#fff;
+  .tabs{ display:flex; gap:6px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .tab{ flex:1 0 auto; min-width:80px; white-space:nowrap; text-align:center; padding:10px 12px; background:rgba(255,255,255,.15); color:#fff;
         border-radius:10px 10px 0 0; font-weight:600; font-size:14px; cursor:pointer; }
   .tab.active{ background:var(--bg); color:var(--blue); }
   main{ padding:14px; }
@@ -84,6 +84,8 @@
       <div class="tab" id="tabMine" onclick="switchTab('mine')">งานของฉัน</div>
       <div class="tab" id="tabBoard" onclick="switchTab('board')">งานทั้งหมด</div>
       <div class="tab" id="tabAll" onclick="switchTab('all')">ภาพรวม</div>
+      <div class="tab" id="tabLeave" onclick="switchTab('leave')">📝 ลา</div>
+      <div class="tab" id="tabApprove" onclick="switchTab('approve')">✅ อนุมัติลา</div>
     </div>
   </header>
   <main>
@@ -106,7 +108,7 @@
   var EXEC_URL = 'https://script.google.com/macros/s/AKfycbwdOotltb--WwTuS-ECutq6uFQs536kjz-RyLuq1mm35Pbfnn25EptvIRkfjaZB6iJf/exec';
   // ═══════════════════════════════
 
-  var UID='', ROLE={isOwner:false,isTeam:false}, STATUSES=[], TEAM=[], CUSTOMERS=[], CACHE={};
+  var UID='', ROLE={isOwner:false,isTeam:false}, STATUSES=[], TEAM=[], CUSTOMERS=[], CACHE={}, LEAVE_TYPES=[];
   var TAB='mine', FILTER_MINE='', FILTER_ALL='', FILTER_BOARD='';
 
   function $(id){ return document.getElementById(id); }
@@ -148,6 +150,8 @@
     $('tabMine').classList.toggle('active', t==='mine');
     $('tabBoard').classList.toggle('active', t==='board');
     $('tabAll').classList.toggle('active', t==='all');
+    $('tabLeave').classList.toggle('active', t==='leave');
+    $('tabApprove').classList.toggle('active', t==='approve');
     $('filterMine').classList.toggle('hide', t!=='mine');
     $('filterBoard').classList.toggle('hide', t!=='board');
     $('searchAll').classList.toggle('hide', t!=='all');
@@ -158,7 +162,11 @@
     // cache: มีของเดิม → โชว์ทันที แล้วรีเฟรชเงียบเบื้องหลัง (silent)
     var cached=CACHE[t]!=null;
     if(cached) $('list').innerHTML=CACHE[t];
-    if(t==='mine') loadMine(cached); else if(t==='board') loadBoard(cached); else loadAll(cached);
+    if(t==='mine') loadMine(cached);
+    else if(t==='board') loadBoard(cached);
+    else if(t==='all') loadAll(cached);
+    else if(t==='leave') loadLeave(cached);
+    else if(t==='approve') loadApprove(cached);
   }
 
   function renderChips(container, current, onPick){
@@ -395,8 +403,92 @@
     }).catch(function(err){ var e=$('crErr'); e.textContent='⚠️ '+err.message; e.classList.remove('hide'); });
   }
 
+  // ───── ลา (ทีม) ─────
+  function leaveBadge(st){
+    if(st.indexOf('รอ')>=0) return 'b-new';
+    if(st.indexOf('ไม่อนุมัติ')>=0 || st.indexOf('ยกเลิก')>=0) return 'b-cancel';
+    if(st.indexOf('อนุมัติ')>=0) return 'b-done';
+    return 'b-new';
+  }
+  function qline(name,b){ return '<div class="kv">• '+name+': เหลือ <b>'+b.remain+'</b>/'+b.quota+' วัน (ใช้ '+b.used+')</div>'; }
+  function cardLeave(l){
+    return '<div class="card"><div class="row1"><span class="no">'+esc(l.no)+'</span>'+
+      '<span class="badge '+leaveBadge(l.status)+'">'+esc(l.status)+'</span></div>'+
+      '<div class="cust">'+esc(l.type)+' · '+esc(l.days)+' วัน</div>'+
+      '<div class="kv">'+esc(l.start)+' – '+esc(l.end)+'</div>'+
+      (l.reason?'<div class="detail">'+esc(l.reason)+'</div>':'')+
+      (l.approver?'<div class="kv">โดย '+esc(l.approver)+'</div>':'')+'</div>';
+  }
+  function loadLeave(silent){
+    if(!silent) listLoading();
+    jsonp({action:'waLeaveInit', uid:UID}).then(function(r){
+      if(!r||!r.ok){ if(!silent) listEmpty((r&&r.error)||'โหลดไม่สำเร็จ'); return; }
+      LEAVE_TYPES=r.types||[];
+      var q=r.quota, html='<button class="btn btn-p" style="width:100%;margin-bottom:10px" onclick="openLeave()">📝 แจ้งลา</button>';
+      if(q) html+='<div class="card"><div class="row1"><b>📋 โควต้าคงเหลือ ปี '+(q.year+543)+'</b></div>'+
+        qline('ลาป่วย',q.sick)+qline('ลากิจ',q.personal)+qline('ลาพักร้อน',q.vacation)+'</div>';
+      var lv=r.leaves||[];
+      html+= lv.length? lv.map(cardLeave).join('') : '<div class="empty">ยังไม่มีประวัติการลา 😊</div>';
+      $('list').innerHTML=html; CACHE.leave=html;
+    }).catch(function(e){ if(!silent) listEmpty(e.message); });
+  }
+  function openLeave(){
+    var opts=LEAVE_TYPES.map(function(t){return '<option value="'+esc(t.key)+'">'+esc(t.label)+'</option>';}).join('');
+    var m=document.createElement('div'); m.className='mask'; m.id='leaveMask';
+    m.innerHTML='<div class="sheet"><h3>📝 แจ้งลา</h3>'+
+      '<div id="lvErr" class="err hide"></div>'+
+      '<div class="fld"><label>ประเภทการลา</label><select id="l_type">'+opts+'</select></div>'+
+      '<div class="fld"><label>วันเริ่ม</label><input id="l_start" type="date"></div>'+
+      '<div class="fld"><label>วันสิ้นสุด</label><input id="l_end" type="date"></div>'+
+      '<div class="fld"><label>เหตุผล</label><textarea id="l_reason" placeholder="เหตุผลการลา…"></textarea></div>'+
+      '<div class="acts"><button class="btn btn-s" onclick="closeLeave()">ยกเลิก</button>'+
+      '<button class="btn btn-p" onclick="submitLeave()">ส่งใบลา</button></div></div>';
+    document.body.appendChild(m);
+  }
+  function closeLeave(){ var m=$('leaveMask'); if(m) m.parentNode.removeChild(m); }
+  function lvErr(msg){ var e=$('lvErr'); e.textContent='⚠️ '+msg; e.classList.remove('hide'); }
+  function submitLeave(){
+    var type=$('l_type').value, start=$('l_start').value, end=$('l_end').value, reason=$('l_reason').value.trim();
+    if(!start||!end){ lvErr('เลือกวันเริ่ม–สิ้นสุดก่อนค่ะ'); return; }
+    if(!reason){ lvErr('กรอกเหตุผลก่อนค่ะ'); return; }
+    toast('กำลังส่งใบลา…');
+    jsonp({action:'waLeaveSubmit', uid:UID, type:type, start:start, end:end, reason:reason}).then(function(r){
+      if(!r||!r.ok){ lvErr((r&&r.error)||'ส่งไม่สำเร็จ'); return; }
+      closeLeave(); toast('✅ ส่งใบลา '+r.no+' แล้ว (รออนุมัติ)'); loadLeave(true);
+    }).catch(function(e){ lvErr(e.message); });
+  }
+
+  // ───── อนุมัติลา (พี่) ─────
+  function cardApprove(l){
+    return '<div class="card"><div class="row1"><span class="no">'+esc(l.no)+'</span>'+
+      '<span class="badge b-new">'+esc(l.status)+'</span></div>'+
+      '<div class="cust">'+esc(l.nick)+' — '+esc(l.type)+' · '+esc(l.days)+' วัน</div>'+
+      '<div class="kv">'+esc(l.start)+' – '+esc(l.end)+'</div>'+
+      (l.reason?'<div class="detail">'+esc(l.reason)+'</div>':'')+
+      '<div class="acts"><button class="btn btn-s" onclick="decideLeave(\''+esc(l.no)+'\',\'reject\')">❌ ไม่อนุมัติ</button>'+
+      '<button class="btn btn-p" onclick="decideLeave(\''+esc(l.no)+'\',\'approve\')">✅ อนุมัติ</button></div></div>';
+  }
+  function loadApprove(silent){
+    if(!silent) listLoading();
+    jsonp({action:'waLeavePending', uid:UID}).then(function(r){
+      if(!r||!r.ok){ if(!silent) listEmpty((r&&r.error)||'โหลดไม่สำเร็จ'); return; }
+      var lv=r.leaves||[];
+      var html= lv.length? lv.map(cardApprove).join('') : '<div class="empty">ไม่มีใบลารออนุมัติ 🎉</div>';
+      $('list').innerHTML=html; CACHE.approve=html;
+    }).catch(function(e){ if(!silent) listEmpty(e.message); });
+  }
+  function decideLeave(no,decision){
+    askConfirm((decision==='approve'?'อนุมัติ':'ไม่อนุมัติ')+'ใบลา '+no+' ใช่ไหมคะ?', function(){
+      toast('กำลังดำเนินการ…');
+      jsonp({action:'waLeaveDecide', uid:UID, no:no, decision:decision}).then(function(r){
+        if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; }
+        toast(decision==='approve'?'✅ อนุมัติแล้ว':'❌ ไม่อนุมัติแล้ว'); loadApprove(true);
+      }).catch(function(e){ toast(e.message); });
+    });
+  }
+
   // ───── list helpers ─────
-  function reloadCurrent(){ if(TAB==='board') loadBoard(true); else if(TAB==='all') loadAll(true); else loadMine(true); }
+  function reloadCurrent(){ if(TAB==='board') loadBoard(true); else if(TAB==='all') loadAll(true); else if(TAB==='leave') loadLeave(true); else if(TAB==='approve') loadApprove(true); else loadMine(true); }
   function listLoading(){ $('list').innerHTML='<div class="loading"><div class="spin"></div>กำลังโหลด…</div>'; }
   function listEmpty(m){ $('list').innerHTML='<div class="empty">'+esc(m)+'</div>'; }
 
@@ -411,6 +503,8 @@
       $('tabMine').classList.toggle('hide', !ROLE.isTeam);
       $('tabBoard').classList.toggle('hide', false);
       $('tabAll').classList.toggle('hide', !ROLE.isOwner);
+      $('tabLeave').classList.toggle('hide', !ROLE.isTeam);
+      $('tabApprove').classList.toggle('hide', !ROLE.isOwner);
       $('boot').classList.add('hide'); $('app').classList.remove('hide');
       var t=ROLE.isTeam ? 'mine' : 'board';
       // ใช้งานแท็บแรกที่ bootstrap แนบมา → เปิดแอปยิง backend ครั้งเดียว (ไม่ยิงซ้ำ)
