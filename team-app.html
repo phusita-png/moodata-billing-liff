@@ -143,7 +143,7 @@
   }
 
   // ───── แท็บ ─────
-  function switchTab(t){
+  function setTabUI(t){
     TAB=t;
     $('tabMine').classList.toggle('active', t==='mine');
     $('tabBoard').classList.toggle('active', t==='board');
@@ -152,6 +152,9 @@
     $('filterBoard').classList.toggle('hide', t!=='board');
     $('searchAll').classList.toggle('hide', t!=='all');
     $('filterAll').classList.toggle('hide', t!=='all');
+  }
+  function switchTab(t){
+    setTabUI(t);
     // cache: มีของเดิม → โชว์ทันที แล้วรีเฟรชเงียบเบื้องหลัง (silent)
     var cached=CACHE[t]!=null;
     if(cached) $('list').innerHTML=CACHE[t];
@@ -169,16 +172,19 @@
   }
 
   // ───── โหลด งานของฉัน ─────
+  function paintMine(tasks){
+    var head='<button class="btn btn-p" style="width:100%;margin-bottom:10px" onclick="openCreate()">➕ เปิดงานใหม่</button>';
+    var ts=(tasks||[]); if(FILTER_MINE) ts=ts.filter(function(t){return t.status===FILTER_MINE;});
+    var html=head+(ts.length?ts.map(cardMine).join(''):'<div class="empty">ยังไม่มีงานในหมวดนี้ 😊</div>');
+    $('list').innerHTML=html; CACHE.mine=html;
+  }
   function loadMine(silent){
     renderChips($('filterMine'), FILTER_MINE, function(v){ FILTER_MINE=v; loadMine(); });
     if(!silent) listLoading();
     jsonp({action:'waMyTasks', uid:UID}).then(function(r){
       if(!r||!r.ok){ if(!silent) listEmpty((r&&r.error)||'โหลดไม่สำเร็จ'); return; }
       CUSTOMERS=r.customers||CUSTOMERS;
-      var head='<button class="btn btn-p" style="width:100%;margin-bottom:10px" onclick="openCreate()">➕ เปิดงานใหม่</button>';
-      var tasks=r.tasks||[]; if(FILTER_MINE) tasks=tasks.filter(function(t){return t.status===FILTER_MINE;});
-      var html=head+(tasks.length?tasks.map(cardMine).join(''):'<div class="empty">ยังไม่มีงานในหมวดนี้ 😊</div>');
-      $('list').innerHTML=html; CACHE.mine=html;
+      paintMine(r.tasks||[]);
     }).catch(function(e){ if(!silent) listEmpty(e.message); });
   }
 
@@ -251,26 +257,31 @@
   }
 
   // ───── โหลด ภาพรวม (แยกบริษัท · ทีม+พี่ ดูร่วมกัน) ─────
+  function paintBoard(tasks){
+    tasks=tasks||[];
+    // กรองสถานะฝั่ง client (bootstrap ส่งมาทั้งหมด)
+    if(FILTER_BOARD) tasks=tasks.filter(function(t){return t.status===FILTER_BOARD;});
+    if(!tasks.length){ var eh='<div class="empty">ยังไม่มีงาน 😊</div>'; $('list').innerHTML=eh; CACHE.board=eh; return; }
+    // จัดกลุ่มตามบริษัท (คงลำดับที่เจอครั้งแรก = ใหม่→เก่า)
+    var order=[], groups={};
+    tasks.forEach(function(t){
+      var c=t.customer||'(ไม่ระบุบริษัท)';
+      if(!groups[c]){ groups[c]=[]; order.push(c); }
+      groups[c].push(t);
+    });
+    var html='';
+    order.forEach(function(c){
+      html+='<div class="grp">🏢 '+esc(c)+'<span class="cnt">'+groups[c].length+'</span></div>';
+      html+=groups[c].map(cardBoard).join('');
+    });
+    $('list').innerHTML=html; CACHE.board=html;
+  }
   function loadBoard(silent){
     renderChips($('filterBoard'), FILTER_BOARD, function(v){ FILTER_BOARD=v; loadBoard(); });
     if(!silent) listLoading();
     jsonp({action:'waBoard', uid:UID, status:FILTER_BOARD}).then(function(r){
       if(!r||!r.ok){ if(!silent) listEmpty((r&&r.error)||'โหลดไม่สำเร็จ'); return; }
-      var tasks=r.tasks||[];
-      if(!tasks.length){ var eh='<div class="empty">ยังไม่มีงาน 😊</div>'; $('list').innerHTML=eh; CACHE.board=eh; return; }
-      // จัดกลุ่มตามบริษัท (คงลำดับที่เจอครั้งแรก = ใหม่→เก่า)
-      var order=[], groups={};
-      tasks.forEach(function(t){
-        var c=t.customer||'(ไม่ระบุบริษัท)';
-        if(!groups[c]){ groups[c]=[]; order.push(c); }
-        groups[c].push(t);
-      });
-      var html='';
-      order.forEach(function(c){
-        html+='<div class="grp">🏢 '+esc(c)+'<span class="cnt">'+groups[c].length+'</span></div>';
-        html+=groups[c].map(cardBoard).join('');
-      });
-      $('list').innerHTML=html; CACHE.board=html;
+      paintBoard(r.tasks||[]);
     }).catch(function(e){ if(!silent) listEmpty(e.message); });
   }
 
@@ -401,7 +412,15 @@
       $('tabBoard').classList.toggle('hide', false);
       $('tabAll').classList.toggle('hide', !ROLE.isOwner);
       $('boot').classList.add('hide'); $('app').classList.remove('hide');
-      switchTab(ROLE.isTeam ? 'mine' : 'board');
+      var t=ROLE.isTeam ? 'mine' : 'board';
+      // ใช้งานแท็บแรกที่ bootstrap แนบมา → เปิดแอปยิง backend ครั้งเดียว (ไม่ยิงซ้ำ)
+      if(r.firstTab===t && r.tasks){
+        setTabUI(t);
+        if(t==='mine'){ renderChips($('filterMine'),FILTER_MINE,function(v){FILTER_MINE=v;loadMine();}); CUSTOMERS=r.customers||[]; paintMine(r.tasks); }
+        else { renderChips($('filterBoard'),FILTER_BOARD,function(v){FILTER_BOARD=v;loadBoard();}); paintBoard(r.tasks); }
+      } else {
+        switchTab(t);   // fallback: โหลดปกติ
+      }
     }).catch(function(e){ fatal(e.message); });
   }
   (function init(){
