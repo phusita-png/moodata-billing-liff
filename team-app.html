@@ -106,7 +106,7 @@
   var EXEC_URL = 'https://script.google.com/macros/s/AKfycbwdOotltb--WwTuS-ECutq6uFQs536kjz-RyLuq1mm35Pbfnn25EptvIRkfjaZB6iJf/exec';
   // ═══════════════════════════════
 
-  var UID='', ROLE={isOwner:false,isTeam:false}, STATUSES=[], TEAM=[];
+  var UID='', ROLE={isOwner:false,isTeam:false}, STATUSES=[], TEAM=[], CUSTOMERS=[];
   var TAB='mine', FILTER_MINE='', FILTER_ALL='', FILTER_BOARD='';
 
   function $(id){ return document.getElementById(id); }
@@ -164,9 +164,11 @@
     listLoading();
     jsonp({action:'waMyTasks', uid:UID}).then(function(r){
       if(!r||!r.ok){ listEmpty((r&&r.error)||'โหลดไม่สำเร็จ'); return; }
+      CUSTOMERS=r.customers||CUSTOMERS;
+      var head='<button class="btn btn-p" style="width:100%;margin-bottom:10px" onclick="openCreate()">➕ เปิดงานใหม่</button>';
       var tasks=r.tasks||[]; if(FILTER_MINE) tasks=tasks.filter(function(t){return t.status===FILTER_MINE;});
-      if(!tasks.length){ listEmpty('ยังไม่มีงานในหมวดนี้ 😊'); return; }
-      $('list').innerHTML=tasks.map(cardMine).join('');
+      if(!tasks.length){ $('list').innerHTML=head+'<div class="empty">ยังไม่มีงานในหมวดนี้ 😊</div>'; return; }
+      $('list').innerHTML=head+tasks.map(cardMine).join('');
     }).catch(function(e){ listEmpty(e.message); });
   }
 
@@ -317,6 +319,31 @@
       if(!r||!r.ok){ var e=$('subErr'); e.textContent='⚠️ '+((r&&r.error)||'ส่งไม่สำเร็จ'); e.classList.remove('hide'); return; }
       closeSubmit(); toast('📤 ส่งให้พี่กี้ตรวจแล้ว'); reloadCurrent();
     }).catch(function(err){ var e=$('subErr'); e.textContent='⚠️ '+err.message; e.classList.remove('hide'); });
+  }
+
+  // ───── modal เปิดงานใหม่ (ทีมสร้างเอง → งานของฉัน) ─────
+  function openCreate(){
+    var opts='<option value="">— ไม่ระบุลูกค้า —</option>'+CUSTOMERS.map(function(c){return '<option value="'+esc(c)+'">'+esc(c)+'</option>';}).join('');
+    var m=document.createElement('div'); m.className='mask'; m.id='createMask';
+    m.innerHTML='<div class="sheet"><h3>➕ เปิดงานใหม่</h3>'+
+      '<div class="sub">งานนี้จะเป็นของคุณ (สถานะกำลังทำ) และแจ้งพี่กี้อัตโนมัติ</div>'+
+      '<div id="crErr" class="err hide"></div>'+
+      '<div class="fld"><label>ลูกค้า (ไม่บังคับ)</label><select id="c_cust">'+opts+'</select></div>'+
+      '<div class="fld"><label>รายละเอียดงาน *</label><textarea id="c_detail" placeholder="งานที่จะทำ…"></textarea></div>'+
+      '<div class="fld"><label>หัวข้อ (ไม่บังคับ · เว้นว่าง = ตัดจากรายละเอียดให้)</label><input id="c_title" placeholder="หัวข้อสั้นๆ…"></div>'+
+      '<div class="fld"><label>กำหนดเสร็จ (ไม่บังคับ)</label><input id="c_due" type="date"></div>'+
+      '<div class="acts"><button class="btn btn-s" onclick="closeCreate()">ยกเลิก</button>'+
+      '<button class="btn btn-p" onclick="submitCreate()">เปิดงาน</button></div></div>';
+    document.body.appendChild(m);
+  }
+  function closeCreate(){ var m=$('createMask'); if(m) m.parentNode.removeChild(m); }
+  function submitCreate(){
+    var customer=$('c_cust').value, detail=$('c_detail').value.trim(), title=$('c_title').value.trim(), due=$('c_due').value;
+    if(!detail){ var e=$('crErr'); e.textContent='⚠️ กรอกรายละเอียดงานก่อนค่ะ'; e.classList.remove('hide'); return; }
+    jsonp({action:'waTeamCreate', uid:UID, customer:customer, detail:detail, title:title, due:due}).then(function(r){
+      if(!r||!r.ok){ var e=$('crErr'); e.textContent='⚠️ '+((r&&r.error)||'เปิดงานไม่สำเร็จ'); e.classList.remove('hide'); return; }
+      closeCreate(); toast('➕ เปิดงาน '+r.no+' แล้ว (แจ้งพี่กี้ให้อัตโนมัติ)'); loadMine();
+    }).catch(function(err){ var e=$('crErr'); e.textContent='⚠️ '+err.message; e.classList.remove('hide'); });
   }
 
   // ───── list helpers ─────
