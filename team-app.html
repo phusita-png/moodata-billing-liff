@@ -114,7 +114,9 @@
   function fatal(m){ $('boot').classList.add('hide'); $('app').classList.add('hide'); $('fatalMsg').textContent=m; $('fatal').classList.remove('hide'); }
   var _tt; function toast(m){ var t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(_tt); _tt=setTimeout(function(){t.classList.remove('show');},2200); }
 
-  function jsonp(params){
+  // เรียก backend (JSONP) + auto-retry: Apps Script redirect บางจังหวะคืน error มั่วๆ (ฝั่ง Google) → ลองซ้ำเอง
+  function jsonp(params, _try){
+    _try=_try||0;
     return new Promise(function(resolve,reject){
       var cb='cb_'+Date.now()+'_'+Math.floor(Math.random()*1e6);
       var timer=setTimeout(function(){cleanup();reject(new Error('หมดเวลาเชื่อมต่อ'));},60000);
@@ -122,7 +124,12 @@
       function cleanup(){clearTimeout(timer);delete window[cb];if(s.parentNode)s.parentNode.removeChild(s);}
       var qs=Object.keys(params).map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(params[k]);}).join('&');
       var s=document.createElement('script'); s.src=EXEC_URL+'?'+qs+'&callback='+cb;
-      s.onerror=function(){cleanup();reject(new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้'));}; document.body.appendChild(s);
+      s.onerror=function(){
+        cleanup();
+        if(_try<2){ setTimeout(function(){ jsonp(params,_try+1).then(resolve,reject); }, 700); }  // retry ×3
+        else reject(new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้'));
+      };
+      document.body.appendChild(s);
     });
   }
 
