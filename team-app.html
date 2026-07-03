@@ -226,7 +226,16 @@
       h+='<div class="acts"><button class="btn btn-p" onclick="doSend(\''+esc(t.no)+'\')">📨 ส่งให้ลูกค้า</button></div>';
     else if(!t.hasGroup)
       h+='<div class="kv" style="color:#C87F1E">⚠️ งานนี้ไม่มีกลุ่ม LINE ลูกค้า (ส่งให้ลูกค้าไม่ได้)</div>';
+    if(t.status.indexOf('ยกเลิก')<0)
+      h+='<div class="acts"><button class="btn btn-s" onclick="doCancel(\''+esc(t.no)+'\')">❌ ยกเลิกงาน</button></div>';
     return h+'</div>';
+  }
+
+  function doCancel(no){
+    if(!confirm('ยกเลิกงาน '+no+' ใช่ไหมคะ? (งานจะหายจากรายการ)')) return;
+    jsonp({action:'waCancel', uid:UID, no:no}).then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; } toast('❌ ยกเลิกงานแล้ว'); loadAll();
+    }).catch(function(e){ toast(e.message); });
   }
 
   // ───── โหลด ภาพรวม (แยกบริษัท · ทีม+พี่ ดูร่วมกัน) ─────
