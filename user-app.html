@@ -72,6 +72,22 @@
   .time-row input[type=time]{ flex:1; padding:11px 12px; border:1.5px solid var(--line); border-radius:12px;
     font-family:inherit; font-size:15px; }
   .time-row .dash{ color:var(--muted); }
+  /* หน้าเอกสาร: ชิปสลิป · รายการเอกสาร · สลิป modal */
+  .chip-row{ display:flex; flex-wrap:wrap; gap:8px; }
+  .doc-chip{ background:var(--red-tint); color:var(--red-deep); border:1px solid var(--red-soft);
+    border-radius:999px; padding:8px 16px; font-size:14px; font-weight:600; cursor:pointer; }
+  .doc-chip:active{ background:var(--red-soft); }
+  .doc-item{ display:flex; align-items:center; gap:10px; padding:11px 4px; border-bottom:1px solid var(--line);
+    text-decoration:none; color:inherit; }
+  .doc-item:last-child{ border-bottom:0; }
+  .di-ic{ font-size:20px; } .di-main{ flex:1; display:flex; flex-direction:column; }
+  .di-main small{ color:#8A93A3; font-size:12px; margin-top:2px; } .di-go{ color:#C3CAD6; font-size:22px; }
+  .sl-net{ text-align:center; background:var(--red-tint); border-radius:12px; padding:10px; margin:6px 0 12px; font-size:15px; }
+  .sl-net b{ font-size:24px; color:var(--red-deep); }
+  .sl-sec{ font-size:13px; font-weight:700; color:#16A34A; margin:12px 0 4px; }
+  .sl-row{ display:flex; justify-content:space-between; font-size:14px; padding:4px 0; color:#4A5262; }
+  .sl-row.bold{ font-weight:700; color:#222; border-top:1px dashed var(--line); margin-top:4px; padding-top:8px; }
+  .sl-ytd{ font-size:12px; color:#8A93A3; margin-top:12px; text-align:center; }
   /* มือถือจอแคบ — โควต้า 3 ช่องยังอยู่ แต่ย่อ font กันล้น */
   @media(max-width:430px){
     .qbox{ padding:12px 8px; } .qbox-num{ font-size:34px; } .qbox-emo{ font-size:20px; }
@@ -118,10 +134,8 @@
       <svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></svg><span>การลา</span></button>
     <button class="nav-btn" data-view="ot" aria-label="ขอ OT">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12.5" r="8.5"/><path d="M12 8v5l3 2"/></svg><span>ขอ OT</span></button>
-    <button class="nav-btn" data-view="mydocs" aria-label="เอกสารฉัน">
-      <svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg><span>เอกสารฉัน</span></button>
-    <button class="nav-btn" data-view="reqdoc" aria-label="ขอเอกสาร">
-      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>ขอเอกสาร</span></button>
+    <button class="nav-btn" data-view="docs" aria-label="เอกสาร">
+      <svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg><span>เอกสาร</span></button>
   </nav>
 </div>
 
@@ -140,7 +154,7 @@
   var MENAME='', TEAM=[], CUSTOMERS=[];   // งาน
   var VIEW_META = {
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], leave:['📝','การลา'],
-    ot:['⏰','ขอ OT'], mydocs:['📁','เอกสารฉัน'], reqdoc:['📨','ขอเอกสาร']
+    ot:['⏰','ขอ OT'], docs:['📁','เอกสาร']
   };
 
   function $(id){ return document.getElementById(id); }
@@ -170,7 +184,7 @@
     VIEW=v;
     Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(b){ b.classList.toggle('active', b.dataset.view===v); });
     var meta=VIEW_META[v]||['•',v]; $('tbIcon').textContent=meta[0]; $('tbTitle').textContent=meta[1];
-    ({ leave:renderLeave, mytasks:renderMytasks, alltasks:renderAlltasks }[v] || soon)();
+    ({ leave:renderLeave, mytasks:renderMytasks, alltasks:renderAlltasks, docs:renderDocs }[v] || soon)();
   }
   function soon(){
     $('main').innerHTML='<div class="card"><div class="soon-wrap"><div class="e-emo">🚧</div>เมนูนี้กำลังย้ายมาหน้านี้ — เร็ว ๆ นี้ค่ะ<br><span style="font-size:13px">(ตอนนี้ยังใช้ผ่านเมนูเดิม/แชทได้)</span></div></div>';
@@ -425,6 +439,104 @@
   }
   function doClaim(no){ toast('กำลังรับงาน…');
     jsonp({action:'waClaim',uid:UID,no:no}).then(function(r){ if(!r||!r.ok){toast((r&&r.error)||'ไม่สำเร็จ');return;} toast('🙋 รับงานแล้ว (แจ้งพี่ให้)'); renderAlltasks(); }).catch(function(e){toast(e.message);}); }
+
+  // ═══════════ VIEW: เอกสาร (สลิป + คลัง + คำขอ) ═══════════
+  var DOCTYPES=[], RQ={ type:'', detail:'' };
+  function renderDocs(){
+    skel();
+    jsonp({action:'waDocs', idToken:IDTOKEN, uid:UID}).then(function(r){
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      DOCTYPES=r.types||[]; paintDocs(r);
+    }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
+  }
+  function paintDocs(r){
+    var html='';
+    // สลิปเงินเดือน
+    html+='<div class="section-h">💵 สลิปเงินเดือน</div>';
+    html+= (r.payslips||[]).length
+      ? '<div class="card"><div class="chip-row">'+r.payslips.map(function(m){
+          return '<button class="doc-chip" onclick="openSlip(\''+esc(m.key)+'\')">'+esc(m.label)+'</button>'; }).join('')+'</div></div>'
+      : '<div class="card"><div class="empty">ยังไม่มีสลิปค่ะ</div></div>';
+    // คลังเอกสาร
+    html+='<div class="section-h">📁 เอกสารของฉัน</div>';
+    html+= (r.docs||[]).length
+      ? '<div class="card" style="padding:6px 12px">'+r.docs.map(function(d){
+          return '<a class="doc-item" href="'+esc(d.link)+'" target="_blank"><span class="di-ic">📄</span>'+
+            '<span class="di-main"><b>'+esc(d.title)+'</b>'+(d.at?'<small>'+esc(d.at)+'</small>':'')+'</span>'+
+            '<span class="di-go">›</span></a>'; }).join('')+'</div>'
+      : '<div class="card"><div class="empty">ยังไม่มีเอกสารในคลัง 🙏</div></div>';
+    // ขอเอกสารใหม่ (ฟอร์ม)
+    html+='<div class="section-h">📝 ขอเอกสารใหม่</div>';
+    html+='<div class="card"><div id="rqErr" class="edit-banner hidden" style="background:#fbe7e7;color:#c0392b"></div>'+
+      '<label class="field-lb">ประเภทเอกสาร</label><div id="rqTypes" class="type-grid" style="grid-template-columns:1fr;gap:8px"></div>'+
+      '<label class="field-lb" style="margin-top:12px">รายละเอียด <span style="color:#8A93A3;font-weight:400">(จำเป็นถ้าเลือก "อื่น ๆ")</span></label>'+
+      '<textarea id="rqDetail" rows="2" placeholder="ระบุชื่อ/รายละเอียดเอกสาร…"></textarea>'+
+      '<div style="margin-top:14px"><button id="btnReq" class="btn btn-primary" style="width:100%">ส่งคำขอ</button></div></div>';
+    // ประวัติคำขอ
+    html+='<div class="section-h">ประวัติคำขอ</div>';
+    html+= (r.reqs||[]).length
+      ? '<div class="card" style="padding:6px 12px">'+r.reqs.map(reqItem).join('')+'</div>'
+      : '<div class="card"><div class="empty">ยังไม่มีคำขอ 😊</div></div>';
+    $('main').innerHTML=html;
+    RQ={ type:(DOCTYPES[0]||{}).key||'', detail:'' };
+    renderRqTypes();
+    $('rqDetail').addEventListener('input', function(e){ RQ.detail=e.target.value; });
+    $('btnReq').addEventListener('click', submitReq);
+  }
+  function renderRqTypes(){
+    $('rqTypes').innerHTML=DOCTYPES.map(function(t){
+      return '<div class="type-opt'+(RQ.type===t.key?' sel':'')+'" data-k="'+esc(t.key)+'" '+
+        'style="flex-direction:row;justify-content:flex-start;gap:10px;text-align:left;padding:12px 14px">'+
+        '<div class="t-lb">'+esc(t.label)+'</div></div>'; }).join('');
+    Array.prototype.forEach.call($('rqTypes').querySelectorAll('.type-opt'), function(el){
+      el.addEventListener('click', function(){ RQ.type=el.dataset.k; renderRqTypes(); }); });
+  }
+  function reqErr(m){ var e=$('rqErr'); e.textContent='⚠️ '+m; e.classList.remove('hidden'); }
+  function submitReq(){
+    if(!RQ.type){ reqErr('เลือกประเภทเอกสารก่อนค่ะ'); return; }
+    if(RQ.type==='other' && !RQ.detail.trim()){ reqErr('ระบุรายละเอียดเอกสารก่อนค่ะ'); return; }
+    toast('กำลังส่งคำขอ…');
+    jsonp({action:'waReqDocSubmit', uid:UID, type:RQ.type, detail:RQ.detail.trim()}).then(function(r){
+      if(!r||!r.ok){ reqErr((r&&r.error)||'ส่งไม่สำเร็จ'); return; }
+      toast('✅ ส่งคำขอ '+r.no+' แล้ว (แจ้ง HR ให้)'); renderDocs();
+    }).catch(function(e){ reqErr(e.message); });
+  }
+  function reqItem(q){
+    var badge=q.status.indexOf('เสร็จ')>=0?'lvb-ok':(q.status.indexOf('ปฏิเสธ')>=0?'lvb-no':'lvb-wait');
+    var link=q.link?(' · <a href="'+esc(q.link)+'" target="_blank">เปิดเอกสาร</a>'):'';
+    return '<div class="hist"><div class="hist-ic">📝</div><div class="hist-main">'+
+      '<div class="hist-type">'+esc(q.type)+'<span class="lvb '+badge+'">'+esc(q.status)+'</span></div>'+
+      '<div class="hist-meta">'+esc(q.no)+(q.detail?(' · '+esc(q.detail)):'')+(q.at?(' · '+esc(q.at)):'')+link+'</div></div></div>';
+  }
+  // สลิป modal
+  function openSlip(key){ toast('กำลังโหลดสลิป…');
+    jsonp({action:'waPayslipDetail', idToken:IDTOKEN, uid:UID, m:key}).then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'โหลดสลิปไม่สำเร็จ'); return; } showSlip(r.slip);
+    }).catch(function(e){ toast(e.message); });
+  }
+  function money(n){ return (Number(n)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function slipRow(l,v,bold){ return '<div class="sl-row'+(bold?' bold':'')+'"><span>'+esc(l)+'</span><span>'+money(v)+'</span></div>'; }
+  function showSlip(p){
+    var inc=slipRow('เงินเดือน',p.salary);
+    if(p.commission) inc+=slipRow('ค่าคอมมิชชั่น',p.commission);
+    if(p.ot) inc+=slipRow('ค่าล่วงเวลา (OT)',p.ot);
+    if(p.bonus) inc+=slipRow('โบนัส',p.bonus);
+    if(p.gasoline) inc+=slipRow('ค่าน้ำมัน',p.gasoline);
+    if(p.allowance) inc+=slipRow('ค่าเบี้ยเลี้ยง',p.allowance);
+    inc+=slipRow('รวมรายรับ',p.gross,true);
+    var ded=slipRow('ประกันสังคม',p.sso);
+    if(p.tax) ded+=slipRow('ภาษีหัก ณ ที่จ่าย',p.tax);
+    if(p.other) ded+=slipRow('หักอื่น ๆ',p.other);
+    ded+=slipRow('รวมรายการหัก',p.deduct,true);
+    var pdf=p.slipLink?('<a class="btn btn-ghost" href="'+esc(p.slipLink)+'" target="_blank" style="width:100%;margin-top:10px">📄 เปิดสลิป PDF</a>'):'';
+    modal('<h3>💵 สลิป '+esc(p.monthLabel||'')+'</h3>'+
+      '<div class="sl-net">สุทธิ <b>'+money(p.net)+'</b> บาท</div>'+
+      '<div class="sl-sec">รายได้</div>'+inc+
+      '<div class="sl-sec" style="color:#DC2626">รายการหัก</div>'+ded+
+      (p.ytdIncome?('<div class="sl-ytd">สะสมทั้งปี: รายได้ '+money(p.ytdIncome)+' · ภาษี '+money(p.ytdTax)+' · ปกส. '+money(p.ytdSso)+'</div>'):'')+
+      pdf+
+      '<div class="m-act" style="margin-top:12px"><button class="btn btn-primary" onclick="closeModal()" style="width:100%">ปิด</button></div>');
+  }
 
   // ───── init ─────
   function startParam(){ try{ return (new URLSearchParams(location.search).get('p')||'').toLowerCase(); }catch(e){ return ''; } }
