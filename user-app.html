@@ -21,6 +21,15 @@
   .lvb-no{ background:#fbe7e7; color:#c0392b; }
   .soon-wrap{ text-align:center; padding:48px 22px; color:var(--muted); }
   .soon-wrap .e-emo{ font-size:40px; margin-bottom:10px; }
+  /* โควต้าการลา 3 ช่อง — คงเหลือใหญ่กลาง · เต็มเล็กมุมขวา */
+  .qgrid{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:16px; }
+  .qbox{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:16px 18px 20px; text-align:center; }
+  .qbox-top{ display:flex; align-items:center; justify-content:space-between; }
+  .qbox-emo{ font-size:24px; line-height:1; }
+  .qbox-full{ font-size:12px; font-weight:600; color:var(--muted); }
+  .qbox-num{ font-size:42px; font-weight:800; color:var(--red); line-height:1; margin:10px 0 5px; }
+  .qbox-lb{ font-size:13px; font-weight:600; color:var(--muted); }
 </style>
 </head>
 <body>
@@ -128,18 +137,20 @@
       TYPES=r.types||[]; QUOTA=r.quota; LEAVES=r.leaves||[]; paintLeave();
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
   }
-  function statCard(cls,emo,num,lb){
-    return '<div class="stat '+cls+'"><div class="stat-ic">'+emo+'</div><div><div class="stat-num">'+num+'</div><div class="stat-lb">'+lb+'</div></div></div>';
+  function qbox(emo,b,lb){
+    return '<div class="qbox"><div class="qbox-top"><span class="qbox-emo">'+emo+'</span>'+
+      '<span class="qbox-full">เต็ม '+b.quota+'</span></div>'+
+      '<div class="qbox-num">'+b.remain+'</div><div class="qbox-lb">'+lb+' (วัน)</div></div>';
   }
   function paintLeave(){
     var q=QUOTA, html='';
     // โควต้า
     if(q){
       html+='<div class="section-h">โควต้าคงเหลือ ปี '+(q.year+543)+'</div>'+
-        '<div class="stat-grid">'+
-          statCard('vac','🌴',q.vacation.remain,'พักร้อน ('+q.vacation.quota+')')+
-          statCard('biz','📄',q.personal.remain,'ลากิจ ('+q.personal.quota+')')+
-          statCard('sick','🤒',q.sick.remain,'ลาป่วย ('+q.sick.quota+')')+
+        '<div class="qgrid">'+
+          qbox('🌴',q.vacation,'พักร้อนคงเหลือ')+
+          qbox('📄',q.personal,'ลากิจคงเหลือ')+
+          qbox('🤒',q.sick,'ลาป่วยคงเหลือ')+
         '</div>';
     }
     // ปุ่มแจ้งลา + ฟอร์ม (การ์ด)
