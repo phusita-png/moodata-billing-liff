@@ -21,6 +21,37 @@
   .lvb-no{ background:#fbe7e7; color:#c0392b; }
   .soon-wrap{ text-align:center; padding:48px 22px; color:var(--muted); }
   .soon-wrap .e-emo{ font-size:40px; margin-bottom:10px; }
+  /* งาน (task card) */
+  .tk{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:14px 16px; margin-bottom:12px; }
+  .tk-top{ display:flex; align-items:center; gap:8px; }
+  .tk-no{ font-weight:700; color:var(--red); font-size:14px; }
+  .tk-badge{ margin-left:auto; font-size:12px; padding:3px 10px; border-radius:999px; font-weight:600; white-space:nowrap; }
+  .b-new{ background:#EEF1F6; color:#5B6472; } .b-doing{ background:#E3EEFD; color:#1B72E8; }
+  .b-review{ background:#FDF0E1; color:#C87F1E; } .b-done{ background:#E4F5EA; color:#1E9E5A; }
+  .tk-cust{ font-weight:600; margin-top:8px; } .tk-cat{ font-size:12px; color:var(--muted); }
+  .tk-detail{ font-size:14px; color:#4A5262; margin-top:6px; white-space:pre-wrap; }
+  .tk-kv{ font-size:13px; margin-top:8px; } .tk-kv b{ color:var(--muted); font-weight:500; }
+  .tk-kv a{ color:var(--red); word-break:break-all; }
+  .tk-asg{ font-size:13px; color:#4A5262; margin-top:8px; } .tk-asg.none{ color:#C87F1E; }
+  .tk-acts{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+  .tk-acts .btn{ flex:1; min-width:120px; font-size:14px; padding:9px 12px; }
+  .btn-ok{ background:var(--green); color:#fff; } .btn-ghost{ background:#EEF1F6; color:#333; }
+  .grp-h{ display:flex; align-items:center; gap:8px; margin:16px 2px 9px; font-weight:700; font-size:15px; }
+  .grp-h .cnt{ font-size:12px; font-weight:600; color:#fff; background:var(--red); border-radius:999px; padding:1px 9px; }
+  .grp-h:first-child{ margin-top:2px; }
+  /* modal */
+  .mask{ position:fixed; inset:0; background:rgba(20,28,40,.5); display:flex; align-items:flex-end; justify-content:center; z-index:60; }
+  .sheet{ background:#fff; width:100%; max-width:520px; border-radius:18px 18px 0 0;
+    padding:20px 18px calc(24px + env(safe-area-inset-bottom)); max-height:90vh; overflow:auto; }
+  @media(min-width:860px){ .mask{ align-items:center; } .sheet{ border-radius:18px; } }
+  .sheet h3{ margin:0 0 14px; font-size:18px; }
+  .fld{ margin-bottom:12px; } .fld label{ display:block; font-size:13px; font-weight:600; margin-bottom:6px; }
+  .fld input,.fld textarea,.fld select{ width:100%; padding:11px 12px; border:1.5px solid var(--line);
+    border-radius:12px; font-family:inherit; font-size:15px; background:#fff; color:var(--ink); }
+  .fld textarea{ min-height:76px; resize:vertical; }
+  .m-err{ background:#fbe7e7; color:#c0392b; padding:9px 12px; border-radius:9px; font-size:13px; margin-bottom:10px; }
+  .m-act{ display:flex; gap:9px; margin-top:6px; } .m-act .btn{ flex:1; }
   /* โควต้าการลา 3 ช่อง — คงเหลือใหญ่กลาง · เต็มใหญ่สีแดงมุมล่าง */
   .qgrid{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:16px; }
   .qbox{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow);
@@ -82,14 +113,14 @@
       <svg viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="7" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="6" rx="1.5"/><rect x="14" y="14" width="7" height="6" rx="1.5"/></svg><span>งานทั้งหมด</span></button>
 
     <div class="nav-sec">ข้อมูลส่วนตัว</div>
-    <button class="nav-btn active" data-view="leave" aria-label="ลา">
-      <svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></svg><span>ลา</span></button>
-    <button class="nav-btn" data-view="payslip" aria-label="สลิป">
-      <svg viewBox="0 0 24 24"><path d="M6 2.5h9l4 4V21a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1Z"/><path d="M14 2.5V7h4M8.5 13h7M8.5 17h5"/></svg><span>สลิป</span></button>
+    <button class="nav-btn active" data-view="leave" aria-label="การลา">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></svg><span>การลา</span></button>
+    <button class="nav-btn" data-view="ot" aria-label="ขอ OT">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12.5" r="8.5"/><path d="M12 8v5l3 2"/></svg><span>ขอ OT</span></button>
+    <button class="nav-btn" data-view="mydocs" aria-label="เอกสารฉัน">
+      <svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg><span>เอกสารฉัน</span></button>
     <button class="nav-btn" data-view="reqdoc" aria-label="ขอเอกสาร">
       <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>ขอเอกสาร</span></button>
-    <button class="nav-btn" data-view="mydocs" aria-label="เอกสาร">
-      <svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg><span>เอกสาร</span></button>
   </nav>
 </div>
 
@@ -103,11 +134,12 @@
 
   var UID='', IDTOKEN='', NICK='', VIEW='';
   var TYPES=[], QUOTA=null, LEAVES=[];
-  var LF = { type:'sick', start:'', end:'', period:'full', reason:'' };
+  var LF = { type:'sick', start:'', end:'', period:'full', reason:'', stime:'', etime:'' };
   var TYPE_EMO = { sick:'🤒', personal:'📄', vacation:'🌴' };
+  var MENAME='', TEAM=[], CUSTOMERS=[];   // งาน
   var VIEW_META = {
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], leave:['📝','การลา'],
-    payslip:['📄','สลิปเงินเดือน'], reqdoc:['📨','ขอเอกสาร'], mydocs:['📁','เอกสารของฉัน']
+    ot:['⏰','ขอ OT'], mydocs:['📁','เอกสารฉัน'], reqdoc:['📨','ขอเอกสาร']
   };
 
   function $(id){ return document.getElementById(id); }
@@ -137,7 +169,7 @@
     VIEW=v;
     Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(b){ b.classList.toggle('active', b.dataset.view===v); });
     var meta=VIEW_META[v]||['•',v]; $('tbIcon').textContent=meta[0]; $('tbTitle').textContent=meta[1];
-    ({ leave:renderLeave }[v] || soon)();
+    ({ leave:renderLeave, mytasks:renderMytasks, alltasks:renderAlltasks }[v] || soon)();
   }
   function soon(){
     $('main').innerHTML='<div class="card"><div class="soon-wrap"><div class="e-emo">🚧</div>เมนูนี้กำลังย้ายมาหน้านี้ — เร็ว ๆ นี้ค่ะ<br><span style="font-size:13px">(ตอนนี้ยังใช้ผ่านเมนูเดิม/แชทได้)</span></div></div>';
@@ -262,6 +294,136 @@
         toast('✅ ส่งใบลา '+r.no+' แล้ว (รออนุมัติ)'); renderLeave();
       }).catch(function(e){ lvErr(e.message); });
   }
+
+  // ═══════════ VIEW: งานของฉัน ═══════════
+  function tkBadge(st){ if(st.indexOf('กำลังทำ')>=0)return'b-doing'; if(st.indexOf('รอตรวจ')>=0)return'b-review'; if(st.indexOf('เสร็จ')>=0)return'b-done'; return'b-new'; }
+  function renderMytasks(){
+    skel();
+    jsonp({action:'waMyTasks', uid:UID}).then(function(r){
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      MENAME=(r.me&&r.me.name)||''; TEAM=r.team||[]; CUSTOMERS=r.customers||[];
+      var ts=r.tasks||[];
+      var html='<button class="btn btn-primary" style="width:100%;margin-bottom:14px" onclick="openCreate()">➕ เปิดงานใหม่</button>';
+      html+= ts.length ? ts.map(cardMy).join('') : '<div class="card"><div class="empty">ยังไม่มีงานที่มอบหมายให้คุณ 😊</div></div>';
+      $('main').innerHTML=html;
+    }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
+  }
+  function cardMy(t){
+    var h='<div class="tk"><div class="tk-top"><span class="tk-no">'+esc(t.no)+'</span>'+
+      '<span class="tk-badge '+tkBadge(t.status)+'">'+esc(t.status)+'</span></div>'+
+      '<div class="tk-cust">'+esc(t.customer||'-')+'</div>'+
+      (t.category?'<div class="tk-cat">'+esc(t.category)+'</div>':'')+
+      (t.detail?'<div class="tk-detail">'+esc(t.detail)+'</div>':'');
+    if(t.worklink) h+='<div class="tk-kv"><b>ลิงก์งาน:</b> <a href="'+esc(t.worklink)+'" target="_blank">'+esc(t.worklink)+'</a></div>';
+    if(t.reply) h+='<div class="tk-kv"><b>คำอธิบายถึงลูกค้า:</b> '+esc(t.reply)+'</div>';
+    var btns=[], done=t.status.indexOf('เสร็จ')>=0, cancel=t.status.indexOf('ยกเลิก')>=0;
+    if(!done&&!cancel){
+      if(t.status.indexOf('กำลังทำ')<0&&t.status.indexOf('รอตรวจ')<0)
+        btns.push('<button class="btn btn-primary" onclick="doDoing(\''+esc(t.no)+'\')">🔵 รับงาน</button>');
+      btns.push('<button class="btn btn-ok" onclick="openSubmit(\''+esc(t.no)+'\')">📤 ส่งตรวจ</button>');
+      btns.push('<button class="btn btn-ghost" onclick="openTransfer(\''+esc(t.no)+'\')">🔄 โอนงาน</button>');
+    }
+    if(btns.length) h+='<div class="tk-acts">'+btns.join('')+'</div>';
+    return h+'</div>';
+  }
+  function doDoing(no){ toast('กำลังรับงาน…');
+    jsonp({action:'waTaskDoing',uid:UID,no:no}).then(function(r){ if(!r||!r.ok){toast((r&&r.error)||'ไม่สำเร็จ');return;} toast('รับงานแล้ว 🔵'); renderMytasks(); }).catch(function(e){toast(e.message);}); }
+
+  // modal helper
+  function modal(html){ var m=document.createElement('div'); m.className='mask'; m.id='modal';
+    m.innerHTML='<div class="sheet">'+html+'</div>'; document.body.appendChild(m); return m; }
+  function closeModal(){ var m=$('modal'); if(m) m.parentNode.removeChild(m); }
+  function mErr(msg){ var e=$('mErr'); if(e){ e.textContent='⚠️ '+msg; e.classList.remove('hidden'); } }
+
+  // ส่งตรวจ
+  function openSubmit(no){
+    modal('<h3>📤 ส่งงานให้ตรวจ · '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="fld"><label>ลิงก์งาน (Drive/เว็บ)</label><input id="sLink" placeholder="วางลิงก์…"></div>'+
+      '<div class="fld"><label>คำอธิบายถึงลูกค้า</label><textarea id="sDesc" placeholder="สรุปงานที่ทำ…"></textarea></div>'+
+      '<div class="fld"><label>โน้ตถึงพี่ (ไม่บังคับ)</label><input id="sNote" placeholder="โน้ตภายใน…"></div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" onclick="doSubmit(\''+esc(no)+'\')">ส่งตรวจ</button></div>');
+  }
+  function doSubmit(no){
+    var link=$('sLink').value.trim(), desc=$('sDesc').value.trim(), note=$('sNote').value.trim();
+    if(!link&&!desc){ mErr('กรอกลิงก์ หรือคำอธิบาย อย่างน้อย 1 ช่องค่ะ'); return; }
+    toast('กำลังส่งตรวจ…');
+    jsonp({action:'waTaskSubmit',uid:UID,no:no,link:link,desc:desc,note:note}).then(function(r){
+      if(!r||!r.ok){ mErr((r&&r.error)||'ส่งไม่สำเร็จ'); return; } closeModal(); toast('📤 ส่งตรวจแล้ว (แจ้งพี่ให้)'); renderMytasks();
+    }).catch(function(e){ mErr(e.message); });
+  }
+  // เปิดงานใหม่
+  function openCreate(){
+    var opts='<option value="">— ไม่ระบุลูกค้า —</option>'+CUSTOMERS.map(function(c){return '<option value="'+esc(c)+'">'+esc(c)+'</option>';}).join('');
+    modal('<h3>➕ เปิดงานใหม่</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="fld"><label>ลูกค้า</label><select id="cCust">'+opts+'</select></div>'+
+      '<div class="fld"><label>ชื่องาน (ไม่บังคับ)</label><input id="cTitle" placeholder="เช่น ทำสลิปเงินเดือน"></div>'+
+      '<div class="fld"><label>รายละเอียดงาน</label><textarea id="cDetail" placeholder="อธิบายงาน…"></textarea></div>'+
+      '<div class="fld"><label>กำหนดส่ง (ไม่บังคับ)</label><input type="date" id="cDue"></div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" onclick="doCreate()">เปิดงาน</button></div>');
+  }
+  function doCreate(){
+    var detail=$('cDetail').value.trim();
+    if(!detail){ mErr('กรอกรายละเอียดงานก่อนค่ะ'); return; }
+    toast('กำลังเปิดงาน…');
+    jsonp({action:'waTeamCreate',uid:UID,customer:$('cCust').value,title:$('cTitle').value.trim(),detail:detail,due:$('cDue').value})
+      .then(function(r){ if(!r||!r.ok){ mErr((r&&r.error)||'เปิดงานไม่สำเร็จ'); return; } closeModal(); toast('➕ เปิดงาน '+r.no+' แล้ว (แจ้งพี่ให้)'); renderMytasks(); })
+      .catch(function(e){ mErr(e.message); });
+  }
+  // โอนงาน
+  function openTransfer(no){
+    var opts='<option value="">— เลือกเพื่อน —</option>'+TEAM.filter(function(m){return m.name!==MENAME;}).map(function(m){
+      var lb=m.name+(m.nick&&m.nick!==m.name?' ('+m.nick+')':''); return '<option value="'+esc(m.name)+'">'+esc(lb)+'</option>'; }).join('');
+    modal('<h3>🔄 โอนงาน '+esc(no)+' ให้เพื่อน</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="fld"><label>โอนให้</label><select id="tName">'+opts+'</select></div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" onclick="doTransfer(\''+esc(no)+'\')">โอนงาน</button></div>');
+  }
+  function doTransfer(no){
+    var name=$('tName').value;
+    if(!name){ mErr('เลือกเพื่อนที่จะโอนให้ก่อนค่ะ'); return; }
+    toast('กำลังโอนงาน…');
+    jsonp({action:'waTransfer',uid:UID,no:no,name:name}).then(function(r){
+      if(!r||!r.ok){ mErr((r&&r.error)||'โอนไม่สำเร็จ'); return; }
+      closeModal(); toast('🔄 โอนงานให้ '+r.to+' แล้ว'+(r.notified?' (แจ้ง LINE ให้)':'')); renderMytasks();
+    }).catch(function(e){ mErr(e.message); });
+  }
+
+  // ═══════════ VIEW: งานทั้งหมด ═══════════
+  function renderAlltasks(){
+    skel();
+    jsonp({action:'waBoard', uid:UID}).then(function(r){
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      paintBoard(r.tasks||[]);
+    }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
+  }
+  function paintBoard(tasks){
+    if(!tasks.length){ $('main').innerHTML='<div class="card"><div class="empty">ยังไม่มีงาน 😊</div></div>'; return; }
+    var order=[], groups={};
+    tasks.forEach(function(t){ var c=t.customer||'(ไม่ระบุบริษัท)'; if(!groups[c]){ groups[c]=[]; order.push(c); } groups[c].push(t); });
+    var html='';
+    order.forEach(function(c){ html+='<div class="grp-h">🏢 '+esc(c)+'<span class="cnt">'+groups[c].length+'</span></div>'+groups[c].map(cardBoard).join(''); });
+    $('main').innerHTML=html;
+  }
+  function cardBoard(t){
+    var h='<div class="tk"><div class="tk-top"><span class="tk-no">'+esc(t.no)+'</span>'+
+      '<span class="tk-badge '+tkBadge(t.status)+'">'+esc(t.status)+'</span></div>'+
+      (t.detail?'<div class="tk-detail">'+esc(t.detail)+'</div>':'')+
+      '<div class="tk-asg'+(t.assignee?'':' none')+'">👤 '+(t.assignee?esc(t.assignee):'ยังไม่มอบหมาย')+'</div>';
+    var btns=[];
+    if(t.mine && t.status.indexOf('เสร็จ')<0 && t.status.indexOf('ยกเลิก')<0){
+      if(t.status.indexOf('กำลังทำ')<0 && t.status.indexOf('รอตรวจ')<0)
+        btns.push('<button class="btn btn-primary" onclick="doDoing(\''+esc(t.no)+'\')">🔵 รับงาน</button>');
+      btns.push('<button class="btn btn-ok" onclick="openSubmit(\''+esc(t.no)+'\')">📤 ส่งตรวจ</button>');
+    } else if(t.unassigned){
+      btns.push('<button class="btn btn-primary" onclick="doClaim(\''+esc(t.no)+'\')">🙋 รับงานนี้</button>');
+    }
+    if(btns.length) h+='<div class="tk-acts">'+btns.join('')+'</div>';
+    return h+'</div>';
+  }
+  function doClaim(no){ toast('กำลังรับงาน…');
+    jsonp({action:'waClaim',uid:UID,no:no}).then(function(r){ if(!r||!r.ok){toast((r&&r.error)||'ไม่สำเร็จ');return;} toast('🙋 รับงานแล้ว (แจ้งพี่ให้)'); renderAlltasks(); }).catch(function(e){toast(e.message);}); }
 
   // ───── init ─────
   function startParam(){ try{ return (new URLSearchParams(location.search).get('p')||'').toLowerCase(); }catch(e){ return ''; } }
