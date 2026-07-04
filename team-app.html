@@ -70,6 +70,15 @@
   .toast{ position:fixed; left:50%; bottom:24px; transform:translateX(-50%); background:#242B36; color:#fff;
           padding:11px 18px; border-radius:12px; font-size:14px; z-index:99; opacity:0; transition:.25s; }
   .toast.show{ opacity:1; }
+  /* สลิปเงินเดือน */
+  .slip .sliphead{ font-weight:700; font-size:15px; color:var(--blue); }
+  .slip .slipname{ font-size:13px; color:var(--muted); margin:2px 0 12px; }
+  .ssec{ font-size:12px; font-weight:700; margin:4px 0 6px; }
+  .ssec.inc{ color:#16A34A; } .ssec.ded{ color:#DC2626; }
+  .srow{ display:flex; justify-content:space-between; font-size:14px; color:#4A5262; padding:3px 0; }
+  .srow-b{ font-weight:700; color:var(--text); }
+  .sdiv{ border-top:1px solid var(--line); margin:10px 0; }
+  .snet{ display:flex; justify-content:space-between; font-size:16px; font-weight:700; color:var(--blue); margin-top:4px; }
 </style>
 </head>
 <body>
@@ -85,6 +94,7 @@
       <div class="tab" id="tabBoard" onclick="switchTab('board')">งานทั้งหมด</div>
       <div class="tab" id="tabAll" onclick="switchTab('all')">ภาพรวม</div>
       <div class="tab" id="tabLeave" onclick="switchTab('leave')">📝 ลา</div>
+      <div class="tab" id="tabSlip" onclick="switchTab('slip')">📄 สลิป</div>
       <div class="tab" id="tabApprove" onclick="switchTab('approve')">✅ อนุมัติลา</div>
     </div>
   </header>
@@ -108,8 +118,9 @@
   var EXEC_URL = 'https://script.google.com/macros/s/AKfycbwdOotltb--WwTuS-ECutq6uFQs536kjz-RyLuq1mm35Pbfnn25EptvIRkfjaZB6iJf/exec';
   // ═══════════════════════════════
 
-  var UID='', ROLE={isOwner:false,isTeam:false}, STATUSES=[], TEAM=[], CUSTOMERS=[], CACHE={}, LEAVE_TYPES=[];
+  var UID='', IDTOKEN='', ROLE={isOwner:false,isTeam:false}, STATUSES=[], TEAM=[], CUSTOMERS=[], CACHE={}, LEAVE_TYPES=[];
   var TAB='mine', FILTER_MINE='', FILTER_ALL='', FILTER_BOARD='';
+  var SLIP_MONTHS=[], SLIP_CUR='';
 
   function $(id){ return document.getElementById(id); }
   function esc(s){ return String(s||'').replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
@@ -151,6 +162,7 @@
     $('tabBoard').classList.toggle('active', t==='board');
     $('tabAll').classList.toggle('active', t==='all');
     $('tabLeave').classList.toggle('active', t==='leave');
+    $('tabSlip').classList.toggle('active', t==='slip');
     $('tabApprove').classList.toggle('active', t==='approve');
     $('filterMine').classList.toggle('hide', t!=='mine');
     $('filterBoard').classList.toggle('hide', t!=='board');
@@ -166,6 +178,7 @@
     else if(t==='board') loadBoard(cached);
     else if(t==='all') loadAll(cached);
     else if(t==='leave') loadLeave(cached);
+    else if(t==='slip') loadPayslip(cached);
     else if(t==='approve') loadApprove(cached);
   }
 
@@ -487,8 +500,63 @@
     });
   }
 
+  // ───── สลิปเงินเดือน (ทีม · ยืนยัน ID token) ─────
+  function money(n){ return (Number(n)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function srow(label,amount,bold){
+    var b=bold?' srow-b':'';
+    return '<div class="srow'+b+'"><span>'+esc(label)+'</span><span>'+money(amount)+'</span></div>';
+  }
+  function slipChipsHtml(){
+    return '<div class="chips" style="margin-bottom:12px">'+SLIP_MONTHS.map(function(m){
+      return '<div class="chip'+(m.key===SLIP_CUR?' active':'')+'" onclick="pickSlip(\''+esc(m.key)+'\')">'+esc(m.label)+'</div>';
+    }).join('')+'</div>';
+  }
+  function renderSlip(s){
+    var inc='<div class="ssec inc">รายได้</div>'+srow('เงินเดือน',s.salary);
+    if(s.commission) inc+=srow('ค่าคอมมิชชั่น',s.commission);
+    if(s.ot) inc+=srow('ค่าล่วงเวลา (OT)',s.ot);
+    if(s.bonus) inc+=srow('โบนัส',s.bonus);
+    if(s.gasoline) inc+=srow('ค่าน้ำมัน',s.gasoline);
+    if(s.allowance) inc+=srow('ค่าเบี้ยเลี้ยง',s.allowance);
+    inc+=srow('รวมรายรับ',s.gross,true);
+    var ded='<div class="ssec ded">รายการหัก</div>'+srow('ประกันสังคม',s.sso);
+    if(s.tax) ded+=srow('ภาษีหัก ณ ที่จ่าย',s.tax);
+    if(s.other) ded+=srow('หักอื่น ๆ',s.other);
+    ded+=srow('รวมหัก',s.deduct,true);
+    var net='<div class="snet"><span>เงินสุทธิ</span><span>'+money(s.net)+' บาท</span></div>';
+    var pdf=s.slipLink?('<a class="btn btn-p" style="display:block;text-align:center;text-decoration:none;margin-top:14px" href="'+esc(s.slipLink)+'" target="_blank">📄 เปิดสลิป PDF</a>'):'';
+    var card='<div class="card slip"><div class="sliphead">🧾 สลิปเงินเดือน · '+esc(s.monthLabel)+'</div>'+
+      '<div class="slipname">'+esc(s.name||'')+(s.position?(' · '+esc(s.position)):'')+'</div>'+
+      inc+'<div class="sdiv"></div>'+ded+'<div class="sdiv"></div>'+net+pdf+'</div>';
+    if(s.ytdIncome||s.ytdTax||s.ytdSso){
+      card+='<div class="card"><div class="ssec" style="color:#555">สะสมทั้งปี (YTD)</div>'+
+        srow('รายได้สะสม',s.ytdIncome)+srow('ภาษีหัก ณ ที่จ่ายสะสม',s.ytdTax)+srow('ประกันสังคมสะสม',s.ytdSso)+'</div>';
+    }
+    return card;
+  }
+  function pickSlip(key){ SLIP_CUR=key; $('list').innerHTML=slipChipsHtml()+'<div id="slipBody"><div class="loading"><div class="spin"></div>กำลังโหลดสลิป…</div></div>'; loadSlipDetail(key); }
+  function loadSlipDetail(key){
+    jsonp({action:'waPayslipDetail', idToken:IDTOKEN, m:key}).then(function(r){
+      var body=$('slipBody'); if(!body) return;
+      if(!r||!r.ok){ body.innerHTML='<div class="empty">'+esc((r&&r.error)||'โหลดสลิปไม่สำเร็จ')+'</div>'; return; }
+      body.innerHTML=renderSlip(r.slip); CACHE.slip=$('list').innerHTML;
+    }).catch(function(e){ var body=$('slipBody'); if(body) body.innerHTML='<div class="empty">'+esc(e.message)+'</div>'; });
+  }
+  function loadPayslip(silent){
+    if(!IDTOKEN){ listEmpty('เปิดแท็บนี้ผ่านแอป LINE เพื่อยืนยันตัวตนก่อนดูสลิปค่ะ 🔐'); return; }
+    if(!silent) listLoading();
+    jsonp({action:'waPayslipInit', idToken:IDTOKEN}).then(function(r){
+      if(!r||!r.ok){ if(!silent) listEmpty((r&&r.error)||'โหลดไม่สำเร็จ'); return; }
+      SLIP_MONTHS=r.months||[];
+      if(!SLIP_MONTHS.length){ var eh='<div class="empty">ยังไม่มีสลิปเงินเดือนของคุณในระบบค่ะ 🙏</div>'; $('list').innerHTML=eh; CACHE.slip=eh; return; }
+      if(!SLIP_CUR || !SLIP_MONTHS.some(function(m){return m.key===SLIP_CUR;})) SLIP_CUR=SLIP_MONTHS[0].key;
+      $('list').innerHTML=slipChipsHtml()+'<div id="slipBody"><div class="loading"><div class="spin"></div>กำลังโหลดสลิป…</div></div>';
+      loadSlipDetail(SLIP_CUR);
+    }).catch(function(e){ if(!silent) listEmpty(e.message); });
+  }
+
   // ───── list helpers ─────
-  function reloadCurrent(){ if(TAB==='board') loadBoard(true); else if(TAB==='all') loadAll(true); else if(TAB==='leave') loadLeave(true); else if(TAB==='approve') loadApprove(true); else loadMine(true); }
+  function reloadCurrent(){ if(TAB==='board') loadBoard(true); else if(TAB==='all') loadAll(true); else if(TAB==='leave') loadLeave(true); else if(TAB==='slip') loadPayslip(true); else if(TAB==='approve') loadApprove(true); else loadMine(true); }
   function listLoading(){ $('list').innerHTML='<div class="loading"><div class="spin"></div>กำลังโหลด…</div>'; }
   function listEmpty(m){ $('list').innerHTML='<div class="empty">'+esc(m)+'</div>'; }
 
@@ -504,6 +572,7 @@
       $('tabBoard').classList.toggle('hide', false);
       $('tabAll').classList.toggle('hide', !ROLE.isOwner);
       $('tabLeave').classList.toggle('hide', !ROLE.isTeam);
+      $('tabSlip').classList.toggle('hide', !ROLE.isTeam);
       $('tabApprove').classList.toggle('hide', !ROLE.isOwner);
       $('boot').classList.add('hide'); $('app').classList.remove('hide');
       var t=ROLE.isTeam ? 'mine' : 'board';
@@ -522,6 +591,7 @@
     if(ov){ UID=ov; start(); return; }   // เทสนอกไลน์: ?uid=...
     liff.init({liffId:LIFF_ID}).then(function(){
       if(!liff.isLoggedIn()){ liff.login({redirectUri:location.href}); return; }
+      try{ IDTOKEN=liff.getIDToken()||''; }catch(e){ IDTOKEN=''; }   // ใช้ยืนยันตัวตนก่อนดูสลิป (sensitive)
       return liff.getProfile().then(function(p){ UID=p.userId; start(); });
     }).catch(function(e){ fatal('เปิดผ่านไลน์ไม่สำเร็จ: '+(e.message||e)); });
   })();
