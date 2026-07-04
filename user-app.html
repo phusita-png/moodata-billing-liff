@@ -28,7 +28,11 @@
   .qbox-emo{ font-size:24px; line-height:1; }
   .qbox-num{ font-size:44px; font-weight:800; color:var(--red); line-height:1; margin:6px 0 3px; }
   .qbox-lb{ font-size:13px; font-weight:600; color:var(--muted); }
-  .qbox-full{ font-size:15px; font-weight:700; color:#DC2626; margin-top:9px; padding-top:8px; border-top:1px dashed var(--line); }
+  .qbox-full{ font-size:15px; font-weight:700; color:#DC2626; margin-top:9px; padding-top:8px; border-top:1px dashed rgba(0,0,0,.09); }
+  /* สีจางแยกประเภทลา — พักร้อนเขียว · ลากิจน้ำเงิน · ลาป่วยส้ม */
+  .qbox.q-vac{ background:#EAF7F0; border-color:#BFE4D0; } .qbox.q-vac .qbox-num{ color:#168A52; }
+  .qbox.q-biz{ background:#EAF2FE; border-color:#BDD8FB; } .qbox.q-biz .qbox-num{ color:#1B72E8; }
+  .qbox.q-sick{ background:#FCF3E4; border-color:#ECD5AC; } .qbox.q-sick .qbox-num{ color:#B5710A; }
   /* ประเภทการลา — จัดคอลัมน์ให้ตรงกับโควต้า (3 ช่อง gap เท่ากัน) */
   #typeGrid.type-grid{ grid-template-columns:repeat(3,1fr); gap:12px; }
   /* ช่องเวลา (ราย ชม.) */
@@ -148,8 +152,8 @@
       TYPES=r.types||[]; QUOTA=r.quota; LEAVES=r.leaves||[]; paintLeave();
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
   }
-  function qbox(emo,b,lb){
-    return '<div class="qbox"><div class="qbox-emo">'+emo+'</div>'+
+  function qbox(cls,emo,b,lb){
+    return '<div class="qbox '+cls+'"><div class="qbox-emo">'+emo+'</div>'+
       '<div class="qbox-num">'+b.remain+'</div><div class="qbox-lb">'+lb+' (วัน)</div>'+
       '<div class="qbox-full">เต็ม '+b.quota+' วัน</div></div>';
   }
@@ -159,9 +163,9 @@
     if(q){
       html+='<div class="section-h">โควต้าคงเหลือ ปี '+(q.year+543)+'</div>'+
         '<div class="qgrid">'+
-          qbox('🌴',q.vacation,'พักร้อนคงเหลือ')+
-          qbox('📄',q.personal,'ลากิจคงเหลือ')+
-          qbox('🤒',q.sick,'ลาป่วยคงเหลือ')+
+          qbox('q-vac','🌴',q.vacation,'พักร้อนคงเหลือ')+
+          qbox('q-biz','📄',q.personal,'ลากิจคงเหลือ')+
+          qbox('q-sick','🤒',q.sick,'ลาป่วยคงเหลือ')+
         '</div>';
     }
     // ปุ่มแจ้งลา + ฟอร์ม (การ์ด)
