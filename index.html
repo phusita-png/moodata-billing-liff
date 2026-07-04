@@ -14,12 +14,14 @@
       var q = new URLSearchParams(location.search);
       var p = (q.get('p') || 'team-app').toLowerCase();
       var MAP = {
-        'team': 'team-app.html', 'team-app': 'team-app.html', 'work': 'team-app.html',
+        // งาน + ข้อมูลส่วนตัว → เว็บแอปทีมตัวใหม่ (SPA สไตล์ดิเอลฟ์)
+        'team': 'user-app.html', 'team-app': 'user-app.html', 'work': 'user-app.html',
         'me': 'user-app.html', 'user': 'user-app.html', 'personal': 'user-app.html',
+        'oldteam': 'team-app.html',   // ของเดิม (เครื่องมือ owner: ภาพรวม/อนุมัติ) เผื่อเรียกใช้
         'appt': 'appointment.html', 'appointment': 'appointment.html',
         'board': 'board.html'
       };
-      var target = MAP[p] || 'team-app.html';
+      var target = MAP[p] || 'user-app.html';
       q.delete('p');
       var rest = q.toString();
       location.replace(target + (rest ? '?' + rest : ''));
