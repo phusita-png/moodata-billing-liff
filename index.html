@@ -22,7 +22,7 @@
         'board': 'board.html'
       };
       var target = MAP[p] || 'user-app.html';
-      q.delete('p');
+      // คง p ไว้ให้หน้าปลายทางอ่านต่อ (user-app ใช้เลือก view เริ่ม: work→งานของฉัน, me→ลา)
       var rest = q.toString();
       location.replace(target + (rest ? '?' + rest : ''));
     })();
