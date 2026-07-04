@@ -21,15 +21,26 @@
   .lvb-no{ background:#fbe7e7; color:#c0392b; }
   .soon-wrap{ text-align:center; padding:48px 22px; color:var(--muted); }
   .soon-wrap .e-emo{ font-size:40px; margin-bottom:10px; }
-  /* โควต้าการลา 3 ช่อง — คงเหลือใหญ่กลาง · เต็มเล็กมุมขวา */
+  /* โควต้าการลา 3 ช่อง — คงเหลือใหญ่กลาง · เต็มใหญ่สีแดงมุมล่าง */
   .qgrid{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:16px; }
   .qbox{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow);
-    padding:16px 18px 20px; text-align:center; }
-  .qbox-top{ display:flex; align-items:center; justify-content:space-between; }
+    padding:14px 14px 14px; text-align:center; }
   .qbox-emo{ font-size:24px; line-height:1; }
-  .qbox-full{ font-size:12px; font-weight:600; color:var(--muted); }
-  .qbox-num{ font-size:42px; font-weight:800; color:var(--red); line-height:1; margin:10px 0 5px; }
+  .qbox-num{ font-size:44px; font-weight:800; color:var(--red); line-height:1; margin:6px 0 3px; }
   .qbox-lb{ font-size:13px; font-weight:600; color:var(--muted); }
+  .qbox-full{ font-size:15px; font-weight:700; color:#DC2626; margin-top:9px; padding-top:8px; border-top:1px dashed var(--line); }
+  /* ประเภทการลา — จัดคอลัมน์ให้ตรงกับโควต้า (3 ช่อง gap เท่ากัน) */
+  #typeGrid.type-grid{ grid-template-columns:repeat(3,1fr); gap:12px; }
+  /* ช่องเวลา (ราย ชม.) */
+  .time-row{ display:flex; align-items:center; gap:10px; margin-top:8px; }
+  .time-row input[type=time]{ flex:1; padding:11px 12px; border:1.5px solid var(--line); border-radius:12px;
+    font-family:inherit; font-size:15px; }
+  .time-row .dash{ color:var(--muted); }
+  /* มือถือจอแคบ — โควต้า 3 ช่องยังอยู่ แต่ย่อ font กันล้น */
+  @media(max-width:430px){
+    .qbox{ padding:12px 8px; } .qbox-num{ font-size:34px; } .qbox-emo{ font-size:20px; }
+    .qbox-lb{ font-size:11px; } .qbox-full{ font-size:12px; margin-top:7px; padding-top:6px; }
+  }
 </style>
 </head>
 <body>
@@ -138,9 +149,9 @@
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
   }
   function qbox(emo,b,lb){
-    return '<div class="qbox"><div class="qbox-top"><span class="qbox-emo">'+emo+'</span>'+
-      '<span class="qbox-full">เต็ม '+b.quota+'</span></div>'+
-      '<div class="qbox-num">'+b.remain+'</div><div class="qbox-lb">'+lb+' (วัน)</div></div>';
+    return '<div class="qbox"><div class="qbox-emo">'+emo+'</div>'+
+      '<div class="qbox-num">'+b.remain+'</div><div class="qbox-lb">'+lb+' (วัน)</div>'+
+      '<div class="qbox-full">เต็ม '+b.quota+' วัน</div></div>';
   }
   function paintLeave(){
     var q=QUOTA, html='';
@@ -159,7 +170,7 @@
       '<label class="field-lb">ประเภทการลา</label><div id="typeGrid" class="type-grid"></div>'+
       '<div class="date-row"><div><label class="field-lb">📅 วันเริ่ม</label><input type="date" id="lStart"></div>'+
       '<div><label class="field-lb">วันสิ้นสุด</label><input type="date" id="lEnd"></div></div>'+
-      '<label class="field-lb">ช่วงเวลา</label><div id="seg" class="seg"></div>'+
+      '<label class="field-lb">ช่วงเวลา</label><div id="seg" class="seg"></div><div id="lvTime"></div>'+
       '<label class="field-lb">📝 เหตุผล</label><textarea id="reason" rows="2" placeholder="เหตุผลการลา…"></textarea>'+
       '<div id="lvSummary" style="margin-top:16px"></div>'+
       '<div style="margin-top:14px"><button id="btnLeave" class="btn btn-primary">ส่งใบลา</button></div></div>';
@@ -168,10 +179,10 @@
     html+= LEAVES.length ? '<div class="card" style="padding:6px 12px">'+LEAVES.map(histLeave).join('')+'</div>'
                          : '<div class="card"><div class="empty">ยังไม่มีประวัติการลา 😊</div></div>';
     $('main').innerHTML=html;
-    LF={ type:'sick', start:'', end:'', period:'full', reason:'' };
-    renderTypeGrid(); renderSeg(); renderLvSum();
-    $('lStart').addEventListener('change', function(e){ LF.start=e.target.value; if(!LF.end){LF.end=LF.start;$('lEnd').value=LF.end;} renderSeg(); renderLvSum(); });
-    $('lEnd').addEventListener('change', function(e){ LF.end=e.target.value; renderSeg(); renderLvSum(); });
+    LF={ type:'sick', start:'', end:'', period:'full', reason:'', stime:'', etime:'' };
+    renderTypeGrid(); renderSeg(); renderLvTime(); renderLvSum();
+    $('lStart').addEventListener('change', function(e){ LF.start=e.target.value; if(!LF.end){LF.end=LF.start;$('lEnd').value=LF.end;} renderSeg(); renderLvTime(); renderLvSum(); });
+    $('lEnd').addEventListener('change', function(e){ LF.end=e.target.value; renderSeg(); renderLvTime(); renderLvSum(); });
     $('reason').addEventListener('input', function(e){ LF.reason=e.target.value; });
     $('btnLeave').addEventListener('click', submitLeave);
   }
@@ -194,14 +205,29 @@
   }
   function renderSeg(){
     var multi = LF.start&&LF.end&&LF.end!==LF.start; if(multi) LF.period='full';
-    var opts=[['full','เต็มวัน'],['morning','ครึ่งเช้า'],['afternoon','ครึ่งบ่าย']];
+    var opts=[['full','เต็มวัน'],['morning','ครึ่งเช้า'],['afternoon','ครึ่งบ่าย'],['hours','ราย ชม.']];
     $('seg').innerHTML=opts.map(function(o){ var dis=multi&&o[0]!=='full';
       return '<button class="seg-btn'+(LF.period===o[0]?' sel':'')+'"'+(dis?' disabled style="opacity:.4"':'')+' data-p="'+o[0]+'">'+o[1]+'</button>'; }).join('');
     Array.prototype.forEach.call($('seg').querySelectorAll('.seg-btn'), function(el){
-      el.addEventListener('click', function(){ if(el.disabled)return; LF.period=el.dataset.p; renderSeg(); renderLvSum(); }); });
+      el.addEventListener('click', function(){ if(el.disabled)return; LF.period=el.dataset.p; renderSeg(); renderLvTime(); renderLvSum(); }); });
+  }
+  function renderLvTime(){
+    var el=$('lvTime'); if(!el) return;
+    if(LF.period!=='hours'){ el.innerHTML=''; return; }
+    el.innerHTML='<label class="field-lb">⏰ เวลาที่ลา (วันเดียว · สูงสุด 8 ชม.)</label>'+
+      '<div class="time-row"><input type="time" id="lvS" value="'+LF.stime+'"><span class="dash">→</span><input type="time" id="lvE" value="'+LF.etime+'"></div>';
+    $('lvS').addEventListener('input', function(e){ LF.stime=e.target.value; renderLvSum(); });
+    $('lvE').addEventListener('input', function(e){ LF.etime=e.target.value; renderLvSum(); });
+  }
+  function hoursDiff(s,e){
+    if(!s||!e) return 0;
+    var a=s.split(':'), b=e.split(':');
+    var h=(parseInt(b[0],10)*60+parseInt(b[1],10)-parseInt(a[0],10)*60-parseInt(a[1],10))/60;
+    return h>0?h:0;
   }
   function calcDays(){
     if(!LF.start) return 0;
+    if(LF.period==='hours'){ var h=hoursDiff(LF.stime,LF.etime); return h?Math.round(h/8*100)/100:0; }
     if(LF.period!=='full') return 0.5;
     if(!LF.end||LF.end===LF.start) return 1;
     return Math.max(1, Math.round((new Date(LF.end)-new Date(LF.start))/86400000)+1);
@@ -210,9 +236,10 @@
     var el=$('lvSummary'); if(!el) return;
     if(!LF.start){ el.innerHTML=''; return; }
     var t=(TYPES.filter(function(x){return x.key===LF.type;})[0]||{}).label||'';
-    var per=LF.period==='morning'?'ครึ่งเช้า':LF.period==='afternoon'?'ครึ่งบ่าย':'เต็มวัน';
+    var per={morning:'ครึ่งเช้า',afternoon:'ครึ่งบ่าย',hours:'ราย ชม.'}[LF.period]||'เต็มวัน';
+    var qty=LF.period==='hours' ? (hoursDiff(LF.stime,LF.etime)||0)+' ชม. (≈'+calcDays()+' วัน)' : calcDays()+' วัน';
     el.innerHTML='<div class="chips"><div class="chip"><div class="chip-v">'+(TYPE_EMO[LF.type]||'')+' '+esc(t)+'</div><div class="chip-l">ประเภท</div></div>'+
-      '<div class="chip"><div class="chip-v">'+calcDays()+' วัน</div><div class="chip-l">จำนวน</div></div>'+
+      '<div class="chip"><div class="chip-v">'+qty+'</div><div class="chip-l">จำนวน</div></div>'+
       '<div class="chip"><div class="chip-v">'+per+'</div><div class="chip-l">ช่วงเวลา</div></div></div>';
   }
   function lvErr(msg){ var e=$('lvErr'); e.textContent='⚠️ '+msg; e.classList.remove('hidden'); }
@@ -220,9 +247,13 @@
     if(!LF.start){ lvErr('เลือกวันเริ่มก่อนค่ะ'); return; }
     if(!LF.end) LF.end=LF.start;
     if(new Date(LF.end)<new Date(LF.start)){ lvErr('วันสิ้นสุดต้องไม่ก่อนวันเริ่ม'); return; }
+    if(LF.period==='hours'){
+      if(!LF.stime||!LF.etime){ lvErr('เลือกเวลาเริ่ม–สิ้นสุดก่อนค่ะ'); return; }
+      if(hoursDiff(LF.stime,LF.etime)<=0){ lvErr('เวลาสิ้นสุดต้องหลังเวลาเริ่ม'); return; }
+    }
     if(!LF.reason.trim()){ lvErr('กรอกเหตุผลก่อนค่ะ'); return; }
     toast('กำลังส่งใบลา…');
-    jsonp({action:'waLeaveSubmit', uid:UID, type:LF.type, start:LF.start, end:LF.end, period:LF.period, reason:LF.reason.trim()})
+    jsonp({action:'waLeaveSubmit', uid:UID, type:LF.type, start:LF.start, end:LF.end, period:LF.period, stime:LF.stime, etime:LF.etime, reason:LF.reason.trim()})
       .then(function(r){ if(!r||!r.ok){ lvErr((r&&r.error)||'ส่งไม่สำเร็จ'); return; }
         toast('✅ ส่งใบลา '+r.no+' แล้ว (รออนุมัติ)'); renderLeave();
       }).catch(function(e){ lvErr(e.message); });
