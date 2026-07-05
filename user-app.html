@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="user.css?v=8">
+<link rel="stylesheet" href="user.css?v=9">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -137,6 +137,8 @@
     <button class="nav-btn" data-view="docs" aria-label="เอกสาร">
       <svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg><span>เอกสาร</span></button>
   </nav>
+
+  <button id="helpFab" class="help-fab" type="button" aria-label="คู่มือการใช้งาน" onclick="openHelp()"><span class="hf-ic">📖</span><span class="hf-tx">คู่มือ</span></button>
 </div>
 
 <div id="toast" class="toast"></div>
@@ -148,9 +150,12 @@
   // ═══════════════════════════════
 
   var UID='', IDTOKEN='', NICK='', VIEW='';
-  var TYPES=[], QUOTA=null, LEAVES=[];
-  var LF = { type:'sick', start:'', end:'', period:'full', reason:'', stime:'', etime:'' };
+  var TYPES=[], QUOTA=null, LEAVES=[], HOLIDAYS=[], SCHEDULE=null;
+  var CAL=new Date();   // เดือนที่ปฏิทินแสดงอยู่
+  var LF = { type:'sick', start:null, end:null, period:'full', reason:'', stime:'', etime:'' };  // start/end = Date|null
   var TYPE_EMO = { sick:'🤒', personal:'📄', vacation:'🌴' };
+  var TH_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  var TH_DOW = ['อา','จ','อ','พ','พฤ','ศ','ส'];
   var MENAME='', TEAM=[], CUSTOMERS=[];   // งาน
   var VIEW_META = {
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], leave:['📝','การลา'],
@@ -196,7 +201,7 @@
     skel();
     jsonp({action:'waLeaveInit', uid:UID}).then(function(r){
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
-      TYPES=r.types||[]; QUOTA=r.quota; LEAVES=r.leaves||[]; paintLeave();
+      TYPES=r.types||[]; QUOTA=r.quota; LEAVES=r.leaves||[]; HOLIDAYS=r.holidays||[]; SCHEDULE=r.schedule||null; paintLeave();
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
   }
   function qbox(cls,emo,b,lb){
@@ -219,8 +224,7 @@
     html+='<div class="card"><div class="card-title"><span class="ic"></span>📝 แจ้งลา</div>'+
       '<div id="lvErr" class="edit-banner hidden" style="background:#fbe7e7;color:#c0392b"></div>'+
       '<label class="field-lb">ประเภทการลา</label><div id="typeGrid" class="type-grid"></div>'+
-      '<div class="date-row"><div><label class="field-lb">📅 วันเริ่ม</label><input type="date" id="lStart"></div>'+
-      '<div><label class="field-lb">วันสิ้นสุด</label><input type="date" id="lEnd"></div></div>'+
+      '<label class="field-lb">📅 เลือกวันที่ลา</label><div id="calLeave"></div>'+
       '<label class="field-lb">ช่วงเวลา</label><div id="seg" class="seg"></div><div id="lvTime"></div>'+
       '<label class="field-lb">📝 เหตุผล</label><textarea id="reason" rows="2" placeholder="เหตุผลการลา…"></textarea>'+
       '<div id="lvSummary" style="margin-top:16px"></div>'+
@@ -230,10 +234,9 @@
     html+= LEAVES.length ? '<div class="card" style="padding:6px 12px">'+LEAVES.map(histLeave).join('')+'</div>'
                          : '<div class="card"><div class="emptybox">ยังไม่มีประวัติการลา 😊</div></div>';
     $('main').innerHTML=html;
-    LF={ type:'sick', start:'', end:'', period:'full', reason:'', stime:'', etime:'' };
-    renderTypeGrid(); renderSeg(); renderLvTime(); renderLvSum();
-    $('lStart').addEventListener('change', function(e){ LF.start=e.target.value; if(!LF.end){LF.end=LF.start;$('lEnd').value=LF.end;} renderSeg(); renderLvTime(); renderLvSum(); });
-    $('lEnd').addEventListener('change', function(e){ LF.end=e.target.value; renderSeg(); renderLvTime(); renderLvSum(); });
+    LF={ type:'sick', start:null, end:null, period:'full', reason:'', stime:'', etime:'' };
+    CAL=new Date(); CAL.setDate(1);
+    renderTypeGrid(); renderCal(); renderSeg(); renderLvTime(); renderLvSum();
     $('reason').addEventListener('input', function(e){ LF.reason=e.target.value; });
     $('btnLeave').addEventListener('click', submitLeave);
   }
@@ -255,7 +258,7 @@
       el.addEventListener('click', function(){ LF.type=el.dataset.k; renderTypeGrid(); renderLvSum(); }); });
   }
   function renderSeg(){
-    var multi = LF.start&&LF.end&&LF.end!==LF.start; if(multi) LF.period='full';
+    var multi = LF.start&&LF.end&&dkey(LF.start)!==dkey(LF.end); if(multi) LF.period='full';
     var opts=[['full','เต็มวัน'],['morning','ครึ่งเช้า'],['afternoon','ครึ่งบ่าย'],['hours','ราย ชม.']];
     $('seg').innerHTML=opts.map(function(o){ var dis=multi&&o[0]!=='full';
       return '<button class="seg-btn'+(LF.period===o[0]?' sel':'')+'"'+(dis?' disabled style="opacity:.4"':'')+' data-p="'+o[0]+'">'+o[1]+'</button>'; }).join('');
@@ -279,35 +282,120 @@
   function calcDays(){
     if(!LF.start) return 0;
     if(LF.period==='hours'){ var h=hoursDiff(LF.stime,LF.etime); return h?Math.round(h/8*100)/100:0; }
-    if(LF.period!=='full') return 0.5;
-    if(!LF.end||LF.end===LF.start) return 1;
-    return Math.max(1, Math.round((new Date(LF.end)-new Date(LF.start))/86400000)+1);
+    if(LF.period==='morning'||LF.period==='afternoon') return 0.5;
+    // เต็มวัน — นับเฉพาะวันทำงาน ข้ามวันหยุดกะ + วันหยุดบริษัท (mirror backend waCountWorkDays_)
+    var off=(SCHEDULE&&SCHEDULE.off&&SCHEDULE.off.length)?SCHEDULE.off:[0,6];
+    var cur=new Date(LF.start.getFullYear(),LF.start.getMonth(),LF.start.getDate());
+    var e=LF.end||LF.start; e=new Date(e.getFullYear(),e.getMonth(),e.getDate());
+    if(e<cur) return 0;
+    var n=0,g=0;
+    while(cur<=e&&g<400){ if(off.indexOf(cur.getDay())<0&&!holidayName(cur)) n++; cur.setDate(cur.getDate()+1); g++; }
+    return n;
   }
+  function fmtShow(d){ return d.getDate()+' '+TH_MONTHS[d.getMonth()]+' '+(d.getFullYear()+543); }
   function renderLvSum(){
     var el=$('lvSummary'); if(!el) return;
     if(!LF.start){ el.innerHTML=''; return; }
     var t=(TYPES.filter(function(x){return x.key===LF.type;})[0]||{}).label||'';
     var per={morning:'ครึ่งเช้า',afternoon:'ครึ่งบ่าย',hours:'ราย ชม.'}[LF.period]||'เต็มวัน';
     var qty=LF.period==='hours' ? (hoursDiff(LF.stime,LF.etime)||0)+' ชม. (≈'+calcDays()+' วัน)' : calcDays()+' วัน';
+    var dt=fmtShow(LF.start)+(LF.end&&dkey(LF.end)!==dkey(LF.start)?' — '+fmtShow(LF.end):'')+
+      (LF.period==='hours'&&LF.stime&&LF.etime?'  ⏰ '+LF.stime+'-'+LF.etime:'');
     el.innerHTML='<div class="chips"><div class="chip"><div class="chip-v">'+(TYPE_EMO[LF.type]||'')+' '+esc(t)+'</div><div class="chip-l">ประเภท</div></div>'+
       '<div class="chip"><div class="chip-v">'+qty+'</div><div class="chip-l">จำนวน</div></div>'+
-      '<div class="chip"><div class="chip-v">'+per+'</div><div class="chip-l">ช่วงเวลา</div></div></div>';
+      '<div class="chip"><div class="chip-v">'+per+'</div><div class="chip-l">ช่วงเวลา</div></div></div>'+
+      '<div style="text-align:center;color:var(--muted);font-size:13px;margin-top:8px">📅 '+dt+'</div>';
   }
   function lvErr(msg){ var e=$('lvErr'); e.textContent='⚠️ '+msg; e.classList.remove('hidden'); }
   function submitLeave(){
-    if(!LF.start){ lvErr('เลือกวันเริ่มก่อนค่ะ'); return; }
+    if(!LF.start){ lvErr('แตะเลือกวันที่ลาบนปฏิทินก่อนค่ะ'); return; }
     if(!LF.end) LF.end=LF.start;
-    if(new Date(LF.end)<new Date(LF.start)){ lvErr('วันสิ้นสุดต้องไม่ก่อนวันเริ่ม'); return; }
+    if(LF.end<LF.start){ lvErr('วันสิ้นสุดต้องไม่ก่อนวันเริ่ม'); return; }
     if(LF.period==='hours'){
       if(!LF.stime||!LF.etime){ lvErr('เลือกเวลาเริ่ม–สิ้นสุดก่อนค่ะ'); return; }
       if(hoursDiff(LF.stime,LF.etime)<=0){ lvErr('เวลาสิ้นสุดต้องหลังเวลาเริ่ม'); return; }
-    }
+    } else if(calcDays()<=0){ lvErr('ช่วงที่เลือกเป็นวันหยุดทั้งหมด เลือกวันทำงานนะคะ 😊'); return; }
     if(!LF.reason.trim()){ lvErr('กรอกเหตุผลก่อนค่ะ'); return; }
     toast('กำลังส่งใบลา…');
-    jsonp({action:'waLeaveSubmit', uid:UID, type:LF.type, start:LF.start, end:LF.end, period:LF.period, stime:LF.stime, etime:LF.etime, reason:LF.reason.trim()})
+    jsonp({action:'waLeaveSubmit', uid:UID, type:LF.type, start:iso(LF.start), end:iso(LF.end), period:LF.period, stime:LF.stime, etime:LF.etime, reason:LF.reason.trim()})
       .then(function(r){ if(!r||!r.ok){ lvErr((r&&r.error)||'ส่งไม่สำเร็จ'); return; }
         toast('✅ ส่งใบลา '+r.no+' แล้ว (รออนุมัติ)'); renderLeave();
       }).catch(function(e){ lvErr(e.message); });
+  }
+
+  // ═══════════ ปฏิทิน (ลา) + กะ/วันหยุด ═══════════
+  function dkey(d){ return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); }
+  function iso(d){ return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+  // วันหยุดบริษัท: รองรับทั้ง ค.ศ. และ พ.ศ. (ปี>2500 → -543)
+  function _holParse_(s){ var p=String(s).split('/'); if(p.length!==3) return null; var y=+p[2]; if(y>2500)y-=543; return {y:y,mo:(+p[1])-1,d:+p[0]}; }
+  function holidayName(dt){ var t=dt.getFullYear()+'-'+dt.getMonth()+'-'+dt.getDate();
+    for(var i=0;i<HOLIDAYS.length;i++){ var hp=_holParse_(HOLIDAYS[i].date); if(hp&&(hp.y+'-'+hp.mo+'-'+hp.d)===t) return HOLIDAYS[i].name||'วันหยุดบริษัท'; } return ''; }
+  function holidaysInMonth(y,mo){ var out=[]; HOLIDAYS.forEach(function(h){ var hp=_holParse_(h.date); if(hp&&hp.y===y&&hp.mo===mo) out.push({day:hp.d,name:h.name||'วันหยุดบริษัท'}); }); return out.sort(function(a,b){return a.day-b.day;}); }
+  function buildCalLegend(y,mo){
+    var s=SCHEDULE, box='';
+    if(s){ var tm=(s.start&&s.end)?(' · '+esc(s.start)+'–'+esc(s.end)):'';
+      box+='<div class="cal-sched"><span class="cs-ic">🗓️</span><div><div class="cs-main">กะของคุณ: '+esc(s.label||s.code)+tm+'</div>'+(s.offLabel?'<div class="cs-sub">หยุด: '+esc(s.offLabel)+'</div>':'')+'</div></div>';
+    } else { box+='<div class="cal-sched"><span class="cs-ic">🗓️</span><div class="cs-main">หยุดเสาร์–อาทิตย์</div></div>'; }
+    var hol=holidaysInMonth(y,mo);
+    if(hol.length){ box+='<div class="cal-hols"><div class="ch-title">🎉 วันหยุดบริษัทเดือนนี้</div>'+
+      hol.map(function(x){ return '<div class="ch-row"><b>'+x.day+'</b> '+esc(x.name)+'</div>'; }).join('')+'</div>'; }
+    box+='<div class="cal-legend"><span class="lg"><i class="sw holiday"></i>วันหยุดบริษัท</span>'+
+      '<span class="lg"><i class="sw off"></i>วันหยุดของคุณ</span><span class="lg"><i class="sw today"></i>วันนี้</span></div>';
+    return box;
+  }
+  function renderCal(){
+    var y=CAL.getFullYear(), mo=CAL.getMonth();
+    var first=new Date(y,mo,1).getDay(), days=new Date(y,mo+1,0).getDate();
+    var todayK=dkey(new Date());
+    var off=(SCHEDULE&&SCHEDULE.off&&SCHEDULE.off.length)?SCHEDULE.off:[0,6];
+    var h='<div class="cal-head"><button class="cal-nav" id="cP" type="button">‹</button>'+
+      '<div class="cal-month">'+TH_MONTHS[mo]+' '+(y+543)+'</div>'+
+      '<button class="cal-nav" id="cN" type="button">›</button></div><div class="cal-grid">';
+    TH_DOW.forEach(function(d,i){ h+='<div class="cal-dow'+(i===0||i===6?' we':'')+'">'+d+'</div>'; });
+    for(var i=0;i<first;i++) h+='<div class="cal-day empty"></div>';
+    for(var d=1;d<=days;d++){
+      var dt=new Date(y,mo,d), k=dkey(dt), dow=dt.getDay(), hn=holidayName(dt);
+      var cls='cal-day';
+      if(off.indexOf(dow)>=0) cls+=' we';
+      if(hn) cls+=' holiday';
+      if(k===todayK) cls+=' today';
+      if(LF.start&&k===dkey(LF.start)) cls+=' sel';
+      if(LF.end&&k===dkey(LF.end)) cls+=' sel';
+      if(LF.start&&LF.end&&dt>LF.start&&dt<LF.end) cls+=' inrange';
+      var tip=hn?' title="'+esc(hn)+'"':'';
+      h+='<div class="'+cls+'"'+tip+' data-d="'+d+'">'+d+'</div>';
+    }
+    h+='</div>'+buildCalLegend(y,mo);
+    var c=$('calLeave'); if(!c) return; c.innerHTML=h;
+    $('cP').addEventListener('click', function(){ CAL=new Date(y,mo-1,1); renderCal(); });
+    $('cN').addEventListener('click', function(){ CAL=new Date(y,mo+1,1); renderCal(); });
+    Array.prototype.forEach.call(c.querySelectorAll('.cal-day[data-d]'), function(el){
+      el.addEventListener('click', function(){ pickLeave(new Date(y,mo,+el.dataset.d)); }); });
+  }
+  function pickLeave(dt){
+    if(!LF.start||(LF.start&&LF.end)){ LF.start=dt; LF.end=null; }
+    else if(dt<LF.start){ LF.start=dt; LF.end=null; }
+    else LF.end=dt;
+    if(LF.end&&dkey(LF.end)!==dkey(LF.start)) LF.period='full';
+    renderCal(); renderSeg(); renderLvTime(); renderLvSum();
+  }
+
+  // ═══════════ ปุ่มคู่มือลอย ═══════════
+  function openHelp(){
+    modal('<h3>📖 คู่มือการใช้งาน</h3>'+
+      '<div class="help-sec">📝 ขอลา</div>'+
+      '<p class="help-p">เลือกประเภทลา → แตะวันบนปฏิทิน (แตะ 2 วันเพื่อเลือกช่วง) → เลือกช่วงเวลา (เต็มวัน/ครึ่งวัน/ราย ชม.) → ใส่เหตุผล → กดส่ง · รออนุมัติผ่านไลน์</p>'+
+      '<div class="help-sec">🗓️ ปฏิทินสีต่าง ๆ</div>'+
+      '<div class="help-leg"><span class="lg"><i class="sw sel"></i>วันที่เลือก</span>'+
+        '<span class="lg"><i class="sw holiday"></i>วันหยุดบริษัท</span>'+
+        '<span class="lg"><i class="sw off"></i>วันหยุดกะ (ส-อา)</span>'+
+        '<span class="lg"><i class="sw today"></i>วันนี้</span></div>'+
+      '<p class="help-p" style="margin-top:8px">วันหยุดบริษัท + เสาร์–อาทิตย์ <b>ไม่นับเป็นวันลา</b> ให้อัตโนมัติค่ะ</p>'+
+      '<div class="help-sec">🗂️ งาน</div>'+
+      '<p class="help-p">งานของฉัน = งานที่ได้รับมอบหมาย · เปิดงานใหม่เองได้ · กด “รับงาน / ส่งตรวจ / โอนงาน” ได้ในการ์ด</p>'+
+      '<div class="help-sec">📁 เอกสาร</div>'+
+      '<p class="help-p">ดูสลิปเงินเดือน + คลังเอกสารของตัวเอง · ขอเอกสารใหม่ (หนังสือรับรอง ฯลฯ) HR จะออกให้</p>'+
+      '<div class="m-act" style="margin-top:16px"><button class="btn btn-primary" onclick="closeModal()" style="width:100%">เข้าใจแล้ว 😊</button></div>');
   }
 
   // ═══════════ VIEW: งานของฉัน ═══════════

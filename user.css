@@ -829,3 +829,23 @@ textarea:focus,input[type=time]:focus{border-color:var(--red)}
 .soon-t{font-size:18px;font-weight:700;margin-top:12px}
 .soon-d{font-size:13px;color:var(--muted);margin-top:8px;line-height:1.6;max-width:430px;margin:8px auto 0}
 .soon-b{display:inline-block;margin-top:16px;background:var(--bg);color:var(--muted);font-size:12px;font-weight:600;padding:7px 16px;border-radius:20px}
+
+/* ── ปุ่มคู่มือลอย (floating) — โผล่ทุกหน้า ── */
+.help-fab{position:fixed;right:16px;bottom:82px;z-index:45;border:none;
+  border-radius:24px;background:var(--red);color:#fff;font-family:inherit;font-size:14px;font-weight:700;
+  cursor:pointer;padding:11px 16px;box-shadow:0 6px 18px rgba(27,114,232,.4);display:flex;align-items:center;
+  gap:6px;line-height:1;transition:transform .15s,box-shadow .15s}
+.help-fab .hf-ic{font-size:16px;line-height:1}
+.help-fab:active{transform:scale(.94)}
+.help-fab:hover{box-shadow:0 8px 22px rgba(27,114,232,.5)}
+/* เนื้อหาในชีตคู่มือ */
+.help-sec{font-size:14px;font-weight:700;color:var(--red-deep);margin:14px 0 6px;display:flex;align-items:center;gap:6px}
+.help-sec:first-child{margin-top:0}
+.help-p{font-size:13.5px;color:#4A5262;line-height:1.65;margin:0 0 4px}
+.help-leg{display:flex;flex-wrap:wrap;gap:10px 16px;margin-top:6px}
+.help-leg .lg{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted)}
+.help-leg .sw{width:14px;height:14px;border-radius:4px;display:inline-block}
+.help-leg .sw.holiday{background:var(--red-soft);border:1px solid var(--red)}
+.help-leg .sw.off{background:#fff;border:1px solid var(--red)}
+.help-leg .sw.today{background:var(--red-tint);border:1px solid var(--red-tint)}
+.help-leg .sw.sel{background:var(--red)}
