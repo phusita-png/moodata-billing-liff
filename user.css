@@ -839,9 +839,9 @@ textarea:focus,input[type=time]:focus{border-color:var(--red)}
 .help-fab:active{transform:scale(.94)}
 .help-fab:hover{box-shadow:0 8px 22px rgba(27,114,232,.5)}
 /* หัวการ์ดคู่มือ — hero ฟ้า + มาสคอตถือหนังสือไดคัท */
-.help-hero{display:flex;align-items:center;gap:12px;margin:-20px -18px 16px;padding:14px 18px 14px 16px;
+.help-hero{display:flex;align-items:center;gap:10px;margin:-20px -18px 16px;padding:12px 16px;
   background:linear-gradient(135deg,#2E86F5 0%,var(--red) 60%,var(--red-deep) 100%);border-radius:18px 18px 0 0}
-.help-hero-img{width:84px;height:84px;object-fit:contain;flex:0 0 auto;filter:drop-shadow(0 4px 8px rgba(8,26,60,.34))}
+.help-hero-img{width:116px;height:116px;object-fit:contain;flex:0 0 auto;filter:drop-shadow(0 5px 9px rgba(8,26,60,.36))}
 .help-hero-t{font-size:20px;font-weight:800;color:#fff;line-height:1.15}
 .help-hero-s{font-size:13px;color:#DCEBFF;margin-top:3px}
 @media(min-width:860px){ .help-hero{border-radius:18px 18px 0 0} }
