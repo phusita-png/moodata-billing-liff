@@ -16,6 +16,7 @@
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0}
+html{background:var(--red)}   /* กันเฟรมแรกขาวก่อน loader ฟ้าเรนเดอร์ */
 body{font-family:'IBM Plex Sans Thai',system-ui,sans-serif;background:var(--bg);
   color:var(--ink);-webkit-font-smoothing:antialiased}
 .hidden{display:none!important}
@@ -41,11 +42,9 @@ img{max-width:100%}
 .hd{position:sticky;top:0;z-index:15;display:flex;align-items:center;gap:12px;
   background:var(--red);color:#fff;padding:14px 16px;
   box-shadow:0 2px 12px rgba(27,114,232,.25)}
-.hd-logo{height:42px;background:#fff;border-radius:10px;padding:5px 10px;flex:0 0 auto;
-  display:flex;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,.15)}
-.hd-logo img{height:100%;width:auto;display:block}
-.hd-logo.noimg{padding:0 10px}
-.hd-logo.noimg::before{content:'Moodata';font-weight:700;color:var(--red);font-size:15px}
+.hd-logo{height:52px;background:none;padding:0;flex:0 0 auto;display:flex;align-items:center}
+.hd-logo img{height:100%;width:auto;display:block;filter:drop-shadow(0 2px 5px rgba(10,30,70,.30))}
+.hd-logo.noimg::before{content:'Moodata';font-weight:700;color:#fff;font-size:15px}
 .hd-mid{flex:1;min-width:0}
 .hd-title{font-size:16px;font-weight:700;line-height:1.15}
 .hd-sub{font-size:12px;opacity:.85}
@@ -686,11 +685,10 @@ textarea:focus,input[type=time]:focus{border-color:var(--red)}
     background:var(--red); box-shadow:0 2px 12px rgba(27,114,232,.22)}
   /* เอา "หน้าหลัก" ออกบน PC (ซ้ำกับเมนูทำงาน HR) — โปรไฟล์เลื่อนขึ้นแทน */
   .nav-btn[data-view="home"]{display:none}
-  .nb-logo{width:38px;height:38px;border-radius:10px;background:#fff;flex:0 0 auto;
-    display:flex;align-items:center;justify-content:center;overflow:hidden;
-    box-shadow:0 1px 4px rgba(0,0,0,.12)}
-  .nb-logo img{width:100%;height:100%;object-fit:contain;padding:3px}
-  .nb-logo.noimg::before{content:'E';font-weight:800;color:var(--red);font-size:18px}
+  .nb-logo{width:auto;height:50px;background:none;flex:0 0 auto;
+    display:flex;align-items:center;justify-content:center}
+  .nb-logo img{height:100%;width:auto;object-fit:contain;filter:drop-shadow(0 2px 5px rgba(10,30,70,.30))}
+  .nb-logo.noimg::before{content:'Moodata';font-weight:800;color:#fff;font-size:16px}
   .nb-txt{font-weight:700;font-size:15px;line-height:1.1;color:#fff}
   .nb-txt small{display:block;font-weight:400;font-size:10.5px;color:rgba(255,255,255,.82);margin-top:2px}
 
