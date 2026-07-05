@@ -22,6 +22,8 @@
   .brand{ padding:4px 10px 16px; } .brand b{ font-size:19px; color:var(--rose); }
   .brand .logo{ font-size:18px; } .brand-sub{ font-size:12px; color:var(--muted); margin-top:2px; }
   .nav{ display:flex; flex-direction:column; gap:4px; }
+  .nav-sec{ font-size:11px; font-weight:700; color:var(--muted); letter-spacing:.4px; padding:14px 14px 4px; }
+  @media(max-width:820px){ .nav-sec{ display:none; } }
   .nav-i{ display:flex; align-items:center; gap:10px; padding:11px 14px; border-radius:12px;
           font-size:15px; font-weight:600; color:var(--ink); cursor:pointer; text-decoration:none; white-space:nowrap; }
   .nav-i:hover{ background:var(--bg2); }
@@ -182,9 +184,16 @@
   // เมนูซ้าย — เตรียมรับฟังก์ชันอื่นในอนาคต (ready:false = ยังไม่เปิด แสดง "เร็ว ๆ นี้")
   var PAGE='tasks';
   var NAV=[
-    { id:'tasks',   icon:'📋', label:'งานทั้งหมด',   ready:true },
-    { id:'profile', icon:'👤', label:'ข้อมูลส่วนตัว', ready:false }
+    { sec:'งาน' },
+    { id:'tasks',   icon:'📋', label:'งานทั้งหมด', ready:true },
+    { sec:'ข้อมูลของฉัน' },
+    { id:'profile', icon:'👤', label:'โปรไฟล์',      ready:true },
+    { id:'leave',   icon:'📝', label:'ขอลา',         ready:true },
+    { id:'ot',      icon:'⏰', label:'ขอ OT',         ready:true },
+    { id:'reqdoc',  icon:'📄', label:'ขอเอกสาร',     ready:true },
+    { id:'mydocs',  icon:'🗂️', label:'เอกสารของฉัน',  ready:true }
   ];
+  var MEBOOT=null, MEQUOTA=null;   // cache โปรไฟล์/โควต้า
   var THMON=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
   var THMONF=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 
@@ -352,13 +361,94 @@
   // ── เมนูซ้าย ──
   function renderNav(){
     $('nav').innerHTML=NAV.map(function(n){
+      if(n.sec)   return '<div class="nav-sec">'+n.sec+'</div>';
       if(n.ready) return '<a class="nav-i'+(n.id===PAGE?' active':'')+'" onclick="go(\''+n.id+'\')">'+n.icon+' '+n.label+'</a>';
       return '<a class="nav-i soon">'+n.icon+' '+n.label+'<span class="soon-b">เร็ว ๆ นี้</span></a>';
     }).join('');
   }
   function go(id){ var n=NAV.filter(function(x){return x.id===id;})[0]; if(!n||!n.ready||id===PAGE) return;
-    PAGE=id; renderNav(); /* อนาคต: สลับเนื้อหาแต่ละหน้าที่นี่ */ }
+    PAGE=id; renderNav(); route(); }
   window.go=go;
+
+  // ── สลับหน้า: กระดานงาน ↔ ข้อมูลของฉัน ──
+  var TITLES={ tasks:'งานทั้งหมด', profile:'โปรไฟล์', leave:'ขอลา', ot:'ขอ OT', reqdoc:'ขอเอกสาร', mydocs:'เอกสารของฉัน' };
+  function taskChrome(show){
+    ['stats','views','hint'].forEach(function(id){ var el=$(id); if(el) el.style.display=show?'':'none'; });
+    var tools=document.querySelector('.tools'); if(tools) tools.style.display=show?'':'none';
+    ['fRange','btnCreate','who'].forEach(function(id){ var el=$(id); if(el) el.style.display=show?'':'none'; });
+  }
+  function route(){
+    $('pageTitle').textContent=TITLES[PAGE]||'';
+    if(PAGE==='tasks'){ taskChrome(true); render(); return; }
+    taskChrome(false);
+    if(PAGE==='profile') renderProfile();
+    else if(PAGE==='leave')  soonPage('📝','ขอลา','ฟอร์มแจ้งลา + ประวัติการลา — กำลังพอร์ตจากแอปมือถือ เร็ว ๆ นี้');
+    else if(PAGE==='ot')     soonPage('⏰','ขอ OT','ระบบ OT กำลังพัฒนา (ยังไม่เปิดใช้)');
+    else if(PAGE==='reqdoc') renderReqdoc();
+    else if(PAGE==='mydocs') renderMydocs();
+  }
+  function soonPage(emo,title,desc){ $('view').innerHTML='<div class="center"><div style="font-size:44px;margin-bottom:6px">'+emo+'</div><h2 style="margin:0 0 8px">'+title+'</h2><p style="color:var(--muted);max-width:420px;margin:0 auto">'+desc+'</p></div>'; }
+
+  // ── โปรไฟล์ (ข้อมูลจริง) ──
+  function meLoad(){
+    if(MEBOOT&&MEQUOTA) return Promise.resolve();
+    return jsonp({action:'waBootstrap',uid:UID}).then(function(r){ MEBOOT=r||{}; return jsonp({action:'waLeaveInit',uid:UID}); })
+      .then(function(r){ if(r&&r.ok) MEQUOTA=r.quota; }).catch(function(){});
+  }
+  function pqb(emo,b,lb){ if(!b) return ''; return '<div class="stat"><div class="lab">'+emo+' '+lb+'</div><div class="num">'+b.remain+'</div><div class="sub">เต็ม '+b.quota+' วัน</div></div>'; }
+  function renderProfile(){
+    $('view').innerHTML='<div class="center"><div class="spin"></div>กำลังโหลด…</div>';
+    meLoad().then(function(){
+      var b=MEBOOT||{}, q=MEQUOTA;
+      var role=b.isOwner?'<span class="badge b-review">⭐ OWNER</span>':'<span class="badge b-doing">ทีมงาน</span>';
+      var html='<div class="card" style="padding:22px;margin-bottom:18px;display:flex;align-items:center;gap:16px">'+
+        '<div style="width:56px;height:56px;border-radius:50%;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:28px">🙂</div>'+
+        '<div><div style="font-size:20px;font-weight:700">'+esc(b.nick||'ทีมงาน')+'</div><div style="margin-top:6px">'+role+'</div></div></div>';
+      if(q){ html+='<h3 style="margin:4px 2px 10px;font-size:16px">🗓️ วันลาคงเหลือ ปี '+(q.year+543)+'</h3>'+
+        '<div class="stats" style="padding:0">'+pqb('🤒',q.sick,'ลาป่วย')+pqb('📄',q.personal,'ลากิจ')+pqb('🌴',q.vacation,'พักร้อน')+'</div>'; }
+      html+='<div class="note" style="margin:18px 0 0">⏰ OT รอบนี้ — ระบบ OT กำลังพัฒนา</div>';
+      $('view').innerHTML=html;
+    });
+  }
+
+  // ── ขอเอกสาร (คำขอ = ยิงจริง · ประวัติ = placeholder) ──
+  function renderReqdoc(){
+    $('view').innerHTML='<div class="views" style="padding:0 0 14px"><div class="vtab active" id="rqT1" onclick="rqTab(1)">📝 คำขอเอกสาร</div><div class="vtab" id="rqT2" onclick="rqTab(2)">🕘 ประวัติขอเอกสาร</div></div><div id="rqBody"></div>';
+    rqTab(1);
+  }
+  function rqTab(n){
+    $('rqT1').className='vtab'+(n===1?' active':''); $('rqT2').className='vtab'+(n===2?' active':'');
+    if(n===1){
+      $('rqBody').innerHTML='<div class="card" style="max-width:560px;padding:20px">'+
+        '<div id="rqErr" class="err hide"></div>'+
+        '<div class="fld"><label>ประเภทเอกสาร</label><select id="rqType"><option value="work">หนังสือรับรองการทำงาน</option><option value="salary">หนังสือรับรองเงินเดือน</option><option value="other">อื่น ๆ (ระบุเอง)</option></select></div>'+
+        '<div class="fld"><label>รายละเอียด / จุดประสงค์</label><textarea id="rqDetail" placeholder="เช่น ใช้ยื่นกู้ธนาคาร, ระบุชื่อเอกสารที่ต้องการ…"></textarea></div>'+
+        '<button class="btn btn-p" onclick="rqSubmit()">📨 ส่งคำขอถึง HR</button></div>';
+    } else {
+      $('rqBody').innerHTML='<div class="center"><div style="font-size:38px">🕘</div><p style="color:var(--muted)">ประวัติคำขอเอกสาร — กำลังเชื่อมข้อมูล เร็ว ๆ นี้</p></div>';
+    }
+  }
+  function rqSubmit(){
+    var type=$('rqType').value, detail=($('rqDetail').value||'').trim();
+    var er=$('rqErr'); er.classList.add('hide');
+    if(type==='other' && !detail){ er.textContent='⚠️ กรุณาระบุรายละเอียดเอกสาร'; er.classList.remove('hide'); return; }
+    jsonp({action:'waReqDocSubmit',uid:UID,type:type,detail:detail}).then(function(r){
+      if(!r||!r.ok){ er.textContent='⚠️ '+((r&&r.error)||'ส่งไม่สำเร็จ'); er.classList.remove('hide'); return; }
+      toast('ส่งคำขอแล้ว ✅ HR จะดำเนินการค่ะ'); var d=$('rqDetail'); if(d) d.value='';
+    }).catch(function(e){ er.textContent='⚠️ '+e.message; er.classList.remove('hide'); });
+  }
+
+  // ── เอกสารของฉัน (5 หมวด · UI ก่อน placeholder) ──
+  var MDCATS=[['💵','สลิปเงินเดือน'],['📄','หนังสือรับรองเงินเดือน'],['🏢','หนังสือรับรองการทำงาน'],['⏰','ใบสรุปเบิก OT'],['📝','หนังสือสัญญาจ้าง']];
+  function renderMydocs(){
+    $('view').innerHTML='<div class="views" style="padding:0 0 14px">'+MDCATS.map(function(c,i){return '<div class="vtab'+(i===0?' active':'')+'" id="mdT'+i+'" onclick="mdTab('+i+')">'+c[0]+' '+c[1]+'</div>';}).join('')+'</div><div id="mdBody"></div>';
+    mdTab(0);
+  }
+  function mdTab(i){
+    MDCATS.forEach(function(c,j){ var el=$('mdT'+j); if(el) el.className='vtab'+(j===i?' active':''); });
+    $('mdBody').innerHTML='<div class="center"><div style="font-size:40px">'+MDCATS[i][0]+'</div><h3 style="margin:6px 0 4px">'+MDCATS[i][1]+'</h3><p style="color:var(--muted)">ยังไม่มีเอกสารในหมวดนี้ (เตรียมพื้นที่ไว้แล้ว)</p></div>';
+  }
+  window.rqTab=rqTab; window.rqSubmit=rqSubmit; window.mdTab=mdTab;
 
   // ── controls ──
   function setView(v){ VIEW=v; render(); }
