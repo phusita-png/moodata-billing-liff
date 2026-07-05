@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="user.css?v=9">
+<link rel="stylesheet" href="user.css?v=10">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -382,7 +382,8 @@
 
   // ═══════════ ปุ่มคู่มือลอย ═══════════
   function openHelp(){
-    modal('<h3>📖 คู่มือการใช้งาน</h3>'+
+    modal('<div class="help-hero"><img src="mascot-book.png" alt="ยินดี" class="help-hero-img">'+
+      '<div><div class="help-hero-t">คู่มือการใช้งาน</div><div class="help-hero-s">ยินดีอธิบายให้เองค่ะ 😊</div></div></div>'+
       '<div class="help-sec">📝 ขอลา</div>'+
       '<p class="help-p">เลือกประเภทลา → แตะวันบนปฏิทิน (แตะ 2 วันเพื่อเลือกช่วง) → เลือกช่วงเวลา (เต็มวัน/ครึ่งวัน/ราย ชม.) → ใส่เหตุผล → กดส่ง · รออนุมัติผ่านไลน์</p>'+
       '<div class="help-sec">🗓️ ปฏิทินสีต่าง ๆ</div>'+
