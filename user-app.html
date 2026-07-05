@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="user.css?v=1">
+<link rel="stylesheet" href="user.css?v=2">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -99,16 +99,16 @@
 
 <!-- LOADING -->
 <div id="loader" class="loader">
-  <div class="loader-logo noimg"></div>
+  <div class="loader-logo"><img src="mascot-wave.png" alt="ยินดี"></div>
   <div class="loader-bar"><i></i></div>
-  <div class="loader-text">กำลังโหลด…</div>
+  <div class="loader-text">ยินดีกำลังโหลดข้อมูลให้ค่ะ…</div>
 </div>
 
 <!-- APP -->
 <div id="app" class="app hidden">
   <header class="hd">
-    <div class="hd-logo noimg"></div>
-    <div class="hd-mid"><div class="hd-title">Moodata</div><div class="hd-sub" id="hdSub">ทีมงาน</div></div>
+    <div class="hd-logo"><img src="mascot-wave.png" alt="ยินดี"></div>
+    <div class="hd-mid"><div class="hd-title">Moodata Yindee</div><div class="hd-sub" id="hdSub">ทีมงาน</div></div>
     <div class="hd-avatar" id="avatar">🙂</div>
   </header>
 
@@ -121,7 +121,7 @@
   <main id="main" class="main"></main>
 
   <nav class="nav">
-    <div class="nav-brand"><span class="nb-logo">💠</span><div class="nb-txt">Moodata<small>ทีมงาน</small></div></div>
+    <div class="nav-brand"><span class="nb-logo"><img src="mascot-wave.png" alt="ยินดี"></span><div class="nb-txt">Moodata Yindee<small>ทีมงาน</small></div></div>
 
     <div class="nav-sec">งาน</div>
     <button class="nav-btn" data-view="mytasks" aria-label="งานของฉัน">
@@ -228,7 +228,7 @@
     // ประวัติ
     html+='<div class="section-h">ประวัติการลา</div>';
     html+= LEAVES.length ? '<div class="card" style="padding:6px 12px">'+LEAVES.map(histLeave).join('')+'</div>'
-                         : '<div class="card"><div class="empty">ยังไม่มีประวัติการลา 😊</div></div>';
+                         : '<div class="card"><div class="emptybox">ยังไม่มีประวัติการลา 😊</div></div>';
     $('main').innerHTML=html;
     LF={ type:'sick', start:'', end:'', period:'full', reason:'', stime:'', etime:'' };
     renderTypeGrid(); renderSeg(); renderLvTime(); renderLvSum();
@@ -319,7 +319,7 @@
       MENAME=(r.me&&r.me.name)||''; TEAM=r.team||[]; CUSTOMERS=r.customers||[];
       var ts=r.tasks||[];
       var html='<button class="btn btn-primary" style="width:100%;margin-bottom:14px" onclick="openCreate()">➕ เปิดงานใหม่</button>';
-      html+= ts.length ? ts.map(cardMy).join('') : '<div class="card"><div class="empty">ยังไม่มีงานที่มอบหมายให้คุณ 😊</div></div>';
+      html+= ts.length ? ts.map(cardMy).join('') : '<div class="card"><div class="emptybox">ยังไม่มีงานที่มอบหมายให้คุณ 😊</div></div>';
       $('main').innerHTML=html;
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
   }
@@ -414,7 +414,7 @@
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
   }
   function paintBoard(tasks){
-    if(!tasks.length){ $('main').innerHTML='<div class="card"><div class="empty">ยังไม่มีงาน 😊</div></div>'; return; }
+    if(!tasks.length){ $('main').innerHTML='<div class="card"><div class="emptybox">ยังไม่มีงาน 😊</div></div>'; return; }
     var order=[], groups={};
     tasks.forEach(function(t){ var c=t.customer||'(ไม่ระบุบริษัท)'; if(!groups[c]){ groups[c]=[]; order.push(c); } groups[c].push(t); });
     var html='';
@@ -456,7 +456,7 @@
     html+= (r.payslips||[]).length
       ? '<div class="card"><div class="chip-row">'+r.payslips.map(function(m){
           return '<button class="doc-chip" onclick="openSlip(\''+esc(m.key)+'\')">'+esc(m.label)+'</button>'; }).join('')+'</div></div>'
-      : '<div class="card"><div class="empty">ยังไม่มีสลิปค่ะ</div></div>';
+      : '<div class="card"><div class="emptybox">ยังไม่มีสลิปค่ะ</div></div>';
     // คลังเอกสาร
     html+='<div class="section-h">📁 เอกสารของฉัน</div>';
     html+= (r.docs||[]).length
@@ -464,7 +464,7 @@
           return '<a class="doc-item" href="'+esc(d.link)+'" target="_blank"><span class="di-ic">📄</span>'+
             '<span class="di-main"><b>'+esc(d.title)+'</b>'+(d.at?'<small>'+esc(d.at)+'</small>':'')+'</span>'+
             '<span class="di-go">›</span></a>'; }).join('')+'</div>'
-      : '<div class="card"><div class="empty">ยังไม่มีเอกสารในคลัง 🙏</div></div>';
+      : '<div class="card"><div class="emptybox">ยังไม่มีเอกสารในคลัง 🙏</div></div>';
     // ขอเอกสารใหม่ (ฟอร์ม)
     html+='<div class="section-h">📝 ขอเอกสารใหม่</div>';
     html+='<div class="card"><div id="rqErr" class="edit-banner hidden" style="background:#fbe7e7;color:#c0392b"></div>'+
@@ -476,7 +476,7 @@
     html+='<div class="section-h">ประวัติคำขอ</div>';
     html+= (r.reqs||[]).length
       ? '<div class="card" style="padding:6px 12px">'+r.reqs.map(reqItem).join('')+'</div>'
-      : '<div class="card"><div class="empty">ยังไม่มีคำขอ 😊</div></div>';
+      : '<div class="card"><div class="emptybox">ยังไม่มีคำขอ 😊</div></div>';
     $('main').innerHTML=html;
     RQ={ type:(DOCTYPES[0]||{}).key||'', detail:'' };
     renderRqTypes();

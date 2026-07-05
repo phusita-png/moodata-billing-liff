@@ -426,6 +426,11 @@ textarea:focus,input[type=time]:focus{border-color:var(--red)}
 .empty .e-emo{font-size:42px}
 .empty .e-txt{margin-top:10px;font-size:14px;line-height:1.5}
 
+/* ── Empty (มีมาสคอตยินดี) — เฉพาะจุด "ไม่มีข้อมูล" (ไม่ใช่ error/ปฏิทิน) ── */
+.emptybox{text-align:center;padding:28px 20px 40px;color:var(--muted);font-size:14px;line-height:1.5}
+.emptybox::before{content:'';display:block;width:132px;height:132px;margin:0 auto 8px;
+  background:url(mascot-thumbs.png) center/contain no-repeat}
+
 /* ── Bottom nav ── */
 .nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;
   background:#fff;display:flex;border-top:1px solid var(--line);z-index:20;
