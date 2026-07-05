@@ -40,9 +40,9 @@ img{max-width:100%}
 
 /* ── Header (corporate red bar) ── */
 .hd{position:sticky;top:0;z-index:15;display:flex;align-items:flex-end;gap:12px;
-  background:var(--red);color:#fff;padding:0 16px;height:100px;
+  background:var(--red);color:#fff;padding:0 18px;height:140px;
   box-shadow:0 2px 12px rgba(27,114,232,.25)}
-.hd-logo{height:100px;background:none;padding:0;flex:0 0 auto;display:flex;align-items:flex-end}
+.hd-logo{height:140px;background:none;padding:0;flex:0 0 auto;display:flex;align-items:flex-end}
 .hd-logo img{height:100%;width:auto;display:block;filter:drop-shadow(0 3px 6px rgba(10,30,70,.32))}
 .hd-logo.noimg::before{content:'Moodata';font-weight:700;color:#fff;font-size:15px;align-self:center}
 .hd-mid{flex:1;min-width:0;align-self:center}
