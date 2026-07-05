@@ -39,13 +39,14 @@ img{max-width:100%}
 .app{max-width:480px;margin:0 auto;min-height:100vh;padding-bottom:80px;position:relative}
 
 /* ── Header (corporate red bar) ── */
-.hd{position:sticky;top:0;z-index:15;display:flex;align-items:center;gap:12px;
-  background:var(--red);color:#fff;padding:14px 16px;
+.hd{position:sticky;top:0;z-index:15;display:flex;align-items:flex-end;gap:12px;
+  background:var(--red);color:#fff;padding:0 16px;height:84px;
   box-shadow:0 2px 12px rgba(27,114,232,.25)}
-.hd-logo{height:52px;background:none;padding:0;flex:0 0 auto;display:flex;align-items:center}
-.hd-logo img{height:100%;width:auto;display:block;filter:drop-shadow(0 2px 5px rgba(10,30,70,.30))}
-.hd-logo.noimg::before{content:'Moodata';font-weight:700;color:#fff;font-size:15px}
-.hd-mid{flex:1;min-width:0}
+.hd-logo{height:84px;background:none;padding:0;flex:0 0 auto;display:flex;align-items:flex-end}
+.hd-logo img{height:100%;width:auto;display:block;filter:drop-shadow(0 3px 6px rgba(10,30,70,.32))}
+.hd-logo.noimg::before{content:'Moodata';font-weight:700;color:#fff;font-size:15px;align-self:center}
+.hd-mid{flex:1;min-width:0;align-self:center}
+.hd-avatar{align-self:center}
 .hd-title{font-size:16px;font-weight:700;line-height:1.15}
 .hd-sub{font-size:12px;opacity:.85}
 .hd-avatar{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.18);
