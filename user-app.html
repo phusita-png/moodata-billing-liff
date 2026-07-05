@@ -459,10 +459,14 @@
   // เปิดงานใหม่
   function openCreate(){
     var opts='<option value="">— ไม่ระบุลูกค้า —</option>'+CUSTOMERS.map(function(c){return '<option value="'+esc(c)+'">'+esc(c)+'</option>';}).join('');
+    var asgOpts='<option value="">— ทำเอง (เป็นงานของฉัน) —</option>'+
+      TEAM.filter(function(m){return m.name!==MENAME;}).map(function(m){
+        var lb=m.name+(m.nick&&m.nick!==m.name?' ('+m.nick+')':''); return '<option value="'+esc(m.name)+'">'+esc(lb)+'</option>'; }).join('');
     modal('<h3>➕ เปิดงานใหม่</h3><div id="mErr" class="m-err hidden"></div>'+
       '<div class="fld"><label>ลูกค้า</label><select id="cCust">'+opts+'</select></div>'+
       '<div class="fld"><label>ชื่องาน (ไม่บังคับ)</label><input id="cTitle" placeholder="เช่น ทำสลิปเงินเดือน"></div>'+
       '<div class="fld"><label>รายละเอียดงาน</label><textarea id="cDetail" placeholder="อธิบายงาน…"></textarea></div>'+
+      '<div class="fld"><label>👤 มอบหมายให้</label><select id="cAsg">'+asgOpts+'</select></div>'+
       '<div class="fld"><label>กำหนดส่ง (ไม่บังคับ)</label><input type="date" id="cDue"></div>'+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
       '<button class="btn btn-primary" onclick="doCreate()">เปิดงาน</button></div>');
@@ -471,8 +475,10 @@
     var detail=$('cDetail').value.trim();
     if(!detail){ mErr('กรอกรายละเอียดงานก่อนค่ะ'); return; }
     toast('กำลังเปิดงาน…');
-    jsonp({action:'waTeamCreate',uid:UID,customer:$('cCust').value,title:$('cTitle').value.trim(),detail:detail,due:$('cDue').value})
-      .then(function(r){ if(!r||!r.ok){ mErr((r&&r.error)||'เปิดงานไม่สำเร็จ'); return; } closeModal(); toast('➕ เปิดงาน '+r.no+' แล้ว (แจ้งพี่ให้)'); renderMytasks(); })
+    jsonp({action:'waTeamCreate',uid:UID,customer:$('cCust').value,title:$('cTitle').value.trim(),detail:detail,due:$('cDue').value,assignee:$('cAsg').value})
+      .then(function(r){ if(!r||!r.ok){ mErr((r&&r.error)||'เปิดงานไม่สำเร็จ'); return; } closeModal();
+        var who=(r.assignee&&r.assignee!==MENAME) ? (' · มอบให้ '+r.assignee+(r.notified?' (แจ้ง LINE แล้ว)':' (ยังไม่มี LINE)')) : '';
+        toast('➕ เปิดงาน '+r.no+' แล้ว'+who); renderMytasks(); })
       .catch(function(e){ mErr(e.message); });
   }
   // โอนงาน
