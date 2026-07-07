@@ -8,13 +8,15 @@
   :root{
     --brand:#1E8FE1; --brand-deep:#146bb0; --brand-dk:#0f4f83;
     --tint:#e7f2fc; --tint-2:#d3e8fb;
-    --bg:#f2f7fc; --surface:#ffffff; --surface-2:#f6f9fd;
+    --bg:#eef5fc; --surface:#ffffff; --surface-2:#f6f9fd;
     --ink:#16283a; --ink-soft:#4a5d72; --ink-faint:#8398ad;
     --line:#dbe7f2; --line-2:#c6d8e8;
     --ok:#1f9d63; --ok-tint:#e3f5ec;
     --wip:#d9832a; --wip-tint:#fbefe1;
+    --line-green:#06c755;
     --shadow:0 1px 2px rgba(20,60,100,.06), 0 10px 30px rgba(20,60,100,.08);
     --shadow-sm:0 1px 2px rgba(20,60,100,.06), 0 4px 14px rgba(20,60,100,.06);
+    --shadow-phone:0 30px 60px -18px rgba(15,79,131,.5), 0 8px 20px rgba(15,79,131,.25);
     --r:18px;
   }
   @media (prefers-color-scheme:dark){
@@ -26,99 +28,218 @@
       --ok:#43c184; --ok-tint:#10261c; --wip:#e3a05a; --wip-tint:#2c2113;
       --shadow:0 1px 2px rgba(0,0,0,.35), 0 12px 34px rgba(0,0,0,.45);
       --shadow-sm:0 1px 2px rgba(0,0,0,.3), 0 5px 16px rgba(0,0,0,.4);
+      --shadow-phone:0 30px 60px -18px rgba(0,0,0,.7), 0 8px 20px rgba(0,0,0,.5);
       --brand:#4fabf0; --brand-deep:#7cc2f5;
     }
   }
+  :root[data-theme="light"]{
+    --bg:#eef5fc; --surface:#fff; --surface-2:#f6f9fd; --ink:#16283a; --ink-soft:#4a5d72;
+    --ink-faint:#8398ad; --line:#dbe7f2; --line-2:#c6d8e8; --tint:#e7f2fc; --tint-2:#d3e8fb;
+    --ok:#1f9d63; --ok-tint:#e3f5ec; --wip:#d9832a; --wip-tint:#fbefe1;
+    --brand:#1E8FE1; --brand-deep:#146bb0;
+    --shadow:0 1px 2px rgba(20,60,100,.06), 0 10px 30px rgba(20,60,100,.08);
+    --shadow-sm:0 1px 2px rgba(20,60,100,.06), 0 4px 14px rgba(20,60,100,.06);
+    --shadow-phone:0 30px 60px -18px rgba(15,79,131,.5), 0 8px 20px rgba(15,79,131,.25);
+  }
+  :root[data-theme="dark"]{
+    --bg:#0d1620; --surface:#152232; --surface-2:#1b2b3d; --ink:#e8f0f8; --ink-soft:#a9bccf;
+    --ink-faint:#6f8399; --line:#26384b; --line-2:#324a61; --tint:#13293f; --tint-2:#173754;
+    --ok:#43c184; --ok-tint:#10261c; --wip:#e3a05a; --wip-tint:#2c2113;
+    --brand:#4fabf0; --brand-deep:#7cc2f5;
+    --shadow:0 1px 2px rgba(0,0,0,.35), 0 12px 34px rgba(0,0,0,.45);
+    --shadow-sm:0 1px 2px rgba(0,0,0,.3), 0 5px 16px rgba(0,0,0,.4);
+    --shadow-phone:0 30px 60px -18px rgba(0,0,0,.7), 0 8px 20px rgba(0,0,0,.5);
+  }
   *{box-sizing:border-box}
-  html{-webkit-text-size-adjust:100%; background:var(--brand-dk)}
+  html{-webkit-text-size-adjust:100%; background:var(--brand-dk); scroll-behavior:smooth}
   body{
     margin:0; background:var(--bg); color:var(--ink);
     font-family:"Sarabun","IBM Plex Sans Thai","Noto Sans Thai","Leelawadee UI",system-ui,-apple-system,sans-serif;
     line-height:1.65; font-size:16px; -webkit-font-smoothing:antialiased;
   }
-  .wrap{max-width:680px; margin:0 auto; padding:0 16px 60px}
+  .wrap{max-width:960px; margin:0 auto; padding:0 18px 64px}
 
-  /* hero */
+  /* ---------- HERO ---------- */
   .hero{
     background:
-      radial-gradient(130% 120% at 80% -10%, rgba(255,255,255,.22), transparent 55%),
-      linear-gradient(160deg, var(--brand) 0%, var(--brand-deep) 60%, var(--brand-dk) 100%);
-    color:#fff; text-align:center; padding:38px 20px 30px; position:relative; overflow:hidden;
+      radial-gradient(120% 130% at 88% -20%, rgba(255,255,255,.24), transparent 52%),
+      linear-gradient(155deg, var(--brand) 0%, var(--brand-deep) 55%, var(--brand-dk) 100%);
+    color:#fff; position:relative; overflow:hidden; padding:46px 0 66px;
   }
-  .hero::after{content:""; position:absolute; left:0; right:0; bottom:-1px; height:34px;
-    background:var(--bg); border-radius:50% 50% 0 0 / 100% 100% 0 0;}
-  .hero img{width:132px; height:auto; filter:drop-shadow(0 8px 16px rgba(0,40,80,.28)); margin-bottom:6px}
-  .hero .kicker{font-size:13px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; opacity:.9}
-  .hero h1{font-size:clamp(25px,7vw,34px); margin:6px 0 8px; font-weight:800; letter-spacing:-.01em; text-wrap:balance}
-  .hero p{margin:0 auto; max-width:34ch; font-size:15.5px; opacity:.95}
+  .hero::after{content:""; position:absolute; left:0; right:0; bottom:-1px; height:40px;
+    background:var(--bg); border-radius:50% 50% 0 0 / 100% 100% 0 0}
+  .hero-in{max-width:960px; margin:0 auto; padding:0 22px; position:relative; z-index:2;
+    display:grid; grid-template-columns:1fr; gap:26px; align-items:center; text-align:center}
+  .hero .kicker{display:inline-flex; align-items:center; gap:7px; font-size:12.5px; font-weight:700;
+    letter-spacing:.04em; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.28);
+    padding:6px 14px; border-radius:999px; backdrop-filter:blur(4px)}
+  .hero h1{font-size:clamp(28px,7.4vw,42px); margin:14px 0 10px; font-weight:800; letter-spacing:-.015em;
+    line-height:1.12; text-wrap:balance}
+  .hero .lead{margin:0 auto; max-width:40ch; font-size:16px; opacity:.95}
+  .hero-meta{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:18px}
+  .hero-meta span{font-size:12.5px; font-weight:600; background:rgba(255,255,255,.14);
+    border:1px solid rgba(255,255,255,.24); padding:5px 12px; border-radius:999px}
+  .hero-phone{justify-self:center}
+  @media (min-width:800px){
+    .hero{padding:56px 0 78px}
+    .hero-in{grid-template-columns:1.05fr .95fr; text-align:left; gap:34px}
+    .hero .kicker{align-self:flex-start}
+    .hero .lead{margin:0}
+    .hero-meta{justify-content:flex-start}
+    .hero-phone{justify-self:end}
+  }
 
-  /* toc */
-  .toc{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:22px 0 4px}
-  .toc a{
-    font-size:13.5px; font-weight:600; text-decoration:none; color:var(--brand-deep);
+  /* ---------- PHONE FRAME ---------- */
+  .phone{width:264px; max-width:78vw}
+  .phone-shell{position:relative; background:linear-gradient(155deg,#1a2836,#0b141d);
+    border-radius:40px; padding:11px; box-shadow:var(--shadow-phone); border:1px solid rgba(255,255,255,.08)}
+  .phone-screen{position:relative; border-radius:30px; overflow:hidden; background:#fff;
+    aspect-ratio:9/18.6}
+  .phone-notch{position:absolute; top:0; left:50%; transform:translateX(-50%); width:38%; height:20px;
+    background:#0b141d; border-radius:0 0 15px 15px; z-index:6}
+  .st-bar{position:relative; z-index:5; height:30px; display:flex; align-items:center; justify-content:space-between;
+    padding:6px 16px 0; font-size:11px; font-weight:700; color:#fff}
+  .st-bar.on-brand{color:#fff}
+  .st-bar .dots{letter-spacing:1px}
+  /* screen content shells */
+  .scr{position:absolute; inset:0; display:flex; flex-direction:column}
+  .scr-scroll{flex:1; overflow:hidden}
+
+  /* LINE chat mockup */
+  .chat{display:flex; flex-direction:column; height:100%; background:#a7c3e0}
+  .chat-head{background:var(--brand-deep); color:#fff; display:flex; align-items:center; gap:9px;
+    padding:34px 14px 12px}
+  .chat-head .av{width:30px; height:30px; border-radius:50%; background:#fff; display:flex;
+    align-items:center; justify-content:center; font-size:16px; flex:none}
+  .chat-head .nm{font-size:14px; font-weight:800; line-height:1.1}
+  .chat-head .st{font-size:10px; opacity:.85}
+  .chat-body{flex:1; padding:14px 12px; display:flex; flex-direction:column; gap:9px; overflow:hidden}
+  .b{max-width:82%; padding:8px 11px; border-radius:14px; font-size:12px; line-height:1.5;
+    box-shadow:0 1px 1px rgba(0,0,0,.08)}
+  .b.bot{align-self:flex-start; background:#fff; color:#16283a; border-bottom-left-radius:5px}
+  .b.me{align-self:flex-end; background:var(--line-green); color:#04331a; border-bottom-right-radius:5px; font-weight:600}
+  .b.sys{align-self:center; background:rgba(0,0,0,.28); color:#fff; font-size:10.5px; padding:4px 12px;
+    border-radius:999px; box-shadow:none}
+  .b-card{align-self:flex-start; max-width:86%; background:#fff; border-radius:14px; overflow:hidden;
+    box-shadow:0 2px 6px rgba(0,0,0,.14)}
+  .b-card .top{background:var(--brand); color:#fff; font-size:11px; font-weight:700; padding:8px 11px}
+  .b-card .mid{padding:9px 11px; font-size:11px; color:#16283a; line-height:1.5}
+  .b-card .btn{margin:0 11px 11px; background:var(--tint); color:var(--brand-deep); text-align:center;
+    font-size:11.5px; font-weight:800; padding:7px; border-radius:9px; border:1px solid var(--tint-2)}
+  .loc{align-self:flex-end; width:66%; border-radius:14px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,.14)}
+  .loc .map{height:56px; background:
+      linear-gradient(0deg,rgba(6,199,85,.15),rgba(6,199,85,.15)),
+      repeating-linear-gradient(90deg,#dfe8f0,#dfe8f0 13px,#c9d6e2 13px,#c9d6e2 15px),
+      repeating-linear-gradient(0deg,#dfe8f0,#dfe8f0 13px,#c9d6e2 13px,#c9d6e2 15px);
+    display:flex; align-items:center; justify-content:center; font-size:18px}
+  .loc .lb{background:#fff; font-size:10px; font-weight:700; color:#16283a; padding:5px 9px}
+  .selfie{align-self:flex-end; width:52%; aspect-ratio:3/3.4; border-radius:14px;
+    background:linear-gradient(150deg,#7cc2f5,#1E8FE1 70%); display:flex; align-items:center;
+    justify-content:center; font-size:30px; box-shadow:0 2px 6px rgba(0,0,0,.16)}
+  .rm-inchat{margin-top:2px; align-self:stretch}
+  .rm-inchat img{width:100%; display:block; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,.18)}
+
+  /* web-app mockup screen */
+  .app{display:flex; flex-direction:column; height:100%; background:var(--surface-2)}
+  .app-head{background:linear-gradient(135deg,var(--brand),var(--brand-deep)); color:#fff;
+    padding:34px 14px 12px}
+  .app-head .ttl{font-size:14px; font-weight:800}
+  .app-head .who{font-size:10px; opacity:.85; margin-top:1px}
+  .app-tabs{display:flex; gap:6px; padding:10px 12px 4px; background:var(--surface-2)}
+  .app-tabs .tb{flex:1; text-align:center; font-size:11px; font-weight:700; padding:7px; border-radius:9px;
+    color:var(--ink-faint); background:var(--surface); border:1px solid var(--line)}
+  .app-tabs .tb.on{color:#fff; background:var(--brand); border-color:var(--brand)}
+  .app-list{flex:1; padding:8px 12px; display:flex; flex-direction:column; gap:8px; overflow:hidden}
+  .tk{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:9px 11px;
+    box-shadow:0 1px 3px rgba(20,60,100,.06)}
+  .tk .co{font-size:9.5px; font-weight:800; color:var(--brand-deep); letter-spacing:.02em}
+  .tk .tt{font-size:12px; font-weight:700; color:var(--ink); margin:2px 0 5px; line-height:1.3}
+  .tk .mt{display:flex; align-items:center; gap:7px; font-size:9.5px; color:var(--ink-faint)}
+  .pill{font-size:9px; font-weight:800; padding:2px 8px; border-radius:999px; margin-left:auto}
+  .pill.doing{background:var(--tint); color:var(--brand-deep)}
+  .pill.review{background:var(--wip-tint); color:var(--wip)}
+  .pill.done{background:var(--ok-tint); color:var(--ok)}
+  .app-fab{margin:2px 12px 12px; background:var(--brand); color:#fff; text-align:center; font-size:12px;
+    font-weight:800; padding:9px; border-radius:11px; box-shadow:0 4px 12px rgba(30,143,225,.4)}
+
+  /* browser mockup for desktop step */
+  .browser{width:100%; border-radius:14px; overflow:hidden; border:1px solid var(--line-2);
+    box-shadow:var(--shadow); background:var(--surface)}
+  .browser .bar{background:var(--surface-2); border-bottom:1px solid var(--line); padding:9px 12px;
+    display:flex; align-items:center; gap:6px}
+  .browser .bar i{width:10px; height:10px; border-radius:50%; background:var(--line-2); display:block}
+  .browser .bar .url{margin-left:8px; flex:1; background:var(--surface); border:1px solid var(--line);
+    border-radius:7px; font-size:11px; color:var(--ink-faint); padding:4px 10px; white-space:nowrap;
+    overflow:hidden; text-overflow:ellipsis}
+  .browser .view{padding:16px; text-align:center}
+  .browser .view .lg{font-size:34px}
+  .browser .view .cap{font-size:12.5px; color:var(--ink-soft); margin-top:6px}
+
+  /* ---------- TOC ---------- */
+  .toc{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:26px 0 4px}
+  .toc a{font-size:13.5px; font-weight:600; text-decoration:none; color:var(--brand-deep);
     background:var(--surface); border:1px solid var(--line); padding:7px 14px; border-radius:999px;
-    box-shadow:var(--shadow-sm); transition:.15s; white-space:nowrap;
-  }
+    box-shadow:var(--shadow-sm); transition:.15s; white-space:nowrap}
   .toc a:hover{border-color:var(--brand); transform:translateY(-1px)}
+  .toc a:focus-visible{outline:2px solid var(--brand); outline-offset:2px}
 
   /* status legend */
-  .legend{display:flex; gap:14px; justify-content:center; margin:16px 0 4px; font-size:13px; color:var(--ink-soft); flex-wrap:wrap}
+  .legend{display:flex; gap:14px; justify-content:center; margin:16px 0 6px; font-size:13px;
+    color:var(--ink-soft); flex-wrap:wrap}
   .legend span{display:inline-flex; align-items:center; gap:6px}
-  .badge{font-size:12px; font-weight:700; padding:3px 10px; border-radius:999px; white-space:nowrap; display:inline-flex; align-items:center; gap:5px}
+  .badge{font-size:12px; font-weight:700; padding:3px 10px; border-radius:999px; white-space:nowrap;
+    display:inline-flex; align-items:center; gap:5px}
   .badge.ok{background:var(--ok-tint); color:var(--ok)}
   .badge.wip{background:var(--wip-tint); color:var(--wip)}
 
-  section{margin-top:24px}
-  .sec-title{display:flex; align-items:center; gap:10px; margin:0 4px 12px; font-size:14px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint)}
-  .sec-title::after{content:""; flex:1; height:1px; background:var(--line)}
+  /* ---------- FEATURE BLOCK ---------- */
+  .feat{margin-top:40px; scroll-margin-top:20px}
+  .feat-head{display:flex; align-items:flex-start; gap:14px; margin-bottom:6px}
+  .ico{width:50px; height:50px; border-radius:15px; flex:none; display:flex; align-items:center;
+    justify-content:center; font-size:26px; background:var(--tint); border:1px solid var(--tint-2)}
+  .feat-head .step-no{font-size:12px; font-weight:800; color:var(--brand-deep); letter-spacing:.08em;
+    text-transform:uppercase}
+  .feat-head h2{margin:2px 0 4px; font-size:clamp(21px,4.6vw,26px); font-weight:800; letter-spacing:-.015em;
+    line-height:1.2}
+  .feat-head .sub{font-size:14px; color:var(--ink-faint)}
+  .feat-head .badge{margin-top:7px}
 
-  /* feature card */
-  .card{
-    background:var(--surface); border:1px solid var(--line); border-radius:var(--r);
-    padding:20px 20px 22px; box-shadow:var(--shadow); margin-bottom:16px;
+  .feat-body{margin-top:20px; display:grid; grid-template-columns:1fr; gap:26px; align-items:start}
+  @media (min-width:800px){
+    .feat-body{grid-template-columns:1.12fr .88fr; gap:34px}
+    .feat-body .visual{justify-self:end}
+    .feat.rev .feat-body .visual{order:-1; justify-self:start}
   }
-  .card-head{display:flex; align-items:flex-start; gap:13px; margin-bottom:6px}
-  .ico{
-    width:46px; height:46px; border-radius:13px; flex:none; display:flex; align-items:center; justify-content:center;
-    font-size:24px; background:var(--tint); border:1px solid var(--tint-2);
-  }
-  .card-head h2{margin:0; font-size:19px; font-weight:800; line-height:1.25; letter-spacing:-.01em}
-  .card-head .sub{font-size:13.5px; color:var(--ink-faint); margin-top:2px}
-  .badge-row{margin-top:2px}
+  .visual{justify-self:center; position:sticky; top:16px}
+  @media (max-width:799px){.visual{position:static}}
 
   /* steps */
-  ol.steps{list-style:none; counter-reset:s; margin:16px 0 0; padding:0}
-  ol.steps>li{counter-increment:s; position:relative; padding:0 0 16px 44px; font-size:15px}
+  ol.steps{list-style:none; counter-reset:s; margin:0; padding:0}
+  ol.steps>li{counter-increment:s; position:relative; padding:0 0 18px 46px; font-size:15px}
   ol.steps>li:last-child{padding-bottom:0}
-  ol.steps>li::before{
-    content:counter(s); position:absolute; left:0; top:-2px; width:30px; height:30px; border-radius:50%;
-    background:var(--brand); color:#fff; font-weight:800; font-size:14px;
-    display:flex; align-items:center; justify-content:center; box-shadow:0 3px 8px rgba(30,143,225,.35);
-  }
-  ol.steps>li::after{content:""; position:absolute; left:14px; top:30px; bottom:6px; width:2px; background:var(--line-2)}
+  ol.steps>li::before{content:counter(s); position:absolute; left:0; top:-3px; width:32px; height:32px;
+    border-radius:50%; background:var(--brand); color:#fff; font-weight:800; font-size:14px;
+    display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(30,143,225,.4)}
+  ol.steps>li::after{content:""; position:absolute; left:15px; top:32px; bottom:4px; width:2px; background:var(--line-2)}
   ol.steps>li:last-child::after{display:none}
-  ol.steps b{color:var(--ink)}
+  ol.steps b{color:var(--ink); font-weight:700}
+  ol.steps .st-t{font-weight:800; color:var(--ink); display:block; margin-bottom:1px; font-size:15.5px}
   .chip{display:inline-block; background:var(--tint); color:var(--brand-deep); border:1px solid var(--tint-2);
     padding:1px 9px; border-radius:7px; font-size:13.5px; font-weight:700; white-space:nowrap}
 
-  .tip{
-    margin-top:16px; background:var(--surface-2); border:1px solid var(--line); border-left:3px solid var(--brand);
-    border-radius:0 12px 12px 0; padding:12px 15px; font-size:13.5px; color:var(--ink-soft);
-  }
+  .tip{margin-top:20px; background:var(--surface-2); border:1px solid var(--line); border-left:3px solid var(--brand);
+    border-radius:0 12px 12px 0; padding:12px 15px; font-size:13.5px; color:var(--ink-soft)}
   .tip b{color:var(--ink)}
+  .lead-line{font-size:14.5px; color:var(--ink-soft); margin:0 0 4px}
 
-  /* rich menu (รูปจริง) */
-  .rm-img{width:100%; height:auto; display:block; margin-top:16px; border-radius:14px;
-    border:1px solid var(--line-2); box-shadow:var(--shadow-sm)}
-  .rm-cap{display:flex; flex-direction:column; gap:4px; margin-top:10px; font-size:13.5px; color:var(--ink-soft)}
-  .rm-cap b{color:var(--brand-deep)}
-
-  /* WIP section */
-  .wip-card{
-    background:repeating-linear-gradient(135deg,var(--wip-tint),var(--wip-tint) 16px,transparent 16px,transparent 32px), var(--surface);
-    border:1px solid var(--line); border-radius:var(--r); padding:20px; box-shadow:var(--shadow-sm);
-  }
-  .wip-list{display:grid; gap:10px; margin-top:4px}
+  /* ---------- WIP ---------- */
+  .wip-block{margin-top:44px}
+  .wip-card{background:
+      repeating-linear-gradient(135deg,var(--wip-tint),var(--wip-tint) 16px,transparent 16px,transparent 32px),
+      var(--surface);
+    border:1px solid var(--line); border-radius:var(--r); padding:22px; box-shadow:var(--shadow-sm)}
+  .wip-list{display:grid; gap:10px; margin-top:6px}
+  @media (min-width:620px){.wip-list{grid-template-columns:1fr 1fr}}
   .wip-item{display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--line);
     border-radius:13px; padding:13px 15px}
   .wip-item .e{font-size:22px}
@@ -126,18 +247,46 @@
   .wip-item .d{font-size:12.5px; color:var(--ink-faint)}
   .wip-item .badge{margin-left:auto}
 
-  footer{margin-top:34px; text-align:center; color:var(--ink-faint); font-size:13px}
-  footer img{width:74px; height:auto; margin-bottom:6px}
+  footer{margin-top:40px; text-align:center; color:var(--ink-faint); font-size:13px}
+  footer img{width:80px; height:auto; margin-bottom:6px}
   footer .hi{color:var(--brand-deep); font-weight:700}
 </style>
 </head>
 <body>
 
 <header class="hero">
-  <img src="mascot-wave2.png" alt="ยินดี">
-  <div class="kicker">Moodata · ระบบยินดี</div>
-  <h1>คู่มือใช้งาน "ยินดี"</h1>
-  <p>ผู้ช่วยงานของทีม — ลงเวลา · จัดการงานลูกค้า · และอีกเพียบเร็ว ๆ นี้ 💙</p>
+  <div class="hero-in">
+    <div class="hero-text">
+      <span class="kicker">💙 Moodata · ระบบยินดี</span>
+      <h1>คู่มือใช้งาน<br>"ยินดี"</h1>
+      <p class="lead">ผู้ช่วยงานของทีม — ตั้งแต่ลงทะเบียนครั้งแรก จนถึงลงเวลาและจัดการงานลูกค้าในแต่ละวัน · ใช้ผ่าน LINE ทั้งหมด</p>
+      <div class="hero-meta">
+        <span>📱 ใช้ใน LINE + คอม</span>
+        <span>🗂️ จัดการงานลูกค้า</span>
+        <span>🟢 ลงเวลา GPS</span>
+      </div>
+    </div>
+    <div class="hero-phone">
+      <div class="phone">
+        <div class="phone-shell">
+          <div class="phone-notch"></div>
+          <div class="phone-screen">
+            <div class="scr chat">
+              <div class="st-bar on-brand"><span>9:41</span><span class="dots">••• ▮</span></div>
+              <div class="chat-head">
+                <div class="av">💙</div>
+                <div><div class="nm">ยินดี</div><div class="st">Moodata · ออนไลน์</div></div>
+              </div>
+              <div class="chat-body">
+                <div class="b bot">สวัสดีค่ะ 👋 แตะเมนูด้านล่างได้เลยนะคะ</div>
+                <div class="rm-inchat"><img src="team-richmenu-v3.png" alt="เมนูยินดี"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </header>
 
 <div class="wrap">
@@ -146,7 +295,7 @@
     <a href="#start">🚀 เริ่มต้น</a>
     <a href="#menu">📱 เมนู</a>
     <a href="#clock">🟢 ลงเวลา</a>
-    <a href="#tasks">🗂️ งาน</a>
+    <a href="#tasks">🗂️ จัดการงาน</a>
     <a href="#web">🌐 เปิดบนคอม</a>
     <a href="#soon">🚧 เร็ว ๆ นี้</a>
   </nav>
@@ -157,121 +306,203 @@
   </div>
 
   <!-- START -->
-  <section id="start">
-    <div class="sec-title">เริ่มต้นที่นี่</div>
-    <div class="card">
-      <div class="card-head">
-        <div class="ico">🚀</div>
-        <div>
-          <h2>ลงทะเบียนเข้าทีม</h2>
-          <div class="sub">ทำครั้งเดียวตอนเริ่มใช้งาน</div>
-          <div class="badge-row"><span class="badge ok">✓ ใช้งานได้</span></div>
-        </div>
+  <section class="feat" id="start">
+    <div class="feat-head">
+      <div class="ico">🚀</div>
+      <div>
+        <div class="step-no">คู่มือ 01 · พนักงานใหม่</div>
+        <h2>ลงทะเบียนเข้าทีม</h2>
+        <div class="sub">ทำครั้งเดียวตอนเริ่มใช้งาน</div>
+        <span class="badge ok">✓ ใช้งานได้</span>
       </div>
-      <ol class="steps">
-        <li><b>แอดเพื่อน</b> LINE Official Account <span class="chip">ยินดี</span> (ขอลิงก์/QR จากพี่กี้)</li>
-        <li>พิมพ์คำว่า <span class="chip">ลงทะเบียน</span> ในแชท (หรือทักอะไรก็ได้ แล้วกดปุ่มลงทะเบียนที่เด้งขึ้นมา)</li>
-        <li>ระบบส่งคำขอให้ <b>พี่กี้อนุมัติ</b> — รอสักครู่</li>
-        <li>อนุมัติแล้ว ✅ ใช้ได้ทุกเมนูเลย!</li>
-      </ol>
-      <div class="tip">💡 <b>เข้าไม่ได้/เมนูไม่ขึ้น?</b> ปิด-เปิดแอป LINE ใหม่ 1 รอบ ถ้ายังไม่ได้ทักพี่กี้ได้เลยค่ะ</div>
     </div>
+    <div class="feat-body">
+      <ol class="steps">
+        <li><span class="st-t">แอดเพื่อน OA "ยินดี"</span>เพิ่ม LINE Official Account <span class="chip">ยินดี</span> เป็นเพื่อน (ขอลิงก์/QR จากพี่กี้)</li>
+        <li><span class="st-t">พิมพ์ "ลงทะเบียน"</span>พิมพ์คำว่า <span class="chip">ลงทะเบียน</span> ในแชท (หรือทักอะไรก็ได้ แล้วกดปุ่มลงทะเบียนที่เด้งขึ้นมา)</li>
+        <li><span class="st-t">รอพี่กี้อนุมัติ</span>ระบบส่งคำขอให้ <b>HR อนุมัติ</b> — รอสักครู่นะคะ</li>
+        <li><span class="st-t">พร้อมใช้งาน!</span>อนุมัติแล้ว ✅ ใช้ได้ครบทุกเมนูเลย</li>
+      </ol>
+      <div class="visual">
+        <div class="phone"><div class="phone-shell"><div class="phone-notch"></div><div class="phone-screen">
+          <div class="scr chat">
+            <div class="st-bar on-brand"><span>9:41</span><span class="dots">••• ▮</span></div>
+            <div class="chat-head"><div class="av">💙</div><div><div class="nm">ยินดี</div><div class="st">Moodata</div></div></div>
+            <div class="chat-body">
+              <div class="b bot">สวัสดีค่ะ 👋 พิมพ์ “ลงทะเบียน” เพื่อเข้าทีมได้เลยนะคะ</div>
+              <div class="b me">ลงทะเบียน</div>
+              <div class="b-card">
+                <div class="top">📩 ส่งคำขอลงทะเบียนแล้ว</div>
+                <div class="mid">รอพี่กี้ (HR) อนุมัติสักครู่นะคะ เดี๋ยวแจ้งกลับค่ะ</div>
+              </div>
+              <div class="b sys">✅ อนุมัติแล้ว! ใช้ได้ทุกเมนูเลยค่ะ</div>
+            </div>
+          </div>
+        </div></div></div>
+      </div>
+    </div>
+    <div class="tip">💡 <b>เข้าไม่ได้/เมนูไม่ขึ้น?</b> ปิด–เปิดแอป LINE ใหม่ 1 รอบ ถ้ายังไม่ได้ทักพี่กี้ได้เลยค่ะ</div>
   </section>
 
   <!-- MENU -->
-  <section id="menu">
-    <div class="sec-title">เมนูลัด</div>
-    <div class="card">
-      <div class="card-head">
-        <div class="ico">📱</div>
-        <div>
-          <h2>เมนูด้านล่างจอแชท</h2>
-          <div class="sub">แตะแถบเมนูใต้ช่องพิมพ์ในแชทยินดี</div>
-          <div class="badge-row"><span class="badge ok">✓ ใช้งานได้</span></div>
-        </div>
+  <section class="feat rev" id="menu">
+    <div class="feat-head">
+      <div class="ico">📱</div>
+      <div>
+        <div class="step-no">คู่มือ 02 · เมนูลัด</div>
+        <h2>เมนูด้านล่างจอแชท</h2>
+        <div class="sub">แตะแถบเมนูใต้ช่องพิมพ์ในแชท "ยินดี"</div>
+        <span class="badge ok">✓ ใช้งานได้</span>
       </div>
-      <img src="team-richmenu-v3.png" alt="เมนูยินดี 4 ปุ่ม" class="rm-img">
-      <div class="rm-cap">
-        <span><b>แถบบน</b> 🖥️ เปิดเว็บแอปจัดการงาน</span>
-        <span>🟢 เข้างาน · 🔴 ออกงาน · 📖 คู่มือ</span>
+    </div>
+    <div class="feat-body">
+      <div>
+        <p class="lead-line">เมนูยินดีมี <b>4 ปุ่มหลัก</b> — แตะได้ตลอดเวลาจากหน้าแชท:</p>
+        <ol class="steps" style="margin-top:12px">
+          <li><span class="st-t">🖥️ แถบบน — เปิดเว็บแอป</span>เข้าหน้าจัดการงานลูกค้าเต็มรูปแบบ</li>
+          <li><span class="st-t">🟢 เข้างาน · 🔴 ออกงาน</span>ลงเวลาทำงานพร้อมพิกัด + เซลฟี่</li>
+          <li><span class="st-t">📖 คู่มือ</span>เปิดคู่มือเล่มนี้ได้ทุกเมื่อ</li>
+        </ol>
+        <div class="tip">💡 ไม่เห็นแถบเมนู? แตะไอคอนสี่เหลี่ยม ( ⌨️ / ▢ ) ข้างช่องพิมพ์ในแชทยินดี</div>
       </div>
-      <div class="tip">💡 ไม่เห็นแถบเมนู? แตะไอคอนสี่เหลี่ยม (⌨️/▢) ข้างช่องพิมพ์ในแชทยินดี</div>
+      <div class="visual">
+        <div class="phone"><div class="phone-shell"><div class="phone-notch"></div><div class="phone-screen">
+          <div class="scr chat">
+            <div class="st-bar on-brand"><span>9:41</span><span class="dots">••• ▮</span></div>
+            <div class="chat-head"><div class="av">💙</div><div><div class="nm">ยินดี</div><div class="st">Moodata · ออนไลน์</div></div></div>
+            <div class="chat-body">
+              <div class="b bot">เลือกเมนูด้านล่างได้เลยนะคะ 👇</div>
+              <div class="rm-inchat"><img src="team-richmenu-v3.png" alt="เมนูยินดี 4 ปุ่ม"></div>
+            </div>
+          </div>
+        </div></div></div>
+      </div>
     </div>
   </section>
 
   <!-- CLOCK -->
-  <section id="clock">
-    <div class="sec-title">ลงเวลาทำงาน</div>
-    <div class="card">
-      <div class="card-head">
-        <div class="ico">🟢</div>
-        <div>
-          <h2>ลงเวลาเข้า–ออกงาน</h2>
-          <div class="sub">มีพิกัด + รูปเซลฟี่ยืนยัน</div>
-          <div class="badge-row"><span class="badge ok">✓ ใช้งานได้</span></div>
-        </div>
+  <section class="feat" id="clock">
+    <div class="feat-head">
+      <div class="ico">🟢</div>
+      <div>
+        <div class="step-no">คู่มือ 03 · ลงเวลา</div>
+        <h2>ลงเวลาเข้า–ออกงาน</h2>
+        <div class="sub">มีพิกัด + รูปเซลฟี่ยืนยัน</div>
+        <span class="badge ok">✓ ใช้งานได้</span>
       </div>
-      <ol class="steps">
-        <li>แตะ <span class="chip">🟢 เข้างาน</span> (ตอนเลิก แตะ <span class="chip">🔴 ออกงาน</span>)</li>
-        <li>บอทขอตำแหน่ง → กด <b>แชร์ตำแหน่ง</b> (Location) ให้เปิด GPS ไว้</li>
-        <li>ถ่าย <b>เซลฟี่</b> แล้วส่งรูปเข้าแชท</li>
-        <li>ขึ้นข้อความยืนยัน = บันทึกเวลาเรียบร้อย ✅</li>
-      </ol>
-      <div class="tip">💡 ทำที่หน้างานจริงนะคะ เพราะระบบเก็บพิกัด + เวลาไว้ให้อัตโนมัติ</div>
     </div>
+    <div class="feat-body">
+      <ol class="steps">
+        <li><span class="st-t">แตะ 🟢 เข้างาน</span>ตอนเลิกงานแตะ <span class="chip">🔴 ออกงาน</span></li>
+        <li><span class="st-t">แชร์ตำแหน่ง</span>บอทขอพิกัด → กด <b>แชร์ตำแหน่ง</b> (Location) เปิด GPS ไว้</li>
+        <li><span class="st-t">ถ่ายเซลฟี่</span>ถ่าย <b>เซลฟี่</b> แล้วส่งรูปเข้าแชท</li>
+        <li><span class="st-t">เสร็จเรียบร้อย</span>ขึ้นข้อความยืนยัน = บันทึกเวลาแล้ว ✅</li>
+      </ol>
+      <div class="visual">
+        <div class="phone"><div class="phone-shell"><div class="phone-notch"></div><div class="phone-screen">
+          <div class="scr chat">
+            <div class="st-bar on-brand"><span>9:41</span><span class="dots">••• ▮</span></div>
+            <div class="chat-head"><div class="av">💙</div><div><div class="nm">ยินดี</div><div class="st">Moodata</div></div></div>
+            <div class="chat-body">
+              <div class="b me">🟢 เข้างาน</div>
+              <div class="b bot">📍 กดแชร์ตำแหน่งด้วยนะคะ</div>
+              <div class="loc"><div class="map">📍</div><div class="lb">ตำแหน่งปัจจุบัน</div></div>
+              <div class="b bot">📸 ถ่ายเซลฟี่ยืนยันค่ะ</div>
+              <div class="selfie">🤳</div>
+              <div class="b-card"><div class="top">✅ ลงเวลาเข้างานแล้ว</div><div class="mid">09:03 น. · พิกัดบันทึกเรียบร้อยค่ะ</div></div>
+            </div>
+          </div>
+        </div></div></div>
+      </div>
+    </div>
+    <div class="tip">💡 ทำที่หน้างานจริงนะคะ เพราะระบบเก็บพิกัด + เวลาไว้ให้อัตโนมัติ</div>
   </section>
 
   <!-- TASKS -->
-  <section id="tasks">
-    <div class="sec-title">จัดการงานลูกค้า</div>
-    <div class="card">
-      <div class="card-head">
-        <div class="ico">🗂️</div>
-        <div>
-          <h2>เว็บแอปจัดการงาน</h2>
-          <div class="sub">เปิดจากปุ่ม 🖥️ ระบบ Moodata Yindee</div>
-          <div class="badge-row"><span class="badge ok">✓ ใช้งานได้</span></div>
-        </div>
+  <section class="feat rev" id="tasks">
+    <div class="feat-head">
+      <div class="ico">🗂️</div>
+      <div>
+        <div class="step-no">คู่มือ 04 · จัดการงาน</div>
+        <h2>เว็บแอปจัดการงานลูกค้า</h2>
+        <div class="sub">เปิดจากปุ่ม 🖥️ บนแถบเมนู</div>
+        <span class="badge ok">✓ ใช้งานได้</span>
       </div>
-      <p style="margin:4px 0 0; font-size:14.5px; color:var(--ink-soft)">ด้านล่างมี 2 แท็บหลัก:</p>
-      <ol class="steps" style="margin-top:14px">
-        <li><b>งานของฉัน</b> — งานที่ได้รับมอบหมาย · กด <span class="chip">📤 ส่งตรวจ</span> เมื่อทำเสร็จ · <span class="chip">🔄 โอนงาน</span> ให้เพื่อนได้</li>
-        <li><b>งานทั้งหมด</b> — เห็นงานทุกบริษัท · เจองานว่างที่อยากช่วย กด <span class="chip">🙋 รับงาน</span> ได้เลย</li>
-        <li>อยากเปิดงานใหม่? กด <span class="chip">➕ เปิดงานใหม่</span> → เลือกลูกค้า/ใส่รายละเอียด/มอบหมาย/กำหนดส่ง</li>
-      </ol>
-      <div class="tip">💡 <b>1 งาน = 1 คนดูแล</b> · พิมพ์รายละเอียดงานได้ยาวเต็มที่ ( paste ข้อความลูกค้ามาทั้งก้อนได้เลย)</div>
+    </div>
+    <div class="feat-body">
+      <div>
+        <p class="lead-line">หน้าเว็บแอปมี <b>2 แท็บหลัก</b>:</p>
+        <ol class="steps" style="margin-top:12px">
+          <li><span class="st-t">งานของฉัน</span>งานที่ได้รับมอบหมาย · กด <span class="chip">📤 ส่งตรวจ</span> เมื่อเสร็จ · <span class="chip">🔄 โอนงาน</span> ให้เพื่อนได้</li>
+          <li><span class="st-t">งานทั้งหมด</span>เห็นงานทุกบริษัท · เจองานว่างที่อยากช่วย กด <span class="chip">🙋 รับงาน</span> ได้เลย</li>
+          <li><span class="st-t">เปิดงานใหม่</span>กด <span class="chip">➕ เปิดงานใหม่</span> → เลือกลูกค้า / ใส่รายละเอียด / มอบหมาย / กำหนดส่ง</li>
+        </ol>
+        <div class="tip">💡 <b>1 งาน = 1 คนดูแล</b> · พิมพ์รายละเอียดงานได้ยาวเต็มที่ (paste ข้อความลูกค้ามาทั้งก้อนได้เลย)</div>
+      </div>
+      <div class="visual">
+        <div class="phone"><div class="phone-shell"><div class="phone-notch"></div><div class="phone-screen">
+          <div class="scr app">
+            <div class="st-bar on-brand"><span>9:41</span><span class="dots">••• ▮</span></div>
+            <div class="app-head"><div class="ttl">🗂️ จัดการงาน</div><div class="who">สมชาย · ทีม Moodata</div></div>
+            <div class="app-tabs"><div class="tb on">งานของฉัน</div><div class="tb">งานทั้งหมด</div></div>
+            <div class="app-list">
+              <div class="tk"><div class="co">บ. ริชมอนด์</div><div class="tt">ปิดบัญชีเดือน มิ.ย.</div>
+                <div class="mt">👤 ฉัน · 📅 10 ก.ค.<span class="pill doing">กำลังทำ</span></div></div>
+              <div class="tk"><div class="co">บ. กานต์ชุดา</div><div class="tt">สรุปยอดขายรายสัปดาห์</div>
+                <div class="mt">👤 ฉัน · 📅 12 ก.ค.<span class="pill review">รอตรวจ</span></div></div>
+              <div class="tk"><div class="co">บ. ดิเอลฟ์</div><div class="tt">ยื่นภาษี ภ.ง.ด.</div>
+                <div class="mt">👤 ฉัน · 📅 7 ก.ค.<span class="pill done">เสร็จ</span></div></div>
+            </div>
+            <div class="app-fab">➕ เปิดงานใหม่</div>
+          </div>
+        </div></div></div>
+      </div>
     </div>
   </section>
 
   <!-- WEB -->
-  <section id="web">
-    <div class="sec-title">เปิดบนคอมพิวเตอร์</div>
-    <div class="card">
-      <div class="card-head">
-        <div class="ico">🌐</div>
-        <div>
-          <h2>เปิดเว็บแอปบนคอม</h2>
-          <div class="sub">ทำงานจอใหญ่สบายตา</div>
-          <div class="badge-row"><span class="badge ok">✓ ใช้งานได้</span></div>
+  <section class="feat" id="web">
+    <div class="feat-head">
+      <div class="ico">🌐</div>
+      <div>
+        <div class="step-no">คู่มือ 05 · จอใหญ่</div>
+        <h2>เปิดเว็บแอปบนคอม</h2>
+        <div class="sub">ทำงานจอใหญ่สบายตา</div>
+        <span class="badge ok">✓ ใช้งานได้</span>
+      </div>
+    </div>
+    <div class="feat-body">
+      <ol class="steps">
+        <li><span class="st-t">พิมพ์ "เว็บ"</span>พิมพ์ <span class="chip">เว็บ</span> หรือ <span class="chip">ลิงก์</span> ในแชทยินดี (แชทส่วนตัว)</li>
+        <li><span class="st-t">เปิดลิงก์บนคอม</span>บอทส่งลิงก์มาให้ → เปิดบนเบราว์เซอร์คอมพิวเตอร์</li>
+        <li><span class="st-t">ล็อกอิน LINE</span>ล็อกอินด้วย LINE ครั้งแรก แล้วใช้ได้เหมือนในมือถือ</li>
+      </ol>
+      <div class="visual" style="width:100%; max-width:340px">
+        <div class="browser">
+          <div class="bar"><i></i><i></i><i></i><span class="url">phusita-png.github.io/…/user-app</span></div>
+          <div class="view"><div class="lg">🗂️</div><div class="cap">จัดการงานเต็มจอ<br>บนคอมพิวเตอร์</div></div>
         </div>
       </div>
-      <ol class="steps">
-        <li>พิมพ์ <span class="chip">เว็บ</span> หรือ <span class="chip">ลิงก์</span> ในแชทยินดี (แชทส่วนตัว)</li>
-        <li>บอทส่งลิงก์มาให้ → เปิดบนเบราว์เซอร์คอม</li>
-        <li>ล็อกอินด้วย LINE ครั้งแรก แล้วใช้ได้เหมือนในมือถือ</li>
-      </ol>
     </div>
   </section>
 
   <!-- SOON -->
-  <section id="soon">
-    <div class="sec-title">กำลังพัฒนา — เร็ว ๆ นี้</div>
-    <div class="wip-card">
-      <p style="margin:0 0 14px; font-size:14.5px; color:var(--ink-soft)">ฟีเจอร์เหล่านี้ <b>พักไว้ก่อน</b> กำลังปรับปรุงให้ดีขึ้น — ยังไม่ต้องใช้นะคะ เดี๋ยวเปิดจะแจ้งอีกที 🙏</p>
+  <section class="wip-block" id="soon">
+    <div class="feat-head">
+      <div class="ico" style="background:var(--wip-tint); border-color:var(--wip)">🚧</div>
+      <div>
+        <div class="step-no" style="color:var(--wip)">กำลังพัฒนา</div>
+        <h2>เร็ว ๆ นี้</h2>
+        <div class="sub">ยังไม่ต้องใช้นะคะ เดี๋ยวเปิดจะแจ้งอีกที</div>
+      </div>
+    </div>
+    <div class="wip-card" style="margin-top:20px">
+      <p style="margin:0 0 14px; font-size:14.5px; color:var(--ink-soft)">ฟีเจอร์เหล่านี้ <b>พักไว้ก่อน</b> กำลังปรับปรุงให้ดีขึ้น 🙏</p>
       <div class="wip-list">
         <div class="wip-item"><span class="e">📝</span><div><div class="t">แจ้งลา</div><div class="d">ระบบลาแบบใหม่ กำลังปรับ</div></div><span class="badge wip">🚧 กำลังพัฒนา</span></div>
-        <div class="wip-item"><span class="e">💸</span><div><div class="t">เบิกค่าใช้จ่าย</div><div class="d">ยกเครื่องเป็นระบบออกเอกสารการเงิน</div></div><span class="badge wip">🚧 กำลังพัฒนา</span></div>
+        <div class="wip-item"><span class="e">💸</span><div><div class="t">เบิกค่าใช้จ่าย</div><div class="d">ยกเครื่องเป็นระบบออกเอกสาร</div></div><span class="badge wip">🚧 กำลังพัฒนา</span></div>
         <div class="wip-item"><span class="e">⏰</span><div><div class="t">ขอ OT</div><div class="d">กำลังสร้างระบบ</div></div><span class="badge wip">🚧 กำลังพัฒนา</span></div>
+        <div class="wip-item"><span class="e">📄</span><div><div class="t">สลิป / เอกสาร</div><div class="d">รอยืนยันสถานะ</div></div><span class="badge wip">🚧 กำลังพัฒนา</span></div>
       </div>
     </div>
   </section>
