@@ -399,21 +399,9 @@
 
   // ═══════════ ปุ่มคู่มือลอย ═══════════
   function openHelp(){
-    modal('<div class="help-hero"><img src="mascot-book.png" alt="ยินดี" class="help-hero-img">'+
-      '<div><div class="help-hero-t">คู่มือการใช้งาน</div><div class="help-hero-s">ยินดีอธิบายให้เองค่ะ 😊</div></div></div>'+
-      '<div class="help-sec">📝 ขอลา</div>'+
-      '<p class="help-p">เลือกประเภทลา → แตะวันบนปฏิทิน (แตะ 2 วันเพื่อเลือกช่วง) → เลือกช่วงเวลา (เต็มวัน/ครึ่งวัน/ราย ชม.) → ใส่เหตุผล → กดส่ง · รออนุมัติผ่านไลน์</p>'+
-      '<div class="help-sec">🗓️ ปฏิทินสีต่าง ๆ</div>'+
-      '<div class="help-leg"><span class="lg"><i class="sw sel"></i>วันที่เลือก</span>'+
-        '<span class="lg"><i class="sw holiday"></i>วันหยุดบริษัท</span>'+
-        '<span class="lg"><i class="sw off"></i>วันหยุดกะ (ส-อา)</span>'+
-        '<span class="lg"><i class="sw today"></i>วันนี้</span></div>'+
-      '<p class="help-p" style="margin-top:8px">วันหยุดบริษัท + เสาร์–อาทิตย์ <b>ไม่นับเป็นวันลา</b> ให้อัตโนมัติค่ะ</p>'+
-      '<div class="help-sec">🗂️ งาน</div>'+
-      '<p class="help-p">งานของฉัน = งานที่ได้รับมอบหมาย · เปิดงานใหม่เองได้ · กด “รับงาน / ส่งตรวจ / โอนงาน” ได้ในการ์ด</p>'+
-      '<div class="help-sec">📁 เอกสาร</div>'+
-      '<p class="help-p">ดูสลิปเงินเดือน + คลังเอกสารของตัวเอง · ขอเอกสารใหม่ (หนังสือรับรอง ฯลฯ) HR จะออกให้</p>'+
-      '<div class="m-act" style="margin-top:16px"><button class="btn btn-primary" onclick="closeModal()" style="width:100%">เข้าใจแล้ว 😊</button></div>');
+    var url='https://phusita-png.github.io/moodata-billing-liff/staff-guide.html';
+    try{ if(window.liff && liff.openWindow){ liff.openWindow({url:url, external:false}); return; } }catch(e){}
+    window.open(url,'_blank');
   }
 
   // ═══════════ VIEW: งานของฉัน ═══════════
