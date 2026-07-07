@@ -136,7 +136,8 @@
       <svg viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="7" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="6" rx="1.5"/><rect x="14" y="14" width="7" height="6" rx="1.5"/></svg><span>งานทั้งหมด</span></button>
 
     <div class="nav-sec">ข้อมูลส่วนตัว</div>
-    <button class="nav-btn" data-view="expense" aria-label="เบิกค่าใช้จ่าย">
+    <!-- ปิดชั่วคราว: ระบบเบิกกำลังพัฒนา (เปิดกลับ = ลบ style display:none + ตั้ง EXPENSE_ENABLED=true ฝั่ง .gs) -->
+    <button class="nav-btn" data-view="expense" aria-label="เบิกค่าใช้จ่าย" style="display:none">
       <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9v6M18 9v6"/></svg><span>เบิกค่าใช้จ่าย</span></button>
     <button class="nav-btn active" data-view="leave" aria-label="การลา">
       <svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></svg><span>การลา</span></button>
