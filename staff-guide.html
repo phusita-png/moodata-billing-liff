@@ -107,14 +107,11 @@
   }
   .tip b{color:var(--ink)}
 
-  /* rich menu diagram */
-  .rm{display:grid; gap:8px; margin-top:16px}
-  .rm .top{background:linear-gradient(120deg,var(--brand),var(--brand-deep)); color:#fff; border-radius:12px;
-    padding:16px; text-align:center; font-weight:800; font-size:16px; box-shadow:var(--shadow-sm)}
-  .rm .bot{display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px}
-  .rm .bot div{background:var(--surface-2); border:1px solid var(--line); border-radius:12px; padding:14px 8px;
-    text-align:center; font-weight:700; font-size:13.5px}
-  .rm .bot .e{font-size:22px; display:block; margin-bottom:3px}
+  /* rich menu (รูปจริง) */
+  .rm-img{width:100%; height:auto; display:block; margin-top:16px; border-radius:14px;
+    border:1px solid var(--line-2); box-shadow:var(--shadow-sm)}
+  .rm-cap{display:flex; flex-direction:column; gap:4px; margin-top:10px; font-size:13.5px; color:var(--ink-soft)}
+  .rm-cap b{color:var(--brand-deep)}
 
   /* WIP section */
   .wip-card{
@@ -193,15 +190,12 @@
           <div class="badge-row"><span class="badge ok">✓ ใช้งานได้</span></div>
         </div>
       </div>
-      <div class="rm">
-        <div class="top">🖥️ ระบบ Moodata Yindee<br><small style="font-weight:600;opacity:.9">แตะเพื่อเปิดเว็บแอปจัดการงาน</small></div>
-        <div class="bot">
-          <div><span class="e">🟢</span>เข้างาน</div>
-          <div><span class="e">🔴</span>ออกงาน</div>
-          <div><span class="e">📖</span>คู่มือ</div>
-        </div>
+      <img src="team-richmenu-v3.png" alt="เมนูยินดี 4 ปุ่ม" class="rm-img">
+      <div class="rm-cap">
+        <span><b>แถบบน</b> 🖥️ เปิดเว็บแอปจัดการงาน</span>
+        <span>🟢 เข้างาน · 🔴 ออกงาน · 📖 คู่มือ</span>
       </div>
-      <div class="tip">ปุ่มบนยาว = เปิดเว็บแอป (งาน) · 3 ปุ่มล่าง = ลงเวลาเข้า-ออก และเปิดคู่มือนี้</div>
+      <div class="tip">💡 ไม่เห็นแถบเมนู? แตะไอคอนสี่เหลี่ยม (⌨️/▢) ข้างช่องพิมพ์ในแชทยินดี</div>
     </div>
   </section>
 
