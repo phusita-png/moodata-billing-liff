@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>คู่มือใช้งาน ยินดี — สำหรับทีม Moodata</title>
+<style>
+  :root{
+    --brand:#1E8FE1; --brand-deep:#146bb0; --brand-dk:#0f4f83;
+    --tint:#e7f2fc; --tint-2:#d3e8fb;
+    --bg:#f2f7fc; --surface:#ffffff; --surface-2:#f6f9fd;
+    --ink:#16283a; --ink-soft:#4a5d72; --ink-faint:#8398ad;
+    --line:#dbe7f2; --line-2:#c6d8e8;
+    --ok:#1f9d63; --ok-tint:#e3f5ec;
+    --wip:#d9832a; --wip-tint:#fbefe1;
+    --shadow:0 1px 2px rgba(20,60,100,.06), 0 10px 30px rgba(20,60,100,.08);
+    --shadow-sm:0 1px 2px rgba(20,60,100,.06), 0 4px 14px rgba(20,60,100,.06);
+    --r:18px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#0d1620; --surface:#152232; --surface-2:#1b2b3d;
+      --ink:#e8f0f8; --ink-soft:#a9bccf; --ink-faint:#6f8399;
+      --line:#26384b; --line-2:#324a61;
+      --tint:#13293f; --tint-2:#173754;
+      --ok:#43c184; --ok-tint:#10261c; --wip:#e3a05a; --wip-tint:#2c2113;
+      --shadow:0 1px 2px rgba(0,0,0,.35), 0 12px 34px rgba(0,0,0,.45);
+      --shadow-sm:0 1px 2px rgba(0,0,0,.3), 0 5px 16px rgba(0,0,0,.4);
+      --brand:#4fabf0; --brand-deep:#7cc2f5;
+    }
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%; background:var(--brand-dk)}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Sarabun","IBM Plex Sans Thai","Noto Sans Thai","Leelawadee UI",system-ui,-apple-system,sans-serif;
+    line-height:1.65; font-size:16px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:680px; margin:0 auto; padding:0 16px 60px}
+
+  /* hero */
+  .hero{
+    background:
+      radial-gradient(130% 120% at 80% -10%, rgba(255,255,255,.22), transparent 55%),
+      linear-gradient(160deg, var(--brand) 0%, var(--brand-deep) 60%, var(--brand-dk) 100%);
+    color:#fff; text-align:center; padding:38px 20px 30px; position:relative; overflow:hidden;
+  }
+  .hero::after{content:""; position:absolute; left:0; right:0; bottom:-1px; height:34px;
+    background:var(--bg); border-radius:50% 50% 0 0 / 100% 100% 0 0;}
+  .hero img{width:132px; height:auto; filter:drop-shadow(0 8px 16px rgba(0,40,80,.28)); margin-bottom:6px}
+  .hero .kicker{font-size:13px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; opacity:.9}
+  .hero h1{font-size:clamp(25px,7vw,34px); margin:6px 0 8px; font-weight:800; letter-spacing:-.01em; text-wrap:balance}
+  .hero p{margin:0 auto; max-width:34ch; font-size:15.5px; opacity:.95}
+
+  /* toc */
+  .toc{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:22px 0 4px}
+  .toc a{
+    font-size:13.5px; font-weight:600; text-decoration:none; color:var(--brand-deep);
+    background:var(--surface); border:1px solid var(--line); padding:7px 14px; border-radius:999px;
+    box-shadow:var(--shadow-sm); transition:.15s; white-space:nowrap;
+  }
+  .toc a:hover{border-color:var(--brand); transform:translateY(-1px)}
+
+  /* status legend */
+  .legend{display:flex; gap:14px; justify-content:center; margin:16px 0 4px; font-size:13px; color:var(--ink-soft); flex-wrap:wrap}
+  .legend span{display:inline-flex; align-items:center; gap:6px}
+  .badge{font-size:12px; font-weight:700; padding:3px 10px; border-radius:999px; white-space:nowrap; display:inline-flex; align-items:center; gap:5px}
+  .badge.ok{background:var(--ok-tint); color:var(--ok)}
+  .badge.wip{background:var(--wip-tint); color:var(--wip)}
+
+  section{margin-top:24px}
+  .sec-title{display:flex; align-items:center; gap:10px; margin:0 4px 12px; font-size:14px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint)}
+  .sec-title::after{content:""; flex:1; height:1px; background:var(--line)}
+
+  /* feature card */
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--r);
+    padding:20px 20px 22px; box-shadow:var(--shadow); margin-bottom:16px;
+  }
+  .card-head{display:flex; align-items:flex-start; gap:13px; margin-bottom:6px}
+  .ico{
+    width:46px; height:46px; border-radius:13px; flex:none; display:flex; align-items:center; justify-content:center;
+    font-size:24px; background:var(--tint); border:1px solid var(--tint-2);
+  }
+  .card-head h2{margin:0; font-size:19px; font-weight:800; line-height:1.25; letter-spacing:-.01em}
+  .card-head .sub{font-size:13.5px; color:var(--ink-faint); margin-top:2px}
+  .badge-row{margin-top:2px}
+
+  /* steps */
+  ol.steps{list-style:none; counter-reset:s; margin:16px 0 0; padding:0}
+  ol.steps>li{counter-increment:s; position:relative; padding:0 0 16px 44px; font-size:15px}
+  ol.steps>li:last-child{padding-bottom:0}
+  ol.steps>li::before{
+    content:counter(s); position:absolute; left:0; top:-2px; width:30px; height:30px; border-radius:50%;
+    background:var(--brand); color:#fff; font-weight:800; font-size:14px;
+    display:flex; align-items:center; justify-content:center; box-shadow:0 3px 8px rgba(30,143,225,.35);
+  }
+  ol.steps>li::after{content:""; position:absolute; left:14px; top:30px; bottom:6px; width:2px; background:var(--line-2)}
+  ol.steps>li:last-child::after{display:none}
+  ol.steps b{color:var(--ink)}
+  .chip{display:inline-block; background:var(--tint); color:var(--brand-deep); border:1px solid var(--tint-2);
+    padding:1px 9px; border-radius:7px; font-size:13.5px; font-weight:700; white-space:nowrap}
+
+  .tip{
+    margin-top:16px; background:var(--surface-2); border:1px solid var(--line); border-left:3px solid var(--brand);
+    border-radius:0 12px 12px 0; padding:12px 15px; font-size:13.5px; color:var(--ink-soft);
+  }
+  .tip b{color:var(--ink)}
+
+  /* rich menu diagram */
+  .rm{display:grid; gap:8px; margin-top:16px}
+  .rm .top{background:linear-gradient(120deg,var(--brand),var(--brand-deep)); color:#fff; border-radius:12px;
+    padding:16px; text-align:center; font-weight:800; font-size:16px; box-shadow:var(--shadow-sm)}
+  .rm .bot{display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px}
+  .rm .bot div{background:var(--surface-2); border:1px solid var(--line); border-radius:12px; padding:14px 8px;
+    text-align:center; font-weight:700; font-size:13.5px}
+  .rm .bot .e{font-size:22px; display:block; margin-bottom:3px}
+
+  /* WIP section */
+  .wip-card{
+    background:repeating-linear-gradient(135deg,var(--wip-tint),var(--wip-tint) 16px,transparent 16px,transparent 32px), var(--surface);
+    border:1px solid var(--line); border-radius:var(--r); padding:20px; box-shadow:var(--shadow-sm);
+  }
+  .wip-list{display:grid; gap:10px; margin-top:4px}
+  .wip-item{display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--line);
+    border-radius:13px; padding:13px 15px}
+  .wip-item .e{font-size:22px}
+  .wip-item .t{font-weight:700; font-size:15px}
+  .wip-item .d{font-size:12.5px; color:var(--ink-faint)}
+  .wip-item .badge{margin-left:auto}
+
+  footer{margin-top:34px; text-align:center; color:var(--ink-faint); font-size:13px}
+  footer img{width:74px; height:auto; margin-bottom:6px}
+  footer .hi{color:var(--brand-deep); font-weight:700}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <img src="mascot-wave2.png" alt="ยินดี">
+  <div class="kicker">Moodata · ระบบยินดี</div>
+  <h1>คู่มือใช้งาน "ยินดี"</h1>
+  <p>ผู้ช่วยงานของทีม — ลงเวลา · จัดการงานลูกค้า · และอีกเพียบเร็ว ๆ นี้ 💙</p>
+</header>
+
+<div class="wrap">
+
+  <nav class="toc">
+    <a href="#start">🚀 เริ่มต้น</a>
+    <a href="#menu">📱 เมนู</a>
+    <a href="#clock">🟢 ลงเวลา</a>
+    <a href="#tasks">🗂️ งาน</a>
+    <a href="#web">🌐 เปิดบนคอม</a>
+    <a href="#soon">🚧 เร็ว ๆ นี้</a>
+  </nav>
+
+  <div class="legend">
+    <span><span class="badge ok">✓ ใช้งานได้</span> พร้อมใช้เลย</span>
+    <span><span class="badge wip">🚧 กำลังพัฒนา</span> พักก่อน เดี๋ยวเปิด</span>
+  </div>
+
+  <!-- START -->
+  <section id="start">
+    <div class="sec-title">เริ่มต้นที่นี่</div>
+    <div class="card">
+      <div class="card-head">
+        <div class="ico">🚀</div>
+        <div>
+          <h2>ลงทะเบียนเข้าทีม</h2>
+          <div class="sub">ทำครั้งเดียวตอนเริ่มใช้งาน</div>
+          <div class="badge-row"><span class="badge ok">✓ ใช้งานได้</span></div>
+        </div>
+      </div>
+      <ol class="steps">
+        <li><b>แอดเพื่อน</b> LINE Official Account <span class="chip">ยินดี</span> (ขอลิงก์/QR จากพี่กี้)</li>
+        <li>พิมพ์คำว่า <span class="chip">ลงทะเบียน</span> ในแชท (หรือทักอะไรก็ได้ แล้วกดปุ่มลงทะเบียนที่เด้งขึ้นมา)</li>
+        <li>ระบบส่งคำขอให้ <b>พี่กี้อนุมัติ</b> — รอสักครู่</li>
+        <li>อนุมัติแล้ว ✅ ใช้ได้ทุกเมนูเลย!</li>
+      </ol>
+      <div class="tip">💡 <b>เข้าไม่ได้/เมนูไม่ขึ้น?</b> ปิด-เปิดแอป LINE ใหม่ 1 รอบ ถ้ายังไม่ได้ทักพี่กี้ได้เลยค่ะ</div>
+    </div>
+  </section>
+
+  <!-- MENU -->
+  <section id="menu">
+    <div class="sec-title">เมนูลัด</div>
+    <div class="card">
+      <div class="card-head">
+        <div class="ico">📱</div>
+        <div>
+          <h2>เมนูด้านล่างจอแชท</h2>
+          <div class="sub">แตะแถบเมนูใต้ช่องพิมพ์ในแชทยินดี</div>
+          <div class="badge-row"><span class="badge ok">✓ ใช้งานได้</span></div>
+        </div>
+      </div>
+      <div class="rm">
+        <div class="top">🖥️ ระบบ Moodata Yindee<br><small style="font-weight:600;opacity:.9">แตะเพื่อเปิดเว็บแอปจัดการงาน</small></div>
+        <div class="bot">
+          <div><span class="e">🟢</span>เข้างาน</div>
+          <div><span class="e">🔴</span>ออกงาน</div>
+          <div><span class="e">📖</span>คู่มือ</div>
+        </div>
+      </div>
+      <div class="tip">ปุ่มบนยาว = เปิดเว็บแอป (งาน) · 3 ปุ่มล่าง = ลงเวลาเข้า-ออก และเปิดคู่มือนี้</div>
+    </div>
+  </section>
+
+  <!-- CLOCK -->
+  <section id="clock">
+    <div class="sec-title">ลงเวลาทำงาน</div>
+    <div class="card">
+      <div class="card-head">
+        <div class="ico">🟢</div>
+        <div>
+          <h2>ลงเวลาเข้า–ออกงาน</h2>
+          <div class="sub">มีพิกัด + รูปเซลฟี่ยืนยัน</div>
+          <div class="badge-row"><span class="badge ok">✓ ใช้งานได้</span></div>
+        </div>
+      </div>
+      <ol class="steps">
+        <li>แตะ <span class="chip">🟢 เข้างาน</span> (ตอนเลิก แตะ <span class="chip">🔴 ออกงาน</span>)</li>
+        <li>บอทขอตำแหน่ง → กด <b>แชร์ตำแหน่ง</b> (Location) ให้เปิด GPS ไว้</li>
+        <li>ถ่าย <b>เซลฟี่</b> แล้วส่งรูปเข้าแชท</li>
+        <li>ขึ้นข้อความยืนยัน = บันทึกเวลาเรียบร้อย ✅</li>
+      </ol>
+      <div class="tip">💡 ทำที่หน้างานจริงนะคะ เพราะระบบเก็บพิกัด + เวลาไว้ให้อัตโนมัติ</div>
+    </div>
+  </section>
+
+  <!-- TASKS -->
+  <section id="tasks">
+    <div class="sec-title">จัดการงานลูกค้า</div>
+    <div class="card">
+      <div class="card-head">
+        <div class="ico">🗂️</div>
+        <div>
+          <h2>เว็บแอปจัดการงาน</h2>
+          <div class="sub">เปิดจากปุ่ม 🖥️ ระบบ Moodata Yindee</div>
+          <div class="badge-row"><span class="badge ok">✓ ใช้งานได้</span></div>
+        </div>
+      </div>
+      <p style="margin:4px 0 0; font-size:14.5px; color:var(--ink-soft)">ด้านล่างมี 2 แท็บหลัก:</p>
+      <ol class="steps" style="margin-top:14px">
+        <li><b>งานของฉัน</b> — งานที่ได้รับมอบหมาย · กด <span class="chip">📤 ส่งตรวจ</span> เมื่อทำเสร็จ · <span class="chip">🔄 โอนงาน</span> ให้เพื่อนได้</li>
+        <li><b>งานทั้งหมด</b> — เห็นงานทุกบริษัท · เจองานว่างที่อยากช่วย กด <span class="chip">🙋 รับงาน</span> ได้เลย</li>
+        <li>อยากเปิดงานใหม่? กด <span class="chip">➕ เปิดงานใหม่</span> → เลือกลูกค้า/ใส่รายละเอียด/มอบหมาย/กำหนดส่ง</li>
+      </ol>
+      <div class="tip">💡 <b>1 งาน = 1 คนดูแล</b> · พิมพ์รายละเอียดงานได้ยาวเต็มที่ ( paste ข้อความลูกค้ามาทั้งก้อนได้เลย)</div>
+    </div>
+  </section>
+
+  <!-- WEB -->
+  <section id="web">
+    <div class="sec-title">เปิดบนคอมพิวเตอร์</div>
+    <div class="card">
+      <div class="card-head">
+        <div class="ico">🌐</div>
+        <div>
+          <h2>เปิดเว็บแอปบนคอม</h2>
+          <div class="sub">ทำงานจอใหญ่สบายตา</div>
+          <div class="badge-row"><span class="badge ok">✓ ใช้งานได้</span></div>
+        </div>
+      </div>
+      <ol class="steps">
+        <li>พิมพ์ <span class="chip">เว็บ</span> หรือ <span class="chip">ลิงก์</span> ในแชทยินดี (แชทส่วนตัว)</li>
+        <li>บอทส่งลิงก์มาให้ → เปิดบนเบราว์เซอร์คอม</li>
+        <li>ล็อกอินด้วย LINE ครั้งแรก แล้วใช้ได้เหมือนในมือถือ</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- SOON -->
+  <section id="soon">
+    <div class="sec-title">กำลังพัฒนา — เร็ว ๆ นี้</div>
+    <div class="wip-card">
+      <p style="margin:0 0 14px; font-size:14.5px; color:var(--ink-soft)">ฟีเจอร์เหล่านี้ <b>พักไว้ก่อน</b> กำลังปรับปรุงให้ดีขึ้น — ยังไม่ต้องใช้นะคะ เดี๋ยวเปิดจะแจ้งอีกที 🙏</p>
+      <div class="wip-list">
+        <div class="wip-item"><span class="e">📝</span><div><div class="t">แจ้งลา</div><div class="d">ระบบลาแบบใหม่ กำลังปรับ</div></div><span class="badge wip">🚧 กำลังพัฒนา</span></div>
+        <div class="wip-item"><span class="e">💸</span><div><div class="t">เบิกค่าใช้จ่าย</div><div class="d">ยกเครื่องเป็นระบบออกเอกสารการเงิน</div></div><span class="badge wip">🚧 กำลังพัฒนา</span></div>
+        <div class="wip-item"><span class="e">⏰</span><div><div class="t">ขอ OT</div><div class="d">กำลังสร้างระบบ</div></div><span class="badge wip">🚧 กำลังพัฒนา</span></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <img src="mascot-thumbs.png" alt="ยินดี">
+    <div>มีคำถาม? ทัก <span class="hi">พี่กี้</span> ได้เลยค่ะ</div>
+    <div style="margin-top:6px; opacity:.8">คู่มือใช้งานระบบยินดี · Moodata</div>
+  </footer>
+
+</div>
+</body>
+</html>
