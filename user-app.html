@@ -193,6 +193,14 @@
     });
   }
 
+  // POST (fetch · form-urlencoded) — ใช้กับ action ที่ส่ง text ยาว เลี่ยง URL limit ของ JSONP GET
+  // backend (doPost) route wa* → handler เดิม · ไม่ส่ง callback → ตอบ JSON ตรง
+  function jsonpPost(params){
+    var body=Object.keys(params).map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(params[k]);}).join('&');
+    return fetch(EXEC_URL,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:body})
+      .then(function(r){ if(!r.ok) throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้'); return r.json(); });
+  }
+
   // ───── nav / router ─────
   function switchView(v){
     VIEW=v;
@@ -484,7 +492,7 @@
     var detail=$('cDetail').value.trim();
     if(!detail){ mErr('กรอกรายละเอียดงานก่อนค่ะ'); return; }
     toast('กำลังเปิดงาน…');
-    jsonp({action:'waTeamCreate',uid:UID,customer:$('cCust').value,title:$('cTitle').value.trim(),detail:detail,due:$('cDue').value,assignee:$('cAsg').value})
+    jsonpPost({action:'waTeamCreate',uid:UID,customer:$('cCust').value,title:$('cTitle').value.trim(),detail:detail,due:$('cDue').value,assignee:$('cAsg').value})
       .then(function(r){ if(!r||!r.ok){ mErr((r&&r.error)||'เปิดงานไม่สำเร็จ'); return; } closeModal();
         var who=(r.assignee&&r.assignee!==MENAME) ? (' · มอบให้ '+r.assignee+(r.notified?' (แจ้ง LINE แล้ว)':' (ยังไม่มี LINE)')) : '';
         toast('➕ เปิดงาน '+r.no+' แล้ว'+who); renderMytasks(); })
