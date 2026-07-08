@@ -1066,6 +1066,7 @@
     return { k:'other', color:'#8A94A6', icon:'📋', label:c||'อื่น ๆ' };
   }
   var BCAT_ORDER=['order','issue','inquiry','recur','other'];
+  var BCATS_EDIT=[{k:'order',v:'แจ้งงาน',lb:'📝 แจ้งงาน'},{k:'issue',v:'แจ้งปัญหา',lb:'⚠️ แจ้งปัญหา'},{k:'inquiry',v:'สอบถาม',lb:'❓ สอบถาม'},{k:'recur',v:'งานตามรอบ',lb:'🔁 งานตามรอบ'}];
   function bCatChip(cat){ var c=bCat(cat); return '<span class="bd-catchip" style="background:'+c.color+'">'+c.icon+' '+esc(c.label)+'</span>'; }
   function bMiniCard(t){
     var c=bCat(t.category);
@@ -1153,7 +1154,8 @@
     var stOpts=BSTATUSES.map(function(s){return '<option'+(s===t.status?' selected':'')+'>'+esc(s)+'</option>';}).join('');
     var asgOpts='<option value="">— ยังไม่มอบหมาย —</option>'+BTEAM.map(function(mm){var n=mm.name;return '<option value="'+esc(n)+'"'+(n===t.assignee?' selected':'')+'>'+esc(n+(mm.nick&&mm.nick!==mm.name?' ('+mm.nick+')':''))+'</option>';}).join('');
     var revOpts='<option value="">— '+esc(BOWNER||'ผู้ดูแล')+' (ค่าเริ่มต้น) —</option>'+BTEAM.map(function(mm){var n=mm.name;return '<option value="'+esc(n)+'"'+(n===t.reviewer?' selected':'')+'>'+esc(n)+'</option>';}).join('');
-    var typeOpts=BTYPESLIST.map(function(ty){return '<option'+(ty===(t.type||'')?' selected':'')+'>'+esc(ty)+'</option>';}).join('');
+    var curCatK=bCat(t.category).k;
+    var catOpts=BCATS_EDIT.map(function(o){return '<option value="'+esc(o.v)+'"'+(o.k===curCatK?' selected':'')+'>'+o.lb+'</option>';}).join('');
     var dueVal=t.dueMs?bIso(t.dueMs):'';
     modal('<h3>'+esc(t.no)+' · '+esc(t.customer||'')+'</h3><div id="mErr" class="m-err hidden"></div>'+
       '<div class="fld"><label>หัวข้องาน <span class="bd-age">(เว้นว่าง = ตัดจากรายละเอียด)</span></label><input id="mTitle" value="'+esc(t.title||'')+'" placeholder="หัวข้อสั้น ๆ"></div>'+
@@ -1163,7 +1165,7 @@
       '<div class="fld"><label>สถานะ</label><select id="mStatus">'+stOpts+'</select></div>'+
       '<div class="fld"><label>ผู้รับผิดชอบ</label><select id="mAsg">'+asgOpts+'</select></div>'+
       '<div class="fld"><label>ผู้ตรวจงาน</label><select id="mRev">'+revOpts+'</select></div>'+
-      '<div class="fld"><label>ประเภทงาน</label><select id="mType">'+typeOpts+'</select></div>'+
+      '<div class="fld"><label>ประเภท <span class="bd-age">(กำหนดสีการ์ด)</span></label><select id="mCat">'+catOpts+'</select></div>'+
       '<div class="fld"><label>กำหนดเสร็จ</label><input id="mDue" type="date" value="'+dueVal+'"></div>'+
       '<div class="m-act"><button class="btn btn-primary" onclick="bSaveTask(\''+esc(no)+'\')">💾 บันทึก</button>'+
       (t.hasGroup&&!bDone(t)?'<button class="btn btn-ok" onclick="bSendCust(\''+esc(no)+'\')">📨 ส่งลูกค้า</button>':'')+
@@ -1172,13 +1174,13 @@
   }
   function bSaveTask(no){
     var t=bFind(no); if(!t) return;
-    var title=$('mTitle').value.trim(), st=$('mStatus').value, asg=$('mAsg').value, rev=$('mRev').value, ty=$('mType').value, due=$('mDue').value;
+    var title=$('mTitle').value.trim(), st=$('mStatus').value, asg=$('mAsg').value, rev=$('mRev').value, cat=$('mCat').value, due=$('mDue').value;
     var jobs=[];
     if(title!==(t.title||'')) jobs.push(jsonp({action:'waSetTitle',uid:UID,no:no,title:title}));
     if(st!==t.status) jobs.push(jsonp({action:'waSetStatus',uid:UID,no:no,status:st}));
     if(asg!==(t.assignee||'')) jobs.push(jsonp({action:'waAssign',uid:UID,no:no,name:asg||' '}));
     if(rev!==(t.reviewer||'')) jobs.push(jsonp({action:'waSetReviewer',uid:UID,no:no,reviewer:rev}));
-    if(ty!==(t.type||'')) jobs.push(jsonp({action:'waSetType',uid:UID,no:no,type:ty}));
+    if(bCat(cat).k!==bCat(t.category).k) jobs.push(jsonp({action:'waSetCategory',uid:UID,no:no,category:cat}));   // เทียบด้วย key (สั่งงาน↔แจ้งงาน = ไม่เปลี่ยน)
     var curDue=t.dueMs?bIso(t.dueMs):'';
     if(due!==curDue) jobs.push(jsonp({action:'waSetDue',uid:UID,no:no,due:due}));
     if(!jobs.length){ closeModal(); return; }
