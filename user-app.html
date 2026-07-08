@@ -44,6 +44,7 @@
   .tk-acts{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
   .tk-acts .btn{ flex:1; min-width:120px; font-size:14px; padding:9px 12px; }
   .btn-ok{ background:var(--green); color:#fff; } .btn-ghost{ background:#EEF1F6; color:#333; }
+  .btn-danger{ background:#DC2626; color:#fff; }
   .grp-h{ display:flex; align-items:center; gap:8px; margin:16px 2px 9px; font-weight:700; font-size:15px; }
   .grp-h .cnt{ font-size:12px; font-weight:600; color:#fff; background:var(--red); border-radius:999px; padding:1px 9px; }
   .grp-h .cnt.warn{ background:#DC2626; }
@@ -1207,7 +1208,8 @@
       (t.hasGroup&&!bDone(t)?'<button class="btn btn-ok" onclick="bSendCust(\''+esc(no)+'\')">📨 ส่งลูกค้า</button>':'')+
       '<button class="btn btn-ghost" onclick="closeModal()">ปิด</button></div>'+
       (t.status.indexOf('ยกเลิก')<0?'<button class="btn btn-ghost" style="width:100%;margin-top:8px" onclick="bOpenTransfer(\''+esc(no)+'\')">🔄 โอนงานให้คนอื่น</button>':'')+
-      (!bDone(t)&&t.status.indexOf('ยกเลิก')<0?'<button class="btn btn-ghost" style="width:100%;margin-top:8px" onclick="bOpenReturn(\''+esc(no)+'\')">🔁 ส่งกลับให้ทีมแก้ไข</button>':''));
+      (!bDone(t)&&t.status.indexOf('ยกเลิก')<0?'<button class="btn btn-ghost" style="width:100%;margin-top:8px" onclick="bOpenReturn(\''+esc(no)+'\')">🔁 ส่งกลับให้ทีมแก้ไข</button>':'')+
+      (t.status.indexOf('ยกเลิก')<0?'<button class="btn btn-ghost" style="width:100%;margin-top:8px;color:#DC2626" onclick="bOpenCancel(\''+esc(no)+'\')">❌ ยกเลิกงาน</button>':''));
   }
   function bSaveTask(no){
     var t=bFind(no); if(!t) return;
@@ -1263,6 +1265,20 @@
       closeModal(); toast('🔄 โอนงานให้ '+(r.assignee||name)+' แล้ว'+(r.notified?' (แจ้ง LINE ให้)':'')); renderOwnerBoard(BSCOPE, true);
     }).catch(function(e){ mErr(e.message); });
   }
+  // ยกเลิกงาน (บอร์ด owner) — ยืนยันในหน้า (เลี่ยง confirm() ที่ LIFF บล็อก) → waCancel
+  function bOpenCancel(no){
+    modal('<h3>❌ ยกเลิกงาน '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">งานจะถูกตั้งสถานะเป็น ❌ ยกเลิก และไม่นับในสรุป · ย้อนได้ภายหลังโดยเปลี่ยนสถานะกลับ</div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ไม่ยกเลิก</button>'+
+      '<button class="btn btn-danger" onclick="bDoCancel(\''+esc(no)+'\')">❌ ยืนยันยกเลิกงาน</button></div>');
+  }
+  function bDoCancel(no){
+    toast('กำลังยกเลิก…');
+    jsonp({action:'waCancel',uid:UID,no:no}).then(function(r){
+      if(!r||!r.ok){ mErr((r&&r.error)||'ยกเลิกไม่สำเร็จ'); return; }
+      closeModal(); toast('❌ ยกเลิกงาน '+no+' แล้ว'); renderOwnerBoard(BSCOPE, true);
+    }).catch(function(e){ mErr(e.message); });
+  }
   function bOpenCreate(){
     var asgOpts='<option value="">— ยังไม่มอบหมาย —</option>'+BTEAM.map(function(mm){return '<option value="'+esc(mm.name)+'">'+esc(mm.name)+'</option>';}).join('');
     var catOpts=BCATS_EDIT.map(function(o){return '<option value="'+esc(o.v)+'">'+o.lb+'</option>';}).join('');
@@ -1287,6 +1303,7 @@
   window.bSetView=bSetView; window.bCalMove=bCalMove; window.bOpenTask=bOpenTask; window.bSaveTask=bSaveTask;
   window.bSendCust=bSendCust; window.bOpenReturn=bOpenReturn; window.bDoReturn=bDoReturn; window.bOpenCreate=bOpenCreate; window.bCreateTask=bCreateTask;
   window.bOpenTransfer=bOpenTransfer; window.bDoTransfer=bDoTransfer;
+  window.bOpenCancel=bOpenCancel; window.bDoCancel=bDoCancel;
 
   // ───── init ─────
   function startParam(){ try{ return (new URLSearchParams(location.search).get('p')||'').toLowerCase(); }catch(e){ return ''; } }
