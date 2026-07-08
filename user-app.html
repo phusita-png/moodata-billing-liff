@@ -200,6 +200,11 @@
   #board-wrap .bd-pfill{ height:100%; border-radius:999px; background:var(--bdone); transition:width .3s; }
   #board-wrap .bd-pbar.over .bd-pfill{ background:#DC2626; }
   #board-wrap .bd-center{ text-align:center; padding:60px 20px; color:var(--bdmut); }
+
+  /* ปุ่มคู่มือ: ชิดมุมล่างขวา ไม่บังเนื้อหา (แก้ .help-fab ซ้ำใน user.css ที่ดันขึ้น bottom:82px) */
+  .help-fab{ bottom:14px !important; right:16px !important; padding:9px 14px; font-size:13.5px; box-shadow:0 4px 12px rgba(27,114,232,.32); opacity:.92; }
+  .help-fab:hover{ opacity:1; }
+  @media(max-width:1023px){ .help-fab{ bottom:84px !important; right:12px !important; } }  /* มือถือ: เหนือแถบเมนูล่าง */
 </style>
 </head>
 <body>
@@ -947,7 +952,7 @@
     var base=BTASKS.filter(function(t){ return bInRange(t) && t.status.indexOf('ยกเลิก')<0; });
     function c(sub){ return base.filter(function(t){ return t.status.indexOf(sub)>=0; }).length; }
     $('bStats').innerHTML= bStatCard('all','📋 ทั้งหมด',base.length)+ bStatCard('doing','🔵 กำลังทำ',c('กำลังทำ'))+
-      bStatCard('done','✅ สำเร็จ',c('เสร็จ'))+ bStatCard('over','⏰ เกินกำหนด',base.filter(bOver).length);
+      bStatCard('review','🔍 รอตรวจ',c('รอตรวจ'))+ bStatCard('done','✅ สำเร็จ',c('เสร็จ'))+ bStatCard('over','⏰ เกินกำหนด',base.filter(bOver).length);
   }
   function bVisible(){
     var arr=BTASKS.filter(function(t){
