@@ -231,10 +231,10 @@
     <div class="nav-brand"><span class="nb-logo"><img src="mascot-wave2.png" alt="ยินดี"></span><div class="nb-txt">Moodata Yindee<small>ทีมงาน</small></div></div>
 
     <div class="nav-sec">งาน</div>
-    <button class="nav-btn" data-view="mytasks" aria-label="งานของฉัน">
-      <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg><span>งานของฉัน</span></button>
     <button class="nav-btn" data-view="alltasks" aria-label="งานทั้งหมด">
       <svg viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="7" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="6" rx="1.5"/><rect x="14" y="14" width="7" height="6" rx="1.5"/></svg><span>งานทั้งหมด</span></button>
+    <button class="nav-btn" data-view="mytasks" aria-label="งานของฉัน">
+      <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg><span>งานของฉัน</span></button>
     <button class="nav-btn" data-view="review" aria-label="รอตรวจ" id="navReview" style="display:none">
       <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><span>รอตรวจ</span></button>
 
@@ -525,6 +525,7 @@
       pill('done','✅ เสร็จ',c('เสร็จ'))+(over?pill('over','⏰ เกินกำหนด',over):'')+'</div>';
   }
   function renderMytasks(){
+    if(IS_OWNER){ renderOwnerBoard('mine'); return; }   // พี่ → บอร์ดสไตล์เดียวกัน (เฉพาะงานของพี่)
     skel();
     jsonp({action:'waMyTasks', uid:UID}).then(function(r){
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
@@ -674,7 +675,7 @@
 
   // ═══════════ VIEW: งานทั้งหมด ═══════════
   function renderAlltasks(){
-    if(IS_OWNER){ renderOwnerBoard(); return; }   // พี่/ผู้ดูแล → กระดานจัดการงานเต็ม (ตาราง+แท็บ)
+    if(IS_OWNER){ renderOwnerBoard('all'); return; }   // พี่/ผู้ดูแล → กระดานจัดการงานเต็ม (ตาราง+แท็บ)
     skel();
     jsonp({action:'waBoard', uid:UID}).then(function(r){
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
@@ -721,6 +722,7 @@
 
   // ═══════════ VIEW: รอตรวจ (พี่ · งานที่ทีมส่งกลับ รอตรวจก่อนส่งลูกค้า) ═══════════
   function renderReview(){
+    if(IS_OWNER){ renderOwnerBoard('review'); return; }   // พี่ → บอร์ดสไตล์เดียวกัน (เฉพาะงานรอตรวจ)
     skel();
     jsonp({action:'waBoard', uid:UID}).then(function(r){
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
@@ -869,9 +871,10 @@
   // บอร์ดจัดการงาน (เฉพาะพี่/owner) — การ์ดสรุป + แท็บมุมมอง + ตาราง + จัดการงาน
   // ข้อมูลจาก waPmBoard · แสดงใน #board-wrap (CSS scope กันชนกับหน้าอื่น)
   // ═══════════════════════════════════════════════════════════
-  var BVIEW='list', BTASKS=[], BTEAM=[], BSTATUSES=[], BTYPESLIST=[], BOWNER='', BNOW=0, BCATS=[];
+  var BVIEW='list', BTASKS=[], BALL=[], BSCOPE='all', BTEAM=[], BSTATUSES=[], BTYPESLIST=[], BOWNER='', BNOW=0, BCATS=[];
   var BFILTER='', BFCAT='', BSORT='due', BQ='', BCAL=null, BRANGE='all', BDAY=86400000;
   var BVIEWS=[['list','📋 รายการ'],['company','🏢 ราย บริษัท'],['cards','🗂️ การ์ด'],['kanban','📊 คอลัมน์'],['calendar','📅 ปฏิทิน']];
+  var BSCOPE_EMPTY={ all:'ยังไม่มีงานในระบบ 😊', mine:'ยังไม่มีงานที่มอบหมายให้คุณ 😊', review:'ไม่มีงานรอตรวจในตอนนี้ 🎉' };
   var BMON=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
   var BMONF=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
   function bFind(no){ return BTASKS.filter(function(x){return x.no===no;})[0]; }
@@ -896,11 +899,20 @@
   function bDueHtml(t){ if(!t.dueMs) return '<span class="bd-age">ไม่มีกำหนด</span>';
     var s=bThDate(t.dueMs); if(bOver(t)) s+=' <span class="bd-over">เกินกำหนด</span>'; return s; }
 
-  function renderOwnerBoard(){
+  function bScopeTasks(list){
+    if(BSCOPE==='mine')   return list.filter(function(t){ return t.assignee && BOWNER && t.assignee===BOWNER; });
+    if(BSCOPE==='review') return list.filter(function(t){ return t.status.indexOf('รอตรวจ')>=0; });
+    return list;
+  }
+  function renderOwnerBoard(scope){
+    scope=scope||'all';
+    if(scope!==BSCOPE){ BFILTER=''; BVIEW='list'; }   // เปลี่ยนมุมมอง → รีเซ็ตตัวกรอง/มุมมองย่อย
+    BSCOPE=scope;
     $('main').innerHTML='<div id="board-wrap"><div class="bd-center">กำลังโหลดกระดานงาน…</div></div>';
     jsonp({action:'waPmBoard', uid:UID}).then(function(r){
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
-      BTASKS=r.tasks||[]; BTEAM=r.team||[]; BSTATUSES=r.statuses||[]; BTYPESLIST=r.types||[]; BOWNER=r.owner||''; BNOW=r.now||Date.now();
+      BALL=r.tasks||[]; BTEAM=r.team||[]; BSTATUSES=r.statuses||[]; BTYPESLIST=r.types||[]; BOWNER=r.owner||''; BNOW=r.now||Date.now();
+      BTASKS=bScopeTasks(BALL);
       var cs={}; BTASKS.forEach(function(t){ if(t.category) cs[t.category]=1; }); BCATS=Object.keys(cs);
       bShell();
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
@@ -977,7 +989,7 @@
       bViewCalendar(arr); return;
     }
     hint.style.display='none';
-    if(!arr.length){ $('bView').innerHTML='<div class="bd-center">ไม่พบงานตามเงื่อนไข</div>'; return; }
+    if(!arr.length){ var em=BTASKS.length?'ไม่พบงานตามเงื่อนไข':(BSCOPE_EMPTY[BSCOPE]||'ไม่พบงาน'); $('bView').innerHTML='<div class="bd-center">'+em+'</div>'; return; }
     if(BVIEW==='list') bViewList(arr);
     else if(BVIEW==='cards') bViewCards(arr);
     else if(BVIEW==='kanban') bViewKanban(arr);
@@ -1091,11 +1103,11 @@
     if(due!==curDue) jobs.push(jsonp({action:'waSetDue',uid:UID,no:no,due:due}));
     if(!jobs.length){ closeModal(); return; }
     toast('กำลังบันทึก…');
-    Promise.all(jobs).then(function(){ closeModal(); toast('บันทึกแล้ว ✅'); renderOwnerBoard(); }).catch(function(e){ mErr(e.message); });
+    Promise.all(jobs).then(function(){ closeModal(); toast('บันทึกแล้ว ✅'); renderOwnerBoard(BSCOPE); }).catch(function(e){ mErr(e.message); });
   }
   function bSendCust(no){
     toast('กำลังส่งให้ลูกค้า…');
-    jsonp({action:'waSendCustomer',uid:UID,no:no}).then(function(r){ if(!r||!r.ok){ mErr((r&&r.error)||'ส่งไม่สำเร็จ'); return; } closeModal(); toast('✅ ส่งให้ลูกค้าแล้ว'); renderOwnerBoard(); }).catch(function(e){ mErr(e.message); });
+    jsonp({action:'waSendCustomer',uid:UID,no:no}).then(function(r){ if(!r||!r.ok){ mErr((r&&r.error)||'ส่งไม่สำเร็จ'); return; } closeModal(); toast('✅ ส่งให้ลูกค้าแล้ว'); renderOwnerBoard(BSCOPE); }).catch(function(e){ mErr(e.message); });
   }
   function bOpenReturn(no){
     modal('<h3>🔁 ส่งกลับให้แก้ไข · '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
@@ -1110,7 +1122,7 @@
     toast('กำลังส่งกลับ…');
     jsonpPost({action:'waTaskReturn',uid:UID,no:no,note:note}).then(function(r){
       if(!r||!r.ok){ mErr((r&&r.error)||'ส่งกลับไม่สำเร็จ'); return; }
-      closeModal(); toast('🔁 ส่งกลับให้ '+(r.assignee||'ทีม')+' แก้ไขแล้ว'); renderOwnerBoard();
+      closeModal(); toast('🔁 ส่งกลับให้ '+(r.assignee||'ทีม')+' แก้ไขแล้ว'); renderOwnerBoard(BSCOPE);
     }).catch(function(e){ mErr(e.message); });
   }
   function bOpenCreate(){
@@ -1129,7 +1141,7 @@
     if(!cust && !detail){ mErr('กรอกลูกค้าหรือรายละเอียดอย่างน้อย 1 ช่อง'); return; }
     toast('กำลังเปิดงาน…');
     jsonpPost({action:'waCreateTask',uid:UID,title:$('cbTitle').value.trim(),customer:cust,detail:detail,assignee:$('cbAsg').value,due:$('cbDue').value}).then(function(r){
-      if(!r||!r.ok){ mErr((r&&r.error)||'สร้างไม่สำเร็จ'); return; } closeModal(); toast('เปิดงานใหม่แล้ว '+(r.no||'')); renderOwnerBoard();
+      if(!r||!r.ok){ mErr((r&&r.error)||'สร้างไม่สำเร็จ'); return; } closeModal(); toast('เปิดงานใหม่แล้ว '+(r.no||'')); renderOwnerBoard(BSCOPE);
     }).catch(function(e){ mErr(e.message); });
   }
   window.bSetView=bSetView; window.bCalMove=bCalMove; window.bOpenTask=bOpenTask; window.bSaveTask=bSaveTask;
