@@ -459,6 +459,8 @@
       (t.detail?'<div class="tk-detail">'+esc(t.detail)+'</div>':'');
     if(t.worklink) h+='<div class="tk-kv"><b>ลิงก์งาน:</b> <a href="'+esc(t.worklink)+'" target="_blank">'+esc(t.worklink)+'</a></div>';
     if(t.reply) h+='<div class="tk-kv"><b>คำอธิบายถึงลูกค้า:</b> '+esc(t.reply)+'</div>';
+    if(t.note){ var isFix=t.note.indexOf('พี่ให้แก้ไข')>=0;
+      h+='<div class="tk-kv"'+(isFix?' style="background:#FFF7E6;border-radius:9px;padding:8px 10px;color:#8A6D1E"':'')+'><b>'+(isFix?'📝 สิ่งที่ต้องแก้':'โน้ต')+':</b> '+esc(t.note.replace(/^📝 พี่ให้แก้ไข:\s*/,''))+'</div>'; }
     var btns=[], done=t.status.indexOf('เสร็จ')>=0, cancel=t.status.indexOf('ยกเลิก')>=0;
     if(!done&&!cancel){
       if(t.status.indexOf('กำลังทำ')<0&&t.status.indexOf('รอตรวจ')<0)
@@ -653,12 +655,32 @@
     if(t.worklink) h+='<div class="tk-kv"><b>ลิงก์งานจากทีม:</b> <a href="'+esc(t.worklink)+'" target="_blank">'+esc(t.worklink)+'</a></div>';
     if(t.reply) h+='<div class="tk-kv"><b>คำอธิบายถึงลูกค้า:</b> '+esc(t.reply)+'</div>';
     if(t.note) h+='<div class="tk-kv"><b>โน้ตจากทีม:</b> '+esc(t.note)+'</div>';
-    if(t.hasGroup) h+='<div class="tk-acts"><button class="btn btn-ok" onclick="doSend(\''+esc(t.no)+'\')">📨 ส่งให้ลูกค้า</button></div>';
-    else h+='<div class="tk-kv" style="color:#C87F1E">⚠️ งานนี้ไม่มีกลุ่ม LINE ลูกค้า (ส่งให้ลูกค้าไม่ได้)</div>';
+    var btns=[];
+    if(t.hasGroup) btns.push('<button class="btn btn-ok" onclick="doSend(\''+esc(t.no)+'\')">📨 ส่งให้ลูกค้า</button>');
+    btns.push('<button class="btn btn-ghost" onclick="openReturn(\''+esc(t.no)+'\')">🔁 ส่งกลับแก้ไข</button>');
+    h+='<div class="tk-acts">'+btns.join('')+'</div>';
+    if(!t.hasGroup) h+='<div class="tk-kv" style="color:#C87F1E">⚠️ งานนี้ไม่มีกลุ่ม LINE ลูกค้า (ส่งให้ลูกค้าไม่ได้ · ตีกลับแก้ไขได้)</div>';
     return h+'</div>';
   }
   function doSend(no){ toast('กำลังส่งให้ลูกค้า…');
     jsonp({action:'waSendCustomer',uid:UID,no:no}).then(function(r){ if(!r||!r.ok){toast((r&&r.error)||'ส่งไม่สำเร็จ');return;} toast('✅ ส่งให้ลูกค้าแล้ว'); renderReview(); }).catch(function(e){toast(e.message);}); }
+  // ── ส่งกลับให้ทีมแก้ไข (พร้อมโน้ตสิ่งที่ต้องแก้) ──
+  function openReturn(no){
+    modal('<h3>🔁 ส่งกลับให้แก้ไข · '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">งานจะกลับไปสถานะ 🔵 กำลังทำ + แจ้งผู้รับผิดชอบทาง LINE พร้อมสิ่งที่ต้องแก้</div>'+
+      '<div class="fld"><label>สิ่งที่ต้องแก้ไข *</label><textarea id="rNote" placeholder="เช่น แก้สีโลโก้ให้เข้มขึ้น, เพิ่มเบอร์ติดต่อท้ายโพสต์…"></textarea></div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" onclick="doReturn(\''+esc(no)+'\')">🔁 ส่งกลับแก้ไข</button></div>');
+  }
+  function doReturn(no){
+    var note=$('rNote').value.trim();
+    if(!note){ mErr('ระบุสิ่งที่ต้องแก้ไขก่อนค่ะ'); return; }
+    toast('กำลังส่งกลับ…');
+    jsonpPost({action:'waTaskReturn',uid:UID,no:no,note:note}).then(function(r){
+      if(!r||!r.ok){ mErr((r&&r.error)||'ส่งกลับไม่สำเร็จ'); return; }
+      closeModal(); toast('🔁 ส่งกลับให้ '+(r.assignee||'ทีม')+' แก้ไขแล้ว'+(r.notified?' (แจ้ง LINE ให้)':'')); renderReview();
+    }).catch(function(e){ mErr(e.message); });
+  }
 
   // ═══════════ VIEW: เอกสาร (สลิป + คลัง + คำขอ) ═══════════
   var DOCTYPES=[], RQ={ type:'', detail:'' };

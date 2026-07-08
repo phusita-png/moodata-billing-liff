@@ -541,9 +541,27 @@
       '<div class="fld"><label>กำหนดเสร็จ</label><input id="mDue" type="date" value="'+dueVal+'"></div>'+
       '<div class="frow"><button class="btn btn-p" onclick="saveTask(\''+esc(no)+'\')">💾 บันทึก</button>'+
       (t.hasGroup&&!isDone(t)?'<button class="btn btn-g" onclick="sendCust(\''+esc(no)+'\')">📨 ส่งลูกค้า</button>':'')+
-      '<button class="btn btn-s" onclick="closeModal()">ปิด</button></div>';
+      '<button class="btn btn-s" onclick="closeModal()">ปิด</button></div>'+
+      (!isDone(t)&&t.status.indexOf('ยกเลิก')<0?'<button class="btn btn-o" style="width:100%;margin-top:8px" onclick="openReturn(\''+esc(no)+'\')">🔁 ส่งกลับให้ทีมแก้ไข</button>':'');
     showModal(body);
   }
+  function openReturn(no){
+    showModal('<h3>🔁 ส่งกลับให้แก้ไข · '+esc(no)+'</h3>'+
+      '<div class="sub">งานจะกลับไปสถานะ 🔵 กำลังทำ + แจ้งผู้รับผิดชอบทาง LINE พร้อมสิ่งที่ต้องแก้</div>'+
+      '<div id="mErr" class="err hide"></div>'+
+      '<div class="fld"><label>สิ่งที่ต้องแก้ไข</label><textarea id="rNote" placeholder="เช่น แก้สีโลโก้ให้เข้มขึ้น, เพิ่มเบอร์ติดต่อท้ายโพสต์…"></textarea></div>'+
+      '<div class="frow"><button class="btn btn-p" onclick="doReturn(\''+esc(no)+'\')">🔁 ส่งกลับแก้ไข</button>'+
+      '<button class="btn btn-s" onclick="closeModal()">ยกเลิก</button></div>');
+  }
+  function doReturn(no){
+    var note=$('rNote').value.trim();
+    if(!note){ mErr('ระบุสิ่งที่ต้องแก้ไขก่อนค่ะ'); return; }
+    jsonp({action:'waTaskReturn',uid:UID,no:no,note:note}).then(function(r){
+      if(!r||!r.ok){ mErr((r&&r.error)||'ส่งกลับไม่สำเร็จ'); return; }
+      closeModal(); toast('🔁 ส่งกลับให้ '+(r.assignee||'ทีม')+' แก้ไขแล้ว'); reload();
+    }).catch(function(e){ mErr(e.message); });
+  }
+  window.openReturn=openReturn; window.doReturn=doReturn;
   function saveTask(no){
     var t=TASKS.filter(function(x){return x.no===no;})[0];
     var st=$('mStatus').value, asg=$('mAsg').value, due=$('mDue').value, title=$('mTitle').value.trim();
