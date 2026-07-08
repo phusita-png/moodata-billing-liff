@@ -323,12 +323,18 @@
   function skel(){ $('main').innerHTML='<div class="card"><div class="skel" style="height:120px"></div></div>'; }
 
   // ═══════════ VIEW: ลา ═══════════
-  function renderLeave(){
-    skel();
+  var LVCACHE={at:0,data:null}, DOCCACHE={at:0,data:null}, SLIPCACHE={}, INITTTL=45000;   // แคชหน้าลา/เอกสาร/สลิป
+  function _applyLeave(r){ TYPES=r.types||[]; QUOTA=r.quota; LEAVES=r.leaves||[]; HOLIDAYS=r.holidays||[]; SCHEDULE=r.schedule||null; }
+  function renderLeave(force){
+    if(!force && LVCACHE.data){ _applyLeave(LVCACHE.data); paintLeave(); if(Date.now()-LVCACHE.at>INITTTL) _leaveFetch(true); return; }
+    skel(); _leaveFetch(false);
+  }
+  function _leaveFetch(bg){
     jsonp({action:'waLeaveInit', uid:UID}).then(function(r){
-      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
-      TYPES=r.types||[]; QUOTA=r.quota; LEAVES=r.leaves||[]; HOLIDAYS=r.holidays||[]; SCHEDULE=r.schedule||null; paintLeave();
-    }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
+      if(!r||!r.ok){ if(!bg) $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      LVCACHE={at:Date.now(),data:r};
+      if(!bg){ _applyLeave(r); paintLeave(); }   // bg = รีเฟรชแคชเงียบ ไม่ทับฟอร์มที่พี่กำลังกรอก
+    }).catch(function(e){ if(!bg) $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
   }
   function qbox(cls,emo,b,lb){
     return '<div class="qbox '+cls+'"><div class="qbox-emo">'+emo+'</div>'+
@@ -445,7 +451,7 @@
     toast('กำลังส่งใบลา…');
     jsonp({action:'waLeaveSubmit', uid:UID, type:LF.type, start:iso(LF.start), end:iso(LF.end), period:LF.period, stime:LF.stime, etime:LF.etime, reason:LF.reason.trim()})
       .then(function(r){ if(!r||!r.ok){ lvErr((r&&r.error)||'ส่งไม่สำเร็จ'); return; }
-        toast('✅ ส่งใบลา '+r.no+' แล้ว (รออนุมัติ)'); renderLeave();
+        toast('✅ ส่งใบลา '+r.no+' แล้ว (รออนุมัติ)'); renderLeave(true);
       }).catch(function(e){ lvErr(e.message); });
   }
 
@@ -776,12 +782,16 @@
 
   // ═══════════ VIEW: เอกสาร (สลิป + คลัง + คำขอ) ═══════════
   var DOCTYPES=[], RQ={ type:'', detail:'' };
-  function renderDocs(){
-    skel();
+  function renderDocs(force){
+    if(!force && DOCCACHE.data){ DOCTYPES=DOCCACHE.data.types||[]; paintDocs(DOCCACHE.data); if(Date.now()-DOCCACHE.at>INITTTL) _docsFetch(true); return; }
+    skel(); _docsFetch(false);
+  }
+  function _docsFetch(bg){
     jsonp({action:'waDocs', idToken:IDTOKEN, uid:UID}).then(function(r){
-      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
-      DOCTYPES=r.types||[]; paintDocs(r);
-    }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
+      if(!r||!r.ok){ if(!bg) $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      DOCCACHE={at:Date.now(),data:r}; DOCTYPES=r.types||[];
+      if(!bg) paintDocs(r);   // bg = รีเฟรชแคชเงียบ ไม่ทับฟอร์มขอเอกสาร
+    }).catch(function(e){ if(!bg) $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
   }
   function paintDocs(r){
     var html='';
@@ -832,7 +842,7 @@
     toast('กำลังส่งคำขอ…');
     jsonp({action:'waReqDocSubmit', uid:UID, type:RQ.type, detail:RQ.detail.trim()}).then(function(r){
       if(!r||!r.ok){ reqErr((r&&r.error)||'ส่งไม่สำเร็จ'); return; }
-      toast('✅ ส่งคำขอ '+r.no+' แล้ว (แจ้ง HR ให้)'); renderDocs();
+      toast('✅ ส่งคำขอ '+r.no+' แล้ว (แจ้ง HR ให้)'); renderDocs(true);
     }).catch(function(e){ reqErr(e.message); });
   }
   function reqItem(q){
@@ -843,9 +853,11 @@
       '<div class="hist-meta">'+esc(q.no)+(q.detail?(' · '+esc(q.detail)):'')+(q.at?(' · '+esc(q.at)):'')+link+'</div></div></div>';
   }
   // สลิป modal
-  function openSlip(key){ toast('กำลังโหลดสลิป…');
+  function openSlip(key){
+    if(SLIPCACHE[key]){ showSlip(SLIPCACHE[key]); return; }   // สลิปเดิม → เปิดทันที
+    toast('กำลังโหลดสลิป…');
     jsonp({action:'waPayslipDetail', idToken:IDTOKEN, uid:UID, m:key}).then(function(r){
-      if(!r||!r.ok){ toast((r&&r.error)||'โหลดสลิปไม่สำเร็จ'); return; } showSlip(r.slip);
+      if(!r||!r.ok){ toast((r&&r.error)||'โหลดสลิปไม่สำเร็จ'); return; } SLIPCACHE[key]=r.slip; showSlip(r.slip);
     }).catch(function(e){ toast(e.message); });
   }
   function money(n){ return (Number(n)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2}); }
