@@ -783,16 +783,30 @@
   // ═══════════ VIEW: เอกสาร (สลิป + คลัง + คำขอ) ═══════════
   var DOCTYPES=[], RQ={ type:'', detail:'' };
   function renderDocs(force){
-    if(!IDTOKEN){   // เปิดบนคอมผ่าน ?uid= (ไม่มี token LINE) → เอกสาร/สลิปยืนยันตัวตนไม่ได้
+    if(!IDTOKEN){   // เปิดบนคอมผ่าน ?uid= (ยังไม่มี token LINE) → ให้ยืนยันตัวตนด้วย LINE ก่อน (ปลอดภัยเพราะมีสลิป)
       $('main').innerHTML='<div class="card"><div class="soon-wrap"><div class="e-emo">🔒</div>'+
-        '<div style="font-weight:700;font-size:16px;margin-bottom:6px">หน้าเอกสาร/สลิป เปิดผ่านแอป LINE เท่านั้น</div>'+
-        '<div style="font-size:13px;line-height:1.6;max-width:420px;margin:0 auto">เพราะมีสลิปเงินเดือน ระบบต้องยืนยันตัวตนผ่าน LINE เพื่อความปลอดภัย '+
-        '— เปิดเมนู 🗂️ ในแอป LINE บนมือถือ แล้วเลือก "เอกสาร" ค่ะ</div></div></div>';
+        '<div style="font-weight:700;font-size:16px;margin-bottom:6px">ยืนยันตัวตนก่อนดูเอกสาร/สลิป</div>'+
+        '<div style="font-size:13px;line-height:1.6;max-width:420px;margin:0 auto 16px">เพราะมีสลิปเงินเดือน ระบบต้องยืนยันตัวตนผ่าน LINE เพื่อความปลอดภัย (ดูได้เฉพาะของตัวเอง)</div>'+
+        '<button class="btn btn-primary" onclick="docsLineVerify()" style="max-width:300px;margin:0 auto">🔐 ยืนยันตัวตนด้วย LINE</button></div></div>';
       return;
     }
     if(!force && DOCCACHE.data){ DOCTYPES=DOCCACHE.data.types||[]; paintDocs(DOCCACHE.data); if(Date.now()-DOCCACHE.at>INITTTL) _docsFetch(true); return; }
     skel(); _docsFetch(false);
   }
+  // ยืนยันตัวตนด้วย LINE บนคอม (เปิดผ่าน ?uid=) → login LINE เอา idToken แล้วเปิดเอกสารได้ (เหมือนดิเอลฟ์)
+  function docsLineVerify(){
+    var u; try{ u=new URL(location.href); u.searchParams.delete('uid'); }catch(e){ u=null; }
+    var back=u?u.toString():location.href;
+    if(!window.liff){ toast('เปิดผ่าน LINE ไม่ได้'); return; }
+    toast('กำลังยืนยันตัวตน…');
+    liff.init({liffId:LIFF_ID}).then(function(){
+      if(!liff.isLoggedIn()){ liff.login({redirectUri:back}); return; }   // ยังไม่ login → เด้งหน้า login LINE
+      try{ IDTOKEN=liff.getIDToken()||''; }catch(e){ IDTOKEN=''; }
+      if(IDTOKEN){ DOCCACHE={at:0,data:null}; renderDocs(true); }          // ได้ token → เปิดเอกสารทันที (ไม่ต้อง reload)
+      else liff.login({redirectUri:back});
+    }).catch(function(e){ toast('ยืนยันไม่สำเร็จ: '+(e.message||e)); });
+  }
+  window.docsLineVerify=docsLineVerify;
   function _docsFetch(bg){
     jsonp({action:'waDocs', idToken:IDTOKEN, uid:UID}).then(function(r){
       if(!r||!r.ok){ if(!bg) $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
