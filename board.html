@@ -52,13 +52,26 @@
   .btn.sm{ padding:6px 12px; font-size:13px; }
   #fRange{ padding:9px 12px; border:1px solid var(--line); border-radius:10px; font-family:inherit; font-size:14px; background:#fff; color:var(--ink); cursor:pointer; }
   /* summary stat cards */
-  .stats{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; padding:8px 24px 6px; }
+  .stats{ display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:14px; padding:8px 24px 6px; }
   .stat{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:16px 18px; box-shadow:0 4px 16px rgba(120,150,200,.10); }
   .stat .lab{ font-size:13px; color:var(--muted); font-weight:600; display:flex; align-items:center; gap:7px; }
   .stat .num{ font-size:30px; font-weight:700; margin-top:4px; line-height:1.1; }
   .stat.all .num{ color:var(--rose); } .stat.doing .num{ color:var(--doing); }
   .stat.done .num{ color:var(--done); } .stat.over .num{ color:#D6336C; }
+  .stat.new .num{ color:#5B6472; } .stat.review .num{ color:var(--review); }
   .stat .sub{ font-size:12px; color:var(--muted); margin-top:2px; }
+  /* ── view ราย บริษัท: section + progress bar ── */
+  .cohead{ font-size:14px; font-weight:600; color:#4A5262; margin:2px 2px 16px; }
+  .cosec{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:16px 18px; margin-bottom:16px; box-shadow:0 4px 16px rgba(120,150,200,.10); }
+  .cohd{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:10px; }
+  .coname{ font-size:16px; font-weight:700; }
+  .cocnt{ font-size:12px; font-weight:600; color:#fff; background:var(--rose); border-radius:999px; padding:2px 10px; }
+  .cocnt.warn{ background:#DC2626; }
+  .copct{ font-size:13px; color:var(--muted); }
+  .coover{ font-size:13px; color:#DC2626; font-weight:700; margin-left:auto; }
+  .pbar{ height:9px; border-radius:999px; background:#EDF1F7; overflow:hidden; }
+  .pfill{ height:100%; border-radius:999px; background:var(--done); transition:width .3s; }
+  .pbar.over .pfill{ background:#DC2626; }
   @media(max-width:720px){ .stats{ grid-template-columns:repeat(2,1fr); } .top{ flex-wrap:wrap; } }
   /* view tabs */
   .views{ display:flex; gap:8px; padding:6px 24px; flex-wrap:wrap; }
@@ -180,7 +193,7 @@
   var DAY=86400000;
   var UID='', TASKS=[], TEAM=[], STATUSES=[], SNOW=0, CATS=[];
   var VIEW='list', FILTER='', FCAT='', SORT='due', Q='', CAL=null, RANGE='all';
-  var VIEWS=[['list','รายการ'],['cards','การ์ด'],['kanban','คอลัมน์'],['calendar','ปฏิทิน'],['person','งานของทีม']];
+  var VIEWS=[['list','รายการ'],['company','🏢 ราย บริษัท'],['review','🔍 รอตรวจ'],['kanban','คอลัมน์'],['cards','การ์ด'],['calendar','ปฏิทิน'],['person','งานของทีม']];
   // เมนูซ้าย — เตรียมรับฟังก์ชันอื่นในอนาคต (ready:false = ยังไม่เปิด แสดง "เร็ว ๆ นี้")
   var PAGE='tasks';
   var NAV=[
@@ -246,11 +259,11 @@
   function stat(cls,lab,num){ return '<div class="stat '+cls+'"><div class="lab">'+lab+'</div><div class="num">'+num+'</div></div>'; }
   function renderStats(){
     var base=TASKS.filter(function(t){ return inRange(t) && t.status.indexOf('ยกเลิก')<0; });
-    var doing=base.filter(function(t){ return t.status.indexOf('กำลังทำ')>=0 || t.status.indexOf('รอตรวจ')>=0; }).length;
-    var done=base.filter(isDone).length;
+    function c(sub){ return base.filter(function(t){ return t.status.indexOf(sub)>=0; }).length; }
     var over=base.filter(overdue).length;
-    $('stats').innerHTML= stat('all','📋 งานทั้งหมด',base.length)+ stat('doing','🔵 งานระหว่างทำ',doing)+
-      stat('done','✅ งานสำเร็จ',done)+ stat('over','⏰ เกินกำหนด',over);
+    $('stats').innerHTML= stat('all','📋 ทั้งหมด',base.length)+ stat('new','🆕 ใหม่',c('ใหม่'))+
+      stat('doing','🔵 กำลังทำ',c('กำลังทำ'))+ stat('review','🔍 รอตรวจ',c('รอตรวจ'))+
+      stat('done','✅ เสร็จ',c('เสร็จ'))+ stat('over','⏰ เกินกำหนด',over);
   }
 
   // ── filter + sort ──
@@ -278,6 +291,8 @@
   function render(){
     renderStats();
     $('views').innerHTML=VIEWS.map(function(v){ return '<div class="vtab'+(v[0]===VIEW?' active':'')+'" onclick="setView(\''+v[0]+'\')">'+v[1]+'</div>'; }).join('');
+    if(VIEW==='company'){ $('hint').classList.add('hide'); renderCompany(); return; }
+    if(VIEW==='review'){ $('hint').classList.add('hide'); renderReview(); return; }
     var arr=visible();
     var undated=TASKS.filter(function(t){return !t.dueMs;}).length;
     if(VIEW==='calendar' && undated){ $('hint').classList.remove('hide'); $('hint').textContent='มีงานไม่ได้กำหนดวันในเดือนนี้ '+undated+' งาน — ดูที่มุมมอง "รายการ" หรือ "การ์ด"'; }
@@ -356,6 +371,61 @@
     $('view').innerHTML=order.map(function(k){
       return '<div class="lane"><h3>'+esc(k)+' ('+groups[k].length+')</h3><div class="row">'+groups[k].map(miniCard).join('')+'</div></div>';
     }).join('');
+  }
+
+  // ── ในขอบเขต (ช่วงเวลา + ประเภท + ค้นหา · ตัดยกเลิก · ไม่ยึดตัวกรองสถานะ) ──
+  function baseInScope(){
+    return TASKS.filter(function(t){
+      if(!inRange(t)) return false;
+      if(t.status.indexOf('ยกเลิก')>=0) return false;
+      if(FCAT && t.category!==FCAT) return false;
+      if(Q){ var h=(t.no+' '+t.customer+' '+t.detail+' '+t.assignee).toLowerCase(); if(h.indexOf(Q)<0) return false; }
+      return true;
+    });
+  }
+
+  // ── view: ราย บริษัท (จัดกลุ่ม + บาร์ความสำเร็จ · แดง=มีงานเกินกำหนด) ──
+  function renderCompany(){
+    var base=baseInScope();
+    if(!base.length){ $('view').innerHTML='<div class="center">ไม่พบงานตามเงื่อนไข</div>'; return; }
+    var order=[], groups={};
+    base.forEach(function(t){ var c=t.customer||'(ไม่ระบุบริษัท)'; if(!groups[c]){groups[c]=[];order.push(c);} groups[c].push(t); });
+    var html='<div class="cohead">🏢 '+order.length+' บริษัท · '+base.length+' งาน</div>';
+    var shown=0;
+    order.forEach(function(c){
+      var all=groups[c];
+      var vis=FILTER?all.filter(function(t){return t.status===FILTER;}):all;   // การ์ดตามตัวกรอง · บาร์ยึดทุกสถานะ
+      if(!vis.length) return; shown++;
+      var done=all.filter(isDone).length, over=all.filter(overdue).length;
+      var pct=Math.round(done/all.length*100);
+      html+='<div class="cosec"><div class="cohd">'+
+        '<span class="coname">🏢 '+esc(c)+'</span>'+
+        '<span class="cocnt'+(over?' warn':'')+'">'+all.length+' งาน</span>'+
+        '<span class="copct">เสร็จ '+done+'/'+all.length+' ('+pct+'%)</span>'+
+        (over?'<span class="coover">⏰ เกินกำหนด '+over+'</span>':'')+'</div>'+
+        '<div class="pbar'+(over?' over':'')+'"><div class="pfill" style="width:'+pct+'%"></div></div>'+
+        '<div class="grid" style="margin-top:14px">'+vis.map(miniCard).join('')+'</div></div>';
+    });
+    if(!shown) html='<div class="center">ไม่พบงานตามเงื่อนไข</div>';
+    $('view').innerHTML=html;
+  }
+
+  // ── view: รอตรวจ (งานที่ทีมส่งกลับ รอพี่ตรวจก่อนส่งลูกค้า) ──
+  function reviewCard(t){
+    return '<div class="card" onclick="openTask(\''+esc(t.no)+'\')">'+
+      '<div class="tt">'+esc(ttl(t))+'</div>'+
+      '<div class="cust">'+esc(t.customer||'-')+' · '+esc(t.no)+'</div>'+
+      (t.worklink?'<div class="meta">🔗 มีลิงก์งานจากทีม</div>':'')+
+      '<div class="foot"><span class="badge b-review">'+esc(t.status)+'</span>'+
+      (t.dueMs?'<span class="'+(overdue(t)?'over':'age')+'">'+thDate(t.dueMs)+(overdue(t)?' เกิน':'')+'</span>':'')+
+      '<span class="assignee'+(t.assignee?'':' none')+'" style="margin-left:auto">'+(t.assignee?esc(t.assignee):'ยังไม่มอบ')+'</span></div>'+
+      '<button class="btn btn-p sm" style="margin-top:10px;width:100%" onclick="event.stopPropagation();openTask(\''+esc(t.no)+'\')">🔍 เปิดตรวจ / ส่งลูกค้า</button></div>';
+  }
+  function renderReview(){
+    var base=baseInScope().filter(function(t){ return t.status.indexOf('รอตรวจ')>=0; });
+    if(!base.length){ $('view').innerHTML='<div class="center"><div style="font-size:40px">🎉</div><p>ไม่มีงานรอตรวจในตอนนี้</p></div>'; return; }
+    base.sort(function(a,b){ return (a.dueMs||9e15)-(b.dueMs||9e15); });
+    $('view').innerHTML='<div class="grid">'+base.map(reviewCard).join('')+'</div>';
   }
 
   // ── เมนูซ้าย ──
