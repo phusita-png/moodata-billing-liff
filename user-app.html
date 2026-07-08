@@ -783,6 +783,13 @@
   // ═══════════ VIEW: เอกสาร (สลิป + คลัง + คำขอ) ═══════════
   var DOCTYPES=[], RQ={ type:'', detail:'' };
   function renderDocs(force){
+    if(!IDTOKEN){   // เปิดบนคอมผ่าน ?uid= (ไม่มี token LINE) → เอกสาร/สลิปยืนยันตัวตนไม่ได้
+      $('main').innerHTML='<div class="card"><div class="soon-wrap"><div class="e-emo">🔒</div>'+
+        '<div style="font-weight:700;font-size:16px;margin-bottom:6px">หน้าเอกสาร/สลิป เปิดผ่านแอป LINE เท่านั้น</div>'+
+        '<div style="font-size:13px;line-height:1.6;max-width:420px;margin:0 auto">เพราะมีสลิปเงินเดือน ระบบต้องยืนยันตัวตนผ่าน LINE เพื่อความปลอดภัย '+
+        '— เปิดเมนู 🗂️ ในแอป LINE บนมือถือ แล้วเลือก "เอกสาร" ค่ะ</div></div></div>';
+      return;
+    }
     if(!force && DOCCACHE.data){ DOCTYPES=DOCCACHE.data.types||[]; paintDocs(DOCCACHE.data); if(Date.now()-DOCCACHE.at>INITTTL) _docsFetch(true); return; }
     skel(); _docsFetch(false);
   }
@@ -1192,6 +1199,8 @@
         b.addEventListener('click', function(){ switchView(b.dataset.view); }); });
       var work=startParam()==='work';
       switchView(work ? (IS_OWNER?'alltasks':'mytasks') : 'leave');
+      // อุ่นแคชเบื้องหลัง → คลิกการลา/เอกสารครั้งแรกเด้งทันที (ไม่แย่งจอแรกโหลด)
+      setTimeout(function(){ if(!LVCACHE.data) _leaveFetch(true); if(IDTOKEN && !DOCCACHE.data) _docsFetch(true); }, 900);
     }).catch(function(e){ fatal(e.message); });
   }
   (function init(){
