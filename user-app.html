@@ -783,28 +783,29 @@
   // ═══════════ VIEW: เอกสาร (สลิป + คลัง + คำขอ) ═══════════
   var DOCTYPES=[], RQ={ type:'', detail:'' };
   function renderDocs(force){
-    if(!IDTOKEN){   // เปิดบนคอมผ่าน ?uid= (ยังไม่มี token LINE) → ให้ยืนยันตัวตนด้วย LINE ก่อน (ปลอดภัยเพราะมีสลิป)
-      $('main').innerHTML='<div class="card"><div class="soon-wrap"><div class="e-emo">🔒</div>'+
-        '<div style="font-weight:700;font-size:16px;margin-bottom:6px">ยืนยันตัวตนก่อนดูเอกสาร/สลิป</div>'+
-        '<div style="font-size:13px;line-height:1.6;max-width:420px;margin:0 auto 16px">เพราะมีสลิปเงินเดือน ระบบต้องยืนยันตัวตนผ่าน LINE เพื่อความปลอดภัย (ดูได้เฉพาะของตัวเอง)</div>'+
-        '<button class="btn btn-primary" onclick="docsLineVerify()" style="max-width:300px;margin:0 auto">🔐 ยืนยันตัวตนด้วย LINE</button></div></div>';
+    if(!IDTOKEN){   // ยังไม่มี token LINE → ต้องยืนยันตัวตนก่อน (สลิปเป็นข้อมูลลับ)
+      if(uidOverride()){   // เปิดบนคอมผ่าน ?uid= (บุ๊คมาร์ก) → เสนอปุ่มยืนยันด้วย LINE
+        $('main').innerHTML='<div class="card"><div class="soon-wrap"><div class="e-emo">🔒</div>'+
+          '<div style="font-weight:700;font-size:16px;margin-bottom:6px">ยืนยันตัวตนก่อนดูเอกสาร/สลิป</div>'+
+          '<div style="font-size:13px;line-height:1.6;max-width:420px;margin:0 auto 16px">เพราะมีสลิปเงินเดือน ระบบต้องยืนยันตัวตนผ่าน LINE เพื่อความปลอดภัย (ดูได้เฉพาะของตัวเอง)</div>'+
+          '<button class="btn btn-primary" onclick="docsLineVerify()" style="max-width:300px;margin:0 auto">🔐 ยืนยันตัวตนด้วย LINE</button></div></div>';
+      } else {   // ผ่าน LIFF แล้วแต่ยังไม่ได้ token (เช่นเบราว์เซอร์ไม่รองรับ) → แนะนำเปิดในแอป LINE มือถือ
+        $('main').innerHTML='<div class="card"><div class="soon-wrap"><div class="e-emo">🔒</div>'+
+          '<div style="font-weight:700;font-size:16px;margin-bottom:6px">เปิดหน้าเอกสาร/สลิป ในแอป LINE มือถือ</div>'+
+          '<div style="font-size:13px;line-height:1.6;max-width:420px;margin:0 auto">เพราะมีสลิปเงินเดือน ต้องยืนยันตัวตนผ่านแอป LINE — เปิดเมนู 🗂️ ในไลน์บนมือถือ แล้วเลือก "เอกสาร" ค่ะ</div></div></div>';
+      }
       return;
     }
     if(!force && DOCCACHE.data){ DOCTYPES=DOCCACHE.data.types||[]; paintDocs(DOCCACHE.data); if(Date.now()-DOCCACHE.at>INITTTL) _docsFetch(true); return; }
     skel(); _docsFetch(false);
   }
-  // ยืนยันตัวตนด้วย LINE บนคอม (เปิดผ่าน ?uid=) → login LINE เอา idToken แล้วเปิดเอกสารได้ (เหมือนดิเอลฟ์)
+  // ยืนยันตัวตนด้วย LINE (เปิดผ่าน ?uid= บนคอม) → พาไป LIFF login แบบปกติ (วิธีเดียวกับที่ทีมใช้ได้จริง) กลับมาหน้าเอกสาร
   function docsLineVerify(){
-    var u; try{ u=new URL(location.href); u.searchParams.delete('uid'); }catch(e){ u=null; }
-    var back=u?u.toString():location.href;
-    if(!window.liff){ toast('เปิดผ่าน LINE ไม่ได้'); return; }
-    toast('กำลังยืนยันตัวตน…');
-    liff.init({liffId:LIFF_ID}).then(function(){
-      if(!liff.isLoggedIn()){ liff.login({redirectUri:back}); return; }   // ยังไม่ login → เด้งหน้า login LINE
-      try{ IDTOKEN=liff.getIDToken()||''; }catch(e){ IDTOKEN=''; }
-      if(IDTOKEN){ DOCCACHE={at:0,data:null}; renderDocs(true); }          // ได้ token → เปิดเอกสารทันที (ไม่ต้อง reload)
-      else liff.login({redirectUri:back});
-    }).catch(function(e){ toast('ยืนยันไม่สำเร็จ: '+(e.message||e)); });
+    var u; try{ u=new URL(location.href); }catch(e){ u=null; }
+    if(!u){ location.reload(); return; }
+    u.searchParams.delete('uid');   // ตัด uid ออก → init() จะเข้า flow LIFF (login LINE + getIDToken)
+    u.searchParams.set('p','docs'); // กลับมาแล้วเปิดหน้าเอกสารเลย
+    location.href=u.toString();
   }
   window.docsLineVerify=docsLineVerify;
   function _docsFetch(bg){
@@ -1211,8 +1212,8 @@
       $('loader').classList.add('hidden'); $('app').classList.remove('hidden');
       Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(b){
         b.addEventListener('click', function(){ switchView(b.dataset.view); }); });
-      var work=startParam()==='work';
-      switchView(work ? (IS_OWNER?'alltasks':'mytasks') : 'leave');
+      var sp=startParam();
+      switchView(sp==='docs' ? 'docs' : (sp==='work' ? (IS_OWNER?'alltasks':'mytasks') : 'leave'));
       // อุ่นแคชเบื้องหลัง → คลิกการลา/เอกสารครั้งแรกเด้งทันที (ไม่แย่งจอแรกโหลด)
       setTimeout(function(){ if(!LVCACHE.data) _leaveFetch(true); if(IDTOKEN && !DOCCACHE.data) _docsFetch(true); }, 900);
     }).catch(function(e){ fatal(e.message); });
