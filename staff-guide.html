@@ -161,6 +161,17 @@
   .pill.done{background:var(--ok-tint); color:var(--ok)}
   .app-fab{margin:2px 12px 12px; background:var(--brand); color:#fff; text-align:center; font-size:12px;
     font-weight:800; padding:9px; border-radius:11px; box-shadow:0 4px 12px rgba(30,143,225,.4)}
+  /* task category chip (ป้ายประเภทงาน บนการ์ด mockup) */
+  .catchip{display:inline-flex; align-items:center; gap:4px; font-size:9px; font-weight:800; padding:2px 8px;
+    border-radius:999px; color:#fff; margin-bottom:5px}
+  .catchip.order{background:#1B72E8} .catchip.issue{background:#DC2626}
+  .catchip.inquiry{background:#1E9E5A} .catchip.recur{background:#7C3AED}
+  /* category legend (ในเนื้อหา) */
+  .cat-legend{display:flex; flex-wrap:wrap; gap:8px; margin:12px 0 4px}
+  .cat-legend .c{display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:800;
+    padding:5px 13px; border-radius:999px; color:#fff}
+  .cat-legend .order{background:#1B72E8} .cat-legend .issue{background:#DC2626}
+  .cat-legend .inquiry{background:#1E9E5A} .cat-legend .recur{background:#7C3AED}
   /* leave form + docs mockup bits */
   .app-form{padding:10px 12px; display:flex; flex-direction:column; gap:9px}
   .chips-row{display:flex; gap:5px; flex-wrap:wrap}
@@ -501,9 +512,16 @@
         <ol class="steps" style="margin-top:12px">
           <li><span class="st-t">งานของฉัน</span>งานที่ได้รับมอบหมาย · กด <span class="chip">📤 ส่งตรวจ</span> เมื่อเสร็จ · <span class="chip">🔄 โอนงาน</span> ให้เพื่อนได้</li>
           <li><span class="st-t">งานทั้งหมด</span>เห็นงานทุกบริษัท · เจองานว่างที่อยากช่วย กด <span class="chip">🙋 รับงาน</span> ได้เลย</li>
-          <li><span class="st-t">เปิดงานใหม่</span>กด <span class="chip">➕ เปิดงานใหม่</span> → เลือกลูกค้า / ใส่รายละเอียด / มอบหมาย / กำหนดส่ง</li>
+          <li><span class="st-t">เปิดงานใหม่</span>กด <span class="chip">➕ เปิดงานใหม่</span> → <b>เลือกประเภทงาน</b> / ลูกค้า / รายละเอียด / มอบหมาย / กำหนดส่ง</li>
         </ol>
-        <div class="tip">💡 <b>1 งาน = 1 คนดูแล</b> · พิมพ์รายละเอียดงานได้ยาวเต็มที่ (paste ข้อความลูกค้ามาทั้งก้อนได้เลย)</div>
+        <p class="lead-line" style="margin-top:16px"><b>งานแยกเป็นประเภท</b> — มีสี + ไอคอนให้เห็นชัด ทั้งในเว็บและการ์ดแจ้งเตือนใน LINE:</p>
+        <div class="cat-legend">
+          <span class="c order">📝 แจ้งงาน</span>
+          <span class="c issue">⚠️ แจ้งปัญหา</span>
+          <span class="c inquiry">❓ สอบถาม</span>
+          <span class="c recur">🔁 งานตามรอบ</span>
+        </div>
+        <div class="tip">💡 <b>1 งาน = 1 คนดูแล</b> · พิมพ์รายละเอียดได้ยาวเต็มที่ (paste ข้อความลูกค้ามาทั้งก้อนได้) · <b>มีคนมอบงานให้เมื่อไหร่</b> จะมีการ์ดเด้งในแชท LINE — สีบอกประเภทงานทันที</div>
       </div>
       <div class="visual">
         <div class="phone"><div class="phone-shell"><div class="phone-notch"></div><div class="phone-screen">
@@ -512,11 +530,11 @@
             <div class="app-head"><div class="ttl">🗂️ จัดการงาน</div><div class="who">สมชาย · ทีม Moodata</div></div>
             <div class="app-tabs"><div class="tb on">งานของฉัน</div><div class="tb">งานทั้งหมด</div></div>
             <div class="app-list">
-              <div class="tk"><div class="co">บ. ริชมอนด์</div><div class="tt">ปิดบัญชีเดือน มิ.ย.</div>
+              <div class="tk"><div class="catchip issue">⚠️ แจ้งปัญหา</div><div class="co">บ. ริชมอนด์</div><div class="tt">ปิดบัญชีเดือน มิ.ย.</div>
                 <div class="mt">👤 ฉัน · 📅 10 ก.ค.<span class="pill doing">กำลังทำ</span></div></div>
-              <div class="tk"><div class="co">บ. กานต์ชุดา</div><div class="tt">สรุปยอดขายรายสัปดาห์</div>
+              <div class="tk"><div class="catchip order">📝 แจ้งงาน</div><div class="co">บ. กานต์ชุดา</div><div class="tt">สรุปยอดขายรายสัปดาห์</div>
                 <div class="mt">👤 ฉัน · 📅 12 ก.ค.<span class="pill review">รอตรวจ</span></div></div>
-              <div class="tk"><div class="co">บ. ดิเอลฟ์</div><div class="tt">ยื่นภาษี ภ.ง.ด.</div>
+              <div class="tk"><div class="catchip inquiry">❓ สอบถาม</div><div class="co">บ. ดิเอลฟ์</div><div class="tt">ยื่นภาษี ภ.ง.ด.</div>
                 <div class="mt">👤 ฉัน · 📅 7 ก.ค.<span class="pill done">เสร็จ</span></div></div>
             </div>
             <div class="app-fab">➕ เปิดงานใหม่</div>
@@ -612,7 +630,7 @@
   <footer>
     <img src="mascot-thumbs.png" alt="ยินดี">
     <div>มีคำถาม? ทัก <span class="hi">พี่กี้</span> ได้เลยค่ะ</div>
-    <div style="margin-top:6px; opacity:.8">คู่มือใช้งานระบบยินดี · Moodata</div>
+    <div style="margin-top:6px; opacity:.8">คู่มือใช้งานระบบยินดี · Moodata · อัปเดต ก.ค. 2569</div>
   </footer>
 
 </div>
