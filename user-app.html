@@ -145,6 +145,11 @@
   #board-wrap .bd-stat.done.active{ outline-color:#1E9E5A; } #board-wrap .bd-stat.over.active{ outline-color:#D6336C; }
   #board-wrap .bd-stat.new.active{ outline-color:var(--bnew); }
   @media(max-width:720px){ #board-wrap .bd-stats{ grid-template-columns:repeat(2,1fr); } }
+  /* mini app (มือถือ) → เหลือ ช่วงเวลา+เปิดงานใหม่ / การ์ดสถานะ / การ์ดงานคอลัมน์เดียว (ตัดแท็บมุมมอง+ตัวกรองประเภท/เรียง/ค้นหา) */
+  @media(max-width:1023px){ #board-wrap, #board-wrap *{ box-sizing:border-box; }
+    #board-wrap .bd-views, #board-wrap .bd-tools{ display:none !important; }
+    #board-wrap .bd-grid{ grid-template-columns:1fr; }
+    #board-wrap .bd-top .sp{ display:none; } #board-wrap #bRange{ flex:1 1 auto; min-width:120px; } }
   /* แท็บมุมมอง */
   #board-wrap .bd-views{ display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
   #board-wrap .bd-vtab{ padding:7px 15px; border-radius:999px; background:#fff; border:1px solid var(--bdline); color:var(--bdmut); font-weight:600; font-size:14px; cursor:pointer; }
@@ -1048,8 +1053,15 @@
       return true;
     });
   }
+  function bIsMobile(){ return window.matchMedia('(max-width:1023px)').matches; }
   function bRender(){
     bRenderStats();
+    if(bIsMobile()){                                   // mini app → การ์ดสถานะ + การ์ดงานคอลัมน์เดียว (ยังเก็บ ช่วงเวลา+เปิดงานใหม่)
+      $('bViews').innerHTML=''; $('bHint').style.display='none';
+      var m=bVisible();
+      if(!m.length){ var em0=BTASKS.length?'ไม่พบงานตามสถานะนี้':(BSCOPE_EMPTY[BSCOPE]||'ไม่พบงาน'); $('bView').innerHTML='<div class="bd-center">'+em0+'</div>'; return; }
+      bViewCards(m); return;
+    }
     $('bViews').innerHTML=BVIEWS.map(function(v){ return '<div class="bd-vtab'+(v[0]===BVIEW?' active':'')+'" onclick="bSetView(\''+v[0]+'\')">'+v[1]+'</div>'; }).join('');
     var hint=$('bHint');
     if(BVIEW==='company'){ hint.style.display='none'; bViewCompany(); return; }
