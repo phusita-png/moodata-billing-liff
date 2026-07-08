@@ -137,6 +137,12 @@
   #board-wrap .bd-stat.all .num{ color:var(--bd); } #board-wrap .bd-stat.doing .num{ color:var(--bdoing); }
   #board-wrap .bd-stat.done .num{ color:var(--bdone); } #board-wrap .bd-stat.over .num{ color:var(--bover); }
   #board-wrap .bd-stat.new .num{ color:var(--bnew); } #board-wrap .bd-stat.review .num{ color:var(--breview); }
+  #board-wrap .bd-stat{ cursor:pointer; transition:box-shadow .15s, transform .05s; }
+  #board-wrap .bd-stat:hover{ box-shadow:0 6px 20px rgba(120,150,200,.22); }
+  #board-wrap .bd-stat:active{ transform:scale(.98); }
+  #board-wrap .bd-stat.active{ outline:2.5px solid #1B72E8; outline-offset:-2px; }
+  #board-wrap .bd-stat.doing.active{ outline-color:#2D7FF9; } #board-wrap .bd-stat.review.active{ outline-color:#C87F1E; }
+  #board-wrap .bd-stat.done.active{ outline-color:#1E9E5A; } #board-wrap .bd-stat.over.active{ outline-color:#D6336C; }
   @media(max-width:720px){ #board-wrap .bd-stats{ grid-template-columns:repeat(2,1fr); } }
   /* แท็บมุมมอง */
   #board-wrap .bd-views{ display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
@@ -989,18 +995,33 @@
     $('bQ').oninput=function(){ BQ=this.value.trim().toLowerCase(); bRender(); };
     bRender();
   }
-  function bStatCard(cls,lab,num){ return '<div class="bd-stat '+cls+'"><div class="lab">'+lab+'</div><div class="num">'+num+'</div></div>'; }
+  function bStatusOf(sub){ for(var i=0;i<BSTATUSES.length;i++){ if(BSTATUSES[i].indexOf(sub)>=0) return BSTATUSES[i]; } return ''; }
+  function bMatchFilter(t){ if(!BFILTER) return true; if(BFILTER==='__over__') return bOver(t); return t.status===BFILTER; }
+  function bStatCard(cls,lab,num,kind,active){ return '<div class="bd-stat '+cls+(active?' active':'')+'" onclick="bStatFilter(\''+kind+'\')" title="คลิกเพื่อกรอง"><div class="lab">'+lab+'</div><div class="num">'+num+'</div></div>'; }
   function bRenderStats(){
     var base=BTASKS.filter(function(t){ return bInRange(t) && t.status.indexOf('ยกเลิก')<0; });
     function c(sub){ return base.filter(function(t){ return t.status.indexOf(sub)>=0; }).length; }
-    $('bStats').innerHTML= bStatCard('all','📋 ทั้งหมด',base.length)+ bStatCard('doing','🔵 กำลังทำ',c('กำลังทำ'))+
-      bStatCard('review','🔍 รอตรวจ',c('รอตรวจ'))+ bStatCard('done','✅ สำเร็จ',c('เสร็จ'))+ bStatCard('over','⏰ เกินกำหนด',base.filter(bOver).length);
+    function act(kind){ if(kind==='all') return !BFILTER; if(kind==='over') return BFILTER==='__over__';
+      return BFILTER===bStatusOf(kind==='doing'?'กำลังทำ':kind==='review'?'รอตรวจ':'เสร็จ'); }
+    $('bStats').innerHTML= bStatCard('all','📋 ทั้งหมด',base.length,'all',act('all'))+
+      bStatCard('doing','🔵 กำลังทำ',c('กำลังทำ'),'doing',act('doing'))+
+      bStatCard('review','🔍 รอตรวจ',c('รอตรวจ'),'review',act('review'))+
+      bStatCard('done','✅ สำเร็จ',c('เสร็จ'),'done',act('done'))+
+      bStatCard('over','⏰ เกินกำหนด',base.filter(bOver).length,'over',act('over'));
   }
+  function bStatFilter(kind){
+    var target = kind==='all' ? '' : kind==='over' ? '__over__'
+      : bStatusOf(kind==='doing'?'กำลังทำ':kind==='review'?'รอตรวจ':'เสร็จ');
+    BFILTER = (BFILTER===target) ? '' : target;   // กดซ้ำการ์ดเดิม = ล้างตัวกรอง
+    var fs=$('bFStatus'); if(fs) fs.value = (BFILTER && BFILTER!=='__over__') ? BFILTER : '';
+    bRender();
+  }
+  window.bStatFilter=bStatFilter;
   function bVisible(){
     var arr=BTASKS.filter(function(t){
       if(!bInRange(t)) return false;
       if(t.status.indexOf('ยกเลิก')>=0) return false;
-      if(BFILTER && t.status!==BFILTER) return false;
+      if(!bMatchFilter(t)) return false;
       if(BFCAT && t.category!==BFCAT) return false;
       if(BQ){ var h=(t.no+' '+(t.customer||'')+' '+(t.detail||'')+' '+(t.assignee||'')).toLowerCase(); if(h.indexOf(BQ)<0) return false; }
       return true;
@@ -1114,7 +1135,7 @@
     var html='', shown=0;
     BCAT_ORDER.forEach(function(k){
       var arr=groups[k]; if(!arr||!arr.length) return;
-      var vis=BFILTER?arr.filter(function(t){return t.status===BFILTER;}):arr;   // การ์ดตามตัวกรองสถานะ · นับยึดทั้งหมด
+      var vis=arr.filter(bMatchFilter);   // การ์ดตามตัวกรองสถานะ/เกินกำหนด · นับยึดทั้งหมด
       if(!vis.length) return; shown++;
       var cc=bCat(arr[0].category);
       html+='<div class="bd-typehd" style="border-color:'+cc.color+';color:'+cc.color+'">'+cc.icon+' '+esc(cc.label)+
@@ -1131,7 +1152,7 @@
     var html='<div class="bd-cohead">🏢 '+order.length+' บริษัท · '+base.length+' งาน</div>', shown=0;
     order.forEach(function(c){
       var all=groups[c];
-      var vis=BFILTER?all.filter(function(t){return t.status===BFILTER;}):all;
+      var vis=all.filter(bMatchFilter);
       if(!vis.length) return; shown++;
       var done=all.filter(bDone).length, over=all.filter(bOver).length, pct=Math.round(done/all.length*100);
       html+='<div class="bd-cosec"><div class="bd-cohd">'+
