@@ -79,6 +79,23 @@
   .srow-b{ font-weight:700; color:var(--text); }
   .sdiv{ border-top:1px solid var(--line); margin:10px 0; }
   .snet{ display:flex; justify-content:space-between; font-size:16px; font-weight:700; color:var(--blue); margin-top:4px; }
+  /* ── แถบสรุปยอดตามสถานะ ── */
+  .sumbar{ display:flex; gap:8px; overflow-x:auto; padding-bottom:12px; -webkit-overflow-scrolling:touch; }
+  .scard{ flex:0 0 auto; min-width:76px; background:#fff; border:1px solid var(--line); border-radius:12px; padding:8px 12px; text-align:center; }
+  .scard b{ display:block; font-size:20px; line-height:1.15; }
+  .scard span{ font-size:11px; color:var(--muted); white-space:nowrap; }
+  .scard.all b{ color:var(--blue); } .scard.doing b{ color:#1B72E8; } .scard.new b{ color:#5B6472; }
+  .scard.review b{ color:#C87F1E; } .scard.done b{ color:#1E9E5A; } .scard.over b{ color:#DC2626; }
+  .scard.over{ border-color:#F5C2C2; background:#FEF2F2; }
+  /* ── หัวกระดาน + บาร์ความสำเร็จต่อบริษัท ── */
+  .boardhead{ font-size:13px; font-weight:600; color:#4A5262; margin:2px 2px 12px; }
+  .grp .cnt.warn{ background:#DC2626; }
+  .pwrap{ margin:0 2px 12px; }
+  .pmeta{ display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); margin-bottom:5px; }
+  .pmeta .over{ color:#DC2626; font-weight:700; margin-left:auto; }
+  .pbar{ height:8px; border-radius:999px; background:#EDF1F7; overflow:hidden; }
+  .pfill{ height:100%; border-radius:999px; background:#1E9E5A; transition:width .3s; }
+  .pbar.over .pfill{ background:#DC2626; }
 </style>
 </head>
 <body>
@@ -92,6 +109,7 @@
     <div class="tabs">
       <div class="tab" id="tabMine" onclick="switchTab('mine')">งานของฉัน</div>
       <div class="tab" id="tabBoard" onclick="switchTab('board')">งานทั้งหมด</div>
+      <div class="tab" id="tabReview" onclick="switchTab('review')">🔍 รอตรวจ</div>
       <div class="tab" id="tabAll" onclick="switchTab('all')">ภาพรวม</div>
       <div class="tab" id="tabLeave" onclick="switchTab('leave')">📝 ลา</div>
       <div class="tab" id="tabSlip" onclick="switchTab('slip')">📄 สลิป</div>
@@ -119,7 +137,7 @@
   // ═══════════════════════════════
 
   var UID='', IDTOKEN='', ROLE={isOwner:false,isTeam:false}, STATUSES=[], TEAM=[], CUSTOMERS=[], CACHE={}, LEAVE_TYPES=[];
-  var TAB='mine', FILTER_MINE='', FILTER_ALL='', FILTER_BOARD='';
+  var TAB='mine', FILTER_MINE='', FILTER_ALL='', FILTER_BOARD='', BOARD_TASKS=[];
   var SLIP_MONTHS=[], SLIP_CUR='';
 
   function $(id){ return document.getElementById(id); }
@@ -155,11 +173,33 @@
     return 'b-new';
   }
 
+  // ───── สรุปยอด + เกินกำหนด ─────
+  function isDone_(t){ return t.status.indexOf('เสร็จ')>=0; }
+  function isCancel_(t){ return t.status.indexOf('ยกเลิก')>=0; }
+  function endOfDay_(ms){ var d=new Date(ms); d.setHours(23,59,59,999); return d.getTime(); }
+  function isOverdue_(t){ return !!t.dueMs && !isDone_(t) && !isCancel_(t) && Date.now()>endOfDay_(t.dueMs); }
+  function cntSub_(arr,sub){ return arr.filter(function(t){return t.status.indexOf(sub)>=0;}).length; }
+  // แถบการ์ดนับจำนวนตามสถานะ (ยึดชุดงานเต็ม ไม่ยึด chip กรอง)
+  function summaryHtml(tasks){
+    var live=(tasks||[]).filter(function(t){return !isCancel_(t);});
+    var over=live.filter(isOverdue_).length;
+    function pill(cls,lab,n){ return '<div class="scard '+cls+'"><b>'+n+'</b><span>'+lab+'</span></div>'; }
+    return '<div class="sumbar">'+
+      pill('all','ทั้งหมด',live.length)+
+      pill('new','🆕 ใหม่',cntSub_(live,'ใหม่'))+
+      pill('doing','🔵 ทำอยู่',cntSub_(live,'กำลังทำ'))+
+      pill('review','🔍 รอตรวจ',cntSub_(live,'รอตรวจ'))+
+      pill('done','✅ เสร็จ',cntSub_(live,'เสร็จ'))+
+      (over? pill('over','⏰ เกินกำหนด',over):'')+
+    '</div>';
+  }
+
   // ───── แท็บ ─────
   function setTabUI(t){
     TAB=t;
     $('tabMine').classList.toggle('active', t==='mine');
     $('tabBoard').classList.toggle('active', t==='board');
+    $('tabReview').classList.toggle('active', t==='review');
     $('tabAll').classList.toggle('active', t==='all');
     $('tabLeave').classList.toggle('active', t==='leave');
     $('tabSlip').classList.toggle('active', t==='slip');
@@ -176,6 +216,7 @@
     if(cached) $('list').innerHTML=CACHE[t];
     if(t==='mine') loadMine(cached);
     else if(t==='board') loadBoard(cached);
+    else if(t==='review') loadReview(cached);
     else if(t==='all') loadAll(cached);
     else if(t==='leave') loadLeave(cached);
     else if(t==='slip') loadPayslip(cached);
@@ -194,7 +235,7 @@
 
   // ───── โหลด งานของฉัน ─────
   function paintMine(tasks){
-    var head='<button class="btn btn-p" style="width:100%;margin-bottom:10px" onclick="openCreate()">➕ เปิดงานใหม่</button>';
+    var head=summaryHtml(tasks)+'<button class="btn btn-p" style="width:100%;margin-bottom:10px" onclick="openCreate()">➕ เปิดงานใหม่</button>';
     var ts=(tasks||[]); if(FILTER_MINE) ts=ts.filter(function(t){return t.status===FILTER_MINE;});
     var html=head+(ts.length?ts.map(cardMine).join(''):'<div class="empty">ยังไม่มีงานในหมวดนี้ 😊</div>');
     $('list').innerHTML=html; CACHE.mine=html;
@@ -236,7 +277,7 @@
       if(!r||!r.ok){ if(!silent) listEmpty((r&&r.error)||'โหลดไม่สำเร็จ'); return; }
       TEAM=r.team||[];
       var tasks=r.tasks||[];
-      var html=tasks.length?tasks.map(cardAll).join(''):'<div class="empty">ไม่พบงานตามเงื่อนไข</div>';
+      var html=summaryHtml(tasks)+(tasks.length?tasks.map(cardAll).join(''):'<div class="empty">ไม่พบงานตามเงื่อนไข</div>');
       $('list').innerHTML=html; CACHE.all=html;
     }).catch(function(e){ if(!silent) listEmpty(e.message); });
   }
@@ -277,32 +318,56 @@
     });
   }
 
+  // ───── โหลด รอตรวจ (พี่ · งานที่ทีมส่งกลับ รอตรวจก่อนส่งลูกค้า) ─────
+  function loadReview(silent){
+    if(!silent) listLoading();
+    jsonp({action:'waAllTasks', uid:UID, status:'🔍 รอตรวจ', q:''}).then(function(r){
+      if(!r||!r.ok){ if(!silent) listEmpty((r&&r.error)||'โหลดไม่สำเร็จ'); return; }
+      TEAM=r.team||TEAM;
+      var tasks=r.tasks||[];
+      var html=summaryHtml(tasks)+(tasks.length?tasks.map(cardAll).join(''):'<div class="empty">ไม่มีงานรอตรวจ 🎉</div>');
+      $('list').innerHTML=html; CACHE.review=html;
+    }).catch(function(e){ if(!silent) listEmpty(e.message); });
+  }
+
   // ───── โหลด ภาพรวม (แยกบริษัท · ทีม+พี่ ดูร่วมกัน) ─────
   function paintBoard(tasks){
-    tasks=tasks||[];
-    // กรองสถานะฝั่ง client (bootstrap ส่งมาทั้งหมด)
-    if(FILTER_BOARD) tasks=tasks.filter(function(t){return t.status===FILTER_BOARD;});
-    if(!tasks.length){ var eh='<div class="empty">ยังไม่มีงาน 😊</div>'; $('list').innerHTML=eh; CACHE.board=eh; return; }
+    // ชุดเต็ม (ตัดยกเลิก) — ใช้คิดสรุป + บาร์ต่อบริษัท (ไม่ยึด chip กรอง)
+    var full=(tasks||[]).filter(function(t){return !isCancel_(t);});
+    var summary=summaryHtml(full);
+    if(!full.length){ var eh=summary+'<div class="empty">ยังไม่มีงาน 😊</div>'; $('list').innerHTML=eh; CACHE.board=eh; return; }
     // จัดกลุ่มตามบริษัท (คงลำดับที่เจอครั้งแรก = ใหม่→เก่า)
     var order=[], groups={};
-    tasks.forEach(function(t){
+    full.forEach(function(t){
       var c=t.customer||'(ไม่ระบุบริษัท)';
       if(!groups[c]){ groups[c]=[]; order.push(c); }
       groups[c].push(t);
     });
-    var html='';
+    var html=summary+'<div class="boardhead">🏢 '+order.length+' บริษัท · '+full.length+' งาน</div>';
+    var shown=0;
     order.forEach(function(c){
-      html+='<div class="grp">🏢 '+esc(c)+'<span class="cnt">'+groups[c].length+'</span></div>';
-      html+=groups[c].map(cardBoard).join('');
+      var all=groups[c];
+      var vis=FILTER_BOARD?all.filter(function(t){return t.status===FILTER_BOARD;}):all;
+      if(!vis.length) return;   // chip กรองแล้วบริษัทนี้ไม่มีงาน → ข้าม
+      shown++;
+      var done=all.filter(isDone_).length, over=all.filter(isOverdue_).length;
+      var pct=Math.round(done/all.length*100);
+      html+='<div class="grp">🏢 '+esc(c)+'<span class="cnt'+(over?' warn':'')+'">'+all.length+'</span></div>';
+      html+='<div class="pwrap"><div class="pmeta"><span>เสร็จ '+done+'/'+all.length+' ('+pct+'%)</span>'+
+        (over?'<span class="over">⏰ เกินกำหนด '+over+'</span>':'')+'</div>'+
+        '<div class="pbar'+(over?' over':'')+'"><div class="pfill" style="width:'+pct+'%"></div></div></div>';
+      html+=vis.map(cardBoard).join('');
     });
+    if(!shown){ html=summary+'<div class="empty">ไม่พบงานตามเงื่อนไข 😊</div>'; }
     $('list').innerHTML=html; CACHE.board=html;
   }
   function loadBoard(silent){
-    renderChips($('filterBoard'), FILTER_BOARD, function(v){ FILTER_BOARD=v; loadBoard(); });
+    // chip กรองทำฝั่ง client (มีข้อมูลครบแล้ว) → บาร์ต่อบริษัทคิดจากงานทุกสถานะเสมอ
+    renderChips($('filterBoard'), FILTER_BOARD, function(v){ FILTER_BOARD=v; paintBoard(BOARD_TASKS); });
     if(!silent) listLoading();
-    jsonp({action:'waBoard', uid:UID, status:FILTER_BOARD}).then(function(r){
+    jsonp({action:'waBoard', uid:UID}).then(function(r){
       if(!r||!r.ok){ if(!silent) listEmpty((r&&r.error)||'โหลดไม่สำเร็จ'); return; }
-      paintBoard(r.tasks||[]);
+      BOARD_TASKS=r.tasks||[]; paintBoard(BOARD_TASKS);
     }).catch(function(e){ if(!silent) listEmpty(e.message); });
   }
 
@@ -556,7 +621,7 @@
   }
 
   // ───── list helpers ─────
-  function reloadCurrent(){ if(TAB==='board') loadBoard(true); else if(TAB==='all') loadAll(true); else if(TAB==='leave') loadLeave(true); else if(TAB==='slip') loadPayslip(true); else if(TAB==='approve') loadApprove(true); else loadMine(true); }
+  function reloadCurrent(){ if(TAB==='board') loadBoard(true); else if(TAB==='review') loadReview(true); else if(TAB==='all') loadAll(true); else if(TAB==='leave') loadLeave(true); else if(TAB==='slip') loadPayslip(true); else if(TAB==='approve') loadApprove(true); else loadMine(true); }
   function listLoading(){ $('list').innerHTML='<div class="loading"><div class="spin"></div>กำลังโหลด…</div>'; }
   function listEmpty(m){ $('list').innerHTML='<div class="empty">'+esc(m)+'</div>'; }
 
@@ -570,6 +635,7 @@
       // แท็บตาม role — 🏢 ภาพรวม เห็นทุกคน · งานของฉัน=ทีม · งานทั้งหมด=พี่
       $('tabMine').classList.toggle('hide', !ROLE.isTeam);
       $('tabBoard').classList.toggle('hide', false);
+      $('tabReview').classList.toggle('hide', !ROLE.isOwner);
       $('tabAll').classList.toggle('hide', !ROLE.isOwner);
       $('tabLeave').classList.toggle('hide', !ROLE.isTeam);
       $('tabSlip').classList.toggle('hide', !ROLE.isTeam);
@@ -580,7 +646,7 @@
       if(r.firstTab===t && r.tasks){
         setTabUI(t);
         if(t==='mine'){ renderChips($('filterMine'),FILTER_MINE,function(v){FILTER_MINE=v;loadMine();}); CUSTOMERS=r.customers||[]; paintMine(r.tasks); }
-        else { renderChips($('filterBoard'),FILTER_BOARD,function(v){FILTER_BOARD=v;loadBoard();}); paintBoard(r.tasks); }
+        else { renderChips($('filterBoard'),FILTER_BOARD,function(v){FILTER_BOARD=v;paintBoard(BOARD_TASKS);}); BOARD_TASKS=r.tasks||[]; paintBoard(BOARD_TASKS); }
       } else {
         switchTab(t);   // fallback: โหลดปกติ
       }
