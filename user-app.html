@@ -143,6 +143,7 @@
   #board-wrap .bd-stat.active{ outline:2.5px solid #1B72E8; outline-offset:-2px; }
   #board-wrap .bd-stat.doing.active{ outline-color:#2D7FF9; } #board-wrap .bd-stat.review.active{ outline-color:#C87F1E; }
   #board-wrap .bd-stat.done.active{ outline-color:#1E9E5A; } #board-wrap .bd-stat.over.active{ outline-color:#D6336C; }
+  #board-wrap .bd-stat.new.active{ outline-color:var(--bnew); }
   @media(max-width:720px){ #board-wrap .bd-stats{ grid-template-columns:repeat(2,1fr); } }
   /* แท็บมุมมอง */
   #board-wrap .bd-views{ display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
@@ -998,12 +999,14 @@
   function bStatusOf(sub){ for(var i=0;i<BSTATUSES.length;i++){ if(BSTATUSES[i].indexOf(sub)>=0) return BSTATUSES[i]; } return ''; }
   function bMatchFilter(t){ if(!BFILTER) return true; if(BFILTER==='__over__') return bOver(t); return t.status===BFILTER; }
   function bStatCard(cls,lab,num,kind,active){ return '<div class="bd-stat '+cls+(active?' active':'')+'" onclick="bStatFilter(\''+kind+'\')" title="คลิกเพื่อกรอง"><div class="lab">'+lab+'</div><div class="num">'+num+'</div></div>'; }
+  function bKindSub(kind){ return kind==='new'?'ใหม่':kind==='doing'?'กำลังทำ':kind==='review'?'รอตรวจ':'เสร็จ'; }
   function bRenderStats(){
     var base=BTASKS.filter(function(t){ return bInRange(t) && t.status.indexOf('ยกเลิก')<0; });
     function c(sub){ return base.filter(function(t){ return t.status.indexOf(sub)>=0; }).length; }
     function act(kind){ if(kind==='all') return !BFILTER; if(kind==='over') return BFILTER==='__over__';
-      return BFILTER===bStatusOf(kind==='doing'?'กำลังทำ':kind==='review'?'รอตรวจ':'เสร็จ'); }
+      return BFILTER===bStatusOf(bKindSub(kind)); }
     $('bStats').innerHTML= bStatCard('all','📋 ทั้งหมด',base.length,'all',act('all'))+
+      bStatCard('new','🆕 งานใหม่',c('ใหม่'),'new',act('new'))+
       bStatCard('doing','🔵 กำลังทำ',c('กำลังทำ'),'doing',act('doing'))+
       bStatCard('review','🔍 รอตรวจ',c('รอตรวจ'),'review',act('review'))+
       bStatCard('done','✅ สำเร็จ',c('เสร็จ'),'done',act('done'))+
@@ -1011,7 +1014,7 @@
   }
   function bStatFilter(kind){
     var target = kind==='all' ? '' : kind==='over' ? '__over__'
-      : bStatusOf(kind==='doing'?'กำลังทำ':kind==='review'?'รอตรวจ':'เสร็จ');
+      : bStatusOf(bKindSub(kind));
     BFILTER = (BFILTER===target) ? '' : target;   // กดซ้ำการ์ดเดิม = ล้างตัวกรอง
     var fs=$('bFStatus'); if(fs) fs.value = (BFILTER && BFILTER!=='__over__') ? BFILTER : '';
     bRender();
