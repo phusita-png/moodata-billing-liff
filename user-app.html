@@ -200,6 +200,22 @@
   #board-wrap .bd-pfill{ height:100%; border-radius:999px; background:var(--bdone); transition:width .3s; }
   #board-wrap .bd-pbar.over .bd-pfill{ background:#DC2626; }
   #board-wrap .bd-center{ text-align:center; padding:60px 20px; color:var(--bdmut); }
+  /* การ์ดแบบใหม่ — บาร์บนสีตามประเภท + เลขงาน → บ. → สถานะ → ชื่องาน → ลิงก์ */
+  #board-wrap .bd-card{ padding:0; overflow:hidden; }
+  #board-wrap .bd-cbar{ display:flex; align-items:center; gap:6px; padding:8px 12px; color:#fff; font-size:12px; font-weight:700; line-height:1.2; }
+  #board-wrap .bd-cbar .no{ margin-left:auto; font-family:monospace; font-weight:600; opacity:.95; }
+  #board-wrap .bd-cbody{ padding:11px 13px 13px; }
+  #board-wrap .bd-ccust{ font-weight:700; font-size:14px; }
+  #board-wrap .bd-crow{ display:flex; align-items:center; gap:8px; margin-top:7px; flex-wrap:wrap; }
+  #board-wrap .bd-ctitle{ font-size:13px; color:#4A5262; margin-top:7px; line-height:1.45; }
+  #board-wrap .bd-casg{ font-size:12px; color:#6A7280; margin-top:7px; }
+  #board-wrap .bd-casg.none{ color:var(--breview); }
+  #board-wrap .bd-clink{ display:block; text-align:center; margin-top:10px; padding:8px; border-radius:9px; background:#EEF3FB; color:var(--bd); font-weight:600; font-size:13px; text-decoration:none; }
+  #board-wrap .bd-clink:active{ background:#DCE7F8; }
+  #board-wrap .bd-catchip{ display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; color:#fff; white-space:nowrap; margin-top:3px; }
+  /* หัวกลุ่มตามประเภท (view: ตามประเภท) */
+  #board-wrap .bd-typehd{ display:flex; align-items:center; gap:8px; font-weight:700; font-size:15px; margin:18px 2px 11px; padding-left:11px; border-left:4px solid; }
+  #board-wrap .bd-typehd:first-child{ margin-top:2px; }
 
   /* ปุ่มคู่มือ: ชิดมุมล่างขวา ไม่บังเนื้อหา (แก้ .help-fab ซ้ำใน user.css ที่ดันขึ้น bottom:82px) */
   .help-fab{ bottom:14px !important; right:16px !important; padding:9px 14px; font-size:13.5px; box-shadow:0 4px 12px rgba(27,114,232,.32); opacity:.92; }
@@ -890,7 +906,7 @@
   // ═══════════════════════════════════════════════════════════
   var BVIEW='list', BTASKS=[], BALL=[], BSCOPE='all', BTEAM=[], BSTATUSES=[], BTYPESLIST=[], BOWNER='', BNOW=0, BCATS=[];
   var BFILTER='', BFCAT='', BSORT='due', BQ='', BCAL=null, BRANGE='all', BDAY=86400000;
-  var BVIEWS=[['list','📋 รายการ'],['company','🏢 ราย บริษัท'],['cards','🗂️ การ์ด'],['kanban','📊 คอลัมน์'],['calendar','📅 ปฏิทิน']];
+  var BVIEWS=[['list','📋 รายการ'],['type','📁 ตามประเภท'],['company','🏢 ราย บริษัท'],['cards','🗂️ การ์ด'],['kanban','📊 คอลัมน์'],['calendar','📅 ปฏิทิน']];
   var BSCOPE_EMPTY={ all:'ยังไม่มีงานในระบบ 😊', mine:'ยังไม่มีงานที่มอบหมายให้คุณ 😊', review:'ไม่มีงานรอตรวจในตอนนี้ 🎉' };
   var BCACHE={ at:0, data:null }, BTTL=30000;   // แคชข้อมูลบอร์ด (waPmBoard) — สลับ scope ได้ทันที · รีเฟรชเมื่อเกิน 30 วิ/หลังแก้ไข
   var BMON=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
@@ -1013,6 +1029,7 @@
     $('bViews').innerHTML=BVIEWS.map(function(v){ return '<div class="bd-vtab'+(v[0]===BVIEW?' active':'')+'" onclick="bSetView(\''+v[0]+'\')">'+v[1]+'</div>'; }).join('');
     var hint=$('bHint');
     if(BVIEW==='company'){ hint.style.display='none'; bViewCompany(); return; }
+    if(BVIEW==='type'){ hint.style.display='none'; bViewType(); return; }
     var arr=bVisible();
     if(BVIEW==='calendar'){
       var undated=BTASKS.filter(function(t){return !t.dueMs && t.status.indexOf('ยกเลิก')<0;}).length;
@@ -1030,7 +1047,7 @@
       return '<tr class="brow" onclick="bOpenTask(\''+esc(t.no)+'\')">'+
         '<td class="bd-ord">'+(i+1)+'</td>'+
         '<td><span class="bd-tid">'+esc(t.no)+'</span></td>'+
-        '<td><div class="bd-tt">'+esc(bTtl(t))+'</div>'+(t.category?'<div class="bd-meta">'+esc(t.category)+'</div>':'')+'</td>'+
+        '<td><div class="bd-tt">'+esc(bTtl(t))+'</div>'+bCatChip(t.category)+'</td>'+
         '<td>'+esc(t.customer||'-')+'</td>'+
         '<td><span class="bd-badge '+bBadge(t.status)+'">'+esc(t.status)+'</span></td>'+
         '<td>'+bDueHtml(t)+'</td>'+
@@ -1039,13 +1056,29 @@
     }).join('');
     $('bView').innerHTML='<div class="bd-tblwrap"><table><thead><tr><th style="width:40px">ลำดับ</th><th>รหัสงาน</th><th>งาน</th><th>ลูกค้า</th><th>สถานะ</th><th>กำหนด</th><th>ผู้รับผิดชอบ</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
   }
+  // ประเภทงาน → สี+ไอคอน+ป้าย (แจ้งงาน=ฟ้า📝 · แจ้งปัญหา=แดง⚠️ · สอบถาม=เขียว❓ · ตามรอบ=ม่วง🔁)
+  function bCat(cat){
+    var c=String(cat||'');
+    if(c.indexOf('ปัญหา')>=0)                     return { k:'issue',   color:'#DC2626', icon:'⚠️', label:'แจ้งปัญหา' };
+    if(c.indexOf('สอบถาม')>=0)                    return { k:'inquiry', color:'#1E9E5A', icon:'❓', label:'สอบถาม' };
+    if(c.indexOf('ตามรอบ')>=0)                    return { k:'recur',   color:'#7C3AED', icon:'🔁', label:'งานตามรอบ' };
+    if(c.indexOf('สั่ง')>=0 || c.indexOf('งาน')>=0) return { k:'order',   color:'#1B72E8', icon:'📝', label:'แจ้งงาน' };
+    return { k:'other', color:'#8A94A6', icon:'📋', label:c||'อื่น ๆ' };
+  }
+  var BCAT_ORDER=['order','issue','inquiry','recur','other'];
+  function bCatChip(cat){ var c=bCat(cat); return '<span class="bd-catchip" style="background:'+c.color+'">'+c.icon+' '+esc(c.label)+'</span>'; }
   function bMiniCard(t){
+    var c=bCat(t.category);
     return '<div class="bd-card" onclick="bOpenTask(\''+esc(t.no)+'\')">'+
-      '<div class="bd-tt">'+esc(bTtl(t))+'</div>'+
-      '<div class="cust">'+esc(t.customer||'-')+' · '+esc(t.no)+'</div>'+
-      '<div class="bd-foot"><span class="bd-badge '+bBadge(t.status)+'">'+esc(t.status)+'</span>'+
-      (t.dueMs?'<span class="'+(bOver(t)?'bd-over':'bd-age')+'">'+bThDate(t.dueMs)+(bOver(t)?' เกิน':'')+'</span>':'')+
-      '<span class="bd-asg'+(t.assignee?'':' none')+'" style="margin-left:auto">'+(t.assignee?esc(t.assignee):'ยังไม่มอบ')+'</span></div></div>';
+      '<div class="bd-cbar" style="background:'+c.color+'">'+c.icon+' '+esc(c.label)+'<span class="no">'+esc(t.no)+'</span></div>'+
+      '<div class="bd-cbody">'+
+        '<div class="bd-ccust">🏢 '+esc(t.customer||'-')+'</div>'+
+        '<div class="bd-crow"><span class="bd-badge '+bBadge(t.status)+'">'+esc(t.status)+'</span>'+
+          (t.dueMs?'<span class="'+(bOver(t)?'bd-over':'bd-age')+'">'+bThDate(t.dueMs)+(bOver(t)?' เกินกำหนด':'')+'</span>':'')+'</div>'+
+        '<div class="bd-ctitle">'+esc(bTtl(t))+'</div>'+
+        '<div class="bd-casg'+(t.assignee?'':' none')+'">👤 '+(t.assignee?esc(t.assignee):'ยังไม่มอบหมาย')+'</div>'+
+        (t.worklink?'<a class="bd-clink" href="'+esc(t.worklink)+'" target="_blank" onclick="event.stopPropagation()">🔗 เปิดลิงก์งาน / เอกสาร</a>':'')+
+      '</div></div>';
   }
   function bViewCards(arr){ $('bView').innerHTML='<div class="bd-grid">'+arr.map(bMiniCard).join('')+'</div>'; }
   function bViewKanban(arr){
@@ -1072,6 +1105,22 @@
     }
     $('bView').innerHTML='<div class="bd-calnav"><button class="bd-btn bd-o sm" onclick="bCalMove(-1)">‹ ก่อนหน้า</button>'+
       '<b>'+BMONF[m]+' '+(y+543)+'</b><button class="bd-btn bd-o sm" onclick="bCalMove(1)">ถัดไป ›</button></div><div class="bd-cal">'+cells+'</div>';
+  }
+  function bViewType(){
+    var base=bBaseScope();
+    if(!base.length){ $('bView').innerHTML='<div class="bd-center">'+(BTASKS.length?'ไม่พบงานตามเงื่อนไข':(BSCOPE_EMPTY[BSCOPE]||'ไม่พบงาน'))+'</div>'; return; }
+    var groups={}; base.forEach(function(t){ var k=bCat(t.category).k; (groups[k]=groups[k]||[]).push(t); });
+    var html='', shown=0;
+    BCAT_ORDER.forEach(function(k){
+      var arr=groups[k]; if(!arr||!arr.length) return;
+      var vis=BFILTER?arr.filter(function(t){return t.status===BFILTER;}):arr;   // การ์ดตามตัวกรองสถานะ · นับยึดทั้งหมด
+      if(!vis.length) return; shown++;
+      var cc=bCat(arr[0].category);
+      html+='<div class="bd-typehd" style="border-color:'+cc.color+';color:'+cc.color+'">'+cc.icon+' '+esc(cc.label)+
+        ' <span style="color:var(--bdmut);font-weight:600;font-size:13px">('+arr.length+' งาน)</span></div>'+
+        '<div class="bd-grid">'+vis.map(bMiniCard).join('')+'</div>';
+    });
+    $('bView').innerHTML=shown?html:'<div class="bd-center">ไม่พบงานตามเงื่อนไข</div>';
   }
   function bViewCompany(){
     var base=bBaseScope();
