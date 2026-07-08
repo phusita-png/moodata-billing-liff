@@ -1206,6 +1206,7 @@
       '<div class="m-act"><button class="btn btn-primary" onclick="bSaveTask(\''+esc(no)+'\')">💾 บันทึก</button>'+
       (t.hasGroup&&!bDone(t)?'<button class="btn btn-ok" onclick="bSendCust(\''+esc(no)+'\')">📨 ส่งลูกค้า</button>':'')+
       '<button class="btn btn-ghost" onclick="closeModal()">ปิด</button></div>'+
+      (t.status.indexOf('ยกเลิก')<0?'<button class="btn btn-ghost" style="width:100%;margin-top:8px" onclick="bOpenTransfer(\''+esc(no)+'\')">🔄 โอนงานให้คนอื่น</button>':'')+
       (!bDone(t)&&t.status.indexOf('ยกเลิก')<0?'<button class="btn btn-ghost" style="width:100%;margin-top:8px" onclick="bOpenReturn(\''+esc(no)+'\')">🔁 ส่งกลับให้ทีมแก้ไข</button>':''));
   }
   function bSaveTask(no){
@@ -1243,6 +1244,25 @@
       closeModal(); toast('🔁 ส่งกลับให้ '+(r.assignee||'ทีม')+' แก้ไขแล้ว'); renderOwnerBoard(BSCOPE, true);
     }).catch(function(e){ mErr(e.message); });
   }
+  // โอนงาน (บอร์ด owner) — เลือกคนใหม่ → waAssign (แจ้ง LINE คนใหม่อัตโนมัติ)
+  function bOpenTransfer(no){
+    var t=bFind(no); if(!t) return;
+    var opts='<option value="">— เลือกคนรับงาน —</option>'+BTEAM.map(function(mm){var n=mm.name;return '<option value="'+esc(n)+'"'+(n===t.assignee?' selected':'')+'>'+esc(n+(mm.nick&&mm.nick!==mm.name?' ('+mm.nick+')':''))+'</option>';}).join('');
+    modal('<h3>🔄 โอนงาน '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">เลือกคนรับงานใหม่ → ระบบเปลี่ยนผู้รับผิดชอบ + แจ้ง LINE ให้เขาทันที</div>'+
+      '<div class="fld"><label>โอนให้</label><select id="mtAsg">'+opts+'</select></div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" onclick="bDoTransfer(\''+esc(no)+'\')">🔄 โอนงาน</button></div>');
+  }
+  function bDoTransfer(no){
+    var name=$('mtAsg').value;
+    if(!name){ mErr('เลือกคนรับงานก่อนค่ะ'); return; }
+    toast('กำลังโอนงาน…');
+    jsonp({action:'waAssign',uid:UID,no:no,name:name}).then(function(r){
+      if(!r||!r.ok){ mErr((r&&r.error)||'โอนไม่สำเร็จ'); return; }
+      closeModal(); toast('🔄 โอนงานให้ '+(r.assignee||name)+' แล้ว'+(r.notified?' (แจ้ง LINE ให้)':'')); renderOwnerBoard(BSCOPE, true);
+    }).catch(function(e){ mErr(e.message); });
+  }
   function bOpenCreate(){
     var asgOpts='<option value="">— ยังไม่มอบหมาย —</option>'+BTEAM.map(function(mm){return '<option value="'+esc(mm.name)+'">'+esc(mm.name)+'</option>';}).join('');
     var catOpts=BCATS_EDIT.map(function(o){return '<option value="'+esc(o.v)+'">'+o.lb+'</option>';}).join('');
@@ -1266,6 +1286,7 @@
   }
   window.bSetView=bSetView; window.bCalMove=bCalMove; window.bOpenTask=bOpenTask; window.bSaveTask=bSaveTask;
   window.bSendCust=bSendCust; window.bOpenReturn=bOpenReturn; window.bDoReturn=bDoReturn; window.bOpenCreate=bOpenCreate; window.bCreateTask=bCreateTask;
+  window.bOpenTransfer=bOpenTransfer; window.bDoTransfer=bDoTransfer;
 
   // ───── init ─────
   function startParam(){ try{ return (new URLSearchParams(location.search).get('p')||'').toLowerCase(); }catch(e){ return ''; } }
