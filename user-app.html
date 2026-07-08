@@ -880,6 +880,7 @@
   var BFILTER='', BFCAT='', BSORT='due', BQ='', BCAL=null, BRANGE='all', BDAY=86400000;
   var BVIEWS=[['list','📋 รายการ'],['company','🏢 ราย บริษัท'],['cards','🗂️ การ์ด'],['kanban','📊 คอลัมน์'],['calendar','📅 ปฏิทิน']];
   var BSCOPE_EMPTY={ all:'ยังไม่มีงานในระบบ 😊', mine:'ยังไม่มีงานที่มอบหมายให้คุณ 😊', review:'ไม่มีงานรอตรวจในตอนนี้ 🎉' };
+  var BCACHE={ at:0, data:null }, BTTL=30000;   // แคชข้อมูลบอร์ด (waPmBoard) — สลับ scope ได้ทันที · รีเฟรชเมื่อเกิน 30 วิ/หลังแก้ไข
   var BMON=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
   var BMONF=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
   function bFind(no){ return BTASKS.filter(function(x){return x.no===no;})[0]; }
@@ -909,18 +910,31 @@
     if(BSCOPE==='review') return list.filter(function(t){ return t.status.indexOf('รอตรวจ')>=0; });
     return list;
   }
-  function renderOwnerBoard(scope){
+  function bApplyData(r){
+    BALL=r.tasks||[]; BTEAM=r.team||[]; BSTATUSES=r.statuses||[]; BTYPESLIST=r.types||[]; BOWNER=r.owner||''; BNOW=r.now||Date.now();
+    BTASKS=bScopeTasks(BALL);
+    var cs={}; BTASKS.forEach(function(t){ if(t.category) cs[t.category]=1; }); BCATS=Object.keys(cs);
+  }
+  function bOnBoardView(){ return VIEW==='alltasks'||VIEW==='mytasks'||VIEW==='review'; }
+  function bFetch(mode){   // mode: 'spinner' (รอโหลด) | 'silent' (คงจอเดิม รีเฟรชเบื้องหลัง)
+    jsonp({action:'waPmBoard', uid:UID}).then(function(r){
+      if(!r||!r.ok){ if(mode==='spinner') $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      BCACHE={ at:Date.now(), data:r };
+      if(bOnBoardView() && !document.getElementById('modal')){ bApplyData(r); bShell(); }   // repaint เฉพาะตอนยังอยู่หน้าบอร์ด + ไม่มี modal เปิด
+    }).catch(function(e){ if(mode==='spinner') $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
+  }
+  function renderOwnerBoard(scope, force){
     scope=scope||'all';
     if(scope!==BSCOPE){ BFILTER=''; BVIEW='list'; }   // เปลี่ยนมุมมอง → รีเซ็ตตัวกรอง/มุมมองย่อย
     BSCOPE=scope;
+    if(force){ bFetch('silent'); return; }             // หลังแก้ไข: รีเฟรชเงียบ (คงจอเดิมจนได้ข้อมูลใหม่)
+    if(BCACHE.data){                                    // มีแคช → แสดงทันที
+      bApplyData(BCACHE.data); bShell();
+      if(Date.now()-BCACHE.at>BTTL) bFetch('silent');   // แคชเก่า → รีเฟรชเบื้องหลัง
+      return;
+    }
     $('main').innerHTML='<div id="board-wrap"><div class="bd-center">กำลังโหลดกระดานงาน…</div></div>';
-    jsonp({action:'waPmBoard', uid:UID}).then(function(r){
-      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
-      BALL=r.tasks||[]; BTEAM=r.team||[]; BSTATUSES=r.statuses||[]; BTYPESLIST=r.types||[]; BOWNER=r.owner||''; BNOW=r.now||Date.now();
-      BTASKS=bScopeTasks(BALL);
-      var cs={}; BTASKS.forEach(function(t){ if(t.category) cs[t.category]=1; }); BCATS=Object.keys(cs);
-      bShell();
-    }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
+    bFetch('spinner');
   }
   function bShell(){
     $('main').innerHTML='<div id="board-wrap">'+
@@ -1108,11 +1122,11 @@
     if(due!==curDue) jobs.push(jsonp({action:'waSetDue',uid:UID,no:no,due:due}));
     if(!jobs.length){ closeModal(); return; }
     toast('กำลังบันทึก…');
-    Promise.all(jobs).then(function(){ closeModal(); toast('บันทึกแล้ว ✅'); renderOwnerBoard(BSCOPE); }).catch(function(e){ mErr(e.message); });
+    Promise.all(jobs).then(function(){ closeModal(); toast('บันทึกแล้ว ✅'); renderOwnerBoard(BSCOPE, true); }).catch(function(e){ mErr(e.message); });
   }
   function bSendCust(no){
     toast('กำลังส่งให้ลูกค้า…');
-    jsonp({action:'waSendCustomer',uid:UID,no:no}).then(function(r){ if(!r||!r.ok){ mErr((r&&r.error)||'ส่งไม่สำเร็จ'); return; } closeModal(); toast('✅ ส่งให้ลูกค้าแล้ว'); renderOwnerBoard(BSCOPE); }).catch(function(e){ mErr(e.message); });
+    jsonp({action:'waSendCustomer',uid:UID,no:no}).then(function(r){ if(!r||!r.ok){ mErr((r&&r.error)||'ส่งไม่สำเร็จ'); return; } closeModal(); toast('✅ ส่งให้ลูกค้าแล้ว'); renderOwnerBoard(BSCOPE, true); }).catch(function(e){ mErr(e.message); });
   }
   function bOpenReturn(no){
     modal('<h3>🔁 ส่งกลับให้แก้ไข · '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
@@ -1127,7 +1141,7 @@
     toast('กำลังส่งกลับ…');
     jsonpPost({action:'waTaskReturn',uid:UID,no:no,note:note}).then(function(r){
       if(!r||!r.ok){ mErr((r&&r.error)||'ส่งกลับไม่สำเร็จ'); return; }
-      closeModal(); toast('🔁 ส่งกลับให้ '+(r.assignee||'ทีม')+' แก้ไขแล้ว'); renderOwnerBoard(BSCOPE);
+      closeModal(); toast('🔁 ส่งกลับให้ '+(r.assignee||'ทีม')+' แก้ไขแล้ว'); renderOwnerBoard(BSCOPE, true);
     }).catch(function(e){ mErr(e.message); });
   }
   function bOpenCreate(){
@@ -1146,7 +1160,7 @@
     if(!cust && !detail){ mErr('กรอกลูกค้าหรือรายละเอียดอย่างน้อย 1 ช่อง'); return; }
     toast('กำลังเปิดงาน…');
     jsonpPost({action:'waCreateTask',uid:UID,title:$('cbTitle').value.trim(),customer:cust,detail:detail,assignee:$('cbAsg').value,due:$('cbDue').value}).then(function(r){
-      if(!r||!r.ok){ mErr((r&&r.error)||'สร้างไม่สำเร็จ'); return; } closeModal(); toast('เปิดงานใหม่แล้ว '+(r.no||'')); renderOwnerBoard(BSCOPE);
+      if(!r||!r.ok){ mErr((r&&r.error)||'สร้างไม่สำเร็จ'); return; } closeModal(); toast('เปิดงานใหม่แล้ว '+(r.no||'')); renderOwnerBoard(BSCOPE, true);
     }).catch(function(e){ mErr(e.message); });
   }
   window.bSetView=bSetView; window.bCalMove=bCalMove; window.bOpenTask=bOpenTask; window.bSaveTask=bSaveTask;
