@@ -46,7 +46,24 @@
   .btn-ok{ background:var(--green); color:#fff; } .btn-ghost{ background:#EEF1F6; color:#333; }
   .grp-h{ display:flex; align-items:center; gap:8px; margin:16px 2px 9px; font-weight:700; font-size:15px; }
   .grp-h .cnt{ font-size:12px; font-weight:600; color:#fff; background:var(--red); border-radius:999px; padding:1px 9px; }
+  .grp-h .cnt.warn{ background:#DC2626; }
   .grp-h:first-child{ margin-top:2px; }
+  /* แถบสรุปตามสถานะ */
+  .sumbar{ display:flex; gap:8px; overflow-x:auto; padding-bottom:12px; -webkit-overflow-scrolling:touch; }
+  .scard{ flex:0 0 auto; min-width:78px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:8px 12px; text-align:center; }
+  .scard b{ display:block; font-size:20px; line-height:1.15; }
+  .scard span{ font-size:11px; color:var(--muted); white-space:nowrap; }
+  .scard.all b{ color:var(--red); } .scard.doing b{ color:#1B72E8; } .scard.new b{ color:#5B6472; }
+  .scard.review b{ color:#C87F1E; } .scard.done b{ color:#1E9E5A; } .scard.over b{ color:#DC2626; }
+  .scard.over{ border-color:#F5C2C2; background:#FEF2F2; }
+  /* หัวราย บ. + บาร์ความสำเร็จ */
+  .boardhead{ font-size:13px; font-weight:600; color:#4A5262; margin:2px 2px 12px; }
+  .pwrap{ margin:0 2px 12px; }
+  .pmeta{ display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); margin-bottom:5px; }
+  .pmeta .over{ color:#DC2626; font-weight:700; margin-left:auto; }
+  .pbar{ height:8px; border-radius:999px; background:#EDF1F7; overflow:hidden; }
+  .pfill{ height:100%; border-radius:999px; background:#1E9E5A; transition:width .3s; }
+  .pbar.over .pfill{ background:#DC2626; }
   /* modal */
   .mask{ position:fixed; inset:0; background:rgba(20,28,40,.5); display:flex; align-items:flex-end; justify-content:center; z-index:60; }
   .sheet{ background:#fff; width:100%; max-width:520px; border-radius:18px 18px 0 0;
@@ -134,6 +151,8 @@
       <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg><span>งานของฉัน</span></button>
     <button class="nav-btn" data-view="alltasks" aria-label="งานทั้งหมด">
       <svg viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="7" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="6" rx="1.5"/><rect x="14" y="14" width="7" height="6" rx="1.5"/></svg><span>งานทั้งหมด</span></button>
+    <button class="nav-btn" data-view="review" aria-label="รอตรวจ" id="navReview" style="display:none">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><span>รอตรวจ</span></button>
 
     <div class="nav-sec">ข้อมูลส่วนตัว</div>
     <!-- ปิดชั่วคราว: ระบบเบิกกำลังพัฒนา (เปิดกลับ = ลบ style display:none + ตั้ง EXPENSE_ENABLED=true ฝั่ง .gs) -->
@@ -158,7 +177,7 @@
   var EXEC_URL = 'https://script.google.com/macros/s/AKfycbwdOotltb--WwTuS-ECutq6uFQs536kjz-RyLuq1mm35Pbfnn25EptvIRkfjaZB6iJf/exec';
   // ═══════════════════════════════
 
-  var UID='', IDTOKEN='', NICK='', VIEW='';
+  var UID='', IDTOKEN='', NICK='', VIEW='', IS_OWNER=false;
   var TYPES=[], QUOTA=null, LEAVES=[], HOLIDAYS=[], SCHEDULE=null;
   var CAL=new Date();   // เดือนที่ปฏิทินแสดงอยู่
   var LF = { type:'sick', start:null, end:null, period:'full', reason:'', stime:'', etime:'' };  // start/end = Date|null
@@ -167,7 +186,7 @@
   var TH_DOW = ['อา','จ','อ','พ','พฤ','ศ','ส'];
   var MENAME='', TEAM=[], CUSTOMERS=[];   // งาน
   var VIEW_META = {
-    mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], leave:['📝','การลา'],
+    mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
     expense:['💸','เบิกค่าใช้จ่าย'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร']
   };
   var EXP_TYPES=[];   // ประเภทค่าใช้จ่าย (โหลดจาก waExpenseInit)
@@ -207,7 +226,7 @@
     VIEW=v;
     Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(b){ b.classList.toggle('active', b.dataset.view===v); });
     var meta=VIEW_META[v]||['•',v]; $('tbIcon').textContent=meta[0]; $('tbTitle').textContent=meta[1];
-    ({ leave:renderLeave, mytasks:renderMytasks, alltasks:renderAlltasks, docs:renderDocs, expense:renderExpense }[v] || soon)();
+    ({ leave:renderLeave, mytasks:renderMytasks, alltasks:renderAlltasks, review:renderReview, docs:renderDocs, expense:renderExpense }[v] || soon)();
   }
   function soon(){
     $('main').innerHTML='<div class="card"><div class="soon-wrap"><div class="e-emo">🚧</div>เมนูนี้กำลังย้ายมาหน้านี้ — เร็ว ๆ นี้ค่ะ<br><span style="font-size:13px">(ตอนนี้ยังใช้ผ่านเมนูเดิม/แชทได้)</span></div></div>';
@@ -407,13 +426,27 @@
 
   // ═══════════ VIEW: งานของฉัน ═══════════
   function tkBadge(st){ if(st.indexOf('กำลังทำ')>=0)return'b-doing'; if(st.indexOf('รอตรวจ')>=0)return'b-review'; if(st.indexOf('เสร็จ')>=0)return'b-done'; return'b-new'; }
+  // ── สรุปยอด + เกินกำหนด ──
+  function isDone_(t){ return t.status.indexOf('เสร็จ')>=0; }
+  function isCancel_(t){ return t.status.indexOf('ยกเลิก')>=0; }
+  function endOfDay_(ms){ var d=new Date(ms); d.setHours(23,59,59,999); return d.getTime(); }
+  function isOverdue_(t){ return !!t.dueMs && !isDone_(t) && !isCancel_(t) && Date.now()>endOfDay_(t.dueMs); }
+  function summaryHtml(tasks){
+    var live=(tasks||[]).filter(function(t){return !isCancel_(t);});
+    function c(sub){ return live.filter(function(t){return t.status.indexOf(sub)>=0;}).length; }
+    var over=live.filter(isOverdue_).length;
+    function pill(cls,lab,n){ return '<div class="scard '+cls+'"><b>'+n+'</b><span>'+lab+'</span></div>'; }
+    return '<div class="sumbar">'+pill('all','ทั้งหมด',live.length)+pill('new','🆕 ใหม่',c('ใหม่'))+
+      pill('doing','🔵 ทำอยู่',c('กำลังทำ'))+pill('review','🔍 รอตรวจ',c('รอตรวจ'))+
+      pill('done','✅ เสร็จ',c('เสร็จ'))+(over?pill('over','⏰ เกินกำหนด',over):'')+'</div>';
+  }
   function renderMytasks(){
     skel();
     jsonp({action:'waMyTasks', uid:UID}).then(function(r){
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
       MENAME=(r.me&&r.me.name)||''; TEAM=r.team||[]; CUSTOMERS=r.customers||[];
       var ts=r.tasks||[];
-      var html='<button class="btn btn-primary" style="width:100%;margin-bottom:14px" onclick="openCreate()">➕ เปิดงานใหม่</button>';
+      var html=summaryHtml(ts)+'<button class="btn btn-primary" style="width:100%;margin-bottom:14px" onclick="openCreate()">➕ เปิดงานใหม่</button>';
       html+= ts.length ? ts.map(cardMy).join('') : '<div class="card"><div class="emptybox">ยังไม่มีงานที่มอบหมายให้คุณ 😊</div></div>';
       $('main').innerHTML=html;
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
@@ -562,11 +595,22 @@
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
   }
   function paintBoard(tasks){
-    if(!tasks.length){ $('main').innerHTML='<div class="card"><div class="emptybox">ยังไม่มีงาน 😊</div></div>'; return; }
+    var full=(tasks||[]).filter(function(t){return !isCancel_(t);});
+    var summary=summaryHtml(full);
+    if(!full.length){ $('main').innerHTML=summary+'<div class="card"><div class="emptybox">ยังไม่มีงาน 😊</div></div>'; return; }
     var order=[], groups={};
-    tasks.forEach(function(t){ var c=t.customer||'(ไม่ระบุบริษัท)'; if(!groups[c]){ groups[c]=[]; order.push(c); } groups[c].push(t); });
-    var html='';
-    order.forEach(function(c){ html+='<div class="grp-h">🏢 '+esc(c)+'<span class="cnt">'+groups[c].length+'</span></div>'+groups[c].map(cardBoard).join(''); });
+    full.forEach(function(t){ var c=t.customer||'(ไม่ระบุบริษัท)'; if(!groups[c]){ groups[c]=[]; order.push(c); } groups[c].push(t); });
+    var html=summary+'<div class="boardhead">🏢 '+order.length+' บริษัท · '+full.length+' งาน</div>';
+    order.forEach(function(c){
+      var all=groups[c];
+      var done=all.filter(isDone_).length, over=all.filter(isOverdue_).length;
+      var pct=Math.round(done/all.length*100);
+      html+='<div class="grp-h">🏢 '+esc(c)+'<span class="cnt'+(over?' warn':'')+'">'+all.length+'</span></div>'+
+        '<div class="pwrap"><div class="pmeta"><span>เสร็จ '+done+'/'+all.length+' ('+pct+'%)</span>'+
+        (over?'<span class="over">⏰ เกินกำหนด '+over+'</span>':'')+'</div>'+
+        '<div class="pbar'+(over?' over':'')+'"><div class="pfill" style="width:'+pct+'%"></div></div></div>'+
+        all.map(cardBoard).join('');
+    });
     $('main').innerHTML=html;
   }
   function cardBoard(t){
@@ -587,6 +631,34 @@
   }
   function doClaim(no){ toast('กำลังรับงาน…');
     jsonp({action:'waClaim',uid:UID,no:no}).then(function(r){ if(!r||!r.ok){toast((r&&r.error)||'ไม่สำเร็จ');return;} toast('🙋 รับงานแล้ว (แจ้งพี่ให้)'); renderAlltasks(); }).catch(function(e){toast(e.message);}); }
+
+  // ═══════════ VIEW: รอตรวจ (พี่ · งานที่ทีมส่งกลับ รอตรวจก่อนส่งลูกค้า) ═══════════
+  function renderReview(){
+    skel();
+    jsonp({action:'waBoard', uid:UID}).then(function(r){
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      var ts=(r.tasks||[]).filter(function(t){ return t.status.indexOf('รอตรวจ')>=0; });
+      ts.sort(function(a,b){ return (a.dueMs||9e15)-(b.dueMs||9e15); });
+      var html=summaryHtml(ts);
+      html+= ts.length ? ts.map(reviewCard).join('') : '<div class="card"><div class="emptybox">ไม่มีงานรอตรวจในตอนนี้ 🎉</div></div>';
+      $('main').innerHTML=html;
+    }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
+  }
+  function reviewCard(t){
+    var h='<div class="tk"><div class="tk-top"><span class="tk-no">'+esc(t.no)+'</span>'+
+      '<span class="tk-badge b-review">'+esc(t.status)+'</span></div>'+
+      '<div class="tk-cust">'+esc(t.customer||'-')+'</div>'+
+      (t.detail?'<div class="tk-detail">'+esc(t.detail)+'</div>':'')+
+      '<div class="tk-asg'+(t.assignee?'':' none')+'">👤 '+(t.assignee?esc(t.assignee):'ยังไม่มอบหมาย')+'</div>';
+    if(t.worklink) h+='<div class="tk-kv"><b>ลิงก์งานจากทีม:</b> <a href="'+esc(t.worklink)+'" target="_blank">'+esc(t.worklink)+'</a></div>';
+    if(t.reply) h+='<div class="tk-kv"><b>คำอธิบายถึงลูกค้า:</b> '+esc(t.reply)+'</div>';
+    if(t.note) h+='<div class="tk-kv"><b>โน้ตจากทีม:</b> '+esc(t.note)+'</div>';
+    if(t.hasGroup) h+='<div class="tk-acts"><button class="btn btn-ok" onclick="doSend(\''+esc(t.no)+'\')">📨 ส่งให้ลูกค้า</button></div>';
+    else h+='<div class="tk-kv" style="color:#C87F1E">⚠️ งานนี้ไม่มีกลุ่ม LINE ลูกค้า (ส่งให้ลูกค้าไม่ได้)</div>';
+    return h+'</div>';
+  }
+  function doSend(no){ toast('กำลังส่งให้ลูกค้า…');
+    jsonp({action:'waSendCustomer',uid:UID,no:no}).then(function(r){ if(!r||!r.ok){toast((r&&r.error)||'ส่งไม่สำเร็จ');return;} toast('✅ ส่งให้ลูกค้าแล้ว'); renderReview(); }).catch(function(e){toast(e.message);}); }
 
   // ═══════════ VIEW: เอกสาร (สลิป + คลัง + คำขอ) ═══════════
   var DOCTYPES=[], RQ={ type:'', detail:'' };
@@ -693,6 +765,8 @@
     jsonp({action:'waBootstrap', uid:UID}).then(function(r){
       if(!r||!r.ok){ fatal((r&&r.error)||'โหลดข้อมูลไม่สำเร็จ'); return; }
       NICK=r.nick||''; if(NICK){ $('hdSub').textContent=NICK; }
+      IS_OWNER=!!r.isOwner;
+      if(IS_OWNER){ var nr=$('navReview'); if(nr) nr.style.display=''; }   // แท็บรอตรวจ = เฉพาะพี่/ผู้ตรวจ
       $('loader').classList.add('hidden'); $('app').classList.remove('hidden');
       Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(b){
         b.addEventListener('click', function(){ switchView(b.dataset.view); }); });
