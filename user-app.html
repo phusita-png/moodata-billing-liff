@@ -253,6 +253,20 @@
   .mchk-wrap{ display:flex; flex-direction:column; gap:2px; max-height:46vh; overflow-y:auto; margin:6px 0 4px; }
   .mchk{ display:flex; align-items:center; gap:10px; padding:10px 8px; border-radius:9px; font-size:15px; cursor:pointer; }
   .mchk:hover{ background:#F2F6FC; } .mchk input{ width:18px; height:18px; }
+  /* progress bar % ความสำเร็จ */
+  .pbar{ height:7px; background:#EEF1F6; border-radius:99px; overflow:hidden; margin-top:5px; }
+  .pbar-lg{ height:10px; }
+  .pbar-fill{ height:100%; border-radius:99px; transition:width .4s ease; }
+  .pf-low{ background:#B4BCC8; } .pf-mid{ background:#1B72E8; } .pf-done{ background:#1E9E5A; }
+  .pf-low-t{ color:#8A94A6; } .pf-mid-t{ color:#1B72E8; } .pf-done-t{ color:#1E9E5A; }
+  .tk-prog{ display:flex; justify-content:space-between; align-items:baseline; margin-top:11px; }
+  .tk-prog-l{ font-size:12.5px; color:#8A94A6; } .tk-prog-n{ font-size:14px; font-weight:700; }
+  .pjc-prog{ margin-top:10px; } .pjc-prog-n{ font-size:12.5px; font-weight:600; color:#5A6472; }
+  .pj-hero-prog{ display:flex; align-items:center; gap:15px; margin-top:15px; }
+  .pj-hero-pct{ font-size:32px; font-weight:800; line-height:1; } .pj-hero-pct span{ font-size:16px; font-weight:600; opacity:.85; }
+  .pj-hero-barwrap{ flex:1; }
+  .pj-hero .pbar{ background:rgba(255,255,255,.28); } .pj-hero .pbar-fill{ background:#fff !important; }
+  .pj-hero-cnt{ font-size:12px; opacity:.92; margin-top:6px; }
 </style>
 </head>
 <body>
@@ -697,6 +711,11 @@
   }
 
   // ═══════════ VIEW: Project (บริหารโครงการ) ═══════════
+  // % ความสำเร็จจากสถานะ (ยกเลิก=null ไม่นับ) · progress bar
+  function statusPct(s){ s=String(s||''); if(s.indexOf('ยกเลิก')>=0)return null; if(s.indexOf('เสร็จ')>=0)return 100; if(s.indexOf('รอตรวจ')>=0)return 80; if(s.indexOf('กำลังทำ')>=0)return 50; return 0; }
+  function pctClass(p){ return p>=100?'pf-done':(p>=50?'pf-mid':'pf-low'); }
+  function pctBar(p,big){ return '<div class="pbar'+(big?' pbar-lg':'')+'"><div class="pbar-fill '+pctClass(p)+'" style="width:'+p+'%"></div></div>'; }
+  function avgPct(tasks){ var sum=0,n=0; (tasks||[]).forEach(function(t){ var p=statusPct(t.status); if(p!==null){sum+=p;n++;} }); return n?Math.round(sum/n):0; }
   function renderProjects(){
     CUR_PID='';
     skel();
@@ -719,6 +738,8 @@
         '<div class="pjc-top"><span class="pjc-name">'+esc(pj.name)+'</span>'+
         '<span class="pjc-badge">'+esc(cntLbl)+'</span></div>'+
         '<div class="pjc-meta">'+esc(pj.id)+(pj.customer?' · '+esc(pj.customer):'')+(closed?' · ปิดแล้ว':'')+'</div>';
+      var ppct=(typeof pj.pct==='number')?pj.pct:0;
+      h+='<div class="pjc-prog"><span class="pjc-prog-n">'+ppct+'% สำเร็จ</span>'+pctBar(ppct)+'</div>';
       if(IS_OWNER){
         var mem=(pj.members||[]);
         h+='<div class="pjc-mem">👥 '+(mem.length?esc(mem.join(', ')):'<i>ยังไม่มีสมาชิก</i>')+'</div>'+
@@ -737,9 +758,13 @@
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
       MENAME=(r.me&&r.me.name)||''; TEAM=r.team||[]; CUSTOMERS=r.customers||[];
       var pj=r.project||{}, ts=r.tasks||[];
+      var avg=avgPct(ts), doneN=ts.filter(function(t){return statusPct(t.status)===100;}).length;
       var html='<div class="pj-head"><button class="btn btn-ghost btn-sm" onclick="renderProjects()">← Project ทั้งหมด</button></div>'+
         '<div class="pj-hero"><div class="pj-hero-name">📁 '+esc(pj.name||pid)+'</div>'+
-        '<div class="pj-hero-sub">'+esc(pid)+(pj.customer?' · '+esc(pj.customer):'')+' · 👥 '+esc((r.members||[]).join(', ')||'—')+'</div></div>'+
+        '<div class="pj-hero-sub">'+esc(pid)+(pj.customer?' · '+esc(pj.customer):'')+' · 👥 '+esc((r.members||[]).join(', ')||'—')+'</div>'+
+        '<div class="pj-hero-prog"><div class="pj-hero-pct">'+avg+'<span>%</span></div>'+
+        '<div class="pj-hero-barwrap">'+pctBar(avg,true)+'<div class="pj-hero-cnt">เสร็จ '+doneN+'/'+ts.length+' งาน</div></div></div>'+
+        '</div>'+
         '<button class="btn btn-primary" style="width:100%;margin-bottom:14px" onclick="openCreate(\''+esc(pid)+'\')">➕ เปิดงานใน project นี้</button>';
       html+= ts.length ? ts.map(cardProj).join('') : '<div class="card"><div class="emptybox">ยังไม่มีงานใน project นี้ 😊</div></div>';
       $('main').innerHTML=html;
@@ -753,6 +778,8 @@
       (t.customer&&t.title?'<div class="tk-cat">'+esc(t.customer)+'</div>':'')+
       (t.detail?'<div class="tk-detail">'+esc(t.detail)+'</div>':'')+
       '<div class="tk-kv"><b>ผู้รับผิดชอบ:</b> '+(t.assignee?esc(t.assignee):'<i>ยังไม่มีคนรับ</i>')+'</div>';
+    var tpc=statusPct(t.status);
+    if(tpc!==null) h+='<div class="tk-prog"><span class="tk-prog-l">ความคืบหน้า</span><span class="tk-prog-n '+pctClass(tpc)+'-t">'+tpc+'%</span></div>'+pctBar(tpc);
     if(t.note){ var isFix=t.note.indexOf('พี่ให้แก้ไข')>=0;
       h+='<div class="tk-kv"'+(isFix?' style="background:#FFF7E6;border-radius:9px;padding:8px 10px;color:#8A6D1E"':'')+'><b>'+(isFix?'📝 สิ่งที่ต้องแก้':'โน้ต')+':</b> '+esc(t.note.replace(/^📝 พี่ให้แก้ไข:\s*/,''))+'</div>'; }
     var btns=[], done=t.status.indexOf('เสร็จ')>=0, cancel=t.status.indexOf('ยกเลิก')>=0;
