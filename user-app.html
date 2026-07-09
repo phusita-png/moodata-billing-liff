@@ -234,6 +234,25 @@
   .help-fab{ bottom:14px !important; right:16px !important; padding:9px 14px; font-size:13.5px; box-shadow:0 4px 12px rgba(27,114,232,.32); opacity:.92; }
   .help-fab:hover{ opacity:1; }
   @media(max-width:1023px){ .help-fab{ bottom:84px !important; right:12px !important; } }  /* มือถือ: เหนือแถบเมนูล่าง */
+  /* ── Project (บริหารโครงการ) ── */
+  .btn-sm{ padding:6px 12px; font-size:13px; }
+  .pjc{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:16px 17px; margin-bottom:12px; cursor:pointer; transition:box-shadow .15s, transform .05s; }
+  .pjc:hover{ box-shadow:0 6px 20px rgba(120,150,200,.22); } .pjc:active{ transform:scale(.995); }
+  .pjc-closed{ opacity:.62; }
+  .pjc-top{ display:flex; align-items:center; gap:10px; }
+  .pjc-name{ font-size:16px; font-weight:700; color:#242B36; flex:1; }
+  .pjc-badge{ font-size:12.5px; font-weight:600; color:#1B72E8; background:#EAF1FC; padding:3px 11px; border-radius:999px; white-space:nowrap; }
+  .pjc-meta{ font-size:12.5px; color:#8A94A6; margin-top:4px; }
+  .pjc-mem{ font-size:13px; color:#5A6472; margin-top:9px; }
+  .pjc-acts{ display:flex; gap:8px; margin-top:12px; }
+  .pj-head{ margin-bottom:12px; }
+  .pj-hero{ background:linear-gradient(120deg,#1B72E8,#4A93F0); color:#fff; border-radius:var(--radius); padding:18px 18px; margin-bottom:14px; box-shadow:0 6px 20px rgba(27,114,232,.28); }
+  .pj-hero-name{ font-size:19px; font-weight:700; }
+  .pj-hero-sub{ font-size:13px; opacity:.92; margin-top:5px; }
+  .mchk-wrap{ display:flex; flex-direction:column; gap:2px; max-height:46vh; overflow-y:auto; margin:6px 0 4px; }
+  .mchk{ display:flex; align-items:center; gap:10px; padding:10px 8px; border-radius:9px; font-size:15px; cursor:pointer; }
+  .mchk:hover{ background:#F2F6FC; } .mchk input{ width:18px; height:18px; }
 </style>
 </head>
 <body>
@@ -271,6 +290,8 @@
       <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg><span>งานของฉัน</span></button>
     <button class="nav-btn" data-view="review" aria-label="รอตรวจ" id="navReview" style="display:none">
       <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><span>รอตรวจ</span></button>
+    <button class="nav-btn" data-view="projects" aria-label="Project">
+      <svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M3 11h18"/></svg><span>Project</span></button>
 
     <div class="nav-sec">ข้อมูลส่วนตัว</div>
     <!-- ปิดชั่วคราว: ระบบเบิกกำลังพัฒนา (เปิดกลับ = ลบ style display:none + ตั้ง EXPENSE_ENABLED=true ฝั่ง .gs) -->
@@ -305,8 +326,9 @@
   var MENAME='', TEAM=[], CUSTOMERS=[];   // งาน
   var VIEW_META = {
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
-    expense:['💸','เบิกค่าใช้จ่าย'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร']
+    expense:['💸','เบิกค่าใช้จ่าย'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], projects:['📁','Project']
   };
+  var PROJECTS=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ)
   var EXP_TYPES=[];   // ประเภทค่าใช้จ่าย (โหลดจาก waExpenseInit)
 
   function $(id){ return document.getElementById(id); }
@@ -344,7 +366,7 @@
     VIEW=v;
     Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(b){ b.classList.toggle('active', b.dataset.view===v); });
     var meta=VIEW_META[v]||['•',v]; $('tbIcon').textContent=meta[0]; $('tbTitle').textContent=meta[1];
-    ({ leave:renderLeave, mytasks:renderMytasks, alltasks:renderAlltasks, review:renderReview, docs:renderDocs, expense:renderExpense }[v] || soon)();
+    ({ leave:renderLeave, mytasks:renderMytasks, alltasks:renderAlltasks, review:renderReview, docs:renderDocs, expense:renderExpense, projects:renderProjects }[v] || soon)();
   }
   function soon(){
     $('main').innerHTML='<div class="card"><div class="soon-wrap"><div class="e-emo">🚧</div>เมนูนี้กำลังย้ายมาหน้านี้ — เร็ว ๆ นี้ค่ะ<br><span style="font-size:13px">(ตอนนี้ยังใช้ผ่านเมนูเดิม/แชทได้)</span></div></div>';
@@ -597,7 +619,13 @@
     return h+'</div>';
   }
   function doDoing(no){ toast('กำลังรับงาน…');
-    jsonp({action:'waTaskDoing',uid:UID,no:no}).then(function(r){ if(!r||!r.ok){toast((r&&r.error)||'ไม่สำเร็จ');return;} toast('รับงานแล้ว 🔵'); renderMytasks(); }).catch(function(e){toast(e.message);}); }
+    jsonp({action:'waTaskDoing',uid:UID,no:no}).then(function(r){ if(!r||!r.ok){toast((r&&r.error)||'ไม่สำเร็จ');return;} toast('รับงานแล้ว 🔵'); refreshTasksView(); }).catch(function(e){toast(e.message);}); }
+  // รีเฟรชหน้ารายการงานตาม view ปัจจุบัน (mytasks / alltasks / project board)
+  function refreshTasksView(){
+    if(VIEW==='projects'){ if(CUR_PID) openProjectBoard(CUR_PID); else renderProjects(); }
+    else if(VIEW==='mytasks') renderMytasks();
+    else if(VIEW==='alltasks') renderAlltasks();
+  }
 
   // modal helper
   function modal(html){ var m=document.createElement('div'); m.className='mask'; m.id='modal';
@@ -619,11 +647,13 @@
     if(!link&&!desc){ mErr('กรอกลิงก์ หรือคำอธิบาย อย่างน้อย 1 ช่องค่ะ'); return; }
     toast('กำลังส่งตรวจ…');
     jsonp({action:'waTaskSubmit',uid:UID,no:no,link:link,desc:desc,note:note}).then(function(r){
-      if(!r||!r.ok){ mErr((r&&r.error)||'ส่งไม่สำเร็จ'); return; } closeModal(); toast('📤 ส่งตรวจแล้ว (แจ้งพี่ให้)'); renderMytasks();
+      if(!r||!r.ok){ mErr((r&&r.error)||'ส่งไม่สำเร็จ'); return; } closeModal(); toast('📤 ส่งตรวจแล้ว (แจ้งพี่ให้)'); refreshTasksView();
     }).catch(function(e){ mErr(e.message); });
   }
-  // เปิดงานใหม่
-  function openCreate(){
+  // เปิดงานใหม่ (pid = สร้างในบอร์ด project นั้น · ไม่ส่ง = งานทั่วไป)
+  var CREATE_PID='';
+  function openCreate(pid){
+    CREATE_PID = (typeof pid==='string') ? pid : '';
     var opts='<option value="">— ไม่ระบุลูกค้า —</option>'+CUSTOMERS.map(function(c){return '<option value="'+esc(c)+'">'+esc(c)+'</option>';}).join('');
     var asgOpts='<option value="">— ทำเอง (เป็นงานของฉัน) —</option>'+
       TEAM.filter(function(m){return m.name!==MENAME;}).map(function(m){
@@ -641,10 +671,10 @@
     var detail=$('cDetail').value.trim();
     if(!detail){ mErr('กรอกรายละเอียดงานก่อนค่ะ'); return; }
     toast('กำลังเปิดงาน…');
-    jsonpPost({action:'waTeamCreate',uid:UID,customer:$('cCust').value,title:$('cTitle').value.trim(),detail:detail,due:$('cDue').value,assignee:$('cAsg').value})
+    jsonpPost({action:'waTeamCreate',uid:UID,customer:$('cCust').value,title:$('cTitle').value.trim(),detail:detail,due:$('cDue').value,assignee:$('cAsg').value,project:CREATE_PID})
       .then(function(r){ if(!r||!r.ok){ mErr((r&&r.error)||'เปิดงานไม่สำเร็จ'); return; } closeModal();
         var who=(r.assignee&&r.assignee!==MENAME) ? (' · มอบให้ '+r.assignee+(r.notified?' (แจ้ง LINE แล้ว)':' (ยังไม่มี LINE)')) : '';
-        toast('➕ เปิดงาน '+r.no+' แล้ว'+who); renderMytasks(); })
+        toast('➕ เปิดงาน '+r.no+' แล้ว'+who); refreshTasksView(); })
       .catch(function(e){ mErr(e.message); });
   }
   // โอนงาน
@@ -662,7 +692,118 @@
     toast('กำลังโอนงาน…');
     jsonp({action:'waTransfer',uid:UID,no:no,name:name}).then(function(r){
       if(!r||!r.ok){ mErr((r&&r.error)||'โอนไม่สำเร็จ'); return; }
-      closeModal(); toast('🔄 โอนงานให้ '+r.to+' แล้ว'+(r.notified?' (แจ้ง LINE ให้)':'')); renderMytasks();
+      closeModal(); toast('🔄 โอนงานให้ '+r.to+' แล้ว'+(r.notified?' (แจ้ง LINE ให้)':'')); refreshTasksView();
+    }).catch(function(e){ mErr(e.message); });
+  }
+
+  // ═══════════ VIEW: Project (บริหารโครงการ) ═══════════
+  function renderProjects(){
+    CUR_PID='';
+    skel();
+    var act = IS_OWNER ? 'waProjectAdminList' : 'waMyProjects';
+    jsonp({action:act, uid:UID}).then(function(r){
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      PROJECTS=r.projects||[]; if(IS_OWNER) TEAM_ALL=r.team||[];
+      paintProjects();
+    }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
+  }
+  function paintProjects(){
+    var html='';
+    if(IS_OWNER) html+='<button class="btn btn-primary" style="width:100%;margin-bottom:14px" onclick="openProjEdit()">➕ สร้าง Project</button>';
+    if(!PROJECTS.length){ html+='<div class="card"><div class="emptybox">'+(IS_OWNER?'ยังไม่มี project — กด "สร้าง Project" ได้เลยค่ะ':'คุณยังไม่ได้อยู่ใน project ไหน 😊 (พี่จะเพิ่มให้)')+'</div></div>'; $('main').innerHTML=html; return; }
+    html+=PROJECTS.map(function(pj){
+      var closed=pj.status&&pj.status.indexOf('ปิด')>=0;
+      var cnt = IS_OWNER ? (pj.taskCount||0) : (pj.taskOpen||0);
+      var cntLbl = IS_OWNER ? (cnt+' งาน') : (cnt+' งานค้าง');
+      var h='<div class="pjc'+(closed?' pjc-closed':'')+'" onclick="openProjectBoard(\''+esc(pj.id)+'\')">'+
+        '<div class="pjc-top"><span class="pjc-name">'+esc(pj.name)+'</span>'+
+        '<span class="pjc-badge">'+esc(cntLbl)+'</span></div>'+
+        '<div class="pjc-meta">'+esc(pj.id)+(pj.customer?' · '+esc(pj.customer):'')+(closed?' · ปิดแล้ว':'')+'</div>';
+      if(IS_OWNER){
+        var mem=(pj.members||[]);
+        h+='<div class="pjc-mem">👥 '+(mem.length?esc(mem.join(', ')):'<i>ยังไม่มีสมาชิก</i>')+'</div>'+
+          '<div class="pjc-acts" onclick="event.stopPropagation()">'+
+          '<button class="btn btn-ghost btn-sm" onclick="openProjEdit(\''+esc(pj.id)+'\')">✏️ แก้</button>'+
+          '<button class="btn btn-ghost btn-sm" onclick="openProjMembers(\''+esc(pj.id)+'\')">👥 สมาชิก</button></div>';
+      }
+      return h+'</div>';
+    }).join('');
+    $('main').innerHTML=html;
+  }
+  // บอร์ดงานของ project เดียว (reuse การ์ดงาน)
+  function openProjectBoard(pid){
+    CUR_PID=pid; VIEW='projects'; skel();
+    jsonp({action:'waProjectBoard', uid:UID, pid:pid}).then(function(r){
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      MENAME=(r.me&&r.me.name)||''; TEAM=r.team||[]; CUSTOMERS=r.customers||[];
+      var pj=r.project||{}, ts=r.tasks||[];
+      var html='<div class="pj-head"><button class="btn btn-ghost btn-sm" onclick="renderProjects()">← Project ทั้งหมด</button></div>'+
+        '<div class="pj-hero"><div class="pj-hero-name">📁 '+esc(pj.name||pid)+'</div>'+
+        '<div class="pj-hero-sub">'+esc(pid)+(pj.customer?' · '+esc(pj.customer):'')+' · 👥 '+esc((r.members||[]).join(', ')||'—')+'</div></div>'+
+        '<button class="btn btn-primary" style="width:100%;margin-bottom:14px" onclick="openCreate(\''+esc(pid)+'\')">➕ เปิดงานใน project นี้</button>';
+      html+= ts.length ? ts.map(cardProj).join('') : '<div class="card"><div class="emptybox">ยังไม่มีงานใน project นี้ 😊</div></div>';
+      $('main').innerHTML=html;
+    }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
+  }
+  // การ์ดงานในบอร์ด project — แสดงผู้รับผิดชอบ + ช่วยกันรับ/ส่ง
+  function cardProj(t){
+    var h='<div class="tk"><div class="tk-top"><span class="tk-no">'+esc(t.no)+'</span>'+
+      '<span class="tk-badge '+tkBadge(t.status)+'">'+esc(t.status)+'</span></div>'+
+      '<div class="tk-cust">'+esc(t.title||t.customer||'-')+'</div>'+
+      (t.customer&&t.title?'<div class="tk-cat">'+esc(t.customer)+'</div>':'')+
+      (t.detail?'<div class="tk-detail">'+esc(t.detail)+'</div>':'')+
+      '<div class="tk-kv"><b>ผู้รับผิดชอบ:</b> '+(t.assignee?esc(t.assignee):'<i>ยังไม่มีคนรับ</i>')+'</div>';
+    if(t.note){ var isFix=t.note.indexOf('พี่ให้แก้ไข')>=0;
+      h+='<div class="tk-kv"'+(isFix?' style="background:#FFF7E6;border-radius:9px;padding:8px 10px;color:#8A6D1E"':'')+'><b>'+(isFix?'📝 สิ่งที่ต้องแก้':'โน้ต')+':</b> '+esc(t.note.replace(/^📝 พี่ให้แก้ไข:\s*/,''))+'</div>'; }
+    var btns=[], done=t.status.indexOf('เสร็จ')>=0, cancel=t.status.indexOf('ยกเลิก')>=0;
+    if(!done&&!cancel){
+      if(t.unassigned) btns.push('<button class="btn btn-primary" onclick="doClaim(\''+esc(t.no)+'\')">🙋 รับงาน</button>');
+      else {
+        if(t.status.indexOf('รอตรวจ')<0) btns.push('<button class="btn btn-ok" onclick="openSubmit(\''+esc(t.no)+'\')">📤 ส่งตรวจ</button>');
+        if(t.mine) btns.push('<button class="btn btn-ghost" onclick="openTransfer(\''+esc(t.no)+'\')">🔄 โอนงาน</button>');
+      }
+    }
+    if(btns.length) h+='<div class="tk-acts">'+btns.join('')+'</div>';
+    return h+'</div>';
+  }
+  function doClaim(no){ toast('กำลังรับงาน…');
+    jsonp({action:'waClaim',uid:UID,no:no}).then(function(r){ if(!r||!r.ok){toast((r&&r.error)||'ไม่สำเร็จ');return;} toast('รับงานแล้ว 🙋'); refreshTasksView(); }).catch(function(e){toast(e.message);}); }
+
+  // ── (พี่) สร้าง/แก้ project ──
+  function openProjEdit(id){
+    var pj = id ? (PROJECTS.filter(function(p){return p.id===id;})[0]||{}) : {};
+    modal('<h3>'+(id?'✏️ แก้ Project':'➕ สร้าง Project')+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="fld"><label>ชื่อ Project</label><input id="pName" placeholder="เช่น ปิดบัญชีไตรมาส 3" value="'+esc(pj.name||'')+'"></div>'+
+      '<div class="fld"><label>ลูกค้า (ถ้ามี · เว้นว่างได้)</label><input id="pCust" placeholder="ชื่อลูกค้า" value="'+esc(pj.customer||'')+'"></div>'+
+      '<div class="fld"><label>หมายเหตุ</label><input id="pNote" placeholder="ไม่บังคับ" value="'+esc(pj.note||'')+'"></div>'+
+      (id?'<div class="fld"><label>สถานะ</label><select id="pStatus"><option value="ทำอยู่"'+(pj.status&&pj.status.indexOf('ปิด')>=0?'':' selected')+'>ทำอยู่</option><option value="ปิด"'+(pj.status&&pj.status.indexOf('ปิด')>=0?' selected':'')+'>ปิด</option></select></div>':'')+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" onclick="doProjSave(\''+esc(id||'')+'\')">บันทึก</button></div>');
+  }
+  function doProjSave(id){
+    var name=$('pName').value.trim();
+    if(!name){ mErr('กรอกชื่อ project ก่อนค่ะ'); return; }
+    var params={action:'waProjectSave',uid:UID,id:id,name:name,customer:$('pCust').value.trim(),note:$('pNote').value.trim()};
+    if(id&&$('pStatus')) params.status=$('pStatus').value;
+    toast('กำลังบันทึก…');
+    jsonp(params).then(function(r){ if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; } closeModal(); toast('บันทึก project แล้ว'); renderProjects(); }).catch(function(e){ mErr(e.message); });
+  }
+  // ── (พี่) จัดสมาชิก project ──
+  function openProjMembers(id){
+    var pj=PROJECTS.filter(function(p){return p.id===id;})[0]||{}; var cur=pj.members||[];
+    var boxes=TEAM_ALL.map(function(nm){ var on=cur.indexOf(nm)>=0;
+      return '<label class="mchk"><input type="checkbox" value="'+esc(nm)+'"'+(on?' checked':'')+'> '+esc(nm)+'</label>'; }).join('');
+    modal('<h3>👥 สมาชิก · '+esc(pj.name||id)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">เลือกคนที่จะให้เห็น+ช่วยกันทำงานใน project นี้</div>'+
+      '<div class="mchk-wrap">'+(boxes||'<i>ยังไม่มีทีมงาน</i>')+'</div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" onclick="doProjMembers(\''+esc(id)+'\')">บันทึก</button></div>');
+  }
+  function doProjMembers(id){
+    var names=[]; Array.prototype.forEach.call(document.querySelectorAll('.mchk-wrap input:checked'), function(c){ names.push(c.value); });
+    toast('กำลังบันทึก…');
+    jsonp({action:'waProjectSetMembers',uid:UID,pid:id,members:names.join(',')}).then(function(r){
+      if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; } closeModal(); toast('บันทึกสมาชิกแล้ว'); renderProjects();
     }).catch(function(e){ mErr(e.message); });
   }
 
