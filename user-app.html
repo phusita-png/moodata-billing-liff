@@ -148,6 +148,14 @@
   #board-wrap .bd-stat-pj{ background:#F3EEFC; border-color:#E0D2F7; } #board-wrap .bd-stat-pj .lab{ color:#7C3AED; } #board-wrap .bd-stat-pj .num{ color:#7C3AED; }
   #board-wrap .bd-stat-add{ background:linear-gradient(120deg,#1B72E8,#4A93F0); border:none; box-shadow:0 4px 14px rgba(27,114,232,.3); }
   #board-wrap .bd-stat-add .lab{ color:#fff; font-weight:700; } #board-wrap .bd-stat-add .num{ color:#fff; font-size:30px; }
+  #board-wrap .bd-pjbar{ display:flex; align-items:center; gap:14px; margin-bottom:14px; flex-wrap:wrap; }
+  #board-wrap .bd-pjbar:empty{ display:none; }
+  #board-wrap .bd-pjsel{ flex:0 0 auto; min-width:230px; padding:11px 14px; border:2px solid #1B72E8; border-radius:11px; font-family:inherit; font-size:15px; font-weight:600; background:#fff; color:var(--bdink); cursor:pointer; }
+  #board-wrap .bd-pjprog{ flex:1; min-width:200px; display:flex; align-items:center; gap:11px; }
+  #board-wrap .bd-pjtrack{ flex:1; height:14px; background:#EDF1F7; border-radius:999px; overflow:hidden; }
+  #board-wrap .bd-pjfill{ height:100%; border-radius:999px; background:linear-gradient(90deg,#1B72E8,#4A93F0); transition:width .3s; }
+  #board-wrap .bd-pjfill.full{ background:#1E9E5A; }
+  #board-wrap .bd-pjpct{ font-size:14px; font-weight:800; color:#3A4250; white-space:nowrap; }
   @media(max-width:720px){ #board-wrap .bd-stats{ grid-template-columns:repeat(2,1fr); } }
   /* mini app (มือถือ) → เหลือ ช่วงเวลา+เปิดงานใหม่ / การ์ดสถานะ / การ์ดงานคอลัมน์เดียว (ตัดแท็บมุมมอง+ตัวกรองประเภท/เรียง/ค้นหา) */
   @media(max-width:1023px){ #board-wrap, #board-wrap *{ box-sizing:border-box; }
@@ -1259,25 +1267,20 @@
         '<select id="bRange"><option value="all">📅 ทุกช่วงเวลา</option><option value="month">เดือนนี้</option>'+
         '<option value="lastmonth">เดือนที่แล้ว</option><option value="last7">7 วันล่าสุด</option><option value="last30">30 วันล่าสุด</option></select>'+
         '<button class="bd-btn bd-p" onclick="bOpenCreate()">+ เปิดงานใหม่</button></div>'+
+      '<div id="bPjBar" class="bd-pjbar"></div>'+
       '<div id="bStats" class="bd-stats"></div>'+
       '<div id="bViews" class="bd-views"></div>'+
       '<div class="bd-tools">'+
-        '<select id="bFProject"></select><select id="bFCat"></select><select id="bFStatus"></select>'+
+        '<select id="bFCat"></select><select id="bFStatus"></select>'+
         '<select id="bFSort"><option value="due">เรียง: กำหนดเสร็จ</option><option value="customer">เรียง: ลูกค้า</option>'+
         '<option value="status">เรียง: สถานะ</option><option value="assignee">เรียง: ผู้รับผิดชอบ</option><option value="no">เรียง: เลขงาน</option></select>'+
         '<input id="bQ" class="search" placeholder="🔍 ค้นหางาน / ลูกค้า"></div>'+
       '<div id="bHint" class="bd-note" style="display:none"></div>'+
       '<div id="bView"></div></div>';
-    var bCos=bCustomers();
-    $('bFProject').innerHTML='<option value="">📁 Project: ทั้งหมด</option>'+
-      (bCos.length?'<optgroup label="กลุ่มไลน์ / ลูกค้า">'+bCos.map(function(c){return '<option value="co:'+esc(c)+'">🏢 '+esc(c)+'</option>';}).join('')+'</optgroup>':'')+
-      (BPROJECTS.length?'<optgroup label="Project จัดเอง">'+BPROJECTS.map(function(p){return '<option value="pj:'+esc(p.id)+'">📁 '+esc(p.name)+'</option>';}).join('')+'</optgroup>':'')+
-      '<option value="__none__">— ยังไม่จัด project —</option>';
     $('bFCat').innerHTML='<option value="">ประเภท: ทั้งหมด</option>'+BCATS.map(function(c){return '<option value="'+esc(c)+'">'+esc(c)+'</option>';}).join('');
     $('bFStatus').innerHTML='<option value="">สถานะ: ทั้งหมด</option>'+BSTATUSES.map(function(s){return '<option value="'+esc(s)+'">'+esc(s)+'</option>';}).join('');
-    $('bRange').value=BRANGE; $('bFProject').value=BFPROJECT; $('bFCat').value=BFCAT; $('bFStatus').value=BFILTER; $('bFSort').value=BSORT; $('bQ').value=BQ;
+    $('bRange').value=BRANGE; $('bFCat').value=BFCAT; $('bFStatus').value=BFILTER; $('bFSort').value=BSORT; $('bQ').value=BQ;
     $('bRange').onchange=function(){ BRANGE=this.value; bRender(); };
-    $('bFProject').onchange=function(){ BFPROJECT=this.value; bRender(); };
     $('bFCat').onchange=function(){ BFCAT=this.value; bRender(); };
     $('bFStatus').onchange=function(){ BFILTER=this.value; bRender(); };
     $('bFSort').onchange=function(){ BSORT=this.value; bRender(); };
@@ -1296,8 +1299,25 @@
   }
   function bStatCard(cls,lab,num,kind,active){ return '<div class="bd-stat '+cls+(active?' active':'')+'" onclick="bStatFilter(\''+kind+'\')" title="คลิกเพื่อกรอง"><div class="lab">'+lab+'</div><div class="num">'+num+'</div></div>'; }
   function bKindSub(kind){ return kind==='new'?'ใหม่':kind==='doing'?'กำลังทำ':kind==='review'?'รอตรวจ':'เสร็จ'; }
+  // แถวบน: ตัวกรอง Project + บาร์ % ความสำเร็จของ project ที่เลือก
+  function bRenderPjBar(){
+    if(!$('bPjBar')) return;
+    if(BSCOPE!=='project'){ $('bPjBar').innerHTML=''; return; }   // แถวนี้เฉพาะหน้า Project
+    var base=BTASKS.filter(function(t){ return bInRange(t) && t.status.indexOf('ยกเลิก')<0 && bMatchProject(t); });
+    var done=base.filter(bDone).length, tot=base.length, pct=tot?Math.round(done/tot*100):0;
+    var bCos=bCustomers();
+    var opts='<option value="">📁 Project: ทั้งหมด</option>'+
+      (bCos.length?'<optgroup label="กลุ่มไลน์ / ลูกค้า">'+bCos.map(function(c){return '<option value="co:'+esc(c)+'">🏢 '+esc(c)+'</option>';}).join('')+'</optgroup>':'')+
+      (BPROJECTS.length?'<optgroup label="Project จัดเอง">'+BPROJECTS.map(function(p){return '<option value="pj:'+esc(p.id)+'">📁 '+esc(p.name)+'</option>';}).join('')+'</optgroup>':'')+
+      '<option value="__none__">— ยังไม่จัด project —</option>';
+    $('bPjBar').innerHTML='<select id="bFProject" class="bd-pjsel">'+opts+'</select>'+
+      '<div class="bd-pjprog"><div class="bd-pjtrack"><div class="bd-pjfill'+(pct>=100?' full':'')+'" style="width:'+pct+'%"></div></div>'+
+      '<span class="bd-pjpct">'+pct+'% · เสร็จ '+done+'/'+tot+'</span></div>';
+    $('bFProject').value=BFPROJECT;
+    $('bFProject').onchange=function(){ BFPROJECT=this.value; bRender(); };
+  }
   function bRenderStats(){
-    var base=BTASKS.filter(function(t){ return bInRange(t) && t.status.indexOf('ยกเลิก')<0; });
+    var base=BTASKS.filter(function(t){ return bInRange(t) && t.status.indexOf('ยกเลิก')<0 && bMatchProject(t); });
     function c(sub){ return base.filter(function(t){ return t.status.indexOf(sub)>=0; }).length; }
     function act(kind){ if(kind==='all') return !BFILTER; if(kind==='over') return BFILTER==='__over__';
       return BFILTER===bStatusOf(bKindSub(kind)); }
@@ -1355,6 +1375,7 @@
   }
   function bIsMobile(){ return window.matchMedia('(max-width:1023px)').matches; }
   function bRender(){
+    bRenderPjBar();
     bRenderStats();
     if(bIsMobile()){                                   // mini app → การ์ดสถานะ + การ์ดงานคอลัมน์เดียว (ยังเก็บ ช่วงเวลา+เปิดงานใหม่)
       $('bViews').innerHTML=''; $('bHint').style.display='none';
