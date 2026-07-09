@@ -23,8 +23,9 @@
       };
       var target = MAP[p] || 'user-app.html';
       // คง p ไว้ให้หน้าปลายทางอ่านต่อ (user-app ใช้เลือก view เริ่ม: work→งานของฉัน, me→ลา) [v2]
+      // + cache-bust (v=เวลา) กัน LINE/เบราว์เซอร์ cache ไฟล์เก่า → โหลดรุ่นล่าสุดเสมอ
       var rest = q.toString();
-      location.replace(target + (rest ? '?' + rest : ''));
+      location.replace(target + '?v=' + Date.now() + (rest ? '&' + rest : ''));
     })();
   </script>
 </body>
