@@ -278,6 +278,21 @@
   .stgbar-done{ border-left-color:#1E9E5A; color:#1E9E5A; }   .stgbar-done .stgbar-n{ background:#1E9E5A; }
   .stgbar-over{ border-left-color:#DC2626; color:#DC2626; }   .stgbar-over .stgbar-n{ background:#DC2626; }
   .stgbar-cancel{ border-left-color:#B8C0CC; color:#8A94A6; } .stgbar-cancel .stgbar-n{ background:#B8C0CC; }
+  /* การ์ดหัวสีใน Project (copy จาก #board-wrap .bd-* · ใส่สีตรง ไม่พึ่ง var) */
+  .pj-card{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:0; overflow:hidden; cursor:default; margin-bottom:12px; box-shadow:0 3px 12px rgba(120,150,200,.10); }
+  .pj-card .bd-cbar{ display:flex; align-items:center; gap:6px; padding:9px 13px; color:#fff; font-size:12.5px; font-weight:700; line-height:1.2; }
+  .pj-card .bd-cbar .no{ margin-left:auto; font-family:monospace; font-weight:600; opacity:.95; }
+  .pj-card .bd-cbody{ padding:12px 14px 14px; }
+  .pj-card .bd-ccust{ font-weight:700; font-size:15px; color:#242B36; }
+  .pj-card .bd-crow{ display:flex; align-items:center; gap:8px; margin-top:8px; flex-wrap:wrap; }
+  .pj-card .bd-badge{ font-size:12px; padding:2px 10px; border-radius:999px; font-weight:600; white-space:nowrap; }
+  .pj-card .bb-new{ background:#EEF1F6; color:#8A94A6; }   .pj-card .bb-doing{ background:#E3EEFD; color:#1B72E8; }
+  .pj-card .bb-review{ background:#FDF0E1; color:#C87F1E; } .pj-card .bb-done{ background:#E4F5EA; color:#1E9E5A; }
+  .pj-card .bd-over{ color:#DC2626; font-weight:700; font-size:12px; } .pj-card .bd-age{ color:#8A94A6; font-size:12px; }
+  .pj-card .bd-ctitle{ font-size:13.5px; color:#4A5262; margin-top:8px; line-height:1.45; }
+  .pj-card .bd-casg{ font-size:12.5px; color:#6A7280; margin-top:8px; }
+  .pj-card .bd-casg.none{ color:#C87F1E; }
+  .pj-cardacts{ display:flex; gap:8px; margin-top:12px; }
   .pjc-top{ display:flex; align-items:center; gap:10px; }
   .pjc-name{ font-size:16px; font-weight:700; color:#242B36; flex:1; }
   .pjc-badge{ font-size:12.5px; font-weight:600; color:#1B72E8; background:#EAF1FC; padding:3px 11px; border-radius:999px; white-space:nowrap; }
@@ -835,14 +850,17 @@
     else if(PJ_SEL.indexOf('pj:')===0) openCreate(PJ_SEL.slice(3));
     else openCreate();
   }
-  // การ์ดงานแบบหน้า "งานทั้งหมด" + ลูกค้า/ชื่องาน (เพราะ Project แยกสถานะ ไม่ได้ group บริษัท)
+  // การ์ดงานหัวสีตามประเภท (แบบหน้างานทั้งหมด · bMiniCard) + ปุ่มช่วยกัน (ทีม+พี่)
   function cardTkPj(t){
-    var h='<div class="tk"><div class="tk-top"><span class="tk-no">'+esc(t.no)+'</span>'+
-      '<span class="tk-badge '+tkBadge(t.status)+'">'+esc(t.status)+'</span></div>'+
-      ((t.title||t.customer)?'<div class="tk-cust">'+esc(t.title||t.customer)+'</div>':'')+
-      ((t.customer&&t.title)?'<div class="tk-cat">'+esc(t.customer)+'</div>':'')+
-      (t.detail?'<div class="tk-detail">'+esc(t.detail)+'</div>':'')+
-      '<div class="tk-asg'+(t.assignee?'':' none')+'">👤 '+(t.assignee?esc(t.assignee):'ยังไม่มอบหมาย')+'</div>';
+    var c=bCat(t.category);
+    var h='<div class="bd-card pj-card">'+
+      '<div class="bd-cbar" style="background:'+c.color+'">'+c.icon+' '+esc(c.label)+'<span class="no">'+esc(t.no)+'</span></div>'+
+      '<div class="bd-cbody">'+
+        '<div class="bd-ccust">🏢 '+esc(t.customer||'-')+'</div>'+
+        '<div class="bd-crow"><span class="bd-badge '+bBadge(t.status)+'">'+esc(t.status)+'</span>'+
+          (t.dueMs?'<span class="'+(isOverdue_(t)?'bd-over':'bd-age')+'">'+bThDate(t.dueMs)+(isOverdue_(t)?' เกินกำหนด':'')+'</span>':'')+'</div>'+
+        '<div class="bd-ctitle">'+esc(bTtl(t))+'</div>'+
+        '<div class="bd-casg'+(t.assignee?'':' none')+'">👤 '+(t.assignee?esc(t.assignee):'ยังไม่มอบหมาย')+'</div>';
     var btns=[];
     if(t.mine && t.status.indexOf('เสร็จ')<0 && t.status.indexOf('ยกเลิก')<0){
       if(t.status.indexOf('กำลังทำ')<0 && t.status.indexOf('รอตรวจ')<0)
@@ -851,8 +869,8 @@
     } else if(t.unassigned){
       btns.push('<button class="btn btn-primary" onclick="doClaim(\''+esc(t.no)+'\')">🙋 รับงานนี้</button>');
     }
-    if(btns.length) h+='<div class="tk-acts">'+btns.join('')+'</div>';
-    return h+'</div>';
+    if(btns.length) h+='<div class="pj-cardacts">'+btns.join('')+'</div>';
+    return h+'</div></div>';
   }
   // เปิดงานใหม่ให้บริษัท (preset ลูกค้า · ไม่ผูก project)
   function openCreateCo(cust){ CREATE_CUST=cust; openCreate(); }
