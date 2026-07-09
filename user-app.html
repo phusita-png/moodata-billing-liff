@@ -145,11 +145,6 @@
   #board-wrap .bd-stat.doing.active{ outline-color:#2D7FF9; } #board-wrap .bd-stat.review.active{ outline-color:#C87F1E; }
   #board-wrap .bd-stat.done.active{ outline-color:#1E9E5A; } #board-wrap .bd-stat.over.active{ outline-color:#D6336C; }
   #board-wrap .bd-stat.new.active{ outline-color:var(--bnew); }
-  #board-wrap .bd-stat-pj .num{ color:#7C3AED; }
-  #board-wrap .bd-stat-pj.active{ outline-color:#7C3AED; }
-  #board-wrap .bd-stat-add{ background:linear-gradient(120deg,#1B72E8,#4A93F0); border:none; box-shadow:0 4px 14px rgba(27,114,232,.3); }
-  #board-wrap .bd-stat-add .lab{ color:#fff; font-weight:700; }
-  #board-wrap .bd-stat-add .num{ color:#fff; font-size:30px; }
   @media(max-width:720px){ #board-wrap .bd-stats{ grid-template-columns:repeat(2,1fr); } }
   /* mini app (มือถือ) → เหลือ ช่วงเวลา+เปิดงานใหม่ / การ์ดสถานะ / การ์ดงานคอลัมน์เดียว (ตัดแท็บมุมมอง+ตัวกรองประเภท/เรียง/ค้นหา) */
   @media(max-width:1023px){ #board-wrap, #board-wrap *{ box-sizing:border-box; }
@@ -779,9 +774,8 @@
   // escape string สำหรับใส่ใน onclick='...' (กันชื่อบริษัทมี ' หรือ ")
   function jss(s){ return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
 
-  // เมนู Project · พี่(owner)=บอร์ดเต็มเหมือนงานทั้งหมด (view ราย Project) · ทีม=dropdown เลือก+6 สถานะ
+  // เมนู Project = dropdown เลือก (บริษัท auto + project จัดเอง) → งานแยก 6 สถานะ + % · โหลดขนาน
   function renderProjects(){
-    if(IS_OWNER){ renderOwnerBoard('project'); return; }
     skel();
     var act = IS_OWNER ? 'waProjectAdminList' : 'waMyProjects';
     Promise.all([ jsonp({action:'waBoard',uid:UID,withCancel:'1'}), jsonp({action:act,uid:UID}) ]).then(function(rs){
@@ -1197,8 +1191,8 @@
   // ═══════════════════════════════════════════════════════════
   var BVIEW='list', BTASKS=[], BALL=[], BSCOPE='all', BTEAM=[], BSTATUSES=[], BTYPESLIST=[], BOWNER='', BNOW=0, BCATS=[], BPROJECTS=[];
   var BFILTER='', BFCAT='', BSORT='due', BQ='', BCAL=null, BRANGE='all', BDAY=86400000;
-  var BVIEWS=[['list','📋 รายการ'],['type','📁 ตามประเภท'],['company','🏢 ราย บริษัท'],['project','📁 ราย Project'],['cards','🗂️ การ์ด'],['kanban','📊 คอลัมน์'],['calendar','📅 ปฏิทิน']];
-  var BSCOPE_EMPTY={ all:'ยังไม่มีงานในระบบ 😊', mine:'ยังไม่มีงานที่มอบหมายให้คุณ 😊', review:'ไม่มีงานรอตรวจในตอนนี้ 🎉', project:'ยังไม่มีงานในระบบ 😊' };
+  var BVIEWS=[['list','📋 รายการ'],['type','📁 ตามประเภท'],['company','🏢 ราย บริษัท'],['cards','🗂️ การ์ด'],['kanban','📊 คอลัมน์'],['calendar','📅 ปฏิทิน']];
+  var BSCOPE_EMPTY={ all:'ยังไม่มีงานในระบบ 😊', mine:'ยังไม่มีงานที่มอบหมายให้คุณ 😊', review:'ไม่มีงานรอตรวจในตอนนี้ 🎉' };
   var BCACHE={ at:0, data:null }, BTTL=30000;   // แคชข้อมูลบอร์ด (waPmBoard) — สลับ scope ได้ทันที · รีเฟรชเมื่อเกิน 30 วิ/หลังแก้ไข
   var BMON=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
   var BMONF=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
@@ -1234,7 +1228,7 @@
     BTASKS=bScopeTasks(BALL);
     var cs={}; BTASKS.forEach(function(t){ if(t.category) cs[t.category]=1; }); BCATS=Object.keys(cs);
   }
-  function bOnBoardView(){ return VIEW==='alltasks'||VIEW==='mytasks'||VIEW==='review'||VIEW==='projects'; }
+  function bOnBoardView(){ return VIEW==='alltasks'||VIEW==='mytasks'||VIEW==='review'; }
   function bFetch(mode){   // mode: 'spinner' (รอโหลด) | 'silent' (คงจอเดิม รีเฟรชเบื้องหลัง)
     jsonp({action:'waPmBoard', uid:UID}).then(function(r){
       if(!r||!r.ok){ if(mode==='spinner') $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
@@ -1244,7 +1238,7 @@
   }
   function renderOwnerBoard(scope, force){
     scope=scope||'all';
-    if(scope!==BSCOPE){ BFILTER=''; BVIEW = (scope==='project') ? 'project' : 'list'; }   // เปลี่ยนมุมมอง → รีเซ็ตตัวกรอง/มุมมองย่อย (Project → เริ่มที่ ราย Project)
+    if(scope!==BSCOPE){ BFILTER=''; BVIEW='list'; }   // เปลี่ยนมุมมอง → รีเซ็ตตัวกรอง/มุมมองย่อย
     BSCOPE=scope;
     if(force){ bFetch('silent'); return; }             // หลังแก้ไข: รีเฟรชเงียบ (คงจอเดิมจนได้ข้อมูลใหม่)
     if(BCACHE.data){                                    // มีแคช → แสดงทันที
@@ -1289,13 +1283,7 @@
     function c(sub){ return base.filter(function(t){ return t.status.indexOf(sub)>=0; }).length; }
     function act(kind){ if(kind==='all') return !BFILTER; if(kind==='over') return BFILTER==='__over__';
       return BFILTER===bStatusOf(bKindSub(kind)); }
-    // หน้า Project → เพิ่ม 2 การ์ดบน: จำนวน Project (กดไป ราย Project) + เปิดงานใหม่
-    var extra='';
-    if(BSCOPE==='project'){
-      extra='<div class="bd-stat bd-stat-pj'+(BVIEW==='project'?' active':'')+'" onclick="bSetView(\'project\')" title="ดูราย Project"><div class="lab">📁 จำนวน Project</div><div class="num">'+BPROJECTS.length+'</div></div>'+
-        '<div class="bd-stat bd-stat-add" onclick="bOpenCreate()" title="เปิดงานใหม่"><div class="lab">เปิดงานใหม่</div><div class="num">➕</div></div>';
-    }
-    $('bStats').innerHTML= extra+
+    $('bStats').innerHTML=
       bStatCard('all','📋 ทั้งหมด',base.length,'all',act('all'))+
       bStatCard('new','🆕 งานใหม่',c('ใหม่'),'new',act('new'))+
       bStatCard('doing','🔵 กำลังทำ',c('กำลังทำ'),'doing',act('doing'))+
@@ -1351,7 +1339,6 @@
     $('bViews').innerHTML=BVIEWS.map(function(v){ return '<div class="bd-vtab'+(v[0]===BVIEW?' active':'')+'" onclick="bSetView(\''+v[0]+'\')">'+v[1]+'</div>'; }).join('');
     var hint=$('bHint');
     if(BVIEW==='company'){ hint.style.display='none'; bViewCompany(); return; }
-    if(BVIEW==='project'){ hint.style.display='none'; bViewProject(); return; }
     if(BVIEW==='type'){ hint.style.display='none'; bViewType(); return; }
     var arr=bVisible();
     if(BVIEW==='calendar'){
@@ -1468,30 +1455,6 @@
     if(!shown) html='<div class="bd-center">ไม่พบงานตามเงื่อนไข</div>';
     $('bView').innerHTML=html;
   }
-  function bViewProject(){
-    var base=bBaseScope();
-    if(!base.length){ $('bView').innerHTML='<div class="bd-center">ไม่พบงานตามเงื่อนไข</div>'; return; }
-    var nameOf={}; BPROJECTS.forEach(function(p){ nameOf[p.id]=p.name; });
-    var order=[], groups={}, UNSET='(ยังไม่จัด project)';
-    base.forEach(function(t){ var key=t.project||UNSET; if(!groups[key]){groups[key]=[];order.push(key);} groups[key].push(t); });
-    order.sort(function(a,b){ if(a===UNSET)return 1; if(b===UNSET)return -1; return 0; });   // ยังไม่จัด → ท้ายสุด
-    var html='<div class="bd-cohead">📁 '+BPROJECTS.length+' project · '+base.length+' งาน</div>', shown=0;
-    order.forEach(function(key){
-      var all=groups[key], vis=all.filter(bMatchFilter);
-      if(!vis.length) return; shown++;
-      var label = key===UNSET ? '📥 ยังไม่จัด project' : ('📁 '+esc(nameOf[key]||key));
-      var done=all.filter(bDone).length, over=all.filter(bOver).length, pct=Math.round(done/all.length*100);
-      html+='<div class="bd-cosec"><div class="bd-cohd">'+
-        '<span class="bd-coname">'+label+'</span>'+
-        '<span class="bd-cocnt'+(over?' warn':'')+'">'+all.length+' งาน</span>'+
-        '<span class="bd-copct">เสร็จ '+done+'/'+all.length+' ('+pct+'%)</span>'+
-        (over?'<span class="bd-coover">⏰ เกินกำหนด '+over+'</span>':'')+'</div>'+
-        '<div class="bd-pbar'+(over?' over':'')+'"><div class="bd-pfill" style="width:'+pct+'%"></div></div>'+
-        '<div class="bd-grid" style="margin-top:12px">'+vis.map(bMiniCard).join('')+'</div></div>';
-    });
-    if(!shown) html='<div class="bd-center">ไม่พบงานตามเงื่อนไข</div>';
-    $('bView').innerHTML=html;
-  }
   function bSetView(v){ BVIEW=v; bRender(); }
   function bCalMove(d){ BCAL=new Date(BCAL.getFullYear(),BCAL.getMonth()+d,1); bRender(); }
 
@@ -1504,6 +1467,9 @@
     var curCatK=bCat(t.category).k;
     var catOpts=BCATS_EDIT.map(function(o){return '<option value="'+esc(o.v)+'"'+(o.k===curCatK?' selected':'')+'>'+o.lb+'</option>';}).join('');
     var dueVal=t.dueMs?bIso(t.dueMs):'';
+    var pjOpts='<option value="">— ไม่ผูก project —</option>'+
+      BPROJECTS.map(function(pp){return '<option value="'+esc(pp.id)+'"'+(pp.id===t.project?' selected':'')+'>'+esc(pp.name)+'</option>';}).join('')+
+      '<option value="__new__">➕ สร้าง project ใหม่…</option>';
     modal('<h3>'+esc(t.no)+' · '+esc(t.customer||'')+'</h3><div id="mErr" class="m-err hidden"></div>'+
       '<div class="fld"><label>หัวข้องาน <span class="bd-age">(เว้นว่าง = ตัดจากรายละเอียด)</span></label><input id="mTitle" value="'+esc(t.title||'')+'" placeholder="หัวข้อสั้น ๆ"></div>'+
       (t.detail?'<div class="fld"><label>รายละเอียด</label><div style="white-space:pre-wrap;font-size:14px;color:#4A5262">'+esc(t.detail)+'</div></div>':'')+
@@ -1514,6 +1480,7 @@
       '<div class="fld"><label>ผู้ตรวจงาน</label><select id="mRev">'+revOpts+'</select></div>'+
       '<div class="fld"><label>ประเภท <span class="bd-age">(กำหนดสีการ์ด)</span></label><select id="mCat">'+catOpts+'</select></div>'+
       '<div class="fld"><label>กำหนดเสร็จ</label><input id="mDue" type="date" value="'+dueVal+'"></div>'+
+      '<div class="fld"><label>📁 จัดเข้า Project <span class="bd-age">(กองงานเป็นกลุ่ม)</span></label><select id="mProject" onchange="bProjSel(\''+esc(no)+'\')">'+pjOpts+'</select></div>'+
       '<div class="m-act"><button class="btn btn-primary" onclick="bSaveTask(\''+esc(no)+'\')">💾 บันทึก</button>'+
       (t.hasGroup&&!bDone(t)?'<button class="btn btn-ok" onclick="bSendCust(\''+esc(no)+'\')">📨 ส่งลูกค้า</button>':'')+
       '<button class="btn btn-ghost" onclick="closeModal()">ปิด</button></div>'+
@@ -1532,9 +1499,32 @@
     if(bCat(cat).k!==bCat(t.category).k) jobs.push(jsonp({action:'waSetCategory',uid:UID,no:no,category:cat}));   // เทียบด้วย key (สั่งงาน↔แจ้งงาน = ไม่เปลี่ยน)
     var curDue=t.dueMs?bIso(t.dueMs):'';
     if(due!==curDue) jobs.push(jsonp({action:'waSetDue',uid:UID,no:no,due:due}));
+    var pj=$('mProject')?$('mProject').value:(t.project||'');
+    if(pj!=='__new__' && pj!==(t.project||'')) jobs.push(jsonp({action:'waAssignProject',uid:UID,no:no,pid:pj}));   // จัดงานเข้า/ออก project
     if(!jobs.length){ closeModal(); return; }
     toast('กำลังบันทึก…');
     Promise.all(jobs).then(function(){ closeModal(); toast('บันทึกแล้ว ✅'); renderOwnerBoard(BSCOPE, true); }).catch(function(e){ mErr(e.message); });
+  }
+  // เลือก project ใน modal งาน — ถ้าเลือก "สร้างใหม่" → เปิดฟอร์มสร้าง+จัดเข้าเลย
+  function bProjSel(no){ if($('mProject') && $('mProject').value==='__new__'){ closeModal(); bNewProjectInline(no); } }
+  function bNewProjectInline(no){
+    modal('<h3>➕ สร้าง Project</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="fld"><label>ชื่อ Project</label><input id="npName" placeholder="เช่น ปิดบัญชี Q3, งานอีเวนต์ลูกค้า A"></div>'+
+      '<div class="m-hint">งาน '+esc(no)+' จะถูกจัดเข้า project นี้ทันที · เพิ่มงานอื่นเข้าทีหลังได้</div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="bOpenTask(\''+esc(no)+'\')">← กลับ</button>'+
+      '<button class="btn btn-primary" onclick="bDoNewProject(\''+esc(no)+'\')">สร้าง + จัดงานเข้า</button></div>');
+  }
+  function bDoNewProject(no){
+    var name=$('npName').value.trim();
+    if(!name){ mErr('กรอกชื่อ project ก่อนค่ะ'); return; }
+    toast('กำลังสร้าง project…');
+    jsonp({action:'waProjectSave',uid:UID,id:'',name:name}).then(function(r){
+      if(!r||!r.ok||!r.id) throw new Error((r&&r.error)||'สร้างไม่สำเร็จ');
+      return jsonp({action:'waAssignProject',uid:UID,no:no,pid:r.id});
+    }).then(function(r2){
+      if(!r2||!r2.ok) throw new Error((r2&&r2.error)||'จัดงานเข้าไม่สำเร็จ');
+      closeModal(); toast('✅ สร้าง + จัดงาน '+no+' เข้า project แล้ว'); renderOwnerBoard(BSCOPE, true);
+    }).catch(function(e){ mErr(e.message); });
   }
   function bSendCust(no){
     toast('กำลังส่งให้ลูกค้า…');
