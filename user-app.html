@@ -255,9 +255,14 @@
   .pjc-body .tk:last-child{ margin-bottom:0; }
   .pjc-sub{ display:flex; align-items:center; flex-wrap:wrap; gap:8px 12px; margin-top:9px; justify-content:space-between; }
   .pjc-sub .pjc-acts{ margin-top:0; }
-  .pj-pickhd{ font-size:14px; font-weight:800; color:#3A4250; margin:2px 2px 9px; }
-  .pj-pick{ margin-bottom:15px; }
-  .pj-pick select{ width:100%; padding:12px 13px; font-size:15px; font-family:inherit; color:#242B36; background:var(--card); border:1px solid var(--line); border-radius:12px; }
+  .pj-toprow{ display:flex; gap:11px; margin-bottom:15px; }
+  .pj-count{ flex:0 0 auto; display:flex; flex-direction:column; justify-content:center; align-items:center; min-width:96px; padding:10px 20px; background:var(--card); border:2px solid #1B72E8; border-radius:14px; box-shadow:var(--shadow); }
+  .pj-count-n{ font-size:34px; font-weight:800; color:#1B72E8; line-height:1; }
+  .pj-count-l{ font-size:12px; font-weight:600; color:#5A6472; margin-top:4px; }
+  .pj-addbtn{ flex:1; font-size:15px; line-height:1.3; display:flex; align-items:center; justify-content:center; }
+  .pj-pick2{ margin-bottom:16px; }
+  .pj-pick2 label{ display:block; font-size:13px; font-weight:700; color:#5A6472; margin-bottom:7px; }
+  .pj-pick2 select{ width:100%; padding:15px 16px; font-size:16px; font-weight:600; font-family:inherit; color:#242B36; background:var(--card); border:2px solid #1B72E8; border-radius:13px; box-shadow:0 2px 10px rgba(27,114,232,.12); }
   .pj-hd2{ background:linear-gradient(120deg,#1B72E8,#4A93F0); color:#fff; border-radius:14px; padding:16px 17px; margin-bottom:16px; box-shadow:0 6px 20px rgba(27,114,232,.28); }
   .pj-hd2-t{ font-size:16px; font-weight:700; margin-bottom:9px; }
   .pj-hd2-pct{ font-size:30px; font-weight:800; line-height:1; }
@@ -265,13 +270,14 @@
   .pj-hd2 .pbar{ margin-top:11px; background:rgba(255,255,255,.28); }
   .pj-hd2 .pbar-fill{ background:#fff !important; }
   .pj-hd2-cnt{ font-size:13px; opacity:.95; margin-top:9px; }
-  .pj-hd2-add{ margin-top:13px; }
-  .btn-light{ background:rgba(255,255,255,.92); color:#1B72E8; font-weight:700; }
-  .stg{ display:flex; align-items:center; gap:8px; margin:18px 2px 9px; font-size:14px; font-weight:700; color:#3A4250; }
-  .stg-n{ font-size:12px; font-weight:700; color:#5A6472; background:#EEF1F6; border-radius:999px; padding:1px 10px; }
-  .stg-over{ color:#DC2626; } .stg-over .stg-n{ color:#fff; background:#DC2626; }
-  .stg-done{ color:#1E9E5A; } .stg-done .stg-n{ color:#fff; background:#1E9E5A; }
-  .stg-empty{ font-size:12px; color:var(--muted); margin:0 2px 6px; }
+  .stgbar{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin:18px 0 11px; padding:12px 16px; font-size:15px; font-weight:700; color:#3A4250; background:var(--card); border:1px solid var(--line); border-left:5px solid #9AA6B8; border-radius:12px; box-shadow:var(--shadow); }
+  .stgbar-n{ font-size:13px; font-weight:800; color:#fff; background:#9AA6B8; border-radius:999px; padding:2px 13px; min-width:30px; text-align:center; }
+  .stgbar-new{ border-left-color:#8A94A6; }   .stgbar-new .stgbar-n{ background:#8A94A6; }
+  .stgbar-doing{ border-left-color:#1B72E8; color:#1B72E8; }  .stgbar-doing .stgbar-n{ background:#1B72E8; }
+  .stgbar-review{ border-left-color:#E0A32E; color:#B5810F; } .stgbar-review .stgbar-n{ background:#E0A32E; }
+  .stgbar-done{ border-left-color:#1E9E5A; color:#1E9E5A; }   .stgbar-done .stgbar-n{ background:#1E9E5A; }
+  .stgbar-over{ border-left-color:#DC2626; color:#DC2626; }   .stgbar-over .stgbar-n{ background:#DC2626; }
+  .stgbar-cancel{ border-left-color:#B8C0CC; color:#8A94A6; } .stgbar-cancel .stgbar-n{ background:#B8C0CC; }
   .pjc-top{ display:flex; align-items:center; gap:10px; }
   .pjc-name{ font-size:16px; font-weight:700; color:#242B36; flex:1; }
   .pjc-badge{ font-size:12.5px; font-weight:600; color:#1B72E8; background:#EAF1FC; padding:3px 11px; border-radius:999px; white-space:nowrap; }
@@ -797,30 +803,56 @@
     var opt='<option value=""'+(PJ_SEL===''?' selected':'')+'>— ทั้งหมด —</option>';
     if(coList.length) opt+='<optgroup label="🏢 บริษัท">'+coList.map(function(c){ var v='co:'+c; return '<option value="'+esc(v)+'"'+(PJ_SEL===v?' selected':'')+'>'+esc(c)+'</option>'; }).join('')+'</optgroup>';
     if(PROJECTS.length) opt+='<optgroup label="📁 Project จัดเอง">'+PROJECTS.map(function(pj){ var v='pj:'+pj.id; return '<option value="'+esc(v)+'"'+(PJ_SEL===v?' selected':'')+'>'+esc(pj.name)+'</option>'; }).join('')+'</optgroup>';
-    var html='<div class="pj-pickhd">📁 Project · '+nItems+' รายการ</div>'+
-      '<div class="pj-pick"><select onchange="setPjSel(this.value)">'+opt+'</select></div>';
+    // แถวบน: กล่องจำนวน project (ตัวใหญ่ มีกรอบ) + ปุ่มเปิดงานใหม่ ข้างกัน
+    var html='<div class="pj-toprow">'+
+      '<div class="pj-count"><span class="pj-count-n">'+nItems+'</span><span class="pj-count-l">Project</span></div>'+
+      '<button class="btn btn-primary pj-addbtn" onclick="pjAddTask()">➕<br>เปิดงานใหม่</button></div>'+
+      // ช่องเลือก project — ใหญ่ เด่น
+      '<div class="pj-pick2"><label>เลือก Project</label><select onchange="setPjSel(this.value)">'+opt+'</select></div>';
     // header % ของ scope ที่เลือก (ไม่นับยกเลิกใน %/ยอดรวม)
     var scope=pjScopeTasks(), live=scope.filter(function(t){return !isCancel_(t);});
     var avg=avgPct(live), doneN=live.filter(function(t){return statusPct(t.status)===100;}).length;
     var title = PJ_SEL==='' ? 'ทุกงาน' : (PJ_SEL.indexOf('co:')===0 ? '🏢 '+PJ_SEL.slice(3)
                 : '📁 '+(((PROJECTS.filter(function(p){return 'pj:'+p.id===PJ_SEL;})[0])||{}).name||PJ_SEL.slice(3)));
-    var addBtn='';
-    if(PJ_SEL.indexOf('co:')===0) addBtn='<button class="btn btn-light btn-sm pj-hd2-add" onclick="openCreateCo(\''+jss(PJ_SEL.slice(3))+'\')">➕ เปิดงานให้บริษัทนี้</button>';
-    else if(PJ_SEL.indexOf('pj:')===0) addBtn='<button class="btn btn-light btn-sm pj-hd2-add" onclick="openCreate(\''+esc(PJ_SEL.slice(3))+'\')">➕ เปิดงานใน project นี้</button>';
     html+='<div class="pj-hd2"><div class="pj-hd2-t">'+esc(title)+'</div>'+
       '<div class="pj-hd2-pct">'+avg+'<span>% สำเร็จ</span></div>'+
-      pctBar(avg,true)+'<div class="pj-hd2-cnt">เสร็จ '+doneN+' / '+live.length+' งาน</div>'+addBtn+'</div>';
-    // งานแยก 6 สถานะ (การ์ดย่อแบบหน้างานทั้งหมด)
+      pctBar(avg,true)+'<div class="pj-hd2-cnt">เสร็จ '+doneN+' / '+live.length+' งาน</div></div>';
+    // งานแยก 6 สถานะ — หัวเป็นบาร์ยาวมีกรอบ · การ์ดแบบงานทั้งหมด
     if(!scope.length){ html+='<div class="card"><div class="emptybox">ยังไม่มีงาน 😊</div></div>'; $('main').innerHTML=html; return; }
     var bucket={new:[],doing:[],review:[],done:[],over:[],cancel:[]};
     scope.forEach(function(t){ bucket[pjBucket(t)].push(t); });
     PJ_STAGES.forEach(function(st){
       var arr=bucket[st[0]];
       if((st[0]==='over'||st[0]==='cancel') && !arr.length) return;   // เกินกำหนด/ยกเลิก ซ่อนถ้าไม่มี
-      html+='<div class="stg stg-'+st[0]+'">'+st[1]+'<span class="stg-n">'+arr.length+'</span></div>';
-      html+= arr.length ? arr.map(cardBoard).join('') : '<div class="stg-empty">— ไม่มี —</div>';
+      html+='<div class="stgbar stgbar-'+st[0]+'"><span>'+st[1]+'</span><span class="stgbar-n">'+arr.length+'</span></div>';
+      if(arr.length) html+=arr.map(cardTkPj).join('');
     });
     $('main').innerHTML=html;
+  }
+  // ปุ่มเปิดงานใหม่ (บนสุด) — preset ตามที่ dropdown เลือกอยู่
+  function pjAddTask(){
+    if(PJ_SEL.indexOf('co:')===0) openCreateCo(PJ_SEL.slice(3));
+    else if(PJ_SEL.indexOf('pj:')===0) openCreate(PJ_SEL.slice(3));
+    else openCreate();
+  }
+  // การ์ดงานแบบหน้า "งานทั้งหมด" + ลูกค้า/ชื่องาน (เพราะ Project แยกสถานะ ไม่ได้ group บริษัท)
+  function cardTkPj(t){
+    var h='<div class="tk"><div class="tk-top"><span class="tk-no">'+esc(t.no)+'</span>'+
+      '<span class="tk-badge '+tkBadge(t.status)+'">'+esc(t.status)+'</span></div>'+
+      ((t.title||t.customer)?'<div class="tk-cust">'+esc(t.title||t.customer)+'</div>':'')+
+      ((t.customer&&t.title)?'<div class="tk-cat">'+esc(t.customer)+'</div>':'')+
+      (t.detail?'<div class="tk-detail">'+esc(t.detail)+'</div>':'')+
+      '<div class="tk-asg'+(t.assignee?'':' none')+'">👤 '+(t.assignee?esc(t.assignee):'ยังไม่มอบหมาย')+'</div>';
+    var btns=[];
+    if(t.mine && t.status.indexOf('เสร็จ')<0 && t.status.indexOf('ยกเลิก')<0){
+      if(t.status.indexOf('กำลังทำ')<0 && t.status.indexOf('รอตรวจ')<0)
+        btns.push('<button class="btn btn-primary" onclick="doDoing(\''+esc(t.no)+'\')">🔵 รับงาน</button>');
+      btns.push('<button class="btn btn-ok" onclick="openSubmit(\''+esc(t.no)+'\')">📤 ส่งตรวจ</button>');
+    } else if(t.unassigned){
+      btns.push('<button class="btn btn-primary" onclick="doClaim(\''+esc(t.no)+'\')">🙋 รับงานนี้</button>');
+    }
+    if(btns.length) h+='<div class="tk-acts">'+btns.join('')+'</div>';
+    return h+'</div>';
   }
   // เปิดงานใหม่ให้บริษัท (preset ลูกค้า · ไม่ผูก project)
   function openCreateCo(cust){ CREATE_CUST=cust; openCreate(); }
