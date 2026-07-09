@@ -777,9 +777,9 @@
   // escape string สำหรับใส่ใน onclick='...' (กันชื่อบริษัทมี ' หรือ ")
   function jss(s){ return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
 
-  // เมนู Project · พี่(owner)=บอร์ดเต็มเหมือนงานทั้งหมด (+ตัวกรอง Project) · ทีม=dropdown+6 สถานะ
+  // เมนู Project · พี่บนคอม(เว็บแอป)=บอร์ดเต็ม · มือถือ(mini app ทั้งพี่+ทีม)=dropdown+6 สถานะ (คงเดิม)
   function renderProjects(){
-    if(IS_OWNER){ renderOwnerBoard('project'); return; }
+    if(IS_OWNER && !bIsMobile()){ renderOwnerBoard('project'); return; }   // เฉพาะจอคอม → บอร์ดเต็ม
     skel();
     var act = IS_OWNER ? 'waProjectAdminList' : 'waMyProjects';
     Promise.all([ jsonp({action:'waBoard',uid:UID,withCancel:'1'}), jsonp({action:act,uid:UID}) ]).then(function(rs){
@@ -1232,7 +1232,7 @@
     BTASKS=bScopeTasks(BALL);
     var cs={}; BTASKS.forEach(function(t){ if(t.category) cs[t.category]=1; }); BCATS=Object.keys(cs);
   }
-  function bOnBoardView(){ return VIEW==='alltasks'||VIEW==='mytasks'||VIEW==='review'||VIEW==='projects'; }
+  function bOnBoardView(){ if(VIEW==='projects') return !bIsMobile(); return VIEW==='alltasks'||VIEW==='mytasks'||VIEW==='review'; }
   function bFetch(mode){   // mode: 'spinner' (รอโหลด) | 'silent' (คงจอเดิม รีเฟรชเบื้องหลัง)
     jsonp({action:'waPmBoard', uid:UID}).then(function(r){
       if(!r||!r.ok){ if(mode==='spinner') $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
@@ -1268,7 +1268,11 @@
         '<input id="bQ" class="search" placeholder="🔍 ค้นหางาน / ลูกค้า"></div>'+
       '<div id="bHint" class="bd-note" style="display:none"></div>'+
       '<div id="bView"></div></div>';
-    $('bFProject').innerHTML='<option value="">📁 Project: ทั้งหมด</option>'+BPROJECTS.map(function(p){return '<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>';}).join('')+'<option value="__none__">— ยังไม่จัด project —</option>';
+    var bCos=bCustomers();
+    $('bFProject').innerHTML='<option value="">📁 Project: ทั้งหมด</option>'+
+      (bCos.length?'<optgroup label="กลุ่มไลน์ / ลูกค้า">'+bCos.map(function(c){return '<option value="co:'+esc(c)+'">🏢 '+esc(c)+'</option>';}).join('')+'</optgroup>':'')+
+      (BPROJECTS.length?'<optgroup label="Project จัดเอง">'+BPROJECTS.map(function(p){return '<option value="pj:'+esc(p.id)+'">📁 '+esc(p.name)+'</option>';}).join('')+'</optgroup>':'')+
+      '<option value="__none__">— ยังไม่จัด project —</option>';
     $('bFCat').innerHTML='<option value="">ประเภท: ทั้งหมด</option>'+BCATS.map(function(c){return '<option value="'+esc(c)+'">'+esc(c)+'</option>';}).join('');
     $('bFStatus').innerHTML='<option value="">สถานะ: ทั้งหมด</option>'+BSTATUSES.map(function(s){return '<option value="'+esc(s)+'">'+esc(s)+'</option>';}).join('');
     $('bRange').value=BRANGE; $('bFProject').value=BFPROJECT; $('bFCat').value=BFCAT; $('bFStatus').value=BFILTER; $('bFSort').value=BSORT; $('bQ').value=BQ;
@@ -1282,7 +1286,14 @@
   }
   function bStatusOf(sub){ for(var i=0;i<BSTATUSES.length;i++){ if(BSTATUSES[i].indexOf(sub)>=0) return BSTATUSES[i]; } return ''; }
   function bMatchFilter(t){ if(!BFILTER) return true; if(BFILTER==='__over__') return bOver(t); return t.status===BFILTER; }
-  function bMatchProject(t){ if(!BFPROJECT) return true; if(BFPROJECT==='__none__') return !t.project; return t.project===BFPROJECT; }
+  function bCustomers(){ var s={},o=[]; BALL.forEach(function(t){ if(t.status.indexOf('ยกเลิก')>=0)return; var c=t.customer||'(ไม่ระบุบริษัท)'; if(!s[c]){s[c]=1;o.push(c);} }); return o; }
+  function bMatchProject(t){
+    if(!BFPROJECT) return true;
+    if(BFPROJECT==='__none__') return !t.project;
+    if(BFPROJECT.indexOf('co:')===0) return (t.customer||'(ไม่ระบุบริษัท)')===BFPROJECT.slice(3);   // กลุ่มไลน์/ลูกค้า
+    if(BFPROJECT.indexOf('pj:')===0) return t.project===BFPROJECT.slice(3);   // project จัดเอง
+    return t.project===BFPROJECT;
+  }
   function bStatCard(cls,lab,num,kind,active){ return '<div class="bd-stat '+cls+(active?' active':'')+'" onclick="bStatFilter(\''+kind+'\')" title="คลิกเพื่อกรอง"><div class="lab">'+lab+'</div><div class="num">'+num+'</div></div>'; }
   function bKindSub(kind){ return kind==='new'?'ใหม่':kind==='doing'?'กำลังทำ':kind==='review'?'รอตรวจ':'เสร็จ'; }
   function bRenderStats(){
@@ -1293,7 +1304,7 @@
     // หน้า Project → เพิ่ม 2 การ์ดบน: สร้าง Project (โชว์จำนวน) + เปิดงานใหม่
     var extra='';
     if(BSCOPE==='project'){
-      extra='<div class="bd-stat bd-stat-pj" onclick="bNewProject()" title="สร้าง project ใหม่"><div class="lab">📁 สร้าง Project</div><div class="num">'+BPROJECTS.length+'</div></div>'+
+      extra='<div class="bd-stat bd-stat-pj" onclick="bNewProject()" title="สร้าง project ใหม่ (1 กลุ่มไลน์ = 1 project อัตโนมัติ)"><div class="lab">📁 สร้าง Project</div><div class="num">'+(bCustomers().length+BPROJECTS.length)+'</div></div>'+
         '<div class="bd-stat bd-stat-add" onclick="bOpenCreate()" title="เปิดงานใหม่"><div class="lab">เปิดงานใหม่</div><div class="num">➕</div></div>';
     }
     $('bStats').innerHTML= extra+
