@@ -145,6 +145,9 @@
   #board-wrap .bd-stat.doing.active{ outline-color:#2D7FF9; } #board-wrap .bd-stat.review.active{ outline-color:#C87F1E; }
   #board-wrap .bd-stat.done.active{ outline-color:#1E9E5A; } #board-wrap .bd-stat.over.active{ outline-color:#D6336C; }
   #board-wrap .bd-stat.new.active{ outline-color:var(--bnew); }
+  #board-wrap .bd-stat-pj{ background:#F3EEFC; border-color:#E0D2F7; } #board-wrap .bd-stat-pj .lab{ color:#7C3AED; } #board-wrap .bd-stat-pj .num{ color:#7C3AED; }
+  #board-wrap .bd-stat-add{ background:linear-gradient(120deg,#1B72E8,#4A93F0); border:none; box-shadow:0 4px 14px rgba(27,114,232,.3); }
+  #board-wrap .bd-stat-add .lab{ color:#fff; font-weight:700; } #board-wrap .bd-stat-add .num{ color:#fff; font-size:30px; }
   @media(max-width:720px){ #board-wrap .bd-stats{ grid-template-columns:repeat(2,1fr); } }
   /* mini app (มือถือ) → เหลือ ช่วงเวลา+เปิดงานใหม่ / การ์ดสถานะ / การ์ดงานคอลัมน์เดียว (ตัดแท็บมุมมอง+ตัวกรองประเภท/เรียง/ค้นหา) */
   @media(max-width:1023px){ #board-wrap, #board-wrap *{ box-sizing:border-box; }
@@ -774,8 +777,9 @@
   // escape string สำหรับใส่ใน onclick='...' (กันชื่อบริษัทมี ' หรือ ")
   function jss(s){ return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
 
-  // เมนู Project = dropdown เลือก (บริษัท auto + project จัดเอง) → งานแยก 6 สถานะ + % · โหลดขนาน
+  // เมนู Project · พี่(owner)=บอร์ดเต็มเหมือนงานทั้งหมด (+ตัวกรอง Project) · ทีม=dropdown+6 สถานะ
   function renderProjects(){
+    if(IS_OWNER){ renderOwnerBoard('project'); return; }
     skel();
     var act = IS_OWNER ? 'waProjectAdminList' : 'waMyProjects';
     Promise.all([ jsonp({action:'waBoard',uid:UID,withCancel:'1'}), jsonp({action:act,uid:UID}) ]).then(function(rs){
@@ -1190,7 +1194,7 @@
   // ข้อมูลจาก waPmBoard · แสดงใน #board-wrap (CSS scope กันชนกับหน้าอื่น)
   // ═══════════════════════════════════════════════════════════
   var BVIEW='list', BTASKS=[], BALL=[], BSCOPE='all', BTEAM=[], BSTATUSES=[], BTYPESLIST=[], BOWNER='', BNOW=0, BCATS=[], BPROJECTS=[];
-  var BFILTER='', BFCAT='', BSORT='due', BQ='', BCAL=null, BRANGE='all', BDAY=86400000;
+  var BFILTER='', BFCAT='', BFPROJECT='', BSORT='due', BQ='', BCAL=null, BRANGE='all', BDAY=86400000;
   var BVIEWS=[['list','📋 รายการ'],['type','📁 ตามประเภท'],['company','🏢 ราย บริษัท'],['cards','🗂️ การ์ด'],['kanban','📊 คอลัมน์'],['calendar','📅 ปฏิทิน']];
   var BSCOPE_EMPTY={ all:'ยังไม่มีงานในระบบ 😊', mine:'ยังไม่มีงานที่มอบหมายให้คุณ 😊', review:'ไม่มีงานรอตรวจในตอนนี้ 🎉' };
   var BCACHE={ at:0, data:null }, BTTL=30000;   // แคชข้อมูลบอร์ด (waPmBoard) — สลับ scope ได้ทันที · รีเฟรชเมื่อเกิน 30 วิ/หลังแก้ไข
@@ -1228,7 +1232,7 @@
     BTASKS=bScopeTasks(BALL);
     var cs={}; BTASKS.forEach(function(t){ if(t.category) cs[t.category]=1; }); BCATS=Object.keys(cs);
   }
-  function bOnBoardView(){ return VIEW==='alltasks'||VIEW==='mytasks'||VIEW==='review'; }
+  function bOnBoardView(){ return VIEW==='alltasks'||VIEW==='mytasks'||VIEW==='review'||VIEW==='projects'; }
   function bFetch(mode){   // mode: 'spinner' (รอโหลด) | 'silent' (คงจอเดิม รีเฟรชเบื้องหลัง)
     jsonp({action:'waPmBoard', uid:UID}).then(function(r){
       if(!r||!r.ok){ if(mode==='spinner') $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
@@ -1238,7 +1242,7 @@
   }
   function renderOwnerBoard(scope, force){
     scope=scope||'all';
-    if(scope!==BSCOPE){ BFILTER=''; BVIEW='list'; }   // เปลี่ยนมุมมอง → รีเซ็ตตัวกรอง/มุมมองย่อย
+    if(scope!==BSCOPE){ BFILTER=''; BFPROJECT=''; BVIEW='list'; }   // เปลี่ยนมุมมอง → รีเซ็ตตัวกรอง/มุมมองย่อย
     BSCOPE=scope;
     if(force){ bFetch('silent'); return; }             // หลังแก้ไข: รีเฟรชเงียบ (คงจอเดิมจนได้ข้อมูลใหม่)
     if(BCACHE.data){                                    // มีแคช → แสดงทันที
@@ -1258,16 +1262,18 @@
       '<div id="bStats" class="bd-stats"></div>'+
       '<div id="bViews" class="bd-views"></div>'+
       '<div class="bd-tools">'+
-        '<select id="bFCat"></select><select id="bFStatus"></select>'+
+        '<select id="bFProject"></select><select id="bFCat"></select><select id="bFStatus"></select>'+
         '<select id="bFSort"><option value="due">เรียง: กำหนดเสร็จ</option><option value="customer">เรียง: ลูกค้า</option>'+
         '<option value="status">เรียง: สถานะ</option><option value="assignee">เรียง: ผู้รับผิดชอบ</option><option value="no">เรียง: เลขงาน</option></select>'+
         '<input id="bQ" class="search" placeholder="🔍 ค้นหางาน / ลูกค้า"></div>'+
       '<div id="bHint" class="bd-note" style="display:none"></div>'+
       '<div id="bView"></div></div>';
+    $('bFProject').innerHTML='<option value="">📁 Project: ทั้งหมด</option>'+BPROJECTS.map(function(p){return '<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>';}).join('')+'<option value="__none__">— ยังไม่จัด project —</option>';
     $('bFCat').innerHTML='<option value="">ประเภท: ทั้งหมด</option>'+BCATS.map(function(c){return '<option value="'+esc(c)+'">'+esc(c)+'</option>';}).join('');
     $('bFStatus').innerHTML='<option value="">สถานะ: ทั้งหมด</option>'+BSTATUSES.map(function(s){return '<option value="'+esc(s)+'">'+esc(s)+'</option>';}).join('');
-    $('bRange').value=BRANGE; $('bFCat').value=BFCAT; $('bFStatus').value=BFILTER; $('bFSort').value=BSORT; $('bQ').value=BQ;
+    $('bRange').value=BRANGE; $('bFProject').value=BFPROJECT; $('bFCat').value=BFCAT; $('bFStatus').value=BFILTER; $('bFSort').value=BSORT; $('bQ').value=BQ;
     $('bRange').onchange=function(){ BRANGE=this.value; bRender(); };
+    $('bFProject').onchange=function(){ BFPROJECT=this.value; bRender(); };
     $('bFCat').onchange=function(){ BFCAT=this.value; bRender(); };
     $('bFStatus').onchange=function(){ BFILTER=this.value; bRender(); };
     $('bFSort').onchange=function(){ BSORT=this.value; bRender(); };
@@ -1276,6 +1282,7 @@
   }
   function bStatusOf(sub){ for(var i=0;i<BSTATUSES.length;i++){ if(BSTATUSES[i].indexOf(sub)>=0) return BSTATUSES[i]; } return ''; }
   function bMatchFilter(t){ if(!BFILTER) return true; if(BFILTER==='__over__') return bOver(t); return t.status===BFILTER; }
+  function bMatchProject(t){ if(!BFPROJECT) return true; if(BFPROJECT==='__none__') return !t.project; return t.project===BFPROJECT; }
   function bStatCard(cls,lab,num,kind,active){ return '<div class="bd-stat '+cls+(active?' active':'')+'" onclick="bStatFilter(\''+kind+'\')" title="คลิกเพื่อกรอง"><div class="lab">'+lab+'</div><div class="num">'+num+'</div></div>'; }
   function bKindSub(kind){ return kind==='new'?'ใหม่':kind==='doing'?'กำลังทำ':kind==='review'?'รอตรวจ':'เสร็จ'; }
   function bRenderStats(){
@@ -1283,7 +1290,13 @@
     function c(sub){ return base.filter(function(t){ return t.status.indexOf(sub)>=0; }).length; }
     function act(kind){ if(kind==='all') return !BFILTER; if(kind==='over') return BFILTER==='__over__';
       return BFILTER===bStatusOf(bKindSub(kind)); }
-    $('bStats').innerHTML=
+    // หน้า Project → เพิ่ม 2 การ์ดบน: สร้าง Project (โชว์จำนวน) + เปิดงานใหม่
+    var extra='';
+    if(BSCOPE==='project'){
+      extra='<div class="bd-stat bd-stat-pj" onclick="bNewProject()" title="สร้าง project ใหม่"><div class="lab">📁 สร้าง Project</div><div class="num">'+BPROJECTS.length+'</div></div>'+
+        '<div class="bd-stat bd-stat-add" onclick="bOpenCreate()" title="เปิดงานใหม่"><div class="lab">เปิดงานใหม่</div><div class="num">➕</div></div>';
+    }
+    $('bStats').innerHTML= extra+
       bStatCard('all','📋 ทั้งหมด',base.length,'all',act('all'))+
       bStatCard('new','🆕 งานใหม่',c('ใหม่'),'new',act('new'))+
       bStatCard('doing','🔵 กำลังทำ',c('กำลังทำ'),'doing',act('doing'))+
@@ -1304,6 +1317,7 @@
       if(!bInRange(t)) return false;
       if(t.status.indexOf('ยกเลิก')>=0) return false;
       if(!bMatchFilter(t)) return false;
+      if(!bMatchProject(t)) return false;
       if(BFCAT && t.category!==BFCAT) return false;
       if(BQ){ var h=(t.no+' '+(t.customer||'')+' '+(t.detail||'')+' '+(t.assignee||'')).toLowerCase(); if(h.indexOf(BQ)<0) return false; }
       return true;
@@ -1322,6 +1336,7 @@
     return BTASKS.filter(function(t){
       if(!bInRange(t)) return false;
       if(t.status.indexOf('ยกเลิก')>=0) return false;
+      if(!bMatchProject(t)) return false;
       if(BFCAT && t.category!==BFCAT) return false;
       if(BQ){ var h=(t.no+' '+(t.customer||'')+' '+(t.detail||'')+' '+(t.assignee||'')).toLowerCase(); if(h.indexOf(BQ)<0) return false; }
       return true;
@@ -1524,6 +1539,24 @@
     }).then(function(r2){
       if(!r2||!r2.ok) throw new Error((r2&&r2.error)||'จัดงานเข้าไม่สำเร็จ');
       closeModal(); toast('✅ สร้าง + จัดงาน '+no+' เข้า project แล้ว'); renderOwnerBoard(BSCOPE, true);
+    }).catch(function(e){ mErr(e.message); });
+  }
+  // สร้าง project เปล่า (จากการ์ด "สร้าง Project")
+  function bNewProject(){
+    modal('<h3>➕ สร้าง Project</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="fld"><label>ชื่อ Project</label><input id="npName" placeholder="เช่น ปิดบัญชี Q3, งานอีเวนต์ลูกค้า A"></div>'+
+      '<div class="fld"><label>ลูกค้า <span class="bd-age">(ถ้ามี · เว้นว่างได้)</span></label><input id="npCust" placeholder="ชื่อลูกค้า"></div>'+
+      '<div class="m-hint">สร้างแล้วไปจัดงานเข้า project นี้ได้ที่การ์ดงาน (📁 จัดเข้า Project) หรือกรองดูจากตัวกรอง Project</div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" onclick="bDoCreateProject()">สร้าง Project</button></div>');
+  }
+  function bDoCreateProject(){
+    var name=$('npName').value.trim();
+    if(!name){ mErr('กรอกชื่อ project ก่อนค่ะ'); return; }
+    toast('กำลังสร้าง project…');
+    jsonp({action:'waProjectSave',uid:UID,id:'',name:name,customer:$('npCust').value.trim()}).then(function(r){
+      if(!r||!r.ok){ mErr((r&&r.error)||'สร้างไม่สำเร็จ'); return; }
+      closeModal(); toast('✅ สร้าง project แล้ว'); renderOwnerBoard(BSCOPE, true);
     }).catch(function(e){ mErr(e.message); });
   }
   function bSendCust(no){
