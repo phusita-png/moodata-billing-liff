@@ -151,12 +151,10 @@
   #board-wrap .bd-pjbar{ display:flex; align-items:stretch; gap:14px; margin-bottom:16px; flex-wrap:wrap; }
   #board-wrap .bd-pjbar:empty{ display:none; }
   #board-wrap .bd-pjsel{ flex:0 0 auto; min-width:230px; padding:12px 15px; border:2px solid #1B72E8; border-radius:13px; font-family:inherit; font-size:15px; font-weight:600; background:#fff; color:var(--bdink); cursor:pointer; box-shadow:0 2px 8px rgba(27,114,232,.12); }
-  #board-wrap .bd-pjprog{ flex:1; min-width:230px; display:flex; align-items:center; gap:14px; padding:0 20px; border:2px solid #CFE0F6; border-radius:13px; background:linear-gradient(180deg,#F7FAFF,#EDF3FC); }
-  #board-wrap .bd-pjtrack{ flex:1; height:16px; background:#E1E9F4; border-radius:999px; overflow:hidden; box-shadow:inset 0 1px 3px rgba(30,60,110,.13); }
-  #board-wrap .bd-pjfill{ height:100%; border-radius:999px; background:linear-gradient(90deg,#1B72E8,#4A93F0); transition:width .4s ease; box-shadow:0 1px 5px rgba(27,114,232,.4); }
-  #board-wrap .bd-pjfill.full{ background:linear-gradient(90deg,#1E9E5A,#28B866); box-shadow:0 1px 5px rgba(30,158,90,.4); }
-  #board-wrap .bd-pjpct{ font-size:15px; font-weight:800; color:#1B72E8; white-space:nowrap; letter-spacing:.2px; }
-  #board-wrap .bd-pjpct.full{ color:#1E9E5A; }
+  #board-wrap .bd-pjprog{ flex:1; min-width:230px; display:flex; align-items:center; gap:16px; padding:0 22px; border-radius:13px; background:linear-gradient(120deg,#1B72E8,#4A93F0); box-shadow:0 4px 16px rgba(27,114,232,.28); }
+  #board-wrap .bd-pjtrack{ flex:1; height:14px; background:rgba(255,255,255,.28); border-radius:999px; overflow:hidden; }
+  #board-wrap .bd-pjfill{ height:100%; border-radius:999px; background:#fff; transition:width .4s ease; box-shadow:0 1px 4px rgba(0,0,0,.12); }
+  #board-wrap .bd-pjpct{ font-size:15px; font-weight:800; color:#fff; white-space:nowrap; letter-spacing:.2px; }
   @media(max-width:1023px){ #board-wrap .bd-pjsel, #board-wrap .bd-pjprog{ min-width:100%; } }
   @media(max-width:720px){ #board-wrap .bd-stats{ grid-template-columns:repeat(2,1fr); } }
   /* mini app (มือถือ) → เหลือ ช่วงเวลา+เปิดงานใหม่ / การ์ดสถานะ / การ์ดงานคอลัมน์เดียว (ตัดแท็บมุมมอง+ตัวกรองประเภท/เรียง/ค้นหา) */
@@ -825,8 +823,8 @@
   }
   var PJ_STAGES=[['new','🆕 ใหม่'],['doing','🔵 กำลังทำ'],['review','🔍 รอตรวจ'],['done','✅ เสร็จ'],['over','⏰ เกินกำหนด'],['cancel','❌ ยกเลิก']];
   function paintProjectsHub(){
-    // นับ "รายการ" = บริษัทที่มีงาน + project จัดเอง
-    var coSet={}; ALL_TASKS.forEach(function(t){ coSet[t.customer||'(ไม่ระบุบริษัท)']=1; });
+    // นับ "รายการ" = บริษัทที่มีงาน active (ไม่รวมยกเลิก) + project จัดเอง · ให้ตรงกับเว็บ bCustomers()
+    var coSet={}; ALL_TASKS.forEach(function(t){ if(isCancel_(t))return; coSet[t.customer||'(ไม่ระบุบริษัท)']=1; });
     var coList=Object.keys(coSet), nItems=coList.length+PROJECTS.length;
     // dropdown เลือก
     var opt='<option value=""'+(PJ_SEL===''?' selected':'')+'>— ทั้งหมด —</option>';
@@ -1313,8 +1311,8 @@
       (BPROJECTS.length?'<optgroup label="Project จัดเอง">'+BPROJECTS.map(function(p){return '<option value="pj:'+esc(p.id)+'">📁 '+esc(p.name)+'</option>';}).join('')+'</optgroup>':'')+
       '<option value="__none__">— ยังไม่จัด project —</option>';
     $('bPjBar').innerHTML='<select id="bFProject" class="bd-pjsel">'+opts+'</select>'+
-      '<div class="bd-pjprog"><div class="bd-pjtrack"><div class="bd-pjfill'+(pct>=100?' full':'')+'" style="width:'+pct+'%"></div></div>'+
-      '<span class="bd-pjpct'+(pct>=100?' full':'')+'">'+pct+'% · เสร็จ '+done+'/'+tot+'</span></div>';
+      '<div class="bd-pjprog"><div class="bd-pjtrack"><div class="bd-pjfill" style="width:'+pct+'%"></div></div>'+
+      '<span class="bd-pjpct">'+pct+'% · เสร็จ '+done+'/'+tot+'</span></div>';
     $('bFProject').value=BFPROJECT;
     $('bFProject').onchange=function(){ BFPROJECT=this.value; bRender(); };
   }
