@@ -241,8 +241,20 @@
   .pjc:hover{ box-shadow:0 6px 20px rgba(120,150,200,.22); } .pjc:active{ transform:scale(.995); }
   .pjc-closed{ opacity:.62; }
   .pjc-co{ border-left:4px solid #1B72E8; }
+  .pjc.open{ box-shadow:0 6px 20px rgba(120,150,200,.22); }
   .pj-sec{ display:flex; align-items:center; gap:8px; font-size:14px; font-weight:800; color:#3A4250; letter-spacing:.2px; margin:2px 0 11px; }
   .pj-sec-n{ font-size:12px; font-weight:700; color:#1B72E8; background:#EAF1FC; padding:2px 10px; border-radius:999px; }
+  .pj-filter{ display:flex; gap:7px; overflow-x:auto; padding-bottom:5px; margin-bottom:14px; -webkit-overflow-scrolling:touch; }
+  .pj-filter::-webkit-scrollbar{ display:none; }
+  .pj-chip{ flex:0 0 auto; font-size:13px; font-weight:600; color:#5A6472; background:var(--card); border:1px solid var(--line); padding:7px 14px; border-radius:999px; cursor:pointer; white-space:nowrap; transition:background .12s,color .12s; }
+  .pj-chip.on{ color:#fff; background:#1B72E8; border-color:#1B72E8; }
+  .pjc-hd{ display:flex; align-items:flex-start; gap:10px; cursor:pointer; }
+  .pjc-chev{ font-size:13px; color:#8A94A6; margin-top:3px; flex:0 0 auto; }
+  .pjc-hdmain{ flex:1; min-width:0; }
+  .pjc-body{ margin-top:13px; padding-top:13px; border-top:1px dashed var(--line); }
+  .pjc-body .tk:last-child{ margin-bottom:0; }
+  .pjc-sub{ display:flex; align-items:center; flex-wrap:wrap; gap:8px 12px; margin-top:9px; justify-content:space-between; }
+  .pjc-sub .pjc-acts{ margin-top:0; }
   .pjc-top{ display:flex; align-items:center; gap:10px; }
   .pjc-name{ font-size:16px; font-weight:700; color:#242B36; flex:1; }
   .pjc-badge{ font-size:12.5px; font-weight:600; color:#1B72E8; background:#EAF1FC; padding:3px 11px; border-radius:999px; white-space:nowrap; }
@@ -346,7 +358,7 @@
     expense:['💸','เบิกค่าใช้จ่าย'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], projects:['📁','Project']
   };
   var PROJECTS=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ)
-  var ALL_TASKS=[], CUR_COMPANY='';   // มุมมอง "ตามบริษัท" (auto group by ลูกค้า)
+  var ALL_TASKS=[], CUR_COMPANY='', EXPANDED={}, PJ_FILTER='';   // มุมมอง Project (accordion คลี่/พับ + ฟิลเตอร์สถานะ)
   var EXP_TYPES=[];   // ประเภทค่าใช้จ่าย (โหลดจาก waExpenseInit)
 
   function $(id){ return document.getElementById(id); }
@@ -640,7 +652,7 @@
     jsonp({action:'waTaskDoing',uid:UID,no:no}).then(function(r){ if(!r||!r.ok){toast((r&&r.error)||'ไม่สำเร็จ');return;} toast('รับงานแล้ว 🔵'); refreshTasksView(); }).catch(function(e){toast(e.message);}); }
   // รีเฟรชหน้ารายการงานตาม view ปัจจุบัน (mytasks / alltasks / project board)
   function refreshTasksView(){
-    if(VIEW==='projects'){ if(CUR_COMPANY) openCompany(CUR_COMPANY); else if(CUR_PID) openProjectBoard(CUR_PID); else renderProjects(); }
+    if(VIEW==='projects'){ renderProjects(); }   // reload สด · คงสถานะคลี่/ฟิลเตอร์ (EXPANDED/PJ_FILTER)
     else if(VIEW==='mytasks') renderMytasks();
     else if(VIEW==='alltasks') renderAlltasks();
   }
@@ -724,106 +736,93 @@
   // escape string สำหรับใส่ใน onclick='...' (กันชื่อบริษัทมี ' หรือ ")
   function jss(s){ return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
 
-  // เมนู Project = ฮับ 2 ส่วน: บน "ตามบริษัท" (auto) · ล่าง "project จัดกลุ่มเอง"
+  // ── ฟิลเตอร์สถานะ + accordion state ──
+  var PJ_FILTERS=[['','ทั้งหมด'],['ใหม่','🆕 ใหม่'],['กำลังทำ','🔵 ทำอยู่'],['รอตรวจ','🔍 รอตรวจ'],['เสร็จ','✅ เสร็จ']];
+  function pjMatch(t){ return !PJ_FILTER || String(t.status||'').indexOf(PJ_FILTER)>=0; }
+  function openCount(ts){ return ts.filter(function(t){ var p=statusPct(t.status); return p!==null&&p<100; }).length; }
+  function setPjFilter(f){ PJ_FILTER=f; paintProjectsHub(); }
+  function toggleAcc(k){ EXPANDED[k]=!EXPANDED[k]; paintProjectsHub(); }
+  function pjFilterBar(){
+    return '<div class="pj-filter">'+PJ_FILTERS.map(function(f){
+      return '<button class="pj-chip'+(PJ_FILTER===f[0]?' on':'')+'" onclick="setPjFilter(\''+f[0]+'\')">'+f[1]+'</button>';
+    }).join('')+'</div>';
+  }
+
+  // เมนู Project = ฮับ 2 ส่วน (accordion คลี่/พับ) · โหลดขนานครั้งเดียว
   function renderProjects(){
-    CUR_PID=''; CUR_COMPANY='';
     skel();
-    // 1) งานทุกใบ → จัดกลุ่มตามบริษัท (ลูกค้า)
-    jsonp({action:'waBoard', uid:UID}).then(function(r){
-      if(r&&r.ok){ ALL_TASKS=r.tasks||[]; MENAME=(r.me&&r.me.name)||MENAME; TEAM=r.team||TEAM; CUSTOMERS=r.customers||CUSTOMERS; }
-      else ALL_TASKS=[];
-      // 2) project ที่จัดกลุ่มเอง (owner=ทั้งหมด · team=ที่ตัวเองอยู่)
-      var act = IS_OWNER ? 'waProjectAdminList' : 'waMyProjects';
-      return jsonp({action:act, uid:UID});
-    }).then(function(r){
-      if(r&&r.ok){ PROJECTS=r.projects||[]; if(IS_OWNER&&r.team) TEAM_ALL=r.team; } else PROJECTS=[];
+    var act = IS_OWNER ? 'waProjectAdminList' : 'waMyProjects';
+    Promise.all([ jsonp({action:'waBoard',uid:UID}), jsonp({action:act,uid:UID}) ]).then(function(rs){
+      var rb=rs[0], rp=rs[1];
+      if(rb&&rb.ok){ ALL_TASKS=rb.tasks||[]; MENAME=(rb.me&&rb.me.name)||MENAME; TEAM=rb.team||TEAM; CUSTOMERS=rb.customers||CUSTOMERS; } else ALL_TASKS=[];
+      if(rp&&rp.ok){ PROJECTS=rp.projects||[]; if(IS_OWNER&&rp.team) TEAM_ALL=rp.team; } else PROJECTS=[];
       paintProjectsHub();
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
   }
   function paintProjectsHub(){
-    // ── ส่วน A: ตามบริษัท (auto จากลูกค้า) ──
+    var html=pjFilterBar();
+    // ── ส่วน A: ตามบริษัท (auto จากลูกค้า) — เรียงงานค้างมากก่อน ──
     var order=[], groups={};
     ALL_TASKS.forEach(function(t){ var c=t.customer||'(ไม่ระบุบริษัท)'; if(!groups[c]){groups[c]=[];order.push(c);} groups[c].push(t); });
-    var html='<div class="pj-sec">🏢 ตามบริษัท<span class="pj-sec-n">'+order.length+'</span></div>';
-    if(!order.length){ html+='<div class="card"><div class="emptybox">ยังไม่มีงานของลูกค้า 😊</div></div>'; }
-    else html+=order.map(function(c){
-      var ts=groups[c], pct=avgPct(ts);
-      var openN=ts.filter(function(t){ var p=statusPct(t.status); return p!==null&&p<100; }).length;
-      var h='<div class="pjc pjc-co" onclick="openCompany(\''+jss(c)+'\')">'+
-        '<div class="pjc-top"><span class="pjc-name">🏢 '+esc(c)+'</span>'+
-        '<span class="pjc-badge">'+(openN?openN+' งานค้าง':ts.length+' งาน')+'</span></div>'+
-        '<div class="pjc-prog"><span class="pjc-prog-n">'+pct+'% สำเร็จ · '+ts.length+' งาน</span>'+pctBar(pct)+'</div>';
-      return h+'</div>';
-    }).join('');
+    order.sort(function(a,b){ return openCount(groups[b])-openCount(groups[a]); });
+    var shownCo=order.filter(function(c){ return groups[c].some(pjMatch); });
+    html+='<div class="pj-sec">🏢 ตามบริษัท<span class="pj-sec-n">'+shownCo.length+'</span></div>';
+    if(!shownCo.length){ html+='<div class="card"><div class="emptybox">'+(PJ_FILTER?'ไม่มีงานสถานะนี้ 😊':'ยังไม่มีงานของลูกค้า 😊')+'</div></div>'; }
+    else shownCo.forEach(function(c){ html+=accCompany(c, groups[c]); });
     // ── ส่วน B: project จัดกลุ่มเอง ──
     html+='<div class="pj-sec" style="margin-top:22px">📁 Project จัดกลุ่มเอง</div>';
-    html+= projectsInnerHtml();
+    if(IS_OWNER) html+='<button class="btn btn-ghost" style="width:100%;margin-bottom:12px" onclick="openProjEdit()">➕ สร้าง Project ใหม่</button>';
+    html+=projectsAccHtml();
     $('main').innerHTML=html;
   }
-  function projectsInnerHtml(){
-    var html='';
-    if(IS_OWNER) html+='<button class="btn btn-ghost" style="width:100%;margin-bottom:12px" onclick="openProjEdit()">➕ สร้าง Project ใหม่</button>';
-    if(!PROJECTS.length) return html+'<div class="card"><div class="emptybox">'+(IS_OWNER?'ยังไม่มี project จัดเอง — เริ่มจาก "ตามบริษัท" ด้านบนได้เลยค่ะ':'ยังไม่ได้อยู่ใน project จัดเอง (ใช้ "ตามบริษัท" ด้านบนได้เลย) 😊')+'</div></div>';
-    return html+PROJECTS.map(function(pj){
-      var closed=pj.status&&pj.status.indexOf('ปิด')>=0;
-      var cnt = IS_OWNER ? (pj.taskCount||0) : (pj.taskOpen||0);
-      var cntLbl = IS_OWNER ? (cnt+' งาน') : (cnt+' งานค้าง');
-      var h='<div class="pjc'+(closed?' pjc-closed':'')+'" onclick="openProjectBoard(\''+esc(pj.id)+'\')">'+
-        '<div class="pjc-top"><span class="pjc-name">'+esc(pj.name)+'</span>'+
-        '<span class="pjc-badge">'+esc(cntLbl)+'</span></div>'+
-        '<div class="pjc-meta">'+esc(pj.id)+(pj.customer?' · '+esc(pj.customer):'')+(closed?' · ปิดแล้ว':'')+'</div>';
-      var ppct=(typeof pj.pct==='number')?pj.pct:0;
-      h+='<div class="pjc-prog"><span class="pjc-prog-n">'+ppct+'% สำเร็จ</span>'+pctBar(ppct)+'</div>';
+  // การ์ดบริษัท (accordion) — header กด คลี่/พับ · body = การ์ดงาน (กรองตามฟิลเตอร์)
+  function accCompany(c, ts){
+    var open=!!EXPANDED['co:'+c], pct=avgPct(ts), shown=ts.filter(pjMatch);
+    var badge = PJ_FILTER ? (shown.length+' รายการ') : (openCount(ts)?openCount(ts)+' งานค้าง':ts.length+' งาน');
+    var h='<div class="pjc pjc-co'+(open?' open':'')+'">'+
+      '<div class="pjc-hd" onclick="toggleAcc(\'co:'+jss(c)+'\')">'+
+      '<span class="pjc-chev">'+(open?'▾':'▸')+'</span>'+
+      '<div class="pjc-hdmain"><div class="pjc-top"><span class="pjc-name">🏢 '+esc(c)+'</span>'+
+      '<span class="pjc-badge">'+badge+'</span></div>'+
+      '<div class="pjc-prog"><span class="pjc-prog-n">'+pct+'% สำเร็จ · '+ts.length+' งาน</span>'+pctBar(pct)+'</div></div></div>';
+    if(open) h+='<div class="pjc-body">'+
+      '<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:10px" onclick="openCreateCo(\''+jss(c)+'\')">➕ เปิดงานให้บริษัทนี้</button>'+
+      (shown.length? shown.map(cardProj).join('') : '<div class="emptybox">ไม่มีงานสถานะนี้ 😊</div>')+'</div>';
+    return h+'</div>';
+  }
+  // การ์ด project จัดกลุ่มเอง (accordion) — งานดึงจาก ALL_TASKS ในเครื่อง (t.project)
+  function projectsAccHtml(){
+    if(!PROJECTS.length) return '<div class="card"><div class="emptybox">'+(IS_OWNER?'ยังไม่มี project จัดเอง — เริ่มจาก "ตามบริษัท" ด้านบนได้เลยค่ะ':'ยังไม่ได้อยู่ใน project จัดเอง (ใช้ "ตามบริษัท" ด้านบนได้เลย) 😊')+'</div></div>';
+    var out=PROJECTS.map(function(pj){
+      var ts=ALL_TASKS.filter(function(t){ return t.project===pj.id; }), shown=ts.filter(pjMatch);
+      if(PJ_FILTER && !shown.length) return '';   // ซ่อน project ที่ไม่มีงานสถานะนี้
+      var open=!!EXPANDED['pj:'+pj.id], closed=pj.status&&pj.status.indexOf('ปิด')>=0;
+      var ppct=ts.length? avgPct(ts) : ((typeof pj.pct==='number')?pj.pct:0);
+      var badge = PJ_FILTER ? (shown.length+' รายการ') : (ts.length+' งาน');
+      var h='<div class="pjc'+(closed?' pjc-closed':'')+(open?' open':'')+'">'+
+        '<div class="pjc-hd" onclick="toggleAcc(\'pj:'+esc(pj.id)+'\')">'+
+        '<span class="pjc-chev">'+(open?'▾':'▸')+'</span>'+
+        '<div class="pjc-hdmain"><div class="pjc-top"><span class="pjc-name">'+esc(pj.name)+'</span>'+
+        '<span class="pjc-badge">'+badge+'</span></div>'+
+        '<div class="pjc-meta">'+esc(pj.id)+(pj.customer?' · '+esc(pj.customer):'')+(closed?' · ปิดแล้ว':'')+'</div>'+
+        '<div class="pjc-prog"><span class="pjc-prog-n">'+ppct+'% สำเร็จ</span>'+pctBar(ppct)+'</div></div></div>';
       if(IS_OWNER){
         var mem=(pj.members||[]);
-        h+='<div class="pjc-mem">👥 '+(mem.length?esc(mem.join(', ')):'<i>ยังไม่มีสมาชิก</i>')+'</div>'+
-          '<div class="pjc-acts" onclick="event.stopPropagation()">'+
+        h+='<div class="pjc-sub" onclick="event.stopPropagation()">'+
+          '<span class="pjc-mem">👥 '+(mem.length?esc(mem.join(', ')):'<i>ยังไม่มีสมาชิก</i>')+'</span>'+
+          '<span class="pjc-acts">'+
           '<button class="btn btn-ghost btn-sm" onclick="openProjEdit(\''+esc(pj.id)+'\')">✏️ แก้</button>'+
-          '<button class="btn btn-ghost btn-sm" onclick="openProjMembers(\''+esc(pj.id)+'\')">👥 สมาชิก</button></div>';
+          '<button class="btn btn-ghost btn-sm" onclick="openProjMembers(\''+esc(pj.id)+'\')">👥 สมาชิก</button></span></div>';
       }
+      if(open) h+='<div class="pjc-body">'+
+        '<button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:10px" onclick="openCreate(\''+esc(pj.id)+'\')">➕ เปิดงานใน project นี้</button>'+
+        (shown.length? shown.map(cardProj).join('') : '<div class="emptybox">ยังไม่มีงาน 😊</div>')+'</div>';
       return h+'</div>';
     }).join('');
-  }
-  // บอร์ดงานของบริษัทเดียว (auto · reuse การ์ดงาน) — โหลดสดเสมอ
-  function openCompany(name){
-    CUR_COMPANY=name; CUR_PID=''; VIEW='projects'; skel();
-    jsonp({action:'waBoard', uid:UID}).then(function(r){
-      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
-      ALL_TASKS=r.tasks||[]; MENAME=(r.me&&r.me.name)||''; TEAM=r.team||[]; CUSTOMERS=r.customers||[];
-      var ts=ALL_TASKS.filter(function(t){ return (t.customer||'(ไม่ระบุบริษัท)')===name; });
-      var avg=avgPct(ts), doneN=ts.filter(function(t){return statusPct(t.status)===100;}).length;
-      var html='<div class="pj-head"><button class="btn btn-ghost btn-sm" onclick="renderProjects()">← ทุกบริษัท</button></div>'+
-        '<div class="pj-hero"><div class="pj-hero-name">🏢 '+esc(name)+'</div>'+
-        '<div class="pj-hero-sub">ลูกค้า · '+ts.length+' งาน</div>'+
-        '<div class="pj-hero-prog"><div class="pj-hero-pct">'+avg+'<span>%</span></div>'+
-        '<div class="pj-hero-barwrap">'+pctBar(avg,true)+'<div class="pj-hero-cnt">เสร็จ '+doneN+'/'+ts.length+' งาน</div></div></div>'+
-        '</div>'+
-        '<button class="btn btn-primary" style="width:100%;margin-bottom:14px" onclick="openCreateCo(\''+jss(name)+'\')">➕ เปิดงานให้บริษัทนี้</button>';
-      html+= ts.length ? ts.map(cardProj).join('') : '<div class="card"><div class="emptybox">ยังไม่มีงาน 😊</div></div>';
-      $('main').innerHTML=html;
-    }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
+    return out || '<div class="card"><div class="emptybox">ไม่มี project ที่มีงานสถานะนี้ 😊</div></div>';
   }
   // เปิดงานใหม่ให้บริษัท (preset ลูกค้า · ไม่ผูก project)
   function openCreateCo(cust){ CREATE_CUST=cust; openCreate(); }
-  // บอร์ดงานของ project เดียว (reuse การ์ดงาน)
-  function openProjectBoard(pid){
-    CUR_PID=pid; VIEW='projects'; skel();
-    jsonp({action:'waProjectBoard', uid:UID, pid:pid}).then(function(r){
-      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
-      MENAME=(r.me&&r.me.name)||''; TEAM=r.team||[]; CUSTOMERS=r.customers||[];
-      var pj=r.project||{}, ts=r.tasks||[];
-      var avg=avgPct(ts), doneN=ts.filter(function(t){return statusPct(t.status)===100;}).length;
-      var html='<div class="pj-head"><button class="btn btn-ghost btn-sm" onclick="renderProjects()">← Project ทั้งหมด</button></div>'+
-        '<div class="pj-hero"><div class="pj-hero-name">📁 '+esc(pj.name||pid)+'</div>'+
-        '<div class="pj-hero-sub">'+esc(pid)+(pj.customer?' · '+esc(pj.customer):'')+' · 👥 '+esc((r.members||[]).join(', ')||'—')+'</div>'+
-        '<div class="pj-hero-prog"><div class="pj-hero-pct">'+avg+'<span>%</span></div>'+
-        '<div class="pj-hero-barwrap">'+pctBar(avg,true)+'<div class="pj-hero-cnt">เสร็จ '+doneN+'/'+ts.length+' งาน</div></div></div>'+
-        '</div>'+
-        '<button class="btn btn-primary" style="width:100%;margin-bottom:14px" onclick="openCreate(\''+esc(pid)+'\')">➕ เปิดงานใน project นี้</button>';
-      html+= ts.length ? ts.map(cardProj).join('') : '<div class="card"><div class="emptybox">ยังไม่มีงานใน project นี้ 😊</div></div>';
-      $('main').innerHTML=html;
-    }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
-  }
   // การ์ดงานในบอร์ด project — แสดงผู้รับผิดชอบ + ช่วยกันรับ/ส่ง
   function cardProj(t){
     var h='<div class="tk"><div class="tk-top"><span class="tk-no">'+esc(t.no)+'</span>'+
