@@ -958,16 +958,10 @@
   }
 
   // ── (พี่) หน้าจัดการ Project — list ทุก project + ปุ่มแก้/จัดสมาชิก (ใช้ได้ทั้งคอม+มือถือ) ──
-  function openProjManage(){
-    toast('กำลังโหลด…');
-    jsonp({action:'waProjectAdminList',uid:UID}).then(function(r){
-      if(!r||!r.ok){ toast((r&&r.error)||'โหลดไม่สำเร็จ'); return; }
-      PROJECTS=r.projects||[]; if(r.team) TEAM_ALL=r.team;
-      paintProjManage();
-    }).catch(function(e){ toast(e.message); });
-  }
-  function paintProjManage(){
-    var rows = PROJECTS.length ? PROJECTS.map(function(pj){
+  // เปิด modal ทันที (โชว์โครง/ของเดิม) แล้วค่อย refresh เฉพาะ #pjmList → กดปุ๊บเห็นปั๊บ ไม่ต้องรอเน็ต
+  function projManageRows(){
+    if(!PROJECTS.length) return '<div class="emptybox">ยังไม่มี project · กด "➕ สร้าง Project" เพื่อเริ่มค่ะ 😊</div>';
+    return PROJECTS.map(function(pj){
       var closed = pj.status && pj.status.indexOf('ปิด')>=0;
       var mem = pj.members||[];
       return '<div class="card pjm-card">'+
@@ -978,12 +972,24 @@
         '<div class="pjc-acts"><button class="btn btn-ghost" onclick="openProjEdit(\''+esc(pj.id)+'\')">✏️ แก้ไข</button>'+
           '<button class="btn btn-ghost" onclick="openProjMembers(\''+esc(pj.id)+'\')">👥 สมาชิก ('+mem.length+')</button></div>'+
         '</div>';
-    }).join('') : '<div class="emptybox">ยังไม่มี project · กด "➕ สร้าง Project" เพื่อเริ่มค่ะ 😊</div>';
+    }).join('');
+  }
+  function openProjManage(){
+    // 1) เปิด modal ทันที — ถ้ามีข้อมูลเดิมโชว์เลย ไม่มีก็โชว์ skeleton
+    var body = PROJECTS.length ? projManageRows()
+      : '<div class="card pjm-card"><div class="skel" style="height:74px"></div></div><div class="card pjm-card"><div class="skel" style="height:74px"></div></div>';
     modal('<h3>⚙️ จัดการ Project</h3>'+
       '<div class="m-hint">สร้าง/แก้ project และจัดว่าใครอยู่ project ไหน — สมาชิกจะเห็นและช่วยกันทำงานใน project นั้นได้</div>'+
-      '<div class="pjm-list">'+rows+'</div>'+
+      '<div class="pjm-list" id="pjmList">'+body+'</div>'+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal();renderProjects()">ปิด</button>'+
       '<button class="btn btn-primary" onclick="openProjEdit(\'\')">➕ สร้าง Project</button></div>');
+    // 2) refresh ข้อมูลล่าสุดใน background → แทนที่เฉพาะ list (modal/ปุ่มคงอยู่ ไม่กระพริบ)
+    jsonp({action:'waProjectAdminList',uid:UID}).then(function(r){
+      var el=$('pjmList'); if(!el) return;   // ปิด modal ไปแล้ว
+      if(!r||!r.ok){ if(!PROJECTS.length) el.innerHTML='<div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div>'; return; }
+      PROJECTS=r.projects||[]; if(r.team) TEAM_ALL=r.team;
+      el.innerHTML=projManageRows();
+    }).catch(function(e){ var el=$('pjmList'); if(el&&!PROJECTS.length) el.innerHTML='<div class="emptybox">'+esc(e.message)+'</div>'; });
   }
   window.openProjManage=openProjManage; window.openProjEdit=openProjEdit; window.openProjMembers=openProjMembers;
 
