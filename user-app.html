@@ -338,6 +338,7 @@
   .bchk:hover{ background:#F2F6FC; } .bchk input{ width:19px; height:19px; margin-top:1px; flex:0 0 auto; }
   .bchk-all{ background:#EAF1FC; border-radius:11px; margin-bottom:8px; }
   .bchk-tx{ line-height:1.4; } .bchk-sub{ color:#8A94A6; font-size:12.5px; }
+  .bchk-cur{ font-size:11.5px; color:#1B72E8; background:#EAF1FC; padding:1px 8px; border-radius:999px; margin-left:4px; white-space:nowrap; }
   .pj-mgbtn{ flex:0 0 auto; min-width:82px; font-size:13.5px; }
   .pj-head{ margin-bottom:12px; }
   .pj-hero{ background:linear-gradient(120deg,#1B72E8,#4A93F0); color:#fff; border-radius:var(--radius); padding:18px 18px; margin-bottom:14px; box-shadow:0 6px 20px rgba(27,114,232,.28); }
@@ -1178,6 +1179,41 @@
   }
   window.openBulk=openBulk; window.bulkAll=bulkAll; window.doBulk=doBulk;
 
+  // ── (พี่) ปรับสถานะหลายใบ — เลือกงาน + เลือกสถานะปลายทาง (ปรับข้อมูล ไม่แจ้งลูกค้า) ──
+  function openBulkStatus(){
+    toast('กำลังโหลด…');
+    jsonp({action:'waBoard',uid:UID,withCancel:'1'}).then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'โหลดไม่สำเร็จ'); return; }
+      var arr=(r.tasks||[]).filter(function(t){ return !isCancel_(t); });
+      var statuses=r.statuses||[];
+      if(!arr.length){ modal('<h3>✏️ ปรับสถานะหลายใบ</h3><div class="emptybox">ยังไม่มีงาน 😊</div><div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button></div>'); return; }
+      var opts=statuses.map(function(s){ return '<option value="'+esc(s)+'">'+esc(s)+'</option>'; }).join('');
+      var rows=arr.map(function(t){
+        return '<label class="bchk"><input type="checkbox" class="bulk-cb" value="'+esc(t.no)+'">'+
+          '<span class="bchk-tx"><b>'+esc(t.no)+'</b> · '+esc(t.customer||'-')+' <span class="bchk-cur">'+esc(t.status)+'</span>'+
+          ((t.title||t.detail)?'<br><span class="bchk-sub">'+esc(t.title||t.detail)+'</span>':'')+'</span></label>';
+      }).join('');
+      modal('<h3>✏️ ปรับสถานะหลายใบ</h3><div class="m-hint">เลือกงาน แล้วเลือกสถานะปลายทาง → ปรับพร้อมกันทีเดียว (ปรับข้อมูลในระบบ · ไม่แจ้งลูกค้า)</div>'+
+        '<div class="fld"><label>เปลี่ยนสถานะเป็น</label><select id="bulkStatusSel">'+opts+'</select></div>'+
+        '<label class="bchk bchk-all"><input type="checkbox" onclick="bulkAll(this)"> <b>เลือกทั้งหมด ('+arr.length+')</b></label>'+
+        '<div class="bchk-wrap">'+rows+'</div>'+
+        '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+        '<button class="btn btn-primary" onclick="doBulkStatus()">ปรับสถานะที่เลือก</button></div>');
+    }).catch(function(e){ toast(e.message); });
+  }
+  function doBulkStatus(){
+    var nos=[]; Array.prototype.forEach.call(document.querySelectorAll('.bulk-cb:checked'),function(c){ nos.push(c.value); });
+    if(!nos.length){ toast('เลือกงานก่อนนะคะ'); return; }
+    var st=$('bulkStatusSel')?$('bulkStatusSel').value:'';
+    if(!st){ toast('เลือกสถานะก่อน'); return; }
+    toast('กำลังปรับ '+nos.length+' รายการ…');
+    jsonpPost({action:'waBulkStatus',uid:UID,nos:nos.join(','),status:st}).then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; }
+      closeModal(); toast('✏️ ปรับสถานะ '+(r.updated||0)+' ใบแล้ว'); renderOwnerBoard(BSCOPE,true);
+    }).catch(function(e){ toast(e.message); });
+  }
+  window.openBulkStatus=openBulkStatus; window.doBulkStatus=doBulkStatus;
+
   // ═══════════ VIEW: เบิกค่าใช้จ่าย ═══════════
   function renderExpense(){
     skel();
@@ -1497,6 +1533,7 @@
         '<select id="bRange"><option value="all">📅 ทุกช่วงเวลา</option><option value="month">เดือนนี้</option>'+
         '<option value="lastmonth">เดือนที่แล้ว</option><option value="last7">7 วันล่าสุด</option><option value="last30">30 วันล่าสุด</option></select>'+
         '<button class="bd-btn bd-p" onclick="bOpenCreate()">+ เปิดงานใหม่</button>'+
+        '<button class="bd-btn bd-bulk" onclick="openBulkStatus()">✏️ ปรับสถานะหลายใบ</button>'+
         '<button class="bd-btn bd-bulk" onclick="openBulk(\'send\')">☑️ ส่งลูกค้าหลายใบ</button></div>'+
       '<div id="bPjBar" class="bd-pjbar"></div>'+
       '<div id="bStats" class="bd-stats"></div>'+
