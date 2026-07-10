@@ -156,6 +156,9 @@
   #board-wrap .bd-pjfill{ height:100%; border-radius:999px; background:#fff; transition:width .4s ease; box-shadow:0 1px 4px rgba(0,0,0,.12); }
   #board-wrap .bd-pjpct{ font-size:15px; font-weight:800; color:#fff; white-space:nowrap; letter-spacing:.2px; }
   @media(max-width:1023px){ #board-wrap .bd-pjsel, #board-wrap .bd-pjprog{ min-width:100%; } }
+  #board-wrap .bd-pjmgbtn{ flex:0 0 auto; padding:0 20px; border-radius:13px; border:2px solid #1B72E8; background:#fff; color:#1B72E8; font-family:inherit; font-size:14.5px; font-weight:700; cursor:pointer; white-space:nowrap; box-shadow:0 2px 8px rgba(27,114,232,.12); }
+  #board-wrap .bd-pjmgbtn:hover{ background:#EAF1FC; }
+  @media(max-width:1023px){ #board-wrap .bd-pjmgbtn{ flex-basis:100%; padding:12px; } }
   @media(max-width:720px){ #board-wrap .bd-stats{ grid-template-columns:repeat(2,1fr); } }
   /* mini app (มือถือ) → เหลือ ช่วงเวลา+เปิดงานใหม่ / การ์ดสถานะ / การ์ดงานคอลัมน์เดียว (ตัดแท็บมุมมอง+ตัวกรองประเภท/เรียง/ค้นหา) */
   @media(max-width:1023px){ #board-wrap, #board-wrap *{ box-sizing:border-box; }
@@ -310,6 +313,9 @@
   .pjc-meta{ font-size:12.5px; color:#8A94A6; margin-top:4px; }
   .pjc-mem{ font-size:13px; color:#5A6472; margin-top:9px; }
   .pjc-acts{ display:flex; gap:8px; margin-top:12px; }
+  .pjm-list{ display:flex; flex-direction:column; margin:2px 0 8px; }
+  .pjm-card{ margin-bottom:11px; }
+  .pj-mgbtn{ flex:0 0 auto; min-width:82px; font-size:13.5px; }
   .pj-head{ margin-bottom:12px; }
   .pj-hero{ background:linear-gradient(120deg,#1B72E8,#4A93F0); color:#fff; border-radius:var(--radius); padding:18px 18px; margin-bottom:14px; box-shadow:0 6px 20px rgba(27,114,232,.28); }
   .pj-hero-name{ font-size:19px; font-weight:700; }
@@ -833,7 +839,8 @@
     // แถวบน: กล่องจำนวน project (ตัวใหญ่ มีกรอบ) + ปุ่มเปิดงานใหม่ ข้างกัน
     var html='<div class="pj-toprow">'+
       '<div class="pj-count"><span class="pj-count-n">'+nItems+'</span><span class="pj-count-l">Project</span></div>'+
-      '<button class="btn btn-primary pj-addbtn" onclick="pjAddTask()">➕<br>เปิดงานใหม่</button></div>'+
+      '<button class="btn btn-primary pj-addbtn" onclick="pjAddTask()">➕<br>เปิดงานใหม่</button>'+
+      (IS_OWNER?'<button class="btn btn-ghost pj-addbtn pj-mgbtn" onclick="openProjManage()">⚙️<br>จัดการ</button>':'')+'</div>'+
       // ช่องเลือก project — ใหญ่ เด่น
       '<div class="pj-pick2"><label>เลือก Project</label><select onchange="setPjSel(this.value)">'+opt+'</select></div>';
     // header % ของ scope ที่เลือก (ไม่นับยกเลิกใน %/ยอดรวม)
@@ -920,7 +927,7 @@
       '<div class="fld"><label>ลูกค้า (ถ้ามี · เว้นว่างได้)</label><input id="pCust" placeholder="ชื่อลูกค้า" value="'+esc(pj.customer||'')+'"></div>'+
       '<div class="fld"><label>หมายเหตุ</label><input id="pNote" placeholder="ไม่บังคับ" value="'+esc(pj.note||'')+'"></div>'+
       (id?'<div class="fld"><label>สถานะ</label><select id="pStatus"><option value="ทำอยู่"'+(pj.status&&pj.status.indexOf('ปิด')>=0?'':' selected')+'>ทำอยู่</option><option value="ปิด"'+(pj.status&&pj.status.indexOf('ปิด')>=0?' selected':'')+'>ปิด</option></select></div>':'')+
-      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="openProjManage()">← กลับ</button>'+
       '<button class="btn btn-primary" onclick="doProjSave(\''+esc(id||'')+'\')">บันทึก</button></div>');
   }
   function doProjSave(id){
@@ -929,7 +936,7 @@
     var params={action:'waProjectSave',uid:UID,id:id,name:name,customer:$('pCust').value.trim(),note:$('pNote').value.trim()};
     if(id&&$('pStatus')) params.status=$('pStatus').value;
     toast('กำลังบันทึก…');
-    jsonp(params).then(function(r){ if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; } closeModal(); toast('บันทึก project แล้ว'); renderProjects(); }).catch(function(e){ mErr(e.message); });
+    jsonp(params).then(function(r){ if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; } toast('บันทึก project แล้ว'); openProjManage(); }).catch(function(e){ mErr(e.message); });
   }
   // ── (พี่) จัดสมาชิก project ──
   function openProjMembers(id){
@@ -939,16 +946,46 @@
     modal('<h3>👥 สมาชิก · '+esc(pj.name||id)+'</h3><div id="mErr" class="m-err hidden"></div>'+
       '<div class="m-hint">เลือกคนที่จะให้เห็น+ช่วยกันทำงานใน project นี้</div>'+
       '<div class="mchk-wrap">'+(boxes||'<i>ยังไม่มีทีมงาน</i>')+'</div>'+
-      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="openProjManage()">← กลับ</button>'+
       '<button class="btn btn-primary" onclick="doProjMembers(\''+esc(id)+'\')">บันทึก</button></div>');
   }
   function doProjMembers(id){
     var names=[]; Array.prototype.forEach.call(document.querySelectorAll('.mchk-wrap input:checked'), function(c){ names.push(c.value); });
     toast('กำลังบันทึก…');
     jsonp({action:'waProjectSetMembers',uid:UID,pid:id,members:names.join(',')}).then(function(r){
-      if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; } closeModal(); toast('บันทึกสมาชิกแล้ว'); renderProjects();
+      if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; } toast('บันทึกสมาชิกแล้ว'); openProjManage();
     }).catch(function(e){ mErr(e.message); });
   }
+
+  // ── (พี่) หน้าจัดการ Project — list ทุก project + ปุ่มแก้/จัดสมาชิก (ใช้ได้ทั้งคอม+มือถือ) ──
+  function openProjManage(){
+    toast('กำลังโหลด…');
+    jsonp({action:'waProjectAdminList',uid:UID}).then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'โหลดไม่สำเร็จ'); return; }
+      PROJECTS=r.projects||[]; if(r.team) TEAM_ALL=r.team;
+      paintProjManage();
+    }).catch(function(e){ toast(e.message); });
+  }
+  function paintProjManage(){
+    var rows = PROJECTS.length ? PROJECTS.map(function(pj){
+      var closed = pj.status && pj.status.indexOf('ปิด')>=0;
+      var mem = pj.members||[];
+      return '<div class="card pjm-card">'+
+        '<div class="pjc-top"><div class="pjc-name">📁 '+esc(pj.name)+'</div>'+
+          '<span class="pjc-badge"'+(closed?' style="color:#8A94A6;background:#EEF1F6"':'')+'>'+(closed?'ปิดแล้ว':'ทำอยู่')+'</span></div>'+
+        '<div class="pjc-meta">'+(pj.customer?'🏢 '+esc(pj.customer)+' · ':'')+'งาน '+(pj.taskCount||0)+' · สำเร็จ '+(pj.pct||0)+'%</div>'+
+        '<div class="pjc-mem">👥 '+(mem.length?esc(mem.join(', ')):'<i style="color:#C87F1E">ยังไม่มีสมาชิก</i>')+'</div>'+
+        '<div class="pjc-acts"><button class="btn btn-ghost" onclick="openProjEdit(\''+esc(pj.id)+'\')">✏️ แก้ไข</button>'+
+          '<button class="btn btn-ghost" onclick="openProjMembers(\''+esc(pj.id)+'\')">👥 สมาชิก ('+mem.length+')</button></div>'+
+        '</div>';
+    }).join('') : '<div class="emptybox">ยังไม่มี project · กด "➕ สร้าง Project" เพื่อเริ่มค่ะ 😊</div>';
+    modal('<h3>⚙️ จัดการ Project</h3>'+
+      '<div class="m-hint">สร้าง/แก้ project และจัดว่าใครอยู่ project ไหน — สมาชิกจะเห็นและช่วยกันทำงานใน project นั้นได้</div>'+
+      '<div class="pjm-list">'+rows+'</div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal();renderProjects()">ปิด</button>'+
+      '<button class="btn btn-primary" onclick="openProjEdit(\'\')">➕ สร้าง Project</button></div>');
+  }
+  window.openProjManage=openProjManage; window.openProjEdit=openProjEdit; window.openProjMembers=openProjMembers;
 
   // ═══════════ VIEW: เบิกค่าใช้จ่าย ═══════════
   function renderExpense(){
@@ -1312,7 +1349,8 @@
       '<option value="__none__">— ยังไม่จัด project —</option>';
     $('bPjBar').innerHTML='<select id="bFProject" class="bd-pjsel">'+opts+'</select>'+
       '<div class="bd-pjprog"><div class="bd-pjtrack"><div class="bd-pjfill" style="width:'+pct+'%"></div></div>'+
-      '<span class="bd-pjpct">'+pct+'% · เสร็จ '+done+'/'+tot+'</span></div>';
+      '<span class="bd-pjpct">'+pct+'% · เสร็จ '+done+'/'+tot+'</span></div>'+
+      (IS_OWNER?'<button class="bd-pjmgbtn" onclick="openProjManage()">⚙️ จัดการ Project</button>':'');
     $('bFProject').value=BFPROJECT;
     $('bFProject').onchange=function(){ BFPROJECT=this.value; bRender(); };
   }
