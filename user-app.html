@@ -734,9 +734,10 @@
   }
 
   // modal helper
-  function modal(html){ var m=document.createElement('div'); m.className='mask'; m.id='modal';
+  function modal(html){ closeModal();   // ปิดของเดิมก่อนเสมอ → กัน modal ซ้อนชั้น (เด้ง flow ไปมาแล้วทับกัน)
+    var m=document.createElement('div'); m.className='mask'; m.id='modal';
     m.innerHTML='<div class="sheet">'+html+'</div>'; document.body.appendChild(m); return m; }
-  function closeModal(){ var m=$('modal'); if(m) m.parentNode.removeChild(m); }
+  function closeModal(){ var m; while((m=$('modal'))){ if(!m.parentNode){ break; } m.parentNode.removeChild(m); } }   // ลบทุกชั้นที่ค้าง
   function mErr(msg){ var e=$('mErr'); if(e){ e.textContent='⚠️ '+msg; e.classList.remove('hidden'); } }
 
   // ส่งตรวจ
