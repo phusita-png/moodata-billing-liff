@@ -317,6 +317,9 @@
   .pjm-card{ margin-bottom:11px; }
   .pjm-sec{ font-size:13px; font-weight:700; color:#5A6472; margin:8px 2px 9px; padding-top:4px; border-top:1px dashed var(--line); }
   .pjm-sec:first-child{ border-top:0; padding-top:0; }
+  .pjm-delbtn{ flex:0 0 auto; padding-left:13px; padding-right:13px; }
+  .hist-del{ margin-left:auto; align-self:center; background:transparent; border:none; font-size:16px; cursor:pointer; padding:7px 9px; border-radius:9px; color:#C0392B; opacity:.5; flex:0 0 auto; }
+  .hist-del:hover{ opacity:1; background:#FCEBEA; }
   .pj-mgbtn{ flex:0 0 auto; min-width:82px; font-size:13.5px; }
   .pj-head{ margin-bottom:12px; }
   .pj-hero{ background:linear-gradient(120deg,#1B72E8,#4A93F0); color:#fff; border-radius:var(--radius); padding:18px 18px; margin-bottom:14px; box-shadow:0 6px 20px rgba(27,114,232,.28); }
@@ -516,8 +519,24 @@
       '<div class="hist-main"><div class="hist-type">'+esc(l.type)+' · '+esc(l.days)+' วัน'+
         '<span class="lvb '+lvBadge(l.status)+'">'+esc(l.status)+'</span></div>'+
       '<div class="hist-meta">📅 '+esc(l.start)+' – '+esc(l.end)+(l.reason?(' · '+esc(l.reason)):'')+
-        (l.approver?(' · โดย '+esc(l.approver)):'')+'</div></div></div>';
+        (l.approver?(' · โดย '+esc(l.approver)):'')+'</div></div>'+
+      (l.no?'<button class="hist-del" onclick="delLeave(\''+esc(l.no)+'\')" title="ลบใบลา">🗑️</button>':'')+'</div>';
   }
+  // ── (เจ้าของ/พี่) ลบใบลา — คืนโควต้าอัตโนมัติ ──
+  function delLeave(no){
+    modal('<h3>🗑️ ลบใบลา</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">ลบใบลา <b>'+esc(no)+'</b> ออกถาวร · ถ้าเป็นใบที่อนุมัติแล้ว โควต้าจะคืนให้อัตโนมัติ · ลบแล้วกู้คืนไม่ได้</div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-danger" onclick="doDelLeave(\''+esc(no)+'\')">ลบใบลา</button></div>');
+  }
+  function doDelLeave(no){
+    toast('กำลังลบ…');
+    jsonp({action:'waLeaveDelete',uid:UID,no:no}).then(function(r){
+      if(!r||!r.ok){ mErr((r&&r.error)||'ลบไม่สำเร็จ'); return; }
+      closeModal(); toast('🗑️ ลบใบลาแล้ว'); renderLeave(true);
+    }).catch(function(e){ mErr(e.message); });
+  }
+  window.delLeave=delLeave; window.doDelLeave=doDelLeave;
   function quotaKey(typeName){ return {'ลาป่วย':'sick','ลากิจ':'personal','ลาพักร้อน':'vacation'}[typeName]||'vacation'; }
 
   function renderTypeGrid(){
@@ -973,7 +992,8 @@
       '<div class="pjc-meta">'+(!isCo&&pj.customer?'🏢 '+esc(pj.customer)+' · ':'')+'งาน '+(pj.taskCount||0)+' · สำเร็จ '+(pj.pct||0)+'%</div>'+
       '<div class="pjc-mem">👥 '+(mem.length?esc(mem.join(', ')):'<i style="color:#C87F1E">ยังไม่มีสมาชิก</i>')+'</div>'+
       '<div class="pjc-acts">'+(isCo?'':'<button class="btn btn-ghost" onclick="openProjEdit(\''+esc(pj.id)+'\')">✏️ แก้ไข</button>')+
-        '<button class="btn btn-ghost" onclick="openProjMembers(\''+esc(pj.id)+'\')">👥 สมาชิก ('+mem.length+')</button></div>'+
+        '<button class="btn btn-ghost" onclick="openProjMembers(\''+esc(pj.id)+'\')">👥 สมาชิก ('+mem.length+')</button>'+
+        (isCo?'':'<button class="btn btn-danger pjm-delbtn" onclick="delProj(\''+esc(pj.id)+'\',\''+jss(pj.name)+'\')" title="ลบ project">🗑️</button>')+'</div>'+
       '</div>';
   }
   function projManageRows(){
@@ -1001,6 +1021,21 @@
     }).catch(function(e){ var el=$('pjmList'); if(el&&!PROJECTS.length&&!COMPANIES.length) el.innerHTML='<div class="emptybox">'+esc(e.message)+'</div>'; });
   }
   window.openProjManage=openProjManage; window.openProjEdit=openProjEdit; window.openProjMembers=openProjMembers;
+  // ── (พี่) ลบ Project จัดเอง (บริษัท auto ลบไม่ได้) ──
+  function delProj(id,name){
+    modal('<h3>🗑️ ลบ Project</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">ลบ <b>📁 '+esc(name)+'</b> ออกถาวร · งานในนั้นจะกลับไป "ยังไม่จัด project" (งานไม่หาย) · ลบแล้วกู้คืนไม่ได้</div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="openProjManage()">← กลับ</button>'+
+      '<button class="btn btn-danger" onclick="doDelProj(\''+esc(id)+'\')">ลบ Project</button></div>');
+  }
+  function doDelProj(id){
+    toast('กำลังลบ…');
+    jsonp({action:'waProjectDelete',uid:UID,pid:id}).then(function(r){
+      if(!r||!r.ok){ mErr((r&&r.error)||'ลบไม่สำเร็จ'); return; }
+      toast('🗑️ ลบ project แล้ว'+(r.freed?' · ปลดงาน '+r.freed+' ใบ':'')); openProjManage();
+    }).catch(function(e){ mErr(e.message); });
+  }
+  window.delProj=delProj; window.doDelProj=doDelProj;
 
   // ═══════════ VIEW: เบิกค่าใช้จ่าย ═══════════
   function renderExpense(){
