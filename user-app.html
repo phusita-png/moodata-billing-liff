@@ -126,6 +126,8 @@
   #board-wrap #bRange{ padding:9px 12px; border:1px solid var(--bdline); border-radius:10px; font-family:inherit; font-size:14px; background:#fff; color:var(--bdink); cursor:pointer; }
   #board-wrap .bd-btn{ border:none; border-radius:999px; padding:10px 18px; font-family:inherit; font-size:14px; font-weight:600; cursor:pointer; }
   #board-wrap .bd-p{ background:linear-gradient(120deg,var(--bd),var(--bd2)); color:#fff; box-shadow:0 4px 14px rgba(27,114,232,.3); }
+  #board-wrap .bd-bulk{ background:#EAF1FC; color:#1B72E8; }
+  #board-wrap .bd-bulk:hover{ background:#DCE9FA; }
   #board-wrap .bd-o{ background:#fff; color:var(--bdink); border:1px solid var(--bdline); }
   #board-wrap .bd-s{ background:#EAF1FB; color:var(--bdink); }
   #board-wrap .bd-g{ background:var(--bdone); color:#fff; }
@@ -1495,7 +1497,7 @@
         '<select id="bRange"><option value="all">📅 ทุกช่วงเวลา</option><option value="month">เดือนนี้</option>'+
         '<option value="lastmonth">เดือนที่แล้ว</option><option value="last7">7 วันล่าสุด</option><option value="last30">30 วันล่าสุด</option></select>'+
         '<button class="bd-btn bd-p" onclick="bOpenCreate()">+ เปิดงานใหม่</button>'+
-        (BSCOPE==='review'?'<button class="bd-btn" onclick="openBulk(\'send\')">☑️ ส่งลูกค้าหลายใบ</button>':'')+'</div>'+
+        '<button class="bd-btn bd-bulk" onclick="openBulk(\'send\')">☑️ ส่งลูกค้าหลายใบ</button></div>'+
       '<div id="bPjBar" class="bd-pjbar"></div>'+
       '<div id="bStats" class="bd-stats"></div>'+
       '<div id="bViews" class="bd-views"></div>'+
