@@ -993,7 +993,7 @@
       '<div class="pjc-mem">👥 '+(mem.length?esc(mem.join(', ')):'<i style="color:#C87F1E">ยังไม่มีสมาชิก</i>')+'</div>'+
       '<div class="pjc-acts">'+(isCo?'':'<button class="btn btn-ghost" onclick="openProjEdit(\''+esc(pj.id)+'\')">✏️ แก้ไข</button>')+
         '<button class="btn btn-ghost" onclick="openProjMembers(\''+esc(pj.id)+'\')">👥 สมาชิก ('+mem.length+')</button>'+
-        (isCo?'':'<button class="btn btn-danger pjm-delbtn" onclick="delProj(\''+esc(pj.id)+'\',\''+jss(pj.name)+'\')" title="ลบ project">🗑️</button>')+'</div>'+
+        '<button class="btn btn-danger pjm-delbtn" onclick="'+(isCo?'delCompany(\''+jss(pj.name)+'\')':'delProj(\''+esc(pj.id)+'\',\''+jss(pj.name)+'\')')+'" title="'+(isCo?'ยกเลิกงานทั้งกลุ่ม':'ลบ project')+'">🗑️</button></div>'+
       '</div>';
   }
   function projManageRows(){
@@ -1036,6 +1036,22 @@
     }).catch(function(e){ mErr(e.message); });
   }
   window.delProj=delProj; window.doDelProj=doDelProj;
+  // ── (พี่) ยกเลิกงานทั้งกลุ่มบริษัท (auto) — งานย้ายเป็น "ยกเลิก" กู้ได้ · กลุ่มหายจาก list ──
+  function delCompany(cust){
+    var co=COMPANIES.filter(function(c){return c.name===cust;})[0]||{};
+    modal('<h3>🗑️ ยกเลิกทั้งกลุ่ม</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">งานทั้งหมดของ <b>🏢 '+esc(cust)+'</b> ('+(co.taskCount||0)+' ใบ) จะย้ายเป็นสถานะ <b>"ยกเลิก"</b> · กลุ่มจะหายจากรายการ · <b>งานไม่หายจริง กู้คืนได้</b> (แก้สถานะกลับในบอร์ด)</div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="openProjManage()">← กลับ</button>'+
+      '<button class="btn btn-danger" onclick="doDelCompany(\''+jss(cust)+'\')">ยกเลิกทั้งกลุ่ม</button></div>');
+  }
+  function doDelCompany(cust){
+    toast('กำลังยกเลิก…');
+    jsonp({action:'waCompanyCancel',uid:UID,cust:cust}).then(function(r){
+      if(!r||!r.ok){ mErr((r&&r.error)||'ทำไม่สำเร็จ'); return; }
+      toast('🗑️ ยกเลิก '+(r.cancelled||0)+' งานแล้ว'); openProjManage();
+    }).catch(function(e){ mErr(e.message); });
+  }
+  window.delCompany=delCompany; window.doDelCompany=doDelCompany;
 
   // ═══════════ VIEW: เบิกค่าใช้จ่าย ═══════════
   function renderExpense(){
