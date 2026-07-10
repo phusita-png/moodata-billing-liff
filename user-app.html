@@ -328,6 +328,14 @@
   .tc-meta{ font-size:12.5px; color:#8A94A6; margin-top:5px; }
   .tc-acts{ display:flex; gap:8px; margin-top:12px; justify-content:flex-end; flex-wrap:wrap; }
   .tc-acts .btn{ width:auto; flex:0 0 auto; padding:8px 15px; font-size:13.5px; }
+  .bulk-entry{ margin:2px 0 12px; }
+  .bulk-entry .btn{ width:auto; display:inline-flex; padding:9px 16px; font-size:13.5px; }
+  .bchk-wrap{ display:flex; flex-direction:column; max-height:52vh; overflow-y:auto; margin:2px 0 4px; border:1px solid var(--line); border-radius:12px; }
+  .bchk{ display:flex; align-items:flex-start; gap:11px; padding:11px 13px; font-size:14.5px; cursor:pointer; border-bottom:1px solid #EEF1F6; }
+  .bchk:last-child{ border-bottom:0; }
+  .bchk:hover{ background:#F2F6FC; } .bchk input{ width:19px; height:19px; margin-top:1px; flex:0 0 auto; }
+  .bchk-all{ background:#EAF1FC; border-radius:11px; margin-bottom:8px; }
+  .bchk-tx{ line-height:1.4; } .bchk-sub{ color:#8A94A6; font-size:12.5px; }
   .pj-mgbtn{ flex:0 0 auto; min-width:82px; font-size:13.5px; }
   .pj-head{ margin-bottom:12px; }
   .pj-hero{ background:linear-gradient(120deg,#1B72E8,#4A93F0); color:#fff; border-radius:var(--radius); padding:18px 18px; margin-bottom:14px; box-shadow:0 6px 20px rgba(27,114,232,.28); }
@@ -1124,6 +1132,50 @@
   }
   window.trashRestore=trashRestore; window.trashPurge=trashPurge; window.doTrashPurge=doTrashPurge; window.trashRequest=trashRequest;
 
+  // ═══════════ เลือกหลายรายการ (bulk) — รับงาน (ทีม) / ส่งลูกค้า (พี่) ═══════════
+  function openBulk(kind){
+    toast('กำลังโหลด…');
+    jsonp({action:'waBoard',uid:UID,withCancel:'1'}).then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'โหลดไม่สำเร็จ'); return; }
+      var tasks=r.tasks||[], elig, title, hint, btn;
+      if(kind==='claim'){
+        elig=tasks.filter(function(t){ return t.unassigned && !isCancel_(t) && !isDone_(t); });
+        title='☑️ รับงานหลายใบ'; hint='เลือกงานที่ยังไม่มีคนรับ แล้วกดรับทีเดียว'; btn='รับงานที่เลือก';
+      } else {
+        elig=tasks.filter(function(t){ return !isCancel_(t) && !isDone_(t) && t.hasGroup && String(t.status||'').indexOf('รอตรวจ')>=0; });
+        title='☑️ ส่งลูกค้าหลายใบ'; hint='เลือกงานรอตรวจที่พร้อมส่ง แล้วกดส่งทีเดียว'; btn='ส่งลูกค้าที่เลือก';
+      }
+      paintBulk(kind,title,hint,btn,elig);
+    }).catch(function(e){ toast(e.message); });
+  }
+  function paintBulk(kind,title,hint,btn,elig){
+    if(!elig.length){ modal('<h3>'+title+'</h3><div class="m-hint">'+hint+'</div><div class="emptybox">ไม่มีงานที่ทำได้ตอนนี้ 😊</div><div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button></div>'); return; }
+    var rows=elig.map(function(t){
+      var sub=t.customer||'-'; var ttl=t.title||t.detail||'';
+      return '<label class="bchk"><input type="checkbox" class="bulk-cb" value="'+esc(t.no)+'">'+
+        '<span class="bchk-tx"><b>'+esc(t.no)+'</b> · '+esc(sub)+(ttl?'<br><span class="bchk-sub">'+esc(ttl)+'</span>':'')+'</span></label>';
+    }).join('');
+    modal('<h3>'+title+'</h3><div class="m-hint">'+hint+'</div>'+
+      '<label class="bchk bchk-all"><input type="checkbox" onclick="bulkAll(this)"> <b>เลือกทั้งหมด ('+elig.length+')</b></label>'+
+      '<div class="bchk-wrap">'+rows+'</div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" onclick="doBulk(\''+kind+'\')">'+btn+'</button></div>');
+  }
+  function bulkAll(cb){ Array.prototype.forEach.call(document.querySelectorAll('.bulk-cb'),function(c){ c.checked=cb.checked; }); }
+  function doBulk(kind){
+    var nos=[]; Array.prototype.forEach.call(document.querySelectorAll('.bulk-cb:checked'),function(c){ nos.push(c.value); });
+    if(!nos.length){ toast('เลือกงานก่อนนะคะ'); return; }
+    toast('กำลังทำ '+nos.length+' รายการ…');
+    var act= kind==='claim' ? 'waBulkClaim' : 'waBulkSendCustomer';
+    jsonpPost({action:act,uid:UID,nos:nos.join(',')}).then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; }
+      closeModal();
+      if(kind==='claim'){ toast('🙋 รับงาน '+(r.claimed||0)+' ใบแล้ว'+(r.skipped?' (ข้าม '+r.skipped+')':'')); refreshTasksView(); }
+      else { toast('📨 ส่งลูกค้า '+(r.sent||0)+' ใบแล้ว'+(r.skipped?' (ข้าม '+r.skipped+')':'')); renderReview(); }
+    }).catch(function(e){ toast(e.message); });
+  }
+  window.openBulk=openBulk; window.bulkAll=bulkAll; window.doBulk=doBulk;
+
   // ═══════════ VIEW: เบิกค่าใช้จ่าย ═══════════
   function renderExpense(){
     skel();
@@ -1186,7 +1238,9 @@
     if(!full.length){ $('main').innerHTML=summary+'<div class="card"><div class="emptybox">ยังไม่มีงาน 😊</div></div>'; return; }
     var order=[], groups={};
     full.forEach(function(t){ var c=t.customer||'(ไม่ระบุบริษัท)'; if(!groups[c]){ groups[c]=[]; order.push(c); } groups[c].push(t); });
-    var html=summary+'<div class="boardhead">🏢 '+order.length+' บริษัท · '+full.length+' งาน</div>';
+    var nUn=full.filter(function(t){return t.unassigned;}).length;
+    var html=summary+(nUn?'<div class="bulk-entry"><button class="btn btn-ghost" onclick="openBulk(\'claim\')">☑️ รับงานหลายใบ ('+nUn+')</button></div>':'')+
+      '<div class="boardhead">🏢 '+order.length+' บริษัท · '+full.length+' งาน</div>';
     order.forEach(function(c){
       var all=groups[c];
       var done=all.filter(isDone_).length, over=all.filter(isOverdue_).length;
@@ -1440,7 +1494,8 @@
       '<div class="bd-top"><span class="sp"></span>'+
         '<select id="bRange"><option value="all">📅 ทุกช่วงเวลา</option><option value="month">เดือนนี้</option>'+
         '<option value="lastmonth">เดือนที่แล้ว</option><option value="last7">7 วันล่าสุด</option><option value="last30">30 วันล่าสุด</option></select>'+
-        '<button class="bd-btn bd-p" onclick="bOpenCreate()">+ เปิดงานใหม่</button></div>'+
+        '<button class="bd-btn bd-p" onclick="bOpenCreate()">+ เปิดงานใหม่</button>'+
+        (BSCOPE==='review'?'<button class="bd-btn" onclick="openBulk(\'send\')">☑️ ส่งลูกค้าหลายใบ</button>':'')+'</div>'+
       '<div id="bPjBar" class="bd-pjbar"></div>'+
       '<div id="bStats" class="bd-stats"></div>'+
       '<div id="bViews" class="bd-views"></div>'+
