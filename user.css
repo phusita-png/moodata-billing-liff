@@ -448,11 +448,11 @@ textarea:focus,input[type=time]:focus{border-color:var(--red)}
 .nav-btn.active svg{stroke:var(--red);transform:translateY(-1px)}
 
 /* ── Toast ── */
-.toast{position:fixed;bottom:92px;left:50%;transform:translateX(-50%) translateY(20px);
-  background:var(--ink);color:#fff;padding:13px 20px;border-radius:13px;font-size:14px;font-weight:500;
-  opacity:0;pointer-events:none;transition:.3s;z-index:200;max-width:90%;text-align:center;
-  box-shadow:0 8px 24px rgba(0,0,0,.25)}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.8);
+  background:var(--ink);color:#fff;padding:16px 26px;border-radius:15px;font-size:15px;font-weight:600;
+  opacity:0;pointer-events:none;transition:.22s cubic-bezier(.2,1.3,.4,1);z-index:200;max-width:82%;text-align:center;
+  box-shadow:0 12px 40px rgba(0,0,0,.32)}
+.toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
 .toast.err{background:var(--red)}
 .toast.ok{background:var(--green)}
 
@@ -756,9 +756,9 @@ textarea:focus,input[type=time]:focus{border-color:var(--red)}
   .hr-emp .he-st .badge{display:inline-block;min-width:72px;text-align:center}
   .hr-emp.over{background:var(--red-tint)}
 
-  /* toast ลอยมุมล่างขวา (ไม่มี bottom nav แล้ว) */
-  .toast{bottom:24px;left:auto;right:24px;transform:translateY(20px)}
-  .toast.show{transform:translateY(0)}
+  /* toast = ป็อปอัปกลางจอ (เดสก์ท็อปก็กลาง เหมือนมือถือ) */
+  .toast{top:50%;bottom:auto;left:50%;right:auto;transform:translate(-50%,-50%) scale(.8)}
+  .toast.show{transform:translate(-50%,-50%) scale(1)}
   /* FAB คู่มือ: ไม่มี bottom nav → ขยับลงมุม + เหนือ toast */
   .help-fab{bottom:20px;right:24px;font-size:15px;padding:12px 18px}
 }
