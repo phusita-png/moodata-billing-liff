@@ -320,6 +320,14 @@
   .pjm-delbtn{ flex:0 0 auto; width:auto; padding:9px 15px; font-size:16px; }
   .hist-del{ margin-left:auto; align-self:center; background:transparent; border:none; font-size:16px; cursor:pointer; padding:7px 9px; border-radius:9px; color:#C0392B; opacity:.5; flex:0 0 auto; }
   .hist-del:hover{ opacity:1; background:#FCEBEA; }
+  .trash-card{ margin-bottom:11px; }
+  .tc-top{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:7px; }
+  .tc-badge{ font-size:12px; font-weight:700; color:#5A6472; background:#EEF1F6; padding:3px 11px; border-radius:999px; }
+  .tc-req{ font-size:12px; font-weight:700; color:#C87F1E; background:#FDF0E1; padding:3px 11px; border-radius:999px; }
+  .tc-label{ font-size:15px; font-weight:600; color:#242B36; line-height:1.4; }
+  .tc-meta{ font-size:12.5px; color:#8A94A6; margin-top:5px; }
+  .tc-acts{ display:flex; gap:8px; margin-top:12px; }
+  .tc-purge{ flex:0 0 auto; width:auto; }
   .pj-mgbtn{ flex:0 0 auto; min-width:82px; font-size:13.5px; }
   .pj-head{ margin-bottom:12px; }
   .pj-hero{ background:linear-gradient(120deg,#1B72E8,#4A93F0); color:#fff; border-radius:var(--radius); padding:18px 18px; margin-bottom:14px; box-shadow:0 6px 20px rgba(27,114,232,.28); }
@@ -381,6 +389,8 @@
       <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><span>รอตรวจ</span></button>
     <button class="nav-btn" data-view="projects" aria-label="Project">
       <svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M3 11h18"/></svg><span>Project</span></button>
+    <button class="nav-btn" data-view="trash" aria-label="ถังขยะ">
+      <svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/></svg><span>ถังขยะ</span></button>
 
     <div class="nav-sec">ข้อมูลส่วนตัว</div>
     <!-- ปิดชั่วคราว: ระบบเบิกกำลังพัฒนา (เปิดกลับ = ลบ style display:none + ตั้ง EXPENSE_ENABLED=true ฝั่ง .gs) -->
@@ -415,7 +425,7 @@
   var MENAME='', TEAM=[], CUSTOMERS=[];   // งาน
   var VIEW_META = {
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
-    expense:['💸','เบิกค่าใช้จ่าย'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], projects:['📁','Project']
+    expense:['💸','เบิกค่าใช้จ่าย'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], projects:['📁','Project'], trash:['🗑️','ถังขยะ']
   };
   var PROJECTS=[], COMPANIES=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ) · COMPANIES=บริษัท auto (หน้าจัดการ)
   var ALL_TASKS=[], PJ_SEL='';   // มุมมอง Project (dropdown เลือก · แยก 6 สถานะ + %)
@@ -456,7 +466,7 @@
     VIEW=v;
     Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(b){ b.classList.toggle('active', b.dataset.view===v); });
     var meta=VIEW_META[v]||['•',v]; $('tbIcon').textContent=meta[0]; $('tbTitle').textContent=meta[1];
-    ({ leave:renderLeave, mytasks:renderMytasks, alltasks:renderAlltasks, review:renderReview, docs:renderDocs, expense:renderExpense, projects:renderProjects }[v] || soon)();
+    ({ leave:renderLeave, mytasks:renderMytasks, alltasks:renderAlltasks, review:renderReview, docs:renderDocs, expense:renderExpense, projects:renderProjects, trash:renderTrash }[v] || soon)();
   }
   function soon(){
     $('main').innerHTML='<div class="card"><div class="soon-wrap"><div class="e-emo">🚧</div>เมนูนี้กำลังย้ายมาหน้านี้ — เร็ว ๆ นี้ค่ะ<br><span style="font-size:13px">(ตอนนี้ยังใช้ผ่านเมนูเดิม/แชทได้)</span></div></div>';
@@ -1053,6 +1063,66 @@
     }).catch(function(e){ mErr(e.message); });
   }
   window.delCompany=delCompany; window.doDelCompany=doDelCompany;
+
+  // ═══════════ VIEW: ถังขยะ ═══════════
+  var TRASH_ITEMS=[];
+  function renderTrash(){
+    skel();
+    jsonp({action:'waTrashList',uid:UID}).then(function(r){
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      TRASH_ITEMS=r.items||[]; paintTrash();
+    }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
+  }
+  function trashTypeMeta(t){ return t==='task'?['🎫','งาน']:t==='project'?['📁','Project']:t==='leave'?['📝','ใบลา']:['🗑️','']; }
+  function paintTrash(){
+    var html='<div class="section-h">🗑️ ถังขยะ '+(IS_OWNER?'(ผู้ดูแล)':'(งานที่ยกเลิก)')+'</div>'+
+      '<div class="m-hint" style="margin:0 0 12px">'+(IS_OWNER
+        ?'♻️ กู้คืน = เอากลับมาใช้ · 🔥 ลบถาวร = ลบจริงกู้ไม่ได้ · งานที่ทีมขอกู้จะขึ้น 🙋 ให้เห็น'
+        :'งานที่ถูกยกเลิก · อยากได้คืนกด 🙋 ขอกู้คืน แล้วพี่จะพิจารณาให้ค่ะ')+'</div>';
+    if(!TRASH_ITEMS.length){ html+='<div class="card"><div class="emptybox">ถังขยะว่างเปล่า 🧺</div></div>'; $('main').innerHTML=html; return; }
+    html+=TRASH_ITEMS.map(trashCard).join('');
+    $('main').innerHTML=html;
+  }
+  function trashCard(it){
+    var m=trashTypeMeta(it.type), req=it.state==='requested';
+    var h='<div class="card trash-card">'+
+      '<div class="tc-top"><span class="tc-badge">'+m[0]+' '+esc(m[1])+'</span>'+
+        (req?'<span class="tc-req">🙋 ทีมขอกู้'+(it.reqBy?' · '+esc(it.reqBy):'')+'</span>':'')+'</div>'+
+      '<div class="tc-label">'+esc(it.label||it.ref)+'</div>'+
+      '<div class="tc-meta">ลบโดย '+esc(it.by||'-')+(it.at?' · '+esc(it.at):'')+'</div>';
+    var btns=[];
+    if(IS_OWNER){
+      btns.push('<button class="btn btn-primary" onclick="trashRestore(\''+esc(it.type)+'\',\''+esc(it.ref)+'\')">♻️ กู้คืน</button>');
+      btns.push('<button class="btn btn-danger tc-purge" onclick="trashPurge(\''+esc(it.type)+'\',\''+esc(it.ref)+'\')">🔥 ลบถาวร</button>');
+    } else if(req){ btns.push('<button class="btn btn-ghost" disabled>⏳ รอพี่อนุมัติ</button>'); }
+    else { btns.push('<button class="btn btn-primary" onclick="trashRequest(\''+esc(it.type)+'\',\''+esc(it.ref)+'\')">🙋 ขอกู้คืน</button>'); }
+    return h+'<div class="tc-acts">'+btns.join('')+'</div></div>';
+  }
+  function trashRestore(type,ref){
+    toast('กำลังกู้คืน…');
+    jsonp({action:'waTrashRestore',uid:UID,type:type,ref:ref}).then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'กู้ไม่สำเร็จ'); return; } toast('♻️ กู้คืนแล้ว'); renderTrash();
+    }).catch(function(e){ toast(e.message); });
+  }
+  function trashPurge(type,ref){
+    modal('<h3>🔥 ลบถาวร</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">ลบ <b>'+esc(ref)+'</b> ออกถาวร · <b>กู้คืนไม่ได้อีก</b> แน่ใจนะคะ?</div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-danger" onclick="doTrashPurge(\''+esc(type)+'\',\''+esc(ref)+'\')">ลบถาวร</button></div>');
+  }
+  function doTrashPurge(type,ref){
+    toast('กำลังลบถาวร…');
+    jsonp({action:'waTrashPurge',uid:UID,type:type,ref:ref}).then(function(r){
+      if(!r||!r.ok){ mErr((r&&r.error)||'ลบไม่สำเร็จ'); return; } closeModal(); toast('🔥 ลบถาวรแล้ว'); renderTrash();
+    }).catch(function(e){ mErr(e.message); });
+  }
+  function trashRequest(type,ref){
+    toast('กำลังส่งคำขอ…');
+    jsonp({action:'waTrashRequest',uid:UID,type:type,ref:ref}).then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'ส่งไม่สำเร็จ'); return; } toast('🙋 ส่งคำขอให้พี่แล้ว'); renderTrash();
+    }).catch(function(e){ toast(e.message); });
+  }
+  window.trashRestore=trashRestore; window.trashPurge=trashPurge; window.doTrashPurge=doTrashPurge; window.trashRequest=trashRequest;
 
   // ═══════════ VIEW: เบิกค่าใช้จ่าย ═══════════
   function renderExpense(){
