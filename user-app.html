@@ -315,6 +315,8 @@
   .pjc-acts{ display:flex; gap:8px; margin-top:12px; }
   .pjm-list{ display:flex; flex-direction:column; margin:2px 0 8px; }
   .pjm-card{ margin-bottom:11px; }
+  .pjm-sec{ font-size:13px; font-weight:700; color:#5A6472; margin:8px 2px 9px; padding-top:4px; border-top:1px dashed var(--line); }
+  .pjm-sec:first-child{ border-top:0; padding-top:0; }
   .pj-mgbtn{ flex:0 0 auto; min-width:82px; font-size:13.5px; }
   .pj-head{ margin-bottom:12px; }
   .pj-hero{ background:linear-gradient(120deg,#1B72E8,#4A93F0); color:#fff; border-radius:var(--radius); padding:18px 18px; margin-bottom:14px; box-shadow:0 6px 20px rgba(27,114,232,.28); }
@@ -412,7 +414,7 @@
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
     expense:['💸','เบิกค่าใช้จ่าย'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], projects:['📁','Project']
   };
-  var PROJECTS=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ)
+  var PROJECTS=[], COMPANIES=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ) · COMPANIES=บริษัท auto (หน้าจัดการ)
   var ALL_TASKS=[], PJ_SEL='';   // มุมมอง Project (dropdown เลือก · แยก 6 สถานะ + %)
   var EXP_TYPES=[];   // ประเภทค่าใช้จ่าย (โหลดจาก waExpenseInit)
 
@@ -938,13 +940,14 @@
     toast('กำลังบันทึก…');
     jsonp(params).then(function(r){ if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; } toast('บันทึก project แล้ว'); openProjManage(); }).catch(function(e){ mErr(e.message); });
   }
-  // ── (พี่) จัดสมาชิก project ──
+  // ── (พี่) จัดสมาชิก project/บริษัท ──
+  function pjFindItem(id){ return PROJECTS.filter(function(p){return p.id===id;})[0] || COMPANIES.filter(function(c){return c.id===id;})[0] || {}; }
   function openProjMembers(id){
-    var pj=PROJECTS.filter(function(p){return p.id===id;})[0]||{}; var cur=pj.members||[];
+    var pj=pjFindItem(id); var cur=pj.members||[]; var isCo=String(id).indexOf('co:')===0;
     var boxes=TEAM_ALL.map(function(nm){ var on=cur.indexOf(nm)>=0;
       return '<label class="mchk"><input type="checkbox" value="'+esc(nm)+'"'+(on?' checked':'')+'> '+esc(nm)+'</label>'; }).join('');
-    modal('<h3>👥 สมาชิก · '+esc(pj.name||id)+'</h3><div id="mErr" class="m-err hidden"></div>'+
-      '<div class="m-hint">เลือกคนที่จะให้เห็น+ช่วยกันทำงานใน project นี้</div>'+
+    modal('<h3>👥 สมาชิก · '+(isCo?'🏢 ':'📁 ')+esc(pj.name||id)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">เลือกคนที่จะให้ช่วยกันทำงาน'+(isCo?'ของบริษัทนี้ (รวมงานใหม่ที่เข้ามาภายหลังด้วย)':'ใน project นี้')+'</div>'+
       '<div class="mchk-wrap">'+(boxes||'<i>ยังไม่มีทีมงาน</i>')+'</div>'+
       '<div class="m-act"><button class="btn btn-ghost" onclick="openProjManage()">← กลับ</button>'+
       '<button class="btn btn-primary" onclick="doProjMembers(\''+esc(id)+'\')">บันทึก</button></div>');
@@ -959,37 +962,43 @@
 
   // ── (พี่) หน้าจัดการ Project — list ทุก project + ปุ่มแก้/จัดสมาชิก (ใช้ได้ทั้งคอม+มือถือ) ──
   // เปิด modal ทันที (โชว์โครง/ของเดิม) แล้วค่อย refresh เฉพาะ #pjmList → กดปุ๊บเห็นปั๊บ ไม่ต้องรอเน็ต
+  // 1 การ์ดต่อ 1 project/บริษัท · isCo=true → บริษัท (ไม่มีปุ่มแก้ · ชื่อ=ลูกค้า)
+  function projManageItemRow(pj,isCo){
+    var closed = pj.status && pj.status.indexOf('ปิด')>=0;
+    var mem = pj.members||[];
+    var badge = isCo ? '<span class="pjc-badge" style="color:#1B72E8;background:#EAF1FC">บริษัท</span>'
+      : '<span class="pjc-badge"'+(closed?' style="color:#8A94A6;background:#EEF1F6"':'')+'>'+(closed?'ปิดแล้ว':'ทำอยู่')+'</span>';
+    return '<div class="card pjm-card">'+
+      '<div class="pjc-top"><div class="pjc-name">'+(isCo?'🏢 ':'📁 ')+esc(pj.name)+'</div>'+badge+'</div>'+
+      '<div class="pjc-meta">'+(!isCo&&pj.customer?'🏢 '+esc(pj.customer)+' · ':'')+'งาน '+(pj.taskCount||0)+' · สำเร็จ '+(pj.pct||0)+'%</div>'+
+      '<div class="pjc-mem">👥 '+(mem.length?esc(mem.join(', ')):'<i style="color:#C87F1E">ยังไม่มีสมาชิก</i>')+'</div>'+
+      '<div class="pjc-acts">'+(isCo?'':'<button class="btn btn-ghost" onclick="openProjEdit(\''+esc(pj.id)+'\')">✏️ แก้ไข</button>')+
+        '<button class="btn btn-ghost" onclick="openProjMembers(\''+esc(pj.id)+'\')">👥 สมาชิก ('+mem.length+')</button></div>'+
+      '</div>';
+  }
   function projManageRows(){
-    if(!PROJECTS.length) return '<div class="emptybox">ยังไม่มี project · กด "➕ สร้าง Project" เพื่อเริ่มค่ะ 😊</div>';
-    return PROJECTS.map(function(pj){
-      var closed = pj.status && pj.status.indexOf('ปิด')>=0;
-      var mem = pj.members||[];
-      return '<div class="card pjm-card">'+
-        '<div class="pjc-top"><div class="pjc-name">📁 '+esc(pj.name)+'</div>'+
-          '<span class="pjc-badge"'+(closed?' style="color:#8A94A6;background:#EEF1F6"':'')+'>'+(closed?'ปิดแล้ว':'ทำอยู่')+'</span></div>'+
-        '<div class="pjc-meta">'+(pj.customer?'🏢 '+esc(pj.customer)+' · ':'')+'งาน '+(pj.taskCount||0)+' · สำเร็จ '+(pj.pct||0)+'%</div>'+
-        '<div class="pjc-mem">👥 '+(mem.length?esc(mem.join(', ')):'<i style="color:#C87F1E">ยังไม่มีสมาชิก</i>')+'</div>'+
-        '<div class="pjc-acts"><button class="btn btn-ghost" onclick="openProjEdit(\''+esc(pj.id)+'\')">✏️ แก้ไข</button>'+
-          '<button class="btn btn-ghost" onclick="openProjMembers(\''+esc(pj.id)+'\')">👥 สมาชิก ('+mem.length+')</button></div>'+
-        '</div>';
-    }).join('');
+    if(!PROJECTS.length && !COMPANIES.length) return '<div class="emptybox">ยังไม่มีงาน/project · กด "➕ สร้าง Project" เพื่อเริ่มค่ะ 😊</div>';
+    var h='';
+    if(PROJECTS.length) h+='<div class="pjm-sec">📁 Project จัดเอง ('+PROJECTS.length+')</div>'+PROJECTS.map(function(p){return projManageItemRow(p,false);}).join('');
+    if(COMPANIES.length) h+='<div class="pjm-sec">🏢 บริษัท / กลุ่มลูกค้า ('+COMPANIES.length+')</div>'+COMPANIES.map(function(c){return projManageItemRow(c,true);}).join('');
+    return h;
   }
   function openProjManage(){
     // 1) เปิด modal ทันที — ถ้ามีข้อมูลเดิมโชว์เลย ไม่มีก็โชว์ skeleton
-    var body = PROJECTS.length ? projManageRows()
+    var body = (PROJECTS.length||COMPANIES.length) ? projManageRows()
       : '<div class="card pjm-card"><div class="skel" style="height:74px"></div></div><div class="card pjm-card"><div class="skel" style="height:74px"></div></div>';
     modal('<h3>⚙️ จัดการ Project</h3>'+
-      '<div class="m-hint">สร้าง/แก้ project และจัดว่าใครอยู่ project ไหน — สมาชิกจะเห็นและช่วยกันทำงานใน project นั้นได้</div>'+
+      '<div class="m-hint">จัดว่าใครอยู่ project/บริษัทไหน — สมาชิกจะช่วยกันทำงานในนั้นได้ (บริษัท = จัดกลุ่มงานตามลูกค้าอัตโนมัติ · งานใหม่เข้าเองไม่ต้องจัดซ้ำ)</div>'+
       '<div class="pjm-list" id="pjmList">'+body+'</div>'+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal();renderProjects()">ปิด</button>'+
       '<button class="btn btn-primary" onclick="openProjEdit(\'\')">➕ สร้าง Project</button></div>');
     // 2) refresh ข้อมูลล่าสุดใน background → แทนที่เฉพาะ list (modal/ปุ่มคงอยู่ ไม่กระพริบ)
     jsonp({action:'waProjectAdminList',uid:UID}).then(function(r){
       var el=$('pjmList'); if(!el) return;   // ปิด modal ไปแล้ว
-      if(!r||!r.ok){ if(!PROJECTS.length) el.innerHTML='<div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div>'; return; }
-      PROJECTS=r.projects||[]; if(r.team) TEAM_ALL=r.team;
+      if(!r||!r.ok){ if(!PROJECTS.length&&!COMPANIES.length) el.innerHTML='<div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div>'; return; }
+      PROJECTS=r.projects||[]; COMPANIES=r.companies||[]; if(r.team) TEAM_ALL=r.team;
       el.innerHTML=projManageRows();
-    }).catch(function(e){ var el=$('pjmList'); if(el&&!PROJECTS.length) el.innerHTML='<div class="emptybox">'+esc(e.message)+'</div>'; });
+    }).catch(function(e){ var el=$('pjmList'); if(el&&!PROJECTS.length&&!COMPANIES.length) el.innerHTML='<div class="emptybox">'+esc(e.message)+'</div>'; });
   }
   window.openProjManage=openProjManage; window.openProjEdit=openProjEdit; window.openProjMembers=openProjMembers;
 
