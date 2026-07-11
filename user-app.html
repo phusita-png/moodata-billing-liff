@@ -1541,11 +1541,12 @@
     function c(sub){ return base.filter(function(t){ return t.status.indexOf(sub)>=0; }).length; }
     function act(kind){ if(kind==='all') return !BFILTER; if(kind==='over') return BFILTER==='__over__';
       return BFILTER===bStatusOf(bKindSub(kind)); }
-    // หน้า Project → เพิ่ม 2 การ์ดบน: สร้าง Project (โชว์จำนวน) + เปิดงานใหม่
+    // หน้า Project → 2 การ์ดบน: จำนวน Project (กดดู/จัดการ) + สร้าง Project ใหม่
+    // (เปิดงานใหม่ อยู่ปุ่มแถบบนแล้ว — ไม่ทำซ้ำที่นี่)
     var extra='';
     if(BSCOPE==='project'){
-      extra='<div class="bd-stat bd-stat-pj" onclick="bNewProject()" title="สร้าง project ใหม่ (1 กลุ่มไลน์ = 1 project อัตโนมัติ)"><div class="lab">📁 สร้าง Project</div><div class="num">'+(bCustomers().length+BPROJECTS.length)+'</div></div>'+
-        '<div class="bd-stat bd-stat-add" onclick="bOpenCreate()" title="เปิดงานใหม่"><div class="lab">เปิดงานใหม่</div><div class="num">➕</div></div>';
+      extra='<div class="bd-stat bd-stat-pj" onclick="openProjManage()" title="ดู / จัดการ project"><div class="lab">📁 Project</div><div class="num">'+(bCustomers().length+BPROJECTS.length)+'</div></div>'+
+        '<div class="bd-stat bd-stat-add" onclick="bNewProject()" title="สร้าง project ใหม่ (1 กลุ่มไลน์ = 1 project อัตโนมัติ)"><div class="lab">สร้าง Project</div><div class="num">➕</div></div>';
     }
     $('bStats').innerHTML= extra+
       bStatCard('all','📋 ทั้งหมด',base.length,'all',act('all'))+
