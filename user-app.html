@@ -1892,7 +1892,19 @@
   window.bOpenCancel=bOpenCancel; window.bDoCancel=bDoCancel;
 
   // ───── init ─────
-  function startParam(){ try{ return (new URLSearchParams(location.search).get('p')||'').toLowerCase(); }catch(e){ return ''; } }
+  // รวม param จาก query ตรง + liff.state (LIFF บางครั้งห่อ query เดิมไว้ใน liff.state)
+  function allParams(){
+    var out={};
+    try{
+      var sp=new URLSearchParams(location.search);
+      sp.forEach(function(v,k){ out[k]=v; });
+      var st=sp.get('liff.state');
+      if(st){ var inner=new URLSearchParams(st.charAt(0)==='?'?st.slice(1):st);
+        inner.forEach(function(v,k){ if(out[k]==null) out[k]=v; }); }
+    }catch(e){}
+    return out;
+  }
+  function startParam(){ return String(allParams().p||'').toLowerCase(); }
   function uidOverride(){ try{ return new URLSearchParams(location.search).get('uid')||''; }catch(e){ return ''; } }
   function start(){
     jsonp({action:'waBootstrap', uid:UID}).then(function(r){
@@ -1910,12 +1922,11 @@
     }).catch(function(e){ fatal(e.message); });
   }
   (function init(){
-    // Face Scan: LIFF endpoint ชี้มาที่ user-app → เด้งต่อไปหน้าสแกนหน้า/ลงทะเบียน (คง query kind)
-    var _p=startParam();
+    // Face Scan: LIFF endpoint ชี้มาที่ user-app → เด้งต่อไปหน้าสแกนหน้า/ลงทะเบียน (คง kind)
+    var _pp=allParams(), _p=String(_pp.p||'').toLowerCase();
     if(_p==='clock'||_p==='face'||_p==='face-clock'||_p==='enroll'||_p==='face-enroll'){
       var _t=(_p==='enroll'||_p==='face-enroll') ? 'face-enroll.html' : 'face-clock.html';
-      var _q=''; try{ _q=location.search.replace(/^\?/,''); }catch(e){}
-      location.replace(_t + (_q ? '?'+_q : '')); return;
+      location.replace(_t + (_pp.kind ? '?kind='+encodeURIComponent(_pp.kind) : '')); return;
     }
     var ov=uidOverride();
     if(ov){ UID=ov; start(); return; }
