@@ -392,14 +392,12 @@
     <div class="nav-brand"><span class="nb-logo"><img src="mascot-wave2.png" alt="ยินดี"></span><div class="nb-txt">Moodata Yindee<small>ทีมงาน</small></div></div>
 
     <div class="nav-sec">งาน</div>
-    <button class="nav-btn" data-view="alltasks" aria-label="งานทั้งหมด">
-      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="7" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="6" rx="1.5"/><rect x="14" y="14" width="7" height="6" rx="1.5"/></svg><span>งานทั้งหมด</span></button>
+    <button class="nav-btn" data-view="projects" aria-label="บอร์ดงาน">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="7" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="6" rx="1.5"/><rect x="14" y="14" width="7" height="6" rx="1.5"/></svg><span>บอร์ดงาน</span></button>
     <button class="nav-btn" data-view="mytasks" aria-label="งานของฉัน">
       <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg><span>งานของฉัน</span></button>
     <button class="nav-btn" data-view="review" aria-label="รอตรวจ" id="navReview" style="display:none">
       <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><span>รอตรวจ</span></button>
-    <button class="nav-btn" data-view="projects" aria-label="Project">
-      <svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M3 11h18"/></svg><span>Project</span></button>
     <button class="nav-btn" data-view="trash" aria-label="ถังขยะ">
       <svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/></svg><span>ถังขยะ</span></button>
 
@@ -436,7 +434,7 @@
   var MENAME='', TEAM=[], CUSTOMERS=[];   // งาน
   var VIEW_META = {
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
-    expense:['💸','เบิกค่าใช้จ่าย'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], projects:['📁','Project'], trash:['🗑️','ถังขยะ']
+    expense:['💸','เบิกค่าใช้จ่าย'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ']
   };
   var PROJECTS=[], COMPANIES=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ) · COMPANIES=บริษัท auto (หน้าจัดการ)
   var ALL_TASKS=[], PJ_SEL='';   // มุมมอง Project (dropdown เลือก · แยก 6 สถานะ + %)
@@ -477,7 +475,7 @@
     VIEW=v;
     Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(b){ b.classList.toggle('active', b.dataset.view===v); });
     var meta=VIEW_META[v]||['•',v]; $('tbIcon').textContent=meta[0]; $('tbTitle').textContent=meta[1];
-    ({ leave:renderLeave, mytasks:renderMytasks, alltasks:renderAlltasks, review:renderReview, docs:renderDocs, expense:renderExpense, projects:renderProjects, trash:renderTrash }[v] || soon)();
+    ({ leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, projects:renderProjects, trash:renderTrash }[v] || soon)();
   }
   function soon(){
     $('main').innerHTML='<div class="card"><div class="soon-wrap"><div class="e-emo">🚧</div>เมนูนี้กำลังย้ายมาหน้านี้ — เร็ว ๆ นี้ค่ะ<br><span style="font-size:13px">(ตอนนี้ยังใช้ผ่านเมนูเดิม/แชทได้)</span></div></div>';
@@ -749,9 +747,8 @@
     jsonp({action:'waTaskDoing',uid:UID,no:no}).then(function(r){ if(!r||!r.ok){toast((r&&r.error)||'ไม่สำเร็จ');return;} toast('รับงานแล้ว 🔵'); refreshTasksView(); }).catch(function(e){toast(e.message);}); }
   // รีเฟรชหน้ารายการงานตาม view ปัจจุบัน (mytasks / alltasks / project board)
   function refreshTasksView(){
-    if(VIEW==='projects'){ renderProjects(); }   // reload สดหลัง action
+    if(VIEW==='projects'||VIEW==='alltasks'){ renderProjects(); }   // reload สดหลัง action (บอร์ดงานรวม)
     else if(VIEW==='mytasks') renderMytasks();
-    else if(VIEW==='alltasks') renderAlltasks();
   }
 
   // modal helper
@@ -886,6 +883,9 @@
       (IS_OWNER?'<button class="btn btn-ghost pj-addbtn pj-mgbtn" onclick="openProjManage()">⚙️<br>จัดการ</button>':'')+'</div>'+
       // ช่องเลือก project — ใหญ่ เด่น
       '<div class="pj-pick2"><label>เลือก Project</label><select onchange="setPjSel(this.value)">'+opt+'</select></div>';
+    // ทีม: ปุ่มรับงานหลายใบ (ถ้ามีงานยังไม่มีคนรับ) — คงฟีเจอร์เดิมจากหน้า "งานทั้งหมด"
+    if(!IS_OWNER){ var nUn=ALL_TASKS.filter(function(t){ return t.unassigned && !isCancel_(t); }).length;
+      if(nUn) html+='<div class="bulk-entry"><button class="btn btn-ghost" onclick="openBulk(\'claim\')">☑️ รับงานหลายใบ ('+nUn+')</button></div>'; }
     // header % ของ scope ที่เลือก (ไม่นับยกเลิกใน %/ยอดรวม)
     var scope=pjScopeTasks(), live=scope.filter(function(t){return !isCancel_(t);});
     var avg=avgPct(live), doneN=live.filter(function(t){return statusPct(t.status)===100;}).length;
@@ -1260,55 +1260,6 @@
         toast('📎 ส่งรูปใบเสร็จในแชทไลน์เพื่อยืนยันนะคะ'); renderExpense(); })
       .catch(function(e){ mErr(e.message); });
   }
-
-  // ═══════════ VIEW: งานทั้งหมด ═══════════
-  function renderAlltasks(){
-    if(IS_OWNER){ renderOwnerBoard('all'); return; }   // พี่/ผู้ดูแล → กระดานจัดการงานเต็ม (ตาราง+แท็บ)
-    skel();
-    jsonp({action:'waBoard', uid:UID}).then(function(r){
-      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
-      paintBoard(r.tasks||[]);
-    }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
-  }
-  function paintBoard(tasks){
-    var full=(tasks||[]).filter(function(t){return !isCancel_(t);});
-    var summary=summaryHtml(full);
-    if(!full.length){ $('main').innerHTML=summary+'<div class="card"><div class="emptybox">ยังไม่มีงาน 😊</div></div>'; return; }
-    var order=[], groups={};
-    full.forEach(function(t){ var c=t.customer||'(ไม่ระบุบริษัท)'; if(!groups[c]){ groups[c]=[]; order.push(c); } groups[c].push(t); });
-    var nUn=full.filter(function(t){return t.unassigned;}).length;
-    var html=summary+(nUn?'<div class="bulk-entry"><button class="btn btn-ghost" onclick="openBulk(\'claim\')">☑️ รับงานหลายใบ ('+nUn+')</button></div>':'')+
-      '<div class="boardhead">🏢 '+order.length+' บริษัท · '+full.length+' งาน</div>';
-    order.forEach(function(c){
-      var all=groups[c];
-      var done=all.filter(isDone_).length, over=all.filter(isOverdue_).length;
-      var pct=Math.round(done/all.length*100);
-      html+='<div class="grp-h">🏢 '+esc(c)+'<span class="cnt'+(over?' warn':'')+'">'+all.length+'</span></div>'+
-        '<div class="pwrap"><div class="pmeta"><span>เสร็จ '+done+'/'+all.length+' ('+pct+'%)</span>'+
-        (over?'<span class="over">⏰ เกินกำหนด '+over+'</span>':'')+'</div>'+
-        '<div class="pbar'+(over?' over':'')+'"><div class="pfill" style="width:'+pct+'%"></div></div></div>'+
-        all.map(cardBoard).join('');
-    });
-    $('main').innerHTML=html;
-  }
-  function cardBoard(t){
-    var h='<div class="tk"><div class="tk-top"><span class="tk-no">'+esc(t.no)+'</span>'+
-      '<span class="tk-badge '+tkBadge(t.status)+'">'+esc(t.status)+'</span></div>'+
-      (t.detail?'<div class="tk-detail">'+esc(t.detail)+'</div>':'')+
-      '<div class="tk-asg'+(t.assignee?'':' none')+'">👤 '+(t.assignee?esc(t.assignee):'ยังไม่มอบหมาย')+'</div>';
-    var btns=[];
-    if(t.mine && t.status.indexOf('เสร็จ')<0 && t.status.indexOf('ยกเลิก')<0){
-      if(t.status.indexOf('กำลังทำ')<0 && t.status.indexOf('รอตรวจ')<0)
-        btns.push('<button class="btn btn-primary" onclick="doDoing(\''+esc(t.no)+'\')">🔵 รับงาน</button>');
-      btns.push('<button class="btn btn-ok" onclick="openSubmit(\''+esc(t.no)+'\')">📤 ส่งตรวจ</button>');
-    } else if(t.unassigned){
-      btns.push('<button class="btn btn-primary" onclick="doClaim(\''+esc(t.no)+'\')">🙋 รับงานนี้</button>');
-    }
-    if(btns.length) h+='<div class="tk-acts">'+btns.join('')+'</div>';
-    return h+'</div>';
-  }
-  function doClaim(no){ toast('กำลังรับงาน…');
-    jsonp({action:'waClaim',uid:UID,no:no}).then(function(r){ if(!r||!r.ok){toast((r&&r.error)||'ไม่สำเร็จ');return;} toast('🙋 รับงานแล้ว (แจ้งพี่ให้)'); renderAlltasks(); }).catch(function(e){toast(e.message);}); }
 
   // ═══════════ VIEW: รอตรวจ (พี่ · งานที่ทีมส่งกลับ รอตรวจก่อนส่งลูกค้า) ═══════════
   function renderReview(){
@@ -1952,7 +1903,7 @@
       Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(b){
         b.addEventListener('click', function(){ switchView(b.dataset.view); }); });
       var sp=startParam();
-      switchView(sp==='docs' ? 'docs' : (sp==='work' ? (IS_OWNER?'alltasks':'mytasks') : 'leave'));
+      switchView(sp==='docs' ? 'docs' : (sp==='work' ? 'projects' : 'leave'));
       // อุ่นแคชเบื้องหลัง → คลิกการลา/เอกสารครั้งแรกเด้งทันที (ไม่แย่งจอแรกโหลด)
       setTimeout(function(){ if(!LVCACHE.data) _leaveFetch(true); if(IDTOKEN && !DOCCACHE.data) _docsFetch(true); }, 900);
     }).catch(function(e){ fatal(e.message); });
