@@ -1910,6 +1910,13 @@
     }).catch(function(e){ fatal(e.message); });
   }
   (function init(){
+    // Face Scan: LIFF endpoint ชี้มาที่ user-app → เด้งต่อไปหน้าสแกนหน้า/ลงทะเบียน (คง query kind)
+    var _p=startParam();
+    if(_p==='clock'||_p==='face'||_p==='face-clock'||_p==='enroll'||_p==='face-enroll'){
+      var _t=(_p==='enroll'||_p==='face-enroll') ? 'face-enroll.html' : 'face-clock.html';
+      var _q=''; try{ _q=location.search.replace(/^\?/,''); }catch(e){}
+      location.replace(_t + (_q ? '?'+_q : '')); return;
+    }
     var ov=uidOverride();
     if(ov){ UID=ov; start(); return; }
     liff.init({liffId:LIFF_ID}).then(function(){
