@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>ลงเวลาสแกนหน้า · Moodata</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    :root{ --brand:#1B72E8; --brand-dark:#155cba; --bg:#f4f6fb; --line:#e3e8f0;
+      --text:#1f2733; --muted:#8a94a6; --ok:#1faa59; --err:#d8463f; --warn:#e88a1b; }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    body{margin:0; font-family:'IBM Plex Sans Thai',system-ui,sans-serif; background:var(--bg);
+      color:var(--text); font-size:16px; line-height:1.5;}
+    .wrap{max-width:520px; margin:0 auto; padding:0 0 40px;}
+    .hero{background:linear-gradient(135deg,var(--brand),#3d8bff); color:#fff;
+      padding:22px 20px 26px; border-radius:0 0 22px 22px;}
+    .hero h1{margin:0; font-size:20px; font-weight:700;}
+    .hero p{margin:4px 0 0; font-size:13px; opacity:.92;}
+    .card{background:#fff; margin:16px; padding:18px; border-radius:16px; box-shadow:0 2px 12px rgba(20,40,80,.06);}
+    .status{text-align:center; padding:40px 24px; color:var(--muted);}
+    .spinner{width:34px;height:34px;border:3px solid #d9e2f0;border-top-color:var(--brand);
+      border-radius:50%; animation:spin .8s linear infinite; margin:0 auto 14px;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .btn{width:100%; margin-top:14px; padding:15px; border:none; border-radius:13px;
+      background:var(--brand); color:#fff; font-size:17px; font-weight:600; font-family:inherit; cursor:pointer;}
+    .btn:active{background:var(--brand-dark);}
+    .btn[disabled]{opacity:.5;}
+    .btn.ghost{background:#eef1f6; color:#445;}
+    .btn.warn{background:var(--warn);}
+    .kinds{display:flex; flex-direction:column; gap:10px;}
+    .kbtn{padding:18px; border:1.5px solid var(--line); background:#fff; border-radius:14px;
+      font-size:18px; font-weight:600; font-family:inherit; color:#334; cursor:pointer; text-align:left;}
+    .kbtn:active{border-color:var(--brand); background:#eaf2ff;}
+    .camwrap{position:relative; width:100%; aspect-ratio:3/4; max-height:56vh; background:#0d1017;
+      border-radius:16px; overflow:hidden; margin-top:4px;}
+    video{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
+    .oval{position:absolute; inset:0; margin:auto; width:62%; aspect-ratio:3/4;
+      border:3px dashed rgba(255,255,255,.7); border-radius:50%; pointer-events:none; transition:border-color .2s;}
+    .oval.good{border-color:var(--ok); border-style:solid;}
+    .oval.bad{border-color:var(--warn);}
+    .camhint{position:absolute; left:0; right:0; bottom:0; padding:10px 14px; color:#fff;
+      font-size:14px; font-weight:600; text-align:center; background:linear-gradient(transparent,rgba(0,0,0,.65));}
+    .bar{height:8px; background:#e6ebf3; border-radius:6px; margin-top:12px; overflow:hidden;}
+    .bar > i{display:block; height:100%; width:0; background:var(--ok); transition:width .2s;}
+    .result{text-align:center; padding:8px 4px;}
+    .result .ic{font-size:52px; line-height:1;}
+    .result h2{margin:10px 0 4px; font-size:20px;}
+    .result .when{color:var(--brand); font-weight:600; font-size:15px;}
+    .summary{text-align:left; background:#f7f9fc; border-radius:12px; padding:14px; margin:14px 0; font-size:14px;}
+    .summary div{margin:3px 0;} .summary b{color:#445;}
+    .flagnote{background:#fff5e8; color:#8a5a12; border-radius:12px; padding:12px 14px; font-size:13px; margin-top:12px; line-height:1.55;}
+    .errbox{background:#fdecea; color:var(--err); border-radius:11px; padding:12px 14px; font-size:14px; margin-top:14px; display:none;}
+    .note{font-size:12px; color:var(--muted); margin:10px 2px 0; line-height:1.5;}
+    .hide{display:none !important;}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <h1>🔍 ลงเวลาสแกนหน้า</h1>
+    <p id="heroSub">ยืนยันตัวตนด้วยใบหน้า + พิกัด</p>
+  </div>
+
+  <div id="loading" class="status"><div class="spinner"></div><span id="loadingText">กำลังเตรียมระบบ…</span></div>
+
+  <!-- เลือกเข้า/ออก -->
+  <div id="pick" class="card hide">
+    <div class="kinds">
+      <button class="kbtn" data-kind="in">🟢 เข้างาน</button>
+      <button class="kbtn" data-kind="out">🔴 ออกงาน</button>
+      <button class="kbtn" data-kind="wfh">🏠 WFH (ทำงานที่บ้าน)</button>
+    </div>
+    <div class="note">เลือกประเภท แล้วสแกนใบหน้าเพื่อยืนยันตัวตนค่ะ</div>
+  </div>
+
+  <!-- ยังไม่ลงทะเบียนใบหน้า -->
+  <div id="needEnroll" class="card hide result">
+    <div class="ic">🙂</div>
+    <h2>ยังไม่ได้ลงทะเบียนใบหน้า</h2>
+    <p style="color:var(--muted);margin:2px 0 0">ลงทะเบียนครั้งเดียว ครั้งต่อไปสแกนลงเวลาได้เลยค่ะ</p>
+    <button class="btn" onclick="goEnroll()">🙂 ลงทะเบียนใบหน้า</button>
+    <button class="btn ghost" onclick="closeApp()">ปิดหน้าต่าง</button>
+  </div>
+
+  <!-- กล้องสแกน -->
+  <div id="scan" class="card hide">
+    <div class="camwrap">
+      <video id="video" playsinline muted autoplay></video>
+      <div id="oval" class="oval"></div>
+      <div id="camhint" class="camhint">กำลังเปิดกล้อง…</div>
+    </div>
+    <div class="bar"><i id="barFill"></i></div>
+    <div id="scanKind" class="note" style="text-align:center;font-weight:600;color:#445"></div>
+    <button id="fallbackBtn" class="btn warn hide" onclick="doFallback()">📸 สแกนไม่ผ่าน — ถ่าย selfie แทน (ให้ HR ตรวจ)</button>
+    <div id="err" class="errbox"></div>
+  </div>
+
+  <!-- กำลังบันทึก -->
+  <div id="saving" class="status hide"><div class="spinner"></div><span id="savingText">กำลังบันทึกลงเวลา…</span></div>
+
+  <!-- สำเร็จ -->
+  <div id="done" class="card result hide">
+    <div class="ic" id="doneIc">✅</div>
+    <h2 id="doneTitle">บันทึกลงเวลาแล้ว!</h2>
+    <div class="when" id="doneWhen"></div>
+    <div class="summary" id="doneSummary"></div>
+    <div id="doneFlag" class="flagnote hide">⚠️ ระบบสแกนหน้าไม่ผ่าน จึงบันทึกด้วย selfie และ<b>ติดธงให้ HR ตรวจสอบ</b>ค่ะ</div>
+    <button class="btn ghost" onclick="closeApp()">ปิดหน้าต่าง</button>
+  </div>
+
+  <!-- error เต็มจอ -->
+  <div id="fatal" class="card hide">
+    <div class="errbox" style="display:block" id="fatalMsg"></div>
+    <button id="fatalBtn" class="btn ghost" onclick="location.reload()">ลองใหม่</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/human/dist/human.js"></script>
+<script>
+  // ═══════════ ตั้งค่า ═══════════
+  var LIFF_ID  = '2010533182-66TDQvCu';
+  var EXEC_URL = 'https://script.google.com/macros/s/AKfycbwdOotltb--WwTuS-ECutq6uFQs536kjz-RyLuq1mm35Pbfnn25EptvIRkfjaZB6iJf/exec';
+  // ════════════════════════════════
+
+  var UID='', human=null, stream=null, detecting=false, submitting=false;
+  var ENROLLED=null, THRESHOLD=0.5, KIND='', bestScore=0, hitFrames=0, elapsed=0, failTimer=null;
+  var KIND_LABEL={ in:'🟢 เข้างาน', out:'🔴 ออกงาน', wfh:'🏠 WFH' };
+
+  function $(id){ return document.getElementById(id); }
+  function show(id){ $(id).classList.remove('hide'); }
+  function hide(id){ $(id).classList.add('hide'); }
+  function fatal(msg, extBtn){ ['loading','pick','scan','saving','done','needEnroll'].forEach(hide);
+    $('fatalMsg').textContent='⚠️ '+msg; show('fatal');
+    if (extBtn){ var b=$('fatalBtn'); b.textContent='เปิดในเบราว์เซอร์ (Chrome/Safari)'; b.onclick=openExternal; } }
+  function errBox(msg){ var b=$('err'); b.textContent='⚠️ '+msg; b.style.display='block'; }
+
+  function jsonp(params){
+    return new Promise(function(resolve,reject){
+      var cb='cb_'+Date.now()+'_'+Math.floor(Math.random()*1e6);
+      var timer=setTimeout(function(){cleanup();reject(new Error('หมดเวลาเชื่อมต่อ'));},30000);
+      window[cb]=function(d){cleanup();resolve(d);};
+      function cleanup(){clearTimeout(timer);delete window[cb];if(s.parentNode)s.parentNode.removeChild(s);}
+      var qs=Object.keys(params).map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(params[k]);}).join('&');
+      var s=document.createElement('script'); s.src=EXEC_URL+'?'+qs+'&callback='+cb;
+      s.onerror=function(){cleanup();reject(new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้'));};
+      document.body.appendChild(s);
+    });
+  }
+  function jsonpPost(params){
+    var body=Object.keys(params).map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(params[k]);}).join('&');
+    return fetch(EXEC_URL,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:body})
+      .then(function(r){ if(!r.ok) throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้'); return r.json(); });
+  }
+
+  function closeApp(){ try{ if(liff.isInClient()) liff.closeWindow(); else location.href='index.html?p=work'; }catch(e){ location.reload(); } }
+  function goEnroll(){ location.href='face-enroll.html'; }
+  function openExternal(){ try{ liff.openWindow({ url: location.href, external:true }); }catch(e){ alert('เปิดลิงก์นี้ใน Chrome หรือ Safari นะคะ'); } }
+
+  // ความคล้ายใบหน้า 0..1 (ใช้ human.match.similarity ถ้ามี · fallback cosine)
+  function faceSim(a,b){
+    try{ if(human && human.match && typeof human.match.similarity==='function') return human.match.similarity(a,b); }catch(e){}
+    var dot=0,na=0,nb=0; for(var i=0;i<a.length;i++){ dot+=a[i]*b[i]; na+=a[i]*a[i]; nb+=b[i]*b[i]; }
+    var cos=dot/((Math.sqrt(na)*Math.sqrt(nb))||1); return (cos+1)/2;
+  }
+
+  function buildHuman(){
+    return new Human.Human({
+      modelBasePath:'https://cdn.jsdelivr.net/npm/@vladmandic/human/models/',
+      backend:'webgl', cacheSensitivity:0, warmup:'none',
+      filter:{enabled:true, equalization:false},
+      face:{ enabled:true,
+        detector:{rotation:false, maxDetected:1, minConfidence:0.3, return:false},
+        mesh:{enabled:true}, iris:{enabled:false},
+        description:{enabled:true}, emotion:{enabled:false},
+        antispoof:{enabled:false}, liveness:{enabled:false} },
+      body:{enabled:false}, hand:{enabled:false}, object:{enabled:false}, gesture:{enabled:false}
+    });
+  }
+
+  // capture เฟรมปัจจุบันเป็น jpeg base64 (ย่อ ~360px กว้าง · หลักฐาน) · ไม่กลับซ้ายขวา (เก็บภาพจริง)
+  function snap(){
+    var v=$('video'); var w=360, h=Math.round(w*(v.videoHeight/v.videoWidth||4/3));
+    var c=document.createElement('canvas'); c.width=w; c.height=h;
+    c.getContext('2d').drawImage(v,0,0,w,h);
+    try{ return c.toDataURL('image/jpeg',0.6); }catch(e){ return ''; }
+  }
+
+  function getGPS(){
+    return new Promise(function(resolve,reject){
+      if(!navigator.geolocation) return reject(new Error('อุปกรณ์ไม่รองรับ GPS'));
+      navigator.geolocation.getCurrentPosition(
+        function(pos){ resolve({lat:pos.coords.latitude, lng:pos.coords.longitude}); },
+        function(){ reject(new Error('เปิดตำแหน่ง (GPS) ไม่ได้ — อนุญาตตำแหน่งแล้วลองใหม่ค่ะ')); },
+        { enableHighAccuracy:true, timeout:12000, maximumAge:30000 }
+      );
+    });
+  }
+
+  // ───── loop เทียบใบหน้า ─────
+  function loop(){
+    if(!detecting) return;
+    human.detect($('video')).then(function(res){
+      var face=res && res.face && res.face[0];
+      var emb=face && face.embedding;
+      if(emb && emb.length && face.faceScore>0.5){
+        var sim=faceSim(ENROLLED, emb);
+        if(sim>bestScore) bestScore=sim;
+        var pct=Math.round(sim*100);
+        $('barFill').style.width=Math.min(100,pct)+'%';
+        if(sim>=THRESHOLD){
+          hitFrames++;
+          $('oval').className='oval good';
+          $('camhint').textContent='✅ ยืนยันตัวตนได้ ('+pct+'%)';
+          if(hitFrames>=3 && !submitting){ return submitClock(true, sim, emb); }
+        } else {
+          hitFrames=0; $('oval').className='oval bad';
+          $('camhint').textContent='กำลังยืนยัน… ('+pct+'%) ให้ใบหน้าชัดในกรอบ';
+        }
+      } else {
+        hitFrames=0; $('oval').className='oval';
+        $('camhint').textContent='ขยับใบหน้าให้อยู่ในกรอบไข่';
+      }
+      requestAnimationFrame(loop);
+    }).catch(function(){ requestAnimationFrame(loop); });
+  }
+
+  // ───── ส่งลงเวลา ─────
+  function submitClock(matched, sim, emb){
+    if(submitting) return; submitting=true; detecting=false;
+    if(failTimer){ clearTimeout(failTimer); failTimer=null; }
+    var img=snap();
+    hide('scan'); show('saving');
+    $('savingText').textContent='ขอตำแหน่ง (GPS)…';
+    getGPS().then(function(g){
+      $('savingText').textContent='กำลังบันทึกลงเวลา…';
+      return jsonpPost({ action:'waFaceClock', uid:UID, kind:KIND,
+        matched: matched?'1':'0', score: (sim||bestScore||0).toFixed(4),
+        lat:g.lat, lng:g.lng, address:'', img:img });
+    }).then(function(r){
+      hide('saving');
+      if(!r || !r.ok){ submitting=false; show('scan'); if(matched){ detecting=true; requestAnimationFrame(loop);} return errBox((r&&r.error)||'บันทึกไม่สำเร็จ'); }
+      stopCam(); renderDone(r);
+    }).catch(function(e){
+      hide('saving'); submitting=false; show('scan');
+      if(matched){ detecting=true; requestAnimationFrame(loop); }
+      errBox(e.message||'เกิดข้อผิดพลาด');
+    });
+  }
+
+  // fallback — ถ่าย selfie ปัจจุบันส่งแบบไม่ผ่านสแกน (ติดธง HR)
+  function doFallback(){ if(submitting) return; submitClock(false, bestScore, null); }
+
+  function renderDone(r){
+    $('doneWhen').textContent = r.timeText || '';
+    var sum = '<div><b>ประเภท:</b> '+(r.kindLabel||KIND_LABEL[KIND]||'')+'</div>';
+    if(r.address) sum += '<div><b>สถานที่:</b> '+esc(r.address)+'</div>';
+    sum += r.matched ? '<div>✅ ยืนยันใบหน้าผ่าน ('+r.score+'%)</div>' : '<div>⚠️ บันทึกด้วย selfie (สแกนไม่ผ่าน)</div>';
+    $('doneSummary').innerHTML = sum;
+    if(r.flagged){ $('doneIc').textContent='⚠️'; $('doneTitle').textContent='บันทึกแล้ว (รอ HR ตรวจ)'; show('doneFlag'); }
+    show('done');
+  }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+
+  function stopCam(){ try{ if(stream) stream.getTracks().forEach(function(t){t.stop();}); }catch(e){} detecting=false; }
+  function startCamera(){
+    return navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:640}, height:{ideal:800} }, audio:false })
+      .then(function(s){ stream=s; var v=$('video'); v.srcObject=s; return v.play(); });
+  }
+
+  // เลือกประเภท → เปิดกล้องเริ่มเทียบ
+  Array.prototype.forEach.call(document.querySelectorAll('.kbtn'), function(b){
+    b.addEventListener('click', function(){ beginScan(this.getAttribute('data-kind')); });
+  });
+  function beginScan(kind){
+    KIND=kind; hide('pick'); show('scan');
+    $('scanKind').textContent = 'กำลังลงเวลา: ' + (KIND_LABEL[kind]||kind);
+    startCamera().then(function(){
+      detecting=true; bestScore=0; hitFrames=0; requestAnimationFrame(loop);
+      // เปิดปุ่ม fallback หลัง 12 วิ ถ้ายังไม่ผ่าน
+      failTimer=setTimeout(function(){ if(!submitting) show('fallbackBtn'); }, 12000);
+    }).catch(function(err){
+      var msg=(err&&(err.message||err.name))||String(err);
+      if(/Permission|NotAllowed|denied/i.test(msg)) return fatal('ไม่ได้รับสิทธิ์เปิดกล้อง — อนุญาตกล้องแล้วลองใหม่ค่ะ', true);
+      fatal('เปิดกล้องไม่ได้ ลองเปิดในเบราว์เซอร์ค่ะ', true);
+    });
+  }
+
+  // ───── init ─────
+  (function init(){
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      return fatal('เบราว์เซอร์นี้เปิดกล้องไม่ได้ ลองเปิดใน Chrome หรือ Safari นะคะ', true);
+    }
+    var qKind=''; try{ qKind=(new URLSearchParams(location.search)).get('kind')||''; }catch(e){}
+    liff.init({ liffId: LIFF_ID }).then(function(){
+      if(!liff.isLoggedIn()){ liff.login(); return null; }
+      return liff.getProfile();
+    }).then(function(profile){
+      if(!profile) return;
+      UID=profile.userId;
+      return jsonp({ action:'waFaceGet', uid:UID });
+    }).then(function(meta){
+      if(!meta) return;
+      if(!meta.ok){ return fatal(meta.error||'โหลดข้อมูลไม่สำเร็จ'); }
+      if(!meta.hasFace){ hide('loading'); show('needEnroll'); return; }
+      ENROLLED=meta.descriptor; THRESHOLD=meta.threshold||0.5;
+      $('heroSub').textContent='สวัสดีค่ะ '+(meta.nick||'')+' · สแกนหน้าเพื่อลงเวลา';
+      $('loadingText').textContent='กำลังโหลดโมเดลใบหน้า (ครั้งแรกอาจช้า)…';
+      human=buildHuman();
+      return human.load().then(function(){ return human.warmup(); }).then(function(){
+        hide('loading');
+        if(['in','out','wfh'].indexOf(qKind)>=0){ beginScan(qKind); }  // เปิดจาก Rich Menu ระบุ kind → ข้ามหน้าเลือก
+        else show('pick');
+      });
+    }).catch(function(err){
+      fatal((err&&(err.message||err.name))||String(err), true);
+    });
+  })();
+</script>
+</body>
+</html>

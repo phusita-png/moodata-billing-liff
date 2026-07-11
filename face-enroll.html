@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>ลงทะเบียนใบหน้า · Moodata</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    :root{ --brand:#1B72E8; --brand-dark:#155cba; --bg:#f4f6fb; --line:#e3e8f0;
+      --text:#1f2733; --muted:#8a94a6; --ok:#1faa59; --err:#d8463f; --warn:#e88a1b; }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    body{margin:0; font-family:'IBM Plex Sans Thai',system-ui,sans-serif; background:var(--bg);
+      color:var(--text); font-size:16px; line-height:1.5;}
+    .wrap{max-width:520px; margin:0 auto; padding:0 0 40px;}
+    .hero{background:linear-gradient(135deg,var(--brand),#3d8bff); color:#fff;
+      padding:22px 20px 26px; border-radius:0 0 22px 22px;}
+    .hero h1{margin:0; font-size:20px; font-weight:700;}
+    .hero p{margin:4px 0 0; font-size:13px; opacity:.92;}
+    .card{background:#fff; margin:16px; padding:18px; border-radius:16px; box-shadow:0 2px 12px rgba(20,40,80,.06);}
+    .status{text-align:center; padding:40px 24px; color:var(--muted);}
+    .spinner{width:34px;height:34px;border:3px solid #d9e2f0;border-top-color:var(--brand);
+      border-radius:50%; animation:spin .8s linear infinite; margin:0 auto 14px;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .btn{width:100%; margin-top:16px; padding:15px; border:none; border-radius:13px;
+      background:var(--brand); color:#fff; font-size:17px; font-weight:600; font-family:inherit; cursor:pointer;}
+    .btn:active{background:var(--brand-dark);}
+    .btn[disabled]{opacity:.5; cursor:not-allowed;}
+    .btn.ghost{background:#eef1f6; color:#445;}
+    .camwrap{position:relative; width:100%; aspect-ratio:3/4; max-height:56vh; background:#0d1017;
+      border-radius:16px; overflow:hidden; margin-top:4px;}
+    video,canvas.overlay{position:absolute; inset:0; width:100%; height:100%; object-fit:cover;}
+    video{transform:scaleX(-1);}          /* กระจกเงา ให้เหมือนส่องกระจก */
+    .oval{position:absolute; inset:0; margin:auto; width:62%; aspect-ratio:3/4;
+      border:3px dashed rgba(255,255,255,.7); border-radius:50%; pointer-events:none;}
+    .oval.good{border-color:var(--ok); border-style:solid;}
+    .camhint{position:absolute; left:0; right:0; bottom:0; padding:10px 14px; color:#fff;
+      font-size:14px; font-weight:600; text-align:center; background:linear-gradient(transparent,rgba(0,0,0,.6));}
+    .consent{display:flex; gap:10px; align-items:flex-start; background:#f7f9fc; border-radius:12px;
+      padding:13px 14px; margin-top:6px; font-size:13px; color:#556; line-height:1.55;}
+    .consent input{width:20px; height:20px; margin-top:2px; flex:none; accent-color:var(--brand);}
+    .consent b{color:#334;}
+    .result{text-align:center; padding:8px 4px;}
+    .result .ic{font-size:52px; line-height:1;}
+    .result h2{margin:10px 0 4px; font-size:20px;}
+    .errbox{background:#fdecea; color:var(--err); border-radius:11px; padding:12px 14px; font-size:14px; margin-top:14px; display:none;}
+    .note{font-size:12px; color:var(--muted); margin:10px 2px 0; line-height:1.5;}
+    .hide{display:none !important;}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <h1>🙂 ลงทะเบียนใบหน้า</h1>
+    <p>สแกนครั้งเดียว เพื่อใช้ยืนยันตัวตนตอนลงเวลา</p>
+  </div>
+
+  <div id="loading" class="status"><div class="spinner"></div><span id="loadingText">กำลังเตรียมระบบ…</span></div>
+
+  <!-- ขั้นตอนหลัก -->
+  <div id="main" class="card hide">
+    <div class="camwrap">
+      <video id="video" playsinline muted autoplay></video>
+      <div id="oval" class="oval"></div>
+      <div id="camhint" class="camhint">กำลังเปิดกล้อง…</div>
+    </div>
+
+    <label class="consent">
+      <input type="checkbox" id="consent" />
+      <span>ยินยอมให้ Moodata เก็บ <b>ข้อมูลใบหน้า (แบบตัวเลข)</b> เพื่อใช้ยืนยันตัวตนตอนลงเวลาเท่านั้น
+        ตาม PDPA · ระบบ<b>ไม่เก็บรูปใบหน้าต้นฉบับ</b> · ขอถอน/ลบได้ทุกเมื่อ</span>
+    </label>
+
+    <button id="save" class="btn" disabled>บันทึกใบหน้า</button>
+    <div id="err" class="errbox"></div>
+    <div class="note">💡 อยู่ในที่แสงพอ · ถอดแมสก์/แว่นกันแดด · ให้ใบหน้าอยู่ในกรอบไข่</div>
+  </div>
+
+  <!-- สำเร็จ -->
+  <div id="done" class="card result hide">
+    <div class="ic">✅</div>
+    <h2 id="doneTitle">ลงทะเบียนใบหน้าเรียบร้อย!</h2>
+    <p style="color:var(--muted);margin:2px 0 0">ครั้งต่อไปลงเวลาได้ด้วยการสแกนหน้าเลยค่ะ</p>
+    <button class="btn" onclick="goClock()">📍 ลองลงเวลาเลย</button>
+    <button class="btn ghost" onclick="closeApp()">ปิดหน้าต่าง</button>
+  </div>
+
+  <!-- error เต็มจอ -->
+  <div id="fatal" class="card hide">
+    <div class="errbox" style="display:block" id="fatalMsg"></div>
+    <button id="fatalBtn" class="btn ghost" onclick="location.reload()">ลองใหม่</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/human/dist/human.js"></script>
+<script>
+  // ═══════════ ตั้งค่า ═══════════
+  var LIFF_ID  = '2010533182-66TDQvCu';   // LIFF ทีม (channel Kie · router index.html)
+  var EXEC_URL = 'https://script.google.com/macros/s/AKfycbwdOotltb--WwTuS-ECutq6uFQs536kjz-RyLuq1mm35Pbfnn25EptvIRkfjaZB6iJf/exec';
+  // ════════════════════════════════
+
+  var UID='', human=null, stream=null, lastEmbedding=null, detecting=false, goodFrames=0;
+
+  function $(id){ return document.getElementById(id); }
+  function show(id){ $(id).classList.remove('hide'); }
+  function hide(id){ $(id).classList.add('hide'); }
+  function fatal(msg, extBtn){ ['loading','main','done'].forEach(hide);
+    $('fatalMsg').textContent = '⚠️ ' + msg; show('fatal');
+    if (extBtn){ var b=$('fatalBtn'); b.textContent='เปิดในเบราว์เซอร์ (Chrome/Safari)'; b.onclick=openExternal; } }
+  function errBox(msg){ var b=$('err'); b.textContent='⚠️ '+msg; b.style.display='block'; }
+
+  // POST form (descriptor ยาว → เลี่ยง URL limit) · backend doPost route wa* → ตอบ JSON
+  function jsonpPost(params){
+    var body=Object.keys(params).map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(params[k]);}).join('&');
+    return fetch(EXEC_URL,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:body})
+      .then(function(r){ if(!r.ok) throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้'); return r.json(); });
+  }
+
+  function closeApp(){ try{ if(liff.isInClient()) liff.closeWindow(); else location.href='index.html?p=work'; }catch(e){ location.reload(); } }
+  function goClock(){ location.href = 'face-clock.html'; }
+  function openExternal(){ try{ liff.openWindow({ url: location.href, external: true }); }catch(e){ alert('เปิดลิงก์นี้ใน Chrome หรือ Safari นะคะ'); } }
+
+  // ───── human.js config (เฉพาะ face description/embedding · ปิดส่วนอื่นให้เบา) ─────
+  function buildHuman(){
+    return new Human.Human({
+      modelBasePath: 'https://cdn.jsdelivr.net/npm/@vladmandic/human/models/',
+      backend: 'webgl', cacheSensitivity: 0, warmup: 'none',
+      filter: { enabled: true, equalization: false },
+      face: {
+        enabled: true,
+        detector: { rotation: false, maxDetected: 1, minConfidence: 0.3, return: false },
+        mesh: { enabled: true }, iris: { enabled: false },
+        description: { enabled: true }, emotion: { enabled: false },
+        antispoof: { enabled: false }, liveness: { enabled: false }
+      },
+      body:{enabled:false}, hand:{enabled:false}, object:{enabled:false}, gesture:{enabled:false}
+    });
+  }
+
+  // ───── loop ตรวจใบหน้า realtime ─────
+  function loop(){
+    if (!detecting) return;
+    human.detect($('video')).then(function(res){
+      var face = res && res.face && res.face[0];
+      var emb = face && face.embedding;
+      var ok = !!(emb && emb.length && face.faceScore > 0.5 && face.boxScore > 0.5);
+      if (ok){
+        lastEmbedding = emb; goodFrames++;
+        $('oval').classList.add('good');
+        $('camhint').textContent = goodFrames < 4 ? 'จับใบหน้าได้ กำลังโฟกัส…' : '✅ พร้อมบันทึก — กดปุ่มด้านล่าง';
+        $('save').disabled = !($('consent').checked && goodFrames >= 4);
+      } else {
+        goodFrames = 0; lastEmbedding = null;
+        $('oval').classList.remove('good');
+        $('camhint').textContent = 'ขยับใบหน้าให้อยู่ในกรอบไข่';
+        $('save').disabled = true;
+      }
+      requestAnimationFrame(loop);
+    }).catch(function(){ requestAnimationFrame(loop); });
+  }
+
+  // ───── เปิดกล้อง ─────
+  function startCamera(){
+    return navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:640}, height:{ideal:800} }, audio:false })
+      .then(function(s){ stream=s; var v=$('video'); v.srcObject=s; return v.play(); });
+  }
+
+  // ───── บันทึก ─────
+  $('consent').addEventListener('change', function(){
+    $('save').disabled = !(this.checked && goodFrames >= 4);
+  });
+  $('save').addEventListener('click', function(){
+    if (!lastEmbedding){ return errBox('ยังจับใบหน้าไม่ได้ ลองขยับหน้าเข้ากรอบค่ะ'); }
+    if (!$('consent').checked){ return errBox('กรุณาติ๊กยินยอมก่อนค่ะ'); }
+    $('err').style.display='none'; $('save').disabled=true; $('save').textContent='กำลังบันทึก…';
+    detecting=false;
+    var desc = lastEmbedding.map(function(x){ return Math.round(x*100000)/100000; });  // ย่อทศนิยม ลดขนาด payload
+    jsonpPost({ action:'waFaceEnroll', uid:UID, descriptor:JSON.stringify(desc), dim:desc.length, consent:'1' })
+      .then(function(r){
+        stopCam();
+        if (!r || !r.ok){ detecting=true; requestAnimationFrame(loop); $('save').disabled=false; $('save').textContent='บันทึกใบหน้า'; return errBox((r&&r.error)||'บันทึกไม่สำเร็จ'); }
+        if (r.reEnroll) $('doneTitle').textContent = 'อัปเดตใบหน้าเรียบร้อย!';
+        hide('main'); show('done');
+      })
+      .catch(function(e){ detecting=true; requestAnimationFrame(loop); $('save').disabled=false; $('save').textContent='บันทึกใบหน้า'; errBox(e.message||'เกิดข้อผิดพลาด'); });
+  });
+
+  function stopCam(){ try{ if(stream) stream.getTracks().forEach(function(t){t.stop();}); }catch(e){} detecting=false; }
+
+  // ───── เริ่มต้น ─────
+  (function init(){
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      return fatal('เบราว์เซอร์นี้เปิดกล้องไม่ได้ ลองเปิดใน Chrome หรือ Safari นะคะ', true);
+    }
+    liff.init({ liffId: LIFF_ID }).then(function(){
+      if (!liff.isLoggedIn()){ liff.login(); return null; }
+      return liff.getProfile();
+    }).then(function(profile){
+      if (!profile) return;
+      UID = profile.userId;
+      $('loadingText').textContent = 'กำลังโหลดโมเดลใบหน้า (ครั้งแรกอาจช้า)…';
+      human = buildHuman();
+      return human.load().then(function(){ return human.warmup(); });
+    }).then(function(){
+      if (!UID) return;
+      return startCamera();
+    }).then(function(){
+      if (!UID) return;
+      hide('loading'); show('main');
+      detecting=true; requestAnimationFrame(loop);
+    }).catch(function(err){
+      var msg = (err && (err.message||err.name)) || String(err);
+      if (/Permission|NotAllowed|denied/i.test(msg)) return fatal('ไม่ได้รับสิทธิ์เปิดกล้อง — อนุญาตกล้องแล้วลองใหม่ค่ะ', true);
+      if (/NotFound|Overconstrained|NotReadable/i.test(msg)) return fatal('เปิดกล้องไม่ได้ (อาจมีแอปอื่นใช้อยู่ หรือ LINE บล็อก) ลองเปิดในเบราว์เซอร์ค่ะ', true);
+      fatal(msg, true);
+    });
+  })();
+</script>
+</body>
+</html>
