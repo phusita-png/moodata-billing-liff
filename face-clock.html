@@ -190,11 +190,22 @@
   function getGPS(){
     return new Promise(function(resolve,reject){
       if(!navigator.geolocation) return reject(new Error('อุปกรณ์ไม่รองรับ GPS'));
-      navigator.geolocation.getCurrentPosition(
-        function(pos){ resolve({lat:pos.coords.latitude, lng:pos.coords.longitude}); },
-        function(){ reject(new Error('เปิดตำแหน่ง (GPS) ไม่ได้ — อนุญาตตำแหน่งแล้วลองใหม่ค่ะ')); },
-        { enableHighAccuracy:true, timeout:12000, maximumAge:30000 }
-      );
+      function ok(pos){ resolve({lat:pos.coords.latitude, lng:pos.coords.longitude}); }
+      // แยกข้อความตามเหตุจริง: 1=ปฏิเสธสิทธิ์ 2=หาตำแหน่งไม่เจอ 3=หมดเวลา
+      function fail(err){
+        var code = err && err.code;
+        if(code===1) return reject(new Error('ไม่ได้รับสิทธิ์ตำแหน่ง — เปิดสิทธิ์ตำแหน่งให้ LINE/เบราว์เซอร์แล้วลองใหม่ค่ะ'));
+        if(code===2) return reject(new Error('หาตำแหน่งไม่เจอ — เปิด GPS/Location ที่เครื่องแล้วลองใหม่ค่ะ'));
+        return reject(new Error('ขอตำแหน่งนานเกินไป — ลองใหม่ หรือขยับไปจุดสัญญาณดีขึ้นค่ะ'));
+      }
+      // ชั้น 1: แม่นสูง (ชิป GPS จริง) timeout สั้น — ได้ก็ดีสุด
+      navigator.geolocation.getCurrentPosition(ok, function(e1){
+        if(e1 && e1.code===1) return fail(e1);   // ถูกปฏิเสธสิทธิ์ → ลองซ้ำก็ไม่ผ่าน
+        if($('savingText')) $('savingText').textContent='กำลังหาตำแหน่งอีกวิธี…';
+        // ชั้น 2: แม่นต่ำ (Wi-Fi/เครือข่าย — จับในอาคารได้) timeout ยาว
+        navigator.geolocation.getCurrentPosition(ok, fail,
+          { enableHighAccuracy:false, timeout:20000, maximumAge:60000 });
+      }, { enableHighAccuracy:true, timeout:8000, maximumAge:30000 });
     });
   }
 
