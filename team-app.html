@@ -642,6 +642,10 @@
       $('tabApprove').classList.toggle('hide', !ROLE.isOwner);
       $('boot').classList.add('hide'); $('app').classList.remove('hide');
       var t=ROLE.isTeam ? 'mine' : 'board';
+      // ?p=<tab> จากลิงก์ (เช่น Google Chat แจ้งลา → p=approve) → เปิดแท็บนั้นเลยถ้ามีสิทธิ์
+      var pTab=''; try{ pTab=(new URLSearchParams(location.search).get('p')||'').toLowerCase(); }catch(e){}
+      var pOk={ mine:ROLE.isTeam, board:true, review:ROLE.isOwner, all:ROLE.isOwner, leave:ROLE.isTeam, slip:ROLE.isTeam, approve:ROLE.isOwner };
+      if(pTab && pOk[pTab]){ switchTab(pTab); return; }
       // ใช้งานแท็บแรกที่ bootstrap แนบมา → เปิดแอปยิง backend ครั้งเดียว (ไม่ยิงซ้ำ)
       if(r.firstTab===t && r.tasks){
         setTabUI(t);
