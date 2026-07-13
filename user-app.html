@@ -1057,6 +1057,22 @@
     }).catch(function(e){ var el=$('pjmList'); if(el&&!PROJECTS.length&&!COMPANIES.length) el.innerHTML='<div class="emptybox">'+esc(e.message)+'</div>'; });
   }
   window.openProjManage=openProjManage; window.openProjEdit=openProjEdit; window.openProjMembers=openProjMembers;
+  // (พี่) ดูรายชื่อ project ทั้งหมด (อ่านอย่างเดียว + เลขลำดับ) — แยกจากหน้าจัดการที่มีปุ่มแก้ไข
+  function openProjList(){
+    var pjs=BPROJECTS||[], cos=bCustomers();
+    function row(n,icon,name){ return '<div style="display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--line)">'+
+      '<span style="flex:0 0 26px;height:26px;line-height:26px;text-align:center;background:#EEF2FF;color:#4338CA;border-radius:7px;font-weight:700;font-size:13px">'+n+'</span>'+
+      '<span style="flex:1;font-size:14px">'+icon+' '+esc(name)+'</span></div>'; }
+    var h='';
+    if(pjs.length) h+='<div class="pjm-sec">📁 Project จัดเอง ('+pjs.length+')</div>'+pjs.map(function(p,i){return row(i+1,'📁',p.name);}).join('');
+    if(cos.length) h+='<div class="pjm-sec">🏢 บริษัท / กลุ่มไลน์ ('+cos.length+')</div>'+cos.map(function(c,i){return row(i+1,'🏢',c);}).join('');
+    if(!h) h='<div class="emptybox">ยังไม่มี project หรือบริษัทค่ะ 😊</div>';
+    modal('<h3>📁 Project ทั้งหมด ('+(pjs.length+cos.length)+')</h3>'+
+      '<div class="m-hint">รายชื่อทั้งหมด (ดูอย่างเดียว) · แก้ไข/จัดการที่ปุ่ม ⚙️ จัดการ Project</div>'+
+      '<div class="pjm-list">'+h+'</div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button></div>');
+  }
+  window.openProjList=openProjList;
   // ── (พี่) ลบ Project จัดเอง (บริษัท auto ลบไม่ได้) ──
   function delProj(id,name){
     modal('<h3>🗑️ ลบ Project</h3><div id="mErr" class="m-err hidden"></div>'+
@@ -1560,7 +1576,7 @@
     // (เปิดงานใหม่ อยู่ปุ่มแถบบนแล้ว — ไม่ทำซ้ำที่นี่)
     var extra='';
     if(BSCOPE==='project'){
-      extra='<div class="bd-stat bd-stat-pj" onclick="openProjManage()" title="ดู / จัดการ project"><div class="lab">📁 Project</div><div class="num">'+(bCustomers().length+BPROJECTS.length)+'</div></div>'+
+      extra='<div class="bd-stat bd-stat-pj" onclick="openProjList()" title="ดูรายชื่อ project ทั้งหมด"><div class="lab">📁 Project</div><div class="num">'+(bCustomers().length+BPROJECTS.length)+'</div></div>'+
         '<div class="bd-stat bd-stat-add" onclick="bNewProject()" title="สร้าง project ใหม่ (1 กลุ่มไลน์ = 1 project อัตโนมัติ)"><div class="lab">สร้าง Project</div><div class="num">➕</div></div>';
     }
     $('bStats').innerHTML= extra+
