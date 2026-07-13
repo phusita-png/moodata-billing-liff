@@ -1852,7 +1852,7 @@
   function bNewProject(){
     modal('<h3>➕ สร้าง Project</h3><div id="mErr" class="m-err hidden"></div>'+
       '<div class="fld"><label>ชื่อ Project</label><input id="npName" placeholder="เช่น ปิดบัญชี Q3, งานอีเวนต์ลูกค้า A"></div>'+
-      '<div class="fld"><label>ลูกค้า <span class="bd-age">(ถ้ามี · เว้นว่างได้)</span></label><input id="npCust" placeholder="ชื่อลูกค้า"></div>'+
+      '<div class="fld"><label>ลูกค้า <span class="bd-age">(ถ้ามี · เว้นว่างได้ · เลือก/พิมพ์)</span></label><input id="npCust" list="dlNpCust" autocomplete="off" placeholder="เลือกหรือพิมพ์ชื่อลูกค้า">'+custDatalist('dlNpCust')+'</div>'+
       '<div class="m-hint">สร้างแล้วไปจัดงานเข้า project นี้ได้ที่การ์ดงาน (📁 จัดเข้า Project) หรือกรองดูจากตัวกรอง Project</div>'+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
       '<button class="btn btn-primary" onclick="bDoCreateProject()">สร้าง Project</button></div>');
