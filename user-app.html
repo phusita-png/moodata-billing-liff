@@ -1748,12 +1748,16 @@
       return i<0 ? {name:'',url:ln} : {name:ln.slice(0,i).trim(),url:ln.slice(i+1).trim()};
     }).filter(function(x){ return x && x.url; });
   }
+  function wlNorm(u){ u=String(u||'').trim(); if(!u) return ''; if(/^https?:\/\//i.test(u)) return u; if(u.indexOf(' ')<0 && /^[\w.-]+\.[a-z]{2,}(\/.*)?$/i.test(u)) return 'https://'+u; return ''; }
   function wlLinksHtml(s){
     var a=wlParse(s); if(!a.length) return '';
-    return a.map(function(it){ return '<a href="'+esc(it.url)+'" target="_blank" style="word-break:break-all">🔗 '+esc(it.name||it.url)+'</a>'; }).join('<br>');
+    return a.map(function(it){ var u=wlNorm(it.url);
+      return u ? '<a href="'+esc(u)+'" target="_blank" style="word-break:break-all">🔗 '+esc(it.name||it.url)+'</a>'
+               : '🔗 '+esc((it.name?it.name+': ':'')+it.url); }).join('<br>');
   }
   function wlClinksHtml(s){
-    return wlParse(s).map(function(it){ return '<a class="bd-clink" href="'+esc(it.url)+'" target="_blank" onclick="event.stopPropagation()">🔗 '+esc(it.name||'เปิดลิงก์งาน / เอกสาร')+'</a>'; }).join('');
+    return wlParse(s).map(function(it){ var u=wlNorm(it.url); if(!u) return '';
+      return '<a class="bd-clink" href="'+esc(u)+'" target="_blank" onclick="event.stopPropagation()">🔗 '+esc(it.name||'เปิดลิงก์งาน / เอกสาร')+'</a>'; }).join('');
   }
   function wlRowHtml(it){
     it=it||{name:'',url:''};
