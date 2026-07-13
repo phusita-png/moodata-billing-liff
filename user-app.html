@@ -1757,10 +1757,10 @@
   }
   function wlRowHtml(it){
     it=it||{name:'',url:''};
-    return '<div class="wl-row" style="display:flex;gap:4px;margin-bottom:4px">'+
-      '<input class="wl-name" placeholder="ชื่อ" value="'+esc(it.name||'')+'" style="flex:0 0 30%;min-width:0">'+
-      '<input class="wl-url" placeholder="https://…" value="'+esc(it.url||'')+'" style="flex:1;min-width:0">'+
-      '<button type="button" class="btn btn-ghost" onclick="wlDelRow(this)" style="flex:0 0 auto;padding:0 8px">✕</button></div>';
+    return '<div class="wl-row" style="display:flex;gap:6px;margin-bottom:6px;align-items:center">'+
+      '<input class="wl-name" placeholder="ชื่อ" value="'+esc(it.name||'')+'" style="flex:0 0 27%;width:auto;min-width:0;padding:9px 8px">'+
+      '<input class="wl-url" placeholder="https://…" value="'+esc(it.url||'')+'" style="flex:1 1 0;width:auto;min-width:0;padding:9px 8px">'+
+      '<button type="button" onclick="wlDelRow(this)" style="flex:0 0 34px;width:34px;height:38px;padding:0;border:1.5px solid var(--line);border-radius:8px;background:#fff;color:#DC2626;font-size:15px;line-height:1;cursor:pointer">✕</button></div>';
   }
   function wlRowsHtml(s){ var a=wlParse(s); if(!a.length) a=[{name:'',url:''}]; return a.map(wlRowHtml).join(''); }
   function wlAddRow(){ var b=$('mWlBox'); if(b) b.insertAdjacentHTML('beforeend', wlRowHtml()); }
