@@ -1931,10 +1931,12 @@
   function bOpenCreate(){
     var asgOpts='<option value="">— ยังไม่มอบหมาย —</option>'+BTEAM.map(function(mm){return '<option value="'+esc(mm.name)+'">'+esc(mm.name)+'</option>';}).join('');
     var catOpts=BCATS_EDIT.map(function(o){return '<option value="'+esc(o.v)+'">'+o.lb+'</option>';}).join('');
+    var pjOpts='<option value="">— ไม่ผูก project —</option>'+BPROJECTS.map(function(pp){return '<option value="'+esc(pp.id)+'">📁 '+esc(pp.name)+'</option>';}).join('');
     modal('<h3>+ เปิดงานใหม่</h3><div id="mErr" class="m-err hidden"></div>'+
       '<div class="fld"><label>ประเภท <span class="bd-age">(กำหนดสีการ์ด)</span></label><select id="cbCat">'+catOpts+'</select></div>'+
       '<div class="fld"><label>หัวข้องาน <span class="bd-age">(เว้นว่าง = ตัดจากรายละเอียด)</span></label><input id="cbTitle" placeholder="หัวข้อสั้น ๆ"></div>'+
       '<div class="fld"><label>ลูกค้า/บริษัท <span class="bd-age">(เลือกจากรายชื่อ หรือพิมพ์ใหม่)</span></label><input id="cbCust" list="dlCbCust" autocomplete="off" placeholder="เลือกหรือพิมพ์ชื่อลูกค้า">'+custDatalist('dlCbCust')+'</div>'+
+      '<div class="fld"><label>📁 จัดเข้า Project <span class="bd-age">(ไม่บังคับ · กองงานเป็นกลุ่ม)</span></label><select id="cbProject">'+pjOpts+'</select></div>'+
       '<div class="fld"><label>รายละเอียดงาน</label><textarea id="cbDetail" placeholder="สิ่งที่ต้องทำ…"></textarea></div>'+
       '<div class="fld"><label>ผู้รับผิดชอบ</label><select id="cbAsg">'+asgOpts+'</select></div>'+
       '<div class="fld"><label>กำหนดเสร็จ</label><input id="cbDue" type="date"></div>'+
@@ -1945,7 +1947,7 @@
     var cust=$('cbCust').value.trim(), detail=$('cbDetail').value.trim();
     if(!cust && !detail){ mErr('กรอกลูกค้าหรือรายละเอียดอย่างน้อย 1 ช่อง'); return; }
     toast('กำลังเปิดงาน…');
-    jsonpPost({action:'waCreateTask',uid:UID,title:$('cbTitle').value.trim(),customer:cust,detail:detail,category:$('cbCat').value,assignee:$('cbAsg').value,due:$('cbDue').value}).then(function(r){
+    jsonpPost({action:'waCreateTask',uid:UID,title:$('cbTitle').value.trim(),customer:cust,detail:detail,category:$('cbCat').value,assignee:$('cbAsg').value,due:$('cbDue').value,project:($('cbProject')?$('cbProject').value:'')}).then(function(r){
       if(!r||!r.ok){ mErr((r&&r.error)||'สร้างไม่สำเร็จ'); return; } closeModal(); toast('เปิดงานใหม่แล้ว '+(r.no||'')); renderOwnerBoard(BSCOPE, true);
     }).catch(function(e){ mErr(e.message); });
   }
