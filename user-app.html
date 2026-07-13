@@ -1082,31 +1082,33 @@
   }
   window.renameCompany=renameCompany; window.doRenameCompany=doRenameCompany;
 
-  // ── (ทีม/พี่) นัดประชุม — แสดงในเว็บนี้ (port จาก appointment.html · backend apptmeta/apptcreate) ──
+  // ── (ทีม/พี่) นัดประชุม — view ในเว็บ (cache + อีเมลแยกช่อง) · backend apptmeta/apptcreate ──
   var APPT_CUST=[], APPT_DUR=60;
+  function apFetchMeta(cb){ jsonp({action:'apptmeta',uid:UID,gid:''}).then(function(meta){ if(meta&&meta.ok){ APPT_CUST=meta.customers||[]; if(cb)cb(true); } else if(cb)cb(false); }).catch(function(){ if(cb)cb(false); }); }
   function renderAppointment(){
+    if(APPT_CUST.length){ apBuildForm(); apFetchMeta(); return; }   // cache → ทันที + refresh เงียบ
     $('main').innerHTML='<div class="card"><div class="empty">กำลังโหลด…</div></div>';
-    jsonp({action:'apptmeta',uid:UID,gid:''}).then(function(meta){
-      if(!meta||!meta.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((meta&&meta.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
-      APPT_CUST=meta.customers||[];
-      if(!APPT_CUST.length){ $('main').innerHTML='<div class="card"><div class="empty">ยังไม่มีลูกค้าในระบบค่ะ</div></div>'; return; }
-      var opts=APPT_CUST.map(function(c,i){ return '<option value="'+i+'">'+esc(c.name)+(c.groupId?'':' (ยังไม่ผูกกลุ่ม)')+'</option>'; }).join('');
-      var durs=[30,60,90,120].map(function(m){ return '<button type="button" data-min="'+m+'" onclick="apSetDur(this)" style="flex:1;padding:10px 0;border:1.5px solid '+(m===60?'var(--bd,#1B72E8);background:#EAF2FF;color:#1B72E8;font-weight:600':'var(--line);background:#fff')+';border-radius:9px;font-family:inherit;font-size:14px;cursor:pointer">'+(m<60?m+' น.':(m/60)+' ชม.')+'</button>'; }).join('');
-      $('main').innerHTML=
-        '<div class="card">'+
-        '<div class="fld"><label>ลูกค้า *</label><select id="apCust" onchange="apPrefill()">'+opts+'</select></div>'+
-        '<div class="fld"><label>หัวข้อการประชุม *</label><input id="apTitle" placeholder="เช่น ประชุมสรุปงานประจำเดือน"></div>'+
-        '<div class="fld"><label>วันและเวลาเริ่ม *</label><input id="apStart" type="datetime-local"></div>'+
-        '<div class="fld"><label>ระยะเวลา</label><div style="display:flex;gap:8px">'+durs+'</div></div>'+
-        '<div class="fld"><label>อีเมลผู้เข้าร่วม (เชิญทางปฏิทิน)</label><textarea id="apEmails" placeholder="คั่นหลายคนด้วย , (เว้นว่างได้)"></textarea></div>'+
-        '<div class="fld"><label>โน้ตเพิ่มเติม (ไม่บังคับ)</label><textarea id="apNote" placeholder="วาระการประชุม"></textarea></div>'+
-        '<button class="btn btn-primary" style="width:100%;margin-top:8px" onclick="apSubmit()">✅ สร้างนัด + ส่งให้ลูกค้า</button>'+
-        '</div>';
-      APPT_DUR=60; apPrefill(); apDefaultStart();
-    }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
+    apFetchMeta(function(ok){ if(ok&&APPT_CUST.length) apBuildForm(); else $('main').innerHTML='<div class="card"><div class="empty">ยังไม่มีลูกค้าในระบบค่ะ</div></div>'; });
   }
-  function apSetDur(btn){ Array.prototype.forEach.call(btn.parentNode.children,function(b){ b.style.cssText=b.style.cssText.replace(/border-color[^;]*;?/,''); b.style.border='1.5px solid var(--line)'; b.style.background='#fff'; b.style.color=''; b.style.fontWeight='400'; }); btn.style.border='1.5px solid #1B72E8'; btn.style.background='#EAF2FF'; btn.style.color='#1B72E8'; btn.style.fontWeight='600'; APPT_DUR=parseInt(btn.getAttribute('data-min'),10); }
-  function apPrefill(){ var c=APPT_CUST[$('apCust').value]; if(c&&c.email&&$('apEmails')&&!$('apEmails').value.trim()) $('apEmails').value=c.email; }
+  function apBuildForm(){
+    if(VIEW!=='appt'||document.getElementById('modal')) return;   // ออกจากหน้า/มี modal → ไม่ทับ
+    var opts=APPT_CUST.map(function(c,i){ return '<option value="'+i+'">'+esc(c.name)+(c.groupId?'':' (ยังไม่ผูกกลุ่ม)')+'</option>'; }).join('');
+    var durs=[30,60,90,120].map(function(m){ return '<button type="button" data-min="'+m+'" onclick="apSetDur(this)" style="flex:1;padding:10px 0;border:1.5px solid '+(m===60?'#1B72E8;background:#EAF2FF;color:#1B72E8;font-weight:600':'var(--line);background:#fff')+';border-radius:9px;font-family:inherit;font-size:14px;cursor:pointer">'+(m<60?m+' น.':(m/60)+' ชม.')+'</button>'; }).join('');
+    $('main').innerHTML=
+      '<div class="card">'+
+      '<div class="fld"><label>ลูกค้า *</label><select id="apCust" onchange="apPrefill(true)">'+opts+'</select></div>'+
+      '<div class="fld"><label>หัวข้อการประชุม *</label><input id="apTitle" placeholder="เช่น ประชุมสรุปงานประจำเดือน"></div>'+
+      '<div class="fld"><label>วันและเวลาเริ่ม *</label><input id="apStart" type="datetime-local"></div>'+
+      '<div class="fld"><label>ระยะเวลา</label><div style="display:flex;gap:8px">'+durs+'</div></div>'+
+      '<div class="fld"><label>อีเมลผู้เข้าร่วม <span class="bd-age">(เชิญทางปฏิทิน · กด ➕ เพิ่ม)</span></label><div id="apEmBox">'+emRowsHtml('')+'</div>'+
+        '<button type="button" onclick="emAddRow()" style="margin-top:4px;padding:8px 14px;border:1.5px dashed var(--line);border-radius:8px;background:#fff;color:#1B72E8;font-family:inherit;font-size:14px;cursor:pointer">➕ เพิ่มอีเมล</button></div>'+
+      '<div class="fld"><label>โน้ตเพิ่มเติม (ไม่บังคับ)</label><textarea id="apNote" placeholder="วาระการประชุม"></textarea></div>'+
+      '<button class="btn btn-primary" style="width:100%;margin-top:8px" onclick="apSubmit()">✅ สร้างนัด + ส่งให้ลูกค้า</button>'+
+      '</div>';
+    APPT_DUR=60; apPrefill(false); apDefaultStart();
+  }
+  function apSetDur(btn){ Array.prototype.forEach.call(btn.parentNode.children,function(b){ b.style.border='1.5px solid var(--line)'; b.style.background='#fff'; b.style.color=''; b.style.fontWeight='400'; }); btn.style.border='1.5px solid #1B72E8'; btn.style.background='#EAF2FF'; btn.style.color='#1B72E8'; btn.style.fontWeight='600'; APPT_DUR=parseInt(btn.getAttribute('data-min'),10); }
+  function apPrefill(force){ var c=APPT_CUST[$('apCust').value], box=$('apEmBox'); if(!box)return; if(force||!emCollect()){ box.innerHTML=emRowsHtml((c&&c.email)||''); } }
   function apDefaultStart(){ var d=new Date(); d.setMinutes(0,0,0); d.setHours(d.getHours()+1); function p(n){return(n<10?'0':'')+n;} if($('apStart')) $('apStart').value=d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes()); }
   function apSubmit(){
     var c=APPT_CUST[$('apCust').value]||{}, customer=c.name||'', title=$('apTitle').value.trim(), start=$('apStart').value;
@@ -1114,7 +1116,7 @@
     if(!title){ toast('ใส่หัวข้อประชุมก่อนค่ะ'); return; }
     if(!start){ toast('เลือกวันเวลาก่อนค่ะ'); return; }
     toast('กำลังสร้างนัด + Meet…');
-    jsonp({action:'apptcreate',uid:UID,customer:customer,title:title,start:start,duration:APPT_DUR,emails:$('apEmails').value,note:$('apNote').value}).then(function(r){
+    jsonp({action:'apptcreate',uid:UID,customer:customer,title:title,start:start,duration:APPT_DUR,emails:emCollect(),note:$('apNote').value}).then(function(r){
       if(!r||!r.ok){ toast((r&&r.error)||'สร้างนัดไม่สำเร็จ'); return; }
       modal('<h3>🎉 สร้างนัดเรียบร้อย</h3>'+
         '<div class="m-hint">'+esc(r.when||'')+'</div>'+
@@ -1123,28 +1125,38 @@
         '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal();renderAppointment()">สร้างนัดอีก</button></div>');
     }).catch(function(e){ toast(e.message); });
   }
-  window.renderAppointment=renderAppointment; window.apSetDur=apSetDur; window.apPrefill=apPrefill; window.apSubmit=apSubmit;
+  // อีเมลผู้เข้าร่วม — ช่องแยก + ปุ่ม ➕/✕
+  function emRowHtml(v){ return '<div class="em-row" style="display:flex;gap:6px;margin-bottom:6px;align-items:center">'+
+    '<input class="em-in" type="email" placeholder="name@email.com" value="'+esc(v||'')+'" style="flex:1 1 0;width:auto;min-width:0;padding:9px 8px">'+
+    '<button type="button" onclick="emDelRow(this)" style="flex:0 0 34px;width:34px;height:38px;padding:0;border:1.5px solid var(--line);border-radius:8px;background:#fff;color:#DC2626;font-size:15px;line-height:1;cursor:pointer">✕</button></div>'; }
+  function emRowsHtml(str){ var a=String(str||'').split(',').map(function(s){return s.trim();}).filter(Boolean); if(!a.length)a=['']; return a.map(emRowHtml).join(''); }
+  function emAddRow(){ var b=$('apEmBox'); if(b) b.insertAdjacentHTML('beforeend', emRowHtml('')); }
+  function emDelRow(btn){ var r=btn.parentNode; if(!r||!r.parentNode)return; if(document.querySelectorAll('#apEmBox .em-row').length>1) r.parentNode.removeChild(r); else r.querySelector('.em-in').value=''; }
+  function emCollect(){ var out=[]; Array.prototype.forEach.call(document.querySelectorAll('#apEmBox .em-in'),function(i){ var v=i.value.trim(); if(v)out.push(v); }); return out.join(','); }
+  window.renderAppointment=renderAppointment; window.apSetDur=apSetDur; window.apPrefill=apPrefill; window.apSubmit=apSubmit; window.emAddRow=emAddRow; window.emDelRow=emDelRow;
 
   // ── (ทีม/พี่) ส่งประกาศเข้ากลุ่มลูกค้า · เลือกทุกกลุ่ม หรือเฉพาะบางกลุ่ม ──
   var ANNOUNCE_GROUPS=[];
+  function anFetchGroups(cb){ jsonp({action:'waAnnounceGroups',uid:UID}).then(function(r){ ANNOUNCE_GROUPS=(r&&r.ok&&r.groups)||[]; if(cb)cb(true); }).catch(function(){ if(cb)cb(false); }); }
   function renderAnnounce(){
+    if(ANNOUNCE_GROUPS.length){ anBuildForm(); anFetchGroups(); return; }   // cache → ทันที + refresh เงียบ
     $('main').innerHTML='<div class="card"><div class="empty">กำลังโหลด…</div></div>';
-    jsonp({action:'waAnnounceGroups',uid:UID}).then(function(r){
-      ANNOUNCE_GROUPS=(r&&r.ok&&r.groups)||[];
-      if(!ANNOUNCE_GROUPS.length){ $('main').innerHTML='<div class="card"><div class="empty">ยังไม่มีกลุ่มลูกค้าให้ส่งประกาศค่ะ'+(IS_OWNER?'':' (แจ้งพี่ให้จัดสมาชิกกลุ่มก่อน)')+'</div></div>'; return; }
-      var chk=ANNOUNCE_GROUPS.map(function(g){ return '<label style="display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid var(--line);font-size:14px"><input type="checkbox" class="angrp" value="'+esc(g.groupId)+'" checked style="width:auto"> 🏢 '+esc(g.customer)+'</label>'; }).join('');
-      $('main').innerHTML=
-        '<div class="card">'+
-        '<div class="m-hint">พิมพ์ข้อความ → ส่งเข้าไลน์กลุ่มลูกค้า · บอทขึ้นต้นให้ "📢 ประกาศจาก…"</div>'+
-        '<textarea id="anText" placeholder="พิมพ์ข้อความประกาศ…" style="width:100%;min-height:120px;padding:11px;border:1.5px solid var(--line);border-radius:10px;font-size:15px;font-family:inherit;box-sizing:border-box"></textarea>'+
-        '<div class="fld" style="margin-top:12px"><label>ส่งเข้ากลุ่ม</label>'+
-          '<label style="display:flex;align-items:center;gap:8px;padding:6px 2px"><input type="radio" name="anScope" value="all" checked onchange="anToggleScope()" style="width:auto"> ทุกกลุ่ม ('+ANNOUNCE_GROUPS.length+')</label>'+
-          '<label style="display:flex;align-items:center;gap:8px;padding:6px 2px"><input type="radio" name="anScope" value="pick" onchange="anToggleScope()" style="width:auto"> เลือกเฉพาะบางกลุ่ม</label>'+
-          '<div id="anPick" style="display:none;max-height:220px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:2px 10px;margin-top:6px">'+chk+'</div>'+
-        '</div>'+
-        '<button class="btn btn-primary" style="width:100%;margin-top:6px" onclick="doAnnounce()">📢 ส่งประกาศ</button>'+
-        '</div>';
-    }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
+    anFetchGroups(function(){ if(ANNOUNCE_GROUPS.length) anBuildForm(); else $('main').innerHTML='<div class="card"><div class="empty">ยังไม่มีกลุ่มลูกค้าให้ส่งประกาศค่ะ'+(IS_OWNER?'':' (แจ้งพี่ให้จัดสมาชิกกลุ่มก่อน)')+'</div></div>'; });
+  }
+  function anBuildForm(){
+    if(VIEW!=='announce'||document.getElementById('modal')) return;
+    var chk=ANNOUNCE_GROUPS.map(function(g){ return '<label style="display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid var(--line);font-size:14px"><input type="checkbox" class="angrp" value="'+esc(g.groupId)+'" checked style="width:auto"> 🏢 '+esc(g.customer)+'</label>'; }).join('');
+    $('main').innerHTML=
+      '<div class="card">'+
+      '<div class="m-hint">พิมพ์ข้อความ → ส่งเข้าไลน์กลุ่มลูกค้า · บอทขึ้นต้นให้ "📢 ประกาศจาก…"</div>'+
+      '<textarea id="anText" placeholder="พิมพ์ข้อความประกาศ…" style="width:100%;min-height:120px;padding:11px;border:1.5px solid var(--line);border-radius:10px;font-size:15px;font-family:inherit;box-sizing:border-box"></textarea>'+
+      '<div class="fld" style="margin-top:12px"><label>ส่งเข้ากลุ่ม</label>'+
+        '<label style="display:flex;align-items:center;gap:8px;padding:6px 2px"><input type="radio" name="anScope" value="all" checked onchange="anToggleScope()" style="width:auto"> ทุกกลุ่ม ('+ANNOUNCE_GROUPS.length+')</label>'+
+        '<label style="display:flex;align-items:center;gap:8px;padding:6px 2px"><input type="radio" name="anScope" value="pick" onchange="anToggleScope()" style="width:auto"> เลือกเฉพาะบางกลุ่ม</label>'+
+        '<div id="anPick" style="display:none;max-height:220px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:2px 10px;margin-top:6px">'+chk+'</div>'+
+      '</div>'+
+      '<button class="btn btn-primary" style="width:100%;margin-top:6px" onclick="doAnnounce()">📢 ส่งประกาศ</button>'+
+      '</div>';
   }
   function anToggleScope(){ var pick=document.querySelector('input[name=anScope]:checked').value==='pick'; if($('anPick')) $('anPick').style.display=pick?'block':'none'; }
   function doAnnounce(){
@@ -2100,7 +2112,7 @@
       var sp=startParam();
       switchView(sp==='docs' ? 'docs' : (sp==='work' ? 'projects' : 'leave'));
       // อุ่นแคชเบื้องหลัง → คลิกการลา/เอกสารครั้งแรกเด้งทันที (ไม่แย่งจอแรกโหลด)
-      setTimeout(function(){ if(!LVCACHE.data) _leaveFetch(true); if(IDTOKEN && !DOCCACHE.data) _docsFetch(true); }, 900);
+      setTimeout(function(){ if(!LVCACHE.data) _leaveFetch(true); if(IDTOKEN && !DOCCACHE.data) _docsFetch(true); if(!APPT_CUST.length) apFetchMeta(); if(!ANNOUNCE_GROUPS.length) anFetchGroups(); }, 900);
     }).catch(function(e){ fatal(e.message); });
   }
   (function init(){
