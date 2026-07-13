@@ -1046,7 +1046,8 @@
       '<div class="m-hint">จัดว่าใครอยู่ project/บริษัทไหน — สมาชิกจะช่วยกันทำงานในนั้นได้ (บริษัท = จัดกลุ่มงานตามลูกค้าอัตโนมัติ · งานใหม่เข้าเองไม่ต้องจัดซ้ำ)</div>'+
       '<div class="pjm-list" id="pjmList">'+body+'</div>'+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal();renderProjects()">ปิด</button>'+
-      '<button class="btn btn-primary" onclick="openProjEdit(\'\')">➕ สร้าง Project</button></div>');
+      // บนคอมมีการ์ด "สร้าง Project" แยกบนบอร์ดแล้ว → ไม่ซ้ำในหน้านี้ · มือถือไม่มีการ์ดแยก จึงคงปุ่มไว้
+      (bIsMobile()?'<button class="btn btn-primary" onclick="openProjEdit(\'\')">➕ สร้าง Project</button>':'')+'</div>');
     // 2) refresh ข้อมูลล่าสุดใน background → แทนที่เฉพาะ list (modal/ปุ่มคงอยู่ ไม่กระพริบ)
     jsonp({action:'waProjectAdminList',uid:UID}).then(function(r){
       var el=$('pjmList'); if(!el) return;   // ปิด modal ไปแล้ว
