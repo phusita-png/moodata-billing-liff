@@ -399,6 +399,8 @@
       <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg><span>งานของฉัน</span></button>
     <button class="nav-btn" onclick="location.href='appointment.html'" aria-label="นัดประชุม">
       <svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 2.5v4M16 2.5v4M8.5 13.5l2 2 4-4"/></svg><span>นัดประชุม</span></button>
+    <button class="nav-btn" data-view="announce" aria-label="ประกาศ">
+      <svg viewBox="0 0 24 24"><path d="M3 11v2a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1Z"/><path d="M15 8.5a4 4 0 0 1 0 7"/></svg><span>ประกาศ</span></button>
     <button class="nav-btn" data-view="review" aria-label="รอตรวจ" id="navReview" style="display:none">
       <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><span>รอตรวจ</span></button>
     <button class="nav-btn" data-view="trash" aria-label="ถังขยะ">
@@ -437,7 +439,7 @@
   var MENAME='', TEAM=[], CUSTOMERS=[];   // งาน
   var VIEW_META = {
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
-    expense:['💸','เบิกค่าใช้จ่าย'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ']
+    expense:['💸','เบิกค่าใช้จ่าย'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ']
   };
   var PROJECTS=[], COMPANIES=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ) · COMPANIES=บริษัท auto (หน้าจัดการ)
   var ALL_TASKS=[], PJ_SEL='';   // มุมมอง Project (dropdown เลือก · แยก 6 สถานะ + %)
@@ -478,7 +480,7 @@
     VIEW=v;
     Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(b){ b.classList.toggle('active', b.dataset.view===v); });
     var meta=VIEW_META[v]||['•',v]; $('tbIcon').textContent=meta[0]; $('tbTitle').textContent=meta[1];
-    ({ leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, projects:renderProjects, trash:renderTrash }[v] || soon)();
+    ({ leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, projects:renderProjects, trash:renderTrash, announce:renderAnnounce }[v] || soon)();
   }
   function soon(){
     $('main').innerHTML='<div class="card"><div class="soon-wrap"><div class="e-emo">🚧</div>เมนูนี้กำลังย้ายมาหน้านี้ — เร็ว ๆ นี้ค่ะ<br><span style="font-size:13px">(ตอนนี้ยังใช้ผ่านเมนูเดิม/แชทได้)</span></div></div>';
@@ -1079,6 +1081,37 @@
     }).catch(function(e){ mErr(e.message); });
   }
   window.renameCompany=renameCompany; window.doRenameCompany=doRenameCompany;
+  // ── (ทีม/พี่) ส่งประกาศเข้ากลุ่มลูกค้า · พี่=ทุกกลุ่ม · ทีม=เฉพาะกลุ่มที่ดูแล ──
+  function renderAnnounce(){
+    var scope = IS_OWNER ? 'ทุกกลุ่มลูกค้า' : 'กลุ่มลูกค้าที่คุณดูแล';
+    $('main').innerHTML =
+      '<div class="card">'+
+      '<div class="m-hint">พิมพ์ข้อความแล้วส่งเข้าไลน์ <b>'+scope+'</b> ทันที · บอทจะขึ้นต้นให้ว่า "📢 ประกาศจาก…"</div>'+
+      '<textarea id="anText" placeholder="พิมพ์ข้อความประกาศ…" style="width:100%;min-height:130px;padding:11px;border:1.5px solid var(--line);border-radius:10px;font-size:15px;font-family:inherit;box-sizing:border-box"></textarea>'+
+      '<button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="doAnnounce()">📢 ส่งประกาศ</button>'+
+      '</div>';
+  }
+  function doAnnounce(){
+    var t=$('anText')?$('anText').value.trim():'';
+    if(!t){ toast('พิมพ์ข้อความก่อนค่ะ'); return; }
+    var scope = IS_OWNER ? 'ทุกกลุ่มลูกค้า' : 'กลุ่มที่คุณดูแล';
+    modal('<h3>📢 ยืนยันส่งประกาศ</h3>'+
+      '<div class="m-hint">ส่งเข้า <b>'+scope+'</b> — เข้าไลน์กลุ่มลูกค้าทันที ยกเลิกไม่ได้</div>'+
+      '<div style="background:#F8FAFC;border:1px solid var(--line);border-radius:8px;padding:11px;white-space:pre-wrap;font-size:14px;max-height:200px;overflow:auto">'+esc(t)+'</div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" onclick="submitAnnounce()">ส่งเลย</button></div>');
+  }
+  function submitAnnounce(){
+    var t=$('anText')?$('anText').value.trim():'';
+    if(!t) return;
+    closeModal(); toast('กำลังส่งประกาศ…');
+    jsonpPost({action:'waAnnounce',uid:UID,text:t}).then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'ส่งไม่สำเร็จ'); return; }
+      toast('✅ ส่งประกาศแล้ว '+(r.sent||0)+'/'+(r.total||0)+' กลุ่ม');
+      if($('anText')) $('anText').value='';
+    }).catch(function(e){ toast(e.message); });
+  }
+  window.renderAnnounce=renderAnnounce; window.doAnnounce=doAnnounce; window.submitAnnounce=submitAnnounce;
   // ── (พี่) ลบ Project จัดเอง (บริษัท auto ลบไม่ได้) ──
   function delProj(id,name){
     modal('<h3>🗑️ ลบ Project</h3><div id="mErr" class="m-err hidden"></div>'+
