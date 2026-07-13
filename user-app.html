@@ -738,6 +738,7 @@
       if(t.status.indexOf('กำลังทำ')<0&&t.status.indexOf('รอตรวจ')<0)
         btns.push('<button class="btn btn-primary" onclick="doDoing(\''+esc(t.no)+'\')">🔵 รับงาน</button>');
       btns.push('<button class="btn btn-ok" onclick="openSubmit(\''+esc(t.no)+'\')">📤 ส่งตรวจ</button>');
+      if(t.hasGroup) btns.push('<button class="btn btn-ok" onclick="sendMine(\''+esc(t.no)+'\')">📨 ส่งลูกค้าเลย</button>');
       btns.push('<button class="btn btn-ghost" onclick="openTransfer(\''+esc(t.no)+'\')">🔄 โอนงาน</button>');
     }
     if(btns.length) h+='<div class="tk-acts">'+btns.join('')+'</div>';
@@ -775,6 +776,17 @@
       if(!r||!r.ok){ mErr((r&&r.error)||'ส่งไม่สำเร็จ'); return; } closeModal(); toast('📤 ส่งตรวจแล้ว (แจ้งพี่ให้)'); refreshTasksView();
     }).catch(function(e){ mErr(e.message); });
   }
+  // ทีมส่งงานให้ลูกค้าเอง (เฉพาะงานตัวเอง · ข้ามพี่ตรวจ) — มี confirm กันพลาด · backend เช็ค assignee ซ้ำ
+  function sendMine(no){
+    modal('<h3>📨 ส่งงานให้ลูกค้า</h3><div class="m-hint">ยืนยันส่งงาน <b>'+esc(no)+'</b> ให้ลูกค้าเลยไหมคะ<br>(ไม่ผ่านพี่ตรวจ — ลูกค้าจะได้รับการ์ดงานทันที)</div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-ok" onclick="doSendMine(\''+esc(no)+'\')">ส่งเลย</button></div>');
+  }
+  function doSendMine(no){
+    toast('กำลังส่ง…');
+    jsonp({action:'waSendCustomer',uid:UID,no:no}).then(function(r){ if(!r||!r.ok){ toast((r&&r.error)||'ส่งไม่สำเร็จ'); return; } closeModal(); toast('✅ ส่งให้ลูกค้าแล้ว'); refreshTasksView(); }).catch(function(e){ toast(e.message); });
+  }
+
   // เปิดงานใหม่ (pid = สร้างในบอร์ด project นั้น · ไม่ส่ง = งานทั่วไป)
   var CREATE_PID='', CREATE_CUST='';
   function openCreate(pid){
@@ -953,6 +965,7 @@
       if(t.unassigned) btns.push('<button class="btn btn-primary" onclick="doClaim(\''+esc(t.no)+'\')">🙋 รับงาน</button>');
       else {
         if(t.status.indexOf('รอตรวจ')<0) btns.push('<button class="btn btn-ok" onclick="openSubmit(\''+esc(t.no)+'\')">📤 ส่งตรวจ</button>');
+        if(t.mine&&t.hasGroup) btns.push('<button class="btn btn-ok" onclick="sendMine(\''+esc(t.no)+'\')">📨 ส่งลูกค้าเลย</button>');
         if(t.mine) btns.push('<button class="btn btn-ghost" onclick="openTransfer(\''+esc(t.no)+'\')">🔄 โอนงาน</button>');
       }
     }
