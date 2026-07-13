@@ -1027,7 +1027,7 @@
       '<div class="pjc-top"><div class="pjc-name">'+(isCo?'🏢 ':'📁 ')+esc(pj.name)+'</div>'+badge+'</div>'+
       '<div class="pjc-meta">'+(!isCo&&pj.customer?'🏢 '+esc(pj.customer)+' · ':'')+'งาน '+(pj.taskCount||0)+' · สำเร็จ '+(pj.pct||0)+'%</div>'+
       '<div class="pjc-mem">👥 '+(mem.length?esc(mem.join(', ')):'<i style="color:#C87F1E">ยังไม่มีสมาชิก</i>')+'</div>'+
-      '<div class="pjc-acts">'+(isCo?'':'<button class="btn btn-ghost" onclick="openProjEdit(\''+esc(pj.id)+'\')">✏️ แก้ไข</button>')+
+      '<div class="pjc-acts">'+(isCo?'<button class="btn btn-ghost" onclick="renameCompany(\''+jss(pj.name)+'\')" title="เปลี่ยนชื่อ + ตามอัปเดตงานเก่าให้">✏️ เปลี่ยนชื่อ</button>':'<button class="btn btn-ghost" onclick="openProjEdit(\''+esc(pj.id)+'\')">✏️ แก้ไข</button>')+
         '<button class="btn btn-ghost" onclick="openProjMembers(\''+esc(pj.id)+'\')">👥 สมาชิก ('+mem.length+')</button>'+
         '<button class="btn btn-danger pjm-delbtn" onclick="'+(isCo?'delCompany(\''+jss(pj.name)+'\')':'delProj(\''+esc(pj.id)+'\',\''+jss(pj.name)+'\')')+'" title="'+(isCo?'ยกเลิกงานทั้งกลุ่ม':'ลบ project')+'">🗑️</button></div>'+
       '</div>';
@@ -1058,6 +1058,25 @@
     }).catch(function(e){ var el=$('pjmList'); if(el&&!PROJECTS.length&&!COMPANIES.length) el.innerHTML='<div class="emptybox">'+esc(e.message)+'</div>'; });
   }
   window.openProjManage=openProjManage; window.openProjEdit=openProjEdit; window.openProjMembers=openProjMembers;
+  // (พี่) เปลี่ยนชื่อลูกค้า/บริษัท → backend ตามอัปเดตงานเก่า+กลุ่ม+ตามรอบ+project+สมาชิกให้อัตโนมัติ
+  function renameCompany(oldName){
+    modal('<h3>✏️ เปลี่ยนชื่อลูกค้า</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">เปลี่ยนชื่อ <b>🏢 '+esc(oldName)+'</b> — ระบบจะตามอัปเดต <b>งานเก่าทุกใบ + กลุ่ม + งานตามรอบ + project + สมาชิก</b> ให้อัตโนมัติ (ไม่แตะประวัติบิล/เอกสาร)</div>'+
+      '<div class="fld"><label>ชื่อใหม่</label><input id="rcNew" value="'+esc(oldName)+'"></div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="openProjManage()">← กลับ</button>'+
+      '<button class="btn btn-primary" onclick="doRenameCompany(\''+jss(oldName)+'\')">เปลี่ยนชื่อ</button></div>');
+  }
+  function doRenameCompany(oldName){
+    var nw=$('rcNew').value.trim();
+    if(!nw){ mErr('กรอกชื่อใหม่ก่อนค่ะ'); return; }
+    if(nw===oldName){ mErr('ชื่อใหม่ต้องต่างจากเดิม'); return; }
+    toast('กำลังเปลี่ยนชื่อ…');
+    jsonp({action:'waRenameCustomer',uid:UID,old:oldName,'new':nw}).then(function(r){
+      if(!r||!r.ok){ mErr((r&&r.error)||'เปลี่ยนไม่สำเร็จ'); return; }
+      var c=r.counts||{}; toast('✅ เปลี่ยนเป็น "'+nw+'" · อัปเดตงาน '+(c.task||0)+' ใบ'+((c.project||c.recur)?' + project/รอบ':'')); openProjManage();
+    }).catch(function(e){ mErr(e.message); });
+  }
+  window.renameCompany=renameCompany; window.doRenameCompany=doRenameCompany;
   // ── (พี่) ลบ Project จัดเอง (บริษัท auto ลบไม่ได้) ──
   function delProj(id,name){
     modal('<h3>🗑️ ลบ Project</h3><div id="mErr" class="m-err hidden"></div>'+
