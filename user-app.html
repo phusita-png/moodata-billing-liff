@@ -980,7 +980,7 @@
     var pj = id ? (PROJECTS.filter(function(p){return p.id===id;})[0]||{}) : {};
     modal('<h3>'+(id?'✏️ แก้ Project':'➕ สร้าง Project')+'</h3><div id="mErr" class="m-err hidden"></div>'+
       '<div class="fld"><label>ชื่อ Project</label><input id="pName" placeholder="เช่น ปิดบัญชีไตรมาส 3" value="'+esc(pj.name||'')+'"></div>'+
-      '<div class="fld"><label>ลูกค้า (ถ้ามี · เว้นว่างได้)</label><input id="pCust" placeholder="ชื่อลูกค้า" value="'+esc(pj.customer||'')+'"></div>'+
+      '<div class="fld"><label>ลูกค้า (ถ้ามี · เว้นว่างได้)</label><input id="pCust" list="dlPCust" autocomplete="off" placeholder="เลือกหรือพิมพ์ชื่อลูกค้า" value="'+esc(pj.customer||'')+'">'+custDatalist('dlPCust')+'</div>'+
       '<div class="fld"><label>หมายเหตุ</label><input id="pNote" placeholder="ไม่บังคับ" value="'+esc(pj.note||'')+'"></div>'+
       (id?'<div class="fld"><label>สถานะ</label><select id="pStatus"><option value="ทำอยู่"'+(pj.status&&pj.status.indexOf('ปิด')>=0?'':' selected')+'>ทำอยู่</option><option value="ปิด"'+(pj.status&&pj.status.indexOf('ปิด')>=0?' selected':'')+'>ปิด</option></select></div>':'')+
       '<div class="m-act"><button class="btn btn-ghost" onclick="openProjManage()">← กลับ</button>'+
@@ -1467,6 +1467,7 @@
   }
   function bApplyData(r){
     BALL=r.tasks||[]; BTEAM=r.team||[]; BSTATUSES=r.statuses||[]; BTYPESLIST=r.types||[]; BOWNER=r.owner||''; BNOW=r.now||Date.now(); BPROJECTS=r.projects||[];
+    if(r.customers) CUSTOMERS=r.customers;   // รายชื่อลูกค้าจากชีตกลุ่มลูกค้า → ใช้ทำ datalist ตอนสร้างงาน/project
     BTASKS=bScopeTasks(BALL);
     var cs={}; BTASKS.forEach(function(t){ if(t.category) cs[t.category]=1; }); BCATS=Object.keys(cs);
   }
@@ -1918,13 +1919,22 @@
       closeModal(); toast('❌ ยกเลิกงาน '+no+' แล้ว'); renderOwnerBoard(BSCOPE, true);
     }).catch(function(e){ mErr(e.message); });
   }
+  // รายชื่อลูกค้าสำหรับ datalist — รวมจากชีตกลุ่มลูกค้า (CUSTOMERS) + บริษัท auto (COMPANIES) + บริษัทที่มีงานอยู่ (BALL) · dedupe + เรียง
+  function custOptions(){
+    var set={}, out=[];
+    function add(a){ (a||[]).forEach(function(c){ c=String(c||'').trim(); if(c && !set[c]){ set[c]=1; out.push(c); } }); }
+    add(CUSTOMERS); add(COMPANIES);
+    try{ add(bCustomers()); }catch(e){}
+    return out.sort(function(a,b){ return a.localeCompare(b,'th'); });
+  }
+  function custDatalist(id){ return '<datalist id="'+id+'">'+custOptions().map(function(c){ return '<option value="'+esc(c)+'">'; }).join('')+'</datalist>'; }
   function bOpenCreate(){
     var asgOpts='<option value="">— ยังไม่มอบหมาย —</option>'+BTEAM.map(function(mm){return '<option value="'+esc(mm.name)+'">'+esc(mm.name)+'</option>';}).join('');
     var catOpts=BCATS_EDIT.map(function(o){return '<option value="'+esc(o.v)+'">'+o.lb+'</option>';}).join('');
     modal('<h3>+ เปิดงานใหม่</h3><div id="mErr" class="m-err hidden"></div>'+
       '<div class="fld"><label>ประเภท <span class="bd-age">(กำหนดสีการ์ด)</span></label><select id="cbCat">'+catOpts+'</select></div>'+
       '<div class="fld"><label>หัวข้องาน <span class="bd-age">(เว้นว่าง = ตัดจากรายละเอียด)</span></label><input id="cbTitle" placeholder="หัวข้อสั้น ๆ"></div>'+
-      '<div class="fld"><label>ลูกค้า/บริษัท</label><input id="cbCust" placeholder="เช่น ร้านกาแฟดีใจ"></div>'+
+      '<div class="fld"><label>ลูกค้า/บริษัท <span class="bd-age">(เลือกจากรายชื่อ หรือพิมพ์ใหม่)</span></label><input id="cbCust" list="dlCbCust" autocomplete="off" placeholder="เลือกหรือพิมพ์ชื่อลูกค้า">'+custDatalist('dlCbCust')+'</div>'+
       '<div class="fld"><label>รายละเอียดงาน</label><textarea id="cbDetail" placeholder="สิ่งที่ต้องทำ…"></textarea></div>'+
       '<div class="fld"><label>ผู้รับผิดชอบ</label><select id="cbAsg">'+asgOpts+'</select></div>'+
       '<div class="fld"><label>กำหนดเสร็จ</label><input id="cbDue" type="date"></div>'+
