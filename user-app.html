@@ -251,6 +251,26 @@
   .help-fab{ bottom:14px !important; right:16px !important; padding:9px 14px; font-size:13.5px; box-shadow:0 4px 12px rgba(27,114,232,.32); opacity:.92; }
   .help-fab:hover{ opacity:1; }
   @media(max-width:1023px){ .help-fab{ bottom:84px !important; right:12px !important; } }  /* มือถือ: เหนือแถบเมนูล่าง */
+
+  /* ── มือถือ: เมนู "กลุ่ม" ล่าง + แท็บย่อยบน (คอมไม่แตะ · ยังใช้ sidebar เดิม) ── */
+  .mtabs, .mnav{ display:none; }
+  @media(max-width:1023px){
+    .nav{ display:none !important; }   /* ซ่อนแถบ 10 ปุ่มเดิม → ใช้ 5 กลุ่มแทน */
+    .mtabs{ display:flex; gap:6px; overflow-x:auto; -webkit-overflow-scrolling:touch;
+      position:sticky; top:140px; z-index:14; background:#fff; border-bottom:1px solid var(--line);
+      padding:8px 12px; scrollbar-width:none; }
+    .mtabs::-webkit-scrollbar{ display:none; }
+    .mtab{ flex:0 0 auto; border:1.5px solid var(--line); background:#fff; color:#556;
+      border-radius:18px; padding:7px 15px; font-family:inherit; font-size:13.5px; white-space:nowrap; cursor:pointer; }
+    .mtab.on{ border-color:var(--red); background:#FDECEC; color:var(--red); font-weight:600; }
+    .mnav{ display:flex; position:fixed; bottom:0; left:50%; transform:translateX(-50%);
+      width:100%; max-width:480px; background:#fff; border-top:1px solid var(--line);
+      box-shadow:0 -2px 12px rgba(20,30,50,.08); z-index:15; padding-bottom:env(safe-area-inset-bottom,0); }
+    .mnav-btn{ flex:1; border:none; background:none; display:flex; flex-direction:column; align-items:center;
+      gap:2px; padding:9px 2px 8px; color:#8A94A6; font-family:inherit; font-size:11px; cursor:pointer; }
+    .mnav-btn .mn-ic{ font-size:19px; line-height:1; }
+    .mnav-btn.on{ color:var(--red); font-weight:600; }
+  }
   /* ── Project (บริหารโครงการ) ── */
   .btn-sm{ padding:6px 12px; font-size:13px; }
   .pjc{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow);
@@ -381,6 +401,8 @@
     <div class="hd-avatar" id="avatar">🙂</div>
   </header>
 
+  <div id="mtabs" class="mtabs"></div>
+
   <div id="topbar" class="topbar">
     <span class="tb-icon" id="tbIcon">📝</span>
     <div class="tb-mid"><div class="tb-title" id="tbTitle">การลา</div><div class="tb-sub">Moodata</div></div>
@@ -420,6 +442,8 @@
       <svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg><span>เอกสาร</span></button>
   </nav>
 
+  <nav id="mnav" class="mnav"></nav>
+
   <button id="helpFab" class="help-fab" type="button" aria-label="คู่มือการใช้งาน" onclick="openHelp()"><span class="hf-ic">📖</span><span class="hf-tx">คู่มือ</span></button>
 </div>
 
@@ -441,7 +465,7 @@
   var MENAME='', TEAM=[], CUSTOMERS=[];   // งาน
   var VIEW_META = {
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
-    expense:['💸','เบิกค่าใช้จ่าย'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า']
+    expense:['💸','เบิกค่าใช้จ่าย'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT']
   };
   var PROJECTS=[], COMPANIES=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ) · COMPANIES=บริษัท auto (หน้าจัดการ)
   var ALL_TASKS=[], PJ_SEL='', MB_STATUSES=[];   // มุมมอง Project (dropdown เลือก · แยก 6 สถานะ + %) · MB_STATUSES=รายการสถานะ (ฟอร์มแก้งานมือถือ)
@@ -482,8 +506,52 @@
     VIEW=v;
     Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(b){ b.classList.toggle('active', b.dataset.view===v); });
     var meta=VIEW_META[v]||['•',v]; $('tbIcon').textContent=meta[0]; $('tbTitle').textContent=meta[1];
-    ({ leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc }[v] || soon)();
+    mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
+    ({ leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove }[v] || soon)();
   }
+
+  // ───── มือถือ: เมนูกลุ่ม (ล่าง) + แท็บย่อย (บน) · คอมใช้ sidebar เดิม ไม่เกี่ยว ─────
+  var NAV_GROUPS=[
+    { key:'work',  icon:'📊', label:'งาน',    views:['projects','mytasks','review','trash'] },
+    { key:'cust',  icon:'📤', label:'ลูกค้า',  views:['senddoc','appt','announce'] },
+    { key:'leave', icon:'📝', label:'ลา',      views:['leave','approve'] },
+    { key:'ot',    icon:'⏰', label:'OT',      views:['ot','otapprove'] },
+    { key:'docs',  icon:'📁', label:'เอกสาร',  views:['docs'] }
+  ];
+  var VIEW_TAB={ projects:'บอร์ดงาน', mytasks:'งานของฉัน', review:'รอตรวจ', trash:'ถังขยะ',
+    senddoc:'ส่งงานลูกค้า', appt:'นัดประชุม', announce:'ประกาศ',
+    leave:'ลาของฉัน', approve:'อนุมัติลา', ot:'OT ของฉัน', otapprove:'อนุมัติ OT', docs:'เอกสาร' };
+  var OWNER_VIEWS={ review:1, approve:1, otapprove:1 };   // แท็บที่เห็นเฉพาะพี่/ผู้ดูแล
+  var MGROUP='', MG_LAST={};
+  function mVisibleViews(g){ return g.views.filter(function(v){ return IS_OWNER || !OWNER_VIEWS[v]; }); }
+  function mGroupOf(v){ for(var i=0;i<NAV_GROUPS.length;i++){ if(NAV_GROUPS[i].views.indexOf(v)>=0) return NAV_GROUPS[i]; } return null; }
+  function mBuildGroupBar(){
+    var el=$('mnav'); if(!el) return;
+    el.innerHTML=NAV_GROUPS.map(function(g){
+      return '<button class="mnav-btn'+(g.key===MGROUP?' on':'')+'" onclick="mSelectGroup(\''+g.key+'\')">'+
+        '<span class="mn-ic">'+g.icon+'</span>'+esc(g.label)+'</button>';
+    }).join('');
+  }
+  function mRenderTabs(){
+    var el=$('mtabs'); if(!el) return;
+    var g=mGroupOf(VIEW); if(!g){ el.innerHTML=''; return; }
+    var vis=mVisibleViews(g);
+    if(vis.length<=1){ el.innerHTML=''; return; }   // กลุ่มมีหัวข้อเดียว → ไม่ต้องโชว์แท็บ
+    el.innerHTML=vis.map(function(v){
+      return '<button class="mtab'+(v===VIEW?' on':'')+'" onclick="switchView(\''+v+'\')">'+esc(VIEW_TAB[v]||v)+'</button>';
+    }).join('');
+  }
+  function mSyncNav(v){
+    var g=mGroupOf(v); if(g){ MGROUP=g.key; MG_LAST[g.key]=v; }
+    mBuildGroupBar(); mRenderTabs();
+  }
+  function mSelectGroup(gkey){
+    var g=null; for(var i=0;i<NAV_GROUPS.length;i++){ if(NAV_GROUPS[i].key===gkey){ g=NAV_GROUPS[i]; break; } }
+    if(!g) return;
+    var vis=mVisibleViews(g); if(!vis.length) return;
+    switchView(MG_LAST[gkey] && vis.indexOf(MG_LAST[gkey])>=0 ? MG_LAST[gkey] : vis[0]);
+  }
+  window.switchView=switchView; window.mSelectGroup=mSelectGroup;
   function soon(){
     $('main').innerHTML='<div class="card"><div class="soon-wrap"><div class="e-emo">🚧</div>เมนูนี้กำลังย้ายมาหน้านี้ — เร็ว ๆ นี้ค่ะ<br><span style="font-size:13px">(ตอนนี้ยังใช้ผ่านเมนูเดิม/แชทได้)</span></div></div>';
   }
@@ -1349,6 +1417,37 @@
     }).catch(function(e){ toast(e.message); });
   }
   window.renderSendDoc=renderSendDoc; window.sdSwitchType=sdSwitchType; window.sdSendOne=sdSendOne; window.sdSendAll=sdSendAll; window.sdDoSendAll=sdDoSendAll; window.sdCreate=sdCreate; window.sdDoCreate=sdDoCreate;
+
+  // ═══════════ VIEW: อนุมัติลา (พี่/HR) — ย้ายจาก team-app เข้าแอปหลัก ═══════════
+  function renderApprove(){
+    if(!IS_OWNER){ $('main').innerHTML='<div class="card"><div class="empty">เฉพาะผู้ดูแล (พี่/HR) ค่ะ</div></div>'; return; }
+    skel();
+    jsonp({action:'waLeavePending',uid:UID}).then(function(r){
+      if(VIEW!=='approve') return;
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      var lv=r.leaves||[];
+      $('main').innerHTML = lv.length ? lv.map(apprCard).join('') : '<div class="card"><div class="empty">ไม่มีใบลารออนุมัติ 🎉</div></div>';
+    }).catch(function(e){ if(VIEW==='approve') $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
+  }
+  function apprCard(l){
+    return '<div class="card" id="appr-'+esc(l.no)+'">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b>'+esc(l.nick||'-')+'</b><span class="tk-badge b-new">'+esc(l.type||'')+'</span></div>'+
+      '<div style="font-size:14px;color:#4A5262">📅 '+esc(l.start||'')+' – '+esc(l.end||'')+' ('+esc(String(l.days||0))+' วัน)</div>'+
+      (l.reason?'<div style="font-size:13.5px;color:#777;margin-top:5px">📄 '+esc(l.reason)+'</div>':'')+
+      '<div class="m-act" style="margin-top:11px"><button class="btn btn-danger" onclick="apprDecide(\''+esc(l.no)+'\',\'reject\')">❌ ไม่อนุมัติ</button>'+
+      '<button class="btn btn-primary" onclick="apprDecide(\''+esc(l.no)+'\',\'approve\')">✅ อนุมัติ</button></div></div>';
+  }
+  function apprDecide(no,decision){
+    toast(decision==='approve'?'กำลังอนุมัติ…':'กำลังบันทึก…');
+    jsonp({action:'waLeaveDecide',uid:UID,no:no,decision:decision}).then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; }
+      toast(decision==='approve'?'✅ อนุมัติแล้ว':'❌ ไม่อนุมัติแล้ว');
+      var el=$('appr-'+no);
+      if(el){ el.style.transition='opacity .3s'; el.style.opacity='0'; setTimeout(function(){ if(el.parentNode)el.parentNode.removeChild(el); if(!document.querySelector('[id^="appr-"]')) renderApprove(); },300); }
+      else renderApprove();
+    }).catch(function(e){ toast(e.message); });
+  }
+  window.renderApprove=renderApprove; window.apprDecide=apprDecide;
   // ── (พี่) ลบ Project จัดเอง (บริษัท auto ลบไม่ได้) ──
   function delProj(id,name){
     modal('<h3>🗑️ ลบ Project</h3><div id="mErr" class="m-err hidden"></div>'+
@@ -2276,7 +2375,8 @@
       Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(b){
         b.addEventListener('click', function(){ switchView(b.dataset.view); }); });
       var sp=startParam();
-      switchView(sp==='docs' ? 'docs' : (sp==='work' ? 'projects' : 'leave'));
+      var startView = sp==='docs' ? 'docs' : (sp==='work' ? 'projects' : (sp==='approve' && IS_OWNER ? 'approve' : 'leave'));
+      switchView(startView);   // switchView → mSyncNav สร้างเมนูกลุ่มล่าง + แท็บบนให้เอง
       // อุ่นแคชเบื้องหลัง → คลิกการลา/เอกสารครั้งแรกเด้งทันที (ไม่แย่งจอแรกโหลด)
       setTimeout(function(){ if(!LVCACHE.data) _leaveFetch(true); if(IDTOKEN && !DOCCACHE.data) _docsFetch(true); if(!APPT_CUST.length) apFetchMeta(); if(!ANNOUNCE_GROUPS.length) anFetchGroups(); }, 900);
     }).catch(function(e){ fatal(e.message); });
