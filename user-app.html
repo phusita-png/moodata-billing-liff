@@ -719,7 +719,7 @@
       pill('done','✅ เสร็จ',c('เสร็จ'))+(over?pill('over','⏰ เกินกำหนด',over):'')+'</div>';
   }
   function renderMytasks(){
-    if(IS_OWNER){ renderOwnerBoard('mine'); return; }   // พี่ → บอร์ดสไตล์เดียวกัน (เฉพาะงานของพี่)
+    if(!bIsMobile()){ renderOwnerBoard('mine'); return; }   // คอม (พี่+ทีม) → บอร์ดเต็ม (เฉพาะงานตัวเอง) · ทีมแก้ได้
     skel();
     jsonp({action:'waMyTasks', uid:UID}).then(function(r){
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
@@ -850,15 +850,15 @@
   // escape string สำหรับใส่ใน onclick='...' (กันชื่อบริษัทมี ' หรือ ")
   function jss(s){ return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
 
-  // เมนู Project · พี่บนคอม(เว็บแอป)=บอร์ดเต็ม · มือถือ(mini app ทั้งพี่+ทีม)=dropdown+6 สถานะ (คงเดิม)
+  // เมนู Project · คอม (พี่+ทีม)=บอร์ดเต็ม (ทีมแก้/สร้างได้) · มือถือ (mini app)=dropdown+6 สถานะ
   function renderProjects(){
-    if(IS_OWNER && !bIsMobile()){ renderOwnerBoard('project'); return; }   // เฉพาะจอคอม → บอร์ดเต็ม
+    if(!bIsMobile()){ renderOwnerBoard('project'); return; }   // จอคอม (ทุกคน) → บอร์ดเต็ม
     skel();
-    var act = IS_OWNER ? 'waProjectAdminList' : 'waMyProjects';
+    var act = 'waProjectAdminList';   // ทีม+พี่ = เห็น/จัดการทุก project (เพิ่ม project ได้)
     Promise.all([ jsonp({action:'waBoard',uid:UID,withCancel:'1'}), jsonp({action:act,uid:UID}) ]).then(function(rs){
       var rb=rs[0], rp=rs[1];
       if(rb&&rb.ok){ ALL_TASKS=rb.tasks||[]; MENAME=(rb.me&&rb.me.name)||MENAME; TEAM=rb.team||TEAM; CUSTOMERS=rb.customers||CUSTOMERS; } else ALL_TASKS=[];
-      if(rp&&rp.ok){ PROJECTS=rp.projects||[]; if(IS_OWNER&&rp.team) TEAM_ALL=rp.team; } else PROJECTS=[];
+      if(rp&&rp.ok){ PROJECTS=rp.projects||[]; if(rp.team) TEAM_ALL=rp.team; } else PROJECTS=[];
       // ถ้าค่าที่เลือกไว้หายไป (project ถูกลบ) → กลับไปทั้งหมด
       if(PJ_SEL && !pjSelExists()) PJ_SEL='';
       paintProjectsHub();
@@ -899,7 +899,7 @@
     var html='<div class="pj-toprow">'+
       '<div class="pj-count"><span class="pj-count-n">'+nItems+'</span><span class="pj-count-l">Project</span></div>'+
       '<button class="btn btn-primary pj-addbtn" onclick="pjAddTask()">➕<br>เปิดงานใหม่</button>'+
-      (IS_OWNER?'<button class="btn btn-ghost pj-addbtn pj-mgbtn" onclick="openProjManage()">⚙️<br>จัดการ</button>':'')+'</div>'+
+      '<button class="btn btn-ghost pj-addbtn pj-mgbtn" onclick="openProjManage()">⚙️<br>จัดการ</button></div>'+   // ทีม+พี่ จัดการ project ได้
       // ช่องเลือก project — ใหญ่ เด่น
       '<div class="pj-pick2"><label>เลือก Project</label><select onchange="setPjSel(this.value)">'+opt+'</select></div>';
     // ทีม: ปุ่มรับงานหลายใบ (ถ้ามีงานยังไม่มีคนรับ) — คงฟีเจอร์เดิมจากหน้า "งานทั้งหมด"
@@ -1033,9 +1033,9 @@
       '<div class="pjc-top"><div class="pjc-name">'+(isCo?'🏢 ':'📁 ')+esc(pj.name)+'</div>'+badge+'</div>'+
       '<div class="pjc-meta">'+(!isCo&&pj.customer?'🏢 '+esc(pj.customer)+' · ':'')+'งาน '+(pj.taskCount||0)+' · สำเร็จ '+(pj.pct||0)+'%</div>'+
       '<div class="pjc-mem">👥 '+(mem.length?esc(mem.join(', ')):'<i style="color:#C87F1E">ยังไม่มีสมาชิก</i>')+'</div>'+
-      '<div class="pjc-acts">'+(isCo?'<button class="btn btn-ghost" onclick="renameCompany(\''+jss(pj.name)+'\')" title="เปลี่ยนชื่อ + ตามอัปเดตงานเก่าให้">✏️ เปลี่ยนชื่อ</button>':'<button class="btn btn-ghost" onclick="openProjEdit(\''+esc(pj.id)+'\')">✏️ แก้ไข</button>')+
+      '<div class="pjc-acts">'+(isCo?(IS_OWNER?'<button class="btn btn-ghost" onclick="renameCompany(\''+jss(pj.name)+'\')" title="เปลี่ยนชื่อ + ตามอัปเดตงานเก่าให้">✏️ เปลี่ยนชื่อ</button>':''):'<button class="btn btn-ghost" onclick="openProjEdit(\''+esc(pj.id)+'\')">✏️ แก้ไข</button>')+
         '<button class="btn btn-ghost" onclick="openProjMembers(\''+esc(pj.id)+'\')">👥 สมาชิก ('+mem.length+')</button>'+
-        '<button class="btn btn-danger pjm-delbtn" onclick="'+(isCo?'delCompany(\''+jss(pj.name)+'\')':'delProj(\''+esc(pj.id)+'\',\''+jss(pj.name)+'\')')+'" title="'+(isCo?'ยกเลิกงานทั้งกลุ่ม':'ลบ project')+'">🗑️</button></div>'+
+        (IS_OWNER?'<button class="btn btn-danger pjm-delbtn" onclick="'+(isCo?'delCompany(\''+jss(pj.name)+'\')':'delProj(\''+esc(pj.id)+'\',\''+jss(pj.name)+'\')')+'" title="'+(isCo?'ยกเลิกงานทั้งกลุ่ม':'ลบ project')+'">🗑️</button>':'')+'</div>'+   // ลบ/เปลี่ยนชื่อ = พี่เท่านั้น
       '</div>';
   }
   function projManageRows(){
@@ -1425,7 +1425,8 @@
       var arr=(r.tasks||[]).filter(function(t){ return !isCancel_(t); });
       var statuses=r.statuses||[];
       if(!arr.length){ modal('<h3>✏️ ปรับสถานะหลายใบ</h3><div class="emptybox">ยังไม่มีงาน 😊</div><div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button></div>'); return; }
-      var opts=statuses.map(function(s){ return '<option value="'+esc(s)+'">'+esc(s)+'</option>'; }).join('');
+      var opts=statuses.filter(function(s){ return IS_OWNER || s.indexOf('ยกเลิก')<0; })   // ทีมตั้ง "ยกเลิก" ไม่ได้ (กฎเหล็ก)
+        .map(function(s){ return '<option value="'+esc(s)+'">'+esc(s)+'</option>'; }).join('');
       var rows=arr.map(function(t){
         return '<label class="bchk"><input type="checkbox" class="bulk-cb" value="'+esc(t.no)+'">'+
           '<span class="bchk-tx"><b>'+esc(t.no)+'</b> · '+esc(t.customer||'-')+' <span class="bchk-cur">'+esc(t.status)+'</span>'+
@@ -1724,7 +1725,7 @@
         '<option value="lastmonth">เดือนที่แล้ว</option><option value="last7">7 วันล่าสุด</option><option value="last30">30 วันล่าสุด</option></select>'+
         '<button class="bd-btn bd-p" onclick="bOpenCreate()">+ เปิดงานใหม่</button>'+
         '<button class="bd-btn bd-bulk" onclick="openBulkStatus()">✏️ ปรับสถานะหลายใบ</button>'+
-        '<button class="bd-btn bd-bulk" onclick="openBulk(\'send\')">☑️ ส่งลูกค้าหลายใบ</button></div>'+
+        (IS_OWNER?'<button class="bd-btn bd-bulk" onclick="openBulk(\'send\')">☑️ ส่งลูกค้าหลายใบ</button>':'')+'</div>'+   // ส่งลูกค้าหลายใบ = พี่ (backend owner-only)
       '<div id="bPjBar" class="bd-pjbar"></div>'+
       '<div id="bStats" class="bd-stats"></div>'+
       '<div id="bViews" class="bd-views"></div>'+
@@ -1771,7 +1772,7 @@
     $('bPjBar').innerHTML='<select id="bFProject" class="bd-pjsel">'+opts+'</select>'+
       '<div class="bd-pjprog"><div class="bd-pjtrack"><div class="bd-pjfill" style="width:'+pct+'%"></div></div>'+
       '<span class="bd-pjpct">'+pct+'% · เสร็จ '+done+'/'+tot+'</span></div>'+
-      (IS_OWNER?'<button class="bd-pjmgbtn" onclick="openProjManage()">⚙️ จัดการ Project</button>':'');
+      '<button class="bd-pjmgbtn" onclick="openProjManage()">⚙️ จัดการ Project</button>';   // ทีม+พี่ จัดการ project ได้
     $('bFProject').value=BFPROJECT;
     $('bFProject').onchange=function(){ BFPROJECT=this.value; bRender(); };
   }
@@ -2004,7 +2005,8 @@
 
   function bOpenTask(no){
     var t=bFind(no); if(!t) return;
-    var stOpts=BSTATUSES.map(function(s){return '<option'+(s===t.status?' selected':'')+'>'+esc(s)+'</option>';}).join('');
+    var stOpts=BSTATUSES.filter(function(s){ return IS_OWNER || s.indexOf('ยกเลิก')<0 || s===t.status; })   // ทีมตั้ง "ยกเลิก" ไม่ได้ (คงไว้ถ้าเป็นสถานะปัจจุบัน)
+      .map(function(s){return '<option'+(s===t.status?' selected':'')+'>'+esc(s)+'</option>';}).join('');
     var asgOpts='<option value="">— ยังไม่มอบหมาย —</option>'+BTEAM.map(function(mm){var n=mm.name;return '<option value="'+esc(n)+'"'+(n===t.assignee?' selected':'')+'>'+esc(n+(mm.nick&&mm.nick!==mm.name?' ('+mm.nick+')':''))+'</option>';}).join('');
     var revOpts='<option value="">— '+esc(BOWNER||'ผู้ดูแล')+' (ค่าเริ่มต้น) —</option>'+BTEAM.map(function(mm){var n=mm.name;return '<option value="'+esc(n)+'"'+(n===t.reviewer?' selected':'')+'>'+esc(n)+'</option>';}).join('');
     var curCatK=bCat(t.category).k;
@@ -2015,7 +2017,7 @@
       '<option value="__new__">➕ สร้าง project ใหม่…</option>';
     modal('<h3>'+esc(t.no)+' · '+esc(t.customer||'')+'</h3><div id="mErr" class="m-err hidden"></div>'+
       '<div class="fld"><label>หัวข้องาน <span class="bd-age">(เว้นว่าง = ตัดจากรายละเอียด)</span></label><input id="mTitle" value="'+esc(t.title||'')+'" placeholder="หัวข้อสั้น ๆ"></div>'+
-      (IS_OWNER?'<div class="fld"><label>🏢 บริษัท/ลูกค้า</label><input id="mCust" value="'+esc(t.customer||'')+'" placeholder="ชื่อบริษัท (ให้ตรงกับกลุ่มลูกค้า)"></div>':'')+
+      '<div class="fld"><label>🏢 บริษัท/ลูกค้า</label><input id="mCust" value="'+esc(t.customer||'')+'" placeholder="ชื่อบริษัท (ให้ตรงกับกลุ่มลูกค้า)"></div>'+
       (t.detail?'<div class="fld"><label>รายละเอียด</label><div style="white-space:pre-wrap;font-size:14px;color:#4A5262">'+esc(t.detail)+'</div></div>':'')+
       '<div class="fld"><label>🔗 ลิงก์งาน <span class="bd-age">(วางได้หลายลิงก์)</span></label><div id="mWlBox">'+wlRowsHtml(t.worklink)+'</div>'+
         '<button type="button" class="btn btn-ghost" onclick="wlAddRow()" style="margin-top:2px;font-size:13px">➕ เพิ่มลิงก์</button></div>'+
@@ -2031,7 +2033,7 @@
       '<button class="btn btn-ghost" onclick="closeModal()">ปิด</button></div>'+
       (t.status.indexOf('ยกเลิก')<0?'<button class="btn btn-ghost" style="width:100%;margin-top:8px" onclick="bOpenTransfer(\''+esc(no)+'\')">🔄 โอนงานให้คนอื่น</button>':'')+
       (!bDone(t)&&t.status.indexOf('ยกเลิก')<0?'<button class="btn btn-ghost" style="width:100%;margin-top:8px" onclick="bOpenReturn(\''+esc(no)+'\')">🔁 ส่งกลับให้ทีมแก้ไข</button>':'')+
-      (t.status.indexOf('ยกเลิก')<0?'<button class="btn btn-ghost" style="width:100%;margin-top:8px;color:#DC2626" onclick="bOpenCancel(\''+esc(no)+'\')">❌ ยกเลิกงาน</button>':''));
+      (IS_OWNER&&t.status.indexOf('ยกเลิก')<0?'<button class="btn btn-ghost" style="width:100%;margin-top:8px;color:#DC2626" onclick="bOpenCancel(\''+esc(no)+'\')">❌ ยกเลิกงาน</button>':''));   // กฎเหล็ก: ยกเลิก=ลบ → พี่เท่านั้น
   }
   function bSaveTask(no){
     var t=bFind(no); if(!t) return;
@@ -2046,7 +2048,7 @@
     if(due!==curDue) jobs.push(jsonp({action:'waSetDue',uid:UID,no:no,due:due}));
     var pj=$('mProject')?$('mProject').value:(t.project||'');
     if(pj!=='__new__' && pj!==(t.project||'')) jobs.push(jsonp({action:'waAssignProject',uid:UID,no:no,pid:pj}));   // จัดงานเข้า/ออก project
-    if(IS_OWNER){ var cust=$('mCust')?$('mCust').value.trim():(t.customer||''); if(cust!==(t.customer||'')) jobs.push(jsonp({action:'waSetCustomer',uid:UID,no:no,customer:cust})); }
+    var cust=$('mCust')?$('mCust').value.trim():(t.customer||''); if(cust!==(t.customer||'')) jobs.push(jsonp({action:'waSetCustomer',uid:UID,no:no,customer:cust}));   // ทีม+พี่ แก้ลูกค้าได้
     var wl=wlCollect(); if(wl!==String(t.worklink||'').trim()) jobs.push(jsonpPost({action:'waSetWorkLink',uid:UID,no:no,worklink:wl}));   // POST กันลิงก์หลายอันยาวเกิน URL
     if(!jobs.length){ closeModal(); return; }
     toast('กำลังบันทึก…');
