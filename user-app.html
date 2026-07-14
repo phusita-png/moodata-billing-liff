@@ -444,7 +444,7 @@
     expense:['💸','เบิกค่าใช้จ่าย'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า']
   };
   var PROJECTS=[], COMPANIES=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ) · COMPANIES=บริษัท auto (หน้าจัดการ)
-  var ALL_TASKS=[], PJ_SEL='';   // มุมมอง Project (dropdown เลือก · แยก 6 สถานะ + %)
+  var ALL_TASKS=[], PJ_SEL='', MB_STATUSES=[];   // มุมมอง Project (dropdown เลือก · แยก 6 สถานะ + %) · MB_STATUSES=รายการสถานะ (ฟอร์มแก้งานมือถือ)
   var EXP_TYPES=[];   // ประเภทค่าใช้จ่าย (โหลดจาก waExpenseInit)
 
   function $(id){ return document.getElementById(id); }
@@ -748,6 +748,7 @@
       if(t.hasGroup) btns.push('<button class="btn btn-ok" onclick="sendMine(\''+esc(t.no)+'\')">📨 ส่งลูกค้าเลย</button>');
       btns.push('<button class="btn btn-ghost" onclick="openTransfer(\''+esc(t.no)+'\')">🔄 โอนงาน</button>');
     }
+    btns.push('<button class="btn btn-ghost" onclick="mEditTask(\''+esc(t.no)+'\')">✏️ แก้ไข</button>');   // แก้ field รายตัว (มือถือ)
     if(btns.length) h+='<div class="tk-acts">'+btns.join('')+'</div>';
     return h+'</div>';
   }
@@ -857,7 +858,7 @@
     var act = 'waProjectAdminList';   // ทีม+พี่ = เห็น/จัดการทุก project (เพิ่ม project ได้)
     Promise.all([ jsonp({action:'waBoard',uid:UID,withCancel:'1'}), jsonp({action:act,uid:UID}) ]).then(function(rs){
       var rb=rs[0], rp=rs[1];
-      if(rb&&rb.ok){ ALL_TASKS=rb.tasks||[]; MENAME=(rb.me&&rb.me.name)||MENAME; TEAM=rb.team||TEAM; CUSTOMERS=rb.customers||CUSTOMERS; } else ALL_TASKS=[];
+      if(rb&&rb.ok){ ALL_TASKS=rb.tasks||[]; MENAME=(rb.me&&rb.me.name)||MENAME; TEAM=rb.team||TEAM; CUSTOMERS=rb.customers||CUSTOMERS; if(rb.statuses) MB_STATUSES=rb.statuses; } else ALL_TASKS=[];
       if(rp&&rp.ok){ PROJECTS=rp.projects||[]; if(rp.team) TEAM_ALL=rp.team; } else PROJECTS=[];
       // ถ้าค่าที่เลือกไว้หายไป (project ถูกลบ) → กลับไปทั้งหมด
       if(PJ_SEL && !pjSelExists()) PJ_SEL='';
@@ -976,11 +977,78 @@
         if(t.mine) btns.push('<button class="btn btn-ghost" onclick="openTransfer(\''+esc(t.no)+'\')">🔄 โอนงาน</button>');
       }
     }
+    btns.push('<button class="btn btn-ghost" onclick="mEditTask(\''+esc(t.no)+'\')">✏️ แก้ไข</button>');   // แก้ field รายตัว (ทีม+พี่ · ทุกงาน)
     if(btns.length) h+='<div class="tk-acts">'+btns.join('')+'</div>';
     return h+'</div>';
   }
   function doClaim(no){ toast('กำลังรับงาน…');
     jsonp({action:'waClaim',uid:UID,no:no}).then(function(r){ if(!r||!r.ok){toast((r&&r.error)||'ไม่สำเร็จ');return;} toast('รับงานแล้ว 🙋'); refreshTasksView(); }).catch(function(e){toast(e.message);}); }
+
+  // ═══════════ (มือถือ) แก้ข้อมูลงานรายตัว — ทีม+พี่ · ยกเลิก/ลบ = พี่เท่านั้น ═══════════
+  var ME_ORIG=null, ME_TEAM=[], ME_PROJ=[], ME_STAT=[];
+  function mEditTask(no){
+    toast('กำลังโหลด…');   // ดึง waPmBoard สด → ได้ tasks/team/statuses/projects ครบ (ทำงานได้ทุกวิว)
+    jsonp({action:'waPmBoard',uid:UID}).then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'โหลดไม่สำเร็จ'); return; }
+      var t=null, ts=r.tasks||[]; for(var i=0;i<ts.length;i++){ if(ts[i].no===no){ t=ts[i]; break; } }
+      if(!t){ toast('ไม่พบงาน'); return; }
+      ME_ORIG=t; ME_TEAM=r.team||[]; ME_PROJ=r.projects||[]; ME_STAT=r.statuses||[];
+      mRenderEdit(no, t);
+    }).catch(function(e){ toast(e.message); });
+  }
+  function mRenderEdit(no, t){
+    var stList=ME_STAT.length?ME_STAT:['🆕 ใหม่','🔵 กำลังทำ','🔍 รอตรวจ','✅ เสร็จ'];
+    var stOpts=stList.filter(function(s){ return IS_OWNER || s.indexOf('ยกเลิก')<0 || s===t.status; })   // ทีมตั้ง "ยกเลิก" ไม่ได้
+      .map(function(s){ return '<option'+(s===t.status?' selected':'')+'>'+esc(s)+'</option>'; }).join('');
+    function tmOpts(sel,lead){ return '<option value="">'+lead+'</option>'+ME_TEAM.map(function(m){ var n=m.name||m; return '<option value="'+esc(n)+'"'+(n===sel?' selected':'')+'>'+esc(n+(m.nick&&m.nick!==m.name?' ('+m.nick+')':''))+'</option>'; }).join(''); }
+    var curCatK=bCat(t.category).k;
+    var catOpts=BCATS_EDIT.map(function(o){ return '<option value="'+esc(o.v)+'"'+(o.k===curCatK?' selected':'')+'>'+o.lb+'</option>'; }).join('');
+    var pjOpts='<option value="">— ไม่ผูก project —</option>'+ME_PROJ.map(function(pp){ return '<option value="'+esc(pp.id)+'"'+(pp.id===t.project?' selected':'')+'>'+esc(pp.name)+'</option>'; }).join('');
+    var dueVal=t.dueMs?bIso(t.dueMs):'';
+    modal('<h3>✏️ '+esc(t.no)+' · '+esc(t.customer||'')+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="fld"><label>หัวข้องาน</label><input id="meTitle" value="'+esc(t.title||'')+'" placeholder="หัวข้อสั้น ๆ"></div>'+
+      '<div class="fld"><label>🏢 บริษัท/ลูกค้า</label><input id="meCust" value="'+esc(t.customer||'')+'" placeholder="ชื่อบริษัท (ให้ตรงกับกลุ่มลูกค้า)"></div>'+
+      (t.detail?'<div class="fld"><label>รายละเอียด</label><div style="white-space:pre-wrap;font-size:14px;color:#4A5262">'+esc(t.detail)+'</div></div>':'')+
+      '<div class="fld"><label>🔗 ลิงก์งาน <span class="bd-age">(หลายลิงก์ = บรรทัดละ ชื่อ | url)</span></label><textarea id="meWl" placeholder="https://...">'+esc(t.worklink||'')+'</textarea></div>'+
+      '<div class="fld"><label>สถานะ</label><select id="meStatus">'+stOpts+'</select></div>'+
+      '<div class="fld"><label>ผู้รับผิดชอบ</label><select id="meAsg">'+tmOpts(t.assignee,'— ยังไม่มอบหมาย —')+'</select></div>'+
+      '<div class="fld"><label>ผู้ตรวจงาน</label><select id="meRev">'+tmOpts(t.reviewer,'— ผู้ดูแล (ค่าเริ่มต้น) —')+'</select></div>'+
+      '<div class="fld"><label>ประเภท <span class="bd-age">(กำหนดสีการ์ด)</span></label><select id="meCat">'+catOpts+'</select></div>'+
+      '<div class="fld"><label>กำหนดเสร็จ</label><input id="meDue" type="date" value="'+dueVal+'"></div>'+
+      '<div class="fld"><label>📁 จัดเข้า Project</label><select id="meProject">'+pjOpts+'</select></div>'+
+      '<div class="m-act"><button class="btn btn-primary" onclick="mSaveTask(\''+esc(no)+'\')">💾 บันทึก</button>'+
+      '<button class="btn btn-ghost" onclick="closeModal()">ปิด</button></div>'+
+      (IS_OWNER&&!isDone_(t)&&!isCancel_(t)?'<button class="btn btn-ghost" style="width:100%;margin-top:8px;color:#DC2626" onclick="mCancelTask(\''+esc(no)+'\')">❌ ยกเลิกงาน</button>':''));   // ยกเลิก = พี่เท่านั้น
+  }
+  function mSaveTask(no){
+    var t=ME_ORIG; if(!t||t.no!==no) return;
+    var title=$('meTitle').value.trim(), cust=$('meCust').value.trim(), st=$('meStatus').value, asg=$('meAsg').value, rev=$('meRev').value, cat=$('meCat').value, due=$('meDue').value, wl=$('meWl').value.trim();
+    var jobs=[];
+    if(title!==(t.title||'')) jobs.push(jsonp({action:'waSetTitle',uid:UID,no:no,title:title}));
+    if(cust!==(t.customer||'')) jobs.push(jsonp({action:'waSetCustomer',uid:UID,no:no,customer:cust}));
+    if(st!==t.status) jobs.push(jsonp({action:'waSetStatus',uid:UID,no:no,status:st}));
+    if(asg!==(t.assignee||'')) jobs.push(jsonp({action:'waAssign',uid:UID,no:no,name:asg||' '}));
+    if(rev!==(t.reviewer||'')) jobs.push(jsonp({action:'waSetReviewer',uid:UID,no:no,reviewer:rev}));
+    if(bCat(cat).k!==bCat(t.category).k) jobs.push(jsonp({action:'waSetCategory',uid:UID,no:no,category:cat}));
+    var curDue=t.dueMs?bIso(t.dueMs):'';
+    if(due!==curDue) jobs.push(jsonp({action:'waSetDue',uid:UID,no:no,due:due}));
+    var pj=$('meProject').value; if(pj!==(t.project||'')) jobs.push(jsonp({action:'waAssignProject',uid:UID,no:no,pid:pj}));
+    if(wl!==String(t.worklink||'').trim()) jobs.push(jsonpPost({action:'waSetWorkLink',uid:UID,no:no,worklink:wl}));   // POST กันลิงก์ยาว
+    if(!jobs.length){ closeModal(); return; }
+    toast('กำลังบันทึก…');
+    Promise.all(jobs).then(function(){ closeModal(); toast('บันทึกแล้ว ✅'); refreshTasksView(); }).catch(function(e){ mErr(e.message); });
+  }
+  function mCancelTask(no){
+    modal('<h3>❌ ยกเลิกงาน '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">ยกเลิกงานนี้? (ย้ายไปถังขยะ · กู้คืนได้)</div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="mEditTask(\''+esc(no)+'\')">← กลับ</button>'+
+      '<button class="btn btn-danger" onclick="mDoCancel(\''+esc(no)+'\')">ยกเลิกงาน</button></div>');
+  }
+  function mDoCancel(no){
+    toast('กำลังยกเลิก…');
+    jsonp({action:'waCancel',uid:UID,no:no}).then(function(r){ if(!r||!r.ok){ mErr((r&&r.error)||'ไม่สำเร็จ'); return; } closeModal(); toast('❌ ยกเลิกงานแล้ว'); refreshTasksView(); }).catch(function(e){ mErr(e.message); });
+  }
+  window.mEditTask=mEditTask; window.mSaveTask=mSaveTask; window.mCancelTask=mCancelTask; window.mDoCancel=mDoCancel;
 
   // ── (พี่) สร้าง/แก้ project ──
   function openProjEdit(id){
