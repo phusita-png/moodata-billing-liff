@@ -2029,7 +2029,7 @@
       '<div class="fld"><label>กำหนดเสร็จ</label><input id="mDue" type="date" value="'+dueVal+'"></div>'+
       '<div class="fld"><label>📁 จัดเข้า Project <span class="bd-age">(กองงานเป็นกลุ่ม)</span></label><select id="mProject" onchange="bProjSel(\''+esc(no)+'\')">'+pjOpts+'</select></div>'+
       '<div class="m-act"><button class="btn btn-primary" onclick="bSaveTask(\''+esc(no)+'\')">💾 บันทึก</button>'+
-      (t.hasGroup&&!bDone(t)?'<button class="btn btn-ok" onclick="bSendCust(\''+esc(no)+'\')">📨 ส่งลูกค้า</button>':'')+
+      ((IS_OWNER||t.assignee===BOWNER)&&t.hasGroup&&!bDone(t)?'<button class="btn btn-ok" onclick="bSendCust(\''+esc(no)+'\')">📨 ส่งลูกค้า</button>':'')+   // ทีมส่งได้เฉพาะงานตัวเอง
       '<button class="btn btn-ghost" onclick="closeModal()">ปิด</button></div>'+
       (t.status.indexOf('ยกเลิก')<0?'<button class="btn btn-ghost" style="width:100%;margin-top:8px" onclick="bOpenTransfer(\''+esc(no)+'\')">🔄 โอนงานให้คนอื่น</button>':'')+
       (!bDone(t)&&t.status.indexOf('ยกเลิก')<0?'<button class="btn btn-ghost" style="width:100%;margin-top:8px" onclick="bOpenReturn(\''+esc(no)+'\')">🔁 ส่งกลับให้ทีมแก้ไข</button>':'')+
