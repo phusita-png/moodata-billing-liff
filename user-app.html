@@ -1189,7 +1189,7 @@
   window.renderAnnounce=renderAnnounce; window.anToggleScope=anToggleScope; window.doAnnounce=doAnnounce; window.submitAnnounce=submitAnnounce;
 
   // ── (ทีม/พี่) ส่งรายงาน/เอกสารที่เตรียมไว้เข้ากลุ่มลูกค้า — เฉพาะลูกค้าที่ดูแล (พี่=ทุกลูกค้า) ──
-  var SD_TYPE='report';
+  var SD_TYPE='report', SD_CUSTOMERS=[], SD_NAME='';
   function renderSendDoc(){ sdSwitchType(SD_TYPE); }
   function sdSeg(){
     function b(t,label){ var on=SD_TYPE===t;
@@ -1207,20 +1207,24 @@
     jsonp({action:'waSendList',uid:UID,type:type}).then(function(r){
       if(VIEW!=='senddoc'||SD_TYPE!==type) return;
       if(!r||!r.ok){ if($('sdBody')) $('sdBody').innerHTML='<div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div>'; return; }
+      SD_CUSTOMERS=r.customers||[]; SD_NAME=r.name||'';
       sdPaint(r.items||[], r.name||'');
     }).catch(function(e){ if(VIEW==='senddoc'&&$('sdBody')) $('sdBody').innerHTML='<div class="empty">'+esc(e.message)+'</div>'; });
   }
   function sdPaint(items, name){
+    if(name) SD_NAME=name;
     var body=$('sdBody'); if(!body) return;
-    if(!items.length){ body.innerHTML='<div class="empty">🎉 ไม่มี'+esc(name||'งาน')+'ค้างส่งแล้วค่ะ</div>'; return; }
-    var head=items.length>=2 ? '<button class="btn btn-primary sd-allbtn" style="width:100%;margin-bottom:10px" onclick="sdSendAll('+items.length+')">✅ ส่งทั้งหมด ('+items.length+')</button>' : '';
+    var nm=SD_NAME||'รายการ';
+    var createBtn='<button class="btn btn-primary" style="width:100%;margin-bottom:10px" onclick="sdCreate()">➕ สร้าง'+esc(nm)+'</button>';
+    if(!items.length){ body.innerHTML=createBtn+'<div class="empty">🎉 ยังไม่มี'+esc(nm)+'ค้างส่ง — กด "สร้าง'+esc(nm)+'" เพื่อเพิ่มได้เลยค่ะ</div>'; return; }
+    var head=items.length>=2 ? '<button class="btn btn-ok sd-allbtn" style="width:100%;margin-bottom:10px" onclick="sdSendAll('+items.length+')">✅ ส่งทั้งหมด ('+items.length+')</button>' : '';
     var list=items.map(function(it){
       return '<div id="sd-'+it.row+'" style="display:flex;align-items:center;gap:10px;padding:11px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px">'+
         '<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(it.key||'(ไม่มีชื่อ)')+'</div>'+
           '<div style="font-size:12.5px;color:#777;margin-top:2px">🏢 '+esc(it.customer||'—')+'</div></div>'+
         '<button class="btn btn-primary" style="flex:0 0 auto;width:auto;padding:8px 18px" onclick="sdSendOne('+it.row+',this)">ส่ง</button></div>';
     }).join('');
-    body.innerHTML=head+list;
+    body.innerHTML=createBtn+head+list;
   }
   function sdSendOne(row, btn){
     if(btn){ btn.disabled=true; btn.textContent='กำลังส่ง…'; }
@@ -1234,9 +1238,33 @@
   }
   function sdAfter(remaining){
     var body=$('sdBody'); if(!body) return;
-    if(remaining!=null && remaining<=0){ body.innerHTML='<div class="empty">🎉 ส่งครบทุกใบแล้วค่ะ</div>'; return; }
+    if(remaining!=null && remaining<=0){ sdPaint([], SD_NAME); return; }   // คงปุ่มสร้าง + ขึ้นข้อความว่าง
     var allBtn=body.querySelector('.sd-allbtn');
     if(remaining!=null && allBtn){ if(remaining>=2) allBtn.textContent='✅ ส่งทั้งหมด ('+remaining+')'; else allBtn.parentNode.removeChild(allBtn); }
+  }
+  // สร้างรายการรายงาน/เอกสารใหม่บนเว็บ (แทนการพิมพ์ในชีต) — ลูกค้า/ชื่อ/รายละเอียด/ลิงก์
+  function sdCreate(){
+    var nm=SD_NAME||'รายการ';
+    if(!SD_CUSTOMERS.length){ toast(IS_OWNER?'ยังไม่มีลูกค้าที่ผูกกลุ่ม LINE ค่ะ':'ยังไม่ได้ดูแลลูกค้าที่ผูกกลุ่ม LINE ค่ะ'); return; }
+    var opts=SD_CUSTOMERS.map(function(c){ return '<option value="'+esc(c)+'">'+esc(c)+'</option>'; }).join('');
+    modal('<h3>➕ สร้าง'+esc(nm)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="fld"><label>ลูกค้า *</label><select id="sdCust">'+opts+'</select></div>'+
+      '<div class="fld"><label>ชื่อ'+esc(nm)+' *</label><input id="sdTitle" placeholder="เช่น ทะเบียนการจ่ายเงินเดือน เดือน มิ.ย. 2569"></div>'+
+      '<div class="fld"><label>รายละเอียด (ไม่บังคับ)</label><textarea id="sdDetail" placeholder="ช่วงเวลา / หมายเหตุ"></textarea></div>'+
+      '<div class="fld"><label>ลิงก์'+esc(nm)+' <span class="bd-age">(หลายใบ = บรรทัดละ  ชื่อ | ลิงก์)</span></label><textarea id="sdLink" placeholder="https://..."></textarea></div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" onclick="sdDoCreate()">บันทึก</button></div>');
+  }
+  function sdDoCreate(){
+    var customer=$('sdCust')?$('sdCust').value:'', title=$('sdTitle')?$('sdTitle').value.trim():'';
+    var detail=$('sdDetail')?$('sdDetail').value.trim():'', link=$('sdLink')?$('sdLink').value.trim():'';
+    if(!customer){ mErr('เลือกลูกค้าก่อนค่ะ'); return; }
+    if(!title){ mErr('ใส่ชื่อ'+(SD_NAME||'รายการ')+'ก่อนค่ะ'); return; }
+    toast('กำลังบันทึก…');
+    jsonpPost({action:'waSendCreate',uid:UID,type:SD_TYPE,customer:customer,title:title,detail:detail,link:link}).then(function(r){
+      if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+      SD_CUSTOMERS=r.customers||SD_CUSTOMERS; closeModal(); toast('✅ สร้าง'+(SD_NAME||'รายการ')+'แล้ว'); sdPaint(r.items||[], SD_NAME);
+    }).catch(function(e){ mErr(e.message); });
   }
   function sdSendAll(n){
     modal('<h3>📤 ยืนยันส่งทั้งหมด</h3>'+
@@ -1252,7 +1280,7 @@
       sdSwitchType(SD_TYPE);
     }).catch(function(e){ toast(e.message); });
   }
-  window.renderSendDoc=renderSendDoc; window.sdSwitchType=sdSwitchType; window.sdSendOne=sdSendOne; window.sdSendAll=sdSendAll; window.sdDoSendAll=sdDoSendAll;
+  window.renderSendDoc=renderSendDoc; window.sdSwitchType=sdSwitchType; window.sdSendOne=sdSendOne; window.sdSendAll=sdSendAll; window.sdDoSendAll=sdDoSendAll; window.sdCreate=sdCreate; window.sdDoCreate=sdDoCreate;
   // ── (พี่) ลบ Project จัดเอง (บริษัท auto ลบไม่ได้) ──
   function delProj(id,name){
     modal('<h3>🗑️ ลบ Project</h3><div id="mErr" class="m-err hidden"></div>'+
