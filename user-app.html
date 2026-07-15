@@ -36,6 +36,31 @@
   .ex-meta{ font-size:12px; color:var(--muted); margin-top:8px; }
   .ex-lk{ color:var(--red); text-decoration:none; margin-right:12px; white-space:nowrap; }
   .m-hint{ font-size:12.5px; color:var(--muted); background:#F4F7FB; border-radius:10px; padding:9px 11px; margin:4px 0 12px; line-height:1.5; }
+  /* ── dashboard (สรุปค่าใช้จ่าย / ตั้งเบิก) — กราฟทำด้วย CSS ล้วน ไม่พึ่งไลบรารีนอก (LIFF โหลด CDN ช้า/บล็อกได้) ── */
+  .ds-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin-bottom:12px; }
+  .ds-stat{ background:#fff; border-radius:14px; padding:12px 14px; box-shadow:0 1px 3px rgba(16,24,40,.06); }
+  .ds-stat .ds-lb{ font-size:12px; color:var(--muted); }
+  .ds-stat .ds-vl{ font-size:20px; font-weight:700; color:#1F2733; margin-top:3px; letter-spacing:-.3px; }
+  .ds-stat .ds-sub{ font-size:11.5px; color:var(--muted); margin-top:2px; }
+  .ds-warn .ds-vl{ color:#E5484D; } .ds-wait .ds-vl{ color:#C8730B; }
+  .ds-h{ font-size:13px; font-weight:700; color:#4A5262; margin:2px 0 10px; }
+  .ds-bars{ display:flex; align-items:flex-end; gap:6px; height:110px; padding-top:6px; }
+  .ds-bar{ flex:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; height:100%; }
+  .ds-bar .bar{ width:100%; background:linear-gradient(180deg,#F2707A,#E5484D); border-radius:6px 6px 0 0; min-height:2px; }
+  .ds-bar .bar.zero{ background:#EEF1F6; }
+  .ds-bar .bl{ font-size:10px; color:var(--muted); margin-top:5px; white-space:nowrap; }
+  .ds-bar .bv{ font-size:10px; color:#4A5262; font-weight:600; margin-bottom:3px; white-space:nowrap; }
+  .ds-row{ margin-bottom:9px; }
+  .ds-row .rl{ display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:4px; gap:8px; }
+  .ds-row .rl b{ font-weight:600; color:#1F2733; }
+  .ds-row .rl span{ color:var(--muted); white-space:nowrap; }
+  .ds-track{ height:7px; background:#F1F3F7; border-radius:99px; overflow:hidden; }
+  .ds-fill{ height:100%; background:#E5484D; border-radius:99px; }
+  .ds-chips{ display:flex; flex-wrap:wrap; gap:7px; }
+  .ds-chip{ font-size:12px; padding:5px 10px; border-radius:999px; background:#F4F7FB; color:#4A5262; }
+  .ds-chip b{ color:#1F2733; }
+  .ds-sel{ display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+  .ds-sel select{ flex:1; padding:9px 11px; border:1px solid #E3E7EE; border-radius:10px; font:inherit; background:#fff; }
   .tk-cust{ font-weight:600; margin-top:8px; } .tk-cat{ font-size:12px; color:var(--muted); }
   .tk-detail{ font-size:14px; color:#4A5262; margin-top:6px; white-space:pre-wrap; }
   .tk-kv{ font-size:13px; margin-top:8px; } .tk-kv b{ color:var(--muted); font-weight:500; }
@@ -433,8 +458,12 @@
     <div class="nav-sec">ข้อมูลส่วนตัว</div>
     <button class="nav-btn" data-view="expense" aria-label="เบิกค่าใช้จ่าย">
       <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9v6M18 9v6"/></svg><span>เบิกค่าใช้จ่าย</span></button>
+    <button class="nav-btn" data-view="expdash" aria-label="สรุปค่าใช้จ่าย">
+      <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>สรุปค่าใช้จ่าย</span></button>
     <button class="nav-btn" data-view="expapprove" aria-label="อนุมัติเบิกจ่าย" id="navExpAppr" style="display:none">
       <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="m8 12.5 2.5 2.5L16 9.5"/></svg><span>อนุมัติเบิกจ่าย</span></button>
+    <button class="nav-btn" data-view="reimb" aria-label="ตั้งเบิกลูกค้า" id="navReimb" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6Z"/><path d="M14 3v5h5M9 12h6M9 16h4"/></svg><span>ตั้งเบิกลูกค้า</span></button>
     <button class="nav-btn active" data-view="leave" aria-label="การลา">
       <svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></svg><span>การลา</span></button>
     <button class="nav-btn" data-view="ot" aria-label="ขอ OT">
@@ -466,7 +495,8 @@
   var MENAME='', TEAM=[], CUSTOMERS=[];   // งาน
   var VIEW_META = {
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
-    expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติเบิกจ่าย'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT']
+    expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติเบิกจ่าย'],
+    expdash:['📊','สรุปค่าใช้จ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT']
   };
   var PROJECTS=[], COMPANIES=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ) · COMPANIES=บริษัท auto (หน้าจัดการ)
   var ALL_TASKS=[], PJ_SEL='', MB_STATUSES=[];   // มุมมอง Project (dropdown เลือก · แยก 6 สถานะ + %) · MB_STATUSES=รายการสถานะ (ฟอร์มแก้งานมือถือ)
@@ -509,7 +539,7 @@
     Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(b){ b.classList.toggle('active', b.dataset.view===v); });
     var meta=VIEW_META[v]||['•',v]; $('tbIcon').textContent=meta[0]; $('tbTitle').textContent=meta[1];
     mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
-    ({ leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove }[v] || soon)();
+    ({ leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove }[v] || soon)();
   }
 
   // ───── มือถือ: เมนูกลุ่ม (ล่าง) + แท็บย่อย (บน) · คอมใช้ sidebar เดิม ไม่เกี่ยว ─────
@@ -517,15 +547,18 @@
     { key:'work',  icon:'📊', label:'งาน',    views:['projects','mytasks','review','trash'] },
     { key:'cust',  icon:'📤', label:'ลูกค้า',  views:['senddoc','appt','announce'] },
     { key:'leave', icon:'📝', label:'ลา',      views:['leave','approve'] },
-    { key:'exp',   icon:'💸', label:'เบิก',    views:['expense','expapprove'] },
+    { key:'exp',   icon:'💸', label:'เบิก',    views:['expense','expdash','expapprove','reimb'] },
     { key:'ot',    icon:'⏰', label:'OT',      views:['ot','otapprove'] },
     { key:'docs',  icon:'📁', label:'เอกสาร',  views:['docs'] }
   ];
   var VIEW_TAB={ projects:'บอร์ดงาน', mytasks:'งานของฉัน', review:'รอตรวจ', trash:'ถังขยะ',
     senddoc:'ส่งงานลูกค้า', appt:'นัดประชุม', announce:'ประกาศ',
     leave:'ลาของฉัน', approve:'อนุมัติลา', expense:'เบิกของฉัน', expapprove:'อนุมัติเบิก',
+    expdash:'สรุป', reimb:'ตั้งเบิกลูกค้า',
     ot:'OT ของฉัน', otapprove:'อนุมัติ OT', docs:'เอกสาร' };
-  var OWNER_VIEWS={ review:1, approve:1, expapprove:1, otapprove:1 };   // แท็บที่เห็นเฉพาะพี่/ผู้ดูแล
+  // แท็บที่เห็นเฉพาะพี่/ผู้ดูแล · reimb = ตั้งเบิกลูกค้า (ชีตไม่มีเจ้าของรายคน + เป็นข้อมูลรายได้)
+  // ⚠️ ซ่อนแท็บ ≠ กันข้อมูล — backend กรองสิทธิ์เองอีกชั้นเสมอ
+  var OWNER_VIEWS={ review:1, approve:1, expapprove:1, otapprove:1, reimb:1 };
   var MGROUP='', MG_LAST={};
   function mVisibleViews(g){ return g.views.filter(function(v){ return IS_OWNER || !OWNER_VIEWS[v]; }); }
   function mGroupOf(v){ for(var i=0;i<NAV_GROUPS.length;i++){ if(NAV_GROUPS[i].views.indexOf(v)>=0) return NAV_GROUPS[i]; } return null; }
@@ -2103,6 +2136,111 @@
   window.renderExpenseApprove=renderExpenseApprove; window.exReject=exReject; window.exDecide=exDecide;
   window.exOpenPay=exOpenPay; window.exDoPay=exDoPay; window.exRebuild=exRebuild;
 
+  // ═══════════ VIEW: 📊 สรุปค่าใช้จ่าย + 🧾 ตั้งเบิกลูกค้า (dashboard) ═══════════
+  // สิทธิ์: พนักงานเห็นของตัวเอง · พี่เห็นทั้งบริษัท (backend กรองให้ · หน้าจอแค่แสดงตามที่ได้มา)
+  var DASH_YM='';
+  // money() มีอยู่แล้วในสโคปนี้ (ประกาศท้ายไฟล์ · function declaration hoist ขึ้นมาให้) — อย่าประกาศซ้ำ
+  function moneyShort(n){
+    n=Number(n)||0;
+    if(n>=1000000) return (n/1000000).toFixed(1)+'ล.';
+    if(n>=1000) return Math.round(n/1000)+'k';
+    return String(Math.round(n));
+  }
+  function ymThai(ym){
+    var p=String(ym||'').split('-'); var mi=parseInt(p[1],10)-1;
+    return (TH_MONTHS[mi]||p[1])+' '+p[0];
+  }
+  function ymShort(ym){
+    var p=String(ym||'').split('-'); var mi=parseInt(p[1],10)-1;
+    return (['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'][mi]||p[1]);
+  }
+  function statCard(label,value,sub,cls){
+    return '<div class="ds-stat '+(cls||'')+'"><div class="ds-lb">'+esc(label)+'</div>'+
+      '<div class="ds-vl">'+esc(value)+'</div>'+(sub?'<div class="ds-sub">'+esc(sub)+'</div>':'')+'</div>';
+  }
+  /** กราฟแท่งแนวโน้ม — สเกลจากค่าสูงสุด (ทุกเดือน 0 = แท่งเทาทั้งแถว ไม่ใช่หารศูนย์) */
+  function barChart(items,labelFn,valFn){
+    var max=0; items.forEach(function(x){ var v=valFn(x); if(v>max) max=v; });
+    return '<div class="ds-bars">'+items.map(function(x){
+      var v=valFn(x), h=max>0?Math.max(2,Math.round(v/max*88)):2;
+      return '<div class="ds-bar">'+(v>0?'<div class="bv">'+moneyShort(v)+'</div>':'')+
+        '<div class="bar'+(v>0?'':' zero')+'" style="height:'+h+'px"></div>'+
+        '<div class="bl">'+esc(labelFn(x))+'</div></div>';
+    }).join('')+'</div>';
+  }
+  /** แถวสัดส่วน (แยกตามประเภท/คน/ลูกค้า) */
+  function propRows(items){
+    var max=0; items.forEach(function(x){ if(x.amt>max) max=x.amt; });
+    return items.map(function(x){
+      var w=max>0?Math.max(2,Math.round(x.amt/max*100)):0;
+      return '<div class="ds-row"><div class="rl"><b>'+esc(x.key)+'</b><span>'+money(x.amt)+' · '+x.n+' ใบ</span></div>'+
+        '<div class="ds-track"><div class="ds-fill" style="width:'+w+'%"></div></div></div>';
+    }).join('');
+  }
+  function renderExpDash(){
+    skel();
+    jsonp({action:'waExpDash',uid:UID,ym:DASH_YM}).then(function(r){
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      if(r.empty){ $('main').innerHTML='<div class="card"><div class="emptybox">ยังไม่มีรายการเบิก 😊</div></div>'; return; }
+      DASH_YM=r.ym;
+      var h='<div class="ds-sel"><select id="dsYm" onchange="dsSetYm(this.value)">'+
+        r.months.slice().reverse().map(function(m){
+          return '<option value="'+esc(m)+'"'+(m===r.ym?' selected':'')+'>'+esc(ymThai(m))+'</option>';
+        }).join('')+'</select></div>';
+
+      h+='<div class="ds-grid">'+
+        statCard('ยอดเดือนนี้',money(r.cur.amt),r.cur.n+' ใบ'+(r.isOwner?' · ทั้งทีม':' · ของฉัน'))+
+        statCard('รอจ่ายคืน',money(r.waiting.amt),r.waiting.n+' ใบ (อนุมัติแล้ว)','ds-wait')+
+        statCard('รวม '+r.months.length+' เดือน',money(r.all.amt),r.all.n+' ใบ')+
+        (r.noProofN?statCard('ไม่มีหลักฐาน',r.noProofN+' ใบ','เดือนนี้ · ควรตามย้อนหลัง','ds-warn'):'')+
+        '</div>';
+
+      h+='<div class="card"><div class="ds-h">แนวโน้ม '+r.months.length+' เดือน (ไม่รวมใบที่ไม่อนุมัติ)</div>'+
+        barChart(r.trend,function(x){return ymShort(x.ym);},function(x){return x.amt;})+'</div>';
+
+      if(r.byStatus.length) h+='<div class="card"><div class="ds-h">สถานะใบเบิกเดือน '+esc(ymThai(r.ym))+'</div><div class="ds-chips">'+
+        r.byStatus.map(function(s){ return '<div class="ds-chip">'+esc(s.key)+' <b>'+s.n+'</b> ใบ · '+money(s.amt)+'</div>'; }).join('')+'</div></div>';
+
+      if(r.byType.length) h+='<div class="card"><div class="ds-h">แยกตามประเภทค่าใช้จ่าย</div>'+propRows(r.byType)+'</div>';
+      if(r.isOwner&&r.byPerson.length) h+='<div class="card"><div class="ds-h">แยกตามพนักงาน</div>'+propRows(r.byPerson)+'</div>';
+      if(!r.cur.n) h+='<div class="card"><div class="emptybox">เดือน '+esc(ymThai(r.ym))+' ยังไม่มีรายการ</div></div>';
+      $('main').innerHTML=h;
+    }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
+  }
+  function dsSetYm(v){ DASH_YM=v; renderExpDash(); }
+
+  /** 🧾 ตั้งเบิกลูกค้า (เฉพาะพี่) — ดูอย่างเดียว · แก้ที่ชีตเหมือนเดิม */
+  function renderReimb(){
+    skel();
+    jsonp({action:'waReimbDash',uid:UID}).then(function(r){
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      if(r.empty||!r.list.length){ $('main').innerHTML='<div class="card"><div class="emptybox">ยังไม่มีใบตั้งเบิก</div></div>'; return; }
+      var h='<div class="ds-grid">'+
+        statCard('ตั้งเบิกทั้งหมด',money(r.all.amt),r.all.n+' ใบ')+
+        statCard('ยังตามไม่จบ',money(r.open.amt),r.open.n+' ใบ (ส่งแล้ว · ยังไม่ได้หลักฐาน)','ds-wait')+
+        '</div>';
+      h+='<div class="card"><div class="ds-h">แนวโน้ม '+r.months.length+' เดือน (ตามวันที่ส่ง)</div>'+
+        barChart(r.trend,function(x){return ymShort(x.ym);},function(x){return x.amt;})+'</div>';
+      h+='<div class="card"><div class="ds-h">สถานะ</div><div class="ds-chips">'+
+        r.byStage.map(function(s){ return '<div class="ds-chip">'+esc(s.key)+' <b>'+s.n+'</b> ใบ · '+money(s.amt)+'</div>'; }).join('')+'</div></div>';
+      if(r.byCust.length) h+='<div class="card"><div class="ds-h">แยกตามลูกค้า (สูงสุด 10)</div>'+propRows(r.byCust)+'</div>';
+      h+='<div class="ds-h" style="margin:16px 0 8px">รายการล่าสุด ('+r.list.length+' ใบ)</div>';
+      h+=r.list.map(function(x){
+        var links='';
+        if(x.link) links+='<a class="ex-lk" href="'+esc(x.link)+'" target="_blank">📄 ใบตั้งเบิก</a>';
+        if(x.proofLink) links+='<a class="ex-lk" href="'+esc(x.proofLink)+'" target="_blank">📎 หลักฐาน</a>';
+        return '<div class="tk"><div class="tk-top"><span class="tk-no">'+esc(x.no||'-')+'</span>'+
+          '<span class="tk-badge '+(x.stage.indexOf('รับหลักฐาน')>=0?'b-done':(x.stage.indexOf('ยังไม่ส่ง')>=0?'b-new':'b-review'))+'">'+esc(x.stage)+'</span></div>'+
+          '<div class="tk-cust">'+esc(x.customer||'-')+'</div>'+
+          (x.title?'<div class="tk-detail">'+esc(x.title)+'</div>':'')+
+          '<div class="ex-amt">'+money(x.amount)+' บาท</div>'+
+          '<div class="ex-meta">'+(x.sentAt?'ส่งเมื่อ '+esc(x.sentAt):'ยังไม่ส่ง')+(links?'<br>'+links:'')+'</div></div>';
+      }).join('');
+      $('main').innerHTML=h;
+    }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
+  }
+  window.renderExpDash=renderExpDash; window.dsSetYm=dsSetYm; window.renderReimb=renderReimb;
+
   // ═══════════ VIEW: รอตรวจ (พี่ · งานที่ทีมส่งกลับ รอตรวจก่อนส่งลูกค้า) ═══════════
   function renderReview(){
     if(IS_OWNER){ renderOwnerBoard('review'); return; }   // พี่ → บอร์ดสไตล์เดียวกัน (เฉพาะงานรอตรวจ)
@@ -2807,7 +2945,8 @@
       NICK=r.nick||''; if(NICK){ $('hdSub').textContent=NICK; }
       IS_OWNER=!!r.isOwner;
       if(IS_OWNER){ var nr=$('navReview'); if(nr) nr.style.display='';      // แท็บรอตรวจ = เฉพาะพี่/ผู้ตรวจ
-        var ne=$('navExpAppr'); if(ne) ne.style.display=''; }               // แท็บอนุมัติเบิกจ่าย = เฉพาะพี่
+        var ne=$('navExpAppr'); if(ne) ne.style.display='';                 // แท็บอนุมัติเบิกจ่าย = เฉพาะพี่
+        var nb=$('navReimb'); if(nb) nb.style.display=''; }                 // แท็บตั้งเบิกลูกค้า = เฉพาะพี่
       $('loader').classList.add('hidden'); $('app').classList.remove('hidden');
       Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(b){
         b.addEventListener('click', function(){ switchView(b.dataset.view); }); });
