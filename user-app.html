@@ -471,7 +471,7 @@
   var PROJECTS=[], COMPANIES=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ) · COMPANIES=บริษัท auto (หน้าจัดการ)
   var ALL_TASKS=[], PJ_SEL='', MB_STATUSES=[];   // มุมมอง Project (dropdown เลือก · แยก 6 สถานะ + %) · MB_STATUSES=รายการสถานะ (ฟอร์มแก้งานมือถือ)
   var EXP_TYPES=[];   // ประเภทค่าใช้จ่าย (โหลดจาก waExpenseInit)
-  var EXP_IMG='';     // รูปที่แนบในฟอร์มที่เปิดอยู่ (ใบเสร็จเบิก / สลิปจ่ายคืน · data URL jpeg)
+  var EXP_IMG='';     // รูปเดี่ยวที่แนบในฟอร์มที่เปิดอยู่ (สลิปจ่ายคืน · data URL jpeg) — ใบเสร็จ/หลักฐานใช้ IMGS[] (หลายใบ)
 
   function $(id){ return document.getElementById(id); }
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
@@ -1667,17 +1667,32 @@
           '<button type="button" id="epRcp" class="btn btn-sm" onclick="expSetProof(false)" style="flex:1">🧾 มีใบเสร็จ</button>'+
           '<button type="button" id="epSr" class="btn btn-sm" onclick="expSetProof(true)" style="flex:1">📄 ไม่มีใบเสร็จ</button>'+
         '</div></div>'+
-      '<div id="epRcpBox">'+imgFldHtml('eImg','📎 รูปใบเสร็จ/สลิป (บังคับแนบ)')+'</div>'+
+      '<div id="epRcpBox">'+imgsFldHtml('eImg','📎 รูปใบเสร็จ (แนบได้หลายใบ → รวมเป็น PDF เดียวให้)')+'</div>'+
       '<div id="epSrBox" class="hidden">'+
         '<div class="m-hint">ระบบจะออก <b>ใบรับรองแทนใบเสร็จ</b> ให้อัตโนมัติตอน'+esc(OWNERTXT())+'อนุมัติ พร้อมฝังลายเซ็นของคุณ — ใช้กับค่าใช้จ่ายที่ขอใบเสร็จไม่ได้ (แท็กซี่ วิน ของตลาด)</div>'+
         '<div class="fld"><label>วันที่จ่ายเงินจริง</label><input id="ePayDate" type="date" value="'+todayISO()+'"></div>'+
+        imgsFldHtml('eSrImg','📎 หลักฐานเท่าที่มี — สลิปโอน / บิลเงินสด / บิลต่างประเทศ (แนบได้หลายใบ)')+
+        '<div class="m-hint" style="margin-top:-4px">แม้ไม่มีใบเสร็จ ก็ต้องมีหลักฐานประกอบเพื่อเพิ่มน้ำหนักทางภาษีค่ะ</div>'+
+        '<div class="fld" style="margin-top:8px">'+
+          '<label style="display:flex;gap:7px;align-items:center;cursor:pointer">'+
+            '<input id="eNoProof" type="checkbox" onchange="expToggleNoProof()" style="width:auto;margin:0">'+
+            '<span>ไม่มีหลักฐานเลยจริงๆ (เช่น จ่ายสดวินมอเตอร์ไซค์)</span></label>'+
+          '<textarea id="eNoProofWhy" class="hidden" placeholder="ระบุเหตุผล เช่น จ่ายสดค่าวินหน้าปากซอย ไม่มีบิล" style="margin-top:6px"></textarea>'+
+        '</div>'+
         '<div id="epSign" class="m-hint"></div>'+
       '</div>'+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
       '<button class="btn btn-primary" id="eSend" onclick="doExpense()">แจ้งเบิก</button></div>');
-    imgFldBind('eImg', function(d){ EXP_IMG=d; });
+    imgsFldBind('eImg'); imgsFldBind('eSrImg');
     expSetProof(false);
   }
+  /** ติ๊ก "ไม่มีหลักฐานเลย" → ซ่อนช่องแนบ + บังคับพิมพ์เหตุผล (ไปโผล่ให้พี่เห็นก่อนอนุมัติ) */
+  function expToggleNoProof(){
+    var on=($('eNoProof')||{}).checked;
+    var why=$('eNoProofWhy'); if(why) why.classList.toggle('hidden', !on);
+    var box=$('eSrImg'); if(box && box.parentNode) box.parentNode.style.opacity = on?'0.45':'1';
+  }
+  window.expToggleNoProof=expToggleNoProof;
   function OWNERTXT(){ return 'พี่'; }
   function todayISO(){ var d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
   /** สลับโหมดหลักฐาน — ไม่มีใบเสร็จ = ต้องมีลายเซ็นในระบบก่อน (เอกสารคือ "พนักงานรับรองเอง") */
@@ -1706,9 +1721,19 @@
       var pd=($('ePayDate')||{}).value||'';
       if(!pd){ mErr('ระบุวันที่จ่ายเงินก่อนค่ะ'); return; }
       p.noReceipt='1'; p.payDate=pd;
+      var noProof=($('eNoProof')||{}).checked, arr=IMGS['eSrImg']||[];
+      if(noProof){
+        var why=($('eNoProofWhy')||{}).value.trim();
+        if(!why){ mErr('ระบุเหตุผลที่ไม่มีหลักฐานก่อนค่ะ'); return; }
+        p.noProofReason=why;
+      } else {
+        if(!arr.length){ mErr('แนบหลักฐานเท่าที่มีก่อนค่ะ (สลิปโอน/บิลเงินสด) — ถ้าไม่มีจริงๆ ติ๊กช่องด้านล่าง'); return; }
+        p.imgs=JSON.stringify(arr);
+      }
     } else {
-      if(!EXP_IMG){ mErr('แนบรูปใบเสร็จก่อนค่ะ (หรือเลือก "ไม่มีใบเสร็จ")'); return; }
-      p.img=EXP_IMG;
+      var rcp=IMGS['eImg']||[];
+      if(!rcp.length){ mErr('แนบรูปใบเสร็จก่อนค่ะ (หรือเลือก "ไม่มีใบเสร็จ")'); return; }
+      p.imgs=JSON.stringify(rcp);
     }
     var b=$('eSend'); if(b){ b.disabled=true; b.textContent='กำลังส่ง…'; }
     toast('กำลังส่งใบเบิก…');
@@ -1716,8 +1741,8 @@
     jsonpPost(p)
       .then(function(r){ if(!r||!r.ok){ if(b){b.disabled=false;b.textContent='แจ้งเบิก';}
           if(r&&r.needSign){ mErr((r.error||'')+' '); } else mErr((r&&r.error)||'ส่งไม่สำเร็จ'); return; }
-        closeModal(); EXP_IMG='';
-        toast('✅ ส่งใบเบิกแล้ว ('+(r.no||'')+')'+(r.sr?' · จะออกใบรับรองแทนตอนอนุมัติ':' รออนุมัตินะคะ'));
+        closeModal(); IMGS['eImg']=[]; IMGS['eSrImg']=[];
+        toast('✅ ส่งใบเบิกแล้ว ('+(r.no||'')+')'+(r.merged?' · รวม '+r.files+' ไฟล์เป็น PDF แล้ว':'')+(r.sr?' · จะออกใบรับรองแทนตอนอนุมัติ':''));
         renderExpense(); })
       .catch(function(e){ if(b){b.disabled=false;b.textContent='แจ้งเบิก';} mErr(e.message); });
   }
@@ -1897,7 +1922,44 @@
   }
   window.openSign=openSign; window.sigClear=sigClear; window.sigSave=sigSave; window.sigRedraw=sigRedraw;
 
-  // ───── ช่องแนบรูป (ใช้ร่วม: ใบเสร็จเบิก + สลิปจ่ายคืน) · ย่อรูปเป็น jpeg base64 ก่อนส่ง ─────
+  // ───── ช่องแนบรูป "หลายใบ" (ใบเสร็จ/หลักฐาน) · หลายใบ = backend รวมเป็น PDF เดียวผ่าน Worker ─────
+  var IMGS={};   // { fldId: [dataURL,…] }
+  function imgsFldHtml(id,label){
+    return '<div class="fld"><label>'+esc(label)+'</label>'+
+      '<input id="'+id+'" type="file" accept="image/*" multiple style="font-family:inherit;font-size:14px">'+
+      '<div id="'+id+'List" class="m-hint" style="margin-top:6px">ยังไม่ได้แนบรูป</div></div>';
+  }
+  function imgsFldBind(id){
+    IMGS[id]=[];
+    var el=$(id); if(!el) return;
+    el.addEventListener('change', function(){
+      var fs=el.files ? Array.prototype.slice.call(el.files) : [];
+      if(!fs.length) return;
+      var lb=$(id+'List'); if(lb) lb.textContent='กำลังเตรียมรูป '+fs.length+' ใบ…';
+      Promise.all(fs.map(function(f){ return shrinkImage(f).catch(function(){ return null; }); }))
+        .then(function(ds){
+          ds.filter(Boolean).forEach(function(d){ if(IMGS[id].length<10) IMGS[id].push(d); });
+          el.value='';            // เคลียร์ input → เลือกไฟล์เดิมซ้ำได้ + กดเพิ่มทีละชุดได้
+          imgsPaint(id);
+        });
+    });
+  }
+  function imgsPaint(id){
+    var lb=$(id+'List'); if(!lb) return;
+    var arr=IMGS[id]||[];
+    if(!arr.length){ lb.textContent='ยังไม่ได้แนบรูป'; return; }
+    lb.innerHTML='✅ แนบแล้ว '+arr.length+' ใบ'+(arr.length>1?' · จะรวมเป็น PDF ใบเดียวให้':'')+'<br>'+
+      arr.map(function(d,i){
+        return '<span style="display:inline-block;position:relative;margin:4px 6px 0 0">'+
+          '<img src="'+d+'" style="width:66px;height:66px;object-fit:cover;border-radius:8px;border:1px solid #ddd">'+
+          '<button type="button" onclick="imgsDel(\''+id+'\','+i+')" title="เอาออก" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;'+
+          'border-radius:50%;border:none;background:#E5484D;color:#fff;font-size:12px;line-height:1;cursor:pointer">×</button></span>';
+      }).join('');
+  }
+  function imgsDel(id,i){ (IMGS[id]||[]).splice(i,1); imgsPaint(id); }
+  window.imgsDel=imgsDel;
+
+  // ───── ช่องแนบรูป (รูปเดียว: สลิปจ่ายคืน) · ย่อรูปเป็น jpeg base64 ก่อนส่ง ─────
   function imgFldHtml(id,label){
     return '<div class="fld"><label>'+esc(label)+'</label>'+
       '<input id="'+id+'" type="file" accept="image/*" style="font-family:inherit;font-size:14px">'+
@@ -1964,10 +2026,13 @@
       '<div class="ex-amt"><span class="ex-t">'+esc(x.type)+'</span> · '+money+' บาท</div>'+
       (x.detail?'<div class="tk-detail">'+esc(x.detail)+'</div>':'')+
       '<div class="ex-meta">'+esc(x.createdAt||'')+
-        (x.receiptUrl?'<br><a class="ex-lk" href="'+esc(x.receiptUrl)+'" target="_blank">🔍 ดูใบเสร็จ</a>':'')+
+        (x.receiptUrl?'<br><a class="ex-lk" href="'+esc(x.receiptUrl)+'" target="_blank">🔍 ดูหลักฐาน</a>':'')+
         // ไม่มีใบเสร็จ = พี่ควรเห็นชัดก่อนกดอนุมัติ (อนุมัติแล้วระบบออกใบรับรองแทนทันที)
-        (!x.receiptUrl&&x.docType&&x.docType.indexOf('ใบรับรอง')>=0
+        (x.docType&&x.docType.indexOf('ใบรับรอง')>=0
           ?'<br><span style="color:#C8730B">📄 ไม่มีใบเสร็จ — อนุมัติแล้วระบบจะออกใบรับรองแทนให้</span>':'')+
+        // ไม่มีหลักฐานแนบเลย = จุดเสี่ยงทางภาษี ต้องเด้งตา
+        (x.note&&x.note.indexOf('ไม่มีหลักฐาน')>=0
+          ?'<br><span style="color:#E5484D;font-weight:600">'+esc(x.note)+'</span>':'')+
         (x.docLink?'<br><a class="ex-lk" href="'+esc(x.docLink)+'" target="_blank">📄 '+esc(x.docNo||'เอกสาร')+'</a>':'')+'</div>'+
       (isPaid
         ? '<div class="m-act" style="margin-top:11px"><button class="btn btn-primary" onclick="exOpenPay(\''+esc(x.no)+'\',\''+esc(x.nick||'')+'\','+(Number(x.amount)||0)+')">💰 จ่ายคืนแล้ว</button></div>'
