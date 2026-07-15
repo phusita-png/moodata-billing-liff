@@ -1645,6 +1645,11 @@
       if(x.docLink)    links+='<a class="ex-lk" href="'+esc(x.docLink)+'" target="_blank">📄 '+esc(x.docNo||'ใบรับรองแทนใบเสร็จ')+'</a>';
       else if(x.docType&&x.docType.indexOf('ใบรับรอง')>=0) links+='<span class="ex-lk" style="color:#8A94A6">📄 ไม่มีใบเสร็จ · ออกใบรับรองแทนตอนอนุมัติ</span>';
       if(x.paidSlip)   links+='<a class="ex-lk" href="'+esc(x.paidSlip)+'" target="_blank">📎 สลิปโอนคืน</a>';
+      // แฟ้มครบชุด (เอกสาร+หลักฐาน+สลิป รวมใบเดียว) — เกิดเองตอนพี่กดจ่ายคืน
+      if(x.dossier)    links+='<a class="ex-lk" href="'+esc(x.dossier)+'" target="_blank">🗂️ แฟ้มครบชุด</a>';
+      // จ่ายแล้วแต่แฟ้มไม่เกิด (Worker ล่มตอนนั้น) → พี่กดสร้างใหม่ได้ · พนักงานไม่ต้องเห็นปุ่มนี้
+      else if(IS_OWNER&&String(x.status).indexOf('จ่ายแล้ว')>=0)
+        links+='<a class="ex-lk" href="#" onclick="exRebuild(\''+esc(x.no)+'\');return false" style="color:#C8730B">🗂️ สร้างแฟ้มครบชุด</a>';
       return '<div class="tk"><div class="tk-top"><span class="tk-no">'+esc(x.no)+'</span>'+
         '<span class="tk-badge '+expBadge(x.status)+'">'+esc(x.status)+'</span></div>'+
         '<div class="ex-amt"><span class="ex-t">'+esc(x.type)+'</span> · '+money+' บาท</div>'+
@@ -2074,8 +2079,20 @@
     toast('กำลังบันทึก…');
     jsonpPost({action:'waExpPay',uid:UID,no:no,img:EXP_IMG||''}).then(function(r){
       if(!r||!r.ok){ if(b){b.disabled=false;b.textContent='บันทึกจ่ายคืน';} mErr((r&&r.error)||'ไม่สำเร็จ'); return; }
-      closeModal(); EXP_IMG=''; toast('💰 บันทึกจ่ายคืนแล้ว'); exFade(no);
+      closeModal(); EXP_IMG='';
+      // แฟ้มครบชุดรวมให้เองตอนนี้ · ไม่เกิด = ไม่ใช่เรื่องใหญ่ (เงินจ่ายแล้ว) แต่ต้องบอกให้รู้ว่าต้องกดสร้างใหม่
+      toast(r.dossier?'💰 จ่ายคืนแล้ว · 🗂️ รวมแฟ้มครบชุดให้แล้ว':'💰 จ่ายคืนแล้ว · แฟ้มยังไม่รวม (กด 🗂️ ที่รายการเพื่อสร้าง)');
+      exFade(no);
     }).catch(function(e){ if(b){b.disabled=false;b.textContent='บันทึกจ่ายคืน';} mErr(e.message); });
+  }
+  /** สร้างแฟ้มครบชุดใหม่ (พี่เท่านั้น) — เผื่อ Worker ล่มตอนจ่าย หรือแนบหลักฐานเพิ่มทีหลัง */
+  function exRebuild(no){
+    toast('กำลังรวมแฟ้ม…');
+    jsonpPost({action:'waExpDossier',uid:UID,no:no}).then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'รวมแฟ้มไม่สำเร็จ'); return; }
+      toast('🗂️ รวมแฟ้มแล้ว ('+(r.parts||[]).length+' ชิ้น)');
+      renderExpense();
+    }).catch(function(e){ toast(e.message); });
   }
   /** การ์ดที่ตัดสินแล้ว fade ออก แล้วโหลดหน้าใหม่ (pattern เดียวกับ apprDecide) */
   function exFade(no){
@@ -2084,7 +2101,7 @@
     else renderExpenseApprove();
   }
   window.renderExpenseApprove=renderExpenseApprove; window.exReject=exReject; window.exDecide=exDecide;
-  window.exOpenPay=exOpenPay; window.exDoPay=exDoPay;
+  window.exOpenPay=exOpenPay; window.exDoPay=exDoPay; window.exRebuild=exRebuild;
 
   // ═══════════ VIEW: รอตรวจ (พี่ · งานที่ทีมส่งกลับ รอตรวจก่อนส่งลูกค้า) ═══════════
   function renderReview(){
