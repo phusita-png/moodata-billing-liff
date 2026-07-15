@@ -431,9 +431,10 @@
       <svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/></svg><span>ถังขยะ</span></button>
 
     <div class="nav-sec">ข้อมูลส่วนตัว</div>
-    <!-- ปิดชั่วคราว: ระบบเบิกกำลังพัฒนา (เปิดกลับ = ลบ style display:none + ตั้ง EXPENSE_ENABLED=true ฝั่ง .gs) -->
-    <button class="nav-btn" data-view="expense" aria-label="เบิกค่าใช้จ่าย" style="display:none">
+    <button class="nav-btn" data-view="expense" aria-label="เบิกค่าใช้จ่าย">
       <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9v6M18 9v6"/></svg><span>เบิกค่าใช้จ่าย</span></button>
+    <button class="nav-btn" data-view="expapprove" aria-label="อนุมัติเบิกจ่าย" id="navExpAppr" style="display:none">
+      <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="m8 12.5 2.5 2.5L16 9.5"/></svg><span>อนุมัติเบิกจ่าย</span></button>
     <button class="nav-btn active" data-view="leave" aria-label="การลา">
       <svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></svg><span>การลา</span></button>
     <button class="nav-btn" data-view="ot" aria-label="ขอ OT">
@@ -465,11 +466,12 @@
   var MENAME='', TEAM=[], CUSTOMERS=[];   // งาน
   var VIEW_META = {
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
-    expense:['💸','เบิกค่าใช้จ่าย'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT']
+    expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติเบิกจ่าย'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT']
   };
   var PROJECTS=[], COMPANIES=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ) · COMPANIES=บริษัท auto (หน้าจัดการ)
   var ALL_TASKS=[], PJ_SEL='', MB_STATUSES=[];   // มุมมอง Project (dropdown เลือก · แยก 6 สถานะ + %) · MB_STATUSES=รายการสถานะ (ฟอร์มแก้งานมือถือ)
   var EXP_TYPES=[];   // ประเภทค่าใช้จ่าย (โหลดจาก waExpenseInit)
+  var EXP_IMG='';     // รูปที่แนบในฟอร์มที่เปิดอยู่ (ใบเสร็จเบิก / สลิปจ่ายคืน · data URL jpeg)
 
   function $(id){ return document.getElementById(id); }
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
@@ -507,7 +509,7 @@
     Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(b){ b.classList.toggle('active', b.dataset.view===v); });
     var meta=VIEW_META[v]||['•',v]; $('tbIcon').textContent=meta[0]; $('tbTitle').textContent=meta[1];
     mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
-    ({ leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove }[v] || soon)();
+    ({ leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove }[v] || soon)();
   }
 
   // ───── มือถือ: เมนูกลุ่ม (ล่าง) + แท็บย่อย (บน) · คอมใช้ sidebar เดิม ไม่เกี่ยว ─────
@@ -515,13 +517,15 @@
     { key:'work',  icon:'📊', label:'งาน',    views:['projects','mytasks','review','trash'] },
     { key:'cust',  icon:'📤', label:'ลูกค้า',  views:['senddoc','appt','announce'] },
     { key:'leave', icon:'📝', label:'ลา',      views:['leave','approve'] },
+    { key:'exp',   icon:'💸', label:'เบิก',    views:['expense','expapprove'] },
     { key:'ot',    icon:'⏰', label:'OT',      views:['ot','otapprove'] },
     { key:'docs',  icon:'📁', label:'เอกสาร',  views:['docs'] }
   ];
   var VIEW_TAB={ projects:'บอร์ดงาน', mytasks:'งานของฉัน', review:'รอตรวจ', trash:'ถังขยะ',
     senddoc:'ส่งงานลูกค้า', appt:'นัดประชุม', announce:'ประกาศ',
-    leave:'ลาของฉัน', approve:'อนุมัติลา', ot:'OT ของฉัน', otapprove:'อนุมัติ OT', docs:'เอกสาร' };
-  var OWNER_VIEWS={ review:1, approve:1, otapprove:1 };   // แท็บที่เห็นเฉพาะพี่/ผู้ดูแล
+    leave:'ลาของฉัน', approve:'อนุมัติลา', expense:'เบิกของฉัน', expapprove:'อนุมัติเบิก',
+    ot:'OT ของฉัน', otapprove:'อนุมัติ OT', docs:'เอกสาร' };
+  var OWNER_VIEWS={ review:1, approve:1, expapprove:1, otapprove:1 };   // แท็บที่เห็นเฉพาะพี่/ผู้ดูแล
   var MGROUP='', MG_LAST={};
   function mVisibleViews(g){ return g.views.filter(function(v){ return IS_OWNER || !OWNER_VIEWS[v]; }); }
   function mGroupOf(v){ for(var i=0;i<NAV_GROUPS.length;i++){ if(NAV_GROUPS[i].views.indexOf(v)>=0) return NAV_GROUPS[i]; } return null; }
@@ -1647,25 +1651,147 @@
   }
   function openExpense(){
     if(!EXP_TYPES.length){ toast('กำลังโหลดประเภท…'); return; }
+    EXP_IMG='';
     var opts=EXP_TYPES.map(function(t){return '<option value="'+esc(t.key)+'">'+esc(t.label)+'</option>';}).join('');
     modal('<h3>💸 แจ้งเบิกค่าใช้จ่าย</h3><div id="mErr" class="m-err hidden"></div>'+
       '<div class="fld"><label>ประเภท</label><select id="eType">'+opts+'</select></div>'+
       '<div class="fld"><label>จำนวนเงิน (บาท)</label><input id="eAmt" type="number" inputmode="decimal" min="0" step="0.01" placeholder="เช่น 250"></div>'+
       '<div class="fld"><label>รายละเอียด (จ่ายค่าอะไร)</label><textarea id="eDetail" placeholder="เช่น ค่าแท็กซี่ไปหาลูกค้า A"></textarea></div>'+
-      '<div class="m-hint">📎 กด "แจ้งเบิก" แล้วส่ง <b>รูปใบเสร็จ</b> ในแชทไลน์เพื่อยืนยัน (บังคับแนบ)</div>'+
+      imgFldHtml('eImg','📎 รูปใบเสร็จ/สลิป (บังคับแนบ)')+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
-      '<button class="btn btn-primary" onclick="doExpense()">แจ้งเบิก</button></div>');
+      '<button class="btn btn-primary" id="eSend" onclick="doExpense()">แจ้งเบิก</button></div>');
+    imgFldBind('eImg', function(d){ EXP_IMG=d; });
   }
   function doExpense(){
     var type=$('eType').value, amt=$('eAmt').value, detail=$('eDetail').value.trim();
     if(!(parseFloat(amt)>0)){ mErr('กรอกจำนวนเงินก่อนค่ะ'); return; }
     if(!detail){ mErr('กรอกรายละเอียดก่อนค่ะ'); return; }
-    toast('กำลังส่ง…');
-    jsonp({action:'waExpenseSubmit',uid:UID,type:type,amount:amt,detail:detail})
-      .then(function(r){ if(!r||!r.ok){ mErr((r&&r.error)||'ส่งไม่สำเร็จ'); return; } closeModal();
-        toast('📎 ส่งรูปใบเสร็จในแชทไลน์เพื่อยืนยันนะคะ'); renderExpense(); })
-      .catch(function(e){ mErr(e.message); });
+    if(!EXP_IMG){ mErr('แนบรูปใบเสร็จก่อนค่ะ'); return; }
+    var b=$('eSend'); if(b){ b.disabled=true; b.textContent='กำลังส่ง…'; }
+    toast('กำลังส่งใบเบิก…');
+    // POST — รูป base64 ยาวเกิน URL limit ของ JSONP GET
+    jsonpPost({action:'waExpCreate',uid:UID,type:type,amount:amt,detail:detail,img:EXP_IMG})
+      .then(function(r){ if(!r||!r.ok){ if(b){b.disabled=false;b.textContent='แจ้งเบิก';} mErr((r&&r.error)||'ส่งไม่สำเร็จ'); return; }
+        closeModal(); EXP_IMG=''; toast('✅ ส่งใบเบิกแล้ว ('+(r.no||'')+') รออนุมัตินะคะ'); renderExpense(); })
+      .catch(function(e){ if(b){b.disabled=false;b.textContent='แจ้งเบิก';} mErr(e.message); });
   }
+
+  // ───── ช่องแนบรูป (ใช้ร่วม: ใบเสร็จเบิก + สลิปจ่ายคืน) · ย่อรูปเป็น jpeg base64 ก่อนส่ง ─────
+  function imgFldHtml(id,label){
+    return '<div class="fld"><label>'+esc(label)+'</label>'+
+      '<input id="'+id+'" type="file" accept="image/*" style="font-family:inherit;font-size:14px">'+
+      '<div id="'+id+'Pv" class="m-hint" style="margin-top:6px">ยังไม่ได้แนบรูป</div></div>';
+  }
+  function imgFldBind(id,onReady){
+    var el=$(id); if(!el) return;
+    el.addEventListener('change', function(){
+      var f=el.files && el.files[0]; var pv=$(id+'Pv');
+      if(!f){ onReady(''); if(pv) pv.textContent='ยังไม่ได้แนบรูป'; return; }
+      if(pv) pv.textContent='กำลังเตรียมรูป…';
+      shrinkImage(f).then(function(d){ onReady(d);
+        if(pv) pv.innerHTML='✅ แนบแล้ว · <img src="'+d+'" style="max-width:120px;max-height:120px;border-radius:8px;vertical-align:middle;margin-left:6px">'; })
+        .catch(function(){ onReady(''); if(pv) pv.textContent='⚠️ อ่านรูปไม่สำเร็จ ลองรูปอื่นนะคะ'; });
+    });
+  }
+  /** ย่อรูป (ด้านยาวสุด ≤ 1280) → data URL jpeg 0.7 — กันไฟล์ใหญ่เกิน POST/Drive */
+  function shrinkImage(file){
+    return new Promise(function(resolve,reject){
+      var fr=new FileReader();
+      fr.onerror=function(){ reject(new Error('อ่านไฟล์ไม่ได้')); };
+      fr.onload=function(){
+        var img=new Image();
+        img.onerror=function(){ reject(new Error('ไฟล์ไม่ใช่รูป')); };
+        img.onload=function(){
+          var mx=1280, w=img.width, h=img.height;
+          if(Math.max(w,h)>mx){ var s=mx/Math.max(w,h); w=Math.round(w*s); h=Math.round(h*s); }
+          var c=document.createElement('canvas'); c.width=w; c.height=h;
+          c.getContext('2d').drawImage(img,0,0,w,h);
+          try{ resolve(c.toDataURL('image/jpeg',0.7)); }catch(e){ reject(e); }
+        };
+        img.src=fr.result;
+      };
+      fr.readAsDataURL(file);
+    });
+  }
+
+  // ═══════════ VIEW: อนุมัติเบิกจ่าย (พี่) ═══════════
+  function renderExpenseApprove(){
+    if(!IS_OWNER){ $('main').innerHTML='<div class="card"><div class="empty">เฉพาะผู้ดูแล (พี่/HR) ค่ะ</div></div>'; return; }
+    skel();
+    jsonp({action:'waExpPending',uid:UID}).then(function(r){
+      if(VIEW!=='expapprove') return;
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      var pd=r.pending||[], tp=r.topay||[];
+      var html='';
+      html+=exSecHd('⏳ รออนุมัติ ('+pd.length+')','');
+      html+= pd.length ? pd.map(function(x){ return exApprCard(x,false); }).join('')
+                       : '<div class="card"><div class="emptybox">ไม่มีใบเบิกรออนุมัติ 🎉</div></div>';
+      html+=exSecHd('💰 อนุมัติแล้ว · รอจ่ายคืน ('+tp.length+')','margin-top:18px');
+      html+= tp.length ? tp.map(function(x){ return exApprCard(x,true); }).join('')
+                       : '<div class="card"><div class="emptybox">ไม่มีรายการค้างจ่ายคืน 😊</div></div>';
+      $('main').innerHTML=html;
+    }).catch(function(e){ if(VIEW==='expapprove') $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
+  }
+  function exSecHd(text,extra){
+    return '<div style="font-size:14px;font-weight:600;color:#4A5262;margin:0 2px 8px;'+(extra||'')+'">'+esc(text)+'</div>';
+  }
+  function exApprCard(x,isPaid){
+    var money=(Number(x.amount)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+    return '<div class="card" id="exa-'+esc(x.no)+'">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'+
+        '<b>'+esc(x.nick||'-')+'</b><span class="tk-badge '+expBadge(x.status)+'">'+esc(x.no)+'</span></div>'+
+      '<div class="ex-amt"><span class="ex-t">'+esc(x.type)+'</span> · '+money+' บาท</div>'+
+      (x.detail?'<div class="tk-detail">'+esc(x.detail)+'</div>':'')+
+      '<div class="ex-meta">'+esc(x.createdAt||'')+
+        (x.receiptUrl?'<br><a class="ex-lk" href="'+esc(x.receiptUrl)+'" target="_blank">🔍 ดูใบเสร็จ</a>':'')+'</div>'+
+      (isPaid
+        ? '<div class="m-act" style="margin-top:11px"><button class="btn btn-primary" onclick="exOpenPay(\''+esc(x.no)+'\',\''+esc(x.nick||'')+'\','+(Number(x.amount)||0)+')">💰 จ่ายคืนแล้ว</button></div>'
+        : '<div class="m-act" style="margin-top:11px"><button class="btn btn-danger" onclick="exReject(\''+esc(x.no)+'\')">❌ ไม่อนุมัติ</button>'+
+          '<button class="btn btn-primary" onclick="exDecide(\''+esc(x.no)+'\',\'approve\',\'\')">✅ อนุมัติ</button></div>')+
+      '</div>';
+  }
+  /** ไม่อนุมัติ → ถามเหตุผลก่อน (ลงคอลัมน์หมายเหตุ + แจ้งผู้แจ้ง) */
+  function exReject(no){
+    modal('<h3>❌ ไม่อนุมัติใบเบิก '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="fld"><label>เหตุผล (ไม่บังคับ · ผู้แจ้งจะเห็น)</label><textarea id="exNote" placeholder="เช่น ใบเสร็จไม่ชัด ขอถ่ายใหม่"></textarea></div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-danger" onclick="exDecide(\''+esc(no)+'\',\'reject\',$(\'exNote\').value.trim())">ไม่อนุมัติ</button></div>');
+  }
+  function exDecide(no,decision,note){
+    toast(decision==='approve'?'กำลังอนุมัติ…':'กำลังบันทึก…');
+    jsonpPost({action:'waExpDecide',uid:UID,no:no,decision:decision,note:note||''}).then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; }
+      closeModal(); toast(decision==='approve'?'✅ อนุมัติแล้ว':'❌ ไม่อนุมัติแล้ว');
+      exFade(no);
+    }).catch(function(e){ toast(e.message); });
+  }
+  /** จ่ายคืน → แนบสลิปโอน (ข้ามได้) */
+  function exOpenPay(no,nick,amount){
+    EXP_IMG='';
+    var money=(Number(amount)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+    modal('<h3>💰 จ่ายคืน '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">โอนคืน <b>'+esc(nick)+'</b> · '+money+' บาท</div>'+
+      imgFldHtml('pImg','📎 สลิปโอนคืน (ไม่บังคับ · ผู้แจ้งจะเห็น)')+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" id="pSend" onclick="exDoPay(\''+esc(no)+'\')">บันทึกจ่ายคืน</button></div>');
+    imgFldBind('pImg', function(d){ EXP_IMG=d; });
+  }
+  function exDoPay(no){
+    var b=$('pSend'); if(b){ b.disabled=true; b.textContent='กำลังบันทึก…'; }
+    toast('กำลังบันทึก…');
+    jsonpPost({action:'waExpPay',uid:UID,no:no,img:EXP_IMG||''}).then(function(r){
+      if(!r||!r.ok){ if(b){b.disabled=false;b.textContent='บันทึกจ่ายคืน';} mErr((r&&r.error)||'ไม่สำเร็จ'); return; }
+      closeModal(); EXP_IMG=''; toast('💰 บันทึกจ่ายคืนแล้ว'); exFade(no);
+    }).catch(function(e){ if(b){b.disabled=false;b.textContent='บันทึกจ่ายคืน';} mErr(e.message); });
+  }
+  /** การ์ดที่ตัดสินแล้ว fade ออก แล้วโหลดหน้าใหม่ (pattern เดียวกับ apprDecide) */
+  function exFade(no){
+    var el=$('exa-'+no);
+    if(el){ el.style.transition='opacity .3s'; el.style.opacity='0'; setTimeout(renderExpenseApprove,320); }
+    else renderExpenseApprove();
+  }
+  window.renderExpenseApprove=renderExpenseApprove; window.exReject=exReject; window.exDecide=exDecide;
+  window.exOpenPay=exOpenPay; window.exDoPay=exDoPay;
 
   // ═══════════ VIEW: รอตรวจ (พี่ · งานที่ทีมส่งกลับ รอตรวจก่อนส่งลูกค้า) ═══════════
   function renderReview(){
@@ -2370,12 +2496,14 @@
       if(!r||!r.ok){ fatal((r&&r.error)||'โหลดข้อมูลไม่สำเร็จ'); return; }
       NICK=r.nick||''; if(NICK){ $('hdSub').textContent=NICK; }
       IS_OWNER=!!r.isOwner;
-      if(IS_OWNER){ var nr=$('navReview'); if(nr) nr.style.display=''; }   // แท็บรอตรวจ = เฉพาะพี่/ผู้ตรวจ
+      if(IS_OWNER){ var nr=$('navReview'); if(nr) nr.style.display='';      // แท็บรอตรวจ = เฉพาะพี่/ผู้ตรวจ
+        var ne=$('navExpAppr'); if(ne) ne.style.display=''; }               // แท็บอนุมัติเบิกจ่าย = เฉพาะพี่
       $('loader').classList.add('hidden'); $('app').classList.remove('hidden');
       Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(b){
         b.addEventListener('click', function(){ switchView(b.dataset.view); }); });
       var sp=startParam();
-      var startView = sp==='docs' ? 'docs' : (sp==='work' ? 'projects' : (sp==='approve' && IS_OWNER ? 'approve' : 'leave'));
+      var startView = sp==='docs' ? 'docs' : (sp==='work' ? 'projects' : (sp==='expense' ? 'expense' :
+        ((sp==='approve'||sp==='expapprove') && IS_OWNER ? sp : 'leave')));   // ลิงก์จาก Google Chat/แชท → เปิดแท็บตรง
       switchView(startView);   // switchView → mSyncNav สร้างเมนูกลุ่มล่าง + แท็บบนให้เอง
       // อุ่นแคชเบื้องหลัง → คลิกการลา/เอกสารครั้งแรกเด้งทันที (ไม่แย่งจอแรกโหลด)
       setTimeout(function(){ if(!LVCACHE.data) _leaveFetch(true); if(IDTOKEN && !DOCCACHE.data) _docsFetch(true); if(!APPT_CUST.length) apFetchMeta(); if(!ANNOUNCE_GROUPS.length) anFetchGroups(); }, 900);
