@@ -1630,11 +1630,13 @@
     jsonp({action:'waExpenseInit', uid:UID}).then(function(r){
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
       EXP_TYPES=r.types||[]; paintExpense(r.expenses||[]);
+      sigRefresh();
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
   }
   function expBadge(s){ s=String(s||''); if(s.indexOf('จ่าย')>=0)return'b-done'; if(s.indexOf('ไม่')>=0)return'b-cancel'; if(s.indexOf('อนุมัติ')>=0)return'b-doing'; return'b-new'; }
   function paintExpense(list){
-    var html='<button class="btn btn-primary" style="width:100%;margin-bottom:14px" onclick="openExpense()">➕ แจ้งเบิกค่าใช้จ่าย</button>';
+    var html='<button class="btn btn-primary" style="width:100%;margin-bottom:10px" onclick="openExpense()">➕ แจ้งเบิกค่าใช้จ่าย</button>'+
+      '<button class="btn btn-ghost" style="width:100%;margin-bottom:14px" onclick="openSign()">✍️ ลายเซ็นของฉัน<span id="sigState" style="color:#8A94A6;font-weight:400"></span></button>';
     if(!list.length){ html+='<div class="card"><div class="emptybox">ยังไม่มีรายการเบิก 😊</div></div>'; $('main').innerHTML=html; return; }
     html+=list.map(function(x){
       var money=(Number(x.amount)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -1675,6 +1677,91 @@
         closeModal(); EXP_IMG=''; toast('✅ ส่งใบเบิกแล้ว ('+(r.no||'')+') รออนุมัตินะคะ'); renderExpense(); })
       .catch(function(e){ if(b){b.disabled=false;b.textContent='แจ้งเบิก';} mErr(e.message); });
   }
+
+  // ═══════════ ลายเซ็นของฉัน (เซ็นครั้งเดียว ใช้ตลอด · ระบบเอาไปฝังเอกสารที่ออกให้) ═══════════
+  // ต้นแบบแผ่นวาด: skill handover-letter (วาดด้วยนิ้ว/เมาส์ หรืออัปรูปลายเซ็น)
+  var SIG_HAS=false;
+  /** อัปเดตป้ายสถานะข้างปุ่ม "ลายเซ็นของฉัน" (ยังไม่มี → ชวนเซ็น) */
+  function sigRefresh(){
+    jsonp({action:'waSignGet',uid:UID}).then(function(r){
+      if(!r||!r.ok) return;
+      SIG_HAS=!!r.has;
+      var el=$('sigState'); if(!el) return;
+      el.textContent = r.has ? ' · เซ็นแล้ว ('+(r.updatedAt||'')+')' : ' · ยังไม่ได้เซ็น';
+    }).catch(function(){});
+  }
+  function openSign(){
+    modal('<h3>✍️ ลายเซ็นของฉัน</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">เซ็นครั้งเดียว ระบบจำไว้ใช้ตลอด — เอกสารที่ออกให้ (ใบสำคัญรับเงิน / ใบแทนใบเสร็จ) จะฝังลายเซ็นนี้อัตโนมัติ ไม่ต้องเซ็นซ้ำทุกใบค่ะ</div>'+
+      '<div class="fld"><label>เซ็นในกรอบ (ใช้นิ้ววาดได้เลย)</label>'+
+        '<canvas id="sigPad" width="600" height="200" style="width:100%;height:auto;border:1.5px dashed #B9C2D0;border-radius:10px;background:#fff;touch-action:none"></canvas>'+
+        '<div style="display:flex;gap:8px;margin-top:8px;align-items:center">'+
+          '<button class="btn btn-ghost btn-sm" onclick="sigClear()">🧹 ล้าง</button>'+
+          '<label class="btn btn-ghost btn-sm" style="margin:0">📷 อัปรูปลายเซ็น'+
+            '<input id="sigUp" type="file" accept="image/*" style="display:none"></label>'+
+        '</div></div>'+
+      '<div id="sigCur" class="m-hint"></div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button>'+
+      '<button class="btn btn-primary" id="sigSave" onclick="sigSave()">บันทึกลายเซ็น</button></div>');
+    sigInitPad($('sigPad'));
+    var up=$('sigUp'); if(up) up.addEventListener('change', sigUpload);
+    // โชว์ลายเซ็นเดิม (ถ้ามี) ให้เห็นว่าจะทับอันไหน
+    jsonp({action:'waSignGet',uid:UID}).then(function(r){
+      var el=$('sigCur'); if(!el||!r||!r.ok||!r.has) return;
+      el.innerHTML='ลายเซ็นปัจจุบัน ('+esc(r.updatedAt||'')+') — บันทึกใหม่จะทับอันนี้<br>'+
+        '<img src="'+esc(r.url)+'" alt="" style="max-height:60px;margin-top:4px" onerror="this.style.display=\'none\'">';
+    }).catch(function(){});
+  }
+  function sigInitPad(c){
+    if(!c) return;
+    var ctx=c.getContext('2d');
+    ctx.lineWidth=2.6; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle='#16284a';
+    var drawing=false, last=null;
+    function pos(e){
+      var r=c.getBoundingClientRect();
+      var t=(e.touches&&e.touches[0])?e.touches[0]:e;
+      return { x:(t.clientX-r.left)*(c.width/r.width), y:(t.clientY-r.top)*(c.height/r.height) };
+    }
+    function start(e){ drawing=true; last=pos(e); e.preventDefault(); }
+    function move(e){ if(!drawing) return; var p=pos(e);
+      ctx.beginPath(); ctx.moveTo(last.x,last.y); ctx.lineTo(p.x,p.y); ctx.stroke(); last=p; e.preventDefault(); }
+    function end(){ drawing=false; }
+    c.addEventListener('mousedown',start); c.addEventListener('mousemove',move); window.addEventListener('mouseup',end);
+    c.addEventListener('touchstart',start,{passive:false}); c.addEventListener('touchmove',move,{passive:false}); c.addEventListener('touchend',end);
+  }
+  function sigClear(){ var c=$('sigPad'); if(c) c.getContext('2d').clearRect(0,0,c.width,c.height); }
+  /** อัปรูปลายเซ็น → วาดลงกรอบ (ย่อพอดีกรอบ) */
+  function sigUpload(e){
+    var f=e.target.files && e.target.files[0]; if(!f) return;
+    var c=$('sigPad'), ctx=c.getContext('2d');
+    var img=new Image();
+    img.onload=function(){
+      ctx.clearRect(0,0,c.width,c.height);
+      var r=Math.min(c.width/img.width, c.height/img.height);
+      var w=img.width*r, h=img.height*r;
+      ctx.drawImage(img,(c.width-w)/2,(c.height-h)/2,w,h);
+      URL.revokeObjectURL(img.src);
+    };
+    img.onerror=function(){ mErr('อ่านรูปไม่สำเร็จ ลองรูปอื่นนะคะ'); };
+    img.src=URL.createObjectURL(f);
+  }
+  /** คืน dataURL png ของลายเซ็น · '' ถ้ากรอบว่าง (ไม่ได้วาด/อัปรูป) */
+  function sigData(){
+    var c=$('sigPad'); if(!c) return '';
+    var d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;
+    for(var i=3;i<d.length;i+=4){ if(d[i]!==0) return c.toDataURL('image/png'); }
+    return '';
+  }
+  function sigSave(){
+    var img=sigData();
+    if(!img){ mErr('เซ็นในกรอบก่อนค่ะ (หรือกดอัปรูปลายเซ็น)'); return; }
+    var b=$('sigSave'); if(b){ b.disabled=true; b.textContent='กำลังบันทึก…'; }
+    jsonpPost({action:'waSignSave',uid:UID,img:img}).then(function(r){
+      if(!r||!r.ok){ if(b){b.disabled=false;b.textContent='บันทึกลายเซ็น';} mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+      closeModal(); toast('✍️ บันทึกลายเซ็นแล้วค่ะ'); sigRefresh();
+    }).catch(function(e){ if(b){b.disabled=false;b.textContent='บันทึกลายเซ็น';} mErr(e.message); });
+  }
+  window.openSign=openSign; window.sigClear=sigClear; window.sigSave=sigSave;
 
   // ───── ช่องแนบรูป (ใช้ร่วม: ใบเสร็จเบิก + สลิปจ่ายคืน) · ย่อรูปเป็น jpeg base64 ก่อนส่ง ─────
   function imgFldHtml(id,label){
