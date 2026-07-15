@@ -1680,7 +1680,7 @@
 
   // ═══════════ ลายเซ็นของฉัน (เซ็นครั้งเดียว ใช้ตลอด · ระบบเอาไปฝังเอกสารที่ออกให้) ═══════════
   // ต้นแบบแผ่นวาด: skill handover-letter (วาดด้วยนิ้ว/เมาส์ หรืออัปรูปลายเซ็น)
-  var SIG_HAS=false;
+  var SIG_HAS=false, SIG_PHOTO=null;   // SIG_PHOTO = รูปถ่ายต้นฉบับ (เก็บไว้ประมวลผลใหม่ตอนเลื่อนสไลเดอร์)
   /** อัปเดตป้ายสถานะข้างปุ่ม "ลายเซ็นของฉัน" (ยังไม่มี → ชวนเซ็น) */
   function sigRefresh(){
     jsonp({action:'waSignGet',uid:UID}).then(function(r){
@@ -1691,15 +1691,27 @@
     }).catch(function(){});
   }
   function openSign(){
+    SIG_PHOTO=null;
     modal('<h3>✍️ ลายเซ็นของฉัน</h3><div id="mErr" class="m-err hidden"></div>'+
       '<div class="m-hint">เซ็นครั้งเดียว ระบบจำไว้ใช้ตลอด — เอกสารที่ออกให้ (ใบสำคัญรับเงิน / ใบแทนใบเสร็จ) จะฝังลายเซ็นนี้อัตโนมัติ ไม่ต้องเซ็นซ้ำทุกใบค่ะ</div>'+
-      '<div class="fld"><label>เซ็นในกรอบ (ใช้นิ้ววาดได้เลย)</label>'+
-        '<canvas id="sigPad" width="600" height="200" style="width:100%;height:auto;border:1.5px dashed #B9C2D0;border-radius:10px;background:#fff;touch-action:none"></canvas>'+
-        '<div style="display:flex;gap:8px;margin-top:8px;align-items:center">'+
+      '<div class="fld"><label>เซ็นในกรอบ (ใช้นิ้ววาด) หรือถ่ายรูปลายเซ็นบนกระดาษ</label>'+
+        // พื้นตารางหมากรุก = โชว์ให้เห็นว่าพื้นโปร่งใสจริง (ไม่ใช่พื้นขาว)
+        '<canvas id="sigPad" width="600" height="200" style="width:100%;height:auto;border:1.5px dashed #B9C2D0;border-radius:10px;touch-action:none;'+
+          'background-color:#fff;background-image:linear-gradient(45deg,#EDF1F6 25%,transparent 25%,transparent 75%,#EDF1F6 75%),linear-gradient(45deg,#EDF1F6 25%,transparent 25%,transparent 75%,#EDF1F6 75%);'+
+          'background-size:16px 16px;background-position:0 0,8px 8px"></canvas>'+
+        '<div style="display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap">'+
           '<button class="btn btn-ghost btn-sm" onclick="sigClear()">🧹 ล้าง</button>'+
-          '<label class="btn btn-ghost btn-sm" style="margin:0">📷 อัปรูปลายเซ็น'+
+          '<label class="btn btn-ghost btn-sm" style="margin:0">📷 ถ่าย/เลือกรูปลายเซ็น'+
+            // ไม่ใส่ capture → เลือกได้ทั้ง "ถ่ายเลย" และ "รูปในคลัง" (ใส่ capture บน iOS = บังคับกล้องอย่างเดียว)
             '<input id="sigUp" type="file" accept="image/*" style="display:none"></label>'+
-        '</div></div>'+
+        '</div>'+
+        // สไลเดอร์โผล่เฉพาะตอนใช้รูปถ่าย — ปรับแล้ว preview สดทันที
+        '<div id="sigTune" class="hidden" style="margin-top:10px">'+
+          '<label style="font-size:13px;color:#4A5262">ความเข้มลายเซ็น — เลื่อนซ้ายถ้ามีจุดรบกวน · ขวาถ้าเส้นขาดหาย</label>'+
+          '<input id="sigSens" type="range" min="5" max="45" value="15" style="width:100%" oninput="sigRedraw()">'+
+          '<div class="m-hint" style="margin-top:2px">💡 พื้นกระดาษถูกลบให้โปร่งใสแล้ว — ช่องตารางที่เห็นคือพื้นโปร่ง</div>'+
+        '</div>'+
+      '</div>'+
       '<div id="sigCur" class="m-hint"></div>'+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button>'+
       '<button class="btn btn-primary" id="sigSave" onclick="sigSave()">บันทึกลายเซ็น</button></div>');
@@ -1729,21 +1741,98 @@
     c.addEventListener('mousedown',start); c.addEventListener('mousemove',move); window.addEventListener('mouseup',end);
     c.addEventListener('touchstart',start,{passive:false}); c.addEventListener('touchmove',move,{passive:false}); c.addEventListener('touchend',end);
   }
-  function sigClear(){ var c=$('sigPad'); if(c) c.getContext('2d').clearRect(0,0,c.width,c.height); }
-  /** อัปรูปลายเซ็น → วาดลงกรอบ (ย่อพอดีกรอบ) */
+  function sigClear(){
+    var c=$('sigPad'); if(c) c.getContext('2d').clearRect(0,0,c.width,c.height);
+    SIG_PHOTO=null; var t=$('sigTune'); if(t) t.classList.add('hidden');
+  }
+  /** ถ่าย/เลือกรูปลายเซ็นบนกระดาษ → ลบพื้นกระดาษให้โปร่ง → วาดลงกรอบ */
   function sigUpload(e){
     var f=e.target.files && e.target.files[0]; if(!f) return;
-    var c=$('sigPad'), ctx=c.getContext('2d');
+    toast('กำลังแยกลายเซ็นออกจากพื้นกระดาษ…');
     var img=new Image();
     img.onload=function(){
-      ctx.clearRect(0,0,c.width,c.height);
-      var r=Math.min(c.width/img.width, c.height/img.height);
-      var w=img.width*r, h=img.height*r;
-      ctx.drawImage(img,(c.width-w)/2,(c.height-h)/2,w,h);
-      URL.revokeObjectURL(img.src);
+      SIG_PHOTO=img;
+      var t=$('sigTune'); if(t) t.classList.remove('hidden');
+      sigRedraw();
     };
     img.onerror=function(){ mErr('อ่านรูปไม่สำเร็จ ลองรูปอื่นนะคะ'); };
     img.src=URL.createObjectURL(f);
+  }
+  /** ปรับสไลเดอร์ความเข้ม → ประมวลผลรูปเดิมใหม่ (preview สด) */
+  function sigRedraw(){
+    if(!SIG_PHOTO) return;
+    var sens=parseInt(($('sigSens')||{}).value||'15',10)/100;
+    var out=sigExtractInk(SIG_PHOTO, sens);
+    var c=$('sigPad'), ctx=c.getContext('2d');
+    ctx.clearRect(0,0,c.width,c.height);
+    if(!out){ mErr('ไม่เจอลายเซ็นในรูป — ลองถ่ายใหม่ให้เห็นเส้นชัดๆ นะคะ'); return; }
+    var r=Math.min(c.width/out.width, c.height/out.height, 1);
+    var w=out.width*r, h=out.height*r;
+    ctx.drawImage(out,(c.width-w)/2,(c.height-h)/2,w,h);
+  }
+  /**
+   * แยก "หมึก" ออกจากพื้นกระดาษในรูปถ่าย → canvas พื้นโปร่ง (ตัดขอบว่างออกแล้ว)
+   * ใช้ adaptive threshold: เทียบความสว่างแต่ละจุดกับ "ค่าเฉลี่ยรอบๆ จุดนั้น" ไม่ใช่ค่าเดียวทั้งรูป
+   * → รูปถ่ายที่แสงไม่เท่ากัน (เงามือ/เงากระดาษ) ไม่กลายเป็นแถบดำ
+   * @param {Image} img รูปต้นฉบับ · @param {number} sens 0.05–0.45 ยิ่งมากยิ่งเก็บเส้นจาง (แต่ได้ noise)
+   * @return {HTMLCanvasElement|null} null ถ้าไม่เจอหมึกเลย
+   */
+  function sigExtractInk(img, sens){
+    // 1) ย่อลงก่อน (รูปมือถือใหญ่มาก · ลายเซ็นไม่ต้องละเอียดขนาดนั้น)
+    var mx=1000, w=img.width, h=img.height;
+    if(Math.max(w,h)>mx){ var s=mx/Math.max(w,h); w=Math.round(w*s); h=Math.round(h*s); }
+    var work=document.createElement('canvas'); work.width=w; work.height=h;
+    var wctx=work.getContext('2d'); wctx.drawImage(img,0,0,w,h);
+    var src=wctx.getImageData(0,0,w,h), d=src.data;
+
+    // 2) grayscale
+    var gray=new Float64Array(w*h);
+    for(var i=0,p=0;i<d.length;i+=4,p++) gray[p]=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
+
+    // 3) integral image → หาค่าเฉลี่ยในกรอบรอบจุด ได้เร็วคงที่ (ไม่ต้องวนซ้ำต่อจุด)
+    var integ=new Float64Array((w+1)*(h+1));
+    for(var y=0;y<h;y++){ var rowSum=0;
+      for(var x=0;x<w;x++){ rowSum+=gray[y*w+x];
+        integ[(y+1)*(w+1)+(x+1)] = integ[y*(w+1)+(x+1)] + rowSum; } }
+    function boxMean(x0,y0,x1,y1){
+      x0=Math.max(0,x0); y0=Math.max(0,y0); x1=Math.min(w-1,x1); y1=Math.min(h-1,y1);
+      var area=(x1-x0+1)*(y1-y0+1);
+      var s=integ[(y1+1)*(w+1)+(x1+1)] - integ[y0*(w+1)+(x1+1)] - integ[(y1+1)*(w+1)+x0] + integ[y0*(w+1)+x0];
+      return s/area;
+    }
+    var rad=Math.max(8, Math.round(Math.min(w,h)*0.06));   // กรอบเฉลี่ย ~6% ของด้านสั้น
+
+    // 4) จุดที่ "เข้มกว่าพื้นรอบๆ" = หมึก · ยิ่งเข้ากว่ามาก alpha ยิ่งทึบ (ขอบเส้นเนียน ไม่หยัก)
+    var out=document.createElement('canvas'); out.width=w; out.height=h;
+    var octx=out.getContext('2d');
+    var dst=octx.createImageData(w,h), o=dst.data;
+    var minX=w, minY=h, maxX=-1, maxY=-1, ink=0;
+    var soft=255*0.10;   // ระยะไล่ alpha
+    for(var y2=0;y2<h;y2++){
+      for(var x2=0;x2<w;x2++){
+        var idx=y2*w+x2;
+        var mean=boxMean(x2-rad,y2-rad,x2+rad,y2+rad);
+        var cut=mean*(1-sens);              // เส้นต้องเข้มกว่าพื้นรอบๆ ตามสัดส่วน sens
+        var diff=cut-gray[idx];
+        if(diff<=0) continue;               // สว่างกว่าพื้น = กระดาษ → โปร่ง (alpha=0 อยู่แล้ว)
+        var a=Math.min(255, Math.round(diff/soft*255));
+        if(a<8) continue;
+        var q=idx*4;
+        o[q]=22; o[q+1]=40; o[q+2]=74; o[q+3]=a;   // สีหมึก #16284A ให้เข้าชุดกับที่วาดเอง
+        ink++;
+        if(x2<minX)minX=x2; if(x2>maxX)maxX=x2; if(y2<minY)minY=y2; if(y2>maxY)maxY=y2;
+      }
+    }
+    if(ink<20 || maxX<0) return null;       // ไม่เจอหมึก (รูปเปล่า/มืดทั้งใบ)
+    octx.putImageData(dst,0,0);
+
+    // 5) ตัดขอบว่างรอบลายเซ็นออก (auto-crop) → ฝังลงเอกสารแล้วได้ขนาดพอดี ไม่ลอยกลางช่องว่าง
+    var pad=Math.round(Math.min(w,h)*0.02);
+    var cx=Math.max(0,minX-pad), cy=Math.max(0,minY-pad);
+    var cw=Math.min(w,maxX+pad)-cx+1, ch=Math.min(h,maxY+pad)-cy+1;
+    var crop=document.createElement('canvas'); crop.width=cw; crop.height=ch;
+    crop.getContext('2d').drawImage(out,cx,cy,cw,ch,0,0,cw,ch);
+    return crop;
   }
   /** คืน dataURL png ของลายเซ็น · '' ถ้ากรอบว่าง (ไม่ได้วาด/อัปรูป) */
   function sigData(){
@@ -1761,7 +1850,7 @@
       closeModal(); toast('✍️ บันทึกลายเซ็นแล้วค่ะ'); sigRefresh();
     }).catch(function(e){ if(b){b.disabled=false;b.textContent='บันทึกลายเซ็น';} mErr(e.message); });
   }
-  window.openSign=openSign; window.sigClear=sigClear; window.sigSave=sigSave;
+  window.openSign=openSign; window.sigClear=sigClear; window.sigSave=sigSave; window.sigRedraw=sigRedraw;
 
   // ───── ช่องแนบรูป (ใช้ร่วม: ใบเสร็จเบิก + สลิปจ่ายคืน) · ย่อรูปเป็น jpeg base64 ก่อนส่ง ─────
   function imgFldHtml(id,label){
