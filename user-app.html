@@ -1683,6 +1683,7 @@
         if(String(x.status).indexOf('อนุมัติ')>=0 && String(x.status).indexOf('ไม่')<0)
           links+='<a class="ex-lk" href="#" onclick="exRelink(\''+esc(x.no)+'\');return false" style="color:#C8730B">🔗 ขอลิงก์เซ็นใหม่</a>';
       }
+      if(x.whtLink)    links+='<a class="ex-lk" href="'+esc(x.whtLink)+'" target="_blank">🧾 50 ทวิ '+esc(x.whtNo||'')+'</a>';
       if(x.paidSlip)   links+='<a class="ex-lk" href="'+esc(x.paidSlip)+'" target="_blank">📎 สลิปโอนคืน</a>';
       // แฟ้มครบชุด (เอกสาร+หลักฐาน+สลิป รวมใบเดียว) — เกิดเองตอนพี่กดจ่ายคืน
       if(x.dossier)    links+='<a class="ex-lk" href="'+esc(x.dossier)+'" target="_blank">🗂️ แฟ้มครบชุด</a>';
