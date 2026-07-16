@@ -2145,6 +2145,10 @@
     if(x.whtRate>0) s+='<br><span style="color:#8A94A6">หัก ณ ที่จ่าย '+x.whtRate+'% → ผู้รับได้ '+
       (Number(x.netAmt)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})+' บาท</span>';
     if(x.signStatus) s+='<br><span style="color:'+(x.docNo?'#1B7F4B':'#C8730B')+'">'+esc(x.signStatus)+'</span>';
+    // 50 ทวิ ออกแล้ว → แยก 2 ฉบับ: เก็บ(3-4) + ฉบับผู้รับเงิน(1-2 ส่งข้างนอก)
+    if(x.whtNo) s+='<br><span style="color:#1B7F4B">📄 50 ทวิ '+esc(x.whtNo)+'</span>'+
+      (x.whtLink?' · <a class="ex-lk" href="'+esc(x.whtLink)+'" target="_blank">ฉบับเก็บ</a>':'')+
+      (x.whtPayeeLink?' · <a class="ex-lk" href="'+esc(x.whtPayeeLink)+'" target="_blank">📤 ฉบับผู้รับเงิน (ส่งผู้รับจ้าง)</a>':'');
     return s;
   }
   /**
