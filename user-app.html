@@ -1781,6 +1781,14 @@
       }).catch(function(){});
     }
   }
+  /** ตรวจ checksum เลขบัตร ปชช ไทย 13 หลัก (จับพิมพ์ผิด/มั่ว · ฟรี · ด่านจริงอยู่ backend) */
+  function validThaiId(id){
+    var s=String(id||'').replace(/\D/g,''); if(s.length!==13) return false;
+    var sum=0; for(var i=0;i<12;i++) sum+=parseInt(s.charAt(i),10)*(13-i);
+    return ((11-(sum%11))%10)===parseInt(s.charAt(12),10);
+  }
+  /** ดึง Drive file id จากลิงก์ → URL รูป thumbnail (โชว์สำเนาบัตร inline ให้พี่เทียบตอนอนุมัติ) */
+  function drvThumb(u,w){ var m=String(u||'').match(/[-\w]{25,}/); return m?('https://drive.google.com/thumbnail?id='+m[0]+'&sz=w'+(w||600)):''; }
   function doExpense(){
     var type=$('eType').value, amt=$('eAmt').value, detail=$('eDetail').value.trim();
     if(!(parseFloat(amt)>0)){ mErr('กรอกจำนวนเงินก่อนค่ะ'); return; }
@@ -1791,6 +1799,7 @@
       var ra=($('eRvAddr')||{}).value.trim(), card=IMGS['eRvCard']||[];
       if(!rn){ mErr('กรอกชื่อผู้รับเงินก่อนค่ะ'); return; }
       if(rid.length!==13){ mErr('เลขบัตรประชาชนผู้รับเงินต้องมี 13 หลักค่ะ'); return; }
+      if(!validThaiId(rid)){ mErr('เลขบัตรประชาชนไม่ถูกต้อง — ตรวจเลข 13 หลักอีกครั้งค่ะ (อาจพิมพ์สลับ/ตกหล่น)'); return; }
       if(!ra){ mErr('กรอกที่อยู่ผู้รับเงินก่อนค่ะ'); return; }
       if(!card.length){ mErr('แนบสำเนาบัตรประชาชนผู้รับเงินก่อนค่ะ'); return; }
       p.proof='rv'; p.payeeName=rn; p.payeeId=rid; p.payeeAddr=ra;
@@ -2129,7 +2138,10 @@
     var s='<br><span style="color:#1B72E8">💵 ใบสำคัญรับเงิน — ผู้รับ: <b>'+esc(x.payeeName||'-')+'</b>'+
       (x.payeeId?' · '+esc(x.payeeId):'')+'</span>'+
       (x.payeeAddr?'<br><span style="color:#8A94A6">🏠 '+esc(x.payeeAddr)+'</span>':'')+
-      (x.idCardUrl?'<br><a class="ex-lk" href="'+esc(x.idCardUrl)+'" target="_blank">🪪 ดูสำเนาบัตรผู้รับเงิน</a>':'');
+      (x.idCardUrl?'<br><span style="color:#8A94A6">🪪 สำเนาบัตรผู้รับเงิน (เทียบชื่อ/เลขบัตร/ที่อยู่ให้ตรงก่อนอนุมัติ):</span>'+
+        '<br><a href="'+esc(x.idCardUrl)+'" target="_blank"><img src="'+drvThumb(x.idCardUrl,600)+'" alt="สำเนาบัตร" '+
+        'style="max-width:100%;max-height:240px;border-radius:8px;border:1px solid #E3E8EF;margin-top:4px" onerror="this.style.display=\'none\'"></a>'+
+        '<br><a class="ex-lk" href="'+esc(x.idCardUrl)+'" target="_blank">🔍 เปิดดูเต็ม</a>':'');
     if(x.whtRate>0) s+='<br><span style="color:#8A94A6">หัก ณ ที่จ่าย '+x.whtRate+'% → ผู้รับได้ '+
       (Number(x.netAmt)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})+' บาท</span>';
     if(x.signStatus) s+='<br><span style="color:'+(x.docNo?'#1B7F4B':'#C8730B')+'">'+esc(x.signStatus)+'</span>';
