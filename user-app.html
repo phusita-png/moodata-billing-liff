@@ -1675,8 +1675,14 @@
       var money=(Number(x.amount)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
       var links='';
       if(x.receiptUrl) links+='<a class="ex-lk" href="'+esc(x.receiptUrl)+'" target="_blank">🔍 ใบเสร็จ</a>';
-      if(x.docLink)    links+='<a class="ex-lk" href="'+esc(x.docLink)+'" target="_blank">📄 '+esc(x.docNo||'ใบรับรองแทนใบเสร็จ')+'</a>';
+      if(x.docLink)    links+='<a class="ex-lk" href="'+esc(x.docLink)+'" target="_blank">📄 '+esc(x.docNo||'เอกสาร')+'</a>';
       else if(x.docType&&x.docType.indexOf('ใบรับรอง')>=0) links+='<span class="ex-lk" style="color:#8A94A6">📄 ไม่มีใบเสร็จ · ออกใบรับรองแทนตอนอนุมัติ</span>';
+      // ใบ RV: พนักงานต้องรู้ว่าตอนนี้ค้างที่ "ผู้รับเงินยังไม่เซ็น" (ลิงก์อยู่ในแชท 1:1) + ขอลิงก์ใหม่ได้เอง
+      else if(isRv(x)){
+        links+='<span class="ex-lk" style="color:#8A94A6">💵 ผู้รับ: '+esc(x.payeeName||'-')+'</span>';
+        if(String(x.status).indexOf('อนุมัติ')>=0 && String(x.status).indexOf('ไม่')<0)
+          links+='<a class="ex-lk" href="#" onclick="exRelink(\''+esc(x.no)+'\');return false" style="color:#C8730B">🔗 ขอลิงก์เซ็นใหม่</a>';
+      }
       if(x.paidSlip)   links+='<a class="ex-lk" href="'+esc(x.paidSlip)+'" target="_blank">📎 สลิปโอนคืน</a>';
       // แฟ้มครบชุด (เอกสาร+หลักฐาน+สลิป รวมใบเดียว) — เกิดเองตอนพี่กดจ่ายคืน
       if(x.dossier)    links+='<a class="ex-lk" href="'+esc(x.dossier)+'" target="_blank">🗂️ แฟ้มครบชุด</a>';
@@ -1691,19 +1697,21 @@
     }).join('');
     $('main').innerHTML=html;
   }
-  var EXP_NORCP=false;   // โหมดหลักฐาน: false = แนบใบเสร็จ · true = ไม่มีใบเสร็จ (ออกใบรับรองแทน)
+  // โหมดหลักฐาน 3 ทาง: 'rcp' แนบใบเสร็จ · 'sr' ไม่มีใบเสร็จ (ออกใบรับรองแทน) · 'rv' จ่ายค่าจ้างคนนอก (ใบสำคัญรับเงิน)
+  var EXP_PROOF='rcp';
   function openExpense(){
     if(!EXP_TYPES.length){ toast('กำลังโหลดประเภท…'); return; }
-    EXP_IMG=''; EXP_NORCP=false;
+    EXP_IMG=''; EXP_PROOF='rcp';
     var opts=EXP_TYPES.map(function(t){return '<option value="'+esc(t.key)+'">'+esc(t.label)+'</option>';}).join('');
     modal('<h3>💸 แจ้งเบิกค่าใช้จ่าย</h3><div id="mErr" class="m-err hidden"></div>'+
       '<div class="fld"><label>ประเภท</label><select id="eType">'+opts+'</select></div>'+
       '<div class="fld"><label>จำนวนเงิน (บาท)</label><input id="eAmt" type="number" inputmode="decimal" min="0" step="0.01" placeholder="เช่น 250"></div>'+
       '<div class="fld"><label>รายละเอียด (จ่ายค่าอะไร)</label><textarea id="eDetail" placeholder="เช่น ค่าแท็กซี่ไปหาลูกค้า A"></textarea></div>'+
       '<div class="fld"><label>หลักฐาน</label>'+
-        '<div style="display:flex;gap:8px">'+
-          '<button type="button" id="epRcp" class="btn btn-sm" onclick="expSetProof(false)" style="flex:1">🧾 มีใบเสร็จ</button>'+
-          '<button type="button" id="epSr" class="btn btn-sm" onclick="expSetProof(true)" style="flex:1">📄 ไม่มีใบเสร็จ</button>'+
+        '<div style="display:flex;gap:6px">'+
+          '<button type="button" id="epRcp" class="btn btn-sm" onclick="expSetProof(\'rcp\')" style="flex:1">🧾 มีใบเสร็จ</button>'+
+          '<button type="button" id="epSr" class="btn btn-sm" onclick="expSetProof(\'sr\')" style="flex:1">📄 ไม่มีใบเสร็จ</button>'+
+          '<button type="button" id="epRv" class="btn btn-sm" onclick="expSetProof(\'rv\')" style="flex:1">💵 จ่ายค่าจ้าง</button>'+
         '</div></div>'+
       '<div id="epRcpBox">'+imgsFldHtml('eImg','📎 รูปใบเสร็จ (แนบได้หลายใบ → รวมเป็น PDF เดียวให้)')+'</div>'+
       '<div id="epSrBox" class="hidden">'+
@@ -1719,10 +1727,22 @@
         '</div>'+
         '<div id="epSign" class="m-hint"></div>'+
       '</div>'+
+      '<div id="epRvBox" class="hidden">'+
+        '<div class="m-hint">ใช้กับ <b>ค่าจ้าง/ค่าแรง/ค่าบริการ ที่จ่ายให้คนนอก</b> ที่ออกใบเสร็จให้ไม่ได้ — '+
+          'ระบบจะส่งลิงก์ให้ผู้รับเงินเซ็นรับเงินออนไลน์ พอเซ็นเสร็จจะออก <b>ใบสำคัญรับเงิน</b> ให้อัตโนมัติค่ะ</div>'+
+        '<div class="fld"><label>ชื่อ-นามสกุล ผู้รับเงิน</label><input id="eRvName" placeholder="เช่น สมชาย ใจดี"></div>'+
+        '<div class="fld"><label>เลขบัตรประชาชนผู้รับเงิน (13 หลัก)</label>'+
+          '<input id="eRvId" type="tel" inputmode="numeric" maxlength="17" placeholder="x xxxx xxxxx xx x"></div>'+
+        '<div class="fld"><label>ที่อยู่ผู้รับเงิน</label><textarea id="eRvAddr" placeholder="บ้านเลขที่ / ถนน / ตำบล / อำเภอ / จังหวัด / รหัสไปรษณีย์"></textarea></div>'+
+        imgsFldHtml('eRvCard','🪪 สำเนาบัตรประชาชนผู้รับเงิน (บังคับ)')+
+        '<div class="m-hint" style="margin-top:-4px">เอกสารระบุเองว่าต้องแนบสำเนาบัตรผู้รับเงินทุกครั้ง ไม่มีจะออกใบให้ไม่ได้ค่ะ</div>'+
+        imgsFldHtml('eRvImg','📎 หลักฐานอื่น เช่น สลิปโอน (ถ้ามี · ไม่บังคับ)')+
+        '<div class="m-hint">💡 อัตราหัก ณ ที่จ่าย '+esc(OWNERTXT())+'จะเป็นคนเลือกตอนอนุมัติค่ะ</div>'+
+      '</div>'+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
       '<button class="btn btn-primary" id="eSend" onclick="doExpense()">แจ้งเบิก</button></div>');
-    imgsFldBind('eImg'); imgsFldBind('eSrImg');
-    expSetProof(false);
+    imgsFldBind('eImg'); imgsFldBind('eSrImg'); imgsFldBind('eRvCard'); imgsFldBind('eRvImg');
+    expSetProof('rcp');
   }
   /** ติ๊ก "ไม่มีหลักฐานเลย" → ซ่อนช่องแนบ + บังคับพิมพ์เหตุผล (ไปโผล่ให้พี่เห็นก่อนอนุมัติ) */
   function expToggleNoProof(){
@@ -1733,15 +1753,23 @@
   window.expToggleNoProof=expToggleNoProof;
   function OWNERTXT(){ return 'พี่'; }
   function todayISO(){ var d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
-  /** สลับโหมดหลักฐาน — ไม่มีใบเสร็จ = ต้องมีลายเซ็นในระบบก่อน (เอกสารคือ "พนักงานรับรองเอง") */
-  function expSetProof(sr){
-    EXP_NORCP=!!sr;
+  /**
+   * สลับโหมดหลักฐาน (rcp/sr/rv)
+   * sr = ต้องมีลายเซ็นในระบบก่อน (เอกสารคือ "พนักงานรับรองเอง")
+   * rv = ไม่ต้องเช็คลายเซ็นพนักงานตรงนี้ — ช่องที่ต้องเซ็นคือ "ผู้รับเงิน" ซึ่งเป็นคนนอก (เซ็นทีหลังผ่านลิงก์)
+   */
+  function expSetProof(mode){
+    if(mode===true) mode='sr'; if(mode===false) mode='rcp';   // เผื่อ frontend เก่าที่ LINE แคชไว้เรียกแบบ boolean
+    EXP_PROOF=mode;
     var on='background:#1B72E8;color:#fff;border-color:#1B72E8', off='background:#fff;color:#1B72E8;border:1.5px solid #1B72E8';
-    var a=$('epRcp'), b=$('epSr');
-    if(a) a.style.cssText='flex:1;'+(sr?off:on); if(b) b.style.cssText='flex:1;'+(sr?on:off);
-    var rb=$('epRcpBox'), sb=$('epSrBox');
-    if(rb) rb.classList.toggle('hidden', !!sr); if(sb) sb.classList.toggle('hidden', !sr);
-    if(sr){
+    [['epRcp','rcp'],['epSr','sr'],['epRv','rv']].forEach(function(t){
+      var el=$(t[0]); if(el) el.style.cssText='flex:1;font-size:13px;padding:9px 4px;'+(mode===t[1]?on:off);
+    });
+    var rb=$('epRcpBox'), sb=$('epSrBox'), vb=$('epRvBox');
+    if(rb) rb.classList.toggle('hidden', mode!=='rcp');
+    if(sb) sb.classList.toggle('hidden', mode!=='sr');
+    if(vb) vb.classList.toggle('hidden', mode!=='rv');
+    if(mode==='sr'){
       var el=$('epSign'); if(el) el.textContent='กำลังตรวจลายเซ็น…';
       jsonp({action:'waSignGet',uid:UID}).then(function(r){
         var e2=$('epSign'); if(!e2) return;
@@ -1755,7 +1783,18 @@
     if(!(parseFloat(amt)>0)){ mErr('กรอกจำนวนเงินก่อนค่ะ'); return; }
     if(!detail){ mErr('กรอกรายละเอียดก่อนค่ะ'); return; }
     var p={action:'waExpCreate',uid:UID,type:type,amount:amt,detail:detail};
-    if(EXP_NORCP){
+    if(EXP_PROOF==='rv'){
+      var rn=($('eRvName')||{}).value.trim(), rid=(($('eRvId')||{}).value||'').replace(/\D/g,'');
+      var ra=($('eRvAddr')||{}).value.trim(), card=IMGS['eRvCard']||[];
+      if(!rn){ mErr('กรอกชื่อผู้รับเงินก่อนค่ะ'); return; }
+      if(rid.length!==13){ mErr('เลขบัตรประชาชนผู้รับเงินต้องมี 13 หลักค่ะ'); return; }
+      if(!ra){ mErr('กรอกที่อยู่ผู้รับเงินก่อนค่ะ'); return; }
+      if(!card.length){ mErr('แนบสำเนาบัตรประชาชนผู้รับเงินก่อนค่ะ'); return; }
+      p.proof='rv'; p.payeeName=rn; p.payeeId=rid; p.payeeAddr=ra;
+      p.idcard=JSON.stringify(card);
+      var other=IMGS['eRvImg']||[];
+      if(other.length) p.imgs=JSON.stringify(other);
+    } else if(EXP_PROOF==='sr'){
       var pd=($('ePayDate')||{}).value||'';
       if(!pd){ mErr('ระบุวันที่จ่ายเงินก่อนค่ะ'); return; }
       p.noReceipt='1'; p.payDate=pd;
@@ -1779,8 +1818,9 @@
     jsonpPost(p)
       .then(function(r){ if(!r||!r.ok){ if(b){b.disabled=false;b.textContent='แจ้งเบิก';}
           if(r&&r.needSign){ mErr((r.error||'')+' '); } else mErr((r&&r.error)||'ส่งไม่สำเร็จ'); return; }
-        closeModal(); IMGS['eImg']=[]; IMGS['eSrImg']=[];
-        toast('✅ ส่งใบเบิกแล้ว ('+(r.no||'')+')'+(r.merged?' · รวม '+r.files+' ไฟล์เป็น PDF แล้ว':'')+(r.sr?' · จะออกใบรับรองแทนตอนอนุมัติ':''));
+        closeModal(); IMGS['eImg']=[]; IMGS['eSrImg']=[]; IMGS['eRvCard']=[]; IMGS['eRvImg']=[];
+        toast('✅ ส่งใบเบิกแล้ว ('+(r.no||'')+')'+(r.merged?' · รวม '+r.files+' ไฟล์เป็น PDF แล้ว':'')+
+          (r.sr?' · จะออกใบรับรองแทนตอนอนุมัติ':'')+(r.rv?' · อนุมัติแล้วจะได้ลิงก์ให้ผู้รับเงินเซ็นค่ะ':''));
         renderExpense(); })
       .catch(function(e){ if(b){b.disabled=false;b.textContent='แจ้งเบิก';} mErr(e.message); });
   }
@@ -2071,13 +2111,67 @@
         // ไม่มีหลักฐานแนบเลย = จุดเสี่ยงทางภาษี ต้องเด้งตา
         (x.note&&x.note.indexOf('ไม่มีหลักฐาน')>=0
           ?'<br><span style="color:#E5484D;font-weight:600">'+esc(x.note)+'</span>':'')+
-        (x.docLink?'<br><a class="ex-lk" href="'+esc(x.docLink)+'" target="_blank">📄 '+esc(x.docNo||'เอกสาร')+'</a>':'')+'</div>'+
+        (x.docLink?'<br><a class="ex-lk" href="'+esc(x.docLink)+'" target="_blank">📄 '+esc(x.docNo||'เอกสาร')+'</a>':'')+
+        exRvMeta(x)+'</div>'+
       (isPaid
-        ? '<div class="m-act" style="margin-top:11px"><button class="btn btn-primary" onclick="exOpenPay(\''+esc(x.no)+'\',\''+esc(x.nick||'')+'\','+(Number(x.amount)||0)+')">💰 จ่ายคืนแล้ว</button></div>'
+        ? '<div class="m-act" style="margin-top:11px">'+exRvPayGate(x)+'</div>'
         : '<div class="m-act" style="margin-top:11px"><button class="btn btn-danger" onclick="exReject(\''+esc(x.no)+'\')">❌ ไม่อนุมัติ</button>'+
-          '<button class="btn btn-primary" onclick="exDecide(\''+esc(x.no)+'\',\'approve\',\'\')">✅ อนุมัติ</button></div>')+
+          '<button class="btn btn-primary" onclick="'+(isRv(x)?'exOpenRv(\''+esc(x.no)+'\')':'exDecide(\''+esc(x.no)+'\',\'approve\',\'\')')+'">✅ อนุมัติ</button></div>')+
       '</div>';
   }
+  function isRv(x){ return !!(x.docType && x.docType.indexOf('ใบสำคัญ')>=0); }
+  /** รายละเอียดผู้รับเงิน + สถานะเซ็น — พี่ต้องเห็นก่อนกดอนุมัติ (จ่ายให้ใคร เลขบัตรตรงกับสำเนาไหม) */
+  function exRvMeta(x){
+    if(!isRv(x)) return '';
+    var s='<br><span style="color:#1B72E8">💵 ใบสำคัญรับเงิน — ผู้รับ: <b>'+esc(x.payeeName||'-')+'</b>'+
+      (x.payeeId?' · '+esc(x.payeeId):'')+'</span>'+
+      (x.payeeAddr?'<br><span style="color:#8A94A6">🏠 '+esc(x.payeeAddr)+'</span>':'')+
+      (x.idCardUrl?'<br><a class="ex-lk" href="'+esc(x.idCardUrl)+'" target="_blank">🪪 ดูสำเนาบัตรผู้รับเงิน</a>':'');
+    if(x.whtRate>0) s+='<br><span style="color:#8A94A6">หัก ณ ที่จ่าย '+x.whtRate+'% → ผู้รับได้ '+
+      (Number(x.netAmt)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})+' บาท</span>';
+    if(x.signStatus) s+='<br><span style="color:'+(x.docNo?'#1B7F4B':'#C8730B')+'">'+esc(x.signStatus)+'</span>';
+    return s;
+  }
+  /**
+   * ใบ RV ที่ผู้รับยังไม่เซ็น = ยังไม่มีเอกสาร → ห้ามกดจ่ายคืน (จ่ายไปแล้วเอกสารจะตามเก็บยาก)
+   * ให้ปุ่มส่งลิงก์ใหม่แทน
+   */
+  function exRvPayGate(x){
+    if(isRv(x) && !x.docNo){
+      return '<button class="btn btn-ghost" style="width:100%" onclick="exRelink(\''+esc(x.no)+'\')">🔗 ส่งลิงก์เซ็นใหม่ (รอผู้รับเงินเซ็น)</button>';
+    }
+    return '<button class="btn btn-primary" onclick="exOpenPay(\''+esc(x.no)+'\',\''+esc(x.nick||'')+'\','+(Number(x.amount)||0)+')">💰 จ่ายคืนแล้ว</button>';
+  }
+  /** อนุมัติใบ RV → เลือกอัตรา WHT ก่อน (พี่เคาะ: พี่เป็นคนตัดสินอัตรา ไม่ใช่พนักงาน) */
+  function exOpenRv(no){
+    modal('<h3>✅ อนุมัติใบสำคัญรับเงิน '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">เลือกอัตราหัก ณ ที่จ่าย — ระบบจะคำนวณยอดสุทธิและออกลิงก์ให้ผู้รับเงินเซ็นค่ะ</div>'+
+      '<div class="fld"><label>อัตราหัก ณ ที่จ่าย</label><select id="exWht">'+
+        '<option value="0">0% — ยกเว้น / ไม่หัก</option>'+
+        '<option value="3">3% — จ้างทำของ / บริการ</option>'+
+        '<option value="5">5% — ค่าเช่า / จ้างบุคคล</option>'+
+      '</select></div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" onclick="exDecide(\''+esc(no)+'\',\'approve\',\'\',$(\'exWht\').value)">อนุมัติ + ออกลิงก์เซ็น</button></div>');
+  }
+  /** ขอลิงก์เซ็นใหม่ (ลิงก์เดิมหมดอายุ 7 วัน / ส่งผิดคน) — ลิงก์เก่าตายทันที */
+  function exRelink(no){
+    toast('กำลังออกลิงก์ใหม่…');
+    jsonp({action:'waRvRelink',uid:UID,no:no}).then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; }
+      modal('<h3>🔗 ลิงก์เซ็นรับเงิน</h3>'+
+        '<div class="m-hint">ส่งลิงก์นี้ให้ผู้รับเงิน · ใช้ได้ถึง '+esc(r.exp||'')+' ค่ะ (ส่งเข้าแชทผู้ตั้งเบิกให้แล้ว)</div>'+
+        '<div class="fld"><textarea id="rvLink" readonly style="font-size:12px">'+esc(r.url)+'</textarea></div>'+
+        '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button>'+
+        '<button class="btn btn-primary" onclick="rvCopy()">📋 ก๊อปลิงก์</button></div>');
+    }).catch(function(e){ toast(e.message); });
+  }
+  function rvCopy(){
+    var t=$('rvLink'); if(!t) return;
+    t.select(); t.setSelectionRange(0,99999);
+    try{ document.execCommand('copy'); toast('📋 ก๊อปลิงก์แล้ว'); }catch(e){ toast('กดค้างที่ลิงก์เพื่อคัดลอกค่ะ'); }
+  }
+  window.exOpenRv=exOpenRv; window.exRelink=exRelink; window.rvCopy=rvCopy;
   /** ไม่อนุมัติ → ถามเหตุผลก่อน (ลงคอลัมน์หมายเหตุ + แจ้งผู้แจ้ง) */
   function exReject(no){
     modal('<h3>❌ ไม่อนุมัติใบเบิก '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
@@ -2085,13 +2179,14 @@
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
       '<button class="btn btn-danger" onclick="exDecide(\''+esc(no)+'\',\'reject\',$(\'exNote\').value.trim())">ไม่อนุมัติ</button></div>');
   }
-  function exDecide(no,decision,note){
+  function exDecide(no,decision,note,wht){
     toast(decision==='approve'?'กำลังอนุมัติ…':'กำลังบันทึก…');
-    jsonpPost({action:'waExpDecide',uid:UID,no:no,decision:decision,note:note||''}).then(function(r){
+    jsonpPost({action:'waExpDecide',uid:UID,no:no,decision:decision,note:note||'',wht:wht||'0'}).then(function(r){
       if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; }
       closeModal();
-      if(r.docError) toast('✅ อนุมัติแล้ว · ⚠️ ออกใบรับรองแทนไม่สำเร็จ: '+r.docError);
+      if(r.docError) toast('✅ อนุมัติแล้ว · ⚠️ ออกเอกสารไม่สำเร็จ: '+r.docError);
       else if(r.docNo) toast('✅ อนุมัติแล้ว · 📄 ออกใบรับรองแทน '+r.docNo+' แล้ว');
+      else if(r.rvLink) toast('✅ อนุมัติแล้ว · 🔗 ส่งลิงก์ให้ผู้ตั้งเบิกส่งต่อให้ผู้รับเงินเซ็นแล้วค่ะ');
       else toast(decision==='approve'?'✅ อนุมัติแล้ว':'❌ ไม่อนุมัติแล้ว');
       exFade(no);
     }).catch(function(e){ toast(e.message); });
