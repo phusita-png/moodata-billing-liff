@@ -1685,11 +1685,13 @@
       }
       if(x.whtLink)    links+='<a class="ex-lk" href="'+esc(x.whtLink)+'" target="_blank">🧾 50 ทวิ '+esc(x.whtNo||'')+'</a>';
       if(x.paidSlip)   links+='<a class="ex-lk" href="'+esc(x.paidSlip)+'" target="_blank">📎 สลิปโอนคืน</a>';
-      // แฟ้มครบชุด (เอกสาร+หลักฐาน+สลิป รวมใบเดียว) — เกิดเองตอนพี่กดจ่ายคืน
+      // แฟ้มครบชุด (เอกสาร+สำเนาบัตร+หลักฐาน+50ทวิ+สลิป รวมใบเดียว) — เกิดเองตอนพี่กดจ่ายคืน
       if(x.dossier)    links+='<a class="ex-lk" href="'+esc(x.dossier)+'" target="_blank">🗂️ แฟ้มครบชุด</a>';
-      // จ่ายแล้วแต่แฟ้มไม่เกิด (Worker ล่มตอนนั้น) → พี่กดสร้างใหม่ได้ · พนักงานไม่ต้องเห็นปุ่มนี้
-      else if(IS_OWNER&&String(x.status).indexOf('จ่ายแล้ว')>=0)
-        links+='<a class="ex-lk" href="#" onclick="exRebuild(\''+esc(x.no)+'\');return false" style="color:#C8730B">🗂️ สร้างแฟ้มครบชุด</a>';
+      // ปุ่มสร้างแฟ้ม (เฉพาะพี่ · จ่ายแล้ว) โผล่เสมอ — มีแฟ้มแล้วก็กดสร้างใหม่ได้ (เพิ่มสำเนาบัตร/50ทวิ/แนบเพิ่ม
+      // หรือ Worker เคยล่มตอนจ่าย) · ใบ RV กดครั้งนี้ = ออก 50 ทวิ ย้อนหลังให้ด้วย
+      if(IS_OWNER&&String(x.status).indexOf('จ่ายแล้ว')>=0)
+        links+='<a class="ex-lk" href="#" onclick="exRebuild(\''+esc(x.no)+'\');return false" style="color:#C8730B">'+
+          (x.dossier?'🔄 สร้างแฟ้มใหม่':'🗂️ สร้างแฟ้มครบชุด')+'</a>';
       return '<div class="tk"><div class="tk-top"><span class="tk-no">'+esc(x.no)+'</span>'+
         '<span class="tk-badge '+expBadge(x.status)+'">'+esc(x.status)+'</span></div>'+
         '<div class="ex-amt"><span class="ex-t">'+esc(x.type)+'</span> · '+money+' บาท</div>'+
@@ -2219,7 +2221,7 @@
     toast('กำลังรวมแฟ้ม…');
     jsonpPost({action:'waExpDossier',uid:UID,no:no}).then(function(r){
       if(!r||!r.ok){ toast((r&&r.error)||'รวมแฟ้มไม่สำเร็จ'); return; }
-      toast('🗂️ รวมแฟ้มแล้ว ('+(r.parts||[]).length+' ชิ้น)');
+      toast('🗂️ รวมแฟ้มแล้ว ('+(r.parts||[]).length+' ชิ้น)'+(r.whtNo?' · ออก 50 ทวิ '+r.whtNo:''));
       renderExpense();
     }).catch(function(e){ toast(e.message); });
   }
