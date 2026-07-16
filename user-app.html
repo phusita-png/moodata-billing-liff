@@ -511,6 +511,7 @@
   var PROJECTS=[], COMPANIES=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ) · COMPANIES=บริษัท auto (หน้าจัดการ)
   var ALL_TASKS=[], PJ_SEL='', MB_STATUSES=[];   // มุมมอง Project (dropdown เลือก · แยก 6 สถานะ + %) · MB_STATUSES=รายการสถานะ (ฟอร์มแก้งานมือถือ)
   var EXP_TYPES=[];   // ประเภทค่าใช้จ่าย (โหลดจาก waExpenseInit)
+  var EXP_BYNO={};    // เก็บ object ใบเบิกตามเลขที่ (ให้ปุ่มแก้ผู้รับเงินดึงข้อมูลเดิมมาเติมฟอร์ม)
   var EXP_IMG='';     // รูปเดี่ยวที่แนบในฟอร์มที่เปิดอยู่ (สลิปจ่ายคืน · data URL jpeg) — ใบเสร็จ/หลักฐานใช้ IMGS[] (หลายใบ)
 
   function $(id){ return document.getElementById(id); }
@@ -1696,6 +1697,7 @@
       '<button class="btn btn-ghost" style="width:100%;margin-bottom:14px" onclick="openSign()">✍️ ลายเซ็นของฉัน<span id="sigState" style="color:#8A94A6;font-weight:400"></span></button>';
     if(!list.length){ html+='<div class="card"><div class="emptybox">ยังไม่มีรายการเบิก 😊</div></div>'; $('main').innerHTML=html; return; }
     html+=list.map(function(x){
+      EXP_BYNO[x.no]=x;   // เก็บไว้ให้ปุ่มแก้ผู้รับเงินดึงมาเติมฟอร์ม
       var money=(Number(x.amount)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
       var links='';
       if(x.receiptUrl) links+='<a class="ex-lk" href="'+esc(x.receiptUrl)+'" target="_blank">🔍 ใบเสร็จ</a>';
@@ -1707,6 +1709,8 @@
         if(String(x.status).indexOf('อนุมัติ')>=0 && String(x.status).indexOf('ไม่')<0)
           links+='<a class="ex-lk" href="#" onclick="exRelink(\''+esc(x.no)+'\');return false" style="color:#C8730B">🔗 ขอลิงก์เซ็นใหม่</a>';
       }
+      // แก้ข้อมูลผู้รับเงิน (เจ้าของใบแก้ของตัวเองได้) — ยืดหยุ่นตามที่พี่ขอ
+      if(isRv(x)) links+='<a class="ex-lk" href="#" onclick="exEditPayee(\''+esc(x.no)+'\');return false" style="color:#1B72E8">✏️ แก้ผู้รับเงิน</a>';
       if(x.whtLink)    links+='<a class="ex-lk" href="'+esc(x.whtLink)+'" target="_blank">🧾 50 ทวิ '+esc(x.whtNo||'')+'</a>';
       if(x.paidSlip)   links+='<a class="ex-lk" href="'+esc(x.paidSlip)+'" target="_blank">📎 สลิปโอนคืน</a>';
       // แฟ้มครบชุด (เอกสาร+สำเนาบัตร+หลักฐาน+50ทวิ+สลิป รวมใบเดียว) — เกิดเองตอนพี่กดจ่ายคืน
@@ -2133,6 +2137,7 @@
     return '<div style="font-size:14px;font-weight:600;color:#4A5262;margin:0 2px 8px;'+(extra||'')+'">'+esc(text)+'</div>';
   }
   function exApprCard(x,isPaid){
+    EXP_BYNO[x.no]=x;   // ให้ปุ่มแก้ผู้รับเงินดึงข้อมูลเดิม
     var money=(Number(x.amount)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
     return '<div class="card" id="exa-'+esc(x.no)+'">'+
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'+
@@ -2173,6 +2178,7 @@
     if(x.whtNo) s+='<br><span style="color:#1B7F4B">📄 50 ทวิ '+esc(x.whtNo)+'</span>'+
       (x.whtLink?' · <a class="ex-lk" href="'+esc(x.whtLink)+'" target="_blank">ฉบับเก็บ</a>':'')+
       (x.whtPayeeLink?' · <a class="ex-lk" href="'+esc(x.whtPayeeLink)+'" target="_blank">📤 ฉบับผู้รับเงิน (ส่งผู้รับจ้าง)</a>':'');
+    s+='<br><a class="ex-lk" href="#" onclick="exEditPayee(\''+esc(x.no)+'\');return false" style="color:#1B72E8">✏️ แก้ข้อมูลผู้รับเงิน</a>';
     return s;
   }
   /**
@@ -2215,6 +2221,36 @@
     try{ document.execCommand('copy'); toast('📋 ก๊อปลิงก์แล้ว'); }catch(e){ toast('กดค้างที่ลิงก์เพื่อคัดลอกค่ะ'); }
   }
   window.exOpenRv=exOpenRv; window.exRelink=exRelink; window.rvCopy=rvCopy;
+  /** แก้ข้อมูลผู้รับเงิน (พี่ + เจ้าของใบ) — เติมฟอร์มจากข้อมูลเดิม + เตือนถ้าออกเอกสารแล้ว */
+  function exEditPayee(no){
+    var x=EXP_BYNO[no]; if(!x){ toast('ไม่พบข้อมูลใบ '+no+' ลองรีเฟรชนะคะ'); return; }
+    modal('<h3>✏️ แก้ข้อมูลผู้รับเงิน '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      ((x.whtNo||x.docNo)?'<div class="m-hint" style="color:#C8730B">⚠️ ใบนี้ออกเอกสารแล้ว — แก้เสร็จอย่าลืม<b>ออกเอกสารใหม่</b> (RV / 50 ทวิ) ให้ข้อมูลตรงกันด้วยนะคะ</div>':'')+
+      '<div class="fld"><label>ชื่อผู้รับเงิน</label><input id="edName" value="'+esc(x.payeeName||'')+'"></div>'+
+      '<div class="fld"><label>เลขบัตรประชาชน (13 หลัก)</label><input id="edId" inputmode="numeric" value="'+esc(x.payeeId||'')+'"></div>'+
+      '<div class="fld"><label>ที่อยู่ผู้รับเงิน</label><textarea id="edAddr">'+esc(x.payeeAddr||'')+'</textarea></div>'+
+      (x.idCardUrl?'<div class="fld"><label>สำเนาบัตรปัจจุบัน</label><a href="'+esc(x.idCardUrl)+'" target="_blank"><img src="'+drvThumb(x.idCardUrl,400)+'" style="max-width:100%;max-height:160px;border-radius:8px;border:1px solid #E3E8EF" onerror="this.style.display=\'none\'"></a></div>':'')+
+      imgsFldHtml('edCard','🪪 อัปสำเนาบัตรใหม่ (ไม่บังคับ · ไม่แนบ = ใช้รูปเดิม)')+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" onclick="exSavePayee(\''+esc(no)+'\')">บันทึก</button></div>');
+    imgsFldBind('edCard');
+  }
+  function exSavePayee(no){
+    var nm=($('edName')||{}).value.trim(), id=(($('edId')||{}).value||'').replace(/\D/g,''), ad=($('edAddr')||{}).value.trim();
+    if(!nm){ mErr('กรอกชื่อผู้รับเงินก่อนค่ะ'); return; }
+    if(id.length!==13){ mErr('เลขบัตรประชาชนต้องมี 13 หลักค่ะ'); return; }
+    if(!validThaiId(id)){ mErr('เลขบัตรประชาชนไม่ถูกต้อง — ตรวจเลข 13 หลักอีกครั้งค่ะ'); return; }
+    if(!ad){ mErr('กรอกที่อยู่ผู้รับเงินก่อนค่ะ'); return; }
+    var p={action:'waExpEditPayee',uid:UID,no:no,payeeName:nm,payeeId:id,payeeAddr:ad};
+    var card=IMGS['edCard']||[]; if(card.length) p.idcard=JSON.stringify(card);
+    callBusy('กำลังบันทึก…', jsonpPost(p), 'บันทึกแล้ว').then(function(r){
+      if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+      closeModal(); IMGS['edCard']=[];
+      toast(r.hasDoc?'✅ แก้แล้ว — อย่าลืมออกเอกสารใหม่ให้ข้อมูลตรงกันนะคะ':'✅ แก้ข้อมูลผู้รับเงินแล้ว');
+      if(VIEW==='expapprove') renderExpenseApprove(); else renderExpense();
+    }).catch(function(e){ mErr(e.message); });
+  }
+  window.exEditPayee=exEditPayee; window.exSavePayee=exSavePayee;
   /** ไม่อนุมัติ → ถามเหตุผลก่อน (ลงคอลัมน์หมายเหตุ + แจ้งผู้แจ้ง) */
   function exReject(no){
     modal('<h3>❌ ไม่อนุมัติใบเบิก '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
