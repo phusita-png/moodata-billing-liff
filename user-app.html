@@ -96,6 +96,8 @@
   .busy-box{ background:#fff; border-radius:16px; padding:22px 26px; display:flex; flex-direction:column; align-items:center; gap:12px; box-shadow:0 8px 30px rgba(20,30,50,.25); max-width:80vw; }
   .busy-spin{ width:38px; height:38px; border:4px solid #DCE4F0; border-top-color:#1B72E8; border-radius:50%; animation:busySpin .8s linear infinite; }
   @keyframes busySpin{ to{ transform:rotate(360deg); } }
+  .busy-ok{ font-size:40px; line-height:1; animation:busyPop .25s ease; }
+  @keyframes busyPop{ from{ transform:scale(.5); opacity:0; } to{ transform:scale(1); opacity:1; } }
   .busy-text{ font-size:15px; font-weight:600; color:#1B2A44; text-align:center; }
   /* modal */
   .mask{ position:fixed; inset:0; background:rgba(20,28,40,.5); display:flex; align-items:flex-end; justify-content:center; z-index:60; }
@@ -517,10 +519,19 @@
     document.body.insertAdjacentHTML('beforeend','<div class="loader"><div style="font-size:38px">⚠️</div><div class="loader-text" style="max-width:80vw;text-align:center">'+esc(m)+'</div></div>'); }
   var _tt; function toast(m){ var t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(_tt); _tt=setTimeout(function(){t.classList.remove('show');},2400); }
   // overlay "กำลังทำรายการ" — บังจอ + กันกดซ้ำ (เงียบนาน ผู้ใช้กดซ้ำ = ทำรายการซ้ำ · พี่แจ้ง 16 ก.ค.)
-  function busy(m){ var b=$('busy'); if(!b) return; $('busyText').textContent=m||'กำลังทำรายการ…'; b.classList.add('show'); }
-  function unbusy(){ var b=$('busy'); if(b) b.classList.remove('show'); }
-  // ครอบ call ที่ทำงานนาน → โชว์ overlay · ปิดเองเมื่อเสร็จ/พลาด (ก่อน .then/.catch ของผู้เรียก)
-  function callBusy(m, p){ busy(m); return p.then(function(r){ unbusy(); return r; }, function(e){ unbusy(); throw e; }); }
+  var _busyDone;
+  function busy(m){ var b=$('busy'); if(!b) return; clearTimeout(_busyDone);
+    b.querySelector('.busy-box').innerHTML='<div class="busy-spin"></div><div class="busy-text">'+esc(m||'กำลังทำรายการ…')+'</div>';
+    b.classList.add('show'); }
+  function unbusy(){ var b=$('busy'); if(b) b.classList.remove('show'); clearTimeout(_busyDone); }
+  // เสร็จแล้ว → เปลี่ยนเป็น ✅ สำเร็จ ค้างให้เห็นชัด (พี่ขอ) แล้วค่อยหาย
+  function busyOk(m){ var b=$('busy'); if(!b) return;
+    b.querySelector('.busy-box').innerHTML='<div class="busy-ok">✅</div><div class="busy-text">'+esc(m||'สำเร็จแล้ว')+'</div>';
+    b.classList.add('show'); clearTimeout(_busyDone); _busyDone=setTimeout(unbusy, 1500); }
+  // ครอบ call ที่ทำงานนาน → spinner ค้างจนเสร็จจริง · สำเร็จ = โชว์ ✅ ค้าง 1.5 วิ · พลาด = ปิด (caller แสดง error)
+  function callBusy(m, p, okMsg){ busy(m);
+    return p.then(function(r){ if(r&&r.ok) busyOk(okMsg||'สำเร็จแล้ว'); else unbusy(); return r; },
+                  function(e){ unbusy(); throw e; }); }
 
   function jsonp(params, _try){
     _try=_try||0;
@@ -2213,7 +2224,7 @@
   }
   function exDecide(no,decision,note,wht){
     toast(decision==='approve'?'กำลังอนุมัติ…':'กำลังบันทึก…');
-    callBusy(decision==='approve'?'กำลังอนุมัติ / ออกเอกสาร…':'กำลังบันทึก…', jsonpPost({action:'waExpDecide',uid:UID,no:no,decision:decision,note:note||'',wht:wht||'0'})).then(function(r){
+    callBusy(decision==='approve'?'กำลังสร้างเอกสาร…':'กำลังบันทึก…', jsonpPost({action:'waExpDecide',uid:UID,no:no,decision:decision,note:note||'',wht:wht||'0'}), decision==='approve'?'อนุมัติแล้ว':'บันทึกแล้ว').then(function(r){
       if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; }
       closeModal();
       if(r.docError) toast('✅ อนุมัติแล้ว · ⚠️ ออกเอกสารไม่สำเร็จ: '+r.docError);
@@ -2237,7 +2248,7 @@
   function exDoPay(no){
     var b=$('pSend'); if(b){ b.disabled=true; b.textContent='กำลังบันทึก…'; }
     toast('กำลังบันทึก…');
-    callBusy('กำลังบันทึกจ่ายคืน + สร้างแฟ้ม…', jsonpPost({action:'waExpPay',uid:UID,no:no,img:EXP_IMG||''})).then(function(r){
+    callBusy('กำลังสร้างเอกสาร + แฟ้ม…', jsonpPost({action:'waExpPay',uid:UID,no:no,img:EXP_IMG||''}), 'บันทึกจ่ายคืนแล้ว').then(function(r){
       if(!r||!r.ok){ if(b){b.disabled=false;b.textContent='บันทึกจ่ายคืน';} mErr((r&&r.error)||'ไม่สำเร็จ'); return; }
       closeModal(); EXP_IMG='';
       // แฟ้มครบชุดรวมให้เองตอนนี้ · ไม่เกิด = ไม่ใช่เรื่องใหญ่ (เงินจ่ายแล้ว) แต่ต้องบอกให้รู้ว่าต้องกดสร้างใหม่
@@ -2248,7 +2259,7 @@
   /** สร้างแฟ้มครบชุดใหม่ (พี่เท่านั้น) — เผื่อ Worker ล่มตอนจ่าย หรือแนบหลักฐานเพิ่มทีหลัง */
   function exRebuild(no){
     toast('กำลังรวมแฟ้ม…');
-    callBusy('กำลังสร้างแฟ้ม + ออก 50 ทวิ…', jsonpPost({action:'waExpDossier',uid:UID,no:no})).then(function(r){
+    callBusy('กำลังสร้างเอกสาร + แฟ้ม…', jsonpPost({action:'waExpDossier',uid:UID,no:no}), 'สร้างแฟ้มแล้ว').then(function(r){
       if(!r||!r.ok){ toast((r&&r.error)||'รวมแฟ้มไม่สำเร็จ'); return; }
       toast('🗂️ รวมแฟ้มแล้ว ('+(r.parts||[]).length+' ชิ้น)'+(r.whtNo?' · ออก 50 ทวิ '+r.whtNo:''));
       renderExpense();
