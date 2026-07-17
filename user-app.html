@@ -1732,6 +1732,9 @@
       if(IS_OWNER && (String(x.status).indexOf('จ่ายแล้ว')>=0 || (String(x.status).indexOf('อนุมัติ')>=0 && String(x.status).indexOf('ไม่อนุมัติ')<0)))
         links+='<a class="ex-lk" href="#" onclick="exRebuild(\''+esc(x.no)+'\');return false" style="color:#C8730B">'+
           (x.dossier?'🔄 สร้างแฟ้มใหม่':'🗂️ สร้างแฟ้มครบชุด')+'</a>';
+      // แก้ประเภทเอกสาร (เฉพาะพี่ · ไม่ใช่ RV) — พนักงานกดผิด แนบใบเสร็จ ⇄ ไม่มีใบเสร็จ (ออก SR)
+      if(IS_OWNER && !isRv(x))
+        links+='<a class="ex-lk" href="#" onclick="exSetProof(\''+esc(x.no)+'\');return false" style="color:#1B72E8">✏️ แก้ประเภท</a>';
       // ยกเลิก/ลบใบเทส (เฉพาะพี่ · ทุกสถานะ) — ลบใบเบิก+เอกสาร+ไฟล์ ถาวร
       if(IS_OWNER)
         links+='<a class="ex-lk" href="#" onclick="exVoid(\''+esc(x.no)+'\');return false" style="color:#DC2626">🗑️ ยกเลิก (เทส)</a>';
@@ -2342,6 +2345,32 @@
   window.renderExpenseApprove=renderExpenseApprove; window.exReject=exReject; window.exDecide=exDecide;
   window.exOpenPay=exOpenPay; window.exDoPay=exDoPay; window.exRebuild=exRebuild;
   window.exVoid=exVoid; window.exVoidDo=exVoidDo;
+
+  /** ✏️ แก้ประเภทเอกสาร (พี่เท่านั้น) — แนบใบเสร็จ ⇄ ไม่มีใบเสร็จ (ออก SR) */
+  function exSetProof(no){
+    var x=EXP_BYNO[no]||{};
+    var isSr=(String(x.docType||'').indexOf('ใบรับรอง')>=0);
+    modal('<h3>✏️ แก้ประเภทเอกสาร</h3>'+
+      '<div class="m-hint" style="margin:0 0 12px">ใบ <b>'+esc(no)+'</b> ตอนนี้: '+esc(x.docType||'🧾 แนบใบเสร็จ')+'</div>'+
+      '<button class="btn '+(isSr?'btn-ghost':'btn-ok')+'" style="width:100%;margin-bottom:8px" onclick="exSetProofDo(\''+esc(no)+'\',\'sr\')">📄 ไม่มีใบเสร็จ → ออกใบรับรองแทน (SR)</button>'+
+      '<button class="btn btn-ghost" style="width:100%;margin-bottom:12px" onclick="exSetProofDo(\''+esc(no)+'\',\'rcp\')">🧾 แนบใบเสร็จ (มีหลักฐานแล้ว)</button>'+
+      '<div class="m-hint" style="margin:0 0 12px;font-size:11.5px">เลือก "ออกใบรับรองแทน" → ระบบออก SR ให้ (ใช้ลายเซ็นพนักงานที่เก็บไว้) · ถ้าพนักงานยังไม่เซ็น จะแจ้งให้เซ็นก่อน แล้วออกให้อัตโนมัติ</div>'+
+      '<button class="btn btn-ghost" style="width:100%" onclick="closeModal()">ปิด</button>');
+  }
+  function exSetProofDo(no,proof){
+    closeModal();
+    callBusy('กำลังสร้างเอกสาร…', jsonpPost({action:'waExpSetProof',uid:UID,no:no,proof:proof}), 'บันทึกแล้ว').then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'แก้ไม่สำเร็จ'); return; }
+      if(r.issued)        toast('📄 ออกใบรับรองแทน '+(r.docNo||'')+' แล้ว');
+      else if(r.already)  toast('ใบนี้มีใบรับรองแทน '+(r.docNo||'')+' อยู่แล้ว');
+      else if(r.needSign) toast('✍️ แจ้งพนักงานให้เซ็นลายเซ็นก่อน · เซ็นเสร็จออกให้อัตโนมัติ');
+      else if(r.pending)  toast('เปลี่ยนเป็น "ไม่มีใบเสร็จ" แล้ว · จะออก SR ตอนอนุมัติ');
+      else if(r.toReceipt)toast('เปลี่ยนเป็น "แนบใบเสร็จ" แล้ว');
+      else toast('บันทึกแล้ว');
+      renderExpense();
+    }).catch(function(e){ toast(e.message); });
+  }
+  window.exSetProof=exSetProof; window.exSetProofDo=exSetProofDo;
 
   // ═══════════ VIEW: 📊 สรุปค่าใช้จ่าย + 🧾 ตั้งเบิกลูกค้า (dashboard) ═══════════
   // สิทธิ์: พนักงานเห็นของตัวเอง · พี่เห็นทั้งบริษัท (backend กรองให้ · หน้าจอแค่แสดงตามที่ได้มา)
