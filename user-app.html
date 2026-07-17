@@ -2391,12 +2391,12 @@
   window.exEditRcp=exEditRcp; window.exSaveRcp=exSaveRcp;
 
   // ═══════════ VIEW: OT (พนักงานขอ + พี่อนุมัติ + ดึงเข้า payroll) ═══════════
-  var OT_LIST=[], OT_KINDS={workday:'วันทำงาน (×1.5)',holiday:'วันหยุด (×3)'};
+  var OT_LIST=[], OT_KINDS={workday:'OT วันทำงาน (×1.5)',holiday_work:'ทำงานวันหยุด (×1)',holiday_ot:'OT วันหยุด (×3)'}, OT_DRAFT=null;
   function otBadge(s){ s=String(s||''); if(s.indexOf('ไม่')>=0)return'b-cancel'; if(s.indexOf('อนุมัติ')>=0)return'b-done'; return'b-new'; }
   function otHM(s){ var m=String(s||'').match(/^(\d{1,2}):(\d{2})$/); if(!m)return null; return (+m[1])*60+(+m[2]); }
   function otHoursCalc(s,e){ var a=otHM(s),b=otHM(e); if(a==null||b==null)return 0; if(b<=a)b+=1440; var mins=b-a; var lunch=Math.max(0,Math.min(b,780)-Math.max(a,720)); return Math.round((mins-lunch)/60*100)/100; }
   function renderOt(){
-    skel();
+    OT_DRAFT=null; skel();
     jsonp({action:'waOtInit',uid:UID}).then(function(r){
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
       OT_LIST=r.list||[];
@@ -2414,31 +2414,49 @@
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
   }
   function otOpenForm(){
-    var t=new Date(), dstr=t.getFullYear()+'-'+('0'+(t.getMonth()+1)).slice(-2)+'-'+('0'+t.getDate()).slice(-2);
+    var t=new Date(), today=t.getFullYear()+'-'+('0'+(t.getMonth()+1)).slice(-2)+'-'+('0'+t.getDate()).slice(-2);
+    var d=OT_DRAFT||{};
     modal('<h3>⏰ ขอ OT (ทำล่วงเวลา)</h3><div id="mErr" class="m-err hidden"></div>'+
-      '<div class="fld"><label>วันที่ทำ OT</label><input id="otDate" type="date" value="'+dstr+'"></div>'+
+      '<div class="fld"><label>วันที่ทำ OT</label><input id="otDate" type="date" value="'+esc(d.date||today)+'"></div>'+
       '<div style="display:flex;gap:8px">'+
-        '<div class="fld" style="flex:1"><label>เริ่ม</label><input id="otStart" type="time" value="17:00" oninput="otCalc()"></div>'+
-        '<div class="fld" style="flex:1"><label>สิ้นสุด</label><input id="otEnd" type="time" value="20:00" oninput="otCalc()"></div></div>'+
+        '<div class="fld" style="flex:1"><label>เริ่ม</label><input id="otStart" type="time" value="'+esc(d.start||'17:00')+'" oninput="otCalc()"></div>'+
+        '<div class="fld" style="flex:1"><label>สิ้นสุด</label><input id="otEnd" type="time" value="'+esc(d.end||'20:00')+'" oninput="otCalc()"></div></div>'+
       '<div id="otHint" class="m-hint" style="margin:0 0 10px"></div>'+
-      '<div class="fld"><label>เหตุผล / งานที่ทำ</label><textarea id="otReason" rows="2" placeholder="เช่น ปิดงบเดือน / เตรียมงานอีเวนต์"></textarea></div>'+
+      '<div class="fld"><label>เหตุผล / งานที่ทำ</label><textarea id="otReason" rows="2" placeholder="เช่น ปิดงบเดือน / เตรียมงานอีเวนต์">'+esc(d.reason||'')+'</textarea></div>'+
       '<div style="display:flex;gap:8px"><button class="btn btn-ghost" style="flex:1" onclick="closeModal()">ยกเลิก</button>'+
-      '<button class="btn btn-primary" style="flex:1" onclick="otSubmit()">ส่งขอ OT</button></div>');
+      '<button class="btn btn-primary" style="flex:1" onclick="otReview()">ถัดไป — ดูสรุป</button></div>');
     otCalc();
   }
   function otCalc(){
     var hint=$('otHint'); if(!hint) return;
     var h=otHoursCalc(($('otStart')||{}).value, ($('otEnd')||{}).value);
-    hint.innerHTML=h>0?('⏱️ รวม <b>'+h+' ชั่วโมง</b> · ระบบคิดเงินตามเรท (วันทำงาน ×1.5 / วันหยุด ×3) หลังส่ง'):'กรอกเวลาเริ่ม–สิ้นสุด';
+    hint.innerHTML=h>0?('⏱️ รวม <b>'+h+' ชั่วโมง</b> (หักพักเที่ยงให้ถ้าคาบ) · เรท+เงินระบบคิดหลังพี่อนุมัติ'):'กรอกเวลาเริ่ม–สิ้นสุด';
   }
-  function otSubmit(){
+  function otRevRow(l,v){ return '<div style="display:flex;gap:8px;padding:5px 0"><span style="color:#8A94A6;min-width:92px">'+esc(l)+'</span><span style="flex:1;color:#333;font-weight:600">'+esc(v)+'</span></div>'; }
+  function otReview(){
     var date=($('otDate')||{}).value, st=($('otStart')||{}).value, en=($('otEnd')||{}).value, reason=(($('otReason')||{}).value||'').trim();
     if(!date){ mErr('เลือกวันที่ก่อนค่ะ'); return; }
-    if(otHoursCalc(st,en)<=0){ mErr('เวลาเริ่ม–สิ้นสุดไม่ถูกต้องค่ะ'); return; }
+    var hours=otHoursCalc(st,en);
+    if(hours<=0){ mErr('เวลาเริ่ม–สิ้นสุดไม่ถูกต้องค่ะ'); return; }
     if(!reason){ mErr('กรอกเหตุผลก่อนค่ะ'); return; }
-    callBusy('กำลังส่งขอ OT…', jsonpPost({action:'waOtSubmit',uid:UID,date:date,start:st,end:en,reason:reason}), 'ส่งแล้ว').then(function(r){
+    OT_DRAFT={date:date,start:st,end:en,reason:reason};
+    var dp=date.split('-'), dateThai=(+dp[2])+'/'+dp[1]+'/'+((+dp[0])+543);
+    var a=otHM(st),b=otHM(en); if(b<=a)b+=1440; var lunch=Math.max(0,Math.min(b,780)-Math.max(a,720));
+    modal('<h3>⏰ ยืนยันคำขอ OT</h3>'+
+      '<div class="m-hint" style="margin:0 0 12px">ตรวจสอบก่อนส่งนะคะ</div>'+
+      '<div class="card" style="box-shadow:none;border:1px solid var(--line);margin-bottom:4px">'+
+        otRevRow('📅 วันที่', dateThai)+otRevRow('⏱️ เวลา', st+'–'+en)+
+        otRevRow('⏱️ รวม', hours+' ชั่วโมง'+(lunch>0?' (หักพักเที่ยง 1 ชม.แล้ว)':''))+
+        otRevRow('📝 เหตุผล', reason)+'</div>'+
+      '<div class="m-hint" style="margin:8px 0 12px;font-size:11.5px">ประเภทวัน (×1.5/×1/×3) + เงิน OT ระบบคำนวณให้หลังพี่อนุมัติค่ะ</div>'+
+      '<div style="display:flex;gap:8px"><button class="btn btn-ghost" style="flex:1" onclick="otOpenForm()">← ย้อนกลับแก้ไข</button>'+
+      '<button class="btn btn-primary" style="flex:1" onclick="otDoSubmit()">✅ ยืนยันส่ง</button></div>');
+  }
+  function otDoSubmit(){
+    var d=OT_DRAFT; if(!d) return;
+    callBusy('กำลังส่งขอ OT…', jsonpPost({action:'waOtSubmit',uid:UID,date:d.date,start:d.start,end:d.end,reason:d.reason}), 'ส่งแล้ว').then(function(r){
       if(!r||!r.ok){ mErr((r&&r.error)||'ส่งไม่สำเร็จ'); return; }
-      closeModal();
+      closeModal(); OT_DRAFT=null;
       toast('⏰ ส่งขอ OT '+r.no+' แล้ว · '+r.hours+' ชม.'+(r.noSalary?' (⚠️ ยังไม่มีฐานเงินเดือน แจ้งพี่)':''));
       renderOt();
     }).catch(function(e){ mErr(e.message); });
@@ -2495,7 +2513,7 @@
       toast('💰 ดึงเข้า '+r.payName+' แล้ว · '+r.people+' คน · '+money(r.total)+' บาท'+(r.skipped&&r.skipped.length?' · ข้าม(ไม่มีในเงินเดือน) '+r.skipped.join(','):''));
     }).catch(function(e){ toast(e.message); });
   }
-  window.renderOt=renderOt; window.otOpenForm=otOpenForm; window.otCalc=otCalc; window.otSubmit=otSubmit;
+  window.renderOt=renderOt; window.otOpenForm=otOpenForm; window.otCalc=otCalc; window.otReview=otReview; window.otDoSubmit=otDoSubmit;
   window.renderOtApprove=renderOtApprove; window.otDecide=otDecide; window.otToPayroll=otToPayroll; window.otMonthSummary=otMonthSummary;
 
   /** ✏️ แก้ประเภทเอกสาร (พี่เท่านั้น) — แนบใบเสร็จ ⇄ ไม่มีใบเสร็จ (ออก SR) */
