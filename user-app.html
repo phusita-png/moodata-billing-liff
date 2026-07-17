@@ -1562,7 +1562,7 @@
       TRASH_ITEMS=r.items||[]; paintTrash();
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
   }
-  function trashTypeMeta(t){ return t==='task'?['🎫','งาน']:t==='project'?['📁','Project']:t==='leave'?['📝','ใบลา']:['🗑️','']; }
+  function trashTypeMeta(t){ return t==='task'?['🎫','งาน']:t==='project'?['📁','Project']:t==='leave'?['📝','ใบลา']:t==='expense'?['💸','ใบเบิก']:['🗑️','']; }
   function paintTrash(){
     var html='<div class="section-h">🗑️ ถังขยะ '+(IS_OWNER?'(ผู้ดูแล)':'(งานที่ยกเลิก)')+'</div>'+
       '<div class="m-hint" style="margin:0 0 12px">'+(IS_OWNER
@@ -1735,9 +1735,9 @@
       // แก้ประเภทเอกสาร (เฉพาะพี่ · ไม่ใช่ RV) — พนักงานกดผิด แนบใบเสร็จ ⇄ ไม่มีใบเสร็จ (ออก SR)
       if(IS_OWNER && !isRv(x))
         links+='<a class="ex-lk" href="#" onclick="exSetProof(\''+esc(x.no)+'\');return false" style="color:#1B72E8">✏️ แก้ประเภท</a>';
-      // ยกเลิก/ลบใบเทส (เฉพาะพี่ · ทุกสถานะ) — ลบใบเบิก+เอกสาร+ไฟล์ ถาวร
+      // ยกเลิกใบเบิก (เฉพาะพี่ · ทุกสถานะ) — ย้ายไปถังขยะก่อน (soft-delete · กู้คืนได้)
       if(IS_OWNER)
-        links+='<a class="ex-lk" href="#" onclick="exVoid(\''+esc(x.no)+'\');return false" style="color:#DC2626">🗑️ ยกเลิก</a>';
+        links+='<a class="ex-lk" href="#" onclick="exTrash(\''+esc(x.no)+'\');return false" style="color:#DC2626">🗑️ ยกเลิก</a>';
       return '<div class="tk"><div class="tk-top"><span class="tk-no">'+esc(x.no)+'</span>'+
         '<span class="tk-badge '+expBadge(x.status)+'">'+esc(x.status)+'</span></div>'+
         (IS_OWNER&&x.nick?'<div class="tk-cust">👤 '+esc(x.nick)+'</div>':'')+
@@ -2326,25 +2326,25 @@
     if(el){ el.style.transition='opacity .3s'; el.style.opacity='0'; setTimeout(renderExpenseApprove,320); }
     else renderExpenseApprove();
   }
-  /** 🗑️ ยกเลิก/ลบใบเทส (พี่เท่านั้น) — ลบใบเบิก + เอกสาร + ไฟล์ ถาวร */
-  function exVoid(no){
+  /** 🗑️ ยกเลิกใบเบิก → ย้ายไปถังขยะ (พี่เท่านั้น · soft-delete · กู้คืนได้) */
+  function exTrash(no){
     modal('<h3>🗑️ ยกเลิกใบเบิก</h3>'+
-      '<div class="m-hint" style="margin:0 0 14px">ลบ <b>'+esc(no)+'</b> ถาวร — ลบใบเบิก + เอกสารที่ออก (SR/RV/50 ทวิ) + ไฟล์ใน Drive ทั้งหมด'+
-      '<br><span style="color:#DC2626">⚠️ กู้คืนไม่ได้ · เลขรันของเดือนนี้จะนับใหม่</span></div>'+
-      '<div style="display:flex;gap:8px"><button class="btn btn-ghost" style="flex:1" onclick="closeModal()">ยกเลิก</button>'+
-      '<button class="btn btn-danger" style="flex:1" onclick="exVoidDo(\''+esc(no)+'\')">ลบถาวร</button></div>');
+      '<div class="m-hint" style="margin:0 0 14px">ย้าย <b>'+esc(no)+'</b> ไปถังขยะ — จะไม่แสดงในรายการ/สรุป'+
+      '<br><span style="color:#1B72E8">♻️ กู้คืนได้ที่เมนู "🗑️ ถังขยะ" (ลบถาวรทำที่นั่น)</span></div>'+
+      '<div style="display:flex;gap:8px"><button class="btn btn-ghost" style="flex:1" onclick="closeModal()">ปิด</button>'+
+      '<button class="btn btn-danger" style="flex:1" onclick="exTrashDo(\''+esc(no)+'\')">ย้ายไปถังขยะ</button></div>');
   }
-  function exVoidDo(no){
+  function exTrashDo(no){
     closeModal();
-    callBusy('กำลังลบ…', jsonpPost({action:'waExpVoid',uid:UID,no:no}), 'ลบแล้ว').then(function(r){
-      if(!r||!r.ok){ toast((r&&r.error)||'ลบไม่สำเร็จ'); return; }
-      toast('🗑️ ลบ '+no+' แล้ว'+(r.removed?' ('+r.removed+' รายการ)':''));
+    callBusy('กำลังย้ายไปถังขยะ…', jsonpPost({action:'waExpTrash',uid:UID,no:no}), 'ย้ายแล้ว').then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; }
+      toast('🗑️ ย้าย '+no+' ไปถังขยะแล้ว · กู้คืนได้ที่เมนูถังขยะ');
       renderExpense();
     }).catch(function(e){ toast(e.message); });
   }
   window.renderExpenseApprove=renderExpenseApprove; window.exReject=exReject; window.exDecide=exDecide;
   window.exOpenPay=exOpenPay; window.exDoPay=exDoPay; window.exRebuild=exRebuild;
-  window.exVoid=exVoid; window.exVoidDo=exVoidDo;
+  window.exTrash=exTrash; window.exTrashDo=exTrashDo;
 
   /** ✏️ แก้ประเภทเอกสาร (พี่เท่านั้น) — แนบใบเสร็จ ⇄ ไม่มีใบเสร็จ (ออก SR) */
   function exSetProof(no){
