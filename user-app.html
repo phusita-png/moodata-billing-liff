@@ -1737,7 +1737,7 @@
         links+='<a class="ex-lk" href="#" onclick="exSetProof(\''+esc(x.no)+'\');return false" style="color:#1B72E8">✏️ แก้ประเภท</a>';
       // ยกเลิก/ลบใบเทส (เฉพาะพี่ · ทุกสถานะ) — ลบใบเบิก+เอกสาร+ไฟล์ ถาวร
       if(IS_OWNER)
-        links+='<a class="ex-lk" href="#" onclick="exVoid(\''+esc(x.no)+'\');return false" style="color:#DC2626">🗑️ ยกเลิก (เทส)</a>';
+        links+='<a class="ex-lk" href="#" onclick="exVoid(\''+esc(x.no)+'\');return false" style="color:#DC2626">🗑️ ยกเลิก</a>';
       return '<div class="tk"><div class="tk-top"><span class="tk-no">'+esc(x.no)+'</span>'+
         '<span class="tk-badge '+expBadge(x.status)+'">'+esc(x.status)+'</span></div>'+
         (IS_OWNER&&x.nick?'<div class="tk-cust">👤 '+esc(x.nick)+'</div>':'')+
@@ -2328,7 +2328,7 @@
   }
   /** 🗑️ ยกเลิก/ลบใบเทส (พี่เท่านั้น) — ลบใบเบิก + เอกสาร + ไฟล์ ถาวร */
   function exVoid(no){
-    modal('<h3>🗑️ ยกเลิกใบเทส</h3>'+
+    modal('<h3>🗑️ ยกเลิกใบเบิก</h3>'+
       '<div class="m-hint" style="margin:0 0 14px">ลบ <b>'+esc(no)+'</b> ถาวร — ลบใบเบิก + เอกสารที่ออก (SR/RV/50 ทวิ) + ไฟล์ใน Drive ทั้งหมด'+
       '<br><span style="color:#DC2626">⚠️ กู้คืนไม่ได้ · เลขรันของเดือนนี้จะนับใหม่</span></div>'+
       '<div style="display:flex;gap:8px"><button class="btn btn-ghost" style="flex:1" onclick="closeModal()">ยกเลิก</button>'+
