@@ -1575,7 +1575,7 @@
       TRASH_ITEMS=r.items||[]; paintTrash();
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
   }
-  function trashTypeMeta(t){ return t==='task'?['🎫','งาน']:t==='project'?['📁','Project']:t==='leave'?['📝','ใบลา']:t==='expense'?['💸','ใบเบิก']:['🗑️','']; }
+  function trashTypeMeta(t){ return t==='task'?['🎫','งาน']:t==='project'?['📁','Project']:t==='leave'?['📝','ใบลา']:t==='expense'?['💸','ใบเบิก']:t==='ot'?['⏰','OT']:['🗑️','']; }
   function paintTrash(){
     var html='<div class="section-h">🗑️ ถังขยะ '+(IS_OWNER?'(ผู้ดูแล)':'(งานที่ยกเลิก)')+'</div>'+
       '<div class="m-hint" style="margin:0 0 12px">'+(IS_OWNER
@@ -2391,32 +2391,60 @@
   window.exEditRcp=exEditRcp; window.exSaveRcp=exSaveRcp;
 
   // ═══════════ VIEW: OT (พนักงานขอ + พี่อนุมัติ + ดึงเข้า payroll) ═══════════
-  var OT_LIST=[], OT_KINDS={workday:'OT วันทำงาน (×1.5)',holiday_work:'ทำงานวันหยุด (×1)',holiday_ot:'OT วันหยุด (×3)'}, OT_DRAFT=null;
+  var OT_LIST=[], OT_KINDS={workday:'OT วันทำงาน (×1.5)',holiday_work:'ทำงานวันหยุด (×1)',holiday_ot:'OT วันหยุด (×3)'}, OT_DRAFT=null, OT_TEAM=[], OT_EDIT_NO=null;
   function otBadge(s){ s=String(s||''); if(s.indexOf('ไม่')>=0)return'b-cancel'; if(s.indexOf('อนุมัติ')>=0)return'b-done'; return'b-new'; }
   function otHM(s){ var m=String(s||'').match(/^(\d{1,2}):(\d{2})$/); if(!m)return null; return (+m[1])*60+(+m[2]); }
   function otHoursCalc(s,e){ var a=otHM(s),b=otHM(e); if(a==null||b==null)return 0; if(b<=a)b+=1440; var mins=b-a; var lunch=Math.max(0,Math.min(b,780)-Math.max(a,720)); return Math.round((mins-lunch)/60*100)/100; }
   function renderOt(){
-    OT_DRAFT=null; skel();
+    OT_DRAFT=null; OT_EDIT_NO=null; skel();
     jsonp({action:'waOtInit',uid:UID}).then(function(r){
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
-      OT_LIST=r.list||[];
-      var h='<button class="btn btn-primary" style="width:100%;margin-bottom:14px" onclick="otOpenForm()">➕ ขอ OT (ทำล่วงเวลา)</button>';
-      if(r.isOwner) h+='<div class="m-hint" style="margin:0 0 12px">👑 มุมผู้ดูแล: เห็นใบ OT ทุกคน · อนุมัติที่แท็บ "อนุมัติ OT"</div>';
+      OT_LIST=r.list||[]; OT_TEAM=r.team||[];
+      var h='<button class="btn btn-primary" style="width:100%;margin-bottom:14px" onclick="otNewForm()">➕ ขอ OT (ทำล่วงเวลา)</button>';
+      if(r.isOwner) h+='<div class="m-hint" style="margin:0 0 12px">👑 มุมผู้ดูแล: เห็นใบ OT ทุกคน · ขอแทนพนักงานได้ · อนุมัติที่แท็บ "อนุมัติ OT"</div>';
       if(!OT_LIST.length){ h+='<div class="card"><div class="emptybox">ยังไม่มีใบ OT 😊</div></div>'; $('main').innerHTML=h; return; }
       h+=OT_LIST.map(function(x){
+        var acts=(!x.paidToPayroll)?('<div class="ex-meta" style="margin-top:6px">'+
+          '<a class="ex-lk" href="#" onclick="otEdit(\''+esc(x.no)+'\');return false" style="color:#1B72E8">✏️ แก้ไข</a>'+
+          '<a class="ex-lk" href="#" onclick="otTrash(\''+esc(x.no)+'\');return false" style="color:#DC2626">🗑️ ยกเลิก</a></div>'):'';
         return '<div class="tk"><div class="tk-top"><span class="tk-no">'+esc(x.no)+'</span>'+
           '<span class="tk-badge '+otBadge(x.status)+'">'+esc(x.status)+'</span></div>'+
           (IS_OWNER&&x.nick?'<div class="tk-cust">👤 '+esc(x.nick)+'</div>':'')+
           '<div class="ex-amt">📅 '+esc(x.otDate)+' · '+esc(x.start)+'–'+esc(x.end)+' ('+x.hours+' ชม.)</div>'+
-          '<div class="tk-detail">'+esc(x.kind)+(x.reason?' · '+esc(x.reason):'')+'</div></div>';
+          '<div class="tk-detail">'+esc(x.kind)+(x.reason?' · '+esc(x.reason):'')+'</div>'+acts+'</div>';
       }).join('');
       $('main').innerHTML=h;
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
   }
+  function otNewForm(){ OT_DRAFT=null; OT_EDIT_NO=null; otOpenForm(); }
+  function otEdit(no){
+    var x=null; for(var i=0;i<OT_LIST.length;i++){ if(OT_LIST[i].no===no){ x=OT_LIST[i]; break; } }
+    if(!x) return;
+    var dp=String(x.otDate).split('/'); var ymd=dp.length===3?(dp[2]+'-'+('0'+dp[1]).slice(-2)+'-'+('0'+dp[0]).slice(-2)):'';
+    OT_DRAFT={date:ymd,start:x.start,end:x.end,reason:x.reason,forUid:''}; OT_EDIT_NO=no; otOpenForm();
+  }
+  function otTrash(no){
+    modal('<h3>🗑️ ยกเลิกใบ OT</h3>'+
+      '<div class="m-hint" style="margin:0 0 14px">ย้าย <b>'+esc(no)+'</b> ไปถังขยะ — <span style="color:#1B72E8">♻️ กู้คืนได้ที่เมนู "🗑️ ถังขยะ"</span></div>'+
+      '<div style="display:flex;gap:8px"><button class="btn btn-ghost" style="flex:1" onclick="closeModal()">ปิด</button>'+
+      '<button class="btn btn-danger" style="flex:1" onclick="otTrashDo(\''+esc(no)+'\')">ย้ายไปถังขยะ</button></div>');
+  }
+  function otTrashDo(no){
+    closeModal();
+    callBusy('กำลังย้ายไปถังขยะ…', jsonpPost({action:'waOtTrash',uid:UID,no:no}), 'ย้ายแล้ว').then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; }
+      toast('🗑️ ย้าย '+no+' ไปถังขยะแล้ว · กู้คืนได้ที่เมนูถังขยะ'); renderOt();
+    }).catch(function(e){ toast(e.message); });
+  }
   function otOpenForm(){
     var t=new Date(), today=t.getFullYear()+'-'+('0'+(t.getMonth()+1)).slice(-2)+'-'+('0'+t.getDate()).slice(-2);
     var d=OT_DRAFT||{};
-    modal('<h3>⏰ ขอ OT (ทำล่วงเวลา)</h3><div id="mErr" class="m-err hidden"></div>'+
+    var forSel=(IS_OWNER && !OT_EDIT_NO && OT_TEAM.length)
+      ? '<div class="fld"><label>ทำแทนพนักงาน (เลือกได้)</label><select id="otFor"><option value="">— ตัวเอง —</option>'+
+        OT_TEAM.map(function(m){ return '<option value="'+esc(m.uid)+'"'+((d.forUid===m.uid)?' selected':'')+'>'+esc(m.nick)+'</option>'; }).join('')+'</select></div>'
+      : '';
+    modal('<h3>'+(OT_EDIT_NO?('✏️ แก้ไข OT '+esc(OT_EDIT_NO)):'⏰ ขอ OT (ทำล่วงเวลา)')+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      forSel+
       '<div class="fld"><label>วันที่ทำ OT</label><input id="otDate" type="date" value="'+esc(d.date||today)+'"></div>'+
       '<div style="display:flex;gap:8px">'+
         '<div class="fld" style="flex:1"><label>เริ่ม</label><input id="otStart" type="time" value="'+esc(d.start||'17:00')+'" oninput="otCalc()"></div>'+
@@ -2439,7 +2467,7 @@
     var hours=otHoursCalc(st,en);
     if(hours<=0){ mErr('เวลาเริ่ม–สิ้นสุดไม่ถูกต้องค่ะ'); return; }
     if(!reason){ mErr('กรอกเหตุผลก่อนค่ะ'); return; }
-    OT_DRAFT={date:date,start:st,end:en,reason:reason};
+    OT_DRAFT={date:date,start:st,end:en,reason:reason,forUid:($('otFor')||{}).value||''};
     var dp=date.split('-'), dateThai=(+dp[2])+'/'+dp[1]+'/'+((+dp[0])+543);
     var a=otHM(st),b=otHM(en); if(b<=a)b+=1440; var lunch=Math.max(0,Math.min(b,780)-Math.max(a,720));
     modal('<h3>⏰ ยืนยันคำขอ OT</h3>'+
@@ -2454,10 +2482,13 @@
   }
   function otDoSubmit(){
     var d=OT_DRAFT; if(!d) return;
-    callBusy('กำลังส่งขอ OT…', jsonpPost({action:'waOtSubmit',uid:UID,date:d.date,start:d.start,end:d.end,reason:d.reason}), 'ส่งแล้ว').then(function(r){
-      if(!r||!r.ok){ mErr((r&&r.error)||'ส่งไม่สำเร็จ'); return; }
-      closeModal(); OT_DRAFT=null;
-      toast('⏰ ส่งขอ OT '+r.no+' แล้ว · '+r.hours+' ชม.'+(r.noSalary?' (⚠️ ยังไม่มีฐานเงินเดือน แจ้งพี่)':''));
+    var act=OT_EDIT_NO
+      ? {action:'waOtEdit',uid:UID,no:OT_EDIT_NO,date:d.date,start:d.start,end:d.end,reason:d.reason}
+      : {action:'waOtSubmit',uid:UID,date:d.date,start:d.start,end:d.end,reason:d.reason,forUid:d.forUid||''};
+    callBusy(OT_EDIT_NO?'กำลังบันทึกแก้ไข…':'กำลังส่งขอ OT…', jsonpPost(act), 'บันทึกแล้ว').then(function(r){
+      if(!r||!r.ok){ mErr((r&&r.error)||'ไม่สำเร็จ'); return; }
+      var wasEdit=OT_EDIT_NO; closeModal(); OT_DRAFT=null; OT_EDIT_NO=null;
+      toast(wasEdit?('✏️ แก้ไข OT '+wasEdit+' แล้ว · '+r.hours+' ชม. (รออนุมัติใหม่)'):('⏰ ส่งขอ OT '+r.no+' แล้ว · '+r.hours+' ชม.'+(r.noSalary?' (⚠️ ยังไม่มีฐานเงินเดือน แจ้งพี่)':'')));
       renderOt();
     }).catch(function(e){ mErr(e.message); });
   }
@@ -2514,6 +2545,7 @@
     }).catch(function(e){ toast(e.message); });
   }
   window.renderOt=renderOt; window.otOpenForm=otOpenForm; window.otCalc=otCalc; window.otReview=otReview; window.otDoSubmit=otDoSubmit;
+  window.otNewForm=otNewForm; window.otEdit=otEdit; window.otTrash=otTrash; window.otTrashDo=otTrashDo;
   window.renderOtApprove=renderOtApprove; window.otDecide=otDecide; window.otToPayroll=otToPayroll; window.otMonthSummary=otMonthSummary;
 
   /** ✏️ แก้ประเภทเอกสาร (พี่เท่านั้น) — แนบใบเสร็จ ⇄ ไม่มีใบเสร็จ (ออก SR) */
