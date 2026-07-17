@@ -44,6 +44,15 @@
   .ds-stat .ds-sub{ font-size:11.5px; color:var(--muted); margin-top:2px; }
   .ds-warn .ds-vl{ color:#E5484D; } .ds-wait .ds-vl{ color:#C8730B; }
   .ds-h{ font-size:13px; font-weight:700; color:#4A5262; margin:2px 0 10px; }
+  .tax-tbl-wrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; margin:0 -4px; }
+  .tax-tbl{ border-collapse:collapse; width:100%; font-size:12.5px; min-width:520px; }
+  .tax-tbl th,.tax-tbl td{ border-bottom:1px solid var(--line); padding:7px 8px; text-align:left; white-space:nowrap; }
+  .tax-tbl th{ background:#EDEDF2; font-weight:700; color:#4A5262; }
+  .tax-tbl td.ta-r{ text-align:right; font-variant-numeric:tabular-nums; }
+  .tax-tbl tr.tax-total td{ font-weight:700; background:#FAFAFC; border-top:2px solid #D9DDE6; }
+  .tax-acts{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+  .tax-acts .btn{ width:auto; flex:1; min-width:150px; text-align:center; text-decoration:none; }
+  .tax-inp{ width:100%; box-sizing:border-box; padding:9px 12px; border:1px solid var(--line); border-radius:10px; font-size:14px; font-family:inherit; }
   .ds-bars{ display:flex; align-items:flex-end; gap:6px; height:110px; padding-top:6px; }
   .ds-bar{ flex:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; height:100%; }
   .ds-bar .bar{ width:100%; background:linear-gradient(180deg,#F2707A,#E5484D); border-radius:6px 6px 0 0; min-height:2px; }
@@ -479,6 +488,8 @@
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12.5" r="8.5"/><path d="M12 8v5l3 2"/></svg><span>ขอ OT</span></button>
     <button class="nav-btn" data-view="docs" aria-label="เอกสาร">
       <svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg><span>เอกสาร</span></button>
+    <button class="nav-btn" data-view="taxdoc" aria-label="ภาษี/เอกสาร" id="navTaxDoc" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M5 3h9l5 5v13H5Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>ภาษี/เอกสาร</span></button>
   </nav>
 
   <nav id="mnav" class="mnav"></nav>
@@ -506,7 +517,7 @@
   var VIEW_META = {
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
     expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติเบิกจ่าย'],
-    expdash:['📊','สรุปค่าใช้จ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT']
+    expdash:['📊','สรุปค่าใช้จ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT']
   };
   var PROJECTS=[], COMPANIES=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ) · COMPANIES=บริษัท auto (หน้าจัดการ)
   var ALL_TASKS=[], PJ_SEL='', MB_STATUSES=[];   // มุมมอง Project (dropdown เลือก · แยก 6 สถานะ + %) · MB_STATUSES=รายการสถานะ (ฟอร์มแก้งานมือถือ)
@@ -564,7 +575,7 @@
     Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(b){ b.classList.toggle('active', b.dataset.view===v); });
     var meta=VIEW_META[v]||['•',v]; $('tbIcon').textContent=meta[0]; $('tbTitle').textContent=meta[1];
     mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
-    ({ leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove }[v] || soon)();
+    ({ leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove }[v] || soon)();
   }
 
   // ───── มือถือ: เมนูกลุ่ม (ล่าง) + แท็บย่อย (บน) · คอมใช้ sidebar เดิม ไม่เกี่ยว ─────
@@ -574,7 +585,7 @@
     { key:'leave', icon:'📝', label:'ลา',      views:['leave','approve'] },
     { key:'exp',   icon:'💸', label:'เบิก',    views:['expense','expdash','expapprove','reimb'] },
     { key:'ot',    icon:'⏰', label:'OT',      views:['ot','otapprove'] },
-    { key:'docs',  icon:'📁', label:'เอกสาร',  views:['docs'] }
+    { key:'docs',  icon:'📁', label:'เอกสาร',  views:['docs'] }   /* taxdoc ซ่อนไว้ก่อน — รื้อเป็น ภ.ง.ด.1/3/53 (v2) */
   ];
   var VIEW_TAB={ projects:'บอร์ดงาน', mytasks:'งานของฉัน', review:'รอตรวจ', trash:'ถังขยะ',
     senddoc:'ส่งงานลูกค้า', appt:'นัดประชุม', announce:'ประกาศ',
@@ -583,7 +594,7 @@
     ot:'OT ของฉัน', otapprove:'อนุมัติ OT', docs:'เอกสาร' };
   // แท็บที่เห็นเฉพาะพี่/ผู้ดูแล · reimb = ตั้งเบิกลูกค้า (ชีตไม่มีเจ้าของรายคน + เป็นข้อมูลรายได้)
   // ⚠️ ซ่อนแท็บ ≠ กันข้อมูล — backend กรองสิทธิ์เองอีกชั้นเสมอ
-  var OWNER_VIEWS={ review:1, approve:1, expapprove:1, otapprove:1, reimb:1 };
+  var OWNER_VIEWS={ review:1, approve:1, expapprove:1, otapprove:1, reimb:1, taxdoc:1 };
   var MGROUP='', MG_LAST={};
   function mVisibleViews(g){ return g.views.filter(function(v){ return IS_OWNER || !OWNER_VIEWS[v]; }); }
   function mGroupOf(v){ for(var i=0;i<NAV_GROUPS.length;i++){ if(NAV_GROUPS[i].views.indexOf(v)>=0) return NAV_GROUPS[i]; } return null; }
@@ -1715,11 +1726,14 @@
       if(x.paidSlip)   links+='<a class="ex-lk" href="'+esc(x.paidSlip)+'" target="_blank">📎 สลิปโอนคืน</a>';
       // แฟ้มครบชุด (เอกสาร+สำเนาบัตร+หลักฐาน+50ทวิ+สลิป รวมใบเดียว) — เกิดเองตอนพี่กดจ่ายคืน
       if(x.dossier)    links+='<a class="ex-lk" href="'+esc(x.dossier)+'" target="_blank">🗂️ แฟ้มครบชุด</a>';
-      // ปุ่มสร้างแฟ้ม (เฉพาะพี่ · จ่ายแล้ว) โผล่เสมอ — มีแฟ้มแล้วก็กดสร้างใหม่ได้ (เพิ่มสำเนาบัตร/50ทวิ/แนบเพิ่ม
-      // หรือ Worker เคยล่มตอนจ่าย) · ใบ RV กดครั้งนี้ = ออก 50 ทวิ ย้อนหลังให้ด้วย
-      if(IS_OWNER&&String(x.status).indexOf('จ่ายแล้ว')>=0)
+      // ปุ่มสร้างแฟ้ม (เฉพาะพี่) โผล่ตั้งแต่ "อนุมัติ" เป็นต้นไป — แฟ้มสร้างได้ตั้งแต่ออก SR/RV แล้ว
+      // (พี่กี้ 17 ก.ค.: SR อนุมัติแล้วยังไม่จ่าย ต้องกดรวมแฟ้มได้) · จ่ายแล้วกด = รวมสลิป/50ทวิ เพิ่ม
+      if(IS_OWNER && (String(x.status).indexOf('จ่ายแล้ว')>=0 || (String(x.status).indexOf('อนุมัติ')>=0 && String(x.status).indexOf('ไม่อนุมัติ')<0)))
         links+='<a class="ex-lk" href="#" onclick="exRebuild(\''+esc(x.no)+'\');return false" style="color:#C8730B">'+
           (x.dossier?'🔄 สร้างแฟ้มใหม่':'🗂️ สร้างแฟ้มครบชุด')+'</a>';
+      // ยกเลิก/ลบใบเทส (เฉพาะพี่ · ทุกสถานะ) — ลบใบเบิก+เอกสาร+ไฟล์ ถาวร
+      if(IS_OWNER)
+        links+='<a class="ex-lk" href="#" onclick="exVoid(\''+esc(x.no)+'\');return false" style="color:#DC2626">🗑️ ยกเลิก (เทส)</a>';
       return '<div class="tk"><div class="tk-top"><span class="tk-no">'+esc(x.no)+'</span>'+
         '<span class="tk-badge '+expBadge(x.status)+'">'+esc(x.status)+'</span></div>'+
         '<div class="ex-amt"><span class="ex-t">'+esc(x.type)+'</span> · '+money+' บาท</div>'+
@@ -2307,8 +2321,25 @@
     if(el){ el.style.transition='opacity .3s'; el.style.opacity='0'; setTimeout(renderExpenseApprove,320); }
     else renderExpenseApprove();
   }
+  /** 🗑️ ยกเลิก/ลบใบเทส (พี่เท่านั้น) — ลบใบเบิก + เอกสาร + ไฟล์ ถาวร */
+  function exVoid(no){
+    modal('<h3>🗑️ ยกเลิกใบเทส</h3>'+
+      '<div class="m-hint" style="margin:0 0 14px">ลบ <b>'+esc(no)+'</b> ถาวร — ลบใบเบิก + เอกสารที่ออก (SR/RV/50 ทวิ) + ไฟล์ใน Drive ทั้งหมด'+
+      '<br><span style="color:#DC2626">⚠️ กู้คืนไม่ได้ · เลขรันของเดือนนี้จะนับใหม่</span></div>'+
+      '<div style="display:flex;gap:8px"><button class="btn btn-ghost" style="flex:1" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-danger" style="flex:1" onclick="exVoidDo(\''+esc(no)+'\')">ลบถาวร</button></div>');
+  }
+  function exVoidDo(no){
+    closeModal();
+    callBusy('กำลังลบ…', jsonpPost({action:'waExpVoid',uid:UID,no:no}), 'ลบแล้ว').then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'ลบไม่สำเร็จ'); return; }
+      toast('🗑️ ลบ '+no+' แล้ว'+(r.removed?' ('+r.removed+' รายการ)':''));
+      renderExpense();
+    }).catch(function(e){ toast(e.message); });
+  }
   window.renderExpenseApprove=renderExpenseApprove; window.exReject=exReject; window.exDecide=exDecide;
   window.exOpenPay=exOpenPay; window.exDoPay=exDoPay; window.exRebuild=exRebuild;
+  window.exVoid=exVoid; window.exVoidDo=exVoidDo;
 
   // ═══════════ VIEW: 📊 สรุปค่าใช้จ่าย + 🧾 ตั้งเบิกลูกค้า (dashboard) ═══════════
   // สิทธิ์: พนักงานเห็นของตัวเอง · พี่เห็นทั้งบริษัท (backend กรองให้ · หน้าจอแค่แสดงตามที่ได้มา)
@@ -2414,6 +2445,80 @@
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
   }
   window.renderExpDash=renderExpDash; window.dsSetYm=dsSetYm; window.renderReimb=renderReimb;
+
+  // ═══════════ VIEW: ภาษี/เอกสาร (พี่/HR) — ภ.ง.ด.3 รายเดือน + Masterlist ═══════════
+  var TAX_MONTH='', ML_ALL=[];
+  function taxMonths(){   // 12 เดือนล่าสุด (พ.ศ. 'YYYY-MM')
+    var arr=[], d=new Date(); d.setDate(1);
+    for(var i=0;i<12;i++){ arr.push((d.getFullYear()+543)+'-'+('0'+(d.getMonth()+1)).slice(-2)); d.setMonth(d.getMonth()-1); }
+    return arr;
+  }
+  function renderTaxDoc(){
+    if(!IS_OWNER){ $('main').innerHTML='<div class="card"><div class="emptybox">เฉพาะผู้ดูแล (พี่/HR) ค่ะ</div></div>'; return; }
+    skel();
+    jsonp({action:'waPnd3',uid:UID,month:TAX_MONTH}).then(function(r){
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      TAX_MONTH=r.month;
+      var months=taxMonths(); if(months.indexOf(TAX_MONTH)<0) months.unshift(TAX_MONTH);
+      var h='<div class="ds-sel"><select id="taxYm" onchange="taxSetMonth(this.value)">'+
+        months.map(function(m){ return '<option value="'+esc(m)+'"'+(m===TAX_MONTH?' selected':'')+'>'+esc(ymThai(m))+'</option>'; }).join('')+'</select></div>';
+      h+='<div class="ds-grid">'+
+        statCard('จำนวนราย',r.sum.count+' ราย','ภ.ง.ด.3 '+esc(r.monthText))+
+        statCard('เงินได้รวม',money(r.sum.amount),'บาท')+
+        statCard('ภาษีนำส่ง',money(r.sum.wht),'บาท · ยื่นสรรพากร','ds-wait')+
+        '</div>';
+      h+='<div class="card"><div class="ds-h">ภ.ง.ด.3 · ผู้จ่าย: '+esc(r.company)+'</div>';
+      if(!r.rows.length){ h+='<div class="emptybox">เดือนนี้ยังไม่มีใบ 50 ทวิ ที่หักภาษี</div>'; }
+      else {
+        h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
+          '<th>#</th><th>เลขบัตร</th><th>ชื่อผู้ถูกหัก</th><th>ประเภทเงินได้</th><th>อัตรา</th><th>ยอดจ่าย</th><th>ภาษีหัก</th></tr></thead><tbody>'+
+          r.rows.map(function(x){ return '<tr><td>'+x.seq+'</td><td>'+esc(x.payeeId)+'</td><td>'+esc(x.payeeName)+'</td><td>'+esc(x.incomeType)+'</td><td>'+x.rate+'%</td><td class="ta-r">'+money(x.amount)+'</td><td class="ta-r">'+money(x.wht)+'</td></tr>'; }).join('')+
+          '<tr class="tax-total"><td colspan="5">รวม '+r.sum.count+' ราย</td><td class="ta-r">'+money(r.sum.amount)+'</td><td class="ta-r">'+money(r.sum.wht)+'</td></tr>'+
+          '</tbody></table></div>';
+      }
+      h+='<div class="tax-acts">'+
+        '<a class="btn btn-ghost" href="'+esc(r.sheetUrl)+'" target="_blank">📋 เปิดแท็บในชีต</a>'+
+        (r.rows.length?'<button class="btn btn-ok" onclick="taxPdf()">📄 สร้าง PDF ใบแนบ</button>':'')+
+        '</div></div>';
+      h+='<div class="card" id="mlCard"><div class="ds-h">Masterlist เอกสาร</div><div class="skel" style="height:80px"></div></div>';
+      $('main').innerHTML=h;
+      taxLoadMaster();
+    }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
+  }
+  function taxSetMonth(v){ TAX_MONTH=v; renderTaxDoc(); }
+  function taxPdf(){
+    callBusy('กำลังสร้างเอกสาร…', jsonp({action:'waPnd3Pdf',uid:UID,month:TAX_MONTH}), 'สร้าง PDF แล้ว')
+      .then(function(r){ if(!r||!r.ok){ toast((r&&r.error)||'สร้าง PDF ไม่สำเร็จ'); return; } window.open(r.pdfUrl,'_blank'); })
+      .catch(function(e){ toast(e.message); });
+  }
+  function taxLoadMaster(){
+    jsonp({action:'waMasterlist',uid:UID,month:TAX_MONTH}).then(function(r){
+      var c=$('mlCard'); if(!c) return;
+      if(!r||!r.ok){ c.innerHTML='<div class="ds-h">Masterlist</div><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div>'; return; }
+      ML_ALL=r.list||[];
+      c.innerHTML='<div class="ds-h">Masterlist เอกสาร ('+ML_ALL.length+' รายการ · เดือน '+esc(ymThai(TAX_MONTH))+')</div>'+
+        '<input id="mlQ" class="tax-inp" placeholder="🔍 ค้นหา เลขที่ / ชื่อ / ประเภท" oninput="taxRenderMaster()" style="margin-bottom:10px">'+
+        '<div id="mlBody"></div>';
+      taxRenderMaster();
+    }).catch(function(e){ var c=$('mlCard'); if(c) c.innerHTML='<div class="ds-h">Masterlist</div><div class="emptybox">'+esc(e.message)+'</div>'; });
+  }
+  function taxRenderMaster(){
+    var b=$('mlBody'); if(!b) return;
+    var q=($('mlQ')?$('mlQ').value:'').trim().toLowerCase();
+    var list=ML_ALL.filter(function(x){ return !q || ((x.no||'')+' '+(x.who||'')+' '+(x.docType||'')).toLowerCase().indexOf(q)>=0; });
+    if(!list.length){ b.innerHTML='<div class="emptybox">ไม่พบเอกสาร</div>'; return; }
+    b.innerHTML=list.map(function(x){
+      var links='';
+      if(x.link) links+='<a class="ex-lk" href="'+esc(x.link)+'" target="_blank">📄 เปิด</a>';
+      if(x.link2) links+='<a class="ex-lk" href="'+esc(x.link2)+'" target="_blank">📄 ฉบับผู้รับเงิน</a>';
+      return '<div class="tk"><div class="tk-top"><span class="tk-no">'+esc(x.no||'-')+'</span><span class="tk-badge b-review">'+esc(x.docType)+'</span></div>'+
+        '<div class="tk-cust">'+esc(x.who||'-')+'</div>'+
+        (x.amount?'<div class="ex-amt">'+money(x.amount)+' บาท</div>':'')+
+        '<div class="ex-meta">'+esc(x.dateText||'')+(links?'<br>'+links:'')+'</div></div>';
+    }).join('');
+  }
+  window.renderTaxDoc=renderTaxDoc; window.taxSetMonth=taxSetMonth; window.taxPdf=taxPdf;
+  window.taxLoadMaster=taxLoadMaster; window.taxRenderMaster=taxRenderMaster;
 
   // ═══════════ VIEW: รอตรวจ (พี่ · งานที่ทีมส่งกลับ รอตรวจก่อนส่งลูกค้า) ═══════════
   function renderReview(){
@@ -3121,6 +3226,7 @@
       if(IS_OWNER){ var nr=$('navReview'); if(nr) nr.style.display='';      // แท็บรอตรวจ = เฉพาะพี่/ผู้ตรวจ
         var ne=$('navExpAppr'); if(ne) ne.style.display='';                 // แท็บอนุมัติเบิกจ่าย = เฉพาะพี่
         var nb=$('navReimb'); if(nb) nb.style.display=''; }                 // แท็บตั้งเบิกลูกค้า = เฉพาะพี่
+        // navTaxDoc (ภาษี/เอกสาร) ซ่อนไว้ก่อน — เปิดตอน v2 (ภ.ง.ด.1/3/53) เสร็จ
       $('loader').classList.add('hidden'); $('app').classList.remove('hidden');
       Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(b){
         b.addEventListener('click', function(){ switchView(b.dataset.view); }); });
