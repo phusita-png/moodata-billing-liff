@@ -1746,6 +1746,8 @@
       // แก้ประเภทเอกสาร (เฉพาะพี่ · ไม่ใช่ RV) — พนักงานกดผิด แนบใบเสร็จ ⇄ ไม่มีใบเสร็จ (ออก SR)
       if(IS_OWNER && !isRv(x))
         links+='<a class="ex-lk" href="#" onclick="exSetProof(\''+esc(x.no)+'\');return false" style="color:#1B72E8">✏️ แก้ประเภท</a>';
+      // แก้ไฟล์แนบ (พี่ + เจ้าของใบ) — แนบผิดไฟล์ → อัปใหม่ + รวมแฟ้มใหม่
+      links+='<a class="ex-lk" href="#" onclick="exEditRcp(\''+esc(x.no)+'\');return false" style="color:#1B72E8">📎 แก้ไฟล์แนบ</a>';
       // ยกเลิกใบเบิก (เฉพาะพี่ · ทุกสถานะ) — ย้ายไปถังขยะก่อน (soft-delete · กู้คืนได้)
       if(IS_OWNER)
         links+='<a class="ex-lk" href="#" onclick="exTrash(\''+esc(x.no)+'\');return false" style="color:#DC2626">🗑️ ยกเลิก</a>';
@@ -2363,6 +2365,28 @@
   window.renderExpenseApprove=renderExpenseApprove; window.exReject=exReject; window.exDecide=exDecide;
   window.exOpenPay=exOpenPay; window.exDoPay=exDoPay; window.exRebuild=exRebuild;
   window.exTrash=exTrash; window.exTrashDo=exTrashDo;
+
+  /** 📎 แก้ไฟล์แนบ (พี่ + เจ้าของใบ) — อัปไฟล์ใหม่แทนของเดิม + สร้างแฟ้มครบชุดใหม่ */
+  function exEditRcp(no){
+    IMGS['edRcp']=[];
+    modal('<h3>📎 แก้ไฟล์แนบ (ใบเสร็จ/หลักฐาน)</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint" style="margin:0 0 10px">ใบ <b>'+esc(no)+'</b> — ไฟล์ใหม่จะ<b>แทนที่</b>ไฟล์เดิม แล้วสร้างแฟ้มครบชุดใหม่ให้อัตโนมัติ</div>'+
+      imgsFldHtml('edRcp','📎 ไฟล์ใหม่ — รูป หรือ PDF (แนบได้หลายไฟล์ → รวมเป็น PDF เดียว)')+
+      '<div style="display:flex;gap:8px;margin-top:10px"><button class="btn btn-ghost" style="flex:1" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-ok" style="flex:1" onclick="exSaveRcp(\''+esc(no)+'\')">บันทึกไฟล์ใหม่</button></div>');
+    imgsFldBind('edRcp');
+  }
+  function exSaveRcp(no){
+    var arr=IMGS['edRcp']||[];
+    if(!arr.length){ mErr('แนบไฟล์ใหม่ก่อนค่ะ'); return; }
+    callBusy('กำลังบันทึก + สร้างแฟ้ม…', jsonpPost({action:'waExpEditReceipt',uid:UID,no:no,imgs:JSON.stringify(arr)}), 'บันทึกแล้ว').then(function(r){
+      if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+      closeModal(); IMGS['edRcp']=[];
+      toast('📎 เปลี่ยนไฟล์แนบ '+no+' แล้ว'+(r.dossier?' · รวมแฟ้มใหม่ให้แล้ว':''));
+      renderExpense();
+    }).catch(function(e){ mErr(e.message); });
+  }
+  window.exEditRcp=exEditRcp; window.exSaveRcp=exSaveRcp;
 
   /** ✏️ แก้ประเภทเอกสาร (พี่เท่านั้น) — แนบใบเสร็จ ⇄ ไม่มีใบเสร็จ (ออก SR) */
   function exSetProof(no){
