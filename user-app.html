@@ -26,8 +26,8 @@
   .tk{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow);
     padding:14px 16px; margin-bottom:12px; }
   /* รายการใบเบิกหน้าสรุป — ตารางแถวละ 1 รายการ (list view · เว็บกว้างเห็นครบบรรทัดเดียว · มือถือเลื่อนแนวนอน) */
-  .exl-tbl{ min-width:720px; table-layout:auto; }
-  .exl-tbl td.exl-detail{ white-space:normal; width:100%; color:#5B6472; }   /* กินพื้นที่เหลือ → ยอด/เอกสารไม่ลอยไปขวาสุด */
+  .exl-tbl{ width:auto; min-width:760px; table-layout:auto; }   /* ชิดซ้าย ไม่ยืดเต็มจอ → ยอด/เอกสารอยู่ใกล้ ไม่ลอยไปขอบขวา */
+  .exl-tbl td.exl-detail{ white-space:normal; max-width:360px; color:#5B6472; }
   .exl-tbl td.exl-amt{ text-align:right; font-variant-numeric:tabular-nums; font-weight:600; white-space:nowrap; }
   .exl-tbl td.exl-doc{ white-space:nowrap; }
   .exl-tbl td .tk-badge{ margin-left:0; }
@@ -2428,9 +2428,10 @@
   /** กรอง/เรียง/ค้นหา + วาดตารางรายการใบเบิก (หน้าสรุปค่าใช้จ่าย · คล้ายบอร์ดงาน) */
   function edRender(){
     var body=$('edBody'); if(!body) return;
-    var ty=$('edType')?$('edType').value:'', st=$('edStatus')?$('edStatus').value:'',
+    var mo=$('edMonth')?$('edMonth').value:'', ty=$('edType')?$('edType').value:'', st=$('edStatus')?$('edStatus').value:'',
         so=$('edSort')?$('edSort').value:'new', q=($('edQ')?$('edQ').value:'').trim().toLowerCase();
     var arr=EDLIST.filter(function(x){
+      if(mo&&x.month!==mo) return false;
       if(ty&&x.type!==ty) return false;
       if(st&&x.status!==st) return false;
       if(q && ((x.no||'')+' '+(x.nick||'')+' '+(x.detail||'')).toLowerCase().indexOf(q)<0) return false;
@@ -2475,18 +2476,21 @@
       h+='<div class="card"><div class="ds-h">แนวโน้ม '+r.months.length+' เดือน (ไม่รวมใบที่ไม่อนุมัติ)</div>'+
         barChart(r.trend,function(x){return ymShort(x.ym);},function(x){return x.amt;})+'</div>';
 
-      if(r.byStatus.length) h+='<div class="card"><div class="ds-h">สถานะใบเบิกเดือน '+esc(ymThai(r.ym))+'</div><div class="ds-chips">'+
-        r.byStatus.map(function(s){ return '<div class="ds-chip">'+esc(s.key)+' <b>'+s.n+'</b> ใบ · '+money(s.amt)+'</div>'; }).join('')+'</div></div>';
+      // สถานะครบทุกช่อง (การ์ดตัวเลข · แม้ 0 ใบ)
+      if(r.byStatus&&r.byStatus.length) h+='<div class="ds-grid" style="margin-top:2px">'+
+        r.byStatus.map(function(s){ return statCard(s.key, s.n+' ใบ', money(s.amt)+' บาท', String(s.key).indexOf('ไม่')>=0?'ds-warn':(String(s.key).indexOf('รออนุมัติ')>=0?'ds-wait':'')); }).join('')+'</div>';
 
       if(r.byType.length) h+='<div class="card"><div class="ds-h">แยกตามประเภทค่าใช้จ่าย</div>'+propRows(r.byType)+'</div>';
       if(r.isOwner&&r.byPerson.length) h+='<div class="card"><div class="ds-h">แยกตามพนักงาน</div>'+propRows(r.byPerson)+'</div>';
       // รายการใบเบิกทีละใบ (ลำดับ/สถานะ/ผู้เบิก/ค่าอะไร) — พี่กี้ขอ 17 ก.ค.
       if(r.list&&r.list.length){
         EDLIST=r.list;
-        var edTypes=[], edSts=[];
-        r.list.forEach(function(x){ if(x.type&&edTypes.indexOf(x.type)<0)edTypes.push(x.type); if(x.status&&edSts.indexOf(x.status)<0)edSts.push(x.status); });
-        h+='<div class="ds-h" style="margin:16px 0 8px">รายการทั้งหมด เดือน '+esc(ymThai(r.ym))+' ('+r.list.length+' ใบ)</div>';
+        var edTypes=[], edSts=[], edMonths=[];
+        r.list.forEach(function(x){ if(x.type&&edTypes.indexOf(x.type)<0)edTypes.push(x.type); if(x.status&&edSts.indexOf(x.status)<0)edSts.push(x.status); if(x.month&&edMonths.indexOf(x.month)<0)edMonths.push(x.month); });
+        edMonths.sort().reverse();
+        h+='<div class="ds-h" style="margin:16px 0 8px">รายการทั้งหมด ('+r.list.length+' ใบ)</div>';
         h+='<div class="ed-filter">'+
+          '<select id="edMonth" onchange="edRender()"><option value="">เดือน: ทั้งหมด</option>'+edMonths.map(function(mm){return '<option value="'+esc(mm)+'">'+esc(ymThai(mm))+'</option>';}).join('')+'</select>'+
           '<select id="edType" onchange="edRender()"><option value="">ประเภท: ทั้งหมด</option>'+edTypes.map(function(t){return '<option value="'+esc(t)+'">'+esc(t)+'</option>';}).join('')+'</select>'+
           '<select id="edStatus" onchange="edRender()"><option value="">สถานะ: ทั้งหมด</option>'+edSts.map(function(s){return '<option value="'+esc(s)+'">'+esc(s)+'</option>';}).join('')+'</select>'+
           '<select id="edSort" onchange="edRender()"><option value="new">เรียง: ใหม่→เก่า</option><option value="amt">ยอดมาก→น้อย</option><option value="amtA">ยอดน้อย→มาก</option></select>'+
