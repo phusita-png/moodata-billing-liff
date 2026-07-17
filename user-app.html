@@ -2439,7 +2439,21 @@
 
       if(r.byType.length) h+='<div class="card"><div class="ds-h">แยกตามประเภทค่าใช้จ่าย</div>'+propRows(r.byType)+'</div>';
       if(r.isOwner&&r.byPerson.length) h+='<div class="card"><div class="ds-h">แยกตามพนักงาน</div>'+propRows(r.byPerson)+'</div>';
-      if(!r.cur.n) h+='<div class="card"><div class="emptybox">เดือน '+esc(ymThai(r.ym))+' ยังไม่มีรายการ</div></div>';
+      // รายการใบเบิกทีละใบ (ลำดับ/สถานะ/ผู้เบิก/ค่าอะไร) — พี่กี้ขอ 17 ก.ค.
+      if(r.list&&r.list.length){
+        h+='<div class="ds-h" style="margin:16px 0 8px">รายการทั้งหมด เดือน '+esc(ymThai(r.ym))+' ('+r.list.length+' ใบ)</div>';
+        h+=r.list.map(function(x){
+          var links='';
+          if(x.docLink) links+='<a class="ex-lk" href="'+esc(x.docLink)+'" target="_blank">📄 '+esc(x.docNo||'เอกสาร')+'</a>';
+          if(x.dossier) links+='<a class="ex-lk" href="'+esc(x.dossier)+'" target="_blank">🗂️ แฟ้ม</a>';
+          return '<div class="tk"><div class="tk-top"><span class="tk-no">'+x.seq+'. '+esc(x.no)+'</span>'+
+            '<span class="tk-badge '+expBadge(x.status)+'">'+esc(x.status)+'</span></div>'+
+            (x.nick?'<div class="tk-cust">👤 '+esc(x.nick)+'</div>':'')+
+            '<div class="ex-amt"><span class="ex-t">'+esc(x.type)+'</span> · '+money(x.amount)+' บาท</div>'+
+            (x.detail?'<div class="tk-detail">'+esc(x.detail)+'</div>':'')+
+            (links?'<div class="ex-meta">'+links+'</div>':'')+'</div>';
+        }).join('');
+      } else h+='<div class="card"><div class="emptybox">เดือน '+esc(ymThai(r.ym))+' ยังไม่มีรายการ</div></div>';
       $('main').innerHTML=h;
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
   }
