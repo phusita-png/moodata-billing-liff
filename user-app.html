@@ -1774,7 +1774,7 @@
           '<button type="button" id="epSr" class="btn btn-sm" onclick="expSetProof(\'sr\')" style="flex:1">📄 ไม่มีใบเสร็จ</button>'+
           '<button type="button" id="epRv" class="btn btn-sm" onclick="expSetProof(\'rv\')" style="flex:1">💵 จ่ายค่าจ้าง</button>'+
         '</div></div>'+
-      '<div id="epRcpBox">'+imgsFldHtml('eImg','📎 รูปใบเสร็จ (แนบได้หลายใบ → รวมเป็น PDF เดียวให้)')+'</div>'+
+      '<div id="epRcpBox">'+imgsFldHtml('eImg','📎 ใบเสร็จ — รูป หรือ PDF (แนบได้หลายไฟล์ → รวมเป็น PDF เดียวให้)')+'</div>'+
       '<div id="epSrBox" class="hidden">'+
         '<div class="m-hint">ระบบจะออก <b>ใบรับรองแทนใบเสร็จ</b> ให้อัตโนมัติตอน'+esc(OWNERTXT())+'อนุมัติ พร้อมฝังลายเซ็นของคุณ — ใช้กับค่าใช้จ่ายที่ขอใบเสร็จไม่ได้ (แท็กซี่ วิน ของตลาด)</div>'+
         '<div class="fld"><label>วันที่จ่ายเงินจริง</label><input id="ePayDate" type="date" value="'+todayISO()+'"></div>'+
@@ -2074,17 +2074,21 @@
   var IMGS={};   // { fldId: [dataURL,…] }
   function imgsFldHtml(id,label){
     return '<div class="fld"><label>'+esc(label)+'</label>'+
-      '<input id="'+id+'" type="file" accept="image/*" multiple style="font-family:inherit;font-size:14px">'+
-      '<div id="'+id+'List" class="m-hint" style="margin-top:6px">ยังไม่ได้แนบรูป</div></div>';
+      '<input id="'+id+'" type="file" accept="image/*,application/pdf" multiple style="font-family:inherit;font-size:14px">'+
+      '<div id="'+id+'List" class="m-hint" style="margin-top:6px">ยังไม่ได้แนบไฟล์ (รูป หรือ PDF)</div></div>';
   }
+  function readFileDataURL(f){ return new Promise(function(res,rej){ var fr=new FileReader(); fr.onload=function(){res(fr.result);}; fr.onerror=rej; fr.readAsDataURL(f); }); }
   function imgsFldBind(id){
     IMGS[id]=[];
     var el=$(id); if(!el) return;
     el.addEventListener('change', function(){
       var fs=el.files ? Array.prototype.slice.call(el.files) : [];
       if(!fs.length) return;
-      var lb=$(id+'List'); if(lb) lb.textContent='กำลังเตรียมรูป '+fs.length+' ใบ…';
-      Promise.all(fs.map(function(f){ return shrinkImage(f).catch(function(){ return null; }); }))
+      var lb=$(id+'List'); if(lb) lb.textContent='กำลังเตรียมไฟล์ '+fs.length+' รายการ…';
+      Promise.all(fs.map(function(f){
+        if(f.type==='application/pdf'||/\.pdf$/i.test(f.name||'')) return readFileDataURL(f).catch(function(){ return null; });   // PDF อ่านตรง (ไม่ย่อ)
+        return shrinkImage(f).catch(function(){ return null; });
+      }))
         .then(function(ds){
           ds.filter(Boolean).forEach(function(d){ if(IMGS[id].length<10) IMGS[id].push(d); });
           el.value='';            // เคลียร์ input → เลือกไฟล์เดิมซ้ำได้ + กดเพิ่มทีละชุดได้
@@ -2095,11 +2099,14 @@
   function imgsPaint(id){
     var lb=$(id+'List'); if(!lb) return;
     var arr=IMGS[id]||[];
-    if(!arr.length){ lb.textContent='ยังไม่ได้แนบรูป'; return; }
-    lb.innerHTML='✅ แนบแล้ว '+arr.length+' ใบ'+(arr.length>1?' · จะรวมเป็น PDF ใบเดียวให้':'')+'<br>'+
+    if(!arr.length){ lb.textContent='ยังไม่ได้แนบไฟล์ (รูป หรือ PDF)'; return; }
+    lb.innerHTML='✅ แนบแล้ว '+arr.length+' รายการ'+(arr.length>1?' · จะรวมเป็น PDF ใบเดียวให้':'')+'<br>'+
       arr.map(function(d,i){
-        return '<span style="display:inline-block;position:relative;margin:4px 6px 0 0">'+
-          '<img src="'+d+'" style="width:66px;height:66px;object-fit:cover;border-radius:8px;border:1px solid #ddd">'+
+        var isPdf=String(d).indexOf('data:application/pdf')===0;
+        var thumb=isPdf
+          ? '<span style="display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:66px;height:66px;border-radius:8px;border:1px solid #ddd;background:#F4F7FB;font-size:11px;color:#5B6472;line-height:1.3">📄<br>PDF</span>'
+          : '<img src="'+d+'" style="width:66px;height:66px;object-fit:cover;border-radius:8px;border:1px solid #ddd">';
+        return '<span style="display:inline-block;position:relative;margin:4px 6px 0 0">'+thumb+
           '<button type="button" onclick="imgsDel(\''+id+'\','+i+')" title="เอาออก" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;'+
           'border-radius:50%;border:none;background:#E5484D;color:#fff;font-size:12px;line-height:1;cursor:pointer">×</button></span>';
       }).join('');
