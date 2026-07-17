@@ -1705,7 +1705,8 @@
   function expBadge(s){ s=String(s||''); if(s.indexOf('จ่าย')>=0)return'b-done'; if(s.indexOf('ไม่')>=0)return'b-cancel'; if(s.indexOf('อนุมัติ')>=0)return'b-doing'; return'b-new'; }
   function paintExpense(list){
     var html='<button class="btn btn-primary" style="width:100%;margin-bottom:10px" onclick="openExpense()">➕ แจ้งเบิกค่าใช้จ่าย</button>'+
-      '<button class="btn btn-ghost" style="width:100%;margin-bottom:14px" onclick="openSign()">✍️ ลายเซ็นของฉัน<span id="sigState" style="color:#8A94A6;font-weight:400"></span></button>';
+      '<button class="btn btn-ghost" style="width:100%;margin-bottom:14px" onclick="openSign()">✍️ ลายเซ็นของฉัน<span id="sigState" style="color:#8A94A6;font-weight:400"></span></button>'+
+      (IS_OWNER?'<div class="m-hint" style="margin:0 0 12px">👑 มุมผู้ดูแล: เห็นใบเบิก<b>ทุกคน</b> · จัดการ/แก้/ลบได้จากที่นี่</div>':'');
     if(!list.length){ html+='<div class="card"><div class="emptybox">ยังไม่มีรายการเบิก 😊</div></div>'; $('main').innerHTML=html; return; }
     html+=list.map(function(x){
       EXP_BYNO[x.no]=x;   // เก็บไว้ให้ปุ่มแก้ผู้รับเงินดึงมาเติมฟอร์ม
@@ -1736,6 +1737,7 @@
         links+='<a class="ex-lk" href="#" onclick="exVoid(\''+esc(x.no)+'\');return false" style="color:#DC2626">🗑️ ยกเลิก (เทส)</a>';
       return '<div class="tk"><div class="tk-top"><span class="tk-no">'+esc(x.no)+'</span>'+
         '<span class="tk-badge '+expBadge(x.status)+'">'+esc(x.status)+'</span></div>'+
+        (IS_OWNER&&x.nick?'<div class="tk-cust">👤 '+esc(x.nick)+'</div>':'')+
         '<div class="ex-amt"><span class="ex-t">'+esc(x.type)+'</span> · '+money+' บาท</div>'+
         (x.detail?'<div class="tk-detail">'+esc(x.detail)+'</div>':'')+
         '<div class="ex-meta">'+esc(x.createdAt||'')+(links?'<br>'+links:'')+'</div></div>';
