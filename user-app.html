@@ -497,6 +497,8 @@
       <svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></svg><span>การลา</span></button>
     <button class="nav-btn" data-view="ot" aria-label="ขอ OT">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12.5" r="8.5"/><path d="M12 8v5l3 2"/></svg><span>ขอ OT</span></button>
+    <button class="nav-btn" data-view="otapprove" aria-label="อนุมัติ OT" id="navOtAppr" style="display:none">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12.5" r="8.5"/><path d="m8.5 12.5 2.5 2.5 4.5-5"/></svg><span>อนุมัติ OT</span></button>
     <button class="nav-btn" data-view="docs" aria-label="เอกสาร">
       <svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg><span>เอกสาร</span></button>
     <button class="nav-btn" data-view="taxdoc" aria-label="ภาษี/เอกสาร" id="navTaxDoc" style="display:none">
@@ -586,7 +588,7 @@
     Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(b){ b.classList.toggle('active', b.dataset.view===v); });
     var meta=VIEW_META[v]||['•',v]; $('tbIcon').textContent=meta[0]; $('tbTitle').textContent=meta[1];
     mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
-    ({ leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove }[v] || soon)();
+    ({ leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove }[v] || soon)();
   }
 
   // ───── มือถือ: เมนูกลุ่ม (ล่าง) + แท็บย่อย (บน) · คอมใช้ sidebar เดิม ไม่เกี่ยว ─────
@@ -2388,6 +2390,105 @@
   }
   window.exEditRcp=exEditRcp; window.exSaveRcp=exSaveRcp;
 
+  // ═══════════ VIEW: OT (พนักงานขอ + พี่อนุมัติ + ดึงเข้า payroll) ═══════════
+  var OT_LIST=[], OT_KINDS={workday:'วันทำงาน (×1.5)',holiday:'วันหยุด (×3)'};
+  function otBadge(s){ s=String(s||''); if(s.indexOf('ไม่')>=0)return'b-cancel'; if(s.indexOf('อนุมัติ')>=0)return'b-done'; return'b-new'; }
+  function otHM(s){ var m=String(s||'').match(/^(\d{1,2}):(\d{2})$/); if(!m)return null; return (+m[1])*60+(+m[2]); }
+  function otHoursCalc(s,e){ var a=otHM(s),b=otHM(e); if(a==null||b==null)return 0; if(b<=a)b+=1440; return Math.round((b-a)/60*100)/100; }
+  function renderOt(){
+    skel();
+    jsonp({action:'waOtInit',uid:UID}).then(function(r){
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      OT_LIST=r.list||[];
+      var h='<button class="btn btn-primary" style="width:100%;margin-bottom:14px" onclick="otOpenForm()">➕ ขอ OT (ทำล่วงเวลา)</button>';
+      if(r.isOwner) h+='<div class="m-hint" style="margin:0 0 12px">👑 มุมผู้ดูแล: เห็นใบ OT ทุกคน · อนุมัติที่แท็บ "อนุมัติ OT"</div>';
+      if(!OT_LIST.length){ h+='<div class="card"><div class="emptybox">ยังไม่มีใบ OT 😊</div></div>'; $('main').innerHTML=h; return; }
+      h+=OT_LIST.map(function(x){
+        return '<div class="tk"><div class="tk-top"><span class="tk-no">'+esc(x.no)+'</span>'+
+          '<span class="tk-badge '+otBadge(x.status)+'">'+esc(x.status)+'</span></div>'+
+          (IS_OWNER&&x.nick?'<div class="tk-cust">👤 '+esc(x.nick)+'</div>':'')+
+          '<div class="ex-amt">📅 '+esc(x.otDate)+' · '+esc(x.start)+'–'+esc(x.end)+' ('+x.hours+' ชม.)</div>'+
+          '<div class="tk-detail">'+esc(x.kind)+' · 💰 '+money(x.amount)+' บาท'+(x.reason?' · '+esc(x.reason):'')+'</div></div>';
+      }).join('');
+      $('main').innerHTML=h;
+    }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
+  }
+  function otOpenForm(){
+    var t=new Date(), dstr=t.getFullYear()+'-'+('0'+(t.getMonth()+1)).slice(-2)+'-'+('0'+t.getDate()).slice(-2);
+    modal('<h3>⏰ ขอ OT (ทำล่วงเวลา)</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="fld"><label>วันที่ทำ OT</label><input id="otDate" type="date" value="'+dstr+'"></div>'+
+      '<div style="display:flex;gap:8px">'+
+        '<div class="fld" style="flex:1"><label>เริ่ม</label><input id="otStart" type="time" value="17:00" oninput="otCalc()"></div>'+
+        '<div class="fld" style="flex:1"><label>สิ้นสุด</label><input id="otEnd" type="time" value="20:00" oninput="otCalc()"></div></div>'+
+      '<div id="otHint" class="m-hint" style="margin:0 0 10px"></div>'+
+      '<div class="fld"><label>เหตุผล / งานที่ทำ</label><textarea id="otReason" rows="2" placeholder="เช่น ปิดงบเดือน / เตรียมงานอีเวนต์"></textarea></div>'+
+      '<div style="display:flex;gap:8px"><button class="btn btn-ghost" style="flex:1" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" style="flex:1" onclick="otSubmit()">ส่งขอ OT</button></div>');
+    otCalc();
+  }
+  function otCalc(){
+    var hint=$('otHint'); if(!hint) return;
+    var h=otHoursCalc(($('otStart')||{}).value, ($('otEnd')||{}).value);
+    hint.innerHTML=h>0?('⏱️ รวม <b>'+h+' ชั่วโมง</b> · ระบบคิดเงินตามเรท (วันทำงาน ×1.5 / วันหยุด ×3) หลังส่ง'):'กรอกเวลาเริ่ม–สิ้นสุด';
+  }
+  function otSubmit(){
+    var date=($('otDate')||{}).value, st=($('otStart')||{}).value, en=($('otEnd')||{}).value, reason=(($('otReason')||{}).value||'').trim();
+    if(!date){ mErr('เลือกวันที่ก่อนค่ะ'); return; }
+    if(otHoursCalc(st,en)<=0){ mErr('เวลาเริ่ม–สิ้นสุดไม่ถูกต้องค่ะ'); return; }
+    if(!reason){ mErr('กรอกเหตุผลก่อนค่ะ'); return; }
+    callBusy('กำลังส่งขอ OT…', jsonpPost({action:'waOtSubmit',uid:UID,date:date,start:st,end:en,reason:reason}), 'ส่งแล้ว').then(function(r){
+      if(!r||!r.ok){ mErr((r&&r.error)||'ส่งไม่สำเร็จ'); return; }
+      closeModal();
+      toast('⏰ ส่งขอ OT '+r.no+' แล้ว · '+r.hours+' ชม. · '+money(r.amount)+' บาท'+(r.noSalary?' (⚠️ ยังไม่มีฐานเงินเดือน แจ้งพี่)':''));
+      renderOt();
+    }).catch(function(e){ mErr(e.message); });
+  }
+  function renderOtApprove(){
+    if(!IS_OWNER){ $('main').innerHTML='<div class="card"><div class="empty">เฉพาะผู้ดูแล (พี่/HR) ค่ะ</div></div>'; return; }
+    skel();
+    jsonp({action:'waOtPending',uid:UID}).then(function(r){
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      OT_KINDS=r.kinds||OT_KINDS;
+      var h='<div class="section-h">⏰ อนุมัติ OT</div>'+
+        '<div class="card"><div class="ds-h">ดึง OT เข้าเงินเดือน (ปิดรอบ)</div>'+
+        '<div class="ed-filter"><input id="otPayMonth" class="ed-q" placeholder="เดือน พ.ศ. เช่น 2569-07" style="max-width:200px">'+
+        '<button class="btn btn-ok" style="width:auto;padding:9px 16px" onclick="otToPayroll()">ดึงเข้าเงินเดือน</button></div>'+
+        '<div class="m-hint" style="margin:0">รวมยอด OT ที่อนุมัติของเดือน → บวกเข้าช่อง OT ในชีตเงินเดือนเดือนนั้น (กดซ้ำไม่บวกซ้ำ)</div></div>';
+      var list=r.list||[];
+      if(!list.length){ h+='<div class="card"><div class="emptybox">ไม่มี OT รออนุมัติ 🎉</div></div>'; $('main').innerHTML=h; return; }
+      h+=list.map(function(x){
+        var opts=Object.keys(OT_KINDS).map(function(k){ var sel=((x.mult==1.5&&k=='workday')||(x.mult==3&&k=='holiday'))?' selected':''; return '<option value="'+k+'"'+sel+'>'+esc(OT_KINDS[k])+'</option>'; }).join('');
+        return '<div class="card" id="ota-'+esc(x.no)+'"><div class="tk-top"><span class="tk-no">'+esc(x.no)+'</span></div>'+
+          '<div class="tk-cust">👤 '+esc(x.nick)+'</div>'+
+          '<div class="ex-amt">📅 '+esc(x.otDate)+' · '+esc(x.start)+'–'+esc(x.end)+' ('+x.hours+' ชม.)</div>'+
+          (x.reason?'<div class="tk-detail">📝 '+esc(x.reason)+'</div>':'')+
+          '<div class="fld" style="margin-top:8px"><label>ประเภทวัน (ปรับได้ → คิดเงินใหม่)</label><select id="otk-'+esc(x.no)+'">'+opts+'</select></div>'+
+          '<div class="ex-amt" style="color:#1B72E8">💰 เงิน OT ปัจจุบัน '+money(x.amount)+' บาท</div>'+
+          '<div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-ok" style="flex:1" onclick="otDecide(\''+esc(x.no)+'\',\'approve\')">✅ อนุมัติ</button>'+
+          '<button class="btn btn-danger" style="flex:1" onclick="otDecide(\''+esc(x.no)+'\',\'reject\')">❌ ไม่อนุมัติ</button></div></div>';
+      }).join('');
+      $('main').innerHTML=h;
+    }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
+  }
+  function otDecide(no,dec){
+    var kind=($('otk-'+no)||{}).value||'';
+    callBusy(dec==='approve'?'กำลังอนุมัติ…':'กำลังบันทึก…', jsonpPost({action:'waOtDecide',uid:UID,no:no,decision:dec,kind:kind}), 'บันทึกแล้ว').then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; }
+      var el=$('ota-'+no); if(el){ el.style.transition='opacity .3s'; el.style.opacity='0'; setTimeout(renderOtApprove,320); } else renderOtApprove();
+      toast(dec==='approve'?('✅ อนุมัติ OT '+no+' · '+money(r.amount)+' บาท'):('❌ ไม่อนุมัติ '+no));
+    }).catch(function(e){ toast(e.message); });
+  }
+  function otToPayroll(){
+    var month=(($('otPayMonth')||{}).value||'').trim();
+    if(!/^\d{4}-\d{2}$/.test(month)){ toast('พิมพ์เดือน พ.ศ. เช่น 2569-07 ค่ะ'); return; }
+    callBusy('กำลังดึง OT เข้าเงินเดือน…', jsonpPost({action:'waOtToPayroll',uid:UID,month:month}), 'ดึงแล้ว').then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'ดึงไม่สำเร็จ'); return; }
+      toast('💰 ดึงเข้า '+r.payName+' แล้ว · '+r.people+' คน · '+money(r.total)+' บาท'+(r.skipped&&r.skipped.length?' · ข้าม(ไม่มีในเงินเดือน) '+r.skipped.join(','):''));
+    }).catch(function(e){ toast(e.message); });
+  }
+  window.renderOt=renderOt; window.otOpenForm=otOpenForm; window.otCalc=otCalc; window.otSubmit=otSubmit;
+  window.renderOtApprove=renderOtApprove; window.otDecide=otDecide; window.otToPayroll=otToPayroll;
+
   /** ✏️ แก้ประเภทเอกสาร (พี่เท่านั้น) — แนบใบเสร็จ ⇄ ไม่มีใบเสร็จ (ออก SR) */
   function exSetProof(no){
     var x=EXP_BYNO[no]||{};
@@ -3348,7 +3449,8 @@
       IS_OWNER=!!r.isOwner;
       if(IS_OWNER){ var nr=$('navReview'); if(nr) nr.style.display='';      // แท็บรอตรวจ = เฉพาะพี่/ผู้ตรวจ
         var ne=$('navExpAppr'); if(ne) ne.style.display='';                 // แท็บอนุมัติเบิกจ่าย = เฉพาะพี่
-        var nb=$('navReimb'); if(nb) nb.style.display=''; }                 // แท็บตั้งเบิกลูกค้า = เฉพาะพี่
+        var nb=$('navReimb'); if(nb) nb.style.display='';                 // แท็บตั้งเบิกลูกค้า = เฉพาะพี่
+        var noa=$('navOtAppr'); if(noa) noa.style.display=''; }           // แท็บอนุมัติ OT = เฉพาะพี่/HR
         // navTaxDoc (ภาษี/เอกสาร) ซ่อนไว้ก่อน — เปิดตอน v2 (ภ.ง.ด.1/3/53) เสร็จ
       $('loader').classList.add('hidden'); $('app').classList.remove('hidden');
       Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(b){
