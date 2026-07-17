@@ -25,9 +25,10 @@
   /* งาน (task card) */
   .tk{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow);
     padding:14px 16px; margin-bottom:12px; }
-  /* รายการใบเบิกหน้าสรุป — จอกว้างจัดหลายคอลัมน์ใช้พื้นที่ด้านข้าง · มือถือคอลัมน์เดียวอัตโนมัติ */
-  .ex-list-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:12px; align-items:start; }
-  .ex-list-grid .tk{ margin-bottom:0; }
+  /* รายการใบเบิกหน้าสรุป — ตารางแถวละ 1 รายการ (list view · เว็บกว้างเห็นครบบรรทัดเดียว · มือถือเลื่อนแนวนอน) */
+  .exl-tbl{ min-width:720px; }
+  .exl-tbl td.exl-detail{ white-space:normal; min-width:180px; max-width:340px; color:#5B6472; }
+  .exl-tbl td .tk-badge{ margin-left:0; }
   .tk-top{ display:flex; align-items:center; gap:8px; }
   .tk-no{ font-weight:700; color:var(--red); font-size:14px; }
   .tk-badge{ margin-left:auto; font-size:12px; padding:3px 10px; border-radius:999px; font-weight:600; white-space:nowrap; }
@@ -2445,17 +2446,20 @@
       // รายการใบเบิกทีละใบ (ลำดับ/สถานะ/ผู้เบิก/ค่าอะไร) — พี่กี้ขอ 17 ก.ค.
       if(r.list&&r.list.length){
         h+='<div class="ds-h" style="margin:16px 0 8px">รายการทั้งหมด เดือน '+esc(ymThai(r.ym))+' ('+r.list.length+' ใบ)</div>';
-        h+='<div class="ex-list-grid">'+r.list.map(function(x){
-          var links='';
-          if(x.docLink) links+='<a class="ex-lk" href="'+esc(x.docLink)+'" target="_blank">📄 '+esc(x.docNo||'เอกสาร')+'</a>';
-          if(x.dossier) links+='<a class="ex-lk" href="'+esc(x.dossier)+'" target="_blank">🗂️ แฟ้ม</a>';
-          return '<div class="tk"><div class="tk-top"><span class="tk-no">'+x.seq+'. '+esc(x.no)+'</span>'+
-            '<span class="tk-badge '+expBadge(x.status)+'">'+esc(x.status)+'</span></div>'+
-            (x.nick?'<div class="tk-cust">👤 '+esc(x.nick)+'</div>':'')+
-            '<div class="ex-amt"><span class="ex-t">'+esc(x.type)+'</span> · '+money(x.amount)+' บาท</div>'+
-            (x.detail?'<div class="tk-detail">'+esc(x.detail)+'</div>':'')+
-            (links?'<div class="ex-meta">'+links+'</div>':'')+'</div>';
-        }).join('')+'</div>';
+        h+='<div class="tax-tbl-wrap"><table class="tax-tbl exl-tbl"><thead><tr>'+
+          '<th>#</th><th>เลขที่</th><th>สถานะ</th><th>ผู้เบิก</th><th>ประเภท</th><th>รายละเอียด</th><th>ยอด (บาท)</th><th>เอกสาร</th></tr></thead><tbody>'+
+          r.list.map(function(x){
+            var links='';
+            if(x.docLink) links+='<a class="ex-lk" href="'+esc(x.docLink)+'" target="_blank" title="'+esc(x.docNo||'เอกสาร')+'">📄</a> ';
+            if(x.dossier) links+='<a class="ex-lk" href="'+esc(x.dossier)+'" target="_blank" title="แฟ้มครบชุด">🗂️</a>';
+            return '<tr><td>'+x.seq+'</td><td>'+esc(x.no)+'</td>'+
+              '<td><span class="tk-badge '+expBadge(x.status)+'">'+esc(x.status)+'</span></td>'+
+              '<td>'+esc(x.nick||'-')+'</td><td>'+esc(x.type||'-')+'</td>'+
+              '<td class="exl-detail">'+esc(x.detail||'-')+'</td>'+
+              '<td class="ta-r">'+money(x.amount)+'</td>'+
+              '<td>'+(links||'—')+'</td></tr>';
+          }).join('')+
+          '</tbody></table></div>';
       } else h+='<div class="card"><div class="emptybox">เดือน '+esc(ymThai(r.ym))+' ยังไม่มีรายการ</div></div>';
       $('main').innerHTML=h;
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
