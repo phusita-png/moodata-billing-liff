@@ -488,9 +488,7 @@
     <button class="nav-btn" data-view="expense" aria-label="เบิกค่าใช้จ่าย">
       <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9v6M18 9v6"/></svg><span>เบิกค่าใช้จ่าย</span></button>
     <button class="nav-btn" data-view="expdash" aria-label="สรุปค่าใช้จ่าย">
-      <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>สรุปค่าใช้จ่าย</span></button>
-    <button class="nav-btn" data-view="expapprove" aria-label="อนุมัติเบิกจ่าย" id="navExpAppr" style="display:none">
-      <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="m8 12.5 2.5 2.5L16 9.5"/></svg><span>อนุมัติเบิกจ่าย</span></button>
+      <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span id="navExpDashLabel">สรุปค่าใช้จ่าย</span></button>
     <button class="nav-btn" data-view="reimb" aria-label="ตั้งเบิกลูกค้า" id="navReimb" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6Z"/><path d="M14 3v5h5M9 12h6M9 16h4"/></svg><span>ตั้งเบิกลูกค้า</span></button>
     <button class="nav-btn active" data-view="leave" aria-label="การลา">
@@ -596,7 +594,7 @@
     { key:'work',  icon:'📊', label:'งาน',    views:['projects','mytasks','review','trash'] },
     { key:'cust',  icon:'📤', label:'ลูกค้า',  views:['senddoc','appt','announce'] },
     { key:'leave', icon:'📝', label:'ลา',      views:['leave','approve'] },
-    { key:'exp',   icon:'💸', label:'เบิก',    views:['expense','expdash','expapprove','reimb'] },
+    { key:'exp',   icon:'💸', label:'เบิก',    views:['expense','expdash','reimb'] },   /* expapprove รวมเข้า expdash แล้ว (คง view ไว้ให้ deep link จากแจ้งเตือน) */
     { key:'ot',    icon:'⏰', label:'OT',      views:['ot','otapprove'] },
     { key:'docs',  icon:'📁', label:'เอกสาร',  views:['docs'] }   /* taxdoc ซ่อนไว้ก่อน — รื้อเป็น ภ.ง.ด.1/3/53 (v2) */
   ];
@@ -2157,12 +2155,23 @@
   }
 
   // ═══════════ VIEW: อนุมัติเบิกจ่าย (พี่) ═══════════
+  // หน้าอนุมัติแบบเดี่ยว (deep link จาก LINE/GChat ?p=expapprove) — เมนูปกติรวมเข้าหน้าสรุปแล้ว
   function renderExpenseApprove(){
     if(!IS_OWNER){ $('main').innerHTML='<div class="card"><div class="empty">เฉพาะผู้ดูแล (พี่/HR) ค่ะ</div></div>'; return; }
     skel();
+    $('main').innerHTML='<div class="section-h">💸 อนุมัติเบิกจ่าย</div><div id="expApprBlock"></div>';
+    renderExpAppr('expApprBlock','expapprove');
+  }
+  /**
+   * วาดบล็อกอนุมัติเบิก (⏳ รออนุมัติ + 💰 รอจ่ายคืน) ลงในคอนเทนเนอร์ที่ระบุ — ใช้ร่วมหน้าอนุมัติเดี่ยว + หน้าสรุป
+   * guardView = view ที่ต้องยังอยู่ (กันเขียนทับหลังผู้ใช้เปลี่ยนหน้าระหว่างโหลด)
+   */
+  function renderExpAppr(cid, guardView){
+    var el=$(cid); if(el) el.innerHTML='<div class="card"><div class="skel" style="height:90px"></div></div>';
     jsonp({action:'waExpPending',uid:UID}).then(function(r){
-      if(VIEW!=='expapprove') return;
-      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      if(guardView && VIEW!==guardView) return;
+      var box=$(cid); if(!box) return;   // คอนเทนเนอร์หายไปแล้ว (เปลี่ยนหน้า)
+      if(!r||!r.ok){ box.innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
       var pd=r.pending||[], tp=r.topay||[];
       var html='';
       html+=exSecHd('⏳ รออนุมัติ ('+pd.length+')','');
@@ -2171,8 +2180,8 @@
       html+=exSecHd('💰 อนุมัติแล้ว · รอจ่ายคืน ('+tp.length+')','margin-top:18px');
       html+= tp.length ? tp.map(function(x){ return exApprCard(x,true); }).join('')
                        : '<div class="card"><div class="emptybox">ไม่มีรายการค้างจ่ายคืน 😊</div></div>';
-      $('main').innerHTML=html;
-    }).catch(function(e){ if(VIEW==='expapprove') $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
+      box.innerHTML=html;
+    }).catch(function(e){ if(guardView && VIEW!==guardView) return; var box=$(cid); if(box) box.innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
   }
   function exSecHd(text,extra){
     return '<div style="font-size:14px;font-weight:600;color:#4A5262;margin:0 2px 8px;'+(extra||'')+'">'+esc(text)+'</div>';
@@ -2288,7 +2297,7 @@
       if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
       closeModal(); IMGS['edCard']=[];
       toast(r.hasDoc?'✅ แก้แล้ว — อย่าลืมออกเอกสารใหม่ให้ข้อมูลตรงกันนะคะ':'✅ แก้ข้อมูลผู้รับเงินแล้ว');
-      if(VIEW==='expapprove') renderExpenseApprove(); else renderExpense();
+      if(VIEW==='expdash') renderExpDash(); else if(VIEW==='expapprove') renderExpenseApprove(); else renderExpense();
     }).catch(function(e){ mErr(e.message); });
   }
   window.exEditPayee=exEditPayee; window.exSavePayee=exSavePayee;
@@ -2342,11 +2351,12 @@
       renderExpense();
     }).catch(function(e){ toast(e.message); });
   }
-  /** การ์ดที่ตัดสินแล้ว fade ออก แล้วโหลดหน้าใหม่ (pattern เดียวกับ apprDecide) */
+  /** การ์ดที่ตัดสินแล้ว fade ออก แล้วโหลดหน้าใหม่ (หน้าสรุป=โหลดทั้งหน้าให้ยอดอัปเดต · อนุมัติเดี่ยว=โหลดบล็อก) */
   function exFade(no){
+    var reload=(VIEW==='expdash')?renderExpDash:renderExpenseApprove;
     var el=$('exa-'+no);
-    if(el){ el.style.transition='opacity .3s'; el.style.opacity='0'; setTimeout(renderExpenseApprove,320); }
-    else renderExpenseApprove();
+    if(el){ el.style.transition='opacity .3s'; el.style.opacity='0'; setTimeout(reload,320); }
+    else reload();
   }
   /** 🗑️ ยกเลิกใบเบิก → ย้ายไปถังขยะ (พี่เท่านั้น · soft-delete · กู้คืนได้) */
   function exTrash(no){
@@ -2692,9 +2702,15 @@
     skel();
     jsonp({action:'waExpDash',uid:UID,ym:DASH_YM}).then(function(r){
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
-      if(r.empty){ $('main').innerHTML='<div class="card"><div class="emptybox">ยังไม่มีรายการเบิก 😊</div></div>'; return; }
+      if(r.empty){
+        $('main').innerHTML=(IS_OWNER?'<div class="section-h">💸 อนุมัติเบิกจ่าย</div><div id="expApprBlock"></div>':'')+'<div class="card"><div class="emptybox">ยังไม่มีรายการเบิก 😊</div></div>';
+        if(IS_OWNER) renderExpAppr('expApprBlock','expdash');
+        return;
+      }
       DASH_YM=r.ym;
-      var h='<div class="ds-sel"><select id="dsYm" onchange="dsSetYm(this.value)">'+
+      // พี่/HR: บล็อกอนุมัติเบิกจ่าย อยู่บนสุดของหน้าสรุป (พี่ขอรวมหน้าเดียว 18 ก.ค.)
+      var h=(IS_OWNER?'<div class="section-h">💸 อนุมัติเบิกจ่าย</div><div id="expApprBlock"></div><div class="section-h" style="margin-top:20px">📊 สรุปค่าใช้จ่าย</div>':'')+
+        '<div class="ds-sel"><select id="dsYm" onchange="dsSetYm(this.value)">'+
         r.months.slice().reverse().map(function(m){
           return '<option value="'+esc(m)+'"'+(m===r.ym?' selected':'')+'>'+esc(ymThai(m))+'</option>';
         }).join('')+'</select></div>';
@@ -2735,6 +2751,7 @@
       } else { EDLIST=[]; h+='<div class="card"><div class="emptybox">เดือน '+esc(ymThai(r.ym))+' ยังไม่มีรายการ</div></div>'; }
       $('main').innerHTML=h;
       if(EDLIST.length) edRender();
+      if(IS_OWNER) renderExpAppr('expApprBlock','expdash');   // โหลดคิวอนุมัติบนหน้าสรุป
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
   }
   function dsSetYm(v){ DASH_YM=v; renderExpDash(); }
@@ -3549,7 +3566,7 @@
       NICK=r.nick||''; if(NICK){ $('hdSub').textContent=NICK; }
       IS_OWNER=!!r.isOwner;
       if(IS_OWNER){ var nr=$('navReview'); if(nr) nr.style.display='';      // แท็บรอตรวจ = เฉพาะพี่/ผู้ตรวจ
-        var ne=$('navExpAppr'); if(ne) ne.style.display='';                 // แท็บอนุมัติเบิกจ่าย = เฉพาะพี่
+        var nel=$('navExpDashLabel'); if(nel) nel.textContent='สรุป/อนุมัติเบิก';   // พี่: หน้าสรุปรวมอนุมัติเบิกแล้ว (ตัดแท็บอนุมัติแยก)
         var nb=$('navReimb'); if(nb) nb.style.display='';                 // แท็บตั้งเบิกลูกค้า = เฉพาะพี่
         var noa=$('navOtAppr'); if(noa) noa.style.display=''; }           // แท็บอนุมัติ OT = เฉพาะพี่/HR
         // navTaxDoc (ภาษี/เอกสาร) ซ่อนไว้ก่อน — เปิดตอน v2 (ภ.ง.ด.1/3/53) เสร็จ
