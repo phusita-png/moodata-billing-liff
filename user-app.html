@@ -2499,11 +2499,15 @@
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
       OT_KINDS=r.kinds||OT_KINDS;
       var h='<div class="section-h">⏰ อนุมัติ OT</div>'+
-        '<div class="card"><div class="ds-h">ปิดรอบ OT (สิ้นเดือน)</div>'+
-        '<div class="ed-filter"><input id="otPayMonth" class="ed-q" placeholder="เดือน พ.ศ. เช่น 2569-07" style="max-width:200px">'+
-        '<button class="btn btn-ghost" style="width:auto;padding:9px 14px" onclick="otMonthSummary()">📤 ส่งสรุปให้พนักงาน (1-1)</button>'+
-        '<button class="btn btn-ok" style="width:auto;padding:9px 14px" onclick="otToPayroll()">💰 ดึงเข้าเงินเดือน</button></div>'+
-        '<div class="m-hint" style="margin:0">ส่งสรุป = แจ้งเงิน OT รวมทั้งเดือนให้พนักงานแต่ละคน 1-1 · ดึงเข้าเงินเดือน = บวกยอดเข้าช่อง OT ในชีตเงินเดือน (กดซ้ำไม่บวกซ้ำ)</div></div>';
+        '<div class="card"><div class="ds-h">สรุป & ปิดรอบ OT (สิ้นเดือน)</div>'+
+        '<div class="ed-filter"><input id="otPayMonth" class="ed-q" placeholder="เดือน พ.ศ. เช่น 2569-07" style="max-width:200px" value="'+esc(otDefaultMonth())+'">'+
+        '<button class="btn btn-ghost" style="width:auto;padding:9px 14px" onclick="otViewSummary()">📊 ดูสรุป</button></div>'+
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+
+        '<button class="btn btn-ghost" style="flex:1;min-width:130px" onclick="otGenDocs()">📄 สร้างเอกสาร</button>'+
+        '<button class="btn btn-ghost" style="flex:1;min-width:130px" onclick="otSendDocs()">📤 ส่งให้พนักงาน</button>'+
+        '<button class="btn btn-ok" style="flex:1;min-width:130px" onclick="otToPayroll()">💰 ดึงเข้าเงินเดือน</button></div>'+
+        '<div class="m-hint" style="margin:8px 0 0">สร้างเอกสาร = ทำ PDF สรุป OT รายคนให้ตรวจก่อน · ส่ง = ส่งลิงก์ PDF ให้พนักงานทาง LINE (กดซ้ำไม่ส่งซ้ำ) · ดึงเข้าเงินเดือน = บวกยอดเข้าช่อง OT (กดซ้ำไม่บวกซ้ำ)</div>'+
+        '<div id="otSum"></div></div>';
       var list=r.list||[];
       if(!list.length){ h+='<div class="card"><div class="emptybox">ไม่มี OT รออนุมัติ 🎉</div></div>'; $('main').innerHTML=h; return; }
       h+=list.map(function(x){
@@ -2528,17 +2532,54 @@
       toast(dec==='approve'?('✅ อนุมัติ OT '+no):('❌ ไม่อนุมัติ '+no));
     }).catch(function(e){ toast(e.message); });
   }
-  function otMonthSummary(){
-    var month=(($('otPayMonth')||{}).value||'').trim();
-    if(!/^\d{4}-\d{2}$/.test(month)){ toast('พิมพ์เดือน พ.ศ. เช่น 2569-07 ค่ะ'); return; }
-    callBusy('กำลังส่งสรุป OT ให้พนักงาน…', jsonpPost({action:'waOtMonthSummary',uid:UID,month:month}), 'ส่งแล้ว').then(function(r){
+  // เดือนปิดรอบ default = เดือนก่อนหน้า (พ.ศ. YYYY-MM) — รอบ OT มักปิดของเดือนที่ผ่านมา
+  function otDefaultMonth(){ var t=new Date(); t.setDate(1); t.setMonth(t.getMonth()-1); return (t.getFullYear()+543)+'-'+('0'+(t.getMonth()+1)).slice(-2); }
+  function otMonthVal(){ var m=(($('otPayMonth')||{}).value||'').trim(); return /^\d{4}-\d{2}$/.test(m)?m:''; }
+  function renderOtSum(r){
+    var el=$('otSum'); if(!el) return;
+    if(!r||!r.ok){ el.innerHTML='<div class="m-hint" style="color:#c0392b;margin-top:10px">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div>'; return; }
+    if(!r.people.length){ el.innerHTML='<div class="m-hint" style="margin-top:10px">ยังไม่มี OT อนุมัติในเดือน '+esc(r.monthThai)+'</div>'; return; }
+    var rows=r.people.map(function(x){
+      var badge=x.sent?'<span style="color:#1E9E5A">✅ ส่งแล้ว</span>':(x.hasDoc?'<span style="color:#1B72E8">📄 สร้างแล้ว</span>':'<span style="color:#8A94A6">—</span>');
+      var name=(x.hasDoc&&x.pdfUrl)?('<a href="'+esc(x.pdfUrl)+'" target="_blank" style="color:#1B72E8">'+esc(x.nick)+'</a>'):esc(x.nick);
+      return '<tr><td>'+name+'</td><td style="text-align:right">'+x.count+'</td><td style="text-align:right">'+x.hours+'</td><td style="text-align:right">'+money(x.amount)+'</td><td style="text-align:center">'+badge+'</td></tr>';
+    }).join('');
+    el.innerHTML='<style>.ot-sum{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}.ot-sum th,.ot-sum td{padding:6px 8px;border-bottom:1px solid #eef1f5}.ot-sum th{color:#8A94A6;font-weight:600;text-align:left}.ot-sum tfoot td{font-weight:700;border-top:2px solid #dfe4ea;border-bottom:none}</style>'+
+      '<div class="ds-h" style="margin-top:12px">📊 สรุปเดือน '+esc(r.monthThai)+'</div>'+
+      '<table class="ot-sum"><thead><tr><th>พนักงาน</th><th style="text-align:right">ใบ</th><th style="text-align:right">ชม.</th><th style="text-align:right">เงิน OT</th><th style="text-align:center">เอกสาร</th></tr></thead>'+
+      '<tbody>'+rows+'</tbody>'+
+      '<tfoot><tr><td>รวมทีม ('+r.people.length+' คน)</td><td></td><td style="text-align:right">'+r.totalHours+'</td><td style="text-align:right">'+money(r.totalAmount)+'</td><td></td></tr></tfoot></table>';
+  }
+  function otViewSummary(){
+    var month=otMonthVal(); if(!month){ toast('พิมพ์เดือน พ.ศ. เช่น 2569-07 ค่ะ'); return; }
+    var el=$('otSum'); if(el) el.innerHTML='<div class="m-hint" style="margin-top:10px">กำลังโหลด…</div>';
+    jsonp({action:'waOtMonthAgg',uid:UID,month:month}).then(renderOtSum).catch(function(e){ toast(e.message); });
+  }
+  function otGenDocs(){
+    var month=otMonthVal(); if(!month){ toast('พิมพ์เดือน พ.ศ. เช่น 2569-07 ค่ะ'); return; }
+    callBusy('กำลังสร้างเอกสารสรุป OT…', jsonpPost({action:'waOtGenDocs',uid:UID,month:month}), 'สร้างแล้ว').then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'สร้างไม่สำเร็จ'); return; }
+      toast('📄 สร้างเอกสาร '+r.docs.length+' คนแล้ว · ตรวจได้ที่ตารางสรุป (คลิกชื่อ = เปิด PDF)'+(r.failed&&r.failed.length?' · พลาด '+r.failed.join(','):''));
+      otViewSummary();
+    }).catch(function(e){ toast(e.message); });
+  }
+  function otSendDocs(resend){
+    var month=otMonthVal(); if(!month){ toast('พิมพ์เดือน พ.ศ. เช่น 2569-07 ค่ะ'); return; }
+    closeModal();
+    callBusy('กำลังส่งเอกสารให้พนักงาน…', jsonpPost({action:'waOtSendDocs',uid:UID,month:month,resend:resend?'1':''}), 'ส่งแล้ว').then(function(r){
       if(!r||!r.ok){ toast((r&&r.error)||'ส่งไม่สำเร็จ'); return; }
-      toast('📤 ส่งสรุป OT ให้ '+r.people+' คนแล้ว (1-1)'+(r.noUid&&r.noUid.length?' · ข้าม(ไม่มี LINE) '+r.noUid.join(','):''));
+      if(r.allSent){
+        modal('<h3>📤 ส่งครบแล้ว</h3><div class="m-hint" style="margin:0 0 14px">เดือนนี้ส่งเอกสารครบทุกคนแล้ว ('+r.skippedSent+' คน) · ต้องการส่งซ้ำไหมคะ?</div>'+
+          '<div style="display:flex;gap:8px"><button class="btn btn-ghost" style="flex:1" onclick="closeModal()">ปิด</button>'+
+          '<button class="btn btn-primary" style="flex:1" onclick="otSendDocs(1)">ส่งซ้ำทุกคน</button></div>');
+        return;
+      }
+      toast('📤 ส่งเอกสารให้ '+r.sent+' คนแล้ว'+(r.skippedSent?' · ข้าม(ส่งแล้ว) '+r.skippedSent:'')+(r.noUid&&r.noUid.length?' · ข้าม(ไม่มี LINE) '+r.noUid.join(','):''));
+      otViewSummary();
     }).catch(function(e){ toast(e.message); });
   }
   function otToPayroll(){
-    var month=(($('otPayMonth')||{}).value||'').trim();
-    if(!/^\d{4}-\d{2}$/.test(month)){ toast('พิมพ์เดือน พ.ศ. เช่น 2569-07 ค่ะ'); return; }
+    var month=otMonthVal(); if(!month){ toast('พิมพ์เดือน พ.ศ. เช่น 2569-07 ค่ะ'); return; }
     callBusy('กำลังดึง OT เข้าเงินเดือน…', jsonpPost({action:'waOtToPayroll',uid:UID,month:month}), 'ดึงแล้ว').then(function(r){
       if(!r||!r.ok){ toast((r&&r.error)||'ดึงไม่สำเร็จ'); return; }
       toast('💰 ดึงเข้า '+r.payName+' แล้ว · '+r.people+' คน · '+money(r.total)+' บาท'+(r.skipped&&r.skipped.length?' · ข้าม(ไม่มีในเงินเดือน) '+r.skipped.join(','):''));
@@ -2546,7 +2587,8 @@
   }
   window.renderOt=renderOt; window.otOpenForm=otOpenForm; window.otCalc=otCalc; window.otReview=otReview; window.otDoSubmit=otDoSubmit;
   window.otNewForm=otNewForm; window.otEdit=otEdit; window.otTrash=otTrash; window.otTrashDo=otTrashDo;
-  window.renderOtApprove=renderOtApprove; window.otDecide=otDecide; window.otToPayroll=otToPayroll; window.otMonthSummary=otMonthSummary;
+  window.renderOtApprove=renderOtApprove; window.otDecide=otDecide; window.otToPayroll=otToPayroll;
+  window.otDefaultMonth=otDefaultMonth; window.otViewSummary=otViewSummary; window.otGenDocs=otGenDocs; window.otSendDocs=otSendDocs;
 
   /** ✏️ แก้ประเภทเอกสาร (พี่เท่านั้น) — แนบใบเสร็จ ⇄ ไม่มีใบเสร็จ (ออก SR) */
   function exSetProof(no){
