@@ -329,12 +329,13 @@
     <a href="#tasks">🗂️ จัดการงาน</a>
     <a href="#docs">📄 เอกสาร</a>
     <a href="#web">🌐 เปิดบนคอม</a>
-    <a href="#soon">🚧 เร็ว ๆ นี้</a>
+    <a href="#ot">⏰ ขอ OT</a>
+    <a href="#expense">💸 เบิกเงิน</a>
+    <a href="#chat">💬 คำสั่งแชท</a>
   </nav>
 
   <div class="legend">
-    <span><span class="badge ok">✓ ใช้งานได้</span> พร้อมใช้เลย</span>
-    <span><span class="badge wip">🚧 กำลังพัฒนา</span> พักก่อน เดี๋ยวเปิด</span>
+    <span><span class="badge ok">✓ ใช้งานได้</span> ทุกเมนูพร้อมใช้เลยค่ะ 🎉</span>
   </div>
 
   <!-- START -->
@@ -617,21 +618,131 @@
     </div>
   </section>
 
-  <!-- SOON -->
-  <section class="wip-block" id="soon">
+  <!-- OT -->
+  <section class="feat rev" id="ot">
     <div class="feat-head">
-      <div class="ico" style="background:var(--wip-tint); border-color:var(--wip)">🚧</div>
+      <div class="ico">⏰</div>
       <div>
-        <div class="step-no" style="color:var(--wip)">กำลังพัฒนา</div>
-        <h2>เร็ว ๆ นี้</h2>
-        <div class="sub">ยังไม่ต้องใช้นะคะ เดี๋ยวเปิดจะแจ้งอีกที</div>
+        <div class="step-no">คู่มือ 08 · ขอ OT</div>
+        <h2>ขอทำล่วงเวลา (OT)</h2>
+        <div class="sub">กรอกวัน–เวลา ระบบคิดชั่วโมงให้</div>
+        <span class="badge ok">✓ ใช้งานได้</span>
       </div>
     </div>
-    <div class="wip-card" style="margin-top:20px">
-      <p style="margin:0 0 14px; font-size:14.5px; color:var(--ink-soft)">ฟีเจอร์เหล่านี้ <b>พักไว้ก่อน</b> กำลังปรับปรุงให้ดีขึ้น 🙏</p>
-      <div class="wip-list">
-        <div class="wip-item"><span class="e">💸</span><div><div class="t">เบิกค่าใช้จ่าย</div><div class="d">ยกเครื่องเป็นระบบออกเอกสาร</div></div><span class="badge wip">🚧 กำลังพัฒนา</span></div>
-        <div class="wip-item"><span class="e">⏰</span><div><div class="t">ขอ OT</div><div class="d">กำลังสร้างระบบ</div></div><span class="badge wip">🚧 กำลังพัฒนา</span></div>
+    <div class="feat-body">
+      <div>
+        <ol class="steps">
+          <li><span class="st-t">เปิดเมนู "ขอ OT"</span>ในเว็บแอป — แถบล่างมือถือแตะ <span class="chip">⏰ OT</span></li>
+          <li><span class="st-t">เลือกวันที่ + เวลาเริ่ม–สิ้นสุด</span>ระบบ <b>คิดชั่วโมงให้อัตโนมัติ</b> (หักพักเที่ยง 12:00–13:00 ให้ด้วย)</li>
+          <li><span class="st-t">ใส่เหตุผล/งานที่ทำ → ตรวจสรุป → ส่ง</span>ดูสรุป วัน–เวลา–ชั่วโมง ก่อนยืนยัน</li>
+          <li><span class="st-t">รออนุมัติ</span>พอพี่อนุมัติ จะมีการ์ด <span class="chip">✅ อนุมัติ</span> เด้งในไลน์ — <b>สรุปเงิน OT ส่งให้ตอนปิดรอบเงินเดือน</b></li>
+        </ol>
+        <div class="tip">💡 OT วันทำงาน ×1.5 · ทำงานวันหยุด ×1 (พี่ปรับเรตได้ตอนอนุมัติ) · ใบที่ยัง "รออนุมัติ" <b>แก้ไข / ยกเลิกเองได้</b></div>
+      </div>
+      <div class="visual">
+        <div class="phone"><div class="phone-shell"><div class="phone-notch"></div><div class="phone-screen">
+          <div class="scr app">
+            <div class="st-bar on-brand"><span>9:41</span><span class="dots">••• ▮</span></div>
+            <div class="app-head"><div class="ttl">⏰ ขอ OT</div><div class="who">กรอกวัน + เวลา</div></div>
+            <div class="app-form">
+              <div style="background:#f4f7fb; border-radius:10px; padding:9px 11px; font-size:11px; color:#16283a">📅 วันที่ทำ OT<div style="font-weight:700; margin-top:3px">19/07/2569</div></div>
+              <div style="display:flex; gap:8px; margin-top:8px">
+                <div style="flex:1; background:#f4f7fb; border-radius:10px; padding:9px 11px; font-size:11px; color:#16283a">เริ่ม<div style="font-weight:700; margin-top:3px">18:00</div></div>
+                <div style="flex:1; background:#f4f7fb; border-radius:10px; padding:9px 11px; font-size:11px; color:#16283a">สิ้นสุด<div style="font-weight:700; margin-top:3px">21:00</div></div>
+              </div>
+              <div style="background:linear-gradient(120deg,#1B72E8,#4A93F0); border-radius:10px; padding:9px 12px; margin-top:8px; color:#fff; display:flex; justify-content:space-between; align-items:center">
+                <span style="font-size:11px; font-weight:700; opacity:.95">รวมชั่วโมง OT</span>
+                <span style="font-size:15px; font-weight:800">3 ชม.</span>
+              </div>
+              <div class="app-fab" style="margin:9px 0 0">📨 ส่งคำขอ OT</div>
+            </div>
+          </div>
+        </div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EXPENSE -->
+  <section class="feat" id="expense">
+    <div class="feat-head">
+      <div class="ico">💸</div>
+      <div>
+        <div class="step-no">คู่มือ 09 · เบิกเงิน</div>
+        <h2>เบิกค่าใช้จ่าย</h2>
+        <div class="sub">แนบใบเสร็จ ส่งขออนุมัติ รอจ่ายคืน</div>
+        <span class="badge ok">✓ ใช้งานได้</span>
+      </div>
+    </div>
+    <div class="feat-body">
+      <div>
+        <ol class="steps">
+          <li><span class="st-t">เปิดเมนู "เบิกค่าใช้จ่าย"</span>ในเว็บแอป — แถบล่างมือถือแตะ <span class="chip">💸 เบิก</span></li>
+          <li><span class="st-t">กรอกประเภท + รายละเอียด + จำนวนเงิน</span>เช่น ค่าเดินทาง · ค่าอาหาร · อื่น ๆ</li>
+          <li><span class="st-t">แนบใบเสร็จ/สลิป → ส่ง</span>แนบได้ทั้ง <b>รูปและไฟล์ PDF</b> · หลายไฟล์ได้</li>
+          <li><span class="st-t">รออนุมัติ → รับเงินคืน</span>พอพี่อนุมัติและจ่ายคืน จะแจ้งในไลน์ — ดูสถานะได้ที่เมนู <span class="chip">📊 สรุปค่าใช้จ่าย</span></li>
+        </ol>
+        <div class="tip">💡 ไม่มีใบเสร็จก็เบิกได้ (แนบสลิปโอน/บิลเงินสด + ใส่เหตุผล) · ดูรายการ + สถานะเบิกทั้งหมดของตัวเองที่ "สรุปค่าใช้จ่าย"</div>
+      </div>
+      <div class="visual">
+        <div class="phone"><div class="phone-shell"><div class="phone-notch"></div><div class="phone-screen">
+          <div class="scr app">
+            <div class="st-bar on-brand"><span>9:41</span><span class="dots">••• ▮</span></div>
+            <div class="app-head"><div class="ttl">💸 เบิกค่าใช้จ่าย</div><div class="who">กรอก + แนบใบเสร็จ</div></div>
+            <div class="app-form">
+              <div class="chips-row"><span class="mini-chip on">ค่าเดินทาง</span><span class="mini-chip">ค่าอาหาร</span><span class="mini-chip">อื่น ๆ</span></div>
+              <div style="background:#f4f7fb; border-radius:10px; padding:9px 11px; font-size:11px; color:#16283a; margin-top:8px">รายละเอียด<div style="font-weight:700; margin-top:3px">แท็กซี่ไปพบลูกค้า</div></div>
+              <div style="background:linear-gradient(120deg,#1B72E8,#4A93F0); border-radius:10px; padding:9px 12px; margin-top:8px; color:#fff; display:flex; justify-content:space-between; align-items:center">
+                <span style="font-size:11px; font-weight:700; opacity:.95">จำนวนเงิน</span>
+                <span style="font-size:15px; font-weight:800">1,250 บาท</span>
+              </div>
+              <div style="border:1.5px dashed #b8c6d8; border-radius:10px; padding:11px; margin-top:8px; text-align:center; font-size:11px; color:#5a6b80">📎 แนบใบเสร็จ (รูป / PDF)</div>
+              <div class="app-fab" style="margin:9px 0 0">📨 ส่งคำขอเบิก</div>
+            </div>
+          </div>
+        </div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHAT COMMANDS -->
+  <section class="feat rev" id="chat">
+    <div class="feat-head">
+      <div class="ico">💬</div>
+      <div>
+        <div class="step-no">คู่มือ 10 · คำสั่งแชท</div>
+        <h2>พิมพ์ "ยินดี" เรียกเมนู</h2>
+        <div class="sub">ส่งงาน/เอกสารให้ลูกค้า + คำลัดในแชท</div>
+        <span class="badge ok">✓ ใช้งานได้</span>
+      </div>
+    </div>
+    <div class="feat-body">
+      <div>
+        <p class="lead-line">พิมพ์คำว่า <span class="chip">ยินดี</span> ในแชท → ได้เมนูปุ่มลัดสำหรับ <b>ส่งงาน/เอกสารเข้ากลุ่มลูกค้า</b>:</p>
+        <ol class="steps" style="margin-top:12px">
+          <li><span class="st-t">📊 ส่งรายงาน · 📎 ส่งเอกสาร</span>ส่งไฟล์เข้ากลุ่มไลน์ลูกค้าได้เลย</li>
+          <li><span class="st-t">📅 นัดประชุม</span>เปิดฟอร์มนัด — เลือกลูกค้า วัน–เวลา</li>
+          <li><span class="st-t">📢 แจ้งประกาศ</span>ส่งประกาศถึงกลุ่มลูกค้า</li>
+        </ol>
+        <p class="lead-line" style="margin-top:14px"><b>คำลัดอื่น ๆ</b> — พิมพ์ตรง ๆ ในแชทได้เลย ไม่ต้องเปิดเมนู:</p>
+        <div class="tip">💬 <span class="chip">เว็บ</span> / <span class="chip">ลิงก์</span> = เปิดเว็บแอปบนคอม · <span class="chip">เข้างาน</span> / <span class="chip">ออกงาน</span> = ลงเวลาทันที</div>
+      </div>
+      <div class="visual">
+        <div class="phone"><div class="phone-shell"><div class="phone-notch"></div><div class="phone-screen">
+          <div class="scr chat">
+            <div class="st-bar on-brand"><span>9:41</span><span class="dots">••• ▮</span></div>
+            <div class="chat-head"><div class="av">💙</div><div><div class="nm">ยินดี</div><div class="st">Moodata · ออนไลน์</div></div></div>
+            <div class="chat-body">
+              <div class="b me">ยินดี</div>
+              <div class="b bot">มีอะไรให้ยินดีช่วยค่ะ 😊<br>เลือกเมนูด้านล่างได้เลยค่ะ</div>
+              <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:2px; align-self:flex-start; max-width:90%">
+                <span style="background:#fff; border:1.5px solid var(--brand); color:var(--brand-deep); border-radius:99px; padding:5px 11px; font-size:11px; font-weight:700">📊 ส่งรายงาน</span>
+                <span style="background:#fff; border:1.5px solid var(--brand); color:var(--brand-deep); border-radius:99px; padding:5px 11px; font-size:11px; font-weight:700">📎 ส่งเอกสาร</span>
+                <span style="background:#fff; border:1.5px solid var(--brand); color:var(--brand-deep); border-radius:99px; padding:5px 11px; font-size:11px; font-weight:700">📅 นัดประชุม</span>
+                <span style="background:#fff; border:1.5px solid var(--brand); color:var(--brand-deep); border-radius:99px; padding:5px 11px; font-size:11px; font-weight:700">📢 แจ้งประกาศ</span>
+              </div>
+            </div>
+          </div>
+        </div></div></div>
       </div>
     </div>
   </section>
