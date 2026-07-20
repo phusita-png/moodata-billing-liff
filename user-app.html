@@ -2250,8 +2250,9 @@
         '<option value="3">3% — จ้างทำของ / บริการ</option>'+
         '<option value="5">5% — ค่าเช่า / จ้างบุคคล</option>'+
       '</select></div>'+
+      '<div class="fld"><label>วันที่จ่าย / วันที่บนใบสำคัญรับเงิน</label><input id="rvPayDate" type="date" value="'+todayISO()+'"><div class="m-hint" style="margin-top:4px">ค่าเริ่มต้น = วันนี้ · เลือกย้อนหลังได้ (วันนี้จะเป็นวันบนเอกสาร + วันจ่ายจริง)</div></div>'+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
-      '<button class="btn btn-primary" onclick="exDecide(\''+esc(no)+'\',\'approve\',\'\',$(\'exWht\').value)">อนุมัติ + ออกลิงก์เซ็น</button></div>');
+      '<button class="btn btn-primary" onclick="exDecide(\''+esc(no)+'\',\'approve\',\'\',$(\'exWht\').value,$(\'rvPayDate\').value)">อนุมัติ + ออกลิงก์เซ็น</button></div>');
   }
   /** ขอลิงก์เซ็นใหม่ (ลิงก์เดิมหมดอายุ 7 วัน / ส่งผิดคน) — ลิงก์เก่าตายทันที */
   function exRelink(no){
@@ -2308,9 +2309,9 @@
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
       '<button class="btn btn-danger" onclick="exDecide(\''+esc(no)+'\',\'reject\',$(\'exNote\').value.trim())">ไม่อนุมัติ</button></div>');
   }
-  function exDecide(no,decision,note,wht){
+  function exDecide(no,decision,note,wht,payDate){
     toast(decision==='approve'?'กำลังอนุมัติ…':'กำลังบันทึก…');
-    callBusy(decision==='approve'?'กำลังสร้างเอกสาร…':'กำลังบันทึก…', jsonpPost({action:'waExpDecide',uid:UID,no:no,decision:decision,note:note||'',wht:wht||'0'}), decision==='approve'?'อนุมัติแล้ว':'บันทึกแล้ว').then(function(r){
+    callBusy(decision==='approve'?'กำลังสร้างเอกสาร…':'กำลังบันทึก…', jsonpPost({action:'waExpDecide',uid:UID,no:no,decision:decision,note:note||'',wht:wht||'0',payDate:payDate||''}), decision==='approve'?'อนุมัติแล้ว':'บันทึกแล้ว').then(function(r){
       if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; }
       closeModal();
       if(r.docError) toast('✅ อนุมัติแล้ว · ⚠️ ออกเอกสารไม่สำเร็จ: '+r.docError);
