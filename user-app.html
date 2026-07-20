@@ -524,7 +524,7 @@
   var TYPE_EMO = { sick:'🤒', personal:'📄', vacation:'🌴' };
   var TH_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
   var TH_DOW = ['อา','จ','อ','พ','พฤ','ศ','ส'];
-  var MENAME='', TEAM=[], CUSTOMERS=[];   // งาน
+  var MENAME='', MEUID='', TEAM=[], CUSTOMERS=[];   // งาน (MEUID = userId ผู้ใช้ · ใช้กรอง "งานของฉัน" + ตัดตัวเองจาก dropdown มอบหมาย)
   var VIEW_META = {
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
     expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติเบิกจ่าย'],
@@ -875,7 +875,7 @@
     skel();
     jsonp({action:'waMyTasks', uid:UID}).then(function(r){
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
-      MENAME=(r.me&&r.me.name)||''; TEAM=r.team||[]; CUSTOMERS=r.customers||[];
+      MENAME=(r.me&&r.me.name)||''; MEUID=(r.me&&r.me.uid)||MEUID; TEAM=r.team||[]; CUSTOMERS=r.customers||[];
       var ts=r.tasks||[];
       var html=summaryHtml(ts)+'<button class="btn btn-primary" style="width:100%;margin-bottom:14px" onclick="openCreate()">➕ เปิดงานใหม่</button>';
       html+= ts.length ? ts.map(cardMy).join('') : '<div class="card"><div class="emptybox">ยังไม่มีงานที่มอบหมายให้คุณ 😊</div></div>';
@@ -949,13 +949,20 @@
 
   // เปิดงานใหม่ (pid = สร้างในบอร์ด project นั้น · ไม่ส่ง = งานทั่วไป)
   var CREATE_PID='', CREATE_CUST='';
+  /** ป้ายชื่อสมาชิก = "ชื่อจริง (ชื่อเล่น)" (ใช้ display จาก backend ถ้ามี) */
+  function memLabel(m){ return m.display || (m.name+(m.nick&&m.nick!==m.name?' ('+m.nick+')':'')); }
+  /** <option> รายชื่อทีม — value = uid (มอบหมายผูก userId) · selUid = uid ที่เลือกไว้ · excludeUid = ตัดออก (เช่นตัวเอง)
+   *  lead = ข้อความบรรทัดแรก (null = ไม่ใส่) · ข้ามคนที่ไม่มี uid (มอบหมายไม่ได้) */
+  function memOpts(team, selUid, lead, excludeUid){
+    var o = (lead!=null) ? '<option value="">'+lead+'</option>' : '';
+    return o + (team||[]).filter(function(m){ return m.uid && (!excludeUid || m.uid!==excludeUid); })
+      .map(function(m){ return '<option value="'+esc(m.uid)+'"'+((selUid&&m.uid===selUid)?' selected':'')+'>'+esc(memLabel(m))+'</option>'; }).join('');
+  }
   function openCreate(pid){
     CREATE_PID = (typeof pid==='string') ? pid : '';
     var preCust=CREATE_CUST; CREATE_CUST='';   // consume preset ลูกค้า (จากมุมมองบริษัท)
     var opts='<option value="">— ไม่ระบุลูกค้า —</option>'+CUSTOMERS.map(function(c){return '<option value="'+esc(c)+'"'+(c===preCust?' selected':'')+'>'+esc(c)+'</option>';}).join('');
-    var asgOpts='<option value="">— ทำเอง (เป็นงานของฉัน) —</option>'+
-      TEAM.filter(function(m){return m.name!==MENAME;}).map(function(m){
-        var lb=m.name+(m.nick&&m.nick!==m.name?' ('+m.nick+')':''); return '<option value="'+esc(m.name)+'">'+esc(lb)+'</option>'; }).join('');
+    var asgOpts=memOpts(TEAM, '', '— ทำเอง (เป็นงานของฉัน) —', MEUID);
     modal('<h3>➕ เปิดงานใหม่</h3><div id="mErr" class="m-err hidden"></div>'+
       '<div class="fld"><label>ลูกค้า</label><select id="cCust">'+opts+'</select></div>'+
       '<div class="fld"><label>ชื่องาน (ไม่บังคับ)</label><input id="cTitle" placeholder="เช่น ทำสลิปเงินเดือน"></div>'+
@@ -977,8 +984,7 @@
   }
   // โอนงาน
   function openTransfer(no){
-    var opts='<option value="">— เลือกเพื่อน —</option>'+TEAM.filter(function(m){return m.name!==MENAME;}).map(function(m){
-      var lb=m.name+(m.nick&&m.nick!==m.name?' ('+m.nick+')':''); return '<option value="'+esc(m.name)+'">'+esc(lb)+'</option>'; }).join('');
+    var opts=memOpts(TEAM, '', '— เลือกเพื่อน —', MEUID);
     modal('<h3>🔄 โอนงาน '+esc(no)+' ให้เพื่อน</h3><div id="mErr" class="m-err hidden"></div>'+
       '<div class="fld"><label>โอนให้</label><select id="tName">'+opts+'</select></div>'+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
@@ -1010,7 +1016,7 @@
     var act = 'waProjectAdminList';   // ทีม+พี่ = เห็น/จัดการทุก project (เพิ่ม project ได้)
     Promise.all([ jsonp({action:'waBoard',uid:UID,withCancel:'1'}), jsonp({action:act,uid:UID}) ]).then(function(rs){
       var rb=rs[0], rp=rs[1];
-      if(rb&&rb.ok){ ALL_TASKS=rb.tasks||[]; MENAME=(rb.me&&rb.me.name)||MENAME; TEAM=rb.team||TEAM; CUSTOMERS=rb.customers||CUSTOMERS; if(rb.statuses) MB_STATUSES=rb.statuses; } else ALL_TASKS=[];
+      if(rb&&rb.ok){ ALL_TASKS=rb.tasks||[]; MENAME=(rb.me&&rb.me.name)||MENAME; MEUID=(rb.me&&rb.me.uid)||MEUID; TEAM=rb.team||TEAM; CUSTOMERS=rb.customers||CUSTOMERS; if(rb.statuses) MB_STATUSES=rb.statuses; } else ALL_TASKS=[];
       if(rp&&rp.ok){ PROJECTS=rp.projects||[]; if(rp.team) TEAM_ALL=rp.team; } else PROJECTS=[];
       // ถ้าค่าที่เลือกไว้หายไป (project ถูกลบ) → กลับไปทั้งหมด
       if(PJ_SEL && !pjSelExists()) PJ_SEL='';
@@ -1094,7 +1100,7 @@
         '<div class="bd-crow"><span class="bd-badge '+bBadge(t.status)+'">'+esc(t.status)+'</span>'+
           (t.dueMs?'<span class="'+(isOverdue_(t)?'bd-over':'bd-age')+'">'+bThDate(t.dueMs)+(isOverdue_(t)?' เกินกำหนด':'')+'</span>':'')+'</div>'+
         '<div class="bd-ctitle">'+esc(bTtl(t))+'</div>'+
-        '<div class="bd-casg'+(t.assignee?'':' none')+'">👤 '+(t.assignee?esc(t.assignee):'ยังไม่มอบหมาย')+'</div>';
+        '<div class="bd-casg'+(t.assignee?'':' none')+'">👤 '+(t.assignee?esc(t.assigneeDisplay||t.assignee):'ยังไม่มอบหมาย')+'</div>';
     var btns=[];
     if(t.mine && t.status.indexOf('เสร็จ')<0 && t.status.indexOf('ยกเลิก')<0){
       if(t.status.indexOf('กำลังทำ')<0 && t.status.indexOf('รอตรวจ')<0)
@@ -1115,7 +1121,7 @@
       '<div class="tk-cust">'+esc(t.title||t.customer||'-')+'</div>'+
       (t.customer&&t.title?'<div class="tk-cat">'+esc(t.customer)+'</div>':'')+
       (t.detail?'<div class="tk-detail">'+esc(t.detail)+'</div>':'')+
-      '<div class="tk-kv"><b>ผู้รับผิดชอบ:</b> '+(t.assignee?esc(t.assignee):'<i>ยังไม่มีคนรับ</i>')+'</div>';
+      '<div class="tk-kv"><b>ผู้รับผิดชอบ:</b> '+(t.assignee?esc(t.assigneeDisplay||t.assignee):'<i>ยังไม่มีคนรับ</i>')+'</div>';
     var tpc=statusPct(t.status);
     if(tpc!==null) h+='<div class="tk-prog"><span class="tk-prog-l">ความคืบหน้า</span><span class="tk-prog-n '+pctClass(tpc)+'-t">'+tpc+'%</span></div>'+pctBar(tpc);
     if(t.note){ var isFix=t.note.indexOf('พี่ให้แก้ไข')>=0;
@@ -1152,7 +1158,6 @@
     var stList=ME_STAT.length?ME_STAT:['🆕 ใหม่','🔵 กำลังทำ','🔍 รอตรวจ','✅ เสร็จ'];
     var stOpts=stList.filter(function(s){ return IS_OWNER || s.indexOf('ยกเลิก')<0 || s===t.status; })   // ทีมตั้ง "ยกเลิก" ไม่ได้
       .map(function(s){ return '<option'+(s===t.status?' selected':'')+'>'+esc(s)+'</option>'; }).join('');
-    function tmOpts(sel,lead){ return '<option value="">'+lead+'</option>'+ME_TEAM.map(function(m){ var n=m.name||m; return '<option value="'+esc(n)+'"'+(n===sel?' selected':'')+'>'+esc(n+(m.nick&&m.nick!==m.name?' ('+m.nick+')':''))+'</option>'; }).join(''); }
     var curCatK=bCat(t.category).k;
     var catOpts=BCATS_EDIT.map(function(o){ return '<option value="'+esc(o.v)+'"'+(o.k===curCatK?' selected':'')+'>'+o.lb+'</option>'; }).join('');
     var pjOpts='<option value="">— ไม่ผูก project —</option>'+ME_PROJ.map(function(pp){ return '<option value="'+esc(pp.id)+'"'+(pp.id===t.project?' selected':'')+'>'+esc(pp.name)+'</option>'; }).join('');
@@ -1163,8 +1168,8 @@
       (t.detail?'<div class="fld"><label>รายละเอียด</label><div style="white-space:pre-wrap;font-size:14px;color:#4A5262">'+esc(t.detail)+'</div></div>':'')+
       '<div class="fld"><label>🔗 ลิงก์งาน <span class="bd-age">(หลายลิงก์ = บรรทัดละ ชื่อ | url)</span></label><textarea id="meWl" placeholder="https://...">'+esc(t.worklink||'')+'</textarea></div>'+
       '<div class="fld"><label>สถานะ</label><select id="meStatus">'+stOpts+'</select></div>'+
-      '<div class="fld"><label>ผู้รับผิดชอบ</label><select id="meAsg">'+tmOpts(t.assignee,'— ยังไม่มอบหมาย —')+'</select></div>'+
-      '<div class="fld"><label>ผู้ตรวจงาน</label><select id="meRev">'+tmOpts(t.reviewer,'— ผู้ดูแล (ค่าเริ่มต้น) —')+'</select></div>'+
+      '<div class="fld"><label>ผู้รับผิดชอบ</label><select id="meAsg">'+memOpts(ME_TEAM, t.assigneeUid, '— ยังไม่มอบหมาย —')+'</select></div>'+
+      '<div class="fld"><label>ผู้ตรวจงาน</label><select id="meRev">'+memOpts(ME_TEAM, t.reviewerUid, '— ผู้ดูแล (ค่าเริ่มต้น) —')+'</select></div>'+
       '<div class="fld"><label>ประเภท <span class="bd-age">(กำหนดสีการ์ด)</span></label><select id="meCat">'+catOpts+'</select></div>'+
       '<div class="fld"><label>กำหนดเสร็จ</label><input id="meDue" type="date" value="'+dueVal+'"></div>'+
       '<div class="fld"><label>📁 จัดเข้า Project</label><select id="meProject">'+pjOpts+'</select></div>'+
@@ -1179,8 +1184,8 @@
     if(title!==(t.title||'')) jobs.push(jsonp({action:'waSetTitle',uid:UID,no:no,title:title}));
     if(cust!==(t.customer||'')) jobs.push(jsonp({action:'waSetCustomer',uid:UID,no:no,customer:cust}));
     if(st!==t.status) jobs.push(jsonp({action:'waSetStatus',uid:UID,no:no,status:st}));
-    if(asg!==(t.assignee||'')) jobs.push(jsonp({action:'waAssign',uid:UID,no:no,name:asg||' '}));
-    if(rev!==(t.reviewer||'')) jobs.push(jsonp({action:'waSetReviewer',uid:UID,no:no,reviewer:rev}));
+    if(asg!==(t.assigneeUid||'')) jobs.push(jsonp({action:'waAssign',uid:UID,no:no,name:asg||' '}));   // ส่ง uid (' ' = ล้าง)
+    if(rev!==(t.reviewerUid||'')) jobs.push(jsonp({action:'waSetReviewer',uid:UID,no:no,reviewer:rev||' '}));
     if(bCat(cat).k!==bCat(t.category).k) jobs.push(jsonp({action:'waSetCategory',uid:UID,no:no,category:cat}));
     var curDue=t.dueMs?bIso(t.dueMs):'';
     if(due!==curDue) jobs.push(jsonp({action:'waSetDue',uid:UID,no:no,due:due}));
@@ -2881,7 +2886,7 @@
       '<span class="tk-badge b-review">'+esc(t.status)+'</span></div>'+
       '<div class="tk-cust">'+esc(t.customer||'-')+'</div>'+
       (t.detail?'<div class="tk-detail">'+esc(t.detail)+'</div>':'')+
-      '<div class="tk-asg'+(t.assignee?'':' none')+'">👤 '+(t.assignee?esc(t.assignee):'ยังไม่มอบหมาย')+'</div>';
+      '<div class="tk-asg'+(t.assignee?'':' none')+'">👤 '+(t.assignee?esc(t.assigneeDisplay||t.assignee):'ยังไม่มอบหมาย')+'</div>';
     if(t.worklink) h+='<div class="tk-kv"><b>ลิงก์งานจากทีม:</b> '+wlLinksHtml(t.worklink)+'</div>';
     if(t.reply) h+='<div class="tk-kv"><b>คำอธิบายถึงลูกค้า:</b> '+esc(t.reply)+'</div>';
     if(t.note) h+='<div class="tk-kv"><b>โน้ตจากทีม:</b> '+esc(t.note)+'</div>';
@@ -3020,7 +3025,7 @@
   // บอร์ดจัดการงาน (เฉพาะพี่/owner) — การ์ดสรุป + แท็บมุมมอง + ตาราง + จัดการงาน
   // ข้อมูลจาก waPmBoard · แสดงใน #board-wrap (CSS scope กันชนกับหน้าอื่น)
   // ═══════════════════════════════════════════════════════════
-  var BVIEW='list', BTASKS=[], BALL=[], BSCOPE='all', BTEAM=[], BSTATUSES=[], BTYPESLIST=[], BOWNER='', BNOW=0, BCATS=[], BPROJECTS=[];
+  var BVIEW='list', BTASKS=[], BALL=[], BSCOPE='all', BTEAM=[], BSTATUSES=[], BTYPESLIST=[], BOWNER='', BOWNERUID='', BNOW=0, BCATS=[], BPROJECTS=[];
   var BFILTER='', BFCAT='', BFPROJECT='', BSORT='due', BQ='', BCAL=null, BRANGE='all', BDAY=86400000;
   var BVIEWS=[['list','📋 รายการ'],['type','📁 ตามประเภท'],['company','🏢 ราย บริษัท'],['cards','🗂️ การ์ด'],['kanban','📊 คอลัมน์'],['calendar','📅 ปฏิทิน']];
   var BSCOPE_EMPTY={ all:'ยังไม่มีงานในระบบ 😊', mine:'ยังไม่มีงานที่มอบหมายให้คุณ 😊', review:'ไม่มีงานรอตรวจในตอนนี้ 🎉' };
@@ -3050,12 +3055,12 @@
     var s=bThDate(t.dueMs); if(bOver(t)) s+=' <span class="bd-over">เกินกำหนด</span>'; return s; }
 
   function bScopeTasks(list){
-    if(BSCOPE==='mine')   return list.filter(function(t){ return t.assignee && BOWNER && t.assignee===BOWNER; });
+    if(BSCOPE==='mine')   return list.filter(function(t){ return BOWNERUID ? t.assigneeUid===BOWNERUID : (t.assignee && BOWNER && t.assignee===BOWNER); });
     if(BSCOPE==='review') return list.filter(function(t){ return t.status.indexOf('รอตรวจ')>=0; });
     return list;
   }
   function bApplyData(r){
-    BALL=r.tasks||[]; BTEAM=r.team||[]; BSTATUSES=r.statuses||[]; BTYPESLIST=r.types||[]; BOWNER=r.owner||''; BNOW=r.now||Date.now(); BPROJECTS=r.projects||[];
+    BALL=r.tasks||[]; BTEAM=r.team||[]; BSTATUSES=r.statuses||[]; BTYPESLIST=r.types||[]; BOWNER=r.owner||''; BOWNERUID=r.ownerUid||''; BNOW=r.now||Date.now(); BPROJECTS=r.projects||[];
     if(r.customers) CUSTOMERS=r.customers;   // รายชื่อลูกค้าจากชีตกลุ่มลูกค้า → ใช้ทำ datalist ตอนสร้างงาน/project
     BTASKS=bScopeTasks(BALL);
     var cs={}; BTASKS.forEach(function(t){ if(t.category) cs[t.category]=1; }); BCATS=Object.keys(cs);
@@ -3232,7 +3237,7 @@
         '<td>'+esc(t.customer||'-')+'</td>'+
         '<td><span class="bd-badge '+bBadge(t.status)+'">'+esc(t.status)+'</span></td>'+
         '<td>'+bDueHtml(t)+'</td>'+
-        '<td>'+(t.assignee?esc(t.assignee):'<span class="bd-asg none">ยังไม่มอบ</span>')+'</td>'+
+        '<td>'+(t.assignee?esc(t.assigneeDisplay||t.assignee):'<span class="bd-asg none">ยังไม่มอบ</span>')+'</td>'+
         '<td><button class="bd-btn bd-o sm" onclick="event.stopPropagation();bOpenTask(\''+esc(t.no)+'\')">เปิดงาน</button></td></tr>';
     }).join('');
     $('bView').innerHTML='<div class="bd-tblwrap"><table><thead><tr><th style="width:40px">ลำดับ</th><th>รหัสงาน</th><th>งาน</th><th>ลูกค้า</th><th>สถานะ</th><th>กำหนด</th><th>ผู้รับผิดชอบ</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
@@ -3258,7 +3263,7 @@
         '<div class="bd-crow"><span class="bd-badge '+bBadge(t.status)+'">'+esc(t.status)+'</span>'+
           (t.dueMs?'<span class="'+(bOver(t)?'bd-over':'bd-age')+'">'+bThDate(t.dueMs)+(bOver(t)?' เกินกำหนด':'')+'</span>':'')+'</div>'+
         '<div class="bd-ctitle">'+esc(bTtl(t))+'</div>'+
-        '<div class="bd-casg'+(t.assignee?'':' none')+'">👤 '+(t.assignee?esc(t.assignee):'ยังไม่มอบหมาย')+'</div>'+
+        '<div class="bd-casg'+(t.assignee?'':' none')+'">👤 '+(t.assignee?esc(t.assigneeDisplay||t.assignee):'ยังไม่มอบหมาย')+'</div>'+
         (t.worklink?wlClinksHtml(t.worklink):'')+
       '</div></div>';
   }
@@ -3270,7 +3275,7 @@
       return '<div class="bd-kcol"><h3><span class="bd-dot" style="background:'+bDot(st)+'"></span>'+esc(st)+'<span class="cnt">'+items.length+'</span></h3>'+
         items.map(function(t){ return '<div class="bd-kcard" onclick="bOpenTask(\''+esc(t.no)+'\')"><div class="bd-tt">'+esc(bTtl(t))+'</div>'+
           '<div class="cust">'+esc(t.customer||'-')+'</div><div class="bd-foot">'+(t.dueMs?'<span class="'+(bOver(t)?'bd-over':'bd-age')+'">'+bThDate(t.dueMs)+'</span>':'')+
-          '<span class="bd-asg'+(t.assignee?'':' none')+'" style="margin-left:auto">'+(t.assignee?esc(t.assignee):'ยังไม่มอบ')+'</span></div></div>'; }).join('')+'</div>';
+          '<span class="bd-asg'+(t.assignee?'':' none')+'" style="margin-left:auto">'+(t.assignee?esc(t.assigneeDisplay||t.assignee):'ยังไม่มอบ')+'</span></div></div>'; }).join('')+'</div>';
     }).join('')+'</div>';
   }
   function bViewCalendar(arr){
@@ -3370,8 +3375,8 @@
     var t=bFind(no); if(!t) return;
     var stOpts=BSTATUSES.filter(function(s){ return IS_OWNER || s.indexOf('ยกเลิก')<0 || s===t.status; })   // ทีมตั้ง "ยกเลิก" ไม่ได้ (คงไว้ถ้าเป็นสถานะปัจจุบัน)
       .map(function(s){return '<option'+(s===t.status?' selected':'')+'>'+esc(s)+'</option>';}).join('');
-    var asgOpts='<option value="">— ยังไม่มอบหมาย —</option>'+BTEAM.map(function(mm){var n=mm.name;return '<option value="'+esc(n)+'"'+(n===t.assignee?' selected':'')+'>'+esc(n+(mm.nick&&mm.nick!==mm.name?' ('+mm.nick+')':''))+'</option>';}).join('');
-    var revOpts='<option value="">— '+esc(BOWNER||'ผู้ดูแล')+' (ค่าเริ่มต้น) —</option>'+BTEAM.map(function(mm){var n=mm.name;return '<option value="'+esc(n)+'"'+(n===t.reviewer?' selected':'')+'>'+esc(n)+'</option>';}).join('');
+    var asgOpts=memOpts(BTEAM, t.assigneeUid, '— ยังไม่มอบหมาย —');
+    var revOpts=memOpts(BTEAM, t.reviewerUid, '— '+esc(BOWNER||'ผู้ดูแล')+' (ค่าเริ่มต้น) —');
     var curCatK=bCat(t.category).k;
     var catOpts=BCATS_EDIT.map(function(o){return '<option value="'+esc(o.v)+'"'+(o.k===curCatK?' selected':'')+'>'+o.lb+'</option>';}).join('');
     var dueVal=t.dueMs?bIso(t.dueMs):'';
@@ -3392,7 +3397,7 @@
       '<div class="fld"><label>กำหนดเสร็จ</label><input id="mDue" type="date" value="'+dueVal+'"></div>'+
       '<div class="fld"><label>📁 จัดเข้า Project <span class="bd-age">(กองงานเป็นกลุ่ม)</span></label><select id="mProject" onchange="bProjSel(\''+esc(no)+'\')">'+pjOpts+'</select></div>'+
       '<div class="m-act"><button class="btn btn-primary" onclick="bSaveTask(\''+esc(no)+'\')">💾 บันทึก</button>'+
-      ((IS_OWNER||t.assignee===BOWNER)&&t.hasGroup&&!bDone(t)?'<button class="btn btn-ok" onclick="bSendCust(\''+esc(no)+'\')">📨 ส่งลูกค้า</button>':'')+   // ทีมส่งได้เฉพาะงานตัวเอง
+      ((IS_OWNER||(BOWNERUID&&t.assigneeUid===BOWNERUID))&&t.hasGroup&&!bDone(t)?'<button class="btn btn-ok" onclick="bSendCust(\''+esc(no)+'\')">📨 ส่งลูกค้า</button>':'')+   // ทีมส่งได้เฉพาะงานตัวเอง
       '<button class="btn btn-ghost" onclick="closeModal()">ปิด</button></div>'+
       (t.status.indexOf('ยกเลิก')<0?'<button class="btn btn-ghost" style="width:100%;margin-top:8px" onclick="bOpenTransfer(\''+esc(no)+'\')">🔄 โอนงานให้คนอื่น</button>':'')+
       (!bDone(t)&&t.status.indexOf('ยกเลิก')<0?'<button class="btn btn-ghost" style="width:100%;margin-top:8px" onclick="bOpenReturn(\''+esc(no)+'\')">🔁 ส่งกลับให้ทีมแก้ไข</button>':'')+
@@ -3404,8 +3409,8 @@
     var jobs=[];
     if(title!==(t.title||'')) jobs.push(jsonp({action:'waSetTitle',uid:UID,no:no,title:title}));
     if(st!==t.status) jobs.push(jsonp({action:'waSetStatus',uid:UID,no:no,status:st}));
-    if(asg!==(t.assignee||'')) jobs.push(jsonp({action:'waAssign',uid:UID,no:no,name:asg||' '}));
-    if(rev!==(t.reviewer||'')) jobs.push(jsonp({action:'waSetReviewer',uid:UID,no:no,reviewer:rev}));
+    if(asg!==(t.assigneeUid||'')) jobs.push(jsonp({action:'waAssign',uid:UID,no:no,name:asg||' '}));   // ส่ง uid (' ' = ล้าง)
+    if(rev!==(t.reviewerUid||'')) jobs.push(jsonp({action:'waSetReviewer',uid:UID,no:no,reviewer:rev||' '}));
     if(bCat(cat).k!==bCat(t.category).k) jobs.push(jsonp({action:'waSetCategory',uid:UID,no:no,category:cat}));   // เทียบด้วย key (สั่งงาน↔แจ้งงาน = ไม่เปลี่ยน)
     var curDue=t.dueMs?bIso(t.dueMs):'';
     if(due!==curDue) jobs.push(jsonp({action:'waSetDue',uid:UID,no:no,due:due}));
@@ -3479,7 +3484,7 @@
   // โอนงาน (บอร์ด owner) — เลือกคนใหม่ → waAssign (แจ้ง LINE คนใหม่อัตโนมัติ)
   function bOpenTransfer(no){
     var t=bFind(no); if(!t) return;
-    var opts='<option value="">— เลือกคนรับงาน —</option>'+BTEAM.map(function(mm){var n=mm.name;return '<option value="'+esc(n)+'"'+(n===t.assignee?' selected':'')+'>'+esc(n+(mm.nick&&mm.nick!==mm.name?' ('+mm.nick+')':''))+'</option>';}).join('');
+    var opts=memOpts(BTEAM, '', '— เลือกคนรับงาน —', t.assigneeUid);   // ตัดคนที่ถืออยู่ออก (โอนให้คนอื่น)
     modal('<h3>🔄 โอนงาน '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
       '<div class="m-hint">เลือกคนรับงานใหม่ → ระบบเปลี่ยนผู้รับผิดชอบ + แจ้ง LINE ให้เขาทันที</div>'+
       '<div class="fld"><label>โอนให้</label><select id="mtAsg">'+opts+'</select></div>'+
@@ -3519,7 +3524,7 @@
   }
   function custDatalist(id){ return '<datalist id="'+id+'">'+custOptions().map(function(c){ return '<option value="'+esc(c)+'">'; }).join('')+'</datalist>'; }
   function bOpenCreate(){
-    var asgOpts='<option value="">— ยังไม่มอบหมาย —</option>'+BTEAM.map(function(mm){return '<option value="'+esc(mm.name)+'">'+esc(mm.name)+'</option>';}).join('');
+    var asgOpts=memOpts(BTEAM, '', '— ยังไม่มอบหมาย —');
     var catOpts=BCATS_EDIT.map(function(o){return '<option value="'+esc(o.v)+'">'+o.lb+'</option>';}).join('');
     var pjOpts='<option value="">— ไม่ผูก project —</option>'+BPROJECTS.map(function(pp){return '<option value="'+esc(pp.id)+'">📁 '+esc(pp.name)+'</option>';}).join('');
     modal('<h3>+ เปิดงานใหม่</h3><div id="mErr" class="m-err hidden"></div>'+
@@ -3565,6 +3570,7 @@
     jsonp({action:'waBootstrap', uid:UID}).then(function(r){
       if(!r||!r.ok){ fatal((r&&r.error)||'โหลดข้อมูลไม่สำเร็จ'); return; }
       NICK=r.nick||''; if(NICK){ $('hdSub').textContent=NICK; }
+      MEUID=r.uid||UID||MEUID;   // userId ผู้ใช้ (ใช้กรอง "งานของฉัน" + ตัดตัวเองจาก dropdown)
       IS_OWNER=!!r.isOwner;
       if(IS_OWNER){ var nr=$('navReview'); if(nr) nr.style.display='';      // แท็บรอตรวจ = เฉพาะพี่/ผู้ตรวจ
         var nel=$('navExpDashLabel'); if(nel) nel.textContent='สรุป/อนุมัติเบิก';   // พี่: หน้าสรุปรวมอนุมัติเบิกแล้ว (ตัดแท็บอนุมัติแยก)
