@@ -2580,9 +2580,11 @@
     if(!r||!r.ok){ el.innerHTML='<div class="m-hint" style="color:#c0392b;margin-top:10px">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div>'; return; }
     if(!r.people.length){ el.innerHTML='<div class="m-hint" style="margin-top:10px">ยังไม่มี OT อนุมัติในเดือน '+esc(r.monthThai)+'</div>'; return; }
     var rows=r.people.map(function(x){
-      var badge=x.sent?'<span style="color:#1E9E5A">✅ ส่งแล้ว</span>':(x.hasDoc?'<span style="color:#1B72E8">📄 สร้างแล้ว</span>':'<span style="color:#8A94A6">—</span>');
-      var name=(x.hasDoc&&x.pdfUrl)?('<a href="'+esc(x.pdfUrl)+'" target="_blank" style="color:#1B72E8">'+esc(x.nick)+'</a>'):esc(x.nick);
-      return '<tr><td>'+name+'</td><td style="text-align:right">'+x.count+'</td><td style="text-align:right">'+x.hours+'</td><td style="text-align:right">'+money(x.amount)+'</td><td style="text-align:center">'+badge+'</td></tr>';
+      var openBtn=(x.hasDoc&&x.pdfUrl)?'<a href="'+esc(x.pdfUrl)+'" target="_blank" style="display:inline-block;padding:3px 10px;border:1px solid #1B72E8;border-radius:6px;color:#1B72E8;font-size:12px;text-decoration:none;white-space:nowrap">📄 เปิดเอกสาร</a>':'';
+      var docCell=x.sent
+        ? (openBtn?openBtn+'<div style="color:#1E9E5A;font-size:11px;margin-top:3px">✅ ส่งแล้ว</div>':'<span style="color:#1E9E5A">✅ ส่งแล้ว</span>')
+        : (x.hasDoc?(openBtn||'<span style="color:#1B72E8">📄 สร้างแล้ว</span>'):'<span style="color:#8A94A6">ยังไม่สร้าง</span>');
+      return '<tr><td>'+esc(x.nick)+'</td><td style="text-align:right">'+x.count+'</td><td style="text-align:right">'+x.hours+'</td><td style="text-align:right">'+money(x.amount)+'</td><td style="text-align:center">'+docCell+'</td></tr>';
     }).join('');
     el.innerHTML='<style>.ot-sum{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}.ot-sum th,.ot-sum td{padding:6px 8px;border-bottom:1px solid #eef1f5}.ot-sum th{color:#8A94A6;font-weight:600;text-align:left}.ot-sum tfoot td{font-weight:700;border-top:2px solid #dfe4ea;border-bottom:none}</style>'+
       '<div class="ds-h" style="margin-top:12px">📊 สรุปเดือน '+esc(r.monthThai)+'</div>'+
@@ -2599,7 +2601,7 @@
     var month=otMonthVal(); if(!month){ toast('พิมพ์เดือน พ.ศ. เช่น 2569-07 ค่ะ'); return; }
     callBusy('กำลังสร้างเอกสารสรุป OT…', jsonpPost({action:'waOtGenDocs',uid:UID,month:month}), 'สร้างแล้ว').then(function(r){
       if(!r||!r.ok){ toast((r&&r.error)||'สร้างไม่สำเร็จ'); return; }
-      toast('📄 สร้างเอกสาร '+r.docs.length+' คนแล้ว · ตรวจได้ที่ตารางสรุป (คลิกชื่อ = เปิด PDF)'+(r.failed&&r.failed.length?' · พลาด '+r.failed.join(','):''));
+      toast('📄 สร้างเอกสาร '+r.docs.length+' คนแล้ว · กดปุ่ม "เปิดเอกสาร" ในตารางเพื่อตรวจ'+(r.failed&&r.failed.length?' · พลาด '+r.failed.join(','):''));
       otViewSummary();
     }).catch(function(e){ toast(e.message); });
   }
