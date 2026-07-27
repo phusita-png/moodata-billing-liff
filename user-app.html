@@ -493,6 +493,8 @@
       <svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6Z"/><path d="M14 3v5h5M9 12h6M9 16h4"/></svg><span>ตั้งเบิกลูกค้า</span></button>
     <button class="nav-btn active" data-view="leave" aria-label="การลา">
       <svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></svg><span>การลา</span></button>
+    <button class="nav-btn" data-view="approve" aria-label="อนุมัติลา" id="navAppr" style="display:none">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 2.5v4M16 2.5v4M8.5 14l2 2 4-4"/></svg><span>อนุมัติลา</span></button>
     <button class="nav-btn" data-view="ot" aria-label="ขอ OT">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12.5" r="8.5"/><path d="M12 8v5l3 2"/></svg><span>ขอ OT</span></button>
     <button class="nav-btn" data-view="otapprove" aria-label="อนุมัติ OT" id="navOtAppr" style="display:none">
@@ -3597,6 +3599,7 @@
       if(IS_OWNER){ var nr=$('navReview'); if(nr) nr.style.display='';      // แท็บรอตรวจ = เฉพาะพี่/ผู้ตรวจ
         var nel=$('navExpDashLabel'); if(nel) nel.textContent='สรุป/อนุมัติเบิก';   // พี่: หน้าสรุปรวมอนุมัติเบิกแล้ว (ตัดแท็บอนุมัติแยก)
         var nb=$('navReimb'); if(nb) nb.style.display='';                 // แท็บตั้งเบิกลูกค้า = เฉพาะพี่
+        var na=$('navAppr'); if(na) na.style.display='';                  // แท็บอนุมัติลา (+ยื่นลาแทน) = เฉพาะพี่/HR
         var noa=$('navOtAppr'); if(noa) noa.style.display=''; }           // แท็บอนุมัติ OT = เฉพาะพี่/HR
         // navTaxDoc (ภาษี/เอกสาร) ซ่อนไว้ก่อน — เปิดตอน v2 (ภ.ง.ด.1/3/53) เสร็จ
       $('loader').classList.add('hidden'); $('app').classList.remove('hidden');
