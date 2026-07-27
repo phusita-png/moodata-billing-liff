@@ -518,7 +518,7 @@
   // ═══════════════════════════════
 
   var UID='', IDTOKEN='', NICK='', VIEW='', IS_OWNER=false;
-  var TYPES=[], QUOTA=null, LEAVES=[], HOLIDAYS=[], SCHEDULE=null;
+  var TYPES=[], QUOTA=null, LEAVES=[], HOLIDAYS=[], SCHEDULE=null, LV_ISOWNER=false, LV_TEAM=[];
   var CAL=new Date();   // เดือนที่ปฏิทินแสดงอยู่
   var LF = { type:'sick', start:null, end:null, period:'full', reason:'', stime:'', etime:'' };  // start/end = Date|null
   var TYPE_EMO = { sick:'🤒', personal:'📄', vacation:'🌴' };
@@ -643,7 +643,7 @@
 
   // ═══════════ VIEW: ลา ═══════════
   var LVCACHE={at:0,data:null}, DOCCACHE={at:0,data:null}, SLIPCACHE={}, INITTTL=45000;   // แคชหน้าลา/เอกสาร/สลิป
-  function _applyLeave(r){ TYPES=r.types||[]; QUOTA=r.quota; LEAVES=r.leaves||[]; HOLIDAYS=r.holidays||[]; SCHEDULE=r.schedule||null; }
+  function _applyLeave(r){ TYPES=r.types||[]; QUOTA=r.quota; LEAVES=r.leaves||[]; HOLIDAYS=r.holidays||[]; SCHEDULE=r.schedule||null; LV_ISOWNER=!!r.isOwner; LV_TEAM=r.team||[]; }
   function renderLeave(force){
     if(!force && LVCACHE.data){ _applyLeave(LVCACHE.data); paintLeave(); if(Date.now()-LVCACHE.at>INITTTL) _leaveFetch(true); return; }
     skel(); _leaveFetch(false);
@@ -674,6 +674,10 @@
     // ปุ่มแจ้งลา + ฟอร์ม (การ์ด)
     html+='<div class="card"><div class="card-title"><span class="ic"></span>📝 แจ้งลา</div>'+
       '<div id="lvErr" class="edit-banner hidden" style="background:#fbe7e7;color:#c0392b"></div>'+
+      (LV_ISOWNER ? '<label class="field-lb">🧑‍💼 ยื่นลาแทนพนักงาน (ฝ่ายบุคคล)</label>'+
+        '<select id="lvFor"><option value="">— ตัวเอง —</option>'+
+        LV_TEAM.map(function(m){ return '<option value="'+esc(m.uid)+'">'+esc(m.nick)+'</option>'; }).join('')+'</select>'+
+        '<div class="field-lb" style="color:#0a7a55;font-weight:400;margin:2px 0 8px">เลือกพนักงาน = ยื่นลาแทน + อนุมัติให้ทันที (โควต้าถูกหักเลย)</div>' : '')+
       '<label class="field-lb">ประเภทการลา</label><div id="typeGrid" class="type-grid"></div>'+
       '<label class="field-lb">📅 เลือกวันที่ลา</label><div id="calLeave"></div>'+
       '<label class="field-lb">ช่วงเวลา</label><div id="seg" class="seg"></div><div id="lvTime"></div>'+
@@ -685,10 +689,11 @@
     html+= LEAVES.length ? '<div class="card" style="padding:6px 12px">'+LEAVES.map(histLeave).join('')+'</div>'
                          : '<div class="card"><div class="emptybox">ยังไม่มีประวัติการลา 😊</div></div>';
     $('main').innerHTML=html;
-    LF={ type:'sick', start:null, end:null, period:'full', reason:'', stime:'', etime:'' };
+    LF={ type:'sick', start:null, end:null, period:'full', reason:'', stime:'', etime:'', forUid:'' };
     CAL=new Date(); CAL.setDate(1);
     renderTypeGrid(); renderCal(); renderSeg(); renderLvTime(); renderLvSum();
     $('reason').addEventListener('input', function(e){ LF.reason=e.target.value; });
+    var lvForEl=$('lvFor'); if(lvForEl) lvForEl.addEventListener('change', function(e){ LF.forUid=e.target.value; });
     $('btnLeave').addEventListener('click', submitLeave);
   }
   function lvBadge(st){ if(st.indexOf('รอ')>=0)return 'lvb-wait'; if(st.indexOf('ไม่อนุมัติ')>=0||st.indexOf('ยกเลิก')>=0)return 'lvb-no'; if(st.indexOf('อนุมัติ')>=0)return 'lvb-ok'; return 'lvb-wait'; }
@@ -784,9 +789,9 @@
     } else if(calcDays()<=0){ lvErr('ช่วงที่เลือกเป็นวันหยุดทั้งหมด เลือกวันทำงานนะคะ 😊'); return; }
     if(!LF.reason.trim()){ lvErr('กรอกเหตุผลก่อนค่ะ'); return; }
     toast('กำลังส่งใบลา…');
-    jsonp({action:'waLeaveSubmit', uid:UID, type:LF.type, start:iso(LF.start), end:iso(LF.end), period:LF.period, stime:LF.stime, etime:LF.etime, reason:LF.reason.trim()})
+    jsonp({action:'waLeaveSubmit', uid:UID, type:LF.type, start:iso(LF.start), end:iso(LF.end), period:LF.period, stime:LF.stime, etime:LF.etime, reason:LF.reason.trim(), forUid:LF.forUid||''})
       .then(function(r){ if(!r||!r.ok){ lvErr((r&&r.error)||'ส่งไม่สำเร็จ'); return; }
-        toast('✅ ส่งใบลา '+r.no+' แล้ว (รออนุมัติ)'); renderLeave(true);
+        toast(r.byHr ? ('✅ ยื่นลาแทน '+esc(r.nick||'')+' + อนุมัติแล้ว ('+r.no+')') : ('✅ ส่งใบลา '+r.no+' แล้ว (รออนุมัติ)')); renderLeave(true);
       }).catch(function(e){ lvErr(e.message); });
   }
 
