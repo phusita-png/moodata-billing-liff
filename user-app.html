@@ -20,6 +20,27 @@
   .lvb{ margin-left:auto; font-size:12px; padding:3px 11px; border-radius:999px; font-weight:600; white-space:nowrap; }
   .lvb-wait{ background:var(--ot-tint); color:var(--ot); } .lvb-ok{ background:var(--green-tint); color:var(--green); }
   .lvb-no{ background:#fbe7e7; color:#c0392b; }
+  /* ═══ หน้า 🏠 ภาพรวม (พี่กี้เคาะ 29 ก.ค. 2569) — การ์ดสรุปทั้งระบบหน้าเดียว ═══ */
+  .hm-todo{ background:linear-gradient(135deg,#FFF7E8,#FFEFD6); border:1px solid #F3D9A6; border-radius:var(--radius); padding:14px 15px; margin-bottom:14px; }
+  .hm-todo .tdh{ font-weight:700; font-size:14px; margin-bottom:10px; color:#8A5A08; }
+  .hm-todo .tdl{ display:flex; flex-wrap:wrap; gap:8px; }
+  .hm-todo button{ font:inherit; font-size:13px; cursor:pointer; border:1px solid #EBC98A; background:#fff; color:#7A4E06;
+    border-radius:999px; padding:7px 13px; display:inline-flex; align-items:center; gap:7px; }
+  .hm-todo button:hover{ border-color:#D9A94F; }
+  .hm-todo button b{ background:#DC2626; color:#fff; border-radius:999px; padding:0 7px; font-size:12px; }
+  .hm-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:12px; }
+  .hm-c{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:14px 15px; }
+  .hm-c .hh{ display:flex; align-items:center; gap:8px; font-weight:700; font-size:14.5px; margin-bottom:12px; }
+  .hm-c .hh .go{ margin-left:auto; font-size:12px; font-weight:600; color:var(--red); cursor:pointer; }
+  .hm-n{ display:flex; gap:14px; flex-wrap:wrap; }
+  .hm-n > div{ min-width:64px; }
+  .hm-n b{ display:block; font-size:21px; line-height:1.2; color:#1F2733; font-variant-numeric:tabular-nums; }
+  .hm-n b.warn{ color:#DC2626; } .hm-n b.ok{ color:#1E9E5A; } .hm-n b.info{ color:#1B72E8; } .hm-n b.wait{ color:#C87F1E; }
+  .hm-n span{ font-size:11.5px; color:var(--muted); }
+  .hm-sub{ margin-top:11px; padding-top:10px; border-top:1px dashed var(--line); font-size:12.5px; color:#4A5262; }
+  .hm-sub .sl{ display:flex; justify-content:space-between; gap:10px; margin-top:4px; }
+  .hm-sub .sl b{ font-weight:600; color:#1F2733; font-variant-numeric:tabular-nums; }
+  .hm-err{ font-size:12px; color:#C0392B; }
   .soon-wrap{ text-align:center; padding:48px 22px; color:var(--muted); }
   .soon-wrap .e-emo{ font-size:40px; margin-bottom:10px; }
   /* งาน (task card) */
@@ -468,6 +489,10 @@
   <nav class="nav">
     <div class="nav-brand"><span class="nb-logo"><img src="mascot-wave2.png" alt="ยินดี"></span><div class="nb-txt">Moodata Yindee<small>ทีมงาน</small></div></div>
 
+    <div class="nav-sec">ภาพรวม</div>
+    <button class="nav-btn active" data-view="home" aria-label="ภาพรวม">
+      <svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10V20h13V10"/><path d="M10 20v-5h4v5"/></svg><span>ภาพรวม</span></button>
+
     <div class="nav-sec">งาน</div>
     <button class="nav-btn" data-view="projects" aria-label="บอร์ดงาน">
       <svg viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="7" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="6" rx="1.5"/><rect x="14" y="14" width="7" height="6" rx="1.5"/></svg><span>บอร์ดงาน</span></button>
@@ -491,7 +516,7 @@
       <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span id="navExpDashLabel">สรุปค่าใช้จ่าย</span></button>
     <button class="nav-btn" data-view="reimb" aria-label="ตั้งเบิกลูกค้า" id="navReimb" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6Z"/><path d="M14 3v5h5M9 12h6M9 16h4"/></svg><span>ตั้งเบิกลูกค้า</span></button>
-    <button class="nav-btn active" data-view="leave" aria-label="การลา">
+    <button class="nav-btn" data-view="leave" aria-label="การลา">
       <svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></svg><span>การลา</span></button>
     <button class="nav-btn" data-view="approve" aria-label="อนุมัติลา" id="navAppr" style="display:none">
       <svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 2.5v4M16 2.5v4M8.5 14l2 2 4-4"/></svg><span>อนุมัติลา</span></button>
@@ -528,6 +553,7 @@
   var TH_DOW = ['อา','จ','อ','พ','พฤ','ศ','ส'];
   var MENAME='', MEUID='', TEAM=[], CUSTOMERS=[];   // งาน (MEUID = userId ผู้ใช้ · ใช้กรอง "งานของฉัน" + ตัดตัวเองจาก dropdown มอบหมาย)
   var VIEW_META = {
+    home:['🏠','ภาพรวม'],
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
     expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติเบิกจ่าย'],
     expdash:['📊','สรุปค่าใช้จ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT']
@@ -587,11 +613,12 @@
     Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(b){ b.classList.toggle('active', b.dataset.view===v); });
     var meta=VIEW_META[v]||['•',v]; $('tbIcon').textContent=meta[0]; $('tbTitle').textContent=meta[1];
     mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
-    ({ leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove }[v] || soon)();
+    ({ home:renderHome, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove }[v] || soon)();
   }
 
   // ───── มือถือ: เมนูกลุ่ม (ล่าง) + แท็บย่อย (บน) · คอมใช้ sidebar เดิม ไม่เกี่ยว ─────
   var NAV_GROUPS=[
+    { key:'home',  icon:'🏠', label:'ภาพรวม', views:['home'] },
     { key:'work',  icon:'📊', label:'งาน',    views:['projects','mytasks','review','trash'] },
     { key:'cust',  icon:'📤', label:'ลูกค้า',  views:['senddoc','appt','announce'] },
     { key:'exp',   icon:'💸', label:'เบิก',    views:['expense','expdash','reimb'] },   /* ย้ายขึ้นข้าง 'ลูกค้า' → ลา/OT ติดกัน (พี่ขอ 19 ก.ค.) · expapprove รวมเข้า expdash แล้ว (คง view ให้ deep link) */
@@ -599,7 +626,7 @@
     { key:'ot',    icon:'⏰', label:'OT',      views:['ot','otapprove'] },
     { key:'docs',  icon:'📁', label:'เอกสาร',  views:['docs'] }   /* taxdoc ซ่อนไว้ก่อน — รื้อเป็น ภ.ง.ด.1/3/53 (v2) */
   ];
-  var VIEW_TAB={ projects:'บอร์ดงาน', mytasks:'งานของฉัน', review:'รอตรวจ', trash:'ถังขยะ',
+  var VIEW_TAB={ home:'ภาพรวม', projects:'บอร์ดงาน', mytasks:'งานของฉัน', review:'รอตรวจ', trash:'ถังขยะ',
     senddoc:'ส่งงานลูกค้า', appt:'นัดประชุม', announce:'ประกาศ',
     leave:'ลาของฉัน', approve:'อนุมัติลา', expense:'เบิกของฉัน', expapprove:'อนุมัติเบิก',
     expdash:'สรุป', reimb:'ตั้งเบิกลูกค้า',
@@ -641,6 +668,89 @@
     $('main').innerHTML='<div class="card"><div class="soon-wrap"><div class="e-emo">🚧</div>เมนูนี้กำลังย้ายมาหน้านี้ — เร็ว ๆ นี้ค่ะ<br><span style="font-size:13px">(ตอนนี้ยังใช้ผ่านเมนูเดิม/แชทได้)</span></div></div>';
   }
   function skel(){ $('main').innerHTML='<div class="card"><div class="skel" style="height:120px"></div></div>'; }
+
+  // ═══════════ VIEW: 🏠 ภาพรวม (หน้าแรก) ═══════════
+  // การ์ดสรุปทั้งระบบหน้าเดียว — พนักงานเห็นของตัวเอง · พี่เห็นทั้งทีมเพิ่มในบล็อกล่างของแต่ละการ์ด
+  // ทุกตัวเลขมาจาก backend (waHomeDash) ที่กรองสิทธิ์แล้ว — หน้าจอไม่คำนวณเอง ไม่ตัดสินสิทธิ์เอง
+  function renderHome(){
+    skel();
+    jsonp({action:'waHomeDash',uid:UID}).then(function(r){
+      if(VIEW!=='home') return;
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      var html='';
+      html+='<div class="boardhead">สวัสดีค่ะ '+esc(r.nick||'')+' · ข้อมูลเดือน '+esc(r.monthThai||r.ym||'')+'</div>';
+      // แถบ "ต้องทำ" — ของค้างที่รอคนนี้ตัดสินใจ กดแล้วเด้งไปหน้านั้นเลย
+      if((r.todo||[]).length){
+        html+='<div class="hm-todo"><div class="tdh">⚡ ต้องทำ</div><div class="tdl">'+
+          r.todo.map(function(t){
+            return '<button onclick="switchView(\''+esc(t.view)+'\')">'+esc(t.label)+' <b>'+t.n+'</b></button>';
+          }).join('')+'</div></div>';
+      }
+      html+='<div class="hm-grid">'+
+        hmLeave(r.leave,r.year)+hmOt(r.ot,r.isOwner)+hmAttend(r.attend,r.isOwner)+
+        hmTasks(r.tasks,r.isOwner)+hmMoney(r.money,r.isOwner)+(r.isOwner?hmReimb(r.money):'')+
+      '</div>';
+      $('main').innerHTML=html;
+    }).catch(function(e){ if(VIEW==='home') $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
+  }
+  /** กรอบการ์ด 1 ใบ · go = view ที่กดแล้วเด้งไป (ว่าง = ไม่มีปุ่ม) */
+  function hmCard(icon,title,go,goLabel,body){
+    return '<div class="hm-c"><div class="hh">'+icon+' '+esc(title)+
+      (go?'<span class="go" onclick="switchView(\''+esc(go)+'\')">'+esc(goLabel||'ดูทั้งหมด')+' ›</span>':'')+
+      '</div>'+body+'</div>';
+  }
+  function hmNum(v,label,cls){ return '<div><b'+(cls?' class="'+cls+'"':'')+'>'+v+'</b><span>'+esc(label)+'</span></div>'; }
+  function hmErr(d){ return (d&&d.error)?'<div class="hm-err">โหลดส่วนนี้ไม่สำเร็จ: '+esc(d.error)+'</div>':''; }
+  function hmLeave(d,year){
+    if(!d||d.error) return hmCard('📝','การลา','leave','',hmErr(d));
+    var body='<div class="hm-n">'+hmNum(d.days,'ใช้ไปปี '+year+' (วัน)','info')+
+      hmNum(d.monthDays,'เดือนนี้ (วัน)')+hmNum(d.myPending,'ใบรออนุมัติ',d.myPending?'wait':'')+'</div>';
+    if((d.byType||[]).length){
+      body+='<div class="hm-sub">'+d.byType.map(function(t){
+        return '<div class="sl"><span>'+esc(t.key)+'</span><b>'+t.days+' วัน</b></div>'; }).join('')+'</div>';
+    }
+    if(d.teamPending) body+='<div class="hm-sub"><div class="sl"><span>ทั้งทีมรออนุมัติ</span><b>'+d.teamPending+' ใบ</b></div></div>';
+    return hmCard('📝','การลา','leave','ยื่นลา',body);
+  }
+  function hmOt(d,isOwner){
+    if(!d||d.error) return hmCard('⏰','OT เดือนนี้','ot','',hmErr(d));
+    var body='<div class="hm-n">'+hmNum(d.hours,'ชั่วโมง','info')+hmNum(money(d.amount),'บาท','ok')+
+      hmNum(d.myPending,'รออนุมัติ',d.myPending?'wait':'')+'</div>';
+    if(isOwner) body+='<div class="hm-sub"><div class="sl"><span>ทั้งทีมเดือนนี้</span><b>'+d.teamHours+' ชม. · '+money(d.teamAmount)+' บาท</b></div>'+
+      '<div class="sl"><span>ใบรออนุมัติ</span><b>'+d.teamPending+' ใบ</b></div></div>';
+    return hmCard('⏰','OT เดือนนี้','ot','ขอ OT',body);
+  }
+  function hmAttend(d,isOwner){
+    if(!d||d.error) return hmCard('🕐','ลงเวลาเดือนนี้','','',hmErr(d));
+    var body='<div class="hm-n">'+hmNum(d.days,'มาแล้ว (วัน)','ok')+hmNum(d.late,'เข้าสาย',d.late?'warn':'')+'</div>';
+    if(d.openToday) body+='<div class="hm-sub">🟢 วันนี้ลงเข้างานแล้ว · ยังไม่ลงออกงาน</div>';
+    if(isOwner) body+='<div class="hm-sub"><div class="sl"><span>วันนี้ทีมลงเวลาแล้ว</span><b>'+d.teamToday+' คน</b></div></div>';
+    return hmCard('🕐','ลงเวลาเดือนนี้','','',body);
+  }
+  function hmTasks(d,isOwner){
+    if(!d||d.error) return hmCard('📋','งานของฉัน','mytasks','',hmErr(d));
+    var body='<div class="hm-n">'+hmNum(d.newN,'ใหม่')+hmNum(d.doing,'กำลังทำ','info')+
+      hmNum(d.review,'รอตรวจ',d.review?'wait':'')+hmNum(d.overdue,'เกินกำหนด',d.overdue?'warn':'')+'</div>';
+    if(isOwner) body+='<div class="hm-sub"><div class="sl"><span>ทั้งทีม กำลังทำ / รอตรวจ</span><b>'+d.teamDoing+' / '+d.teamReview+'</b></div>'+
+      '<div class="sl"><span>ทั้งทีม เกินกำหนด</span><b>'+d.teamOverdue+' งาน</b></div></div>';
+    return hmCard('📋','งานของฉัน','mytasks','',body);
+  }
+  function hmMoney(d,isOwner){
+    if(!d||d.error) return hmCard('💸','เบิกค่าใช้จ่าย','expense','',hmErr(d));
+    var body='<div class="hm-n">'+hmNum(d.myPendingN,'รออนุมัติ',d.myPendingN?'wait':'')+
+      hmNum(d.myToPayN,'รอจ่ายคืน',d.myToPayN?'info':'')+hmNum(money(d.myMonthAmt),'เดือนนี้ (บาท)')+'</div>';
+    if(isOwner) body+='<div class="hm-sub"><div class="sl"><span>ทีมรออนุมัติ</span><b>'+d.teamPendingN+' ใบ · '+money(d.teamPendingAmt)+'</b></div>'+
+      '<div class="sl"><span>ทีมรอจ่ายคืน (หนี้ค้าง)</span><b>'+d.teamToPayN+' ใบ · '+money(d.teamToPayAmt)+'</b></div>'+
+      '<div class="sl"><span>ทีมเบิกเดือนนี้</span><b>'+money(d.teamMonthAmt)+' บาท</b></div></div>';
+    return hmCard('💸','เบิกค่าใช้จ่าย',isOwner?'expdash':'expense',isOwner?'สรุป/อนุมัติ':'',body);
+  }
+  function hmReimb(d){
+    if(!d||d.error) return '';
+    var body='<div class="hm-n">'+hmNum(d.reimbOpenN,'ใบที่ยังตามไม่จบ',d.reimbOpenN?'wait':'')+
+      hmNum(money(d.reimbOpenAmt),'บาท')+'</div>'+
+      '<div class="hm-sub">นับใบที่ส่งแล้ว/อนุมัติแล้ว แต่ยังไม่ได้รับหลักฐาน</div>';
+    return hmCard('🧾','ตั้งเบิกลูกค้า','reimb','',body);
+  }
 
   // ═══════════ VIEW: ลา ═══════════
   var LVCACHE={at:0,data:null}, DOCCACHE={at:0,data:null}, SLIPCACHE={}, INITTTL=45000;   // แคชหน้าลา/เอกสาร/สลิป
@@ -3628,8 +3738,9 @@
       Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(b){
         b.addEventListener('click', function(){ switchView(b.dataset.view); }); });
       var sp=startParam();
+      // ลิงก์จาก Google Chat/แชท → เปิดแท็บตรง · ไม่มี p= → หน้า "ภาพรวม" (พี่กี้เคาะ 29 ก.ค.)
       var startView = sp==='docs' ? 'docs' : (sp==='work' ? 'projects' : (sp==='expense' ? 'expense' :
-        ((sp==='approve'||sp==='expapprove') && IS_OWNER ? sp : 'leave')));   // ลิงก์จาก Google Chat/แชท → เปิดแท็บตรง
+        (sp==='leave' ? 'leave' : ((sp==='approve'||sp==='expapprove') && IS_OWNER ? sp : 'home'))));
       switchView(startView);   // switchView → mSyncNav สร้างเมนูกลุ่มล่าง + แท็บบนให้เอง
       // อุ่นแคชเบื้องหลัง → คลิกการลา/เอกสารครั้งแรกเด้งทันที (ไม่แย่งจอแรกโหลด)
       setTimeout(function(){ if(!LVCACHE.data) _leaveFetch(true); if(IDTOKEN && !DOCCACHE.data) _docsFetch(true); if(!APPT_CUST.length) apFetchMeta(); if(!ANNOUNCE_GROUPS.length) anFetchGroups(); }, 900);
