@@ -536,7 +536,6 @@
   var ALL_TASKS=[], PJ_SEL='', MB_STATUSES=[];   // มุมมอง Project (dropdown เลือก · แยก 6 สถานะ + %) · MB_STATUSES=รายการสถานะ (ฟอร์มแก้งานมือถือ)
   var EXP_TYPES=[];   // ประเภทค่าใช้จ่าย (โหลดจาก waExpenseInit)
   var EXP_BYNO={};    // เก็บ object ใบเบิกตามเลขที่ (ให้ปุ่มแก้ผู้รับเงินดึงข้อมูลเดิมมาเติมฟอร์ม)
-  var EXP_IMG='';     // รูปเดี่ยวที่แนบในฟอร์มที่เปิดอยู่ (สลิปจ่ายคืน · data URL jpeg) — ใบเสร็จ/หลักฐานใช้ IMGS[] (หลายใบ)
 
   function $(id){ return document.getElementById(id); }
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
@@ -1765,6 +1764,10 @@
       if(isRv(x)) links+='<a class="ex-lk" href="#" onclick="exEditPayee(\''+esc(x.no)+'\');return false" style="color:#1B72E8">✏️ แก้ผู้รับเงิน</a>';
       if(x.whtLink)    links+='<a class="ex-lk" href="'+esc(x.whtLink)+'" target="_blank">🧾 50 ทวิ '+esc(x.whtNo||'')+'</a>';
       if(x.paidSlip)   links+='<a class="ex-lk" href="'+esc(x.paidSlip)+'" target="_blank">📎 สลิปโอนคืน</a>';
+      // จ่ายแล้วแต่ไม่มีสลิป = แฟ้มขาดหลักฐานการโอน → ให้พี่แนบย้อนหลังได้ (เดิมทำไม่ได้เลย · พี่กี้ 29 ก.ค.)
+      if(IS_OWNER && String(x.status).indexOf('จ่ายแล้ว')>=0)
+        links+='<a class="ex-lk" href="#" onclick="exEditSlip(\''+esc(x.no)+'\');return false" style="'+
+          (x.paidSlip?'color:#1B72E8">📎 แก้สลิปโอนคืน':'color:#DC2626">📎 ยังไม่มีสลิป · แนบเลย')+'</a>';
       // แฟ้มครบชุด (เอกสาร+สำเนาบัตร+หลักฐาน+50ทวิ+สลิป รวมใบเดียว) — เกิดเองตอนพี่กดจ่ายคืน
       if(x.dossier)    links+='<a class="ex-lk" href="'+esc(x.dossier)+'" target="_blank">🗂️ แฟ้มครบชุด</a>';
       // ปุ่มสร้างแฟ้ม (เฉพาะพี่) โผล่ตั้งแต่ "อนุมัติ" เป็นต้นไป — แฟ้มสร้างได้ตั้งแต่ออก SR/RV แล้ว
@@ -1793,7 +1796,7 @@
   var EXP_PROOF='rcp';
   function openExpense(){
     if(!EXP_TYPES.length){ toast('กำลังโหลดประเภท…'); return; }
-    EXP_IMG=''; EXP_PROOF='rcp';
+    EXP_PROOF='rcp';
     var opts=EXP_TYPES.map(function(t){return '<option value="'+esc(t.key)+'">'+esc(t.label)+'</option>';}).join('');
     modal('<h3>💸 แจ้งเบิกค่าใช้จ่าย</h3><div id="mErr" class="m-err hidden"></div>'+
       '<div class="fld"><label>ประเภท</label><select id="eType">'+opts+'</select></div>'+
@@ -2145,23 +2148,8 @@
   function imgsDel(id,i){ (IMGS[id]||[]).splice(i,1); imgsPaint(id); }
   window.imgsDel=imgsDel;
 
-  // ───── ช่องแนบรูป (รูปเดียว: สลิปจ่ายคืน) · ย่อรูปเป็น jpeg base64 ก่อนส่ง ─────
-  function imgFldHtml(id,label){
-    return '<div class="fld"><label>'+esc(label)+'</label>'+
-      '<input id="'+id+'" type="file" accept="image/*" style="font-family:inherit;font-size:14px">'+
-      '<div id="'+id+'Pv" class="m-hint" style="margin-top:6px">ยังไม่ได้แนบรูป</div></div>';
-  }
-  function imgFldBind(id,onReady){
-    var el=$(id); if(!el) return;
-    el.addEventListener('change', function(){
-      var f=el.files && el.files[0]; var pv=$(id+'Pv');
-      if(!f){ onReady(''); if(pv) pv.textContent='ยังไม่ได้แนบรูป'; return; }
-      if(pv) pv.textContent='กำลังเตรียมรูป…';
-      shrinkImage(f).then(function(d){ onReady(d);
-        if(pv) pv.innerHTML='✅ แนบแล้ว · <img src="'+d+'" style="max-width:120px;max-height:120px;border-radius:8px;vertical-align:middle;margin-left:6px">'; })
-        .catch(function(){ onReady(''); if(pv) pv.textContent='⚠️ อ่านรูปไม่สำเร็จ ลองรูปอื่นนะคะ'; });
-    });
-  }
+  // (ลบช่องแนบ "รูปเดียว" ทิ้ง 29 ก.ค. — accept="image/*" ทำให้สลิป PDF แนบไม่ติดแบบเงียบ
+  //  ทุกช่องแนบไฟล์ใช้ imgsFldHtml/imgsFldBind ตัวเดียว: รับรูป+PDF หลายใบ · หลายใบรวมเป็น PDF เดียว)
   /** ย่อรูป (ด้านยาวสุด ≤ 1280) → data URL jpeg 0.7 — กันไฟล์ใหญ่เกิน POST/Drive */
   function shrinkImage(file){
     return new Promise(function(resolve,reject){
@@ -2350,34 +2338,65 @@
       exFade(no);
     }).catch(function(e){ toast(e.message); });
   }
-  /** จ่ายคืน → แนบสลิปโอน (ข้ามได้) */
+  /** จ่ายคืน → แนบสลิปโอน (รูป/PDF · หลายใบได้ · ข้ามได้แต่จะเตือน)
+   *  ⚠️ เดิมใช้ช่องรูปเดี่ยว (canvas) → สลิป PDF จากแอปธนาคารแนบไม่ติดแบบเงียบ (พี่กี้เจอจริง 29 ก.ค.) */
   function exOpenPay(no,nick,amount){
-    EXP_IMG='';
     var money=(Number(amount)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
     modal('<h3>💰 จ่ายคืน '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
       '<div class="m-hint">โอนคืน <b>'+esc(nick)+'</b> · '+money+' บาท</div>'+
-      imgFldHtml('pImg','📎 สลิปโอนคืน (ไม่บังคับ · ผู้แจ้งจะเห็น)')+
+      imgsFldHtml('pSlips','📎 สลิปโอนคืน — รูป หรือ PDF (แนบหลายใบได้ · ผู้แจ้งจะเห็น)')+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
       '<button class="btn btn-primary" id="pSend" onclick="exDoPay(\''+esc(no)+'\')">บันทึกจ่ายคืน</button></div>');
-    imgFldBind('pImg', function(d){ EXP_IMG=d; });
+    imgsFldBind('pSlips');
   }
-  function exDoPay(no){
+  function exDoPay(no,force){
+    var slips=IMGS['pSlips']||[];
+    // ไม่มีสลิป = แฟ้มครบชุดจะขาดชิ้นสำคัญ → ถามยืนยันก่อน (ไม่ห้าม แต่ไม่ปล่อยเงียบ)
+    if(!slips.length && !force){
+      mErr('ยังไม่ได้แนบสลิปโอนคืน — แฟ้มครบชุดจะไม่มีหลักฐานการโอน กด "บันทึกจ่ายคืน" อีกครั้งถ้าตั้งใจข้าม');
+      var b0=$('pSend'); if(b0){ b0.textContent='บันทึกจ่ายคืน (ไม่มีสลิป)'; b0.setAttribute('onclick','exDoPay(\''+esc(no)+'\',1)'); }
+      return;
+    }
     var b=$('pSend'); if(b){ b.disabled=true; b.textContent='กำลังบันทึก…'; }
     toast('กำลังบันทึก…');
-    callBusy('กำลังสร้างเอกสาร + แฟ้ม…', jsonpPost({action:'waExpPay',uid:UID,no:no,img:EXP_IMG||''}), 'บันทึกจ่ายคืนแล้ว').then(function(r){
+    callBusy('กำลังสร้างเอกสาร + แฟ้ม…', jsonpPost({action:'waExpPay',uid:UID,no:no,imgs:JSON.stringify(slips)}), 'บันทึกจ่ายคืนแล้ว').then(function(r){
       if(!r||!r.ok){ if(b){b.disabled=false;b.textContent='บันทึกจ่ายคืน';} mErr((r&&r.error)||'ไม่สำเร็จ'); return; }
-      closeModal(); EXP_IMG='';
-      // แฟ้มครบชุดรวมให้เองตอนนี้ · ไม่เกิด = ไม่ใช่เรื่องใหญ่ (เงินจ่ายแล้ว) แต่ต้องบอกให้รู้ว่าต้องกดสร้างใหม่
-      toast(r.dossier?'💰 จ่ายคืนแล้ว · 🗂️ รวมแฟ้มครบชุดให้แล้ว':'💰 จ่ายคืนแล้ว · แฟ้มยังไม่รวม (กด 🗂️ ที่รายการเพื่อสร้าง)');
+      closeModal(); IMGS['pSlips']=[];
+      // แฟ้มครบชุดรวมให้เองตอนนี้ · ไม่เกิด/ขาดชิ้น = ไม่ใช่เรื่องใหญ่ (เงินจ่ายแล้ว) แต่ต้องบอกให้รู้
+      toast(r.dossier
+        ? ('💰 จ่ายคืนแล้ว · 🗂️ รวมแฟ้มครบชุดให้แล้ว'+missTxt(r.missing))
+        : '💰 จ่ายคืนแล้ว · แฟ้มยังไม่รวม (กด 🗂️ ที่รายการเพื่อสร้าง)');
       exFade(no);
     }).catch(function(e){ if(b){b.disabled=false;b.textContent='บันทึกจ่ายคืน';} mErr(e.message); });
+  }
+  /** ข้อความต่อท้าย toast บอกว่าแฟ้มขาดชิ้นไหน (ว่าง = ครบ) */
+  function missTxt(m){ return (m&&m.length)?(' · ⚠️ ขาด: '+m.join(', ')):''; }
+  /** 📎 แนบ/แก้สลิปโอนคืนย้อนหลัง (ใบที่จ่ายแล้ว) → รวมแฟ้มใหม่ให้เลย */
+  function exEditSlip(no){
+    modal('<h3>📎 แนบ/แก้สลิปโอนคืน '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">ใช้กับใบที่จ่ายไปแล้วแต่สลิปยังไม่เข้าแฟ้ม · แนบใหม่แล้วระบบจะรวมแฟ้มครบชุดให้ทันที</div>'+
+      imgsFldHtml('sSlips','สลิปโอนคืน — รูป หรือ PDF (แนบหลายใบได้)')+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" id="sSend" onclick="exSaveSlip(\''+esc(no)+'\')">บันทึก + รวมแฟ้มใหม่</button></div>');
+    imgsFldBind('sSlips');
+  }
+  function exSaveSlip(no){
+    var slips=IMGS['sSlips']||[];
+    if(!slips.length){ mErr('ยังไม่ได้แนบสลิปค่ะ'); return; }
+    var b=$('sSend'); if(b){ b.disabled=true; b.textContent='กำลังบันทึก…'; }
+    callBusy('กำลังบันทึกสลิป + รวมแฟ้ม…', jsonpPost({action:'waExpEditSlip',uid:UID,no:no,imgs:JSON.stringify(slips)}), 'บันทึกแล้ว').then(function(r){
+      if(!r||!r.ok){ if(b){b.disabled=false;b.textContent='บันทึก + รวมแฟ้มใหม่';} mErr((r&&r.error)||'ไม่สำเร็จ'); return; }
+      closeModal(); IMGS['sSlips']=[];
+      toast(r.dossier?('📎 แนบสลิปแล้ว · 🗂️ รวมแฟ้มใหม่ให้แล้ว'+missTxt(r.missing)):'📎 แนบสลิปแล้ว · แฟ้มยังไม่รวม (กด 🗂️ เพื่อสร้าง)');
+      if(VIEW==='expdash') renderExpDash(); else renderExpense();
+    }).catch(function(e){ if(b){b.disabled=false;b.textContent='บันทึก + รวมแฟ้มใหม่';} mErr(e.message); });
   }
   /** สร้างแฟ้มครบชุดใหม่ (พี่เท่านั้น) — เผื่อ Worker ล่มตอนจ่าย หรือแนบหลักฐานเพิ่มทีหลัง */
   function exRebuild(no){
     toast('กำลังรวมแฟ้ม…');
     callBusy('กำลังสร้างเอกสาร + แฟ้ม…', jsonpPost({action:'waExpDossier',uid:UID,no:no}), 'สร้างแฟ้มแล้ว').then(function(r){
       if(!r||!r.ok){ toast((r&&r.error)||'รวมแฟ้มไม่สำเร็จ'); return; }
-      toast('🗂️ รวมแฟ้มแล้ว ('+(r.parts||[]).length+' ชิ้น)'+(r.whtNo?' · ออก 50 ทวิ '+r.whtNo:''));
+      toast('🗂️ รวมแฟ้มแล้ว ('+(r.parts||[]).length+' ชิ้น)'+(r.whtNo?' · ออก 50 ทวิ '+r.whtNo:'')+missTxt(r.missing));
       renderExpense();
     }).catch(function(e){ toast(e.message); });
   }
@@ -2406,6 +2425,7 @@
   }
   window.renderExpenseApprove=renderExpenseApprove; window.exReject=exReject; window.exDecide=exDecide;
   window.exOpenPay=exOpenPay; window.exDoPay=exDoPay; window.exRebuild=exRebuild;
+  window.exEditSlip=exEditSlip; window.exSaveSlip=exSaveSlip;
   window.exTrash=exTrash; window.exTrashDo=exTrashDo;
 
   /** 📎 แก้ไฟล์แนบ (พี่ + เจ้าของใบ) — อัปไฟล์ใหม่แทนของเดิม + สร้างแฟ้มครบชุดใหม่ */
