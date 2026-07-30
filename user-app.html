@@ -566,6 +566,10 @@
       <svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg><span>เอกสาร</span></button>
     <button class="nav-btn" data-view="taxdoc" aria-label="ภาษี/เอกสาร" id="navTaxDoc" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M5 3h9l5 5v13H5Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>ภาษี/เอกสาร</span></button>
+
+    <div class="nav-sec">รายงาน</div>
+    <button class="nav-btn" data-view="reports" aria-label="รายงาน" id="navReports" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/><circle cx="10" cy="4" r="1.6"/></svg><span>รายงาน</span></button>
   </nav>
 
   <nav id="mnav" class="mnav"></nav>
@@ -594,7 +598,7 @@
     home:['🏠','ภาพรวม'],
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
     expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติเบิกจ่าย'],
-    expdash:['📊','สรุปค่าใช้จ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT']
+    expdash:['📊','สรุปค่าใช้จ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], reports:['📊','รายงาน']
   };
   var PROJECTS=[], COMPANIES=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ) · COMPANIES=บริษัท auto (หน้าจัดการ)
   var ALL_TASKS=[], PJ_SEL='', MB_STATUSES=[];   // มุมมอง Project (dropdown เลือก · แยก 6 สถานะ + %) · MB_STATUSES=รายการสถานะ (ฟอร์มแก้งานมือถือ)
@@ -651,7 +655,7 @@
     Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(b){ b.classList.toggle('active', b.dataset.view===v); });
     var meta=VIEW_META[v]||['•',v]; $('tbIcon').textContent=meta[0]; $('tbTitle').textContent=meta[1];
     mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
-    ({ home:renderHome, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove }[v] || soon)();
+    ({ home:renderHome, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, reports:renderReports }[v] || soon)();
   }
 
   // ───── มือถือ: เมนูกลุ่ม (ล่าง) + แท็บย่อย (บน) · คอมใช้ sidebar เดิม ไม่เกี่ยว ─────
@@ -662,22 +666,24 @@
     { key:'exp',   icon:'💸', label:'เบิก',    views:['expense','expdash','reimb'] },   /* ย้ายขึ้นข้าง 'ลูกค้า' → ลา/OT ติดกัน (พี่ขอ 19 ก.ค.) · expapprove รวมเข้า expdash แล้ว (คง view ให้ deep link) */
     { key:'leave', icon:'📝', label:'ลา',      views:['leave','approve'] },
     { key:'ot',    icon:'⏰', label:'OT',      views:['ot','otapprove'] },
-    { key:'docs',  icon:'📁', label:'เอกสาร',  views:['docs'] }   /* taxdoc ซ่อนไว้ก่อน — รื้อเป็น ภ.ง.ด.1/3/53 (v2) */
+    { key:'docs',  icon:'📁', label:'เอกสาร',  views:['docs'] },   /* taxdoc ซ่อนไว้ก่อน — รื้อเป็น ภ.ง.ด.1/3/53 (v2) */
+    { key:'report',icon:'📊', label:'รายงาน',  views:['reports'] }   /* owner only → กลุ่มนี้ไม่โผล่ให้พนักงาน (mBuildGroupBar กรองกลุ่มที่ไม่มี view ที่เห็นได้) */
   ];
   var VIEW_TAB={ home:'ภาพรวม', projects:'บอร์ดงาน', mytasks:'งานของฉัน', review:'รอตรวจ', trash:'ถังขยะ',
     senddoc:'ส่งงานลูกค้า', appt:'นัดประชุม', announce:'ประกาศ',
     leave:'ลาของฉัน', approve:'อนุมัติลา', expense:'เบิกของฉัน', expapprove:'อนุมัติเบิก',
     expdash:'สรุป', reimb:'ตั้งเบิกลูกค้า',
-    ot:'OT ของฉัน', otapprove:'อนุมัติ OT', docs:'เอกสาร' };
+    ot:'OT ของฉัน', otapprove:'อนุมัติ OT', docs:'เอกสาร', reports:'รายงาน' };
   // แท็บที่เห็นเฉพาะพี่/ผู้ดูแล · reimb = ตั้งเบิกลูกค้า (ชีตไม่มีเจ้าของรายคน + เป็นข้อมูลรายได้)
   // ⚠️ ซ่อนแท็บ ≠ กันข้อมูล — backend กรองสิทธิ์เองอีกชั้นเสมอ
-  var OWNER_VIEWS={ review:1, approve:1, expapprove:1, otapprove:1, reimb:1, taxdoc:1 };
+  var OWNER_VIEWS={ review:1, approve:1, expapprove:1, otapprove:1, reimb:1, taxdoc:1, reports:1 };
   var MGROUP='', MG_LAST={};
   function mVisibleViews(g){ return g.views.filter(function(v){ return IS_OWNER || !OWNER_VIEWS[v]; }); }
   function mGroupOf(v){ for(var i=0;i<NAV_GROUPS.length;i++){ if(NAV_GROUPS[i].views.indexOf(v)>=0) return NAV_GROUPS[i]; } return null; }
   function mBuildGroupBar(){
     var el=$('mnav'); if(!el) return;
-    el.innerHTML=NAV_GROUPS.map(function(g){
+    // กลุ่มที่ทุก view เป็นของผู้ดูแล (เช่น 📊 รายงาน) ต้องไม่โผล่ให้พนักงาน — ไม่งั้นกดแล้วไม่มีอะไรเกิดขึ้น
+    el.innerHTML=NAV_GROUPS.filter(function(g){ return mVisibleViews(g).length; }).map(function(g){
       return '<button class="mnav-btn'+(g.key===MGROUP?' on':'')+'" onclick="mSelectGroup(\''+g.key+'\')">'+
         '<span class="mn-ic">'+g.icon+'</span>'+esc(g.label)+'</button>';
     }).join('');
@@ -1717,7 +1723,8 @@
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
       TYPES=r.types||TYPES; SCHEDULE=r.schedule||SCHEDULE; HOLIDAYS=r.holidays||HOLIDAYS; LV_TEAM=r.team||[];
       var lv=r.leaves||[];
-      $('main').innerHTML = lvReportCard()+hrProxyCard()+
+      // การ์ดสรุปสถิติการลา ย้ายไปหน้า 📊 รายงาน แล้ว (พี่กี้เคาะ 30 ก.ค.) — หน้านี้เหลือ "อนุมัติ + ยื่นแทน"
+      $('main').innerHTML = hrProxyCard()+
         '<div class="section-h">ใบลารออนุมัติ ('+lv.length+')</div>'+
         (lv.length ? lv.map(apprCard).join('') : '<div class="card"><div class="empty">ไม่มีใบลารออนุมัติ 🎉</div></div>');
       wireLvForm();   // ผูกฟอร์ม "ยื่นลาแทน" (ปฏิทิน/ประเภท/เหตุผล) ตัวเดียวกับลาปกติ
@@ -1742,6 +1749,17 @@
     }).catch(function(e){ toast(e.message); });
   }
   window.renderApprove=renderApprove; window.apprDecide=apprDecide;
+  // ═══════════ VIEW: 📊 รายงาน (เฉพาะพี่/HR) ═══════════
+  // ที่รวมรายงานรายเดือนของบริษัท — เริ่มด้วยสรุปการลา · รายงานเบิก/OT/ลงเวลา จะมาต่อในหน้านี้
+  function renderReports(){
+    if(!IS_OWNER){ $('main').innerHTML='<div class="card"><div class="empty">เฉพาะผู้ดูแล (พี่/HR) ค่ะ</div></div>'; return; }
+    $('main').innerHTML='<div class="section-h">📊 รายงานรายเดือน</div>'+lvReportCard()+
+      '<div class="card"><div class="ds-h">🧾 รายงานอื่น</div>'+
+      '<div class="m-hint" style="margin:0">กำลังทยอยเพิ่มในหน้านี้ — เบิกค่าใช้จ่ายรายเดือน · OT รายเดือน · ลงเวลา/มาสาย '+
+      '(ตอนนี้ดูได้ที่เมนู "สรุป/อนุมัติเบิก" และ "อนุมัติ OT")</div></div>';
+  }
+  window.renderReports=renderReports;
+
   // ── 📊 สรุปสถิติการลารายเดือน → ส่งเข้ากลุ่ม LINE + Google Chat (พี่กี้ขอ 30 ก.ค. 2569) ──
   // ดูก่อนส่งเสมอ (พี่อ่านทาน แล้วค่อยกดส่ง) · ข้อความที่ preview = ข้อความที่ส่งจริง (backend สร้างตัวเดียว)
   function lvThisMonth(){ var t=new Date(); return (t.getFullYear()+543)+'-'+('0'+(t.getMonth()+1)).slice(-2); }
@@ -3837,7 +3855,8 @@
         var nel=$('navExpDashLabel'); if(nel) nel.textContent='สรุป/อนุมัติเบิก';   // พี่: หน้าสรุปรวมอนุมัติเบิกแล้ว (ตัดแท็บอนุมัติแยก)
         var nb=$('navReimb'); if(nb) nb.style.display='';                 // แท็บตั้งเบิกลูกค้า = เฉพาะพี่
         var na=$('navAppr'); if(na) na.style.display='';                  // แท็บอนุมัติลา (+ยื่นลาแทน) = เฉพาะพี่/HR
-        var noa=$('navOtAppr'); if(noa) noa.style.display=''; }           // แท็บอนุมัติ OT = เฉพาะพี่/HR
+        var noa=$('navOtAppr'); if(noa) noa.style.display='';              // แท็บอนุมัติ OT = เฉพาะพี่/HR
+        var nrp=$('navReports'); if(nrp) nrp.style.display=''; }           // แท็บรายงาน = เฉพาะพี่/HR (ข้อมูลทั้งทีม)
         // navTaxDoc (ภาษี/เอกสาร) ซ่อนไว้ก่อน — เปิดตอน v2 (ภ.ง.ด.1/3/53) เสร็จ
       $('loader').classList.add('hidden'); $('app').classList.remove('hidden');
       Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(b){
@@ -3847,7 +3866,7 @@
       // ⚠️ p=work = ปุ่ม "เปิดระบบ" (Rich Menu/การ์ดแชท) เจตนา "เข้าระบบ" ไม่ใช่ "ไปบอร์ดงาน" → หน้าภาพรวม
       //    (Rich Menu ที่ทีมมีอยู่ฝัง p=work ไว้แล้ว · เข้าบอร์ดงานตรงใช้ p=projects/p=tasks)
       var startView = sp==='docs' ? 'docs' : ((sp==='projects'||sp==='tasks') ? 'projects' : (sp==='expense' ? 'expense' :
-        (sp==='leave' ? 'leave' : ((sp==='approve'||sp==='expapprove') && IS_OWNER ? sp : 'home'))));
+        (sp==='leave' ? 'leave' : ((sp==='approve'||sp==='expapprove'||sp==='reports') && IS_OWNER ? sp : 'home'))));
       switchView(startView);   // switchView → mSyncNav สร้างเมนูกลุ่มล่าง + แท็บบนให้เอง
       // อุ่นแคชเบื้องหลัง → คลิกการลา/เอกสารครั้งแรกเด้งทันที (ไม่แย่งจอแรกโหลด)
       setTimeout(function(){ if(!LVCACHE.data) _leaveFetch(true); if(IDTOKEN && !DOCCACHE.data) _docsFetch(true); if(!APPT_CUST.length) apFetchMeta(); if(!ANNOUNCE_GROUPS.length) anFetchGroups(); }, 900);
