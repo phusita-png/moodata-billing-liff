@@ -26,10 +26,14 @@
         'clock': 'face-clock.html', 'face-clock': 'face-clock.html', 'face': 'face-clock.html'
       };
       var target = MAP[p] || 'user-app.html';
-      // คง p ไว้ให้หน้าปลายทางอ่านต่อ (user-app ใช้เลือก view เริ่ม: work→งานของฉัน, me→ลา) [v2]
-      // + cache-bust (v=เวลา) กัน LINE/เบราว์เซอร์ cache ไฟล์เก่า → โหลดรุ่นล่าสุดเสมอ
+      // คง p ไว้ให้หน้าปลายทางอ่านต่อ (user-app ใช้เลือก view เริ่ม) [v3]
+      // cache-bust แบบ "ช่วง 10 นาที" ไม่ใช่ Date.now() —
+      //   Date.now() ทำให้ URL ไม่ซ้ำเลย → เบราว์เซอร์ต้องโหลด user-app.html (~370KB) ใหม่ทุกครั้งที่เปิด
+      //   ช่วง 10 นาที = เปิดซ้ำในช่วงเดิมใช้ไฟล์ในแคช (0 byte) · ได้รุ่นใหม่ช้าสุด 10 นาที
+      //   (เท่ากับ max-age ของ GitHub Pages เอง → ไม่ทำให้ของใหม่มาช้าลงกว่าเดิม)
       var rest = q.toString();
-      location.replace(target + '?v=' + Date.now() + (rest ? '&' + rest : ''));
+      var bucket = Math.floor(Date.now() / 600000);   // 600000 ms = 10 นาที
+      location.replace(target + '?v=' + bucket + (rest ? '&' + rest : ''));
     })();
   </script>
 </body>
