@@ -671,6 +671,15 @@
     { key:'hr',   icon:'👥', label:'HR',     views:['approve','otapprove','hrreport'] },
     { key:'fin',  icon:'💰', label:'การเงิน', views:['expdash','reimb','finreport','taxdoc'] }   /* taxdoc ซ่อนไว้ก่อน — เปิดตอน ภ.ง.ด. v2 */
   ];
+  // ไอคอนหัวกลุ่มบน sidebar คอม = SVG เส้นสีเดียว (พี่กี้ขอ 30 ก.ค.: เรียบ ๆ ไม่สีสัน)
+  // เข้าชุดกับปุ่มย่อยที่เป็น SVG อยู่แล้ว · emoji ใน NAV_GROUPS ยังใช้ที่แถบล่างมือถือ (จอเล็กอ่านง่ายกว่า)
+  var GROUP_ICON={
+    home:'<svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10V20h13V10"/><path d="M10 20v-5h4v5"/></svg>',
+    work:'<svg viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="7" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="6" rx="1.5"/><rect x="14" y="14" width="7" height="6" rx="1.5"/></svg>',
+    me:'<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c0-3.6 3.1-5.6 7-5.6s7 2 7 5.6"/></svg>',
+    hr:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3.2"/><path d="M3 19.5c0-3.2 2.7-5 6-5s6 1.8 6 5"/><path d="M16 6.2a3.2 3.2 0 0 1 0 6"/><path d="M17.5 14.8c2.1.5 3.5 2 3.5 4.7"/></svg>',
+    fin:'<svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="11" rx="2"/><circle cx="12" cy="12" r="2.4"/><path d="M6.5 9.5v5M17.5 9.5v5"/></svg>'
+  };
   /** พนักงาน: หน้า "สรุปค่าใช้จ่าย" (expdash) เป็นของตัวเอง → ย้ายไปหมวดส่วนตัว
    *  พี่/HR: หน้าเดียวกันคือ "สรุป/อนุมัติเบิก" ของทั้งทีม → คงอยู่หมวดการเงิน
    *  (mutate NAV_GROUPS ครั้งเดียวหลังรู้สิทธิ์ → ทั้ง sidebar และแถบมือถือเห็นชุดเดียวกัน) */
@@ -731,7 +740,8 @@
       else {
         var head=document.createElement('button');
         head.type='button'; head.className='nav-gh';
-        head.innerHTML='<span class="gi">'+g.icon+'</span><span class="gl">'+esc(g.label)+'</span><span class="gc">›</span>';
+        head.innerHTML='<span class="gi">'+(GROUP_ICON[g.key]||g.icon)+'</span>'+
+          '<span class="gl">'+esc(g.label)+'</span><span class="gc">›</span>';
         head.addEventListener('click', function(){ navToggleGroup(g.key); });
         var body=document.createElement('div'); body.className='nav-gb';
         btns.forEach(function(b){ body.appendChild(b); });

@@ -729,7 +729,12 @@ textarea:focus,input[type=time]:focus{border-color:var(--red)}
     background:none; font-family:inherit; font-size:13.5px; color:var(--slate); cursor:pointer;
     border-radius:11px; text-align:left; transition:background .12s}
   .nav-gh:hover{background:var(--bg)}
-  .nav-gh .gi{width:20px; font-size:16px; text-align:center; flex:0 0 auto; line-height:20px}
+  .nav-gh .gi{width:20px; font-size:16px; flex:0 0 auto; line-height:20px;
+    display:flex; align-items:center; justify-content:center; color:#8A94A6}
+  /* ไอคอนหัวกลุ่ม = เส้นสีเดียว (เรียบ ไม่สีสัน · พี่กี้ขอ 30 ก.ค.) */
+  .nav-gh .gi svg{width:19px; height:19px; display:block; fill:none;
+    stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round}
+  .nav-gh:hover .gi, .nav-g.cur > .nav-gh .gi{color:var(--red-deep)}
   .nav-gh .gl{flex:1}
   .nav-gh .gc{color:#b6bdc9; font-size:15px; transition:transform .16s; line-height:1}
   .nav-g.open > .nav-gh .gc{transform:rotate(90deg)}
