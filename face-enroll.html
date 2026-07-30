@@ -117,7 +117,7 @@
       .then(function(r){ if(!r.ok) throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้'); return r.json(); });
   }
 
-  function closeApp(){ try{ if(liff.isInClient()) liff.closeWindow(); else location.href='index.html?p=work'; }catch(e){ location.reload(); } }
+  function closeApp(){ try{ if(liff.isInClient()) liff.closeWindow(); else location.href='index.html?p=home'; }catch(e){ location.reload(); } }
   function goClock(){ location.href = 'face-clock.html'; }
   function openExternal(){ try{ liff.openWindow({ url: location.href, external: true }); }catch(e){ alert('เปิดลิงก์นี้ใน Chrome หรือ Safari นะคะ'); } }
 

@@ -3739,7 +3739,9 @@
         b.addEventListener('click', function(){ switchView(b.dataset.view); }); });
       var sp=startParam();
       // ลิงก์จาก Google Chat/แชท → เปิดแท็บตรง · ไม่มี p= → หน้า "ภาพรวม" (พี่กี้เคาะ 29 ก.ค.)
-      var startView = sp==='docs' ? 'docs' : (sp==='work' ? 'projects' : (sp==='expense' ? 'expense' :
+      // ⚠️ p=work = ปุ่ม "เปิดระบบ" (Rich Menu/การ์ดแชท) เจตนา "เข้าระบบ" ไม่ใช่ "ไปบอร์ดงาน" → หน้าภาพรวม
+      //    (Rich Menu ที่ทีมมีอยู่ฝัง p=work ไว้แล้ว · เข้าบอร์ดงานตรงใช้ p=projects/p=tasks)
+      var startView = sp==='docs' ? 'docs' : ((sp==='projects'||sp==='tasks') ? 'projects' : (sp==='expense' ? 'expense' :
         (sp==='leave' ? 'leave' : ((sp==='approve'||sp==='expapprove') && IS_OWNER ? sp : 'home'))));
       switchView(startView);   // switchView → mSyncNav สร้างเมนูกลุ่มล่าง + แท็บบนให้เอง
       // อุ่นแคชเบื้องหลัง → คลิกการลา/เอกสารครั้งแรกเด้งทันที (ไม่แย่งจอแรกโหลด)
