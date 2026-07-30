@@ -687,8 +687,8 @@ textarea:focus,input[type=time]:focus{border-color:var(--red)}
   .nav-brand{display:flex; align-items:center; gap:10px;
     height:63px; padding:0 14px; margin:-10px -12px 8px;
     background:var(--red); box-shadow:0 2px 12px rgba(27,114,232,.22)}
-  /* เอา "หน้าหลัก" ออกบน PC (ซ้ำกับเมนูทำงาน HR) — โปรไฟล์เลื่อนขึ้นแทน */
-  .nav-btn[data-view="home"]{display:none}
+  /* ⚠️ เคยมี rule ซ่อน .nav-btn[data-view="home"] บน PC (ยุค "หน้าหลัก" เดิมที่ซ้ำกับเมนู HR)
+     → ตอนนี้ data-view="home" = หน้า "ภาพรวม" (dashboard) ต้องเห็นบนคอม ห้ามซ่อน */
   .nb-logo{width:auto;height:50px;background:none;flex:0 0 auto;
     display:flex;align-items:center;justify-content:center}
   .nb-logo img{height:100%;width:auto;object-fit:contain;filter:drop-shadow(0 2px 5px rgba(10,30,70,.30))}

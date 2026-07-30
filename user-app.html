@@ -20,27 +20,61 @@
   .lvb{ margin-left:auto; font-size:12px; padding:3px 11px; border-radius:999px; font-weight:600; white-space:nowrap; }
   .lvb-wait{ background:var(--ot-tint); color:var(--ot); } .lvb-ok{ background:var(--green-tint); color:var(--green); }
   .lvb-no{ background:#fbe7e7; color:#c0392b; }
-  /* ═══ หน้า 🏠 ภาพรวม (พี่กี้เคาะ 29 ก.ค. 2569) — การ์ดสรุปทั้งระบบหน้าเดียว ═══ */
-  .hm-todo{ background:linear-gradient(135deg,#FFF7E8,#FFEFD6); border:1px solid #F3D9A6; border-radius:var(--radius); padding:14px 15px; margin-bottom:14px; }
-  .hm-todo .tdh{ font-weight:700; font-size:14px; margin-bottom:10px; color:#8A5A08; }
-  .hm-todo .tdl{ display:flex; flex-wrap:wrap; gap:8px; }
-  .hm-todo button{ font:inherit; font-size:13px; cursor:pointer; border:1px solid #EBC98A; background:#fff; color:#7A4E06;
-    border-radius:999px; padding:7px 13px; display:inline-flex; align-items:center; gap:7px; }
-  .hm-todo button:hover{ border-color:#D9A94F; }
-  .hm-todo button b{ background:#DC2626; color:#fff; border-radius:999px; padding:0 7px; font-size:12px; }
-  .hm-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:12px; }
-  .hm-c{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:14px 15px; }
-  .hm-c .hh{ display:flex; align-items:center; gap:8px; font-weight:700; font-size:14.5px; margin-bottom:12px; }
-  .hm-c .hh .go{ margin-left:auto; font-size:12px; font-weight:600; color:var(--red); cursor:pointer; }
-  .hm-n{ display:flex; gap:14px; flex-wrap:wrap; }
-  .hm-n > div{ min-width:64px; }
-  .hm-n b{ display:block; font-size:21px; line-height:1.2; color:#1F2733; font-variant-numeric:tabular-nums; }
-  .hm-n b.warn{ color:#DC2626; } .hm-n b.ok{ color:#1E9E5A; } .hm-n b.info{ color:#1B72E8; } .hm-n b.wait{ color:#C87F1E; }
-  .hm-n span{ font-size:11.5px; color:var(--muted); }
-  .hm-sub{ margin-top:11px; padding-top:10px; border-top:1px dashed var(--line); font-size:12.5px; color:#4A5262; }
-  .hm-sub .sl{ display:flex; justify-content:space-between; gap:10px; margin-top:4px; }
-  .hm-sub .sl b{ font-weight:600; color:#1F2733; font-variant-numeric:tabular-nums; }
-  .hm-err{ font-size:12px; color:#C0392B; }
+  /* ═══ หน้า 🏠 ภาพรวม — dashboard มาตรฐาน (พี่กี้เคาะ 30 ก.ค. 2569: ตัวเลขสำคัญบนสุด → สิ่งที่ต้องทำ → รายการล่าสุด → ตารางสรุป) ═══ */
+  .hm-hero{ display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
+  .hm-hero h2{ font-size:19px; font-weight:700; color:#1F2733; }
+  .hm-hero .hp{ font-size:13px; color:var(--muted); }
+  /* แถวตัวเลขสำคัญ (KPI) — 4 ช่องเรียงแถวบน · มือถือ 2 คอลัมน์ */
+  .hm-kpis{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:16px; }
+  .hm-k{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:14px 15px; text-align:left; font:inherit; cursor:pointer; position:relative; transition:box-shadow .12s, transform .05s; }
+  .hm-k:hover{ box-shadow:0 6px 18px rgba(120,150,200,.20); } .hm-k:active{ transform:scale(.995); }
+  .hm-k .kl{ font-size:12px; color:var(--muted); display:flex; align-items:center; gap:6px; }
+  .hm-k .kv{ font-size:27px; font-weight:800; line-height:1.15; margin-top:7px; color:#1F2733; font-variant-numeric:tabular-nums; }
+  .hm-k .kv small{ font-size:13px; font-weight:600; color:var(--muted); margin-left:3px; }
+  .hm-k .ks{ font-size:12px; color:#4A5262; margin-top:5px; font-variant-numeric:tabular-nums; }
+  .hm-k.warn .kv{ color:#DC2626; } .hm-k.ok .kv{ color:#1E9E5A; } .hm-k.info .kv{ color:#1B72E8; } .hm-k.wait .kv{ color:#C87F1E; }
+  /* พื้นที่ 2 คอลัมน์: ต้องทำ | รายการล่าสุด — มือถือเรียงลง */
+  .hm-2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; align-items:start; }
+  .hm-p{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; }
+  .hm-p .ph{ display:flex; align-items:center; gap:8px; font-weight:700; font-size:14px; color:#1F2733;
+    padding:13px 15px; border-bottom:1px solid var(--line); }
+  .hm-p .ph .go{ margin-left:auto; font-size:12px; font-weight:600; color:var(--red); cursor:pointer; }
+  .hm-p .pb{ padding:6px 0; }
+  .hm-empty{ padding:20px 15px; text-align:center; font-size:13px; color:var(--muted); }
+  /* ⚡ ต้องทำ — 1 บรรทัด 1 เรื่อง กดได้ทั้งแถว (มาตรฐาน task list ไม่ใช่ชิปกลม) */
+  .hm-todo-row{ display:flex; align-items:center; gap:10px; width:100%; font:inherit; text-align:left;
+    background:none; border:none; border-bottom:1px solid var(--bg); padding:11px 15px; cursor:pointer; color:#1F2733; }
+  .hm-todo-row:last-child{ border-bottom:none; }
+  .hm-todo-row:hover{ background:var(--red-tint); }
+  .hm-todo-row .dot{ width:8px; height:8px; border-radius:50%; background:#DC2626; flex:0 0 auto; }
+  .hm-todo-row .tl{ flex:1; font-size:13.5px; }
+  .hm-todo-row .tn{ font-weight:700; font-variant-numeric:tabular-nums; }
+  .hm-todo-row .ar{ color:var(--muted); font-size:15px; }
+  /* รายการล่าสุด — ตารางอ่านเร็ว */
+  .hm-r{ display:flex; align-items:center; gap:10px; padding:9px 15px; border-bottom:1px solid var(--bg); cursor:pointer; }
+  .hm-r:last-child{ border-bottom:none; } .hm-r:hover{ background:var(--bg); }
+  .hm-r .rd{ font-size:11.5px; color:var(--muted); width:38px; flex:0 0 auto; font-variant-numeric:tabular-nums; }
+  .hm-r .rt{ flex:1; font-size:13px; color:#1F2733; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .hm-r .rt i{ font-style:normal; color:var(--muted); font-size:11.5px; }
+  .hm-r .ra{ font-size:12.5px; font-weight:600; font-variant-numeric:tabular-nums; color:#1F2733; }
+  .hm-r .rs{ font-size:11px; padding:2px 8px; border-radius:999px; white-space:nowrap; flex:0 0 auto; }
+  .hm-r .rs.ok{ background:var(--green-tint); color:var(--green); }
+  .hm-r .rs.wait{ background:var(--ot-tint); color:var(--ot); }
+  .hm-r .rs.bad{ background:#fbe7e7; color:#c0392b; }
+  /* ตารางสรุป (ล่าง) — label | ค่า */
+  .hm-t{ width:100%; border-collapse:collapse; font-size:13px; }
+  .hm-t td{ padding:9px 15px; border-bottom:1px solid var(--bg); color:#4A5262; }
+  .hm-t tr:last-child td{ border-bottom:none; }
+  .hm-t td.v{ text-align:right; font-weight:600; color:#1F2733; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .hm-t td.v.warn{ color:#DC2626; } .hm-t td.v.ok{ color:#1E9E5A; } .hm-t td.v.wait{ color:#C87F1E; }
+  .hm-t tr.sec td{ background:var(--bg); font-size:11.5px; font-weight:700; color:#6B7280; padding:6px 15px; }
+  .hm-err{ font-size:12px; color:#C0392B; padding:14px 15px; }
+  @media(max-width:900px){
+    .hm-kpis{ grid-template-columns:repeat(2,1fr); gap:10px; }
+    .hm-2{ grid-template-columns:1fr; }
+    .hm-k .kv{ font-size:24px; }
+  }
   .soon-wrap{ text-align:center; padding:48px 22px; color:var(--muted); }
   .soon-wrap .e-emo{ font-size:40px; margin-bottom:10px; }
   /* งาน (task card) */
@@ -670,86 +704,120 @@
   function skel(){ $('main').innerHTML='<div class="card"><div class="skel" style="height:120px"></div></div>'; }
 
   // ═══════════ VIEW: 🏠 ภาพรวม (หน้าแรก) ═══════════
-  // การ์ดสรุปทั้งระบบหน้าเดียว — พนักงานเห็นของตัวเอง · พี่เห็นทั้งทีมเพิ่มในบล็อกล่างของแต่ละการ์ด
-  // ทุกตัวเลขมาจาก backend (waHomeDash) ที่กรองสิทธิ์แล้ว — หน้าจอไม่คำนวณเอง ไม่ตัดสินสิทธิ์เอง
+  // dashboard มาตรฐาน 4 ชั้น: ① ตัวเลขสำคัญ (KPI) ② ⚡ ต้องทำ ③ รายการล่าสุด ④ ตารางสรุป HR/การเงิน
+  // พนักงานเห็นของตัวเอง · พี่เห็นทั้งทีม — ทุกตัวเลขมาจาก backend (waHomeDash) ที่กรองสิทธิ์แล้ว
+  // หน้าจอไม่คำนวณเอง ไม่ตัดสินสิทธิ์เอง (ยกเว้นเลือกว่าจะโชว์ช่องไหน จาก r.isOwner ที่ backend ส่งมา)
   function renderHome(){
     skel();
     jsonp({action:'waHomeDash',uid:UID}).then(function(r){
       if(VIEW!=='home') return;
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
-      var html='';
-      html+='<div class="boardhead">สวัสดีค่ะ '+esc(r.nick||'')+' · ข้อมูลเดือน '+esc(r.monthThai||r.ym||'')+'</div>';
-      // แถบ "ต้องทำ" — ของค้างที่รอคนนี้ตัดสินใจ กดแล้วเด้งไปหน้านั้นเลย
-      if((r.todo||[]).length){
-        html+='<div class="hm-todo"><div class="tdh">⚡ ต้องทำ</div><div class="tdl">'+
-          r.todo.map(function(t){
-            return '<button onclick="switchView(\''+esc(t.view)+'\')">'+esc(t.label)+' <b>'+t.n+'</b></button>';
-          }).join('')+'</div></div>';
-      }
-      html+='<div class="hm-grid">'+
-        hmLeave(r.leave,r.year)+hmOt(r.ot,r.isOwner)+hmAttend(r.attend,r.isOwner)+
-        hmTasks(r.tasks,r.isOwner)+hmMoney(r.money,r.isOwner)+(r.isOwner?hmReimb(r.money):'')+
-      '</div>';
+      var own=!!r.isOwner;
+      var html='<div class="hm-hero"><h2>สวัสดีค่ะ '+esc(r.nick||'')+'</h2>'+
+        '<span class="hp">ข้อมูลเดือน '+esc(r.monthThai||r.ym||'')+'</span></div>';
+      html+=hmKpis(r,own);
+      html+='<div class="hm-2">'+hmTodoPanel(r.todo||[])+hmRecentPanel(r.recent)+'</div>';
+      html+='<div class="hm-2">'+hmHrPanel(r,own)+hmMoneyPanel(r,own)+'</div>';
       $('main').innerHTML=html;
     }).catch(function(e){ if(VIEW==='home') $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
   }
-  /** กรอบการ์ด 1 ใบ · go = view ที่กดแล้วเด้งไป (ว่าง = ไม่มีปุ่ม) */
-  function hmCard(icon,title,go,goLabel,body){
-    return '<div class="hm-c"><div class="hh">'+icon+' '+esc(title)+
-      (go?'<span class="go" onclick="switchView(\''+esc(go)+'\')">'+esc(goLabel||'ดูทั้งหมด')+' ›</span>':'')+
-      '</div>'+body+'</div>';
-  }
-  function hmNum(v,label,cls){ return '<div><b'+(cls?' class="'+cls+'"':'')+'>'+v+'</b><span>'+esc(label)+'</span></div>'; }
-  function hmErr(d){ return (d&&d.error)?'<div class="hm-err">โหลดส่วนนี้ไม่สำเร็จ: '+esc(d.error)+'</div>':''; }
-  function hmLeave(d,year){
-    if(!d||d.error) return hmCard('📝','การลา','leave','',hmErr(d));
-    var body='<div class="hm-n">'+hmNum(d.days,'ใช้ไปปี '+year+' (วัน)','info')+
-      hmNum(d.monthDays,'เดือนนี้ (วัน)')+hmNum(d.myPending,'ใบรออนุมัติ',d.myPending?'wait':'')+'</div>';
-    if((d.byType||[]).length){
-      body+='<div class="hm-sub">'+d.byType.map(function(t){
-        return '<div class="sl"><span>'+esc(t.key)+'</span><b>'+t.days+' วัน</b></div>'; }).join('')+'</div>';
+  /** ① แถวตัวเลขสำคัญ — 4 ช่อง กดแล้วเด้งไปหน้านั้น · พี่เห็นเลขทีม พนักงานเห็นเลขตัวเอง */
+  function hmKpis(r,own){
+    var lv=r.leave||{}, ot=r.ot||{}, mn=r.money||{}, tk=r.tasks||{};
+    function k(view,label,val,unit,sub,cls){
+      return '<button class="hm-k'+(cls?' '+cls:'')+'" onclick="switchView(\''+view+'\')">'+
+        '<div class="kl">'+label+'</div><div class="kv">'+val+(unit?'<small>'+esc(unit)+'</small>':'')+'</div>'+
+        '<div class="ks">'+(sub||'&nbsp;')+'</div></button>';
     }
-    if(d.teamPending) body+='<div class="hm-sub"><div class="sl"><span>ทั้งทีมรออนุมัติ</span><b>'+d.teamPending+' ใบ</b></div></div>';
-    return hmCard('📝','การลา','leave','ยื่นลา',body);
+    var wait=(own?(num(lv.teamPending)+num(ot.teamPending)+num(mn.teamPendingN)):(num(lv.myPending)+num(ot.myPending)+num(mn.myPendingN)));
+    return '<div class="hm-kpis">'+
+      k('approve','⏳ รออนุมัติ',wait,'ใบ',
+        own?('ลา '+num(lv.teamPending)+' · OT '+num(ot.teamPending)+' · เบิก '+num(mn.teamPendingN)):'ใบที่ยื่นไว้ ยังรอผล',
+        wait?'wait':'ok')+
+      k('ot','⏰ OT เดือนนี้',own?num(ot.teamHours):num(ot.hours),'ชม.',
+        money(own?ot.teamAmount:ot.amount)+' บาท','info')+
+      k(own?'expdash':'expense','💸 เบิกค่าใช้จ่าย',own?num(mn.teamToPayN):num(mn.myToPayN),'ใบรอจ่ายคืน',
+        money(own?mn.teamToPayAmt:mn.myToPayAmt)+' บาท',(own?mn.teamToPayN:mn.myToPayN)?'wait':'ok')+
+      k('mytasks','📋 งานเกินกำหนด',num(tk.overdue),'งาน',
+        own?('ทั้งทีม '+num(tk.teamOverdue)+' งาน'):('กำลังทำ '+num(tk.doing)+' · รอตรวจ '+num(tk.review)),
+        num(tk.overdue)?'warn':'ok')+
+    '</div>';
   }
-  function hmOt(d,isOwner){
-    if(!d||d.error) return hmCard('⏰','OT เดือนนี้','ot','',hmErr(d));
-    var body='<div class="hm-n">'+hmNum(d.hours,'ชั่วโมง','info')+hmNum(money(d.amount),'บาท','ok')+
-      hmNum(d.myPending,'รออนุมัติ',d.myPending?'wait':'')+'</div>';
-    if(isOwner) body+='<div class="hm-sub"><div class="sl"><span>ทั้งทีมเดือนนี้</span><b>'+d.teamHours+' ชม. · '+money(d.teamAmount)+' บาท</b></div>'+
-      '<div class="sl"><span>ใบรออนุมัติ</span><b>'+d.teamPending+' ใบ</b></div></div>';
-    return hmCard('⏰','OT เดือนนี้','ot','ขอ OT',body);
+  function num(v){ return Number(v||0); }
+  /** กรอบแผง 1 ใบ (หัว + เนื้อ) */
+  function hmPanel(icon,title,go,goLabel,body){
+    return '<div class="hm-p"><div class="ph">'+icon+' '+esc(title)+
+      (go?'<span class="go" onclick="switchView(\''+esc(go)+'\')">'+esc(goLabel||'ดูทั้งหมด')+' ›</span>':'')+
+      '</div><div class="pb">'+body+'</div></div>';
   }
-  function hmAttend(d,isOwner){
-    if(!d||d.error) return hmCard('🕐','ลงเวลาเดือนนี้','','',hmErr(d));
-    var body='<div class="hm-n">'+hmNum(d.days,'มาแล้ว (วัน)','ok')+hmNum(d.late,'เข้าสาย',d.late?'warn':'')+'</div>';
-    if(d.openToday) body+='<div class="hm-sub">🟢 วันนี้ลงเข้างานแล้ว · ยังไม่ลงออกงาน</div>';
-    if(isOwner) body+='<div class="hm-sub"><div class="sl"><span>วันนี้ทีมลงเวลาแล้ว</span><b>'+d.teamToday+' คน</b></div></div>';
-    return hmCard('🕐','ลงเวลาเดือนนี้','','',body);
+  function hmErr(d){ return (d&&d.error)?'<div class="hm-err">โหลดส่วนนี้ไม่สำเร็จ: '+esc(d.error)+'</div>':''; }
+  /** ② ⚡ ต้องทำ — 1 บรรทัด 1 เรื่อง กดได้ทั้งแถว */
+  function hmTodoPanel(todo){
+    var body=todo.length ? todo.map(function(t){
+      return '<button class="hm-todo-row" onclick="switchView(\''+esc(t.view)+'\')">'+
+        '<span class="dot"></span><span class="tl">'+esc(t.label)+' <span class="tn">'+t.n+'</span></span>'+
+        '<span class="ar">›</span></button>'; }).join('')
+      : '<div class="hm-empty">✅ ไม่มีอะไรค้างค่ะ</div>';
+    return hmPanel('⚡','ต้องทำ','','',body);
   }
-  function hmTasks(d,isOwner){
-    if(!d||d.error) return hmCard('📋','งานของฉัน','mytasks','',hmErr(d));
-    var body='<div class="hm-n">'+hmNum(d.newN,'ใหม่')+hmNum(d.doing,'กำลังทำ','info')+
-      hmNum(d.review,'รอตรวจ',d.review?'wait':'')+hmNum(d.overdue,'เกินกำหนด',d.overdue?'warn':'')+'</div>';
-    if(isOwner) body+='<div class="hm-sub"><div class="sl"><span>ทั้งทีม กำลังทำ / รอตรวจ</span><b>'+d.teamDoing+' / '+d.teamReview+'</b></div>'+
-      '<div class="sl"><span>ทั้งทีม เกินกำหนด</span><b>'+d.teamOverdue+' งาน</b></div></div>';
-    return hmCard('📋','งานของฉัน','mytasks','',body);
+  /** ③ รายการล่าสุด — ลา/OT/เบิก เรียงใหม่→เก่า (backend ส่ง view ให้กดเข้าหน้าที่ถูก) */
+  function hmRecentPanel(rows){
+    if(rows&&rows.error) return hmPanel('🧾','รายการล่าสุด','','',hmErr(rows));
+    var list=rows||[];
+    var body=list.length ? list.map(function(x){
+      return '<div class="hm-r" onclick="switchView(\''+esc(x.view)+'\')">'+
+        '<span class="rd">'+esc(x.when||'')+'</span>'+
+        '<span class="rt">'+esc(x.icon||'')+' '+esc(x.title||'')+(x.who?' <i>· '+esc(x.who)+'</i>':'')+'</span>'+
+        (x.amount?'<span class="ra">'+money(x.amount)+'</span>':'')+
+        '<span class="rs '+esc(x.tone||'ok')+'">'+esc(x.status||'')+'</span></div>'; }).join('')
+      : '<div class="hm-empty">ยังไม่มีรายการค่ะ</div>';
+    return hmPanel('🧾','รายการล่าสุด','','',body);
   }
-  function hmMoney(d,isOwner){
-    if(!d||d.error) return hmCard('💸','เบิกค่าใช้จ่าย','expense','',hmErr(d));
-    var body='<div class="hm-n">'+hmNum(d.myPendingN,'รออนุมัติ',d.myPendingN?'wait':'')+
-      hmNum(d.myToPayN,'รอจ่ายคืน',d.myToPayN?'info':'')+hmNum(money(d.myMonthAmt),'เดือนนี้ (บาท)')+'</div>';
-    if(isOwner) body+='<div class="hm-sub"><div class="sl"><span>ทีมรออนุมัติ</span><b>'+d.teamPendingN+' ใบ · '+money(d.teamPendingAmt)+'</b></div>'+
-      '<div class="sl"><span>ทีมรอจ่ายคืน (หนี้ค้าง)</span><b>'+d.teamToPayN+' ใบ · '+money(d.teamToPayAmt)+'</b></div>'+
-      '<div class="sl"><span>ทีมเบิกเดือนนี้</span><b>'+money(d.teamMonthAmt)+' บาท</b></div></div>';
-    return hmCard('💸','เบิกค่าใช้จ่าย',isOwner?'expdash':'expense',isOwner?'สรุป/อนุมัติ':'',body);
+  /** แถวตารางสรุป */
+  function hmRow(label,val,cls){ return '<tr><td>'+esc(label)+'</td><td class="v'+(cls?' '+cls:'')+'">'+val+'</td></tr>'; }
+  function hmSec(label){ return '<tr class="sec"><td colspan="2">'+esc(label)+'</td></tr>'; }
+  /** ④ ตารางสรุป HR (ลา · OT · ลงเวลา) */
+  function hmHrPanel(r,own){
+    var lv=r.leave||{}, ot=r.ot||{}, at=r.attend||{};
+    if(lv.error&&ot.error&&at.error) return hmPanel('👤','สรุป HR ของฉัน','leave','',hmErr(lv));
+    var t='<table class="hm-t">';
+    t+=hmSec('การลา (ปี '+esc(String(r.year||''))+')');
+    t+=hmRow('ใช้ไปแล้วทั้งปี',num(lv.days)+' วัน','info')+hmRow('เดือนนี้',num(lv.monthDays)+' วัน');
+    (lv.byType||[]).forEach(function(x){ t+=hmRow('· '+x.key,x.days+' วัน'); });
+    if(num(lv.myPending)) t+=hmRow('ใบของฉันรออนุมัติ',num(lv.myPending)+' ใบ','wait');
+    t+=hmSec('OT เดือนนี้');
+    t+=hmRow('ของฉัน',num(ot.hours)+' ชม. · '+money(ot.amount)+' บาท');
+    if(own) t+=hmRow('ทั้งทีม',num(ot.teamHours)+' ชม. · '+money(ot.teamAmount)+' บาท','info');
+    t+=hmSec('ลงเวลาเดือนนี้');
+    t+=hmRow('มาแล้ว',num(at.days)+' วัน','ok')+hmRow('เข้าสาย',num(at.late)+' วัน',num(at.late)?'warn':'');
+    if(at.openToday) t+=hmRow('วันนี้','🟢 ลงเข้างานแล้ว · ยังไม่ลงออก','ok');
+    if(own) t+=hmRow('วันนี้ทีมลงเวลาแล้ว',num(at.teamToday)+' คน');
+    return hmPanel('👤','สรุป HR','leave','ไปหน้าลา',t+'</table>');
   }
-  function hmReimb(d){
-    if(!d||d.error) return '';
-    var body='<div class="hm-n">'+hmNum(d.reimbOpenN,'ใบที่ยังตามไม่จบ',d.reimbOpenN?'wait':'')+
-      hmNum(money(d.reimbOpenAmt),'บาท')+'</div>'+
-      '<div class="hm-sub">นับใบที่ส่งแล้ว/อนุมัติแล้ว แต่ยังไม่ได้รับหลักฐาน</div>';
-    return hmCard('🧾','ตั้งเบิกลูกค้า','reimb','',body);
+  /** ④ ตารางสรุปการเงิน (เบิก · ตั้งเบิกลูกค้า) + งาน */
+  function hmMoneyPanel(r,own){
+    var mn=r.money||{}, tk=r.tasks||{};
+    if(mn.error) return hmPanel('💰','สรุปการเงิน','expense','',hmErr(mn));
+    var t='<table class="hm-t">';
+    t+=hmSec('เบิกค่าใช้จ่าย — ของฉัน');
+    t+=hmRow('รออนุมัติ',num(mn.myPendingN)+' ใบ',num(mn.myPendingN)?'wait':'')+
+       hmRow('รอจ่ายคืน',num(mn.myToPayN)+' ใบ · '+money(mn.myToPayAmt))+
+       hmRow('เบิกเดือนนี้',money(mn.myMonthAmt)+' บาท');
+    if(own){
+      t+=hmSec('เบิกค่าใช้จ่าย — ทั้งทีม');
+      t+=hmRow('รออนุมัติ',num(mn.teamPendingN)+' ใบ · '+money(mn.teamPendingAmt),num(mn.teamPendingN)?'wait':'')+
+         hmRow('รอจ่ายคืน (หนี้ค้าง)',num(mn.teamToPayN)+' ใบ · '+money(mn.teamToPayAmt),num(mn.teamToPayN)?'wait':'')+
+         hmRow('ทีมเบิกเดือนนี้',money(mn.teamMonthAmt)+' บาท');
+      t+=hmSec('ตั้งเบิกลูกค้า (ยังตามไม่จบ)');
+      t+=hmRow('ค้างอยู่',num(mn.reimbOpenN)+' ใบ · '+money(mn.reimbOpenAmt)+' บาท',num(mn.reimbOpenN)?'wait':'');
+    }
+    if(!tk.error){
+      t+=hmSec('งาน'+(own?' — ของฉัน / ทั้งทีม':' — ของฉัน'));
+      t+=hmRow('ใหม่ / กำลังทำ',num(tk.newN)+' / '+num(tk.doing)+(own?'  ·  ทีม '+num(tk.teamDoing):''))+
+         hmRow('รอตรวจ',num(tk.review)+(own?'  ·  ทีม '+num(tk.teamReview):''),num(tk.review)?'wait':'')+
+         hmRow('เกินกำหนด',num(tk.overdue)+(own?'  ·  ทีม '+num(tk.teamOverdue):''),num(tk.overdue)?'warn':'');
+    }
+    return hmPanel('💰','สรุปการเงิน'+(own?' + งาน':''),own?'expdash':'expense','ไปหน้าเบิก',t+'</table>');
   }
 
   // ═══════════ VIEW: ลา ═══════════
