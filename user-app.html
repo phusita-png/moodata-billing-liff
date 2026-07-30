@@ -381,7 +381,10 @@
       box-shadow:0 -2px 12px rgba(20,30,50,.08); z-index:15; padding-bottom:env(safe-area-inset-bottom,0); }
     .mnav-btn{ flex:1; border:none; background:none; display:flex; flex-direction:column; align-items:center;
       gap:2px; padding:9px 2px 8px; color:#8A94A6; font-family:inherit; font-size:11px; cursor:pointer; }
-    .mnav-btn .mn-ic{ font-size:19px; line-height:1; }
+    .mnav-btn .mn-ic{ font-size:19px; line-height:1; display:flex; align-items:center; justify-content:center; height:20px; }
+    /* ไอคอนแถบล่าง = เส้นสีเดียวตามสีปุ่ม (เทา · เปลี่ยนเป็นสีแบรนด์เมื่อเลือก) */
+    .mnav-btn .mn-ic svg{ width:20px; height:20px; display:block; fill:none;
+      stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
     .mnav-btn.on{ color:var(--red); font-weight:600; }
   }
   /* ── Project (บริหารโครงการ) ── */
@@ -655,7 +658,11 @@
   function switchView(v){
     VIEW=v;
     Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(b){ b.classList.toggle('active', b.dataset.view===v); });
-    var meta=VIEW_META[v]||['•',v]; $('tbIcon').textContent=meta[0]; $('tbTitle').textContent=meta[1];
+    var meta=VIEW_META[v]||['•',v];
+    // ไอคอนแถบบน = ไอคอนเส้นของหมวดที่หน้านี้อยู่ (เรียบ ไม่สีสัน · พี่กี้ขอ 30 ก.ค.) · fallback emoji
+    var g=mGroupOf(v), gi=g&&GROUP_ICON[g.key];
+    if(gi) $('tbIcon').innerHTML=gi; else $('tbIcon').textContent=meta[0];
+    $('tbTitle').textContent=meta[1];
     mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
     ({ home:renderHome, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport }[v] || soon)();
   }
@@ -708,7 +715,7 @@
     // กลุ่มที่ทุก view เป็นของผู้ดูแล (เช่น 📊 รายงาน) ต้องไม่โผล่ให้พนักงาน — ไม่งั้นกดแล้วไม่มีอะไรเกิดขึ้น
     el.innerHTML=NAV_GROUPS.filter(function(g){ return mVisibleViews(g).length; }).map(function(g){
       return '<button class="mnav-btn'+(g.key===MGROUP?' on':'')+'" onclick="mSelectGroup(\''+g.key+'\')">'+
-        '<span class="mn-ic">'+g.icon+'</span>'+esc(g.label)+'</button>';
+        '<span class="mn-ic">'+(GROUP_ICON[g.key]||g.icon)+'</span>'+esc(g.label)+'</button>';
     }).join('');
   }
   function mRenderTabs(){

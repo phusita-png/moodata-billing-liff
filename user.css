@@ -674,7 +674,10 @@ textarea:focus,input[type=time]:focus{border-color:var(--red)}
     background:var(--red); color:#fff; border-bottom:none;
     box-shadow:0 2px 12px rgba(27,114,232,.22);
     height:63px; padding:0 30px; position:sticky; top:0; z-index:12}
-  .tb-icon{font-size:21px; line-height:1; flex:0 0 auto}
+  .tb-icon{font-size:21px; line-height:1; flex:0 0 auto; display:flex; align-items:center}
+  /* ไอคอนแถบบน = เส้นขาวเรียบ (เข้าชุดกับเมนูข้าง · พี่กี้ขอ 30 ก.ค.) */
+  .tb-icon svg{width:22px; height:22px; display:block; fill:none;
+    stroke:#fff; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round}
   .tb-mid{flex:1; min-width:0}
   .tb-title{font-size:17px; font-weight:700; line-height:1.2; color:#fff}
   .tb-sub{font-size:12px; color:rgba(255,255,255,.85); margin-top:2px}
