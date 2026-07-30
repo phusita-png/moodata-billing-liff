@@ -699,8 +699,54 @@
   }
   function mSyncNav(v){
     var g=mGroupOf(v); if(g){ MGROUP=g.key; MG_LAST[g.key]=v; }
-    mBuildGroupBar(); mRenderTabs();
+    mBuildGroupBar(); mRenderTabs(); navSyncGroups(v);
   }
+
+  // ───── คอม: sidebar จัดกลุ่มแบบพับ/คลี่ (พี่กี้เคาะ 30 ก.ค. 2569 — ให้เป็นกลุ่มเหมือนแอปมือถือ) ─────
+  // ใช้ NAV_GROUPS ชุดเดียวกับแถบมือถือ (source เดียว ไม่ drift) · ย้ายปุ่มเดิมใน markup เข้ากลุ่ม
+  // (ไม่ generate ปุ่มใหม่ → ไอคอน SVG เดิมอยู่ครบ) · กลุ่มที่มีหัวข้อเดียวไม่ต้องพับ กดเข้าได้เลย
+  function buildNavGroups(){
+    var nav=document.querySelector('.nav'); if(!nav || nav.dataset.grouped) return;
+    Array.prototype.forEach.call(nav.querySelectorAll('.nav-sec'), function(s){ s.parentNode.removeChild(s); });
+    NAV_GROUPS.forEach(function(g){
+      var btns=mVisibleViews(g).map(function(v){ return nav.querySelector('.nav-btn[data-view="'+v+'"]'); })
+        .filter(function(b){ return !!b; });
+      if(!btns.length) return;
+      var wrap=document.createElement('div'); wrap.className='nav-g'; wrap.setAttribute('data-g',g.key);
+      if(btns.length===1){ btns[0].classList.add('solo'); wrap.appendChild(btns[0]); }   // กลุ่มเดี่ยว = ปุ่มเดียวจบ
+      else {
+        var head=document.createElement('button');
+        head.type='button'; head.className='nav-gh';
+        head.innerHTML='<span class="gi">'+g.icon+'</span><span class="gl">'+esc(g.label)+'</span><span class="gc">›</span>';
+        head.addEventListener('click', function(){ navToggleGroup(g.key); });
+        var body=document.createElement('div'); body.className='nav-gb';
+        btns.forEach(function(b){ body.appendChild(b); });
+        wrap.appendChild(head); wrap.appendChild(body);
+      }
+      nav.appendChild(wrap);
+    });
+    // ปุ่มที่ไม่ได้เข้ากลุ่มไหน (สิทธิ์ไม่ถึง / ยังไม่เปิดใช้ เช่น ภาษี-เอกสาร) ต้องไม่ค้างลอยท้ายเมนู
+    // ⚠️ ต้อง copy เป็น array ก่อนลบ — nav.children เป็น live collection ลบไปวนไป index เลื่อน ลบไม่ครบ
+    Array.prototype.slice.call(nav.children).forEach(function(el){
+      if(el.classList.contains('nav-btn')) el.parentNode.removeChild(el);
+    });
+    nav.dataset.grouped='1';
+    navSyncGroups(VIEW);
+  }
+  function navToggleGroup(key){
+    var el=document.querySelector('.nav-g[data-g="'+key+'"]');
+    if(el) el.classList.toggle('open');
+  }
+  /** คลี่กลุ่มของหน้าที่กำลังเปิด (กลุ่มอื่นที่ผู้ใช้คลี่ไว้เอง ปล่อยไว้ ไม่หุบให้) */
+  function navSyncGroups(v){
+    var g=mGroupOf(v); if(!g) return;
+    var el=document.querySelector('.nav-g[data-g="'+g.key+'"]');
+    if(el) el.classList.add('open');
+    Array.prototype.forEach.call(document.querySelectorAll('.nav-g'), function(x){
+      x.classList.toggle('cur', x.getAttribute('data-g')===g.key);
+    });
+  }
+  window.navToggleGroup=navToggleGroup;
   function mSelectGroup(gkey){
     var g=null; for(var i=0;i<NAV_GROUPS.length;i++){ if(NAV_GROUPS[i].key===gkey){ g=NAV_GROUPS[i]; break; } }
     if(!g) return;
@@ -3857,6 +3903,7 @@
         var na=$('navAppr'); if(na) na.style.display='';                  // แท็บอนุมัติลา (+ยื่นลาแทน) = เฉพาะพี่/HR
         var noa=$('navOtAppr'); if(noa) noa.style.display='';              // แท็บอนุมัติ OT = เฉพาะพี่/HR
         var nrp=$('navReports'); if(nrp) nrp.style.display=''; }           // แท็บรายงาน = เฉพาะพี่/HR (ข้อมูลทั้งทีม)
+      buildNavGroups();   // จัดกลุ่ม sidebar (ต้องรู้ IS_OWNER ก่อน — กลุ่มของผู้ดูแลจะไม่โผล่ให้พนักงาน)
         // navTaxDoc (ภาษี/เอกสาร) ซ่อนไว้ก่อน — เปิดตอน v2 (ภ.ง.ด.1/3/53) เสร็จ
       $('loader').classList.add('hidden'); $('app').classList.remove('hidden');
       Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(b){

@@ -723,6 +723,25 @@ textarea:focus,input[type=time]:focus{border-color:var(--red)}
   .nav-sec.has-items{display:block;font-size:10.5px;color:#a0a6b4;text-transform:uppercase;
     letter-spacing:.5px;padding:13px 14px 4px;font-weight:700}
 
+  /* ── เมนูกลุ่มพับ/คลี่ (กลุ่มชุดเดียวกับแถบมือถือ · พี่กี้เคาะ 30 ก.ค. 2569) ── */
+  .nav-g{display:flex; flex-direction:column; width:100%}
+  .nav-gh{display:flex; align-items:center; gap:11px; width:100%; padding:10px 14px; border:none;
+    background:none; font-family:inherit; font-size:13.5px; color:var(--slate); cursor:pointer;
+    border-radius:11px; text-align:left; transition:background .12s}
+  .nav-gh:hover{background:var(--bg)}
+  .nav-gh .gi{width:20px; font-size:16px; text-align:center; flex:0 0 auto; line-height:20px}
+  .nav-gh .gl{flex:1}
+  .nav-gh .gc{color:#b6bdc9; font-size:15px; transition:transform .16s; line-height:1}
+  .nav-g.open > .nav-gh .gc{transform:rotate(90deg)}
+  .nav-g.cur > .nav-gh{color:var(--red-deep); font-weight:600}     /* กลุ่มของหน้าที่เปิดอยู่ */
+  /* เนื้อกลุ่ม: หุบ = สูง 0 · คลี่ = โผล่ทั้งหมด (max-height เผื่อไว้ให้ transition ทำงาน) */
+  .nav-gb{display:flex; flex-direction:column; gap:2px; overflow:hidden;
+    max-height:0; transition:max-height .18s ease; padding-left:16px}
+  .nav-g.open > .nav-gb{max-height:420px}
+  .nav-gb .nav-btn{padding:9px 12px; font-size:13px}
+  .nav-gb .nav-btn span{font-size:13px}
+  .nav-gb .nav-btn svg{width:18px; height:18px}
+
   /* content กว้าง */
   .main{grid-area:main; padding:26px 32px; max-width:none}
   .stat-grid{grid-template-columns:repeat(4,1fr)}
