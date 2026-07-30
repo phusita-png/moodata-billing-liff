@@ -671,12 +671,13 @@
   // ── หมวดเมนู (ใช้ร่วมทั้งแถบมือถือและ sidebar คอม) — พี่กี้เคาะ 30 ก.ค. 2569: แยก งาน / ส่วนตัว / HR / การเงิน
   //    หลักการ: "เรื่องของฉัน" (ยื่นลา ขอ OT เบิก สลิป) แยกจาก "งานผู้ดูแล" (อนุมัติ · รายงาน · ตั้งเบิก)
   //    เพราะพี่สวม 2 บทบาท เมนูเดิมปนกัน (กลุ่ม "ลา" มีทั้งลาของฉันและอนุมัติลา)
+  //    ลำดับ: งานบริษัทก่อน (งาน → HR → การเงิน) แล้วปิดท้ายด้วยเรื่องของตัวเอง (พี่กี้ขอ 30 ก.ค.)
   var NAV_GROUPS=[
     { key:'home', icon:'🏠', label:'ภาพรวม', views:['home'] },
     { key:'work', icon:'📊', label:'งาน',    views:['projects','mytasks','review','senddoc','appt','announce','trash'] },
-    { key:'me',   icon:'🙋', label:'ส่วนตัว', views:['leave','ot','expense','docs'] },
     { key:'hr',   icon:'👥', label:'HR',     views:['approve','otapprove','hrreport'] },
-    { key:'fin',  icon:'💰', label:'การเงิน', views:['expdash','reimb','finreport','taxdoc'] }   /* taxdoc ซ่อนไว้ก่อน — เปิดตอน ภ.ง.ด. v2 */
+    { key:'fin',  icon:'💰', label:'การเงิน', views:['expdash','reimb','finreport','taxdoc'] },   /* taxdoc ซ่อนไว้ก่อน — เปิดตอน ภ.ง.ด. v2 */
+    { key:'me',   icon:'🙋', label:'ส่วนตัว', views:['leave','ot','expense','docs'] }
   ];
   // ไอคอนหัวกลุ่มบน sidebar คอม = SVG เส้นสีเดียว (พี่กี้ขอ 30 ก.ค.: เรียบ ๆ ไม่สีสัน)
   // เข้าชุดกับปุ่มย่อยที่เป็น SVG อยู่แล้ว · emoji ใน NAV_GROUPS ยังใช้ที่แถบล่างมือถือ (จอเล็กอ่านง่ายกว่า)
