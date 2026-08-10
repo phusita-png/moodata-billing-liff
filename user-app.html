@@ -591,7 +591,7 @@
   var EXEC_URL = 'https://script.google.com/macros/s/AKfycbwdOotltb--WwTuS-ECutq6uFQs536kjz-RyLuq1mm35Pbfnn25EptvIRkfjaZB6iJf/exec';
   // ═══════════════════════════════
 
-  var UID='', IDTOKEN='', NICK='', VIEW='', IS_OWNER=false;
+  var UID='', IDTOKEN='', NICK='', VIEW='', IS_OWNER=false, CAN_FIN=false;
   var TYPES=[], QUOTA=null, LEAVES=[], HOLIDAYS=[], SCHEDULE=null, LV_TEAM=[];
   var CAL=new Date();   // เดือนที่ปฏิทินแสดงอยู่
   var LF = { type:'sick', start:null, end:null, period:'full', reason:'', stime:'', etime:'' };  // start/end = Date|null
@@ -1837,17 +1837,76 @@
       '<div class="m-hint" style="margin:0">กำลังทยอยเพิ่ม — OT รายเดือนรายคน · ลงเวลา/มาสาย '+
       '(ตอนนี้ดู OT ได้ที่เมนู HR › อนุมัติ OT)</div></div>';
   }
+  // รายงานการเงินรวม 2 ฝั่ง: เงินออก (เบิกพนักงาน) + เงินที่เรียกคืน (ตั้งเบิกลูกค้า)
+  // default = เดือนก่อน (backend เลือกให้ · เหมาะกับการทำรายงานส่งบัญชี) · สิทธิ์ backend ตัดสินเอง
+  var FIN_MONTH='';
   function renderFinReport(){
-    if(!IS_OWNER){ ownerOnlyPage(); return; }
-    $('main').innerHTML='<div class="section-h">📊 รายงานการเงินรายเดือน</div>'+
-      '<div class="card"><div class="ds-h">💸 รายงานเบิกค่าใช้จ่าย + ตั้งเบิกลูกค้า</div>'+
-      '<div class="m-hint" style="margin:0 0 12px">กำลังทำ — สรุปยอดเบิกรายเดือน (แยกประเภท/รายคน) · ใบตั้งเบิกลูกค้าที่ยังตามไม่จบ · ภาษีหัก ณ ที่จ่าย (ภ.ง.ด.3/53)</div>'+
-      '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
-      '<button class="btn btn-ghost" style="flex:1;min-width:160px" onclick="switchView(\'expdash\')">ไปหน้าสรุป/อนุมัติเบิก</button>'+
-      '<button class="btn btn-ghost" style="flex:1;min-width:160px" onclick="switchView(\'reimb\')">ไปหน้าตั้งเบิกลูกค้า</button>'+
-      '</div></div>';
+    skel();
+    jsonp({action:'waFinance',uid:UID,month:FIN_MONTH}).then(function(r){
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      FIN_MONTH=r.month;
+      var ex=r.expense.sum, rb=r.reimb.sum;
+      var months=taxMonths(); if(months.indexOf(FIN_MONTH)<0) months.unshift(FIN_MONTH);
+      var h='<div class="section-h">📊 รายงานการเงินรายเดือน</div>'+
+        '<div class="ds-sel"><select id="finYm" onchange="finSetMonth(this.value)">'+
+        months.map(function(m){ return '<option value="'+esc(m)+'"'+(m===FIN_MONTH?' selected':'')+'>'+esc(ymThai(m))+'</option>'; }).join('')+'</select></div>';
+
+      h+='<div class="ds-grid">'+
+        statCard('เบิกพนักงาน',money(ex.amount),ex.n+' ใบ · ยอดเต็ม')+
+        statCard('จ่ายจริง',money(ex.net),'หลังหัก ณ ที่จ่าย '+money(ex.wht))+
+        statCard('ค้างจ่ายคืน',money(ex.waiting.amt),ex.waiting.n+' ใบ · อนุมัติแล้วยังไม่จ่าย','ds-wait')+
+        statCard('ตั้งเบิกค้างรับ',money(rb.open.amt),rb.open.n+' ใบ · จาก '+rb.n+' ใบเดือนนี้','ds-wait')+
+        '</div>';
+
+      // ── ① เงินออก ──
+      h+='<div class="card"><div class="ds-h">① เบิกค่าใช้จ่ายพนักงาน (เงินออก)</div>';
+      if(!r.expense.rows.length){ h+='<div class="emptybox">เดือนนี้ไม่มีใบเบิก</div>'; }
+      else {
+        h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
+          '<th>#</th><th>เลขที่</th><th>ผู้เบิก</th><th>ประเภท</th><th>ยอดเต็ม</th><th>หัก ณ ที่จ่าย</th><th>จ่ายจริง</th><th>สถานะ</th></tr></thead><tbody>'+
+          r.expense.rows.map(function(x){
+            return '<tr><td>'+x.seq+'</td><td>'+esc(x.no)+'</td><td>'+esc(x.who)+'</td><td>'+esc(x.type)+'</td>'+
+              '<td class="ta-r">'+money(x.amount)+'</td><td class="ta-r">'+(x.wht?money(x.wht):'-')+'</td>'+
+              '<td class="ta-r">'+money(x.net)+'</td><td>'+esc(x.status)+'</td></tr>'; }).join('')+
+          '<tr class="tax-total"><td colspan="4">รวม '+ex.n+' ใบ (ไม่นับใบไม่อนุมัติ'+(ex.rejected.n?' '+ex.rejected.n+' ใบ':'')+')</td>'+
+          '<td class="ta-r">'+money(ex.amount)+'</td><td class="ta-r">'+money(ex.wht)+'</td><td class="ta-r">'+money(ex.net)+'</td><td></td></tr>'+
+          '</tbody></table></div>';
+      }
+      h+='<div class="tax-acts"><button class="btn btn-ghost" onclick="switchView(\'expdash\')">ไปหน้าสรุป/อนุมัติเบิก</button></div></div>';
+
+      // ── ② เงินที่เรียกคืน ──
+      h+='<div class="card"><div class="ds-h">② ตั้งเบิกลูกค้า (เงินที่เรียกคืน)</div>';
+      if(!r.reimb.rows.length){ h+='<div class="emptybox">เดือนนี้ไม่มีใบตั้งเบิกที่ส่งแล้ว</div>'; }
+      else {
+        h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
+          '<th>#</th><th>เลขที่</th><th>วันที่ส่ง</th><th>ลูกค้า</th><th>เรื่อง</th><th>ยอด</th><th>สถานะ</th></tr></thead><tbody>'+
+          r.reimb.rows.map(function(x){
+            return '<tr><td>'+x.seq+'</td><td>'+esc(x.no||'-')+'</td><td>'+esc(x.sentText)+'</td><td>'+esc(x.customer)+'</td>'+
+              '<td>'+esc(x.title)+'</td><td class="ta-r">'+money(x.amount)+'</td><td>'+esc(x.stage)+'</td></tr>'; }).join('')+
+          '<tr class="tax-total"><td colspan="5">รวม '+rb.n+' ใบ · ค้างรับหลักฐาน '+rb.open.n+' ใบ</td>'+
+          '<td class="ta-r">'+money(rb.amount)+'</td><td></td></tr>'+
+          '</tbody></table></div>';
+      }
+      h+='<div class="tax-acts"><button class="btn btn-ghost" onclick="switchView(\'reimb\')">ไปหน้าตั้งเบิกลูกค้า</button></div></div>';
+
+      // ── เอกสาร ──
+      h+='<div class="card"><div class="ds-h">📄 เอกสารสรุป · '+esc(r.monthText)+'</div>'+
+        '<div class="m-hint" style="margin:0 0 10px">แท็บในชีตระบบเขียนทับทุกครั้งที่เปิดหน้านี้ — อย่าพิมพ์เพิ่มในแท็บนั้นค่ะ</div>'+
+        '<div class="tax-acts">'+
+        (r.sheetUrl?'<a class="btn btn-ghost" href="'+esc(r.sheetUrl)+'" target="_blank">📋 เปิดแท็บในชีต</a>':'')+
+        ((ex.n||rb.n)?'<button class="btn btn-ok" onclick="finPdf()">📄 สร้าง PDF สรุป</button>':'')+
+        '</div></div>';
+      $('main').innerHTML=h;
+    }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
+  }
+  function finSetMonth(v){ FIN_MONTH=v; renderFinReport(); }
+  function finPdf(){
+    callBusy('กำลังสร้างเอกสาร…', jsonp({action:'waFinancePdf',uid:UID,month:FIN_MONTH}), 'สร้าง PDF แล้ว')
+      .then(function(r){ if(!r||!r.ok){ toast((r&&r.error)||'สร้าง PDF ไม่สำเร็จ'); return; } window.open(r.pdfUrl,'_blank'); })
+      .catch(function(e){ toast(e.message); });
   }
   window.renderHrReport=renderHrReport; window.renderFinReport=renderFinReport;
+  window.finSetMonth=finSetMonth; window.finPdf=finPdf;
 
   // ── 📊 สรุปสถิติการลารายเดือน → ส่งเข้ากลุ่ม LINE + Google Chat (พี่กี้ขอ 30 ก.ค. 2569) ──
   // ดูก่อนส่งเสมอ (พี่อ่านทาน แล้วค่อยกดส่ง) · ข้อความที่ preview = ข้อความที่ส่งจริง (backend สร้างตัวเดียว)
@@ -3945,8 +4004,10 @@
         var nb=$('navReimb'); if(nb) nb.style.display='';                 // แท็บตั้งเบิกลูกค้า = เฉพาะพี่
         var na=$('navAppr'); if(na) na.style.display='';                  // แท็บอนุมัติลา (+ยื่นลาแทน) = เฉพาะพี่/HR
         var noa=$('navOtAppr'); if(noa) noa.style.display='';              // แท็บอนุมัติ OT = เฉพาะพี่/HR
-        var nhr=$('navHrReport'); if(nhr) nhr.style.display='';            // รายงาน HR = เฉพาะพี่/HR (ข้อมูลทั้งทีม)
-        var nfr=$('navFinReport'); if(nfr) nfr.style.display=''; }         // รายงานการเงิน = เฉพาะพี่/HR
+        var nhr=$('navHrReport'); if(nhr) nhr.style.display=''; }          // รายงาน HR = เฉพาะพี่/HR (ข้อมูลทั้งทีม)
+      // รายงานการเงินรวม = พี่ + HR ที่ตั้งใน Script Property (backend ตัดสิน ไม่ผูกกับ IS_OWNER)
+      CAN_FIN=!!r.canFinance;
+      if(CAN_FIN){ var nfr=$('navFinReport'); if(nfr) nfr.style.display=''; }
       navApplyRole();     // จัดหมวดตามสิทธิ์ (พนักงาน: สรุปค่าใช้จ่าย → หมวดส่วนตัว)
       buildNavGroups();   // จัดกลุ่ม sidebar (ต้องรู้ IS_OWNER ก่อน — กลุ่มของผู้ดูแลจะไม่โผล่ให้พนักงาน)
         // navTaxDoc (ภาษี/เอกสาร) ซ่อนไว้ก่อน — เปิดตอน v2 (ภ.ง.ด.1/3/53) เสร็จ
