@@ -669,19 +669,27 @@
       <div>
         <div class="step-no">คู่มือ 09 · เบิกเงิน</div>
         <h2>เบิกค่าใช้จ่าย</h2>
-        <div class="sub">แนบใบเสร็จ ส่งขออนุมัติ รอจ่ายคืน</div>
+        <div class="sub">กรอกบัญชีรับโอนครั้งเดียว → แนบใบเสร็จ → รอจ่ายคืน</div>
         <span class="badge ok">✓ ใช้งานได้</span>
       </div>
     </div>
     <div class="feat-body">
       <div>
         <ol class="steps">
+          <li><span class="st-t">ครั้งแรกครั้งเดียว: กรอกบัญชีรับโอน</span>ในหน้าเบิก กดปุ่ม <span class="chip">🏦 บัญชีรับโอนของฉัน</span> →
+            ใส่ <b>ธนาคาร · เลขที่บัญชี · ชื่อบัญชี</b> แล้วบันทึก — ระบบจำไว้ใช้ทุกใบ ไม่ต้องพิมพ์ซ้ำ และไม่ต้องส่งเลขบัญชีในแชทอีก</li>
           <li><span class="st-t">เปิดเมนู "เบิกค่าใช้จ่าย"</span>ในเว็บแอป — แถบล่างมือถือแตะ <span class="chip">💸 เบิก</span></li>
           <li><span class="st-t">กรอกประเภท + รายละเอียด + จำนวนเงิน</span>เช่น ค่าเดินทาง · ค่าอาหาร · อื่น ๆ</li>
           <li><span class="st-t">แนบใบเสร็จ/สลิป → ส่ง</span>แนบได้ทั้ง <b>รูปและไฟล์ PDF</b> · หลายไฟล์ได้</li>
-          <li><span class="st-t">รออนุมัติ → รับเงินคืน</span>พอพี่อนุมัติและจ่ายคืน จะแจ้งในไลน์ — ดูสถานะได้ที่เมนู <span class="chip">📊 สรุปค่าใช้จ่าย</span></li>
+          <li><span class="st-t">รออนุมัติ → รับเงินคืน</span>พอพี่อนุมัติและจ่ายคืน จะแจ้งในไลน์ พร้อมโอนเข้าบัญชีที่กรอกไว้ —
+            ดูสถานะได้ที่เมนู <span class="chip">📊 สรุปค่าใช้จ่าย</span></li>
         </ol>
         <div class="tip">💡 ไม่มีใบเสร็จก็เบิกได้ (แนบสลิปโอน/บิลเงินสด + ใส่เหตุผล) · ดูรายการ + สถานะเบิกทั้งหมดของตัวเองที่ "สรุปค่าใช้จ่าย"</div>
+        <div class="tip">🏦 <b>เรื่องบัญชีรับโอน ที่ต้องรู้</b><br>
+          • <b>ยังไม่กรอกบัญชี = แจ้งเบิกไม่ได้</b> — ระบบจะเด้งให้กรอกก่อน (กันโอนคืนผิดบัญชี)<br>
+          • <b>เปลี่ยนบัญชีทีหลังได้</b> กดปุ่มเดิมแล้วแก้ — ใบที่ <b>ยังไม่จ่าย</b> จะอัปเดตเป็นบัญชีใหม่ให้อัตโนมัติ ส่วนใบที่จ่ายไปแล้วคงเลขเดิมไว้เป็นประวัติ<br>
+          • เลขบัญชีนี้ <b>ไม่ถูกส่งเข้ากลุ่มไลน์</b> — เห็นเฉพาะตัวคุณเองกับคนที่อนุมัติ/โอนเงิน<br>
+          • ใบแบบ <span class="chip">💵 จ่ายค่าจ้าง</span> (ใบสำคัญรับเงิน) ต้องกรอก <b>บัญชีของผู้รับเงินคนนอก</b> ในฟอร์มด้วย เพราะเงินโอนเข้าบัญชีเขา ไม่ใช่บัญชีคุณ</div>
       </div>
       <div class="visual">
         <div class="phone"><div class="phone-shell"><div class="phone-notch"></div><div class="phone-screen">
@@ -689,6 +697,8 @@
             <div class="st-bar on-brand"><span>9:41</span><span class="dots">••• ▮</span></div>
             <div class="app-head"><div class="ttl">💸 เบิกค่าใช้จ่าย</div><div class="who">กรอก + แนบใบเสร็จ</div></div>
             <div class="app-form">
+              <div style="background:#eaf5ec; border:1px solid #bfe0c8; border-radius:10px; padding:8px 11px; font-size:10.5px; color:#1B7F4B; margin-bottom:8px">
+                🏦 โอนคืนเข้า: <b>กสิกรไทย 123-4-56789-0</b><br><span style="opacity:.8">ภูสิตา ใจดี · แตะเพื่อเปลี่ยนบัญชี</span></div>
               <div class="chips-row"><span class="mini-chip on">ค่าเดินทาง</span><span class="mini-chip">ค่าอาหาร</span><span class="mini-chip">อื่น ๆ</span></div>
               <div style="background:#f4f7fb; border-radius:10px; padding:9px 11px; font-size:11px; color:#16283a; margin-top:8px">รายละเอียด<div style="font-weight:700; margin-top:3px">แท็กซี่ไปพบลูกค้า</div></div>
               <div style="background:linear-gradient(120deg,#1B72E8,#4A93F0); border-radius:10px; padding:9px 12px; margin-top:8px; color:#fff; display:flex; justify-content:space-between; align-items:center">
