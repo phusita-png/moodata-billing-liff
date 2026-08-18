@@ -2198,7 +2198,27 @@
           '<button type="button" id="epRv" class="btn btn-sm" onclick="expSetProof(\'rv\')" style="flex:1">💵 จ่ายค่าจ้าง</button>'+
         '</div></div>'+
       '<div id="epBankBox">'+expMyBankHtml()+'</div>'+
-      '<div id="epRcpBox">'+imgsFldHtml('eImg','📎 ใบเสร็จ — รูป หรือ PDF (แนบได้หลายไฟล์ → รวมเป็น PDF เดียวให้)')+'</div>'+
+      '<div id="epRcpBox">'+imgsFldHtml('eImg','📎 ใบเสร็จ — รูป หรือ PDF (แนบได้หลายไฟล์ → รวมเป็น PDF เดียวให้)')+
+        // จ่ายผู้รับจ้าง/บริษัท ที่ต้องหักภาษี ณ ที่จ่าย — ติ๊กแล้วระบบออก 50 ทวิ ให้ตอนจ่าย
+        '<div class="fld" style="margin-top:4px">'+
+          '<label style="display:flex;gap:7px;align-items:center;cursor:pointer">'+
+            '<input id="eWht" type="checkbox" onchange="expToggleWht()" style="width:auto;margin:0">'+
+            '<span>ต้อง<b>หักภาษี ณ ที่จ่าย</b> (จ่ายค่าบริการ/ค่าเช่า/ผู้รับเหมา ให้บริษัทหรือบุคคล)</span></label>'+
+          '<div id="eWhtBox" class="hidden" style="margin-top:8px">'+
+            '<div class="m-hint">กรอกข้อมูลผู้รับเงินให้ครบ — ระบบจะออก <b>หนังสือรับรองหัก ณ ที่จ่าย (50 ทวิ)</b> ให้ตอนจ่ายเงิน '+
+              'และรวมเข้าแบบยื่นรายเดือนให้อัตโนมัติ (ไม่ต้องเซ็นออนไลน์ เพราะมีใบเสร็จ/ใบกำกับแล้ว)</div>'+
+            '<div class="fld"><label>ผู้รับเงินเป็น</label><select id="eWhtKind" onchange="expWhtKind()">'+
+              '<option value="นิติบุคคล">นิติบุคคล (บริษัท/ห้างฯ)</option>'+
+              '<option value="บุคคลธรรมดา">บุคคลธรรมดา</option>'+
+            '</select></div>'+
+            '<div class="fld"><label id="eWhtNameLb">ชื่อบริษัทผู้รับเงิน</label><input id="eWhtName" placeholder="เช่น บริษัท เอบีซี จำกัด"></div>'+
+            '<div class="fld"><label id="eWhtIdLb">เลขประจำตัวผู้เสียภาษี (13 หลัก)</label>'+
+              '<input id="eWhtId" type="tel" inputmode="numeric" maxlength="17" placeholder="x xxxx xxxxx xx x"></div>'+
+            '<div class="fld"><label>ที่อยู่ผู้รับเงิน</label><textarea id="eWhtAddr" placeholder="ที่อยู่ตามหนังสือรับรอง / บัตรประชาชน"></textarea></div>'+
+            '<div class="m-hint">💡 อัตราและประเภทเงินได้ '+esc(OWNERTXT())+'จะเป็นคนเลือกตอนอนุมัติค่ะ</div>'+
+          '</div>'+
+        '</div>'+
+      '</div>'+
       '<div id="epSrBox" class="hidden">'+
         '<div class="m-hint">ระบบจะออก <b>ใบรับรองแทนใบเสร็จ</b> ให้อัตโนมัติตอน'+esc(OWNERTXT())+'อนุมัติ พร้อมฝังลายเซ็นของคุณ — ใช้กับค่าใช้จ่ายที่ขอใบเสร็จไม่ได้ (แท็กซี่ วิน ของตลาด)</div>'+
         '<div class="fld"><label>วันที่จ่ายเงินจริง</label><input id="ePayDate" type="date" value="'+todayISO()+'"></div>'+
@@ -2231,6 +2251,19 @@
     imgsFldBind('eImg'); imgsFldBind('eSrImg'); imgsFldBind('eRvCard'); imgsFldBind('eRvImg');
     expSetProof('rcp');
   }
+  /** ติ๊ก "หักภาษี ณ ที่จ่าย" บนใบแนบใบเสร็จ → เปิดช่องข้อมูลผู้ถูกหัก (ไปโผล่บน 50 ทวิ) */
+  function expToggleWht(){
+    var on=($('eWht')||{}).checked, box=$('eWhtBox');
+    if(box) box.classList.toggle('hidden', !on);
+  }
+  /** สลับบุคคล/นิติ → เปลี่ยน label ให้ตรง (นิติไม่มีบัตร ปชช · ใช้เลขทะเบียนนิติบุคคล) */
+  function expWhtKind(){
+    var k=($('eWhtKind')||{}).value, isCo=(k==='นิติบุคคล');
+    var nb=$('eWhtNameLb'), ib=$('eWhtIdLb');
+    if(nb) nb.textContent = isCo ? 'ชื่อบริษัทผู้รับเงิน' : 'ชื่อ-นามสกุล ผู้รับเงิน';
+    if(ib) ib.textContent = isCo ? 'เลขประจำตัวผู้เสียภาษี (13 หลัก)' : 'เลขบัตรประชาชน (13 หลัก)';
+  }
+  window.expToggleWht=expToggleWht; window.expWhtKind=expWhtKind;
   /** ติ๊ก "ไม่มีหลักฐานเลย" → ซ่อนช่องแนบ + บังคับพิมพ์เหตุผล (ไปโผล่ให้พี่เห็นก่อนอนุมัติ) */
   function expToggleNoProof(){
     var on=($('eNoProof')||{}).checked;
@@ -2324,6 +2357,16 @@
       var rcp=IMGS['eImg']||[];
       if(!rcp.length){ mErr('แนบรูปใบเสร็จก่อนค่ะ (หรือเลือก "ไม่มีใบเสร็จ")'); return; }
       p.imgs=JSON.stringify(rcp);
+      // ติ๊กหัก ณ ที่จ่าย → ต้องรู้ว่าหักจากใคร (ชื่อ/เลขผู้เสียภาษี/ที่อยู่ ไปอยู่บน 50 ทวิ)
+      if(($('eWht')||{}).checked){
+        var wk=($('eWhtKind')||{}).value||'', wn=($('eWhtName')||{}).value.trim();
+        var wi=(($('eWhtId')||{}).value||'').replace(/\D/g,''), wa=($('eWhtAddr')||{}).value.trim();
+        if(!wn){ mErr(wk==='นิติบุคคล'?'กรอกชื่อบริษัทผู้รับเงินก่อนค่ะ':'กรอกชื่อผู้รับเงินก่อนค่ะ'); return; }
+        if(wi.length!==13){ mErr('เลขประจำตัวผู้เสียภาษีต้องมี 13 หลักค่ะ'); return; }
+        if(wk!=='นิติบุคคล' && !validThaiId(wi)){ mErr('เลขบัตรประชาชนไม่ถูกต้อง — ตรวจเลข 13 หลักอีกครั้งค่ะ'); return; }
+        if(!wa){ mErr('กรอกที่อยู่ผู้รับเงินก่อนค่ะ (ใช้บนหนังสือรับรองหัก ณ ที่จ่าย)'); return; }
+        p.wht='1'; p.payeeKind=wk; p.payeeName=wn; p.payeeId=wi; p.payeeAddr=wa;
+      }
     }
     var b=$('eSend'); if(b){ b.disabled=true; b.textContent='กำลังส่ง…'; }
     toast('กำลังส่งใบเบิก…');
@@ -2682,6 +2725,7 @@
       var box=$(cid); if(!box) return;   // คอนเทนเนอร์หายไปแล้ว (เปลี่ยนหน้า)
       if(!r||!r.ok){ box.innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
       var pd=r.pending||[], tp=r.topay||[];
+      SECTIONS=r.sections||SECTIONS; KIND_CO=r.companyKind||KIND_CO;
       var html='';
       html+=exSecHd('⏳ รออนุมัติ ('+pd.length+')','');
       html+= pd.length ? pd.map(function(x){ return exApprCard(x,false); }).join('')
@@ -2712,14 +2756,34 @@
         (x.note&&x.note.indexOf('ไม่มีหลักฐาน')>=0
           ?'<br><span style="color:#E5484D;font-weight:600">'+esc(x.note)+'</span>':'')+
         (x.docLink?'<br><a class="ex-lk" href="'+esc(x.docLink)+'" target="_blank">📄 '+esc(x.docNo||'เอกสาร')+'</a>':'')+
-        exRvMeta(x)+bankLineHtml(x, isRv(x)?'โอนให้ผู้รับเงิน':'โอนเข้า')+'</div>'+
+        exRvMeta(x)+exWhtMeta(x)+bankLineHtml(x, hasWht(x)?'โอนให้ผู้รับเงิน':'โอนเข้า')+'</div>'+
       (isPaid
         ? '<div class="m-act" style="margin-top:11px">'+exRvPayGate(x)+'</div>'
         : '<div class="m-act" style="margin-top:11px"><button class="btn btn-danger" onclick="exReject(\''+esc(x.no)+'\')">❌ ไม่อนุมัติ</button>'+
-          '<button class="btn btn-primary" onclick="'+(isRv(x)?'exOpenRv(\''+esc(x.no)+'\')':'exDecide(\''+esc(x.no)+'\',\'approve\',\'\')')+'">✅ อนุมัติ</button></div>')+
+          '<button class="btn btn-primary" onclick="'+(hasWht(x)?'exOpenWht(\''+esc(x.no)+'\')':'exDecide(\''+esc(x.no)+'\',\'approve\',\'\')')+'">✅ อนุมัติ</button></div>')+
       '</div>';
   }
   function isRv(x){ return !!(x.docType && x.docType.indexOf('ใบสำคัญ')>=0); }
+  /** ใบนี้ต้องหักภาษี ณ ที่จ่ายไหม = มีข้อมูลผู้รับเงิน (ใบ RV หรือใบแนบใบเสร็จที่ติ๊กหัก) */
+  function hasWht(x){ return !!(x.payeeName); }
+  /** แบบยื่นที่จะเข้า — กติกาเดียวกับ formTypeOf_ ฝั่ง backend (นิติ → ภ.ง.ด.53 · 40(1)/40(2) → ภ.ง.ด.1) */
+  function formOf(kind, code){
+    var sec=null; for(var i=0;i<SECTIONS.length;i++){ if(SECTIONS[i].code===code){ sec=SECTIONS[i]; break; } }
+    if(!sec) return '';
+    if(kind===KIND_CO) return 'ภ.ง.ด.53';
+    return sec.formIfPerson==='PND1' ? 'ภ.ง.ด.1' : 'ภ.ง.ด.3';
+  }
+  /** ข้อมูลผู้ถูกหักภาษีของใบที่ไม่ใช่ RV (ใบแนบใบเสร็จที่ติ๊กหัก) — พี่ต้องเห็นก่อนอนุมัติ */
+  function exWhtMeta(x){
+    if(isRv(x) || !hasWht(x)) return '';
+    var s='<br><span style="color:#1B72E8">🧾 หัก ณ ที่จ่าย — '+esc(x.payeeKind||'')+': <b>'+esc(x.payeeName||'-')+'</b>'+
+      (x.payeeId?' · '+esc(x.payeeId):'')+'</span>'+
+      (x.payeeAddr?'<br><span style="color:#8A94A6">🏠 '+esc(x.payeeAddr)+'</span>':'');
+    if(x.whtRate>0) s+='<br><span style="color:#8A94A6">หัก '+x.whtRate+'%'+(x.incomeSection?' · '+esc(x.incomeSection):'')+
+      ' → จ่ายจริง '+(Number(x.netAmt)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})+' บาท</span>';
+    if(x.formType) s+='<br><span style="color:#1B7F4B">📋 เข้าแบบ '+esc({PND1:'ภ.ง.ด.1',PND3:'ภ.ง.ด.3',PND53:'ภ.ง.ด.53'}[x.formType]||x.formType)+'</span>';
+    return s;
+  }
   /** รายละเอียดผู้รับเงิน + สถานะเซ็น — พี่ต้องเห็นก่อนกดอนุมัติ (จ่ายให้ใคร เลขบัตรตรงกับสำเนาไหม) */
   function exRvMeta(x){
     if(!isRv(x)) return '';
@@ -2750,19 +2814,49 @@
     }
     return '<button class="btn btn-primary" onclick="exOpenPay(\''+esc(x.no)+'\',\''+esc(x.nick||'')+'\','+(Number(x.amount)||0)+')">💰 จ่ายคืนแล้ว</button>';
   }
-  /** อนุมัติใบ RV → เลือกอัตรา WHT ก่อน (พี่เคาะ: พี่เป็นคนตัดสินอัตรา ไม่ใช่พนักงาน) */
-  function exOpenRv(no){
-    modal('<h3>✅ อนุมัติใบสำคัญรับเงิน '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
-      '<div class="m-hint">เลือกอัตราหัก ณ ที่จ่าย — ระบบจะคำนวณยอดสุทธิและออกลิงก์ให้ผู้รับเงินเซ็นค่ะ</div>'+
-      '<div class="fld"><label>อัตราหัก ณ ที่จ่าย</label><select id="exWht">'+
+  /**
+   * อนุมัติใบที่มีหักภาษี ณ ที่จ่าย (ใบ RV หรือใบแนบใบเสร็จที่ติ๊กหัก)
+   * พี่เลือก "ประเภทเงินได้ (มาตรา)" → ระบบเติมอัตราให้ (แก้ได้) + โชว์แบบยื่นที่จะเข้าก่อนยืนยัน
+   * เดิมเลือกได้แค่อัตรา 0/3/5 ซึ่งบอกไม่ได้ว่าเข้า ภ.ง.ด.1 หรือ 3 (spec-wht-filing §2 ข้อ 1)
+   */
+  function exOpenWht(no){
+    var x=EXP_BYNO[no]||{}, rv=isRv(x);
+    var kind=x.payeeKind||'บุคคลธรรมดา';
+    var opts=SECTIONS.map(function(s){ return '<option value="'+esc(s.code)+'">'+esc(s.code+' '+s.label)+'</option>'; }).join('');
+    modal('<h3>✅ อนุมัติ'+(rv?'ใบสำคัญรับเงิน ':'ใบเบิก ')+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">ผู้รับเงิน: <b>'+esc(x.payeeName||'-')+'</b> ('+esc(kind)+')'+
+        (rv?' — อนุมัติแล้วระบบจะออกลิงก์ให้ผู้รับเงินเซ็น':' — มีใบเสร็จ/ใบกำกับแล้ว ไม่ต้องเซ็น ออก 50 ทวิ ตอนจ่าย')+'</div>'+
+      '<div class="fld"><label>ประเภทเงินได้ (มาตรา)</label><select id="exSect" onchange="exSectChange()">'+opts+'</select></div>'+
+      '<div class="fld"><label>อัตราหัก ณ ที่จ่าย</label><select id="exWht" onchange="exSectChange(1)">'+
         '<option value="0">0% — ยกเว้น / ไม่หัก</option>'+
-        '<option value="3">3% — จ้างทำของ / บริการ</option>'+
-        '<option value="5">5% — ค่าเช่า / จ้างบุคคล</option>'+
+        '<option value="1">1% — ค่าขนส่ง</option>'+
+        '<option value="2">2% — ค่าโฆษณา</option>'+
+        '<option value="3">3% — จ้างทำของ / บริการ / วิชาชีพ</option>'+
+        '<option value="5">5% — ค่าเช่า</option>'+
       '</select></div>'+
-      '<div class="fld"><label>วันที่จ่าย / วันที่บนใบสำคัญรับเงิน</label><input id="rvPayDate" type="date" value="'+todayISO()+'"><div class="m-hint" style="margin-top:4px">ค่าเริ่มต้น = วันนี้ · เลือกย้อนหลังได้ (วันนี้จะเป็นวันบนเอกสาร + วันจ่ายจริง)</div></div>'+
+      '<div id="exFormNote" class="m-hint"></div>'+
+      '<div class="fld"><label>วันที่จ่าย'+(rv?' / วันที่บนใบสำคัญรับเงิน':'')+'</label><input id="rvPayDate" type="date" value="'+todayISO()+'">'+
+        '<div class="m-hint" style="margin-top:4px">ค่าเริ่มต้น = วันนี้ · เลือกย้อนหลังได้ (เป็นวันบนเอกสาร + วันจ่ายจริง + เดือนที่นำส่งภาษี)</div></div>'+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
-      '<button class="btn btn-primary" onclick="exDecide(\''+esc(no)+'\',\'approve\',\'\',$(\'exWht\').value,$(\'rvPayDate\').value)">อนุมัติ + ออกลิงก์เซ็น</button></div>');
+      '<button class="btn btn-primary" onclick="exDecide(\''+esc(no)+'\',\'approve\',\'\',$(\'exWht\').value,$(\'rvPayDate\').value,$(\'exSect\').value)">'+
+        (rv?'อนุมัติ + ออกลิงก์เซ็น':'อนุมัติ')+'</button></div>');
+    EX_WHT_KIND=kind; exSectChange();
   }
+  var SECTIONS=[], KIND_CO='นิติบุคคล', EX_WHT_KIND='บุคคลธรรมดา';
+  /** เปลี่ยนมาตรา → เติมอัตรา default (ถ้าพี่ยังไม่แก้เอง) + อัปเดตบรรทัด "จะเข้าแบบไหน" */
+  function exSectChange(rateEdited){
+    var sc=($('exSect')||{}).value, rs=$('exWht'), note=$('exFormNote');
+    var sec=null; for(var i=0;i<SECTIONS.length;i++){ if(SECTIONS[i].code===sc){ sec=SECTIONS[i]; break; } }
+    if(sec && rs && !rateEdited) rs.value=String(sec.defRate);
+    if(!note) return;
+    var rate=Number((rs||{}).value||0);
+    var form=formOf(EX_WHT_KIND, sc);
+    note.innerHTML = rate>0
+      ? '📋 จะเข้าแบบ <b>'+esc(form)+'</b> ของเดือนที่จ่าย'+(form==='ภ.ง.ด.1'?' (ต้องนำไปรวมกับ ภ.ง.ด.1 เงินเดือน)':'')
+      : '📋 ไม่หักภาษี — ไม่เข้าแบบยื่นใด และไม่ออก 50 ทวิ';
+  }
+  /** ชื่อเดิม — การ์ด/ลิงก์เก่าที่ LINE แคชไว้ยังเรียก exOpenRv อยู่ */
+  function exOpenRv(no){ exOpenWht(no); }
   /** ขอลิงก์เซ็นใหม่ (ลิงก์เดิมหมดอายุ 7 วัน / ส่งผิดคน) — ลิงก์เก่าตายทันที */
   function exRelink(no){
     toast('กำลังออกลิงก์ใหม่…');
@@ -2780,7 +2874,8 @@
     t.select(); t.setSelectionRange(0,99999);
     try{ document.execCommand('copy'); toast('📋 ก๊อปลิงก์แล้ว'); }catch(e){ toast('กดค้างที่ลิงก์เพื่อคัดลอกค่ะ'); }
   }
-  window.exOpenRv=exOpenRv; window.exRelink=exRelink; window.rvCopy=rvCopy;
+  window.exOpenRv=exOpenRv; window.exOpenWht=exOpenWht; window.exSectChange=exSectChange;
+  window.exRelink=exRelink; window.rvCopy=rvCopy;
   /** แก้ข้อมูลผู้รับเงิน (พี่ + เจ้าของใบ) — เติมฟอร์มจากข้อมูลเดิม + เตือนถ้าออกเอกสารแล้ว */
   function exEditPayee(no){
     var x=EXP_BYNO[no]; if(!x){ toast('ไม่พบข้อมูลใบ '+no+' ลองรีเฟรชนะคะ'); return; }
@@ -2821,9 +2916,9 @@
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
       '<button class="btn btn-danger" onclick="exDecide(\''+esc(no)+'\',\'reject\',$(\'exNote\').value.trim())">ไม่อนุมัติ</button></div>');
   }
-  function exDecide(no,decision,note,wht,payDate){
+  function exDecide(no,decision,note,wht,payDate,section){
     toast(decision==='approve'?'กำลังอนุมัติ…':'กำลังบันทึก…');
-    callBusy(decision==='approve'?'กำลังสร้างเอกสาร…':'กำลังบันทึก…', jsonpPost({action:'waExpDecide',uid:UID,no:no,decision:decision,note:note||'',wht:wht||'0',payDate:payDate||''}), decision==='approve'?'อนุมัติแล้ว':'บันทึกแล้ว').then(function(r){
+    callBusy(decision==='approve'?'กำลังสร้างเอกสาร…':'กำลังบันทึก…', jsonpPost({action:'waExpDecide',uid:UID,no:no,decision:decision,note:note||'',wht:wht||'0',payDate:payDate||'',section:section||''}), decision==='approve'?'อนุมัติแล้ว':'บันทึกแล้ว').then(function(r){
       if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; }
       closeModal();
       if(r.docError) toast('✅ อนุมัติแล้ว · ⚠️ ออกเอกสารไม่สำเร็จ: '+r.docError);
@@ -3336,7 +3431,7 @@
   window.renderExpDash=renderExpDash; window.dsSetYm=dsSetYm; window.renderReimb=renderReimb;
 
   // ═══════════ VIEW: ภาษี/เอกสาร (พี่/HR) — ภ.ง.ด.3 รายเดือน + Masterlist ═══════════
-  var TAX_MONTH='', ML_ALL=[];
+  var TAX_MONTH='', ML_ALL=[], TAX_FORM='PND3';   // แบบยื่นที่กำลังดู (ภ.ง.ด.1/3/53)
   function taxMonths(){   // 12 เดือนล่าสุด (พ.ศ. 'YYYY-MM')
     var arr=[], d=new Date(); d.setDate(1);
     for(var i=0;i<12;i++){ arr.push((d.getFullYear()+543)+'-'+('0'+(d.getMonth()+1)).slice(-2)); d.setMonth(d.getMonth()-1); }
@@ -3345,19 +3440,28 @@
   function renderTaxDoc(){
     if(!IS_OWNER){ $('main').innerHTML='<div class="card"><div class="emptybox">เฉพาะผู้ดูแล (พี่/HR) ค่ะ</div></div>'; return; }
     skel();
-    jsonp({action:'waPnd3',uid:UID,month:TAX_MONTH}).then(function(r){
+    jsonp({action:'waPnd3',uid:UID,month:TAX_MONTH,form:TAX_FORM}).then(function(r){
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
-      TAX_MONTH=r.month;
+      TAX_MONTH=r.month; TAX_FORM=r.form||TAX_FORM;
       var months=taxMonths(); if(months.indexOf(TAX_MONTH)<0) months.unshift(TAX_MONTH);
       var h='<div class="ds-sel"><select id="taxYm" onchange="taxSetMonth(this.value)">'+
         months.map(function(m){ return '<option value="'+esc(m)+'"'+(m===TAX_MONTH?' selected':'')+'>'+esc(ymThai(m))+'</option>'; }).join('')+'</select></div>';
+      // สลับแบบยื่น — โชว์จำนวนรายของแต่ละแบบในเดือนนั้นเลย จะได้รู้ว่าต้องยื่นอะไรบ้าง
+      h+='<div style="display:flex;gap:6px;margin:0 0 12px">'+
+        (r.forms||[]).map(function(f){
+          var on=(f.key===TAX_FORM), c=(r.counts&&r.counts[f.key])||0;
+          return '<button class="btn btn-sm" onclick="taxSetForm(\''+esc(f.key)+'\')" style="flex:1;'+
+            (on?'background:#1B72E8;color:#fff;border-color:#1B72E8':'background:#fff;color:#1B72E8;border:1.5px solid #1B72E8')+'">'+
+            esc(f.label)+(c?' ('+c+')':'')+'</button>';
+        }).join('')+'</div>';
+      if(r.note) h+='<div class="m-hint" style="color:#C8730B;margin:0 0 12px">⚠️ '+esc(r.note)+'</div>';
       h+='<div class="ds-grid">'+
-        statCard('จำนวนราย',r.sum.count+' ราย','ภ.ง.ด.3 '+esc(r.monthText))+
+        statCard('จำนวนราย',r.sum.count+' ราย',esc(r.formLabel||'')+' '+esc(r.monthText))+
         statCard('เงินได้รวม',money(r.sum.amount),'บาท')+
         statCard('ภาษีนำส่ง',money(r.sum.wht),'บาท · ยื่นสรรพากร','ds-wait')+
         '</div>';
-      h+='<div class="card"><div class="ds-h">ภ.ง.ด.3 · ผู้จ่าย: '+esc(r.company)+'</div>';
-      if(!r.rows.length){ h+='<div class="emptybox">เดือนนี้ยังไม่มีใบ 50 ทวิ ที่หักภาษี</div>'; }
+      h+='<div class="card"><div class="ds-h">'+esc(r.formLabel||'')+' · ผู้จ่าย: '+esc(r.company)+'</div>';
+      if(!r.rows.length){ h+='<div class="emptybox">เดือนนี้ยังไม่มีรายการที่เข้า '+esc(r.formLabel||'')+'</div>'; }
       else {
         h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
           '<th>#</th><th>เลขบัตร</th><th>ชื่อผู้ถูกหัก</th><th>ประเภทเงินได้</th><th>อัตรา</th><th>ยอดจ่าย</th><th>ภาษีหัก</th></tr></thead><tbody>'+
@@ -3375,8 +3479,9 @@
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
   }
   function taxSetMonth(v){ TAX_MONTH=v; renderTaxDoc(); }
+  function taxSetForm(f){ TAX_FORM=f; renderTaxDoc(); }
   function taxPdf(){
-    callBusy('กำลังสร้างเอกสาร…', jsonp({action:'waPnd3Pdf',uid:UID,month:TAX_MONTH}), 'สร้าง PDF แล้ว')
+    callBusy('กำลังสร้างเอกสาร…', jsonp({action:'waPnd3Pdf',uid:UID,month:TAX_MONTH,form:TAX_FORM}), 'สร้าง PDF แล้ว')
       .then(function(r){ if(!r||!r.ok){ toast((r&&r.error)||'สร้าง PDF ไม่สำเร็จ'); return; } window.open(r.pdfUrl,'_blank'); })
       .catch(function(e){ toast(e.message); });
   }
@@ -3400,13 +3505,13 @@
       var links='';
       if(x.link) links+='<a class="ex-lk" href="'+esc(x.link)+'" target="_blank">📄 เปิด</a>';
       if(x.link2) links+='<a class="ex-lk" href="'+esc(x.link2)+'" target="_blank">📄 ฉบับผู้รับเงิน</a>';
-      return '<div class="tk"><div class="tk-top"><span class="tk-no">'+esc(x.no||'-')+'</span><span class="tk-badge b-review">'+esc(x.docType)+'</span></div>'+
+      return '<div class="tk"><div class="tk-top"><span class="tk-no">'+esc(x.no||'-')+'</span><span class="tk-badge b-review">'+esc(x.docType)+(x.form?' · '+esc(x.form):'')+'</span></div>'+
         '<div class="tk-cust">'+esc(x.who||'-')+'</div>'+
         (x.amount?'<div class="ex-amt">'+money(x.amount)+' บาท</div>':'')+
         '<div class="ex-meta">'+esc(x.dateText||'')+(links?'<br>'+links:'')+'</div></div>';
     }).join('');
   }
-  window.renderTaxDoc=renderTaxDoc; window.taxSetMonth=taxSetMonth; window.taxPdf=taxPdf;
+  window.renderTaxDoc=renderTaxDoc; window.taxSetMonth=taxSetMonth; window.taxSetForm=taxSetForm; window.taxPdf=taxPdf;
   window.taxLoadMaster=taxLoadMaster; window.taxRenderMaster=taxRenderMaster;
 
   // ═══════════ VIEW: รอตรวจ (พี่ · งานที่ทีมส่งกลับ รอตรวจก่อนส่งลูกค้า) ═══════════
