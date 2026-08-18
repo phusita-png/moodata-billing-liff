@@ -2145,8 +2145,12 @@
       // ใบ RV: พนักงานต้องรู้ว่าตอนนี้ค้างที่ "ผู้รับเงินยังไม่เซ็น" (ลิงก์อยู่ในแชท 1:1) + ขอลิงก์ใหม่ได้เอง
       else if(isRv(x)){
         links+='<span class="ex-lk" style="color:#8A94A6">💵 ผู้รับ: '+esc(x.payeeName||'-')+'</span>';
-        if(String(x.status).indexOf('อนุมัติ')>=0 && String(x.status).indexOf('ไม่')<0)
+        // จ่ายไปแล้วแต่ยังไม่เซ็น = ยังต้องตามลายเซ็น (เอกสาร+50 ทวิ ออกตอนเซ็นเสร็จ)
+        var st=String(x.status);
+        if((st.indexOf('อนุมัติ')>=0 && st.indexOf('ไม่')<0) || st.indexOf('จ่ายแล้ว')>=0){
+          if(st.indexOf('จ่ายแล้ว')>=0) links+='<span class="ex-lk" style="color:#C8730B">⏳ จ่ายแล้ว · รอผู้รับเซ็น</span>';
           links+='<a class="ex-lk" href="#" onclick="exRelink(\''+esc(x.no)+'\');return false" style="color:#C8730B">🔗 ขอลิงก์เซ็นใหม่</a>';
+        }
       }
       // แก้ข้อมูลผู้รับเงิน (เจ้าของใบแก้ของตัวเองได้) — ยืดหยุ่นตามที่พี่ขอ
       if(isRv(x)) links+='<a class="ex-lk" href="#" onclick="exEditPayee(\''+esc(x.no)+'\');return false" style="color:#1B72E8">✏️ แก้ผู้รับเงิน</a>';
@@ -2724,7 +2728,7 @@
       if(guardView && VIEW!==guardView) return;
       var box=$(cid); if(!box) return;   // คอนเทนเนอร์หายไปแล้ว (เปลี่ยนหน้า)
       if(!r||!r.ok){ box.innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
-      var pd=r.pending||[], tp=r.topay||[];
+      var pd=r.pending||[], tp=r.topay||[], aw=r.awaitSign||[];
       SECTIONS=r.sections||SECTIONS; KIND_CO=r.companyKind||KIND_CO;
       var html='';
       html+=exSecHd('⏳ รออนุมัติ ('+pd.length+')','');
@@ -2733,6 +2737,12 @@
       html+=exSecHd('💰 อนุมัติแล้ว · รอจ่ายคืน ('+tp.length+')','margin-top:18px');
       html+= tp.length ? tp.map(function(x){ return exApprCard(x,true); }).join('')
                        : '<div class="card"><div class="emptybox">ไม่มีรายการค้างจ่ายคืน 😊</div></div>';
+      // จ่ายแล้วแต่ผู้รับยังไม่เซ็น → เอกสาร + 50 ทวิ ยังไม่ออก ต้องตามลายเซ็นให้จบ
+      if(aw.length){
+        html+=exSecHd('✍️ จ่ายแล้ว · รอผู้รับเงินลงนาม ('+aw.length+')','margin-top:18px');
+        html+='<div class="m-hint" style="color:#C8730B;margin:0 0 8px">ใบสำคัญรับเงินและ 50 ทวิ จะออกอัตโนมัติทันทีที่ผู้รับเซ็นเสร็จ (ระบบรวมแฟ้มใหม่ให้เอง)</div>';
+        html+=aw.map(function(x){ return exApprCard(x,true); }).join('');
+      }
       box.innerHTML=html;
     }).catch(function(e){ if(guardView && VIEW!==guardView) return; var box=$(cid); if(box) box.innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
   }
@@ -2809,10 +2819,18 @@
    * ให้ปุ่มส่งลิงก์ใหม่แทน
    */
   function exRvPayGate(x){
-    if(isRv(x) && !x.docNo){
-      return '<button class="btn btn-ghost" style="width:100%" onclick="exRelink(\''+esc(x.no)+'\')">🔗 ส่งลิงก์เซ็นใหม่ (รอผู้รับเงินเซ็น)</button>';
+    // จ่ายไปแล้ว (อยู่ในบล็อก "รอผู้รับลงนาม") → เหลืองานเดียวคือตามลายเซ็น
+    if(String(x.status).indexOf('จ่ายแล้ว')>=0){
+      return '<button class="btn btn-ghost" style="width:100%" onclick="exRelink(\''+esc(x.no)+'\')">🔗 ส่งลิงก์เซ็นใหม่ให้ผู้รับเงิน</button>';
     }
-    return '<button class="btn btn-primary" onclick="exOpenPay(\''+esc(x.no)+'\',\''+esc(x.nick||'')+'\','+(Number(x.amount)||0)+')">💰 จ่ายคืนแล้ว</button>';
+    var pay='<button class="btn btn-primary" onclick="exOpenPay(\''+esc(x.no)+'\',\''+esc(x.nick||'')+'\','+(Number(x.amount)||0)+','+(isRv(x)&&!x.docNo?1:0)+')">💰 จ่ายคืนแล้ว</button>';
+    // ใบ RV ที่ผู้รับยังไม่เซ็น — เดิมล็อกไม่ให้จ่าย แต่ของจริงพี่โอนก่อนได้ (คนนอกเซ็นช้า)
+    // → ให้ทั้ง 2 ทาง: ส่งลิงก์เซ็นใหม่ หรือจ่ายเลย (โมดัลจ่ายจะเตือนว่ายังไม่มีเอกสาร)
+    if(isRv(x) && !x.docNo){
+      return '<div style="display:grid;gap:6px;width:100%">'+
+        '<button class="btn btn-ghost" onclick="exRelink(\''+esc(x.no)+'\')">🔗 ส่งลิงก์เซ็นใหม่ (รอผู้รับเงินเซ็น)</button>'+pay+'</div>';
+    }
+    return pay;
   }
   /**
    * อนุมัติใบที่มีหักภาษี ณ ที่จ่าย (ใบ RV หรือใบแนบใบเสร็จที่ติ๊กหัก)
@@ -2930,10 +2948,13 @@
   }
   /** จ่ายคืน → แนบสลิปโอน (รูป/PDF · หลายใบได้ · ข้ามได้แต่จะเตือน)
    *  ⚠️ เดิมใช้ช่องรูปเดี่ยว (canvas) → สลิป PDF จากแอปธนาคารแนบไม่ติดแบบเงียบ (พี่กี้เจอจริง 29 ก.ค.) */
-  function exOpenPay(no,nick,amount){
+  function exOpenPay(no,nick,amount,unsigned){
     var money=(Number(amount)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
     modal('<h3>💰 จ่ายคืน '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
       '<div class="m-hint">โอนคืน <b>'+esc(nick)+'</b> · '+money+' บาท</div>'+
+      // จ่ายก่อนผู้รับเซ็นได้ แต่ต้องรู้ว่ายังต้องตามลายเซ็น (เอกสาร+50 ทวิ ออกตอนเซ็นเสร็จ)
+      (unsigned?'<div class="m-hint" style="color:#C8730B">⚠️ ผู้รับเงิน<b>ยังไม่ได้ลงนาม</b> — บันทึกจ่ายได้เลยค่ะ '+
+        'แต่ใบสำคัญรับเงินกับ 50 ทวิ จะออกให้ตอนผู้รับเซ็นเสร็จ (ระบบรวมแฟ้มใหม่ให้เอง) · อย่าลืมตามลิงก์เซ็นนะคะ</div>':'')+
       imgsFldHtml('pSlips','📎 สลิปโอนคืน — รูป หรือ PDF (แนบหลายใบได้ · ผู้แจ้งจะเห็น)')+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
       '<button class="btn btn-primary" id="pSend" onclick="exDoPay(\''+esc(no)+'\')">บันทึกจ่ายคืน</button></div>');
