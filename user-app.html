@@ -608,6 +608,8 @@
   var PROJECTS=[], COMPANIES=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ) · COMPANIES=บริษัท auto (หน้าจัดการ)
   var ALL_TASKS=[], PJ_SEL='', MB_STATUSES=[];   // มุมมอง Project (dropdown เลือก · แยก 6 สถานะ + %) · MB_STATUSES=รายการสถานะ (ฟอร์มแก้งานมือถือ)
   var EXP_TYPES=[];   // ประเภทค่าใช้จ่าย (โหลดจาก waExpenseInit)
+  // บัญชีรับโอนคืนของฉัน + รายชื่อธนาคาร (มาพร้อม waExpenseInit — ไม่ยิงแยกเพื่อกัน dropdown ว่างตอนกดเร็ว)
+  var MYBANK={name:'',acct:'',owner:''}, BANK_LIST=[], HAS_BANK=false;
   var EXP_BYNO={};    // เก็บ object ใบเบิกตามเลขที่ (ให้ปุ่มแก้ผู้รับเงินดึงข้อมูลเดิมมาเติมฟอร์ม)
 
   function $(id){ return document.getElementById(id); }
@@ -2118,14 +2120,19 @@
     skel();
     jsonp({action:'waExpenseInit', uid:UID}).then(function(r){
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
-      EXP_TYPES=r.types||[]; paintExpense(r.expenses||[]);
+      EXP_TYPES=r.types||[];
+      MYBANK=r.myBank||{name:'',acct:'',owner:''}; BANK_LIST=r.banks||[]; HAS_BANK=!!r.hasBank;
+      paintExpense(r.expenses||[]);
       sigRefresh();
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
   }
   function expBadge(s){ s=String(s||''); if(s.indexOf('จ่าย')>=0)return'b-done'; if(s.indexOf('ไม่')>=0)return'b-cancel'; if(s.indexOf('อนุมัติ')>=0)return'b-doing'; return'b-new'; }
   function paintExpense(list){
     var html='<button class="btn btn-primary" style="width:100%;margin-bottom:10px" onclick="openExpense()">➕ แจ้งเบิกค่าใช้จ่าย</button>'+
-      '<button class="btn btn-ghost" style="width:100%;margin-bottom:14px" onclick="openSign()">✍️ ลายเซ็นของฉัน<span id="sigState" style="color:#8A94A6;font-weight:400"></span></button>'+
+      '<button class="btn btn-ghost" style="width:100%;margin-bottom:8px" onclick="openSign()">✍️ ลายเซ็นของฉัน<span id="sigState" style="color:#8A94A6;font-weight:400"></span></button>'+
+      // บัญชีรับโอนคืน — ต้องมีก่อนถึงแจ้งเบิกได้ (พี่จะได้ไม่ต้องไล่ถามเลขบัญชีในแชท)
+      '<button class="btn btn-ghost" style="width:100%;margin-bottom:14px'+(HAS_BANK?'':';border-color:#E5484D;color:#E5484D')+'" onclick="openBank()">🏦 บัญชีรับโอนของฉัน'+
+        '<span style="color:#8A94A6;font-weight:400">'+(HAS_BANK?(' · '+esc(MYBANK.name)+' '+esc(MYBANK.acct)):' · ยังไม่ได้กรอก')+'</span></button>'+
       (IS_OWNER?'<div class="m-hint" style="margin:0 0 12px">👑 มุมผู้ดูแล: เห็นใบเบิก<b>ทุกคน</b> · จัดการ/แก้/ลบได้จากที่นี่</div>':'');
     if(!list.length){ html+='<div class="card"><div class="emptybox">ยังไม่มีรายการเบิก 😊</div></div>'; $('main').innerHTML=html; return; }
     html+=list.map(function(x){
@@ -2164,12 +2171,13 @@
       // ยกเลิกใบเบิก (เฉพาะพี่ · ทุกสถานะ) — ย้ายไปถังขยะก่อน (soft-delete · กู้คืนได้)
       if(IS_OWNER)
         links+='<a class="ex-lk" href="#" onclick="exTrash(\''+esc(x.no)+'\');return false" style="color:#DC2626">🗑️ ยกเลิก</a>';
+      var bankHtml=bankLineHtml(x, isRv(x)?'โอนให้ผู้รับเงิน':'โอนเข้า');
       return '<div class="tk"><div class="tk-top"><span class="tk-no">'+esc(x.no)+'</span>'+
         '<span class="tk-badge '+expBadge(x.status)+'">'+esc(x.status)+'</span></div>'+
         (IS_OWNER&&x.nick?'<div class="tk-cust">👤 '+esc(x.nick)+'</div>':'')+
         '<div class="ex-amt"><span class="ex-t">'+esc(x.type)+'</span> · '+money+' บาท</div>'+
         (x.detail?'<div class="tk-detail">'+esc(x.detail)+'</div>':'')+
-        '<div class="ex-meta">'+esc(x.createdAt||'')+(links?'<br>'+links:'')+'</div></div>';
+        '<div class="ex-meta">'+esc(x.createdAt||'')+bankHtml+(links?'<br>'+links:'')+'</div></div>';
     }).join('');
     $('main').innerHTML=html;
   }
@@ -2189,6 +2197,7 @@
           '<button type="button" id="epSr" class="btn btn-sm" onclick="expSetProof(\'sr\')" style="flex:1">📄 ไม่มีใบเสร็จ</button>'+
           '<button type="button" id="epRv" class="btn btn-sm" onclick="expSetProof(\'rv\')" style="flex:1">💵 จ่ายค่าจ้าง</button>'+
         '</div></div>'+
+      '<div id="epBankBox">'+expMyBankHtml()+'</div>'+
       '<div id="epRcpBox">'+imgsFldHtml('eImg','📎 ใบเสร็จ — รูป หรือ PDF (แนบได้หลายไฟล์ → รวมเป็น PDF เดียวให้)')+'</div>'+
       '<div id="epSrBox" class="hidden">'+
         '<div class="m-hint">ระบบจะออก <b>ใบรับรองแทนใบเสร็จ</b> ให้อัตโนมัติตอน'+esc(OWNERTXT())+'อนุมัติ พร้อมฝังลายเซ็นของคุณ — ใช้กับค่าใช้จ่ายที่ขอใบเสร็จไม่ได้ (แท็กซี่ วิน ของตลาด)</div>'+
@@ -2213,6 +2222,8 @@
         imgsFldHtml('eRvCard','🪪 สำเนาบัตรประชาชนผู้รับเงิน (บังคับ)')+
         '<div class="m-hint" style="margin-top:-4px">เอกสารระบุเองว่าต้องแนบสำเนาบัตรผู้รับเงินทุกครั้ง ไม่มีจะออกใบให้ไม่ได้ค่ะ</div>'+
         imgsFldHtml('eRvImg','📎 หลักฐานอื่น เช่น สลิปโอน (ถ้ามี · ไม่บังคับ)')+
+        '<div class="m-hint" style="margin-top:6px">🏦 <b>บัญชีที่จะโอนให้ผู้รับเงิน</b> — เงินใบนี้โอนเข้าบัญชีคนนอก ไม่ใช่บัญชีคุณค่ะ</div>'+
+        bankFields('erv', {}, 'ผู้รับเงิน — ')+
         '<div class="m-hint">💡 อัตราหัก ณ ที่จ่าย '+esc(OWNERTXT())+'จะเป็นคนเลือกตอนอนุมัติค่ะ</div>'+
       '</div>'+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
@@ -2241,7 +2252,9 @@
     [['epRcp','rcp'],['epSr','sr'],['epRv','rv']].forEach(function(t){
       var el=$(t[0]); if(el) el.style.cssText='flex:1;font-size:13px;padding:9px 4px;'+(mode===t[1]?on:off);
     });
-    var rb=$('epRcpBox'), sb=$('epSrBox'), vb=$('epRvBox');
+    var rb=$('epRcpBox'), sb=$('epSrBox'), vb=$('epRvBox'), bb=$('epBankBox');
+    // ใบ RV โอนให้คนนอก → ไม่ต้องโชว์บัญชีพนักงาน (ใช้ช่องบัญชีผู้รับเงินในกล่อง RV แทน)
+    if(bb) bb.classList.toggle('hidden', mode==='rv');
     if(rb) rb.classList.toggle('hidden', mode!=='rcp');
     if(sb) sb.classList.toggle('hidden', mode!=='sr');
     if(vb) vb.classList.toggle('hidden', mode!=='rv');
@@ -2253,6 +2266,15 @@
         else { e2.innerHTML='⚠️ ยังไม่ได้เซ็นลายเซ็น — <a href="#" onclick="closeModal();openSign();return false"><b>กดเซ็นก่อนที่นี่</b></a> แล้วค่อยแจ้งเบิกนะคะ'; }
       }).catch(function(){});
     }
+  }
+  /** กล่อง "เงินจะโอนเข้าบัญชีนี้" ในฟอร์มเบิก — ยังไม่กรอก = เตือนแดง + ปุ่มกรอกทันที */
+  function expMyBankHtml(){
+    if(HAS_BANK){
+      return '<div class="m-hint" style="color:#1B7F4B">🏦 โอนคืนเข้า: <b>'+esc(MYBANK.name)+' '+esc(MYBANK.acct)+'</b> ('+esc(MYBANK.owner)+') · '+
+        '<a href="#" onclick="closeModal();openBank();return false">เปลี่ยนบัญชี</a></div>';
+    }
+    return '<div class="m-hint" style="color:#E5484D">⚠️ ยังไม่ได้กรอกบัญชีรับโอนคืน — '+
+      '<a href="#" onclick="closeModal();openBank();return false"><b>กรอกบัญชีก่อนที่นี่</b></a> แล้วค่อยแจ้งเบิกนะคะ</div>';
   }
   /** ตรวจ checksum เลขบัตร ปชช ไทย 13 หลัก (จับพิมพ์ผิด/มั่ว · ฟรี · ด่านจริงอยู่ backend) */
   function validThaiId(id){
@@ -2266,6 +2288,10 @@
     var type=$('eType').value, amt=$('eAmt').value, detail=$('eDetail').value.trim();
     if(!(parseFloat(amt)>0)){ mErr('กรอกจำนวนเงินก่อนค่ะ'); return; }
     if(!detail){ mErr('กรอกรายละเอียดก่อนค่ะ'); return; }
+    // ใบที่โอนคืนเข้าบัญชีพนักงาน (ไม่ใช่ RV) ต้องมีบัญชีก่อน — ด่านจริงอยู่ backend อันนี้กันเสียเวลาอัปรูป
+    if(EXP_PROOF!=='rv' && !HAS_BANK){
+      mErr('กรอกบัญชีรับโอนคืนก่อนค่ะ (ปุ่ม 🏦 บัญชีรับโอนของฉัน)'); return;
+    }
     var p={action:'waExpCreate',uid:UID,type:type,amount:amt,detail:detail};
     if(EXP_PROOF==='rv'){
       var rn=($('eRvName')||{}).value.trim(), rid=(($('eRvId')||{}).value||'').replace(/\D/g,'');
@@ -2275,7 +2301,9 @@
       if(!validThaiId(rid)){ mErr('เลขบัตรประชาชนไม่ถูกต้อง — ตรวจเลข 13 หลักอีกครั้งค่ะ (อาจพิมพ์สลับ/ตกหล่น)'); return; }
       if(!ra){ mErr('กรอกที่อยู่ผู้รับเงินก่อนค่ะ'); return; }
       if(!card.length){ mErr('แนบสำเนาบัตรประชาชนผู้รับเงินก่อนค่ะ'); return; }
+      var rvb=readBank('erv','บัญชีผู้รับเงิน'); if(!rvb) return;
       p.proof='rv'; p.payeeName=rn; p.payeeId=rid; p.payeeAddr=ra;
+      p.payeeBankName=rvb.name; p.payeeBankAcct=rvb.acct; p.payeeBankOwner=rvb.owner;
       p.idcard=JSON.stringify(card);
       var other=IMGS['eRvImg']||[];
       if(other.length) p.imgs=JSON.stringify(other);
@@ -2302,6 +2330,7 @@
     // POST — รูป base64 ยาวเกิน URL limit ของ JSONP GET
     callBusy('กำลังส่งใบเบิก…', jsonpPost(p))
       .then(function(r){ if(!r||!r.ok){ if(b){b.disabled=false;b.textContent='แจ้งเบิก';}
+          if(r&&r.needBank){ closeModal(); toast(r.error||'กรอกบัญชีรับโอนก่อนค่ะ'); openBank(); return; }
           if(r&&r.needSign){ mErr((r.error||'')+' '); } else mErr((r&&r.error)||'ส่งไม่สำเร็จ'); return; }
         closeModal(); IMGS['eImg']=[]; IMGS['eSrImg']=[]; IMGS['eRvCard']=[]; IMGS['eRvImg']=[];
         toast('✅ ส่งใบเบิกแล้ว ('+(r.no||'')+')'+(r.merged?' · รวม '+r.files+' ไฟล์เป็น PDF แล้ว':'')+
@@ -2310,6 +2339,88 @@
       .catch(function(e){ if(b){b.disabled=false;b.textContent='แจ้งเบิก';} mErr(e.message); });
   }
   window.expSetProof=expSetProof;
+
+  // ═══════════ 🏦 บัญชีรับโอนคืน (พี่กี้ขอ 18 ส.ค. 69) ═══════════
+  // พนักงานกรอกครั้งเดียว ใช้ทุกใบเบิก · ใบ RV ใช้บัญชี "ผู้รับเงินคนนอก" ที่กรอกในฟอร์มแทน
+  var BANK_FALLBACK=['กสิกรไทย (KBank)','ไทยพาณิชย์ (SCB)','กรุงเทพ (BBL)','กรุงไทย (KTB)','กรุงศรีอยุธยา (BAY)','ทหารไทยธนชาต (ttb)','ออมสิน (GSB)'];
+  function bankList(){ return (BANK_LIST&&BANK_LIST.length)?BANK_LIST:BANK_FALLBACK; }
+  /** dropdown ธนาคาร + ตัวเลือก "อื่นๆ" (ธนาคารนอกลิสต์ → พิมพ์เอง) */
+  function bankOpts(sel){
+    var list=bankList(), found=false;
+    var h=list.map(function(b){ var on=(b===sel); if(on) found=true;
+      return '<option value="'+esc(b)+'"'+(on?' selected':'')+'>'+esc(b)+'</option>'; }).join('');
+    var other=(sel&&!found);
+    return '<option value=""'+((!sel)?' selected':'')+'>— เลือกธนาคาร —</option>'+h+
+      '<option value="__other__"'+(other?' selected':'')+'>อื่นๆ (พิมพ์เอง)</option>';
+  }
+  /** 3 ช่องบัญชี (ใช้ซ้ำทั้งบัญชีพนักงานและบัญชีผู้รับเงิน RV) — pfx = prefix ของ element id */
+  function bankFields(pfx, b, labelPrefix){
+    b=b||{}; var lp=labelPrefix||'';
+    var list=bankList(), isOther=!!(b.name && list.indexOf(b.name)<0);
+    return '<div class="fld"><label>'+esc(lp)+'ธนาคาร</label>'+
+        '<select id="'+pfx+'Bank" onchange="bankOtherToggle(\''+pfx+'\')">'+bankOpts(b.name||'')+'</select>'+
+        '<input id="'+pfx+'BankOther" class="'+(isOther?'':'hidden')+'" style="margin-top:6px" placeholder="พิมพ์ชื่อธนาคาร" value="'+esc(isOther?b.name:'')+'"></div>'+
+      '<div class="fld"><label>'+esc(lp)+'เลขที่บัญชี</label>'+
+        '<input id="'+pfx+'Acct" type="tel" inputmode="numeric" placeholder="เช่น 1234567890" value="'+esc(b.acct||'')+'"></div>'+
+      '<div class="fld"><label>'+esc(lp)+'ชื่อบัญชี</label>'+
+        '<input id="'+pfx+'Owner" placeholder="ชื่อ-นามสกุล ตามหน้าสมุดบัญชี" value="'+esc(b.owner||'')+'"></div>';
+  }
+  function bankOtherToggle(pfx){
+    var sel=$(pfx+'Bank'), o=$(pfx+'BankOther'); if(!sel||!o) return;
+    var other=(sel.value==='__other__');
+    o.classList.toggle('hidden', !other); if(other) o.focus();
+  }
+  /** อ่านค่าจาก 3 ช่อง → {name,acct,owner} · คืน null พร้อม mErr ถ้ากรอกไม่ครบ/ผิดรูปแบบ */
+  function readBank(pfx, what){
+    var sel=$(pfx+'Bank'), name=sel?sel.value:'';
+    if(name==='__other__') name=(($(pfx+'BankOther')||{}).value||'').trim();
+    var acct=((($(pfx+'Acct')||{}).value)||'').replace(/[^\d\-]/g,'').trim();
+    var owner=((($(pfx+'Owner')||{}).value)||'').trim();
+    var lead=what?(what+': '):'', digits=acct.replace(/\D/g,'');
+    if(!name){ mErr(lead+'เลือกธนาคารก่อนค่ะ'); return null; }
+    if(digits.length<10||digits.length>15){ mErr(lead+'เลขที่บัญชีต้องมี 10-15 หลักค่ะ'); return null; }
+    if(!owner){ mErr(lead+'กรอกชื่อบัญชีก่อนค่ะ'); return null; }
+    return {name:name, acct:acct, owner:owner};
+  }
+  function openBank(){
+    modal('<h3>🏦 บัญชีรับโอนของฉัน</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">กรอกครั้งเดียว ระบบจำไว้ใช้ทุกใบเบิก — เวลาโอนคืน พี่จะเห็นเลขบัญชีนี้บนใบเบิกเลย ไม่ต้องถามในแชทค่ะ</div>'+
+      bankFields('mb', MYBANK, '')+
+      '<div class="m-hint">💡 ใบเบิกที่ยัง<b>ไม่จ่าย</b>ของคุณ จะถูกอัปเดตเป็นบัญชีใหม่ให้อัตโนมัติ (ใบที่จ่ายแล้วคงเดิม)</div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" id="mbSave" onclick="bankSave()">บันทึก</button></div>');
+  }
+  function bankSave(){
+    var b=readBank('mb'); if(!b) return;
+    var btn=$('mbSave'); if(btn){ btn.disabled=true; btn.textContent='กำลังบันทึก…'; }
+    callBusy('กำลังบันทึกบัญชี…', jsonpPost({action:'waBankSave',uid:UID,bankName:b.name,bankAcct:b.acct,bankOwner:b.owner}))
+      .then(function(r){
+        if(!r||!r.ok){ if(btn){btn.disabled=false;btn.textContent='บันทึก';} mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+        MYBANK=r.bank||b; HAS_BANK=true; closeModal();
+        toast('✅ บันทึกบัญชีแล้ว'+(r.synced?' · อัปเดตใบที่ยังไม่จ่าย '+r.synced+' ใบ':''));
+        renderExpense();
+      }).catch(function(e){ if(btn){btn.disabled=false;btn.textContent='บันทึก';} mErr(e.message); });
+  }
+  /** ก๊อปข้อความ (เลขบัญชี) — LINE webview บางรุ่นไม่มี navigator.clipboard → fallback textarea */
+  function copyTxt(t){
+    t=String(t||'');
+    function done(){ toast('📋 ก๊อปแล้ว: '+t); }
+    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(done).catch(function(){ copyFallback(t,done); }); }
+    else copyFallback(t,done);
+  }
+  function copyFallback(t,done){
+    var ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0,99999);
+    try{ document.execCommand('copy'); done(); }catch(e){ toast('ก๊อปไม่ได้ค่ะ กดค้างที่เลขบัญชีเพื่อคัดลอก'); }
+    document.body.removeChild(ta);
+  }
+  /** บรรทัดบัญชีบนการ์ดใบเบิก + ปุ่มก๊อปเลข (พี่ paste ลงแอปธนาคารได้เลย) */
+  function bankLineHtml(x, label){
+    if(!x||!x.bankAcct) return '';
+    return '<br><span style="color:#1B7F4B">🏦 '+esc(label||'โอนเข้า')+': '+esc(x.bankName||'')+' · <b>'+esc(x.bankAcct)+'</b> · '+esc(x.bankOwner||'')+'</span>'+
+      ' <a class="ex-lk" href="#" onclick="copyTxt(\''+esc(x.bankAcct)+'\');return false">📋 ก๊อปเลขบัญชี</a>';
+  }
+  window.openBank=openBank; window.bankSave=bankSave; window.bankOtherToggle=bankOtherToggle; window.copyTxt=copyTxt;
 
   // ═══════════ ลายเซ็นของฉัน (เซ็นครั้งเดียว ใช้ตลอด · ระบบเอาไปฝังเอกสารที่ออกให้) ═══════════
   // ต้นแบบแผ่นวาด: skill handover-letter (วาดด้วยนิ้ว/เมาส์ หรืออัปรูปลายเซ็น)
@@ -2601,7 +2712,7 @@
         (x.note&&x.note.indexOf('ไม่มีหลักฐาน')>=0
           ?'<br><span style="color:#E5484D;font-weight:600">'+esc(x.note)+'</span>':'')+
         (x.docLink?'<br><a class="ex-lk" href="'+esc(x.docLink)+'" target="_blank">📄 '+esc(x.docNo||'เอกสาร')+'</a>':'')+
-        exRvMeta(x)+'</div>'+
+        exRvMeta(x)+bankLineHtml(x, isRv(x)?'โอนให้ผู้รับเงิน':'โอนเข้า')+'</div>'+
       (isPaid
         ? '<div class="m-act" style="margin-top:11px">'+exRvPayGate(x)+'</div>'
         : '<div class="m-act" style="margin-top:11px"><button class="btn btn-danger" onclick="exReject(\''+esc(x.no)+'\')">❌ ไม่อนุมัติ</button>'+
@@ -2679,6 +2790,7 @@
       '<div class="fld"><label>เลขบัตรประชาชน (13 หลัก)</label><input id="edId" inputmode="numeric" value="'+esc(x.payeeId||'')+'"></div>'+
       '<div class="fld"><label>ที่อยู่ผู้รับเงิน</label><textarea id="edAddr">'+esc(x.payeeAddr||'')+'</textarea></div>'+
       (x.idCardUrl?'<div class="fld"><label>สำเนาบัตรปัจจุบัน</label><a href="'+esc(x.idCardUrl)+'" target="_blank"><img src="'+drvThumb(x.idCardUrl,400)+'" style="max-width:100%;max-height:160px;border-radius:8px;border:1px solid #E3E8EF" onerror="this.style.display=\'none\'"></a></div>':'')+
+      bankFields('ed2', {name:x.bankName||'', acct:x.bankAcct||'', owner:x.bankOwner||''}, 'ผู้รับเงิน — ')+
       imgsFldHtml('edCard','🪪 อัปสำเนาบัตรใหม่ (ไม่บังคับ · ไม่แนบ = ใช้รูปเดิม)')+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
       '<button class="btn btn-primary" onclick="exSavePayee(\''+esc(no)+'\')">บันทึก</button></div>');
@@ -2690,7 +2802,9 @@
     if(id.length!==13){ mErr('เลขบัตรประชาชนต้องมี 13 หลักค่ะ'); return; }
     if(!validThaiId(id)){ mErr('เลขบัตรประชาชนไม่ถูกต้อง — ตรวจเลข 13 หลักอีกครั้งค่ะ'); return; }
     if(!ad){ mErr('กรอกที่อยู่ผู้รับเงินก่อนค่ะ'); return; }
-    var p={action:'waExpEditPayee',uid:UID,no:no,payeeName:nm,payeeId:id,payeeAddr:ad};
+    var eb=readBank('ed2','บัญชีผู้รับเงิน'); if(!eb) return;
+    var p={action:'waExpEditPayee',uid:UID,no:no,payeeName:nm,payeeId:id,payeeAddr:ad,
+      payeeBankName:eb.name,payeeBankAcct:eb.acct,payeeBankOwner:eb.owner};
     var card=IMGS['edCard']||[]; if(card.length) p.idcard=JSON.stringify(card);
     callBusy('กำลังบันทึก…', jsonpPost(p), 'บันทึกแล้ว').then(function(r){
       if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
