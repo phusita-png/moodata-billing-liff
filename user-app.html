@@ -557,6 +557,8 @@
       <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span id="navExpDashLabel">สรุปค่าใช้จ่าย</span></button>
     <button class="nav-btn" data-view="reimb" aria-label="ตั้งเบิกลูกค้า" id="navReimb" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6Z"/><path d="M14 3v5h5M9 12h6M9 16h4"/></svg><span>ตั้งเบิกลูกค้า</span></button>
+    <button class="nav-btn" data-view="payout" aria-label="จ่ายออก" id="navPayout" style="display:none">
+      <svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6.5 12h.01M17.5 12h.01"/></svg><span>จ่ายออก</span></button>
     <button class="nav-btn" data-view="leave" aria-label="การลา">
       <svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></svg><span>การลา</span></button>
     <button class="nav-btn" data-view="approve" aria-label="อนุมัติลา" id="navAppr" style="display:none">
@@ -603,7 +605,7 @@
     home:['🏠','ภาพรวม'],
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
     expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติเบิกจ่าย'],
-    expdash:['📊','สรุปค่าใช้จ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน']
+    expdash:['📊','สรุปค่าใช้จ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','จ่ายออก'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน']
   };
   var PROJECTS=[], COMPANIES=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ) · COMPANIES=บริษัท auto (หน้าจัดการ)
   var ALL_TASKS=[], PJ_SEL='', MB_STATUSES=[];   // มุมมอง Project (dropdown เลือก · แยก 6 สถานะ + %) · MB_STATUSES=รายการสถานะ (ฟอร์มแก้งานมือถือ)
@@ -666,7 +668,7 @@
     if(gi) $('tbIcon').innerHTML=gi; else $('tbIcon').textContent=meta[0];
     $('tbTitle').textContent=meta[1];
     mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
-    ({ home:renderHome, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport }[v] || soon)();
+    ({ home:renderHome, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport }[v] || soon)();
   }
 
   // ───── มือถือ: เมนูกลุ่ม (ล่าง) + แท็บย่อย (บน) · คอมใช้ sidebar เดิม ไม่เกี่ยว ─────
@@ -678,7 +680,7 @@
     { key:'home', icon:'🏠', label:'ภาพรวม', views:['home'] },
     { key:'work', icon:'📊', label:'งาน',    views:['projects','mytasks','review','senddoc','appt','announce','trash'] },
     { key:'hr',   icon:'👥', label:'HR',     views:['approve','otapprove','hrreport'] },
-    { key:'fin',  icon:'💰', label:'การเงิน', views:['expdash','reimb','finreport','taxdoc'] },   /* taxdoc ซ่อนไว้ก่อน — เปิดตอน ภ.ง.ด. v2 */
+    { key:'fin',  icon:'💰', label:'การเงิน', views:['expdash','reimb','payout','finreport','taxdoc'] },   /* payout = จ่ายออกของบริษัท (พี่คนเดียว) */   /* taxdoc ซ่อนไว้ก่อน — เปิดตอน ภ.ง.ด. v2 */
     { key:'me',   icon:'🙋', label:'ส่วนตัว', views:['leave','ot','expense','docs'] }
   ];
   // ไอคอนหัวกลุ่มบน sidebar คอม = SVG เส้นสีเดียว (พี่กี้ขอ 30 ก.ค.: เรียบ ๆ ไม่สีสัน)
@@ -704,12 +706,12 @@
   var VIEW_TAB={ home:'ภาพรวม', projects:'บอร์ดงาน', mytasks:'งานของฉัน', review:'รอตรวจ', trash:'ถังขยะ',
     senddoc:'ส่งงานลูกค้า', appt:'นัดประชุม', announce:'ประกาศ',
     leave:'ลาของฉัน', approve:'อนุมัติลา', expense:'เบิกของฉัน', expapprove:'อนุมัติเบิก',
-    expdash:'สรุป', reimb:'ตั้งเบิกลูกค้า',
+    expdash:'สรุป', reimb:'ตั้งเบิกลูกค้า', payout:'จ่ายออก',
     ot:'OT ของฉัน', otapprove:'อนุมัติ OT', docs:'เอกสาร',
     hrreport:'รายงาน HR', finreport:'รายงานการเงิน', taxdoc:'ภาษี/เอกสาร' };
   // แท็บที่เห็นเฉพาะพี่/ผู้ดูแล · reimb = ตั้งเบิกลูกค้า (ชีตไม่มีเจ้าของรายคน + เป็นข้อมูลรายได้)
   // ⚠️ ซ่อนแท็บ ≠ กันข้อมูล — backend กรองสิทธิ์เองอีกชั้นเสมอ
-  var OWNER_VIEWS={ review:1, approve:1, expapprove:1, otapprove:1, reimb:1, taxdoc:1, hrreport:1, finreport:1 };
+  var OWNER_VIEWS={ review:1, approve:1, expapprove:1, otapprove:1, reimb:1, taxdoc:1, payout:1, hrreport:1, finreport:1 };
   var MGROUP='', MG_LAST={};
   function mVisibleViews(g){ return g.views.filter(function(v){ return IS_OWNER || !OWNER_VIEWS[v]; }); }
   function mGroupOf(v){ for(var i=0;i<NAV_GROUPS.length;i++){ if(NAV_GROUPS[i].views.indexOf(v)>=0) return NAV_GROUPS[i]; } return null; }
@@ -2468,6 +2470,316 @@
       ' <a class="ex-lk" href="#" onclick="copyTxt(\''+esc(x.bankAcct)+'\');return false">📋 ก๊อปเลขบัญชี</a>';
   }
   window.openBank=openBank; window.bankSave=bankSave; window.bankOtherToggle=bankOtherToggle; window.copyTxt=copyTxt;
+
+  // ═══════════ VIEW: 💵 จ่ายออก — ใบจ่ายของบริษัท (เฉพาะพี่ · spec-company-payment เฟส B) ═══════════
+  // ต่างจาก "เบิกค่าใช้จ่าย": ใบเบิก = พนักงานสำรองจ่ายแล้วบริษัทคืนเงิน
+  //                        จ่ายออก = บริษัทจ่ายเองให้ผู้รับเงิน (ค่าเช่า/ค่าจ้าง/ซัพพลาย/ค่าตอบแทนพนักงาน)
+  // เฟสนี้: ตั้งเรื่อง → อนุมัติ → จ่าย + แนบสลิป (เอกสาร PV/50 ทวิ = เฟสถัดไป)
+  var PO=null, PO_EDIT='';   // PO = ข้อมูลจาก waPoInit · PO_EDIT = เลขใบที่กำลังแก้ ('' = ใบใหม่)
+  function renderPayout(){
+    skel();
+    jsonp({action:'waPoInit', uid:UID}).then(function(r){
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      PO=r; paintPayout();
+    }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
+  }
+  function poMoney(n){ return (Number(n)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function poBadge(s){ s=String(s||''); if(s.indexOf('จ่าย')>=0)return'b-done'; if(s.indexOf('ไม่')>=0)return'b-cancel'; if(s.indexOf('อนุมัติ')>=0)return'b-doing'; return'b-new'; }
+  /** แบบยื่นที่ใบนี้จะเข้า — mirror formTypeOf_ ฝั่ง backend (นิติบุคคล → ภ.ง.ด.53 ทุกมาตรา) */
+  function poFormLabel(kind, sectCode){
+    if(!sectCode) return '';
+    var s=(PO&&PO.sections||[]).filter(function(x){ return x.code===sectCode; })[0];
+    if(!s) return '';
+    if(kind==='นิติบุคคล') return 'ภ.ง.ด.53';
+    return s.formIfPerson==='PND1' ? 'ภ.ง.ด.1' : (s.formIfPerson==='PND53' ? 'ภ.ง.ด.53' : 'ภ.ง.ด.3');
+  }
+  function paintPayout(){
+    var html='<button class="btn btn-primary" style="width:100%;margin-bottom:10px" onclick="openPayout()">➕ ตั้งเรื่องจ่ายเงิน</button>'+
+      '<div class="m-hint" style="margin:0 0 12px">💵 ใบจ่ายของบริษัท — จ่ายค่าเช่า/ค่าจ้าง/ซัพพลาย ในนามนิติบุคคล '+
+      '(คนละชุดกับใบเบิกที่พนักงานสำรองจ่าย) · เห็นเฉพาะผู้ดูแลค่ะ</div>';
+    html+=poBlock('⏳ รออนุมัติ', PO.pending, 'pending')+
+          poBlock('💸 อนุมัติแล้ว · รอจ่ายเงิน', PO.topay, 'topay')+
+          poBlock('✅ จ่ายแล้ว (40 ใบล่าสุด)', PO.paid, 'done')+
+          poBlock('❌ ไม่อนุมัติ', PO.rejected, 'done');
+    $('main').innerHTML=html;
+  }
+  function poBlock(title, list, mode){
+    list=list||[];
+    if(!list.length && mode==='done') return '';   // บล็อกประวัติที่ว่าง ไม่ต้องรก
+    return '<div class="m-hint" style="margin:14px 0 6px;font-weight:600">'+esc(title)+' ('+list.length+')</div>'+
+      (list.length ? list.map(function(x){ return poCard(x, mode); }).join('')
+                   : '<div class="card"><div class="emptybox">ไม่มีรายการค่ะ 😊</div></div>');
+  }
+  function poCard(x, mode){
+    var wht = x.whtAmt>0 ? ('<br><span style="color:#C8730B">🧾 หัก ณ ที่จ่าย '+esc(x.section||'')+' '+x.whtRate+'% = '+poMoney(x.whtAmt)+
+      ' บาท → จ่ายจริง <b>'+poMoney(x.netAmt)+'</b> บาท'+(x.formType?' · เข้า '+esc(poFormLabel(x.payeeKind,x.section)):'')+'</span>') : '';
+    var bank = x.bank&&x.bank.acct ? ('<br><span style="color:#1B7F4B">🏦 '+esc(x.bank.name||'')+' · <b>'+esc(x.bank.acct)+'</b> · '+esc(x.bank.owner||'')+'</span>'+
+      ' <a class="ex-lk" href="#" onclick="copyTxt(\''+esc(x.bank.acct)+'\');return false">📋 ก๊อปเลขบัญชี</a>') : '';
+    var links='';
+    if(x.proofLink) links+='<a class="ex-lk" href="'+esc(x.proofLink)+'" target="_blank">📎 ใบแจ้งหนี้/ใบกำกับ</a>';
+    if(x.contractLink) links+='<a class="ex-lk" href="'+esc(x.contractLink)+'" target="_blank">📄 สัญญา</a>';
+    if(x.paidSlip) links+='<a class="ex-lk" href="'+esc(x.paidSlip)+'" target="_blank">📎 สลิปโอน</a>';
+    if(mode==='pending'){
+      links+='<a class="ex-lk" href="#" onclick="openPayout(\''+esc(x.no)+'\');return false" style="color:#1B72E8">✏️ แก้ไข</a>'+
+        '<a class="ex-lk" href="#" onclick="poDecide(\''+esc(x.no)+'\',\'approve\');return false" style="color:#1E9E5A"><b>✅ อนุมัติ</b></a>'+
+        '<a class="ex-lk" href="#" onclick="poDecide(\''+esc(x.no)+'\',\'reject\');return false" style="color:#D14343">❌ ไม่อนุมัติ</a>'+
+        '<a class="ex-lk" href="#" onclick="poCancel(\''+esc(x.no)+'\');return false" style="color:#8A94A6">🗑️ ยกเลิก</a>';
+    } else if(mode==='topay'){
+      links+='<a class="ex-lk" href="#" onclick="poOpenPay(\''+esc(x.no)+'\');return false" style="color:#C8730B"><b>💰 บันทึกจ่ายเงิน</b></a>'+
+        '<a class="ex-lk" href="#" onclick="poCancel(\''+esc(x.no)+'\');return false" style="color:#8A94A6">🗑️ ยกเลิก</a>';
+    } else if(String(x.status).indexOf('จ่ายแล้ว')>=0 && !x.paidSlip){
+      // จ่ายแล้วแต่ไม่มีสลิป = หลักฐานการจ่ายขาด (เฟส C จะเอาเข้าแฟ้ม) → เตือนให้แนบย้อนหลังได้
+      links+='<a class="ex-lk" href="#" onclick="poOpenPay(\''+esc(x.no)+'\');return false" style="color:#DC2626">📎 ยังไม่มีสลิป · แนบเลย</a>';
+    }
+    var payLine = x.payDate ? ('<br><span style="color:#8A94A6">💰 จ่าย '+esc(String(x.payDate).slice(0,10))+' · '+esc(x.payMethod||'')+
+      (x.chequeNo?' เลขที่เช็ค '+esc(x.chequeNo):'')+'</span>') : '';
+    return '<div class="tk"><div class="tk-top"><span class="tk-no">'+esc(x.no)+'</span>'+
+      '<span class="tk-badge '+poBadge(x.status)+'">'+esc(x.status)+'</span></div>'+
+      '<div class="tk-cust">🏢 '+esc(x.entityName||x.entity)+'</div>'+
+      '<div class="ex-amt"><span class="ex-t">'+esc(x.type)+'</span> · '+poMoney(x.amount)+' บาท</div>'+
+      '<div class="tk-detail">'+esc(x.detail)+(x.period?' · '+esc(x.period):'')+'</div>'+
+      '<div class="ex-meta">👤 ผู้รับเงิน: '+esc(x.payeeName||'-')+' ('+esc(x.payeeKind||'')+')'+wht+bank+payLine+
+      (x.selfApprove?'<br><span style="color:#C8730B">'+esc(x.selfApprove)+'</span>':'')+
+      (x.note?'<br>📝 '+esc(x.note):'')+
+      (links?'<br>'+links:'')+'</div></div>';
+  }
+
+  // ───── ฟอร์มตั้งเรื่อง / แก้ไข ─────
+  var PO_PAYEE='out';   // 'out' = คนนอก (พิมพ์เอง) · 'staff' = พนักงานในทีม (ดึงชื่อ+บัญชีให้)
+  function openPayout(no){
+    if(!PO){ toast('กำลังโหลด…'); return; }
+    PO_EDIT=String(no||'');
+    var cur=null;
+    if(PO_EDIT){
+      cur=(PO.pending||[]).filter(function(x){ return x.no===PO_EDIT; })[0];
+      if(!cur){ toast('แก้ได้เฉพาะใบที่ยังรออนุมัติค่ะ'); return; }
+    }
+    PO_PAYEE=(cur&&cur.payeeUid)?'staff':'out';
+    var entOpts=(PO.entities||[]).map(function(e){
+      var sel=(cur?cur.entity:PO.defaultEntity)===e.code;
+      return '<option value="'+esc(e.code)+'"'+(sel?' selected':'')+'>'+esc(e.name)+'</option>';
+    }).join('');
+    var typeOpts=(PO.types||[]).map(function(t){
+      return '<option value="'+esc(t.key)+'"'+((cur&&cur.type===t.label)?' selected':'')+'>'+esc(t.label)+'</option>';
+    }).join('');
+    var kindOpts=(PO.payeeKinds||[]).map(function(k){
+      return '<option value="'+esc(k)+'"'+((cur&&cur.payeeKind===k)?' selected':'')+'>'+esc(k)+'</option>';
+    }).join('');
+    var sectOpts='<option value="">— ไม่หักภาษี ณ ที่จ่าย —</option>'+(PO.sections||[]).map(function(s){
+      return '<option value="'+esc(s.code)+'"'+((cur&&cur.section===s.code)?' selected':'')+'>'+esc(s.code)+' '+esc(s.label)+'</option>';
+    }).join('');
+    var staffOpts='<option value="">— เลือกพนักงาน —</option>'+(PO.staff||[]).map(function(m){
+      return '<option value="'+esc(m.uid)+'"'+((cur&&cur.payeeUid===m.uid)?' selected':'')+'>'+esc(m.display||m.name)+'</option>';
+    }).join('');
+    modal('<h3>'+(PO_EDIT?'✏️ แก้ใบจ่าย '+esc(PO_EDIT):'💵 ตั้งเรื่องจ่ายเงิน')+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="fld"><label>บริษัทผู้จ่าย</label><select id="poEnt">'+entOpts+'</select></div>'+
+      '<div class="fld"><label>ประเภทค่าใช้จ่าย</label><select id="poType" onchange="poTypeChange()">'+typeOpts+'</select></div>'+
+      '<div class="fld"><label>รายละเอียด (จ่ายค่าอะไร)</label><textarea id="poDetail" placeholder="เช่น ค่าเช่าออฟฟิศชั้น 2">'+esc(cur?cur.detail:'')+'</textarea></div>'+
+      '<div class="fld"><label>งวด / เดือนที่เกี่ยวข้อง (ไม่บังคับ)</label><input id="poPeriod" placeholder="เช่น ส.ค. 2569" value="'+esc(cur?cur.period:'')+'"></div>'+
+      '<div class="fld"><label>จ่ายให้ใคร</label><div style="display:flex;gap:6px">'+
+        '<button type="button" id="poPOut" class="btn btn-sm" onclick="poPayeeMode(\'out\')" style="flex:1">🏢 คนนอก / บริษัท</button>'+
+        '<button type="button" id="poPStaff" class="btn btn-sm" onclick="poPayeeMode(\'staff\')" style="flex:1">👥 พนักงานเรา</button>'+
+      '</div></div>'+
+      '<div id="poStaffBox" class="hidden"><div class="fld"><label>เลือกพนักงาน</label>'+
+        '<select id="poStaff" onchange="poStaffPick()">'+staffOpts+'</select>'+
+        '<div id="poStaffBank" class="m-hint" style="margin-top:6px"></div></div></div>'+
+      '<div class="fld"><label>ผู้รับเงินเป็น</label><select id="poKind" onchange="poCalc()">'+kindOpts+'</select></div>'+
+      '<div class="fld"><label>ชื่อผู้รับเงิน</label><input id="poName" placeholder="ชื่อบริษัท หรือ ชื่อ-นามสกุล" value="'+esc(cur?cur.payeeName:'')+'"></div>'+
+      '<div class="fld"><label>เลขประจำตัวผู้เสียภาษี / บัตร ปชช (13 หลัก)</label>'+
+        '<input id="poId" type="tel" inputmode="numeric" maxlength="17" placeholder="บังคับเมื่อหักภาษี ณ ที่จ่าย" value="'+esc(cur?cur.payeeId:'')+'"></div>'+
+      '<div class="fld"><label>ที่อยู่ผู้รับเงิน</label><textarea id="poAddr" placeholder="บังคับเมื่อหักภาษี ณ ที่จ่าย (ใช้บน 50 ทวิ)">'+esc(cur?cur.payeeAddr:'')+'</textarea></div>'+
+      '<div id="poBankBox">'+bankFields('po', cur?cur.bank:{}, 'ผู้รับเงิน — ')+'</div>'+
+      '<div class="fld"><label>จำนวนเงิน ก่อนหักภาษี (บาท)</label>'+
+        '<input id="poAmt" type="number" inputmode="decimal" min="0" step="0.01" oninput="poCalc()" value="'+esc(cur?cur.amount:'')+'"></div>'+
+      '<div class="fld"><label>มาตราเงินได้ (หัก ณ ที่จ่าย)</label><select id="poSect" onchange="poSectChange()">'+sectOpts+'</select></div>'+
+      '<div class="fld" id="poRateFld"><label>อัตราหัก %</label><select id="poRate" onchange="poCalc()"></select></div>'+
+      '<div id="poSum" class="m-hint"></div>'+
+      (PO_EDIT?'':imgsFldHtml('poImg','📎 ใบแจ้งหนี้ / ใบกำกับภาษี (รูป หรือ PDF · แนบได้หลายไฟล์)')+
+                imgsFldHtml('poCon','📄 สัญญา (ถ้ามี · ไม่บังคับ)'))+
+      (PO_EDIT?'<div class="m-hint">💡 ไฟล์แนบแก้ที่ใบเดิมไม่ได้ในเฟสนี้ — ถ้าแนบผิดให้ยกเลิกใบแล้วตั้งใหม่ค่ะ</div>':'')+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" id="poSend" onclick="doPayout()">'+(PO_EDIT?'บันทึกการแก้ไข':'ตั้งเรื่อง')+'</button></div>');
+    if(!PO_EDIT){ imgsFldBind('poImg'); imgsFldBind('poCon'); }
+    poPayeeMode(PO_PAYEE);
+    poFillRates(cur?cur.whtRate:null);
+    poCalc();
+  }
+  /** อัตราให้เลือก — ชุดเดียวกับ RV_WHT_RATES ฝั่ง backend (ค่านอกลิสต์ backend ตีเป็น 0) */
+  function poFillRates(sel){
+    var el=$('poRate'); if(!el) return;
+    var rates=[0,1,2,3,5];
+    el.innerHTML=rates.map(function(r){ return '<option value="'+r+'"'+((Number(sel)===r)?' selected':'')+'>'+r+'%</option>'; }).join('');
+  }
+  function poPayeeMode(mode){
+    PO_PAYEE=mode;
+    var on='background:#1B72E8;color:#fff;border-color:#1B72E8', off='background:#fff;color:#1B72E8;border:1.5px solid #1B72E8';
+    var a=$('poPOut'), b=$('poPStaff');
+    if(a) a.style.cssText='flex:1;font-size:13px;padding:9px 4px;'+(mode==='out'?on:off);
+    if(b) b.style.cssText='flex:1;font-size:13px;padding:9px 4px;'+(mode==='staff'?on:off);
+    var box=$('poStaffBox'); if(box) box.classList.toggle('hidden', mode!=='staff');
+    // จ่ายพนักงาน = บุคคลธรรมดาเสมอ (ค่าตอบแทนพนักงานไม่มีทางเป็นนิติบุคคล)
+    var k=$('poKind'); if(k && mode==='staff'){ k.value='บุคคลธรรมดา'; }
+    if(mode==='staff') poStaffPick();
+    poCalc();
+  }
+  /** เลือกพนักงาน → เติมชื่อ + โชว์บัญชีที่พนักงานกรอกไว้ (backend ดึงจากชีตทีมงานอีกชั้น) */
+  function poStaffPick(){
+    var uid=(($('poStaff')||{}).value)||'';
+    var m=(PO.staff||[]).filter(function(x){ return x.uid===uid; })[0];
+    var lb=$('poStaffBank');
+    if(!m){ if(lb) lb.textContent=''; return; }
+    var n=$('poName'); if(n && !n.value.trim()) n.value=m.name||'';
+    if(lb){
+      lb.innerHTML = (m.bank&&m.bank.acct)
+        ? '🏦 ใช้บัญชีที่พนักงานกรอกไว้: <b>'+esc(m.bank.name)+' '+esc(m.bank.acct)+'</b> ('+esc(m.bank.owner)+')'
+        : '⚠️ พนักงานคนนี้ยังไม่ได้กรอกบัญชีรับโอน — กรอกเลขบัญชีเองด้านล่างได้ค่ะ';
+    }
+  }
+  /** เปลี่ยนประเภทค่าใช้จ่าย → เติมมาตราเริ่มต้นให้ (ค่าเช่า→40(5) · ค่าจ้าง→40(2)) */
+  function poTypeChange(){
+    var key=(($('poType')||{}).value)||'';
+    var t=(PO.types||[]).filter(function(x){ return x.key===key; })[0];
+    var s=$('poSect'); if(s && t){ s.value=t.sect||''; poSectChange(); }
+  }
+  /** เปลี่ยนมาตรา → เติมอัตรา default ของมาตรานั้น (พี่แก้ทับได้) */
+  function poSectChange(){
+    var code=(($('poSect')||{}).value)||'';
+    var s=(PO.sections||[]).filter(function(x){ return x.code===code; })[0];
+    poFillRates(code ? (s?s.defRate:0) : 0);
+    poCalc();
+  }
+  /** บรรทัดสรุปใต้ฟอร์ม — ยอดหัก/สุทธิ/แบบยื่นที่จะเข้า (ให้เห็นก่อนกดตั้งเรื่อง) */
+  function poCalc(){
+    var amt=parseFloat((($('poAmt')||{}).value)||'0')||0;
+    var sect=(($('poSect')||{}).value)||'', kind=(($('poKind')||{}).value)||'';
+    var rate=sect ? (parseFloat((($('poRate')||{}).value)||'0')||0) : 0;
+    var rf=$('poRateFld'); if(rf) rf.classList.toggle('hidden', !sect);
+    var wht=Math.round(amt*rate)/100, net=Math.round((amt*100)-(wht*100))/100;
+    var el=$('poSum'); if(!el) return;
+    if(!(amt>0)){ el.textContent='ใส่จำนวนเงินเพื่อดูยอดจ่ายสุทธิ'; return; }
+    if(!rate){ el.innerHTML='💰 จ่ายจริง <b>'+poMoney(amt)+'</b> บาท · ไม่หักภาษี ณ ที่จ่าย'; return; }
+    var fl=poFormLabel(kind, sect);
+    el.innerHTML='💰 ยอด '+poMoney(amt)+' − หัก '+rate+'% ('+poMoney(wht)+') = จ่ายจริง <b>'+poMoney(net)+'</b> บาท'+
+      (fl?'<br>🧾 เข้าแบบ <b>'+esc(fl)+'</b> ของบริษัทผู้จ่าย · ออก 50 ทวิ ให้ตอนจ่ายเงิน (เฟสถัดไป)':'');
+  }
+  function doPayout(){
+    var p={action:(PO_EDIT?'waPoEdit':'waPoCreate'), uid:UID,
+      entity:(($('poEnt')||{}).value)||'', type:(($('poType')||{}).value)||'',
+      detail:((($('poDetail')||{}).value)||'').trim(), period:((($('poPeriod')||{}).value)||'').trim(),
+      payeeKind:(($('poKind')||{}).value)||'', payeeName:((($('poName')||{}).value)||'').trim(),
+      payeeId:((($('poId')||{}).value)||'').replace(/\D/g,''), payeeAddr:((($('poAddr')||{}).value)||'').trim(),
+      amount:(($('poAmt')||{}).value)||'', section:(($('poSect')||{}).value)||'',
+      rate:(($('poSect')||{}).value) ? ((($('poRate')||{}).value)||'0') : '0'};
+    if(PO_EDIT) p.no=PO_EDIT;
+    if(PO_PAYEE==='staff'){
+      p.payeeUid=(($('poStaff')||{}).value)||'';
+      if(!p.payeeUid){ mErr('เลือกพนักงานที่จะจ่ายก่อนค่ะ'); return; }
+    }
+    if(!(parseFloat(p.amount)>0)){ mErr('กรอกจำนวนเงินก่อนค่ะ'); return; }
+    if(!p.detail){ mErr('กรอกรายละเอียดก่อนค่ะ'); return; }
+    if(PO_PAYEE!=='staff' && !p.payeeName){ mErr('กรอกชื่อผู้รับเงินก่อนค่ะ'); return; }
+    // หักภาษี = ต้องมีเลขผู้เสียภาษี + ที่อยู่ (ไปพิมพ์บน 50 ทวิ) — ด่านจริงอยู่ backend อันนี้กันเสียเวลาอัปไฟล์
+    if(p.section && parseFloat(p.rate)>0){
+      if(p.payeeId.length!==13){ mErr('หักภาษี ณ ที่จ่าย ต้องมีเลขประจำตัวผู้เสียภาษี 13 หลักค่ะ'); return; }
+      if(p.payeeKind==='บุคคลธรรมดา' && !validThaiId(p.payeeId)){ mErr('เลขบัตรประชาชนไม่ถูกต้อง — ตรวจอีกครั้งค่ะ'); return; }
+      if(!p.payeeAddr){ mErr('หักภาษี ณ ที่จ่าย ต้องมีที่อยู่ผู้รับเงินค่ะ'); return; }
+    }
+    // บัญชี: ไม่บังคับ (จ่ายเช็ค/เงินสดก็มี) แต่ถ้าเริ่มกรอกแล้วต้องครบ
+    var bs=(($('poBank')||{}).value)||'', ba=((($('poAcct')||{}).value)||'').trim(), bo=((($('poOwner')||{}).value)||'').trim();
+    if(bs||ba||bo){ var b=readBank('po','บัญชีผู้รับเงิน'); if(!b) return;
+      p.bankName=b.name; p.bankAcct=b.acct; p.bankOwner=b.owner; }
+    if(!PO_EDIT){
+      var im=IMGS['poImg']||[]; if(im.length) p.imgs=JSON.stringify(im);
+      var cn=IMGS['poCon']||[]; if(cn.length) p.contract=JSON.stringify(cn);
+    }
+    var btn=$('poSend'); if(btn){ btn.disabled=true; btn.textContent='กำลังบันทึก…'; }
+    callBusy(PO_EDIT?'กำลังบันทึก…':'กำลังตั้งเรื่อง…', jsonpPost(p))
+      .then(function(r){
+        if(!r||!r.ok){ if(btn){btn.disabled=false;btn.textContent=PO_EDIT?'บันทึกการแก้ไข':'ตั้งเรื่อง';}
+          mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+        closeModal(); IMGS['poImg']=[]; IMGS['poCon']=[];
+        toast(PO_EDIT?('✅ แก้ใบ '+PO_EDIT+' แล้ว'):('✅ ตั้งเรื่องแล้ว '+(r.no||'')));
+        PO_EDIT=''; renderPayout();
+      }).catch(function(e){ if(btn){btn.disabled=false;btn.textContent=PO_EDIT?'บันทึกการแก้ไข':'ตั้งเรื่อง';} mErr(e.message); });
+  }
+  /** อนุมัติ / ไม่อนุมัติ — พี่ตั้งเองอนุมัติเอง ระบบจะติดธง "อนุมัติใบตัวเอง" ให้ตรวจย้อนหลังได้ */
+  function poDecide(no, decision){
+    var isApp=(decision==='approve');
+    modal('<h3>'+(isApp?'✅ อนุมัติใบจ่าย':'❌ ไม่อนุมัติใบจ่าย')+' '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      (isApp?'<div class="m-hint">อนุมัติแล้วจะย้ายไปกล่อง <b>รอจ่ายเงิน</b> — ตอนโอนเสร็จค่อยกด 💰 บันทึกจ่ายเงิน แนบสลิปค่ะ</div>'
+            :'<div class="m-hint">ระบุเหตุผลเพื่อให้ย้อนดูได้ว่าทำไมไม่จ่ายใบนี้</div>')+
+      '<div class="fld"><label>หมายเหตุ'+(isApp?' (ไม่บังคับ)':'')+'</label><textarea id="poNote" placeholder="'+(isApp?'เช่น ตรวจใบแจ้งหนี้แล้ว':'เช่น ยอดไม่ตรงกับสัญญา')+'"></textarea></div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" id="poDecBtn" onclick="doPoDecide(\''+esc(no)+'\',\''+esc(decision)+'\')">ยืนยัน</button></div>');
+  }
+  function doPoDecide(no, decision){
+    var note=((($('poNote')||{}).value)||'').trim();
+    if(decision==='reject' && !note){ mErr('ระบุเหตุผลที่ไม่อนุมัติด้วยค่ะ'); return; }
+    var btn=$('poDecBtn'); if(btn){ btn.disabled=true; btn.textContent='กำลังบันทึก…'; }
+    callBusy('กำลังบันทึก…', jsonpPost({action:'waPoDecide', uid:UID, no:no, decision:decision, note:note}))
+      .then(function(r){
+        if(!r||!r.ok){ if(btn){btn.disabled=false;btn.textContent='ยืนยัน';} mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+        closeModal();
+        toast((decision==='approve'?'✅ อนุมัติแล้ว':'❌ ไม่อนุมัติแล้ว')+(r.selfApprove?' · บันทึกว่าอนุมัติใบตัวเอง':''));
+        renderPayout();
+      }).catch(function(e){ if(btn){btn.disabled=false;btn.textContent='ยืนยัน';} mErr(e.message); });
+  }
+  /** บันทึกจ่ายเงิน — วันที่ย้อนหลังได้ (วันที่จ่ายจริง = วันที่หักภาษีบน 50 ทวิ) */
+  function poOpenPay(no){
+    var x=((PO.topay||[]).concat(PO.paid||[])).filter(function(y){ return y.no===no; })[0]||{};
+    var mOpts=(PO.methods||[]).map(function(m){ return '<option value="'+esc(m)+'"'+((x.payMethod===m)?' selected':'')+'>'+esc(m)+'</option>'; }).join('');
+    modal('<h3>💰 บันทึกจ่ายเงิน '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">ผู้รับ: <b>'+esc(x.payeeName||'-')+'</b> · จ่ายจริง <b>'+poMoney(x.netAmt||x.amount)+'</b> บาท'+
+      (x.bank&&x.bank.acct?'<br>🏦 '+esc(x.bank.name||'')+' <b>'+esc(x.bank.acct)+'</b> ('+esc(x.bank.owner||'')+') '+
+        '<a href="#" onclick="copyTxt(\''+esc(x.bank.acct)+'\');return false">📋 ก๊อป</a>':'')+'</div>'+
+      '<div class="fld"><label>วันที่จ่ายจริง</label><input id="poPayDate" type="date" value="'+esc(String(x.payDate||'').slice(0,10)||todayISO())+'"></div>'+
+      '<div class="fld"><label>ช่องทาง</label><select id="poMethod" onchange="poMethodChange()">'+mOpts+'</select></div>'+
+      '<div class="fld hidden" id="poChqFld"><label>เลขที่เช็ค</label><input id="poChq" placeholder="เช่น 0012345" value="'+esc(x.chequeNo||'')+'"></div>'+
+      imgsFldHtml('poSlip','📎 สลิปโอน / หลักฐานการจ่าย (รูป หรือ PDF)')+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" id="poPayBtn" onclick="doPoPay(\''+esc(no)+'\')">บันทึกจ่ายแล้ว</button></div>');
+    imgsFldBind('poSlip'); poMethodChange();
+  }
+  function poMethodChange(){
+    var m=(($('poMethod')||{}).value)||'', f=$('poChqFld');
+    if(f) f.classList.toggle('hidden', m!=='เช็ค');
+  }
+  function doPoPay(no){
+    var p={action:'waPoPay', uid:UID, no:no,
+      payDate:(($('poPayDate')||{}).value)||'', method:(($('poMethod')||{}).value)||'',
+      chequeNo:((($('poChq')||{}).value)||'').trim()};
+    var slips=IMGS['poSlip']||[];
+    if(slips.length) p.imgs=JSON.stringify(slips);
+    var btn=$('poPayBtn'); if(btn){ btn.disabled=true; btn.textContent='กำลังบันทึก…'; }
+    callBusy('กำลังบันทึกการจ่าย…', jsonpPost(p))
+      .then(function(r){
+        if(!r||!r.ok){ if(btn){btn.disabled=false;btn.textContent='บันทึกจ่ายแล้ว';} mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+        closeModal(); IMGS['poSlip']=[];
+        toast('💰 บันทึกจ่ายแล้ว'+((r.warn&&r.warn.length)?' ⚠️ '+r.warn.join(' · '):''));
+        renderPayout();
+      }).catch(function(e){ if(btn){btn.disabled=false;btn.textContent='บันทึกจ่ายแล้ว';} mErr(e.message); });
+  }
+  function poCancel(no){
+    modal('<h3>🗑️ ยกเลิกใบจ่าย '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">ใบจะหายจากรายการ (แถวยังอยู่ในชีต ตรวจย้อนหลังได้) — ใช้กับใบที่ตั้งผิด/ซ้ำค่ะ</div>'+
+      '<div class="fld"><label>เหตุผล (ไม่บังคับ)</label><input id="poCanNote" placeholder="เช่น ตั้งซ้ำกับใบก่อน"></div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ไม่ยกเลิก</button>'+
+      '<button class="btn btn-primary" id="poCanBtn" onclick="doPoCancel(\''+esc(no)+'\')">ยืนยันยกเลิก</button></div>');
+  }
+  function doPoCancel(no){
+    var note=((($('poCanNote')||{}).value)||'').trim();
+    var btn=$('poCanBtn'); if(btn){ btn.disabled=true; btn.textContent='กำลังยกเลิก…'; }
+    callBusy('กำลังยกเลิก…', jsonpPost({action:'waPoCancel', uid:UID, no:no, note:note}))
+      .then(function(r){
+        if(!r||!r.ok){ if(btn){btn.disabled=false;btn.textContent='ยืนยันยกเลิก';} mErr((r&&r.error)||'ยกเลิกไม่สำเร็จ'); return; }
+        closeModal(); toast('🗑️ ยกเลิกใบ '+no+' แล้ว'); renderPayout();
+      }).catch(function(e){ if(btn){btn.disabled=false;btn.textContent='ยืนยันยกเลิก';} mErr(e.message); });
+  }
+  window.openPayout=openPayout; window.poPayeeMode=poPayeeMode; window.poStaffPick=poStaffPick;
+  window.poTypeChange=poTypeChange; window.poSectChange=poSectChange; window.poCalc=poCalc;
+  window.doPayout=doPayout; window.poDecide=poDecide; window.doPoDecide=doPoDecide;
+  window.poOpenPay=poOpenPay; window.poMethodChange=poMethodChange; window.doPoPay=doPoPay;
+  window.poCancel=poCancel; window.doPoCancel=doPoCancel;
 
   // ═══════════ ลายเซ็นของฉัน (เซ็นครั้งเดียว ใช้ตลอด · ระบบเอาไปฝังเอกสารที่ออกให้) ═══════════
   // ต้นแบบแผ่นวาด: skill handover-letter (วาดด้วยนิ้ว/เมาส์ หรืออัปรูปลายเซ็น)
@@ -4244,7 +4556,8 @@
         var nb=$('navReimb'); if(nb) nb.style.display='';                 // แท็บตั้งเบิกลูกค้า = เฉพาะพี่
         var na=$('navAppr'); if(na) na.style.display='';                  // แท็บอนุมัติลา (+ยื่นลาแทน) = เฉพาะพี่/HR
         var noa=$('navOtAppr'); if(noa) noa.style.display='';              // แท็บอนุมัติ OT = เฉพาะพี่/HR
-        var nhr=$('navHrReport'); if(nhr) nhr.style.display=''; }          // รายงาน HR = เฉพาะพี่/HR (ข้อมูลทั้งทีม)
+        var nhr=$('navHrReport'); if(nhr) nhr.style.display='';            // รายงาน HR = เฉพาะพี่/HR (ข้อมูลทั้งทีม)
+        var npo=$('navPayout'); if(npo) npo.style.display=''; }            // 💵 จ่ายออก = พี่คนเดียว (รวมข้อมูลบริษัทลูกค้า)
       // รายงานการเงินรวม = พี่ + HR ที่ตั้งใน Script Property (backend ตัดสิน ไม่ผูกกับ IS_OWNER)
       CAN_FIN=!!r.canFinance;
       if(CAN_FIN){ var nfr=$('navFinReport'); if(nfr) nfr.style.display=''; }
