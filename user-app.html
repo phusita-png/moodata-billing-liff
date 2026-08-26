@@ -2540,6 +2540,11 @@
     if(x.proofLink) links+='<a class="ex-lk" href="'+esc(x.proofLink)+'" target="_blank">📎 ใบแจ้งหนี้/ใบกำกับ</a>';
     if(x.contractLink) links+='<a class="ex-lk" href="'+esc(x.contractLink)+'" target="_blank">📄 สัญญา</a>';
     if(x.paidSlip) links+='<a class="ex-lk" href="'+esc(x.paidSlip)+'" target="_blank">📎 สลิปโอน</a>';
+    // เอกสารที่ระบบออกให้ตอนกดจ่าย (เฟส C)
+    if(x.docLink) links+='<a class="ex-lk" href="'+esc(x.docLink)+'" target="_blank" style="color:#1B72E8">📄 ใบสำคัญจ่าย '+esc(x.docNo||'')+'</a>';
+    if(x.whtLink) links+='<a class="ex-lk" href="'+esc(x.whtLink)+'" target="_blank" style="color:#C8730B">🧾 50 ทวิ '+esc(x.whtNo||'')+'</a>';
+    if(x.whtPayeeLink) links+='<a class="ex-lk" href="'+esc(x.whtPayeeLink)+'" target="_blank" style="color:#C8730B">🧾 50 ทวิ (ฉบับผู้รับ)</a>';
+    if(x.dossier) links+='<a class="ex-lk" href="'+esc(x.dossier)+'" target="_blank" style="color:#1B7F4B">📚 แฟ้มครบชุด</a>';
     if(mode==='pending'){
       links+='<a class="ex-lk" href="#" onclick="openPayout(\''+esc(x.no)+'\');return false" style="color:#1B72E8">✏️ แก้ไข</a>'+
         '<a class="ex-lk" href="#" onclick="poDecide(\''+esc(x.no)+'\',\'approve\');return false" style="color:#1E9E5A"><b>✅ อนุมัติ</b></a>'+
@@ -2548,9 +2553,12 @@
     } else if(mode==='topay'){
       links+='<a class="ex-lk" href="#" onclick="poOpenPay(\''+esc(x.no)+'\');return false" style="color:#C8730B"><b>💰 บันทึกจ่ายเงิน</b></a>'+
         '<a class="ex-lk" href="#" onclick="poCancel(\''+esc(x.no)+'\');return false" style="color:#8A94A6">🗑️ ยกเลิก</a>';
-    } else if(String(x.status).indexOf('จ่ายแล้ว')>=0 && !x.paidSlip){
-      // จ่ายแล้วแต่ไม่มีสลิป = หลักฐานการจ่ายขาด (เฟส C จะเอาเข้าแฟ้ม) → เตือนให้แนบย้อนหลังได้
-      links+='<a class="ex-lk" href="#" onclick="poOpenPay(\''+esc(x.no)+'\');return false" style="color:#DC2626">📎 ยังไม่มีสลิป · แนบเลย</a>';
+    } else if(String(x.status).indexOf('จ่ายแล้ว')>=0){
+      // จ่ายแล้วแต่ไม่มีสลิป = หลักฐานการจ่ายขาด (แฟ้มจะไม่ครบ) → เตือนให้แนบย้อนหลังได้
+      if(!x.paidSlip) links+='<a class="ex-lk" href="#" onclick="poOpenPay(\''+esc(x.no)+'\');return false" style="color:#DC2626">📎 ยังไม่มีสลิป · แนบเลย</a>';
+      // ออกเอกสารใหม่ — ใช้ตอนออกพลาด (Worker ล่ม) หรือแนบสลิป/หลักฐานเพิ่มทีหลังแล้วอยากให้แฟ้มครบ
+      links+='<a class="ex-lk" href="#" onclick="poDocs(\''+esc(x.no)+'\');return false" style="color:#8A94A6">'+
+        (x.docNo?'🔄 ออกเอกสารใหม่':'📄 ออกเอกสาร')+'</a>';
     }
     var payLine = x.payDate ? ('<br><span style="color:#8A94A6">💰 จ่าย '+esc(String(x.payDate).slice(0,10))+' · '+esc(x.payMethod||'')+
       (x.chequeNo?' เลขที่เช็ค '+esc(x.chequeNo):'')+'</span>') : '';
@@ -2776,10 +2784,28 @@
       .then(function(r){
         if(!r||!r.ok){ if(btn){btn.disabled=false;btn.textContent='บันทึกจ่ายแล้ว';} mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
         closeModal(); IMGS['poSlip']=[];
-        toast('💰 บันทึกจ่ายแล้ว'+((r.warn&&r.warn.length)?' ⚠️ '+r.warn.join(' · '):''));
+        var d=r.docs||{};
+        var made=[]; if(d.docNo) made.push('ใบสำคัญจ่าย '+d.docNo); if(d.whtNo) made.push('50 ทวิ '+d.whtNo);
+        if(d.dossier) made.push('แฟ้มครบชุด');
+        toast('💰 บันทึกจ่ายแล้ว'+(made.length?' · ออก '+made.join(' · '):'')+
+          ((r.warn&&r.warn.length)?' ⚠️ '+r.warn.join(' · '):''));
         renderPayout();
       }).catch(function(e){ if(btn){btn.disabled=false;btn.textContent='บันทึกจ่ายแล้ว';} mErr(e.message); });
   }
+  /** ออก/ออกเอกสารใหม่ให้ใบที่จ่ายแล้ว (PV + 50 ทวิ + แฟ้ม) — ใช้เลข PV เดิม ไม่กินเลขใหม่ */
+  function poDocs(no){
+    callBusy('กำลังออกเอกสาร…', jsonpPost({ action:'waPoDocs', uid:UID, no:no }), 'ออกเอกสารแล้ว')
+      .then(function(r){
+        if(!r||!r.ok){ toast((r&&r.error)||'ออกเอกสารไม่สำเร็จ'); return; }
+        var d=r.docs||{};
+        var made=[]; if(d.docNo) made.push('ใบสำคัญจ่าย '+d.docNo); if(d.whtNo) made.push('50 ทวิ '+d.whtNo);
+        if(d.dossier) made.push('แฟ้มครบชุด');
+        toast((made.length?'📄 ออก '+made.join(' · '):'ไม่มีเอกสารที่ออกได้')+
+          ((r.warn&&r.warn.length)?' ⚠️ '+r.warn.join(' · '):''));
+        renderPayout();
+      }).catch(function(e){ toast(e.message); });
+  }
+
   function poCancel(no){
     modal('<h3>🗑️ ยกเลิกใบจ่าย '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
       '<div class="m-hint">ใบจะหายจากรายการ (แถวยังอยู่ในชีต ตรวจย้อนหลังได้) — ใช้กับใบที่ตั้งผิด/ซ้ำค่ะ</div>'+
