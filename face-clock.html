@@ -81,6 +81,7 @@
     <h2>ยังไม่ได้ลงทะเบียนใบหน้า</h2>
     <p style="color:var(--muted);margin:2px 0 0">ลงทะเบียนครั้งเดียว ครั้งต่อไปสแกนลงเวลาได้เลยค่ะ</p>
     <button class="btn" onclick="goEnroll()">🙂 ลงทะเบียนใบหน้า</button>
+    <button class="btn ghost" onclick="beginSelfieOnly()">📸 ลงเวลาด้วย selfie ก่อน</button>
     <button class="btn ghost" onclick="closeApp()">ปิดหน้าต่าง</button>
   </div>
 
@@ -93,7 +94,7 @@
     </div>
     <div class="bar"><i id="barFill"></i></div>
     <div id="scanKind" class="note" style="text-align:center;font-weight:600;color:#445"></div>
-    <button id="fallbackBtn" class="btn warn hide" onclick="doFallback()">📸 สแกนไม่ผ่าน — ถ่าย selfie แทน (ให้ HR ตรวจ)</button>
+    <button id="fallbackBtn" class="btn ghost hide" onclick="doFallback()">📸 ถ่าย selfie ลงเวลาเลย (ไม่ต้องรอสแกน)</button>
     <div id="err" class="errbox"></div>
   </div>
 
@@ -107,6 +108,7 @@
     <div class="when" id="doneWhen"></div>
     <div class="summary" id="doneSummary"></div>
     <div id="doneFlag" class="flagnote hide">⚠️ ระบบสแกนหน้าไม่ผ่าน จึงบันทึกด้วย selfie และ<b>ติดธงให้ HR ตรวจสอบ</b>ค่ะ</div>
+    <div id="doneSelfie" class="flagnote hide" style="background:#eef5ff;color:#1B4F8A">📸 บันทึกด้วยรูป selfie + พิกัดเรียบร้อยค่ะ — ครั้งหน้าลงทะเบียนใบหน้าไว้ จะสแกนลงเวลาได้เร็วขึ้นนะคะ</div>
     <button class="btn ghost" onclick="closeApp()">ปิดหน้าต่าง</button>
   </div>
 
@@ -126,6 +128,7 @@
 
   var UID='', human=null, stream=null, detecting=false, submitting=false;
   var ENROLLED=null, THRESHOLD=0.5, KIND='', bestScore=0, hitFrames=0, elapsed=0, failTimer=null;
+  var SELFIE_ONLY=false;   // true = ไม่เทียบใบหน้า ถ่าย selfie อย่างเดียว (คนที่ยังไม่ลงทะเบียนใบหน้า)
   var KIND_LABEL={ in:'🟢 เข้างาน', out:'🔴 ออกงาน', wfh:'🏠 WFH' };
 
   function $(id){ return document.getElementById(id); }
@@ -247,6 +250,7 @@
     getGPS().then(function(g){
       $('savingText').textContent='กำลังบันทึกลงเวลา…';
       return jsonpPost({ action:'waFaceClock', uid:UID, kind:KIND,
+        mode: matched ? 'face' : 'selfie',   // ไม่ผ่านสแกน = ผู้ใช้เลือกถ่าย selfie เอง → บันทึกปกติ ไม่เตือน HR
         matched: matched?'1':'0', score: (sim||bestScore||0).toFixed(4),
         lat:g.lat, lng:g.lng, address:'', img:img });
     }).then(function(r){
@@ -260,16 +264,25 @@
     });
   }
 
-  // fallback — ถ่าย selfie ปัจจุบันส่งแบบไม่ผ่านสแกน (ติดธง HR)
-  function doFallback(){ if(submitting) return; submitClock(false, bestScore, null); }
+  // ผู้ใช้เลือกเอง — ถ่ายรูปปัจจุบันส่งเป็น selfie (mode=selfie · ไม่ติดธง HR · พี่กี้เคาะ 26 ส.ค. 69)
+  function doFallback(){
+    if(submitting) return;
+    var v=$('video');
+    // กล้องยังไม่มีเฟรมจริง (ปุ่มโผล่ทันทีตั้งแต่กล้องเพิ่งเปิด) → กันได้รูปดำ
+    if(!v||!v.videoWidth){ return errBox('กล้องยังไม่พร้อมค่ะ รอสักครู่แล้วกดใหม่นะคะ'); }
+    submitClock(false, 0, null);
+  }
+  // ยังไม่ลงทะเบียนใบหน้า → ลงเวลาด้วย selfie อย่างเดียว (ไม่โหลดโมเดล = เร็ว)
+  function beginSelfieOnly(){ SELFIE_ONLY=true; hide('needEnroll'); hide('loading'); show('pick'); }
 
   function renderDone(r){
     $('doneWhen').textContent = r.timeText || '';
     var sum = '<div><b>ประเภท:</b> '+(r.kindLabel||KIND_LABEL[KIND]||'')+'</div>';
     if(r.address) sum += '<div><b>สถานที่:</b> '+esc(r.address)+'</div>';
-    sum += r.matched ? '<div>✅ ยืนยันใบหน้าผ่าน ('+r.score+'%)</div>' : '<div>⚠️ บันทึกด้วย selfie (สแกนไม่ผ่าน)</div>';
+    sum += r.matched ? '<div>✅ ยืนยันใบหน้าผ่าน ('+r.score+'%)</div>' : '<div>📸 บันทึกด้วยรูป selfie</div>';
     $('doneSummary').innerHTML = sum;
     if(r.flagged){ $('doneIc').textContent='⚠️'; $('doneTitle').textContent='บันทึกแล้ว (รอ HR ตรวจ)'; show('doneFlag'); }
+    else if(!r.matched){ $('doneIc').textContent='📸'; show('doneSelfie'); }
     show('done');
   }
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
@@ -288,9 +301,16 @@
     KIND=kind; hide('pick'); show('scan');
     $('scanKind').textContent = 'กำลังลงเวลา: ' + (KIND_LABEL[kind]||kind);
     startCamera().then(function(){
-      detecting=true; bestScore=0; hitFrames=0; requestAnimationFrame(loop);
-      // เปิดปุ่ม fallback หลัง 12 วิ ถ้ายังไม่ผ่าน
-      failTimer=setTimeout(function(){ if(!submitting) show('fallbackBtn'); }, 12000);
+      bestScore=0; hitFrames=0;
+      // ปุ่มถ่าย selfie เปิดให้กดตั้งแต่กล้องพร้อม (เดิมรอสแกนไม่ผ่าน 12 วิ · พี่กี้ขอ 26 ส.ค. 69)
+      show('fallbackBtn');
+      if(SELFIE_ONLY || !ENROLLED){        // ไม่มีใบหน้าให้เทียบ → ถ่าย selfie อย่างเดียว
+        SELFIE_ONLY=true; detecting=false;
+        $('fallbackBtn').textContent='📸 ถ่ายรูป selfie ลงเวลา';
+        $('camhint').textContent='จัดหน้าให้อยู่ในกรอบ แล้วกดปุ่มถ่ายรูปด้านล่างค่ะ';
+        return;
+      }
+      detecting=true; requestAnimationFrame(loop);
     }).catch(function(err){
       var msg=(err&&(err.message||err.name))||String(err);
       if(/Permission|NotAllowed|denied/i.test(msg)) return fatal('ไม่ได้รับสิทธิ์เปิดกล้อง — อนุญาตกล้องแล้วลองใหม่ค่ะ', true);

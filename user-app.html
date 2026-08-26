@@ -148,6 +148,23 @@
   .tk-acts{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
   .tk-acts .btn{ flex:1; min-width:120px; font-size:14px; padding:9px 12px; }
   .btn-ok{ background:var(--green); color:#fff; } .btn-ghost{ background:#EEF1F6; color:#333; }
+  /* ── 🕐 ลงเวลา (selfie + พิกัด · ทำในหน้านี้เลย ไม่ต้องโหลดโมเดลสแกนหน้า) ── */
+  .clk-kinds{ display:grid; grid-template-columns:1fr; gap:10px; margin-bottom:14px; }
+  .clk-kb{ display:flex; align-items:center; gap:12px; padding:16px 18px; border:1.5px solid var(--line);
+    background:var(--card); border-radius:var(--radius); font:inherit; font-size:16px; font-weight:600;
+    color:#1F2733; cursor:pointer; box-shadow:var(--shadow); text-align:left; }
+  .clk-kb:active{ border-color:var(--red); background:var(--red-tint); }
+  .clk-kb .ke{ font-size:26px; line-height:1; }
+  .clk-kb .ks{ display:block; font-size:12px; font-weight:500; color:var(--muted); margin-top:2px; }
+  .clk-cam{ position:relative; width:100%; aspect-ratio:3/4; max-height:56vh; background:#0d1117;
+    border-radius:16px; overflow:hidden; margin-bottom:12px; }
+  .clk-cam video{ width:100%; height:100%; object-fit:cover; transform:scaleX(-1); }
+  .clk-cam .ch{ position:absolute; left:0; right:0; bottom:0; padding:10px 14px; color:#fff; font-size:13.5px;
+    font-weight:600; text-align:center; background:linear-gradient(transparent,rgba(0,0,0,.65)); }
+  .clk-row{ display:flex; align-items:center; gap:10px; padding:11px 0; border-bottom:1px solid var(--line); font-size:14px; }
+  .clk-row:last-child{ border-bottom:none; }
+  .clk-row .ct{ font-weight:700; font-variant-numeric:tabular-nums; min-width:46px; }
+  .clk-row .cm{ margin-left:auto; font-size:12px; color:var(--muted); white-space:nowrap; }
   .btn-danger{ background:#DC2626; color:#fff; }
   .grp-h{ display:flex; align-items:center; gap:8px; margin:16px 2px 9px; font-weight:700; font-size:15px; }
   .grp-h .cnt{ font-size:12px; font-weight:600; color:#fff; background:var(--red); border-radius:999px; padding:1px 9px; }
@@ -559,6 +576,8 @@
       <svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6Z"/><path d="M14 3v5h5M9 12h6M9 16h4"/></svg><span>ตั้งเบิกลูกค้า</span></button>
     <button class="nav-btn" data-view="payout" aria-label="จ่ายออก" id="navPayout" style="display:none">
       <svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6.5 12h.01M17.5 12h.01"/></svg><span>จ่ายออก</span></button>
+    <button class="nav-btn" data-view="clock" aria-label="ลงเวลา">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 1.8"/></svg><span>ลงเวลา</span></button>
     <button class="nav-btn" data-view="leave" aria-label="การลา">
       <svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></svg><span>การลา</span></button>
     <button class="nav-btn" data-view="approve" aria-label="อนุมัติลา" id="navAppr" style="display:none">
@@ -602,7 +621,7 @@
   var TH_DOW = ['อา','จ','อ','พ','พฤ','ศ','ส'];
   var MENAME='', MEUID='', TEAM=[], CUSTOMERS=[];   // งาน (MEUID = userId ผู้ใช้ · ใช้กรอง "งานของฉัน" + ตัดตัวเองจาก dropdown มอบหมาย)
   var VIEW_META = {
-    home:['🏠','ภาพรวม'],
+    home:['🏠','ภาพรวม'], clock:['🕐','ลงเวลา'],
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
     expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติเบิกจ่าย'],
     expdash:['📊','สรุปค่าใช้จ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','จ่ายออก'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน']
@@ -660,6 +679,7 @@
 
   // ───── nav / router ─────
   function switchView(v){
+    if(VIEW==='clock' && v!=='clock') clkStop();   // ออกจากหน้าลงเวลา = ปิดกล้องเสมอ
     VIEW=v;
     Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(b){ b.classList.toggle('active', b.dataset.view===v); });
     var meta=VIEW_META[v]||['•',v];
@@ -668,7 +688,7 @@
     if(gi) $('tbIcon').innerHTML=gi; else $('tbIcon').textContent=meta[0];
     $('tbTitle').textContent=meta[1];
     mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
-    ({ home:renderHome, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport }[v] || soon)();
+    ({ home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport }[v] || soon)();
   }
 
   // ───── มือถือ: เมนูกลุ่ม (ล่าง) + แท็บย่อย (บน) · คอมใช้ sidebar เดิม ไม่เกี่ยว ─────
@@ -681,7 +701,7 @@
     { key:'work', icon:'📊', label:'งาน',    views:['projects','mytasks','review','senddoc','appt','announce','trash'] },
     { key:'hr',   icon:'👥', label:'HR',     views:['approve','otapprove','hrreport'] },
     { key:'fin',  icon:'💰', label:'การเงิน', views:['expdash','reimb','payout','finreport','taxdoc'] },   /* payout = จ่ายออกของบริษัท (พี่คนเดียว) */   /* taxdoc ซ่อนไว้ก่อน — เปิดตอน ภ.ง.ด. v2 */
-    { key:'me',   icon:'🙋', label:'ส่วนตัว', views:['leave','ot','expense','docs'] }
+    { key:'me',   icon:'🙋', label:'ส่วนตัว', views:['clock','leave','ot','expense','docs'] }
   ];
   // ไอคอนหัวกลุ่มบน sidebar คอม = SVG เส้นสีเดียว (พี่กี้ขอ 30 ก.ค.: เรียบ ๆ ไม่สีสัน)
   // เข้าชุดกับปุ่มย่อยที่เป็น SVG อยู่แล้ว · emoji ใน NAV_GROUPS ยังใช้ที่แถบล่างมือถือ (จอเล็กอ่านง่ายกว่า)
@@ -3378,6 +3398,129 @@
   function otBadge(s){ s=String(s||''); if(s.indexOf('ไม่')>=0)return'b-cancel'; if(s.indexOf('อนุมัติ')>=0)return'b-done'; return'b-new'; }
   function otHM(s){ var m=String(s||'').match(/^(\d{1,2}):(\d{2})$/); if(!m)return null; return (+m[1])*60+(+m[2]); }
   function otHoursCalc(s,e){ var a=otHM(s),b=otHM(e); if(a==null||b==null)return 0; if(b<=a)b+=1440; var mins=b-a; var lunch=Math.max(0,Math.min(b,780)-Math.max(a,720)); return Math.round((mins-lunch)/60*100)/100; }
+  // ═══════════ 🕐 ลงเวลา (selfie + พิกัด) — พี่กี้ขอ 26 ส.ค. 2569 ═══════════
+  // ทำในหน้านี้เลย ไม่ต้องเด้งไปหน้าสแกนหน้า (หน้านั้นโหลดโมเดล human.js หลายสิบ MB ทุกครั้ง)
+  // บันทึกผ่าน route เดิม waFaceClock ด้วย mode=selfie → ชีตลงเวลาขึ้น "📸 selfie" · ไม่เตือน HR
+  var CLK = { kind:'', stream:null, sending:false, info:null };
+  var CLK_KINDS = [
+    { k:'in',  e:'🟢', t:'เข้างาน',            s:'เริ่มงานวันนี้' },
+    { k:'out', e:'🔴', t:'ออกงาน',             s:'เลิกงาน · ปิดวัน' },
+    { k:'wfh', e:'🏠', t:'WFH (ทำงานที่บ้าน)', s:'แจ้งเข้ากลุ่มทีมให้ด้วย' }
+  ];
+
+  function renderClock(){
+    clkStop(); skel();
+    jsonp({ action:'waClockInit', uid:UID }).then(function(r){
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      CLK.info=r;
+      var h='<div class="card" style="margin-bottom:12px;display:flex;align-items:center;gap:12px">'+
+        '<div style="font-size:30px;line-height:1">'+(r.openToday?'🟢':'🕐')+'</div><div>'+
+        '<div style="font-weight:700;font-size:15px">'+(r.openToday?'เข้างานแล้ว · ยังไม่ได้ลงออก':'ยังไม่ได้ลงเวลาวันนี้')+'</div>'+
+        '<div style="font-size:12.5px;color:var(--muted);margin-top:2px">เดือนนี้ลงเวลาแล้ว '+(r.monthDays||0)+' วัน</div>'+
+        '</div></div>';
+      h+='<div class="clk-kinds">'+CLK_KINDS.map(function(x){
+        return '<button class="clk-kb" data-kind="'+x.k+'"><span class="ke">'+x.e+'</span><span>'+esc(x.t)+
+          '<span class="ks">'+esc(x.s)+'</span></span></button>';
+      }).join('')+'</div>';
+      h+='<div class="m-hint">กดประเภทแล้วถ่ายรูป selfie 1 ครั้ง ระบบจะบันทึกเวลา + พิกัดให้อัตโนมัติค่ะ'+
+         '<br>อยากยืนยันด้วยใบหน้า (ไม่ต้องถ่ายเอง) กด <a href="face-clock.html" style="color:var(--red)">🔍 ลงเวลาสแกนหน้า</a> ได้ค่ะ</div>';
+      h+='<div class="grp-h">📋 วันนี้</div><div class="card">'+(
+        (r.list&&r.list.length) ? r.list.map(function(x){
+          return '<div class="clk-row"><span class="ct">'+esc(x.time)+'</span><span>'+esc(x.kind)+
+            (x.address?'<span style="display:block;font-size:11.5px;color:var(--muted)">📍 '+esc(x.address)+'</span>':'')+
+            '</span><span class="cm">'+esc(x.method||'')+'</span></div>';
+        }).join('') : '<div class="empty">ยังไม่มีรายการลงเวลาวันนี้ 😊</div>')+'</div>';
+      $('main').innerHTML=h;
+      Array.prototype.forEach.call(document.querySelectorAll('.clk-kb'), function(b){
+        b.addEventListener('click', function(){ clkPick(this.getAttribute('data-kind')); });
+      });
+    }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
+  }
+
+  /** เลือกประเภท → เปิดกล้องหน้าในหน้านี้ (ไม่ใช้ input file · เลี่ยงการหยิบรูปเก่าในอัลบั้มมาส่ง) */
+  function clkPick(kind){
+    CLK.kind=kind; CLK.sending=false;
+    var meta=CLK_KINDS.filter(function(x){ return x.k===kind; })[0]||{e:'🕐',t:'ลงเวลา'};
+    $('main').innerHTML='<div class="card">'+
+      '<div style="font-weight:700;font-size:15px;margin-bottom:10px">'+meta.e+' กำลังลงเวลา: '+esc(meta.t)+'</div>'+
+      '<div class="clk-cam"><video id="clkVid" playsinline muted autoplay></video><div class="ch" id="clkHint">กำลังเปิดกล้อง…</div></div>'+
+      '<button class="btn btn-primary" id="clkShot" disabled>📸 ถ่ายรูปและลงเวลา</button>'+
+      '<button class="btn btn-ghost" id="clkBack" style="margin-top:9px">ยกเลิก</button>'+
+      '<div class="m-hint" style="margin-top:12px">ระบบขอตำแหน่ง (GPS) ตอนกดถ่าย — ถ้าเครื่องถามสิทธิ์ กด "อนุญาต" นะคะ</div>'+
+      '</div>';
+    $('clkBack').addEventListener('click', function(){ clkStop(); renderClock(); });
+    $('clkShot').addEventListener('click', clkShoot);
+    navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:640}, height:{ideal:800} }, audio:false })
+      .then(function(st){
+        CLK.stream=st; var v=$('clkVid');
+        if(!v){ clkStop(); return; }                 // ผู้ใช้เปลี่ยนหน้าไปก่อนกล้องพร้อม → ปิดทิ้ง
+        v.srcObject=st; return v.play();
+      }).then(function(){
+        if(!$('clkShot')) return;
+        $('clkShot').disabled=false; $('clkHint').textContent='จัดหน้าให้อยู่ในกรอบ แล้วกดปุ่มถ่ายรูปค่ะ';
+      }).catch(function(err){
+        var m=(err&&(err.message||err.name))||String(err);
+        var deny=/Permission|NotAllowed|denied/i.test(m);
+        if($('clkHint')) $('clkHint').textContent = deny ? 'ไม่ได้รับสิทธิ์กล้อง' : 'เปิดกล้องไม่ได้';
+        toast(deny ? 'ไม่ได้รับสิทธิ์เปิดกล้อง — อนุญาตกล้องให้ LINE/เบราว์เซอร์แล้วลองใหม่ค่ะ'
+                   : 'เปิดกล้องไม่ได้ค่ะ ลองเปิดหน้านี้ใน Chrome/Safari นะคะ');
+      });
+  }
+
+  /** ถ่ายรูป → ขอพิกัด → บันทึก (mode=selfie · ไม่ติดธง HR) */
+  function clkShoot(){
+    if(CLK.sending) return;
+    var v=$('clkVid');
+    if(!v||!v.videoWidth){ toast('กล้องยังไม่พร้อมค่ะ รอสักครู่นะคะ'); return; }
+    CLK.sending=true; $('clkShot').disabled=true;
+    var w=360, h=Math.round(w*(v.videoHeight/v.videoWidth||4/3));
+    var c=document.createElement('canvas'); c.width=w; c.height=h;
+    c.getContext('2d').drawImage(v,0,0,w,h);          // ไม่กลับซ้ายขวา — เก็บภาพจริงเป็นหลักฐาน
+    var img=''; try{ img=c.toDataURL('image/jpeg',0.6); }catch(e){ img=''; }
+    busy('กำลังขอตำแหน่ง (GPS)…');
+    clkGps().then(function(g){
+      busy('กำลังบันทึกลงเวลา…');
+      return jsonpPost({ action:'waFaceClock', uid:UID, kind:CLK.kind, mode:'selfie',
+        matched:'0', score:'0', lat:g.lat, lng:g.lng, address:'', img:img });
+    }).then(function(r){
+      if(!r||!r.ok){ unbusy(); CLK.sending=false; if($('clkShot')) $('clkShot').disabled=false;
+        toast((r&&r.error)||'บันทึกไม่สำเร็จค่ะ'); return; }
+      busyOk('บันทึก'+(r.kindLabel||'ลงเวลา')+'แล้ว');
+      clkStop();
+      toast('✅ '+(r.kindLabel||'ลงเวลา')+' · '+(r.timeText||''));
+      renderClock();
+    }).catch(function(e){
+      unbusy(); CLK.sending=false; if($('clkShot')) $('clkShot').disabled=false;
+      toast(e.message||'เกิดข้อผิดพลาด');
+    });
+  }
+
+  /** ขอพิกัด 2 ชั้น — GPS แม่นก่อน (8 วิ) ไม่ได้ค่อยใช้ Wi-Fi/เครือข่าย (จับในอาคารได้)
+   *  แยกข้อความตามเหตุจริง: 1=ปฏิเสธสิทธิ์ 2=หาไม่เจอ 3=หมดเวลา (เหมือนหน้า face-clock) */
+  function clkGps(){
+    return new Promise(function(resolve,reject){
+      if(!navigator.geolocation) return reject(new Error('อุปกรณ์ไม่รองรับ GPS'));
+      function ok(pos){ resolve({ lat:pos.coords.latitude, lng:pos.coords.longitude }); }
+      function fail(err){
+        var code=err&&err.code;
+        if(code===1) return reject(new Error('ไม่ได้รับสิทธิ์ตำแหน่ง — เปิดสิทธิ์ตำแหน่งให้ LINE/เบราว์เซอร์แล้วลองใหม่ค่ะ'));
+        if(code===2) return reject(new Error('หาตำแหน่งไม่เจอ — เปิด GPS ที่เครื่องแล้วลองใหม่ค่ะ'));
+        return reject(new Error('ขอตำแหน่งนานเกินไป — ลองใหม่ หรือขยับไปจุดสัญญาณดีขึ้นค่ะ'));
+      }
+      navigator.geolocation.getCurrentPosition(ok, function(e1){
+        if(e1&&e1.code===1) return fail(e1);          // ถูกปฏิเสธสิทธิ์ → ลองซ้ำก็ไม่ผ่าน
+        busy('กำลังหาตำแหน่งอีกวิธี…');
+        navigator.geolocation.getCurrentPosition(ok, fail, { enableHighAccuracy:false, timeout:20000, maximumAge:60000 });
+      }, { enableHighAccuracy:true, timeout:8000, maximumAge:30000 });
+    });
+  }
+
+  /** ปิดกล้องเสมอเมื่อออกจากหน้า/บันทึกเสร็จ (ไม่งั้นไฟกล้องค้าง กินแบต) */
+  function clkStop(){
+    try{ if(CLK.stream) CLK.stream.getTracks().forEach(function(t){ t.stop(); }); }catch(e){}
+    CLK.stream=null; CLK.sending=false;
+  }
+
   function renderOt(){
     OT_DRAFT=null; OT_EDIT_NO=null; skel();
     jsonp({action:'waOtInit',uid:UID}).then(function(r){
