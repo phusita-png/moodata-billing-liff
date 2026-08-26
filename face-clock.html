@@ -42,6 +42,10 @@
     .oval.bad{border-color:var(--warn);}
     .camhint{position:absolute; left:0; right:0; bottom:0; padding:10px 14px; color:#fff;
       font-size:14px; font-weight:600; text-align:center; background:linear-gradient(transparent,rgba(0,0,0,.65));}
+    .camwrap img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover;}
+    .vbadge{position:absolute; left:10px; top:10px; padding:5px 11px; border-radius:999px;
+      font-size:12.5px; font-weight:700; color:#fff; background:rgba(20,30,45,.72);}
+    .vbadge.ok{background:var(--ok);} .vbadge.wait{background:rgba(20,30,45,.72);}
     .bar{height:8px; background:#e6ebf3; border-radius:6px; margin-top:12px; overflow:hidden;}
     .bar > i{display:block; height:100%; width:0; background:var(--ok); transition:width .2s;}
     .result{text-align:center; padding:8px 4px;}
@@ -59,8 +63,8 @@
 <body>
 <div class="wrap">
   <div class="hero">
-    <h1>🔍 ลงเวลาสแกนหน้า</h1>
-    <p id="heroSub">ยืนยันตัวตนด้วยใบหน้า + พิกัด</p>
+    <h1>🕐 ลงเวลา</h1>
+    <p id="heroSub">ถ่ายรูปเมื่อพร้อม · ระบบยืนยันใบหน้า + พิกัดให้</p>
   </div>
 
   <div id="loading" class="status"><div class="spinner"></div><span id="loadingText">กำลังเตรียมระบบ…</span></div>
@@ -72,7 +76,7 @@
       <button class="kbtn" data-kind="out">🔴 ออกงาน</button>
       <button class="kbtn" data-kind="wfh">🏠 WFH (ทำงานที่บ้าน)</button>
     </div>
-    <div class="note">เลือกประเภท แล้วสแกนใบหน้าเพื่อยืนยันตัวตนค่ะ</div>
+    <div class="note">เลือกประเภท → กล้องจะยืนยันใบหน้าให้ แล้วกดถ่ายรูปเมื่อพร้อมค่ะ</div>
   </div>
 
   <!-- ยังไม่ลงทะเบียนใบหน้า -->
@@ -90,12 +94,23 @@
     <div class="camwrap">
       <video id="video" playsinline muted autoplay></video>
       <div id="oval" class="oval"></div>
+      <div id="vbadge" class="vbadge wait hide">กำลังยืนยันตัวตน…</div>
       <div id="camhint" class="camhint">กำลังเปิดกล้อง…</div>
     </div>
     <div class="bar"><i id="barFill"></i></div>
     <div id="scanKind" class="note" style="text-align:center;font-weight:600;color:#445"></div>
-    <button id="fallbackBtn" class="btn ghost hide" onclick="doFallback()">📸 ถ่าย selfie ลงเวลาเลย (ไม่ต้องรอสแกน)</button>
+    <button id="shotBtn" class="btn" disabled onclick="doShot()">📸 ถ่ายรูป &amp; ลงเวลา</button>
+    <button class="btn ghost" onclick="backToPick()">ยกเลิก</button>
     <div id="err" class="errbox"></div>
+  </div>
+
+  <!-- ดูรูปก่อนส่ง (ถ่ายใหม่ได้) -->
+  <div id="preview" class="card hide">
+    <div class="camwrap"><img id="shotImg" alt="รูปลงเวลา"><div id="pvBadge" class="vbadge wait">selfie</div></div>
+    <div id="pvKind" class="note" style="text-align:center;font-weight:600;color:#445"></div>
+    <button class="btn" onclick="confirmShot()">✅ ใช้รูปนี้ ลงเวลา</button>
+    <button class="btn ghost" onclick="retake()">🔄 ถ่ายใหม่</button>
+    <div id="pvErr" class="errbox"></div>
   </div>
 
   <!-- กำลังบันทึก -->
@@ -127,8 +142,14 @@
   // ════════════════════════════════
 
   var UID='', human=null, stream=null, detecting=false, submitting=false;
-  var ENROLLED=null, THRESHOLD=0.5, KIND='', bestScore=0, hitFrames=0, elapsed=0, failTimer=null;
+  var FIXED_KIND=false;    // true = เข้ามาจาก Rich Menu ที่ระบุ เข้างาน/ออกงาน มาแล้ว (ไม่มีหน้าเลือกประเภท)
+  var ENROLLED=null, THRESHOLD=0.5, KIND='', bestScore=0, hitFrames=0;
   var SELFIE_ONLY=false;   // true = ไม่เทียบใบหน้า ถ่าย selfie อย่างเดียว (คนที่ยังไม่ลงทะเบียนใบหน้า)
+  // ลำดับใหม่ (พี่กี้เคาะ 26 ส.ค. 69): กล้องยืนยันใบหน้าให้ระหว่างเล็ง แต่ "ไม่บันทึกเอง"
+  // พนักงานกดชัตเตอร์เมื่อพร้อม → ดูรูป → กดยืนยันถึงจะส่ง (เดิมสแกนตรง 3 เฟรมแล้วบันทึกทันที)
+  var NO_FACE_KIND='';     // ประเภทที่ Rich Menu ส่งมา ตอนคนยังไม่ลงทะเบียนใบหน้า
+  var SHOT=null;           // { img:dataURL, verified:bool, score:number } รูปที่ถ่ายรอยืนยัน
+  var LIVE_OK=false;       // เฟรมล่าสุดยืนยันใบหน้าผ่านอยู่ไหม (ใช้ ณ วินาทีที่กดถ่าย)
   var KIND_LABEL={ in:'🟢 เข้างาน', out:'🔴 ออกงาน', wfh:'🏠 WFH' };
 
   function $(id){ return document.getElementById(id); }
@@ -226,14 +247,15 @@
         if(sim>=THRESHOLD){
           hitFrames++;
           $('oval').className='oval good';
-          $('camhint').textContent='✅ ยืนยันตัวตนได้ ('+pct+'%)';
-          if(hitFrames>=3 && !submitting){ return submitClock(true, sim, emb); }
+          // ยืนยันได้แล้ว "ไม่บันทึกเอง" — รอพนักงานกดถ่ายเมื่อพร้อม
+          if(hitFrames>=3){ setVerified(true, pct); $('camhint').textContent='พร้อมแล้ว — กดปุ่มถ่ายรูปด้านล่างค่ะ'; }
+          else $('camhint').textContent='กำลังยืนยัน… ('+pct+'%)';
         } else {
-          hitFrames=0; $('oval').className='oval bad';
+          hitFrames=0; setVerified(false, pct); $('oval').className='oval bad';
           $('camhint').textContent='กำลังยืนยัน… ('+pct+'%) ให้ใบหน้าชัดในกรอบ';
         }
       } else {
-        hitFrames=0; $('oval').className='oval';
+        hitFrames=0; setVerified(false, 0); $('oval').className='oval';
         $('camhint').textContent='ขยับใบหน้าให้อยู่ในกรอบไข่';
       }
       requestAnimationFrame(loop);
@@ -241,39 +263,81 @@
   }
 
   // ───── ส่งลงเวลา ─────
-  function submitClock(matched, sim, emb){
+  function submitClock(matched, sim, img){
     if(submitting) return; submitting=true; detecting=false;
-    if(failTimer){ clearTimeout(failTimer); failTimer=null; }
-    var img=snap();
-    hide('scan'); show('saving');
+    hide('scan'); hide('preview'); show('saving');
     $('savingText').textContent='ขอตำแหน่ง (GPS)…';
     getGPS().then(function(g){
       $('savingText').textContent='กำลังบันทึกลงเวลา…';
       return jsonpPost({ action:'waFaceClock', uid:UID, kind:KIND,
-        mode: matched ? 'face' : 'selfie',   // ไม่ผ่านสแกน = ผู้ใช้เลือกถ่าย selfie เอง → บันทึกปกติ ไม่เตือน HR
+        mode: matched ? 'face' : 'selfie',   // ยืนยันใบหน้าไม่ได้ = selfie ธรรมดา → บันทึกปกติ ไม่เตือน HR
         matched: matched?'1':'0', score: (sim||bestScore||0).toFixed(4),
         lat:g.lat, lng:g.lng, address:'', img:img });
     }).then(function(r){
       hide('saving');
-      if(!r || !r.ok){ submitting=false; show('scan'); if(matched){ detecting=true; requestAnimationFrame(loop);} return errBox((r&&r.error)||'บันทึกไม่สำเร็จ'); }
+      if(!r || !r.ok){ return backToPreview((r&&r.error)||'บันทึกไม่สำเร็จ'); }
       stopCam(); renderDone(r);
     }).catch(function(e){
-      hide('saving'); submitting=false; show('scan');
-      if(matched){ detecting=true; requestAnimationFrame(loop); }
-      errBox(e.message||'เกิดข้อผิดพลาด');
+      hide('saving');
+      backToPreview(e.message||'เกิดข้อผิดพลาด');
     });
   }
 
-  // ผู้ใช้เลือกเอง — ถ่ายรูปปัจจุบันส่งเป็น selfie (mode=selfie · ไม่ติดธง HR · พี่กี้เคาะ 26 ส.ค. 69)
-  function doFallback(){
+  // ป้ายสถานะยืนยันตัวตน (มุมกล้อง) + ข้อความบนปุ่มชัตเตอร์
+  function setVerified(ok, pct){
+    LIVE_OK=ok;
+    var b=$('vbadge'); if(!b) return;
+    b.className='vbadge '+(ok?'ok':'wait');
+    b.textContent = ok ? ('✅ ยืนยันตัวตนแล้ว'+(pct?' ('+pct+'%)':'')) : ('กำลังยืนยันตัวตน…'+(pct?' ('+pct+'%)':''));
+  }
+
+  // ── ชัตเตอร์: พนักงานกดเองเมื่อพร้อม → เก็บรูปไว้ให้ดูก่อน ยังไม่ส่ง ──
+  function doShot(){
     if(submitting) return;
     var v=$('video');
-    // กล้องยังไม่มีเฟรมจริง (ปุ่มโผล่ทันทีตั้งแต่กล้องเพิ่งเปิด) → กันได้รูปดำ
     if(!v||!v.videoWidth){ return errBox('กล้องยังไม่พร้อมค่ะ รอสักครู่แล้วกดใหม่นะคะ'); }
-    submitClock(false, 0, null);
+    var img=snap();
+    if(!img){ return errBox('ถ่ายรูปไม่สำเร็จค่ะ ลองใหม่อีกครั้งนะคะ'); }
+    SHOT={ img:img, verified:(!SELFIE_ONLY && LIVE_OK), score:bestScore };
+    detecting=false;                       // หยุดเทียบระหว่างดูรูป (กล้องยังเปิดค้างไว้ให้ถ่ายใหม่ได้ทันที)
+    $('err').style.display='none';
+    $('shotImg').src=img;
+    $('pvBadge').className='vbadge '+(SHOT.verified?'ok':'wait');
+    $('pvBadge').textContent=SHOT.verified?'✅ ยืนยันใบหน้าแล้ว':'📸 selfie';
+    $('pvKind').textContent='กำลังลงเวลา: '+(KIND_LABEL[KIND]||KIND);
+    hide('scan'); show('preview');
+  }
+  // ถ่ายใหม่ — กลับไปหน้ากล้อง (ไม่ต้องขอสิทธิ์/เปิดกล้องใหม่)
+  function retake(){
+    SHOT=null; $('pvErr').style.display='none';
+    hide('preview'); show('scan');
+    if(!SELFIE_ONLY && ENROLLED && human){ hitFrames=0; detecting=true; requestAnimationFrame(loop); }
+  }
+  // ยืนยันรูป → ส่งบันทึกจริง (ยืนยันใบหน้าได้ = mode face · ไม่ได้ = selfie ปกติ ไม่ติดธง HR)
+  function confirmShot(){
+    if(!SHOT || submitting) return;
+    submitClock(SHOT.verified, SHOT.score, SHOT.img);
+  }
+  // กลับไปหน้าเลือกประเภท (หรือปิดหน้าต่างถ้าเข้ามาจาก Rich Menu ที่ระบุประเภทมาแล้ว)
+  function backToPick(){
+    stopCam(); SHOT=null;
+    if(FIXED_KIND) return closeApp();
+    hide('scan'); hide('preview'); show('pick');
   }
   // ยังไม่ลงทะเบียนใบหน้า → ลงเวลาด้วย selfie อย่างเดียว (ไม่โหลดโมเดล = เร็ว)
-  function beginSelfieOnly(){ SELFIE_ONLY=true; hide('needEnroll'); hide('loading'); show('pick'); }
+  function beginSelfieOnly(){
+    SELFIE_ONLY=true; hide('needEnroll'); hide('loading');
+    // มาจาก Rich Menu (รู้ประเภทแล้ว) → เข้ากล้องเลย · ไม่งั้นให้เลือกประเภทก่อน
+    if(['in','out','wfh'].indexOf(NO_FACE_KIND)>=0){ FIXED_KIND=true; beginScan(NO_FACE_KIND); }
+    else show('pick');
+  }
+
+  // ส่งไม่สำเร็จ → กลับไปหน้ารูปที่ถ่ายไว้ (ไม่ต้องถ่ายใหม่ · กดยืนยันซ้ำได้เลย)
+  function backToPreview(msg){
+    submitting=false;
+    show('preview');
+    var b=$('pvErr'); b.textContent='⚠️ '+msg; b.style.display='block';
+  }
 
   function renderDone(r){
     $('doneWhen').textContent = r.timeText || '';
@@ -298,18 +362,18 @@
     b.addEventListener('click', function(){ beginScan(this.getAttribute('data-kind')); });
   });
   function beginScan(kind){
-    KIND=kind; hide('pick'); show('scan');
+    KIND=kind; hide('pick'); hide('preview'); show('scan');
+    $('err').style.display='none';
     $('scanKind').textContent = 'กำลังลงเวลา: ' + (KIND_LABEL[kind]||kind);
     startCamera().then(function(){
-      bestScore=0; hitFrames=0;
-      // ปุ่มถ่าย selfie เปิดให้กดตั้งแต่กล้องพร้อม (เดิมรอสแกนไม่ผ่าน 12 วิ · พี่กี้ขอ 26 ส.ค. 69)
-      show('fallbackBtn');
-      if(SELFIE_ONLY || !ENROLLED){        // ไม่มีใบหน้าให้เทียบ → ถ่าย selfie อย่างเดียว
-        SELFIE_ONLY=true; detecting=false;
-        $('fallbackBtn').textContent='📸 ถ่ายรูป selfie ลงเวลา';
+      bestScore=0; hitFrames=0; SHOT=null; LIVE_OK=false;
+      $('shotBtn').disabled=false;         // กดถ่ายได้ตั้งแต่กล้องพร้อม — ไม่ต้องรอสแกนผ่าน
+      if(SELFIE_ONLY || !ENROLLED || !human){   // ไม่มีใบหน้าให้เทียบ → ถ่าย selfie อย่างเดียว
+        SELFIE_ONLY=true; detecting=false; hide('vbadge');
         $('camhint').textContent='จัดหน้าให้อยู่ในกรอบ แล้วกดปุ่มถ่ายรูปด้านล่างค่ะ';
         return;
       }
+      show('vbadge'); setVerified(false, 0);
       detecting=true; requestAnimationFrame(loop);
     }).catch(function(err){
       var msg=(err&&(err.message||err.name))||String(err);
@@ -334,14 +398,14 @@
     }).then(function(meta){
       if(!meta) return;
       if(!meta.ok){ return fatal(meta.error||'โหลดข้อมูลไม่สำเร็จ'); }
-      if(!meta.hasFace){ hide('loading'); show('needEnroll'); return; }
+      if(!meta.hasFace){ hide('loading'); show('needEnroll'); NO_FACE_KIND=qKind; return; }
       ENROLLED=meta.descriptor; THRESHOLD=meta.threshold||0.5;
-      $('heroSub').textContent='สวัสดีค่ะ '+(meta.nick||'')+' · สแกนหน้าเพื่อลงเวลา';
+      $('heroSub').textContent='สวัสดีค่ะ '+(meta.nick||'')+' · ถ่ายรูปเมื่อพร้อมได้เลย';
       $('loadingText').textContent='กำลังโหลดโมเดลใบหน้า (ครั้งแรกอาจช้า)…';
       human=buildHuman();
       return human.load().then(function(){ return human.warmup(); }).then(function(){
         hide('loading');
-        if(['in','out','wfh'].indexOf(qKind)>=0){ beginScan(qKind); }  // เปิดจาก Rich Menu ระบุ kind → ข้ามหน้าเลือก
+        if(['in','out','wfh'].indexOf(qKind)>=0){ FIXED_KIND=true; beginScan(qKind); }  // เปิดจาก Rich Menu ระบุ kind → ข้ามหน้าเลือก
         else show('pick');
       });
     }).catch(function(err){

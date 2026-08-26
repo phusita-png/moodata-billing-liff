@@ -159,6 +159,7 @@
   .clk-cam{ position:relative; width:100%; aspect-ratio:3/4; max-height:56vh; background:#0d1117;
     border-radius:16px; overflow:hidden; margin-bottom:12px; }
   .clk-cam video{ width:100%; height:100%; object-fit:cover; transform:scaleX(-1); }
+  .clk-cam img{ width:100%; height:100%; object-fit:cover; }
   .clk-cam .ch{ position:absolute; left:0; right:0; bottom:0; padding:10px 14px; color:#fff; font-size:13.5px;
     font-weight:600; text-align:center; background:linear-gradient(transparent,rgba(0,0,0,.65)); }
   .clk-row{ display:flex; align-items:center; gap:10px; padding:11px 0; border-bottom:1px solid var(--line); font-size:14px; }
@@ -3401,7 +3402,7 @@
   // ═══════════ 🕐 ลงเวลา (selfie + พิกัด) — พี่กี้ขอ 26 ส.ค. 2569 ═══════════
   // ทำในหน้านี้เลย ไม่ต้องเด้งไปหน้าสแกนหน้า (หน้านั้นโหลดโมเดล human.js หลายสิบ MB ทุกครั้ง)
   // บันทึกผ่าน route เดิม waFaceClock ด้วย mode=selfie → ชีตลงเวลาขึ้น "📸 selfie" · ไม่เตือน HR
-  var CLK = { kind:'', stream:null, sending:false, info:null };
+  var CLK = { kind:'', stream:null, sending:false, info:null, shot:null };
   var CLK_KINDS = [
     { k:'in',  e:'🟢', t:'เข้างาน',            s:'เริ่มงานวันนี้' },
     { k:'out', e:'🔴', t:'ออกงาน',             s:'เลิกงาน · ปิดวัน' },
@@ -3467,32 +3468,54 @@
       });
   }
 
-  /** ถ่ายรูป → ขอพิกัด → บันทึก (mode=selfie · ไม่ติดธง HR) */
+  /** ถ่ายรูป → โชว์รูปให้ดูก่อน (ถ่ายใหม่ได้) ยังไม่ส่ง — พี่กี้เคาะ 26 ส.ค. 69 */
   function clkShoot(){
     if(CLK.sending) return;
     var v=$('clkVid');
     if(!v||!v.videoWidth){ toast('กล้องยังไม่พร้อมค่ะ รอสักครู่นะคะ'); return; }
-    CLK.sending=true; $('clkShot').disabled=true;
     var w=360, h=Math.round(w*(v.videoHeight/v.videoWidth||4/3));
     var c=document.createElement('canvas'); c.width=w; c.height=h;
     c.getContext('2d').drawImage(v,0,0,w,h);          // ไม่กลับซ้ายขวา — เก็บภาพจริงเป็นหลักฐาน
     var img=''; try{ img=c.toDataURL('image/jpeg',0.6); }catch(e){ img=''; }
+    if(!img){ toast('ถ่ายรูปไม่สำเร็จค่ะ ลองใหม่อีกครั้งนะคะ'); return; }
+    CLK.shot=img;
+    var meta=CLK_KINDS.filter(function(x){ return x.k===CLK.kind; })[0]||{e:'🕐',t:'ลงเวลา'};
+    $('main').innerHTML='<div class="card">'+
+      '<div style="font-weight:700;font-size:15px;margin-bottom:10px">'+meta.e+' กำลังลงเวลา: '+esc(meta.t)+'</div>'+
+      '<div class="clk-cam"><img src="'+img+'" alt="รูปลงเวลา"></div>'+
+      '<button class="btn btn-primary" id="clkOk">✅ ใช้รูปนี้ ลงเวลา</button>'+
+      '<button class="btn btn-ghost" id="clkRetake" style="margin-top:9px">🔄 ถ่ายใหม่</button>'+
+      '<div class="m-hint" style="margin-top:12px">กด "ใช้รูปนี้" แล้วระบบจะขอตำแหน่ง (GPS) และบันทึกเวลาให้ค่ะ</div>'+
+      '</div>';
+    $('clkRetake').addEventListener('click', function(){ CLK.shot=null; clkPick(CLK.kind); });
+    $('clkOk').addEventListener('click', clkSend);
+  }
+
+  /** ยืนยันรูป → ขอพิกัด → บันทึก (mode=selfie · ไม่ติดธง HR) */
+  function clkSend(){
+    if(CLK.sending || !CLK.shot) return;
+    CLK.sending=true;
+    var ok=$('clkOk'); if(ok) ok.disabled=true;
+    var img=CLK.shot;
     busy('กำลังขอตำแหน่ง (GPS)…');
     clkGps().then(function(g){
       busy('กำลังบันทึกลงเวลา…');
       return jsonpPost({ action:'waFaceClock', uid:UID, kind:CLK.kind, mode:'selfie',
         matched:'0', score:'0', lat:g.lat, lng:g.lng, address:'', img:img });
     }).then(function(r){
-      if(!r||!r.ok){ unbusy(); CLK.sending=false; if($('clkShot')) $('clkShot').disabled=false;
-        toast((r&&r.error)||'บันทึกไม่สำเร็จค่ะ'); return; }
+      if(!r||!r.ok){ clkSendFail((r&&r.error)||'บันทึกไม่สำเร็จค่ะ'); return; }
       busyOk('บันทึก'+(r.kindLabel||'ลงเวลา')+'แล้ว');
-      clkStop();
+      CLK.shot=null; clkStop();
       toast('✅ '+(r.kindLabel||'ลงเวลา')+' · '+(r.timeText||''));
       renderClock();
-    }).catch(function(e){
-      unbusy(); CLK.sending=false; if($('clkShot')) $('clkShot').disabled=false;
-      toast(e.message||'เกิดข้อผิดพลาด');
-    });
+    }).catch(function(e){ clkSendFail(e.message||'เกิดข้อผิดพลาด'); });
+  }
+
+  /** ส่งไม่สำเร็จ → ยังอยู่หน้ารูปเดิม กดยืนยันซ้ำได้ ไม่ต้องถ่ายใหม่ */
+  function clkSendFail(msg){
+    unbusy(); CLK.sending=false;
+    var ok=$('clkOk'); if(ok) ok.disabled=false;
+    toast(msg);
   }
 
   /** ขอพิกัด 2 ชั้น — GPS แม่นก่อน (8 วิ) ไม่ได้ค่อยใช้ Wi-Fi/เครือข่าย (จับในอาคารได้)
@@ -3518,7 +3541,7 @@
   /** ปิดกล้องเสมอเมื่อออกจากหน้า/บันทึกเสร็จ (ไม่งั้นไฟกล้องค้าง กินแบต) */
   function clkStop(){
     try{ if(CLK.stream) CLK.stream.getTracks().forEach(function(t){ t.stop(); }); }catch(e){}
-    CLK.stream=null; CLK.sending=false;
+    CLK.stream=null; CLK.sending=false; CLK.shot=null;
   }
 
   function renderOt(){
