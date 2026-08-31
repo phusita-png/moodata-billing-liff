@@ -581,8 +581,9 @@
     if(s.commission) inc+=srow('ค่าคอมมิชชั่น',s.commission);
     if(s.ot) inc+=srow('ค่าล่วงเวลา (OT)',s.ot);
     if(s.bonus) inc+=srow('โบนัส',s.bonus);
-    if(s.gasoline) inc+=srow('ค่าน้ำมัน',s.gasoline);
     if(s.allowance) inc+=srow('ค่าเบี้ยเลี้ยง',s.allowance);
+    if(s.otherEarn) inc+=srow('รายได้อื่น',s.otherEarn);
+    if(s.otherIncome) inc+=srow('เงินเพิ่มอื่นๆ',s.otherIncome);
     inc+=srow('รวมรายรับ',s.gross,true);
     var ded='<div class="ssec ded">รายการหัก</div>'+srow('ประกันสังคม',s.sso);
     if(s.tax) ded+=srow('ภาษีหัก ณ ที่จ่าย',s.tax);

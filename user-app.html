@@ -4281,8 +4281,9 @@
     if(p.commission) inc+=slipRow('ค่าคอมมิชชั่น',p.commission);
     if(p.ot) inc+=slipRow('ค่าล่วงเวลา (OT)',p.ot);
     if(p.bonus) inc+=slipRow('โบนัส',p.bonus);
-    if(p.gasoline) inc+=slipRow('ค่าน้ำมัน',p.gasoline);
     if(p.allowance) inc+=slipRow('ค่าเบี้ยเลี้ยง',p.allowance);
+    if(p.otherEarn) inc+=slipRow('รายได้อื่น',p.otherEarn);
+    if(p.otherIncome) inc+=slipRow('เงินเพิ่มอื่นๆ',p.otherIncome);
     inc+=slipRow('รวมรายรับ',p.gross,true);
     var ded=slipRow('ประกันสังคม',p.sso);
     if(p.tax) ded+=slipRow('ภาษีหัก ณ ที่จ่าย',p.tax);
