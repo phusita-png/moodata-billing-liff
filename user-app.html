@@ -118,8 +118,32 @@
   .tax-tbl{ border-collapse:collapse; width:100%; font-size:12.5px; min-width:520px; }
   .tax-tbl th,.tax-tbl td{ border-bottom:1px solid var(--line); padding:7px 8px; text-align:left; white-space:nowrap; }
   .tax-tbl th{ background:#EDEDF2; font-weight:700; color:#4A5262; }
-  .tax-tbl td.ta-r{ text-align:right; font-variant-numeric:tabular-nums; }
+  .tax-tbl td.ta-r, .tax-tbl th.ta-r{ text-align:right; font-variant-numeric:tabular-nums; }   /* หัวคอลัมน์ต้องชิดขวาให้ตรงกับตัวเลขใต้มัน */
   .tax-tbl tr.tax-total td{ font-weight:700; background:#FAFAFC; border-top:2px solid #D9DDE6; }
+  /* ═══ ตารางรายการหมวดการเงิน (พี่กี้เคาะ 1 ก.ย. 2569: ตาราง + เมนู ⋮ แทนการ์ดปุ่มเยอะ) ═══ */
+  /* ต่อยอด .tax-tbl เดิม — ลำดับคอลัมน์ตายตัว ยอดชิดขวา ปุ่มสั่งงานอยู่ที่เดียวทุกแถว */
+  .dt-tbl{ min-width:960px; table-layout:fixed; }   /* fixed = ทุกตารางในหน้าตรงคอลัมน์กันเป๊ะ (auto จะกว้างตามเนื้อหาของแต่ละตาราง) */
+  .dt-tbl th, .dt-tbl td{ overflow-wrap:anywhere; }
+  .dt-tbl td{ vertical-align:middle; }
+  .dt-tbl td.dt-detail{ white-space:normal; color:#5B6472; line-height:1.45; }
+  .dt-tbl td.dt-amt{ text-align:right; font-variant-numeric:tabular-nums; font-weight:600; white-space:nowrap; }
+  .dt-tbl td.dt-doc a{ color:var(--red); text-decoration:none; font-size:12px; margin-right:7px; white-space:nowrap; }
+  .dt-tbl td.dt-act{ text-align:center; width:44px; }
+  .dt-tbl tbody tr:hover{ background:#FAFBFD; }
+  .dt-sec{ font-size:14px; font-weight:600; color:#4A5262; margin:18px 2px 8px; }
+  .dt-sec:first-child{ margin-top:0; }
+  .dt-mbtn{ border:1px solid var(--line); background:#fff; border-radius:8px; width:30px; height:28px; cursor:pointer;
+    font-size:15px; line-height:1; color:#4A5262; padding:0; font-family:inherit; }
+  .dt-mbtn:hover{ background:#F1F4F9; border-color:#C9D2E0; }
+  /* ⚠️ ตารางอยู่ใน .tax-tbl-wrap (overflow-x:auto) → เมนูต้อง fixed ไม่งั้นโดน wrapper ตัดหาย */
+  .dt-menu{ position:fixed; z-index:120; background:#fff; border:1px solid var(--line); border-radius:12px;
+    box-shadow:0 10px 30px rgba(40,60,90,.18); padding:6px; min-width:210px; max-height:70vh; overflow-y:auto; }
+  .dt-menu button, .dt-menu a{ display:block; width:100%; box-sizing:border-box; text-align:left; background:none;
+    border:0; padding:9px 11px; border-radius:8px; font-family:inherit; font-size:13.5px; color:#2A3240;
+    cursor:pointer; text-decoration:none; white-space:nowrap; }
+  .dt-menu button:hover, .dt-menu a:hover{ background:#F1F4F9; }
+  .dt-menu .dt-danger{ color:#DC2626; }
+  .dt-menu .dt-sep{ height:1px; background:var(--line); margin:5px 4px; }
   .tax-acts{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
   .tax-acts .btn{ width:auto; flex:1; min-width:150px; text-align:center; text-decoration:none; }
   .tax-inp{ width:100%; box-sizing:border-box; padding:9px 12px; border:1px solid var(--line); border-radius:10px; font-size:14px; font-family:inherit; }
@@ -2245,6 +2269,174 @@
       sigRefresh();
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
   }
+  // ═══════════ ตารางรายการ + เมนู ⋮ (มาตรฐานหมวดการเงิน · พี่กี้เคาะ 1 ก.ย. 2569) ═══════════
+  // spec: docs/spec-finance-table-ui.md — ปุ่มสั่งงานทุกใบอยู่ที่เดียว (ขวาสุด) ไม่ขยับตามสถานะ
+  var DT_ACT = {};      // rowId → [{label, call, href, danger, sep}]
+  var DT_OPEN = null;   // element เมนูที่เปิดอยู่ (เปิดได้ทีละอัน)
+
+  /** ปุ่ม ⋮ ประจำแถว — เก็บรายการคำสั่งไว้ใน DT_ACT ตอน render แล้วเปิดตอนกด */
+  function dtActCell(rowId, actions){
+    if(!actions || !actions.length) return '<td class="dt-act">—</td>';
+    DT_ACT[rowId] = actions;
+    return '<td class="dt-act"><button class="dt-mbtn" title="จัดการ" onclick="dtMenu(event,\'' + esc(rowId) + '\')">⋮</button></td>';
+  }
+  /** เปิดเมนูคำสั่งของแถว (position:fixed — ตารางอยู่ใน overflow-x:auto เมนู absolute จะโดนตัด) */
+  function dtMenu(ev, rowId){
+    ev.preventDefault(); ev.stopPropagation();
+    var items = DT_ACT[rowId] || [];
+    dtCloseMenu();
+    if(!items.length) return;
+    var box = document.createElement('div');
+    box.className = 'dt-menu';
+    box.innerHTML = items.map(function(it){
+      if(it.sep) return '<div class="dt-sep"></div>';
+      var cls = it.danger ? ' class="dt-danger"' : '';
+      return it.href
+        ? '<a href="' + esc(it.href) + '" target="_blank" rel="noopener"' + cls + ' onclick="dtCloseMenu()">' + esc(it.label) + '</a>'
+        : '<button' + cls + ' onclick="dtCloseMenu();' + it.call + '">' + esc(it.label) + '</button>';
+    }).join('');
+    document.body.appendChild(box);
+    // วางใต้ปุ่ม · ชนขอบล่าง/ขวา = พลิกขึ้น/ชิดขวา (จอมือถือเตี้ย เมนูยาว ต้องไม่ตกจอ)
+    var r = ev.currentTarget.getBoundingClientRect(), mw = box.offsetWidth, mh = box.offsetHeight;
+    var left = Math.min(r.right - mw, window.innerWidth - mw - 8);
+    var top = (r.bottom + mh + 8 > window.innerHeight) ? Math.max(8, r.top - mh - 4) : r.bottom + 4;
+    box.style.left = Math.max(8, left) + 'px';
+    box.style.top = top + 'px';
+    DT_OPEN = box;
+    setTimeout(function(){
+      document.addEventListener('click', dtCloseMenu, { once:true });
+      window.addEventListener('scroll', dtCloseMenu, { once:true, capture:true });
+    }, 0);
+  }
+  function dtCloseMenu(){ if(DT_OPEN && DT_OPEN.parentNode) DT_OPEN.parentNode.removeChild(DT_OPEN); DT_OPEN = null; }
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') dtCloseMenu(); });
+  window.dtMenu = dtMenu; window.dtCloseMenu = dtCloseMenu;
+
+  /** ตารางมาตรฐาน: cols = [{k,label,cls}] · rows = [[html,...]] · คืน '' ถ้าไม่มีแถว (ผู้เรียกใส่ empty เอง) */
+  function dtTable(cols, rows, totalRow){
+    if(!rows.length) return '';
+    return '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl">' +
+      '<colgroup>' + cols.map(function(c){ return '<col' + (c.w ? ' style="width:' + c.w + '"' : '') + '>'; }).join('') + '</colgroup>' +
+      '<thead><tr>' +
+      cols.map(function(c){ return '<th' + (c.cls ? ' class="' + c.cls + '"' : '') + '>' + esc(c.label) + '</th>'; }).join('') +
+      '</tr></thead><tbody>' + rows.join('') + '</tbody>' +
+      (totalRow || '') + '</table></div>';
+  }
+  window.dtTable = dtTable;
+
+  /**
+   * รายการคำสั่งในเมนู ⋮ ของใบเบิก 1 ใบ — **ฟังก์ชันบริสุทธิ์** (ของจริงกับเทสเรียกตัวนี้ตัวเดียว)
+   * เงื่อนไขต้องตรงกับด่านฝั่ง backend เป๊ะ: จ่ายแล้วห้ามแก้ยอด · ออก 50 ทวิ แล้วห้ามแก้ภาษี ·
+   * ออกเอกสารแล้วห้ามย้อนสถานะ (ซ่อนปุ่มไม่ใช่การกัน — backend ยังตรวจเองทุกเส้น
+   *  แต่ปุ่มที่กดแล้วโดนปฏิเสธเสมอไม่ควรมีให้กด)
+   * @return {Array} [{key,label,call|href,danger,sep}]
+   */
+  function expRowActions(x, isOwner){
+    var st = String(x.status || '');
+    var paid = st.indexOf('จ่ายแล้ว') >= 0;
+    var pending = st.indexOf('รออนุมัติ') >= 0;
+    var rejected = st.indexOf('ไม่อนุมัติ') >= 0;
+    // ⚠️ "รออนุมัติ" กับ "ไม่อนุมัติ" มีคำว่า "อนุมัติ" อยู่ข้างใน — ต้องคัดสองตัวนี้ออกก่อน
+    //    (การ์ดรุ่นเดิมเช็คแค่ indexOf("อนุมัติ") จึงโชว์ปุ่มของใบที่อนุมัติแล้วบนใบที่ยังรออนุมัติ)
+    var approved = !pending && !rejected && st.indexOf('อนุมัติ') >= 0;
+    var rv = !!(x.docType && x.docType.indexOf('ใบสำคัญ') >= 0);
+    var hasDoc = !!(x.docNo || x.whtNo);
+    var q = "'" + String(x.no).replace(/'/g, "\\'") + "'";
+    var a = [];
+
+    if(x.receiptUrl) a.push({ key:'proof', label:'🔍 ดูหลักฐานที่แนบ', href:x.receiptUrl });
+    if(x.docLink)    a.push({ key:'doc',   label:'📄 ' + (x.docNo || 'เอกสาร'), href:x.docLink });
+    if(x.whtLink)    a.push({ key:'wht',   label:'🧾 50 ทวิ ' + (x.whtNo || ''), href:x.whtLink });
+    if(x.dossier)    a.push({ key:'dossier', label:'🗂️ แฟ้มครบชุด', href:x.dossier });
+    if(x.paidSlip)   a.push({ key:'slip',  label:'💸 สลิปโอนคืน', href:x.paidSlip });
+    if(!isOwner) return a;   // พนักงานเห็นแค่ลิงก์เอกสารของใบตัวเอง
+
+    if(a.length) a.push({ sep:true });
+    // ── งานหลักตามสถานะ (อยู่บนสุดของกลุ่มคำสั่ง) ──
+    if(pending){
+      a.push({ key:'approve', label:'✅ อนุมัติ', call:(x.payeeName ? 'exOpenWht(' + q + ')' : 'exDecide(' + q + ",'approve','')") });
+      a.push({ key:'reject',  label:'❌ ไม่อนุมัติ', call:'exReject(' + q + ')' });
+    }
+    if(approved && !paid){
+      a.push({ key:'pay', label:'💰 บันทึกจ่ายคืน',
+        call:'exOpenPay(' + q + ",'" + String(x.nick || '').replace(/'/g, "\\'") + "'," + (Number(x.amount) || 0) + ',' + (rv && !x.docNo ? 1 : 0) + ')' });
+    }
+    if(rv && !x.docNo) a.push({ key:'relink', label:'🔗 ส่งลิงก์เซ็นใหม่', call:'exRelink(' + q + ')' });
+
+    // ── งานแก้ไข ──
+    a.push({ sep:true });
+    a.push({ key:'type', label:'✏️ แก้ประเภทค่าใช้จ่าย', call:'exEditType(' + q + ')' });
+    if(!paid) a.push({ key:'amount', label:'✏️ แก้ยอด/รายละเอียด', call:'exEditAmount(' + q + ')' });
+    if(x.payeeName && !x.whtNo) a.push({ key:'whtedit', label:'🧾 แก้ภาษีหัก ณ ที่จ่าย', call:'exEditWht(' + q + ')' });
+    if(!rv) a.push({ key:'proofType', label:'🧾 แก้หลักฐาน (ใบเสร็จ/SR)', call:'exSetProof(' + q + ')' });
+    if(rv)  a.push({ key:'payee', label:'✏️ แก้ข้อมูลผู้รับเงิน', call:'exEditPayee(' + q + ')' });
+    a.push({ key:'rcp', label:'📎 แก้ไฟล์แนบ', call:'exEditRcp(' + q + ')' });
+    if(paid) a.push({ key:'editslip', label:'📎 แก้สลิปโอนคืน', call:'exEditSlip(' + q + ')' });
+    if(approved || paid) a.push({ key:'rebuild', label:(x.dossier ? '🔄 สร้างแฟ้มใหม่' : '🗂️ สร้างแฟ้มครบชุด'), call:'exRebuild(' + q + ')' });
+
+    // ── ย้อน/ลบ ──
+    if(x.bankAcct)
+      a.push({ key:'copybank', label:'📋 ก๊อปเลขบัญชี ' + x.bankAcct,
+        call:"copyTxt('" + String(x.bankAcct).replace(/'/g, "\\'") + "')" });
+
+    a.push({ sep:true });
+    if(!paid && (approved || rejected) && !hasDoc)
+      a.push({ key:'undo', label:'↩️ ย้อนเป็นรออนุมัติ', call:'exUndo(' + q + ')' });
+    a.push({ key:'trash', label:'🗑️ ยกเลิกใบนี้', call:'exTrash(' + q + ')', danger:true });
+    return a;
+  }
+  window.expRowActions = expRowActions;
+
+  /** คอลัมน์มาตรฐานของตารางใบเบิก (ลำดับตายตัวทุกหน้า · ยอดชิดขวา) */
+  function expCols(showNick){
+    var c = [{ label:'เลขที่', w:'132px' }, { label:'วันที่', w:'92px' }];
+    if(showNick) c.push({ label:'ผู้เบิก', w:'80px' });
+    return c.concat([{ label:'ประเภท', w:'118px' }, { label:'รายละเอียด' }, { label:'ยอด (บาท)', cls:'ta-r', w:'112px' },
+      { label:'สถานะ', w:'104px' }, { label:'เอกสาร', w:'158px' }, { label:'', w:'46px' }]);
+  }
+  /** 1 แถวของตารางใบเบิก */
+  function expRow(x, showNick){
+    EXP_BYNO[x.no] = x;   // modal ทุกตัวดึงข้อมูลใบจากตรงนี้
+    var docs = '';
+    if(x.docLink)  docs += '<a href="' + esc(x.docLink) + '" target="_blank">📄 ' + esc(x.docNo || 'เอกสาร') + '</a>';
+    if(x.whtLink)  docs += '<a href="' + esc(x.whtLink) + '" target="_blank">🧾 50 ทวิ</a>';
+    if(x.dossier)  docs += '<a href="' + esc(x.dossier) + '" target="_blank">🗂️ แฟ้ม</a>';
+    if(!docs && x.receiptUrl) docs = '<a href="' + esc(x.receiptUrl) + '" target="_blank">🔍 หลักฐาน</a>';
+    // ธงที่ต้องเด้งตา: ไม่มีหลักฐานแนบ = จุดเสี่ยงทางภาษี · รอเซ็น = เอกสารยังไม่เกิด
+    var flag = '';
+    if(x.note && x.note.indexOf('ไม่มีหลักฐาน') >= 0) flag += '<br><span style="color:#E5484D;font-weight:600">⚠️ ไม่มีหลักฐานแนบ</span>';
+    if(x.docType && x.docType.indexOf('ใบสำคัญ') >= 0 && !x.docNo) flag += '<br><span style="color:#C8730B">✍️ รอผู้รับเงินลงนาม</span>';
+    else if(x.docType && x.docType.indexOf('ใบรับรอง') >= 0 && !x.docNo) flag += '<br><span style="color:#C8730B">📄 รอออกใบรับรองแทนใบเสร็จ</span>';
+    // บัญชีรับโอน: โชว์เฉพาะใบที่ยังไม่จ่าย — จ่ายแล้วไม่ต้องรกตา (ยังก๊อปได้จากเมนู ⋮)
+    if(x.bankAcct && String(x.status || '').indexOf('จ่ายแล้ว') < 0)
+      flag += '<br><span style="color:#1B7F4B">🏦 ' + esc(x.bankName || '') + ' · <b>' + esc(x.bankAcct) + '</b>' +
+              (x.bankOwner ? ' · ' + esc(x.bankOwner) : '') + '</span>';
+    return '<tr id="exr-' + esc(x.no) + '">' +
+      '<td>' + esc(x.no) + '</td>' +
+      '<td>' + esc(String(x.createdAt || '').split(' ')[0] || '-') + '</td>' +
+      (showNick ? '<td>' + esc(x.nick || '-') + '</td>' : '') +
+      '<td>' + esc(x.type || '-') + '</td>' +
+      '<td class="dt-detail">' + esc(x.detail || '-') + flag + '</td>' +
+      '<td class="dt-amt">' + money(x.amount) + '</td>' +
+      '<td><span class="tk-badge ' + expBadge(x.status) + '">' + esc(x.status) + '</span></td>' +
+      '<td class="dt-doc">' + (docs || '—') + '</td>' +
+      dtActCell('ex-' + x.no, expRowActions(x, IS_OWNER)) +
+      '</tr>';
+  }
+  /** ตารางใบเบิก 1 ก้อน (หัวข้อ + ตาราง + แถวรวม) */
+  function expTable(title, list, showNick, emptyText){
+    var h = '<div class="dt-sec">' + esc(title) + ' (' + list.length + ')</div>';
+    if(!list.length) return h + '<div class="card"><div class="emptybox">' + esc(emptyText || 'ไม่มีรายการ') + '</div></div>';
+    var sum = list.reduce(function(a, x){ return a + (Number(x.amount) || 0); }, 0);
+    var cols = expCols(showNick);
+    var total = list.length > 1
+      ? '<tr class="tax-total"><td colspan="' + (showNick ? 5 : 4) + '" style="text-align:right">รวม ' + list.length + ' ใบ</td>' +
+        '<td class="dt-amt">' + money(sum) + '</td><td colspan="3"></td></tr>'
+      : '';
+    return h + dtTable(cols, list.map(function(x){ return expRow(x, showNick); }), total);
+  }
+  window.expRow = expRow; window.expTable = expTable;
+
   function expBadge(s){ s=String(s||''); if(s.indexOf('จ่าย')>=0)return'b-done'; if(s.indexOf('ไม่')>=0)return'b-cancel'; if(s.indexOf('อนุมัติ')>=0)return'b-doing'; return'b-new'; }
   function paintExpense(list){
     var html='<button class="btn btn-primary" style="width:100%;margin-bottom:10px" onclick="openExpense()">➕ แจ้งเบิกค่าใช้จ่าย</button>'+
@@ -2254,66 +2446,11 @@
         '<span style="color:#8A94A6;font-weight:400">'+(HAS_BANK?(' · '+esc(MYBANK.name)+' '+esc(MYBANK.acct)):' · ยังไม่ได้กรอก')+'</span></button>'+
       (IS_OWNER?'<div class="m-hint" style="margin:0 0 12px">👑 มุมผู้ดูแล: เห็นใบเบิก<b>ทุกคน</b> · จัดการ/แก้/ลบได้จากที่นี่</div>':'');
     if(!list.length){ html+='<div class="card"><div class="emptybox">ยังไม่มีรายการเบิก 😊</div></div>'; $('main').innerHTML=html; return; }
-    html+=list.map(function(x){
-      EXP_BYNO[x.no]=x;   // เก็บไว้ให้ปุ่มแก้ผู้รับเงินดึงมาเติมฟอร์ม
-      var money=(Number(x.amount)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
-      var links='';
-      if(x.receiptUrl) links+='<a class="ex-lk" href="'+esc(x.receiptUrl)+'" target="_blank">🔍 ใบเสร็จ</a>';
-      if(x.docLink)    links+='<a class="ex-lk" href="'+esc(x.docLink)+'" target="_blank">📄 '+esc(x.docNo||'เอกสาร')+'</a>';
-      else if(x.docType&&x.docType.indexOf('ใบรับรอง')>=0) links+='<span class="ex-lk" style="color:#8A94A6">📄 ไม่มีใบเสร็จ · ออกใบรับรองแทนตอนอนุมัติ</span>';
-      // ใบ RV: พนักงานต้องรู้ว่าตอนนี้ค้างที่ "ผู้รับเงินยังไม่เซ็น" (ลิงก์อยู่ในแชท 1:1) + ขอลิงก์ใหม่ได้เอง
-      else if(isRv(x)){
-        links+='<span class="ex-lk" style="color:#8A94A6">💵 ผู้รับ: '+esc(x.payeeName||'-')+'</span>';
-        // จ่ายไปแล้วแต่ยังไม่เซ็น = ยังต้องตามลายเซ็น (เอกสาร+50 ทวิ ออกตอนเซ็นเสร็จ)
-        var st=String(x.status);
-        if((st.indexOf('อนุมัติ')>=0 && st.indexOf('ไม่')<0) || st.indexOf('จ่ายแล้ว')>=0){
-          if(st.indexOf('จ่ายแล้ว')>=0) links+='<span class="ex-lk" style="color:#C8730B">⏳ จ่ายแล้ว · รอผู้รับเซ็น</span>';
-          links+='<a class="ex-lk" href="#" onclick="exRelink(\''+esc(x.no)+'\');return false" style="color:#C8730B">🔗 ขอลิงก์เซ็นใหม่</a>';
-        }
-      }
-      // แก้ข้อมูลผู้รับเงิน (เจ้าของใบแก้ของตัวเองได้) — ยืดหยุ่นตามที่พี่ขอ
-      if(isRv(x)) links+='<a class="ex-lk" href="#" onclick="exEditPayee(\''+esc(x.no)+'\');return false" style="color:#1B72E8">✏️ แก้ผู้รับเงิน</a>';
-      if(x.whtLink)    links+='<a class="ex-lk" href="'+esc(x.whtLink)+'" target="_blank">🧾 50 ทวิ '+esc(x.whtNo||'')+'</a>';
-      if(x.paidSlip)   links+='<a class="ex-lk" href="'+esc(x.paidSlip)+'" target="_blank">📎 สลิปโอนคืน</a>';
-      // จ่ายแล้วแต่ไม่มีสลิป = แฟ้มขาดหลักฐานการโอน → ให้พี่แนบย้อนหลังได้ (เดิมทำไม่ได้เลย · พี่กี้ 29 ก.ค.)
-      if(IS_OWNER && String(x.status).indexOf('จ่ายแล้ว')>=0)
-        links+='<a class="ex-lk" href="#" onclick="exEditSlip(\''+esc(x.no)+'\');return false" style="'+
-          (x.paidSlip?'color:#1B72E8">📎 แก้สลิปโอนคืน':'color:#DC2626">📎 ยังไม่มีสลิป · แนบเลย')+'</a>';
-      // แฟ้มครบชุด (เอกสาร+สำเนาบัตร+หลักฐาน+50ทวิ+สลิป รวมใบเดียว) — เกิดเองตอนพี่กดจ่ายคืน
-      if(x.dossier)    links+='<a class="ex-lk" href="'+esc(x.dossier)+'" target="_blank">🗂️ แฟ้มครบชุด</a>';
-      // ปุ่มสร้างแฟ้ม (เฉพาะพี่) โผล่ตั้งแต่ "อนุมัติ" เป็นต้นไป — แฟ้มสร้างได้ตั้งแต่ออก SR/RV แล้ว
-      // (พี่กี้ 17 ก.ค.: SR อนุมัติแล้วยังไม่จ่าย ต้องกดรวมแฟ้มได้) · จ่ายแล้วกด = รวมสลิป/50ทวิ เพิ่ม
-      if(IS_OWNER && (String(x.status).indexOf('จ่ายแล้ว')>=0 || (String(x.status).indexOf('อนุมัติ')>=0 && String(x.status).indexOf('ไม่อนุมัติ')<0)))
-        links+='<a class="ex-lk" href="#" onclick="exRebuild(\''+esc(x.no)+'\');return false" style="color:#C8730B">'+
-          (x.dossier?'🔄 สร้างแฟ้มใหม่':'🗂️ สร้างแฟ้มครบชุด')+'</a>';
-      // แก้ประเภทเอกสาร (เฉพาะพี่ · ไม่ใช่ RV) — พนักงานกดผิด แนบใบเสร็จ ⇄ ไม่มีใบเสร็จ (ออก SR)
-      if(IS_OWNER && !isRv(x))
-        links+='<a class="ex-lk" href="#" onclick="exSetProof(\''+esc(x.no)+'\');return false" style="color:#1B72E8">🧾 แก้หลักฐาน (ใบเสร็จ/SR)</a>';
-      // แก้ประเภทค่าใช้จ่าย (เฉพาะพี่ · ทุกสถานะ) — คนละเรื่องกับหลักฐาน: อันนี้คือ เดินทาง/อาหาร/อุปกรณ์…
-      if(IS_OWNER)
-        links+='<a class="ex-lk" href="#" onclick="exEditType(\''+esc(x.no)+'\');return false" style="color:#1B72E8">✏️ ประเภทค่าใช้จ่าย</a>';
-      // แก้ไฟล์แนบ (พี่ + เจ้าของใบ) — แนบผิดไฟล์ → อัปใหม่ + รวมแฟ้มใหม่
-      links+='<a class="ex-lk" href="#" onclick="exEditRcp(\''+esc(x.no)+'\');return false" style="color:#1B72E8">📎 แก้ไฟล์แนบ</a>';
-      // แก้ยอด/รายละเอียด (เฉพาะพี่ · ใบที่ยังไม่จ่าย — จ่ายแล้วยอดต้องตรงกับที่โอนจริง)
-      if(IS_OWNER && String(x.status).indexOf("จ่ายแล้ว")<0)
-        links+='<a class="ex-lk" href="#" onclick="exEditAmount(\''+esc(x.no)+'\');return false" style="color:#1B72E8">✏️ ยอด/รายละเอียด</a>';
-      // แก้ภาษีหัก ณ ที่จ่าย (เฉพาะพี่ · ใบที่มีผู้รับเงินและยังไม่ออก 50 ทวิ)
-      if(IS_OWNER && x.payeeName && !x.whtNo)
-        links+='<a class="ex-lk" href="#" onclick="exEditWht(\''+esc(x.no)+'\');return false" style="color:#1B72E8">🧾 แก้ภาษีหัก ณ ที่จ่าย</a>';
-      // ย้อนสถานะ (เฉพาะพี่ · ใบที่ตัดสินไปแล้ว ยังไม่จ่าย ยังไม่ออกเอกสาร) — กดอนุมัติผิดใบ
-      if(IS_OWNER && String(x.status).indexOf("อนุมัติ")>=0 && String(x.status).indexOf("จ่ายแล้ว")<0 && !x.docNo && !x.whtNo)
-        links+='<a class="ex-lk" href="#" onclick="exUndo(\''+esc(x.no)+'\');return false" style="color:#C8730B">↩️ ย้อนเป็นรออนุมัติ</a>';
-      // ยกเลิกใบเบิก (เฉพาะพี่ · ทุกสถานะ) — ย้ายไปถังขยะก่อน (soft-delete · กู้คืนได้)
-      if(IS_OWNER)
-        links+='<a class="ex-lk" href="#" onclick="exTrash(\''+esc(x.no)+'\');return false" style="color:#DC2626">🗑️ ยกเลิก</a>';
-      var bankHtml=bankLineHtml(x, isRv(x)?'โอนให้ผู้รับเงิน':'โอนเข้า');
-      return '<div class="tk"><div class="tk-top"><span class="tk-no">'+esc(x.no)+'</span>'+
-        '<span class="tk-badge '+expBadge(x.status)+'">'+esc(x.status)+'</span></div>'+
-        (IS_OWNER&&x.nick?'<div class="tk-cust">👤 '+esc(x.nick)+'</div>':'')+
-        '<div class="ex-amt"><span class="ex-t">'+esc(x.type)+'</span>'+(IS_OWNER?exTypeBtn(x.no):'')+' · '+money+' บาท</div>'+
-        (x.detail?'<div class="tk-detail">'+esc(x.detail)+'</div>':'')+
-        '<div class="ex-meta">'+esc(x.createdAt||'')+bankHtml+(links?'<br>'+links:'')+'</div></div>';
-    }).join('');
+    // ตารางมาตรฐาน (พี่กี้เคาะ 1 ก.ย. 69) — ปุ่มสั่งงานรวมในเมนู ⋮ ท้ายแถว ไม่กระจายเป็นลิงก์ยาว
+    var sum=list.reduce(function(a,x){ return a+(Number(x.amount)||0); },0);
+    var total='<tr class="tax-total"><td colspan="'+(IS_OWNER?5:4)+'" style="text-align:right">รวม '+list.length+' ใบ</td>'+
+      '<td class="dt-amt">'+money(sum)+'</td><td colspan="3"></td></tr>';
+    html+=dtTable(expCols(IS_OWNER), list.map(function(x){ return expRow(x,IS_OWNER); }), list.length>1?total:'');
     $('main').innerHTML=html;
   }
   // โหมดหลักฐาน 3 ทาง: 'rcp' แนบใบเสร็จ · 'sr' ไม่มีใบเสร็จ (ออกใบรับรองแทน) · 'rv' จ่ายค่าจ้างคนนอก (ใบสำคัญรับเงิน)
@@ -2612,6 +2749,92 @@
       PO=r; paintPayout();
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
   }
+  /**
+   * รายการคำสั่งในเมนู ⋮ ของใบจ่ายออก 1 ใบ — **ฟังก์ชันบริสุทธิ์** (ของจริงกับเทสเรียกตัวนี้ตัวเดียว)
+   * mode: 'pending' รออนุมัติ · 'topay' อนุมัติแล้วรอโอน · 'done' จ่ายแล้ว
+   * เงื่อนไขตรงกับ backend: แก้ใบได้เฉพาะ "รออนุมัติ" · เอกสาร PV/50ทวิ เกิดตอนกดจ่าย
+   */
+  function poRowActions(x, mode){
+    var q = "'" + String(x.no).replace(/'/g, "\\'") + "'";
+    var a = [];
+    if(x.proofLink)    a.push({ key:'proof',    label:'📎 ใบแจ้งหนี้/ใบกำกับ', href:x.proofLink });
+    if(x.contractLink) a.push({ key:'contract', label:'📄 สัญญา', href:x.contractLink });
+    if(x.reqLink)      a.push({ key:'req',      label:'📝 ใบขออนุมัติจ่าย', href:x.reqLink });
+    if(x.docLink)      a.push({ key:'pv',       label:'📄 ใบสำคัญจ่าย ' + (x.docNo || ''), href:x.docLink });
+    if(x.whtLink)      a.push({ key:'wht',      label:'🧾 50 ทวิ ' + (x.whtNo || ''), href:x.whtLink });
+    if(x.whtPayeeLink) a.push({ key:'whtpayee', label:'🧾 50 ทวิ (ฉบับผู้รับเงิน)', href:x.whtPayeeLink });
+    if(x.dossier)      a.push({ key:'dossier',  label:'📚 แฟ้มครบชุด', href:x.dossier });
+    if(x.paidSlip)     a.push({ key:'slip',     label:'📎 สลิปโอน', href:x.paidSlip });
+    if(a.length) a.push({ sep:true });
+
+    if(mode === 'pending'){
+      a.push({ key:'approve', label:'✅ อนุมัติ', call:'poDecide(' + q + ",'approve')" });
+      a.push({ key:'reject',  label:'❌ ไม่อนุมัติ', call:'poDecide(' + q + ",'reject')" });
+      a.push({ sep:true });
+      a.push({ key:'edit',    label:'✏️ แก้ใบจ่าย', call:'openPayout(' + q + ')' });   // แก้ได้เฉพาะรออนุมัติ (ด่าน backend)
+      a.push({ key:'redoc',   label:'🔄 ออกใบขออนุมัติใหม่', call:'poDocs(' + q + ')' });
+    }
+    if(mode === 'topay'){
+      a.push({ key:'pay', label:'💰 บันทึกจ่ายเงิน', call:'poOpenPay(' + q + ')' });
+    }
+    if(mode === 'done'){
+      if(!x.paidSlip) a.push({ key:'slipadd', label:'📎 แนบสลิปโอน (ยังไม่มี)', call:'poOpenPay(' + q + ')', danger:true });
+      a.push({ key:'redoc', label:(x.docNo ? '🔄 ออกเอกสารใหม่' : '📄 ออกเอกสาร'), call:'poDocs(' + q + ')' });
+    }
+    if(x.bank && x.bank.acct)
+      a.push({ key:'copy', label:'📋 ก๊อปเลขบัญชี ' + x.bank.acct, call:"copyTxt('" + String(x.bank.acct).replace(/'/g, "\\'") + "')" });
+    if(mode !== 'done'){
+      a.push({ sep:true });
+      a.push({ key:'cancel', label:'🗑️ ยกเลิกใบนี้', call:'poCancel(' + q + ')', danger:true });
+    }
+    return a;
+  }
+  window.poRowActions = poRowActions;
+
+  /** ตารางใบจ่ายออก 1 ก้อน — ลำดับคอลัมน์เดียวกับใบเบิก (เลขที่ · วันที่ · คู่ค้า · ประเภท · รายละเอียด · ยอด · สถานะ · เอกสาร · ⋮) */
+  function poTable(title, list, mode){
+    list = list || [];
+    if(!list.length && mode === 'done') return '';            // ประวัติที่ว่าง ไม่ต้องรก
+    var h = '<div class="dt-sec">' + esc(title) + ' (' + list.length + ')</div>';
+    if(!list.length) return h + '<div class="card"><div class="emptybox">ไม่มีรายการค่ะ 😊</div></div>';
+    var cols = [{ label:'เลขที่', w:'150px' }, { label:'บริษัทผู้จ่าย', w:'130px' }, { label:'ผู้รับเงิน', w:'130px' },
+      { label:'ประเภท', w:'118px' }, { label:'รายละเอียด' }, { label:'ยอด (บาท)', cls:'ta-r', w:'112px' },
+      { label:'จ่ายจริง', cls:'ta-r', w:'112px' }, { label:'สถานะ', w:'104px' }, { label:'เอกสาร', w:'150px' },
+      { label:'', w:'46px' }];
+    var rows = list.map(function(x){
+      var docs = '';
+      if(x.reqLink) docs += '<a href="' + esc(x.reqLink) + '" target="_blank">📝 ขออนุมัติ</a>';
+      if(x.docLink) docs += '<a href="' + esc(x.docLink) + '" target="_blank">📄 PV</a>';
+      if(x.whtLink) docs += '<a href="' + esc(x.whtLink) + '" target="_blank">🧾 50 ทวิ</a>';
+      if(x.dossier) docs += '<a href="' + esc(x.dossier) + '" target="_blank">📚 แฟ้ม</a>';
+      // ธงที่ต้องเด้งตา: อนุมัติใบตัวเอง · จ่ายแล้วไม่มีสลิป (แฟ้มขาดหลักฐานการโอน)
+      var flag = '';
+      if(x.selfApprove) flag += '<br><span style="color:#C8730B">' + esc(x.selfApprove) + '</span>';
+      if(mode === 'done' && !x.paidSlip) flag += '<br><span style="color:#DC2626;font-weight:600">📎 ยังไม่มีสลิปโอน</span>';
+      if(x.note) flag += '<br><span style="color:#8A94A6">📝 ' + esc(x.note) + '</span>';
+      var whtLine = x.whtAmt > 0
+        ? '<br><span style="color:#C8730B;font-size:11.5px">หัก ' + esc(x.section || '') + ' ' + x.whtRate + '%</span>' : '';
+      return '<tr>' +
+        '<td>' + esc(x.no) + '</td>' +
+        '<td>' + esc(x.entityName || x.entity || '-') + '</td>' +
+        '<td>' + esc(x.payeeName || '-') + '<br><span style="color:#8A94A6;font-size:11.5px">' + esc(x.payeeKind || '') + '</span></td>' +
+        '<td>' + esc(x.type || '-') + '</td>' +
+        '<td class="dt-detail">' + esc(x.detail || '-') + (x.period ? ' · ' + esc(x.period) : '') + flag + '</td>' +
+        '<td class="dt-amt">' + poMoney(x.amount) + whtLine + '</td>' +
+        '<td class="dt-amt">' + poMoney(x.whtAmt > 0 ? x.netAmt : x.amount) + '</td>' +
+        '<td><span class="tk-badge ' + poBadge(x.status) + '">' + esc(x.status) + '</span></td>' +
+        '<td class="dt-doc">' + (docs || '—') + '</td>' +
+        dtActCell('po-' + x.no, poRowActions(x, mode)) +
+        '</tr>';
+    });
+    var sum = list.reduce(function(a, x){ return a + (Number(x.whtAmt) > 0 ? Number(x.netAmt || 0) : Number(x.amount || 0)); }, 0);
+    var total = list.length > 1
+      ? '<tr class="tax-total"><td colspan="6" style="text-align:right">รวมที่ต้องจ่ายจริง ' + list.length + ' ใบ</td>' +
+        '<td class="dt-amt">' + poMoney(sum) + '</td><td colspan="3"></td></tr>' : '';
+    return h + dtTable(cols, rows, total);
+  }
+  window.poTable = poTable;
+
   function poMoney(n){ return (Number(n)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2}); }
   function poBadge(s){ s=String(s||''); if(s.indexOf('จ่าย')>=0)return'b-done'; if(s.indexOf('ไม่')>=0)return'b-cancel'; if(s.indexOf('อนุมัติ')>=0)return'b-doing'; return'b-new'; }
   /** แบบยื่นที่ใบนี้จะเข้า — mirror formTypeOf_ ฝั่ง backend (นิติบุคคล → ภ.ง.ด.53 ทุกมาตรา) */
@@ -2635,53 +2858,7 @@
   function poBlock(title, list, mode){
     list=list||[];
     if(!list.length && mode==='done') return '';   // บล็อกประวัติที่ว่าง ไม่ต้องรก
-    return '<div class="m-hint" style="margin:14px 0 6px;font-weight:600">'+esc(title)+' ('+list.length+')</div>'+
-      (list.length ? list.map(function(x){ return poCard(x, mode); }).join('')
-                   : '<div class="card"><div class="emptybox">ไม่มีรายการค่ะ 😊</div></div>');
-  }
-  function poCard(x, mode){
-    var wht = x.whtAmt>0 ? ('<br><span style="color:#C8730B">🧾 หัก ณ ที่จ่าย '+esc(x.section||'')+' '+x.whtRate+'% = '+poMoney(x.whtAmt)+
-      ' บาท → จ่ายจริง <b>'+poMoney(x.netAmt)+'</b> บาท'+(x.formType?' · เข้า '+esc(poFormLabel(x.payeeKind,x.section)):'')+'</span>') : '';
-    var bank = x.bank&&x.bank.acct ? ('<br><span style="color:#1B7F4B">🏦 '+esc(x.bank.name||'')+' · <b>'+esc(x.bank.acct)+'</b> · '+esc(x.bank.owner||'')+'</span>'+
-      ' <a class="ex-lk" href="#" onclick="copyTxt(\''+esc(x.bank.acct)+'\');return false">📋 ก๊อปเลขบัญชี</a>') : '';
-    var links='';
-    if(x.proofLink) links+='<a class="ex-lk" href="'+esc(x.proofLink)+'" target="_blank">📎 ใบแจ้งหนี้/ใบกำกับ</a>';
-    if(x.contractLink) links+='<a class="ex-lk" href="'+esc(x.contractLink)+'" target="_blank">📄 สัญญา</a>';
-    if(x.paidSlip) links+='<a class="ex-lk" href="'+esc(x.paidSlip)+'" target="_blank">📎 สลิปโอน</a>';
-    // เอกสารก่อนจ่าย — ใบขออนุมัติจ่าย (มีตั้งแต่ตั้งเรื่อง · ส่งให้ผู้อนุมัติดูก่อนเงินออก)
-    if(x.reqLink) links+='<a class="ex-lk" href="'+esc(x.reqLink)+'" target="_blank" style="color:#7A5AF8">📝 ใบขออนุมัติจ่าย</a>';
-    // เอกสารที่ระบบออกให้ตอนกดจ่าย (เฟส C)
-    if(x.docLink) links+='<a class="ex-lk" href="'+esc(x.docLink)+'" target="_blank" style="color:#1B72E8">📄 ใบสำคัญจ่าย '+esc(x.docNo||'')+'</a>';
-    if(x.whtLink) links+='<a class="ex-lk" href="'+esc(x.whtLink)+'" target="_blank" style="color:#C8730B">🧾 50 ทวิ '+esc(x.whtNo||'')+'</a>';
-    if(x.whtPayeeLink) links+='<a class="ex-lk" href="'+esc(x.whtPayeeLink)+'" target="_blank" style="color:#C8730B">🧾 50 ทวิ (ฉบับผู้รับ)</a>';
-    if(x.dossier) links+='<a class="ex-lk" href="'+esc(x.dossier)+'" target="_blank" style="color:#1B7F4B">📚 แฟ้มครบชุด</a>';
-    if(mode==='pending'){
-      links+='<a class="ex-lk" href="#" onclick="openPayout(\''+esc(x.no)+'\');return false" style="color:#1B72E8">✏️ แก้ไข</a>'+
-        '<a class="ex-lk" href="#" onclick="poDecide(\''+esc(x.no)+'\',\'approve\');return false" style="color:#1E9E5A"><b>✅ อนุมัติ</b></a>'+
-        '<a class="ex-lk" href="#" onclick="poDecide(\''+esc(x.no)+'\',\'reject\');return false" style="color:#D14343">❌ ไม่อนุมัติ</a>'+
-        '<a class="ex-lk" href="#" onclick="poDocs(\''+esc(x.no)+'\');return false" style="color:#8A94A6">🔄 ออกใบขออนุมัติใหม่</a>'+
-        '<a class="ex-lk" href="#" onclick="poCancel(\''+esc(x.no)+'\');return false" style="color:#8A94A6">🗑️ ยกเลิก</a>';
-    } else if(mode==='topay'){
-      links+='<a class="ex-lk" href="#" onclick="poOpenPay(\''+esc(x.no)+'\');return false" style="color:#C8730B"><b>💰 บันทึกจ่ายเงิน</b></a>'+
-        '<a class="ex-lk" href="#" onclick="poCancel(\''+esc(x.no)+'\');return false" style="color:#8A94A6">🗑️ ยกเลิก</a>';
-    } else if(String(x.status).indexOf('จ่ายแล้ว')>=0){
-      // จ่ายแล้วแต่ไม่มีสลิป = หลักฐานการจ่ายขาด (แฟ้มจะไม่ครบ) → เตือนให้แนบย้อนหลังได้
-      if(!x.paidSlip) links+='<a class="ex-lk" href="#" onclick="poOpenPay(\''+esc(x.no)+'\');return false" style="color:#DC2626">📎 ยังไม่มีสลิป · แนบเลย</a>';
-      // ออกเอกสารใหม่ — ใช้ตอนออกพลาด (Worker ล่ม) หรือแนบสลิป/หลักฐานเพิ่มทีหลังแล้วอยากให้แฟ้มครบ
-      links+='<a class="ex-lk" href="#" onclick="poDocs(\''+esc(x.no)+'\');return false" style="color:#8A94A6">'+
-        (x.docNo?'🔄 ออกเอกสารใหม่':'📄 ออกเอกสาร')+'</a>';
-    }
-    var payLine = x.payDate ? ('<br><span style="color:#8A94A6">💰 จ่าย '+esc(String(x.payDate).slice(0,10))+' · '+esc(x.payMethod||'')+
-      (x.chequeNo?' เลขที่เช็ค '+esc(x.chequeNo):'')+'</span>') : '';
-    return '<div class="tk"><div class="tk-top"><span class="tk-no">'+esc(x.no)+'</span>'+
-      '<span class="tk-badge '+poBadge(x.status)+'">'+esc(x.status)+'</span></div>'+
-      '<div class="tk-cust">🏢 '+esc(x.entityName||x.entity)+'</div>'+
-      '<div class="ex-amt"><span class="ex-t">'+esc(x.type)+'</span> · '+poMoney(x.amount)+' บาท</div>'+
-      '<div class="tk-detail">'+esc(x.detail)+(x.period?' · '+esc(x.period):'')+'</div>'+
-      '<div class="ex-meta">👤 ผู้รับเงิน: '+esc(x.payeeName||'-')+' ('+esc(x.payeeKind||'')+')'+wht+bank+payLine+
-      (x.selfApprove?'<br><span style="color:#C8730B">'+esc(x.selfApprove)+'</span>':'')+
-      (x.note?'<br>📝 '+esc(x.note):'')+
-      (links?'<br>'+links:'')+'</div></div>';
+    return poTable(title, list, mode);   // ตารางมาตรฐาน (พี่กี้เคาะ 1 ก.ย. 69) — ปุ่มรวมในเมนู ⋮
   }
 
   // ───── ฟอร์มตั้งเรื่อง / แก้ไข ─────
@@ -3201,63 +3378,19 @@
       if(!r||!r.ok){ box.innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
       var pd=r.pending||[], tp=r.topay||[], aw=r.awaitSign||[];
       SECTIONS=r.sections||SECTIONS; KIND_CO=r.companyKind||KIND_CO; EXP_TYPES=r.types||EXP_TYPES;   // หน้าอนุมัติก็ต้องมีลิสต์ประเภท (waExpenseInit ไม่ได้ถูกเรียกในหน้านี้)
+      // ตาราง 3 ก้อนตามงานที่ต้องทำ (พี่กี้เคาะ 1 ก.ย. 69: ตาราง + เมนู ⋮ แทนการ์ดปุ่มเยอะ)
       var html='';
-      html+=exSecHd('⏳ รออนุมัติ ('+pd.length+')','');
-      html+= pd.length ? pd.map(function(x){ return exApprCard(x,false); }).join('')
-                       : '<div class="card"><div class="emptybox">ไม่มีใบเบิกรออนุมัติ 🎉</div></div>';
-      html+=exSecHd('💰 อนุมัติแล้ว · รอจ่ายคืน ('+tp.length+')','margin-top:18px');
-      html+= tp.length ? tp.map(function(x){ return exApprCard(x,true); }).join('')
-                       : '<div class="card"><div class="emptybox">ไม่มีรายการค้างจ่ายคืน 😊</div></div>';
+      html+=expTable('⏳ รออนุมัติ', pd, true, 'ไม่มีใบเบิกรออนุมัติ 🎉');
+      html+=expTable('💰 อนุมัติแล้ว · รอจ่ายคืน', tp, true, 'ไม่มีรายการค้างจ่ายคืน 😊');
       // จ่ายแล้วแต่ผู้รับยังไม่เซ็น → เอกสาร + 50 ทวิ ยังไม่ออก ต้องตามลายเซ็นให้จบ
       if(aw.length){
-        html+=exSecHd('✍️ จ่ายแล้ว · รอผู้รับเงินลงนาม ('+aw.length+')','margin-top:18px');
-        html+='<div class="m-hint" style="color:#C8730B;margin:0 0 8px">ใบสำคัญรับเงินและ 50 ทวิ จะออกอัตโนมัติทันทีที่ผู้รับเซ็นเสร็จ (ระบบรวมแฟ้มใหม่ให้เอง)</div>';
-        html+=aw.map(function(x){ return exApprCard(x,true); }).join('');
+        html+='<div class="dt-sec">✍️ จ่ายแล้ว · รอผู้รับเงินลงนาม ('+aw.length+')</div>'+
+          '<div class="m-hint" style="color:#C8730B;margin:0 0 8px">ใบสำคัญรับเงินและ 50 ทวิ จะออกอัตโนมัติทันทีที่ผู้รับเซ็นเสร็จ (ระบบรวมแฟ้มใหม่ให้เอง)</div>'+
+          dtTable(expCols(true), aw.map(function(x){ return expRow(x,true); }), '');
       }
       box.innerHTML=html;
     }).catch(function(e){ if(guardView && VIEW!==guardView) return; var box=$(cid); if(box) box.innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
   }
-  function exSecHd(text,extra){
-    return '<div style="font-size:14px;font-weight:600;color:#4A5262;margin:0 2px 8px;'+(extra||'')+'">'+esc(text)+'</div>';
-  }
-  function exApprCard(x,isPaid){
-    EXP_BYNO[x.no]=x;   // ให้ปุ่มแก้ผู้รับเงินดึงข้อมูลเดิม
-    var money=(Number(x.amount)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
-    return '<div class="card" id="exa-'+esc(x.no)+'">'+
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'+
-        '<b>'+esc(x.nick||'-')+'</b><span class="tk-badge '+expBadge(x.status)+'">'+esc(x.no)+'</span></div>'+
-      '<div class="ex-amt"><span class="ex-t">'+esc(x.type)+'</span> · '+money+' บาท</div>'+
-      (x.detail?'<div class="tk-detail">'+esc(x.detail)+'</div>':'')+
-      '<div class="ex-meta">'+esc(x.createdAt||'')+
-        (x.receiptUrl?'<br><a class="ex-lk" href="'+esc(x.receiptUrl)+'" target="_blank">🔍 ดูหลักฐาน</a>':'')+
-        // ไม่มีใบเสร็จ = พี่ควรเห็นชัดก่อนกดอนุมัติ (อนุมัติแล้วระบบออกใบรับรองแทนทันที)
-        (x.docType&&x.docType.indexOf('ใบรับรอง')>=0
-          ?'<br><span style="color:#C8730B">📄 ไม่มีใบเสร็จ — อนุมัติแล้วระบบจะออกใบรับรองแทนให้</span>':'')+
-        // ไม่มีหลักฐานแนบเลย = จุดเสี่ยงทางภาษี ต้องเด้งตา
-        (x.note&&x.note.indexOf('ไม่มีหลักฐาน')>=0
-          ?'<br><span style="color:#E5484D;font-weight:600">'+esc(x.note)+'</span>':'')+
-        (x.docLink?'<br><a class="ex-lk" href="'+esc(x.docLink)+'" target="_blank">📄 '+esc(x.docNo||'เอกสาร')+'</a>':'')+
-        exRvMeta(x)+exWhtMeta(x)+bankLineHtml(x, hasWht(x)?'โอนให้ผู้รับเงิน':'โอนเข้า')+exApprFixes(x)+'</div>'+
-      (isPaid
-        ? '<div class="m-act" style="margin-top:11px">'+exRvPayGate(x)+'</div>'
-        : '<div class="m-act" style="margin-top:11px"><button class="btn btn-danger" onclick="exReject(\''+esc(x.no)+'\')">❌ ไม่อนุมัติ</button>'+
-          '<button class="btn btn-primary" onclick="'+(hasWht(x)?'exOpenWht(\''+esc(x.no)+'\')':'exDecide(\''+esc(x.no)+'\',\'approve\',\'\')')+'">✅ อนุมัติ</button></div>')+
-      '</div>';
-  }
-  /**
-   * ลิงก์แก้ใบในหน้าอนุมัติ (เฉพาะพี่) — ยอด/ภาษี/ย้อนสถานะ
-   * เงื่อนไขตรงกับด่านฝั่ง backend: จ่ายแล้วห้ามแก้ยอด · ออก 50 ทวิ แล้วห้ามแก้ภาษี · ออกเอกสารแล้วห้ามย้อน
-   */
-  function exApprFixes(x){
-    if(!IS_OWNER) return '';
-    var paid=String(x.status).indexOf('จ่ายแล้ว')>=0, out='';
-    if(!paid) out+='<br><a class="ex-lk" href="#" onclick="exEditAmount(\''+esc(x.no)+'\');return false" style="color:#1B72E8">✏️ แก้ยอด/รายละเอียด</a>';
-    if(x.payeeName && !x.whtNo) out+='<a class="ex-lk" href="#" onclick="exEditWht(\''+esc(x.no)+'\');return false" style="color:#1B72E8">🧾 แก้ภาษี</a>';
-    if(!paid && String(x.status).indexOf('อนุมัติ')>=0 && !x.docNo && !x.whtNo)
-      out+='<a class="ex-lk" href="#" onclick="exUndo(\''+esc(x.no)+'\');return false" style="color:#C8730B">↩️ ย้อนเป็นรออนุมัติ</a>';
-    return out;
-  }
-  window.exApprFixes=exApprFixes;
   function isRv(x){ return !!(x.docType && x.docType.indexOf('ใบสำคัญ')>=0); }
   /** ใบนี้ต้องหักภาษี ณ ที่จ่ายไหม = มีข้อมูลผู้รับเงิน (ใบ RV หรือใบแนบใบเสร็จที่ติ๊กหัก) */
   function hasWht(x){ return !!(x.payeeName); }
@@ -3298,24 +3431,6 @@
       (x.whtPayeeLink?' · <a class="ex-lk" href="'+esc(x.whtPayeeLink)+'" target="_blank">📤 ฉบับผู้รับเงิน (ส่งผู้รับจ้าง)</a>':'');
     s+='<br><a class="ex-lk" href="#" onclick="exEditPayee(\''+esc(x.no)+'\');return false" style="color:#1B72E8">✏️ แก้ข้อมูลผู้รับเงิน</a>';
     return s;
-  }
-  /**
-   * ใบ RV ที่ผู้รับยังไม่เซ็น = ยังไม่มีเอกสาร → ห้ามกดจ่ายคืน (จ่ายไปแล้วเอกสารจะตามเก็บยาก)
-   * ให้ปุ่มส่งลิงก์ใหม่แทน
-   */
-  function exRvPayGate(x){
-    // จ่ายไปแล้ว (อยู่ในบล็อก "รอผู้รับลงนาม") → เหลืองานเดียวคือตามลายเซ็น
-    if(String(x.status).indexOf('จ่ายแล้ว')>=0){
-      return '<button class="btn btn-ghost" style="width:100%" onclick="exRelink(\''+esc(x.no)+'\')">🔗 ส่งลิงก์เซ็นใหม่ให้ผู้รับเงิน</button>';
-    }
-    var pay='<button class="btn btn-primary" onclick="exOpenPay(\''+esc(x.no)+'\',\''+esc(x.nick||'')+'\','+(Number(x.amount)||0)+','+(isRv(x)&&!x.docNo?1:0)+')">💰 จ่ายคืนแล้ว</button>';
-    // ใบ RV ที่ผู้รับยังไม่เซ็น — เดิมล็อกไม่ให้จ่าย แต่ของจริงพี่โอนก่อนได้ (คนนอกเซ็นช้า)
-    // → ให้ทั้ง 2 ทาง: ส่งลิงก์เซ็นใหม่ หรือจ่ายเลย (โมดัลจ่ายจะเตือนว่ายังไม่มีเอกสาร)
-    if(isRv(x) && !x.docNo){
-      return '<div style="display:grid;gap:6px;width:100%">'+
-        '<button class="btn btn-ghost" onclick="exRelink(\''+esc(x.no)+'\')">🔗 ส่งลิงก์เซ็นใหม่ (รอผู้รับเงินเซ็น)</button>'+pay+'</div>';
-    }
-    return pay;
   }
   /**
    * อนุมัติใบที่มีหักภาษี ณ ที่จ่าย (ใบ RV หรือใบแนบใบเสร็จที่ติ๊กหัก)
@@ -3411,10 +3526,6 @@
       if(VIEW==='expdash') renderExpDash(); else if(VIEW==='expapprove') renderExpenseApprove(); else renderExpense();
     }).catch(function(e){ mErr(e.message); });
   }
-  /** ปุ่มแก้ประเภทค่าใช้จ่าย (เฉพาะพี่) — เล็ก ๆ ข้างประเภท ไม่แย่งที่ปุ่มอนุมัติ */
-  function exTypeBtn(no,slim){
-    return '<a class="'+(slim?'exl-lk':'ex-lk')+'" style="cursor:pointer;margin-left:6px;font-size:12px" onclick="exEditType(\''+esc(no)+'\')">✏️'+(slim?'':' ประเภท')+'</a>';
-  }
   /** ข้อมูลใบเบิกจากที่ไหนก็ได้ที่หน้านี้โหลดไว้ (การ์ดอนุมัติ / ตารางในหน้าสรุป) */
   function exFind(no){
     if(EXP_BYNO[no]) return EXP_BYNO[no];
@@ -3448,7 +3559,7 @@
       if(VIEW==='expdash') renderExpDash(); else if(VIEW==='expapprove') renderExpenseApprove(); else renderExpense();
     }).catch(function(e){ mErr(e.message); });
   }
-  window.exTypeBtn=exTypeBtn; window.exEditType=exEditType; window.exSaveType=exSaveType;
+  window.exEditType=exEditType; window.exSaveType=exSaveType;
   /** ↩️ ย้อนสถานะ (กดอนุมัติ/ไม่อนุมัติผิดใบ) — กลับไป "รออนุมัติ" แล้วตัดสินใหม่ */
   function exUndo(no){
     var x=exFind(no)||{};
@@ -3611,7 +3722,7 @@
   /** การ์ดที่ตัดสินแล้ว fade ออก แล้วโหลดหน้าใหม่ (หน้าสรุป=โหลดทั้งหน้าให้ยอดอัปเดต · อนุมัติเดี่ยว=โหลดบล็อก) */
   function exFade(no){
     var reload=(VIEW==='expdash')?renderExpDash:renderExpenseApprove;
-    var el=$('exa-'+no);
+    var el=$('exr-'+no);   // id ของแถวในตาราง (เดิมเป็นการ์ด exa-)
     if(el){ el.style.transition='opacity .3s'; el.style.opacity='0'; setTimeout(reload,320); }
     else reload();
   }
@@ -4086,21 +4197,23 @@
       return true;
     });
     arr.sort(function(a,b){ return so==='amt'?((b.amount||0)-(a.amount||0)):so==='amtA'?((a.amount||0)-(b.amount||0)):((b.ms||0)-(a.ms||0)); });
-    if(!arr.length){ body.innerHTML='<tr><td colspan="8" style="text-align:center;color:#8A94A6;padding:16px">ไม่พบรายการตามเงื่อนไข</td></tr>'; return; }
+    if(!arr.length){ body.innerHTML='<tr><td colspan="9" style="text-align:center;color:#8A94A6;padding:16px">ไม่พบรายการตามเงื่อนไข</td></tr>'; return; }
     var sum=0;
     body.innerHTML=arr.map(function(x,i){
       sum+=Number(x.amount)||0;
       var links='';
       if(x.docLink) links+='<a class="exl-lk" href="'+esc(x.docLink)+'" target="_blank">📄 '+esc(x.docNo||'เอกสาร')+'</a>';
       if(x.dossier) links+='<a class="exl-lk" href="'+esc(x.dossier)+'" target="_blank">🗂️ แฟ้ม</a>';
+      EXP_BYNO[x.no]=x;   // เมนู ⋮ กับ modal ทุกตัวดึงข้อมูลใบจากตรงนี้
       return '<tr><td>'+(i+1)+'</td><td>'+esc(x.no)+'</td>'+
         '<td><span class="tk-badge '+expBadge(x.status)+'">'+esc(x.status)+'</span></td>'+
-        '<td>'+esc(x.nick||'-')+'</td><td>'+esc(x.type||'-')+(IS_OWNER?exTypeBtn(x.no,1):'')+'</td>'+
+        '<td>'+esc(x.nick||'-')+'</td><td>'+esc(x.type||'-')+'</td>'+
         '<td class="exl-detail">'+esc(x.detail||'-')+'</td>'+
         '<td class="exl-amt">'+money(x.amount)+'</td>'+
-        '<td class="exl-doc">'+(links||'—')+'</td></tr>';
+        '<td class="exl-doc">'+(links||'—')+'</td>'+
+        dtActCell('ed-'+x.no, expRowActions(x, IS_OWNER))+'</tr>';
     }).join('')+
-    '<tr class="tax-total"><td colspan="6" style="text-align:right">รวม '+arr.length+' ใบ</td><td class="exl-amt">'+money(sum)+'</td><td></td></tr>';
+    '<tr class="tax-total"><td colspan="6" style="text-align:right">รวม '+arr.length+' ใบ</td><td class="exl-amt">'+money(sum)+'</td><td colspan="2"></td></tr>';
   }
   window.edRender=edRender;
   function renderExpDash(){
@@ -4151,7 +4264,7 @@
           '<input id="edQ" class="ed-q" placeholder="🔍 ค้นหา เลขที่ / ผู้เบิก / รายละเอียด" oninput="edRender()">'+
           '</div>';
         h+='<div class="tax-tbl-wrap"><table class="tax-tbl exl-tbl"><thead><tr>'+
-          '<th>#</th><th>เลขที่</th><th>สถานะ</th><th>ผู้เบิก</th><th>ประเภท</th><th>รายละเอียด</th><th>ยอด (บาท)</th><th>เอกสาร</th></tr></thead>'+
+          '<th>#</th><th>เลขที่</th><th>สถานะ</th><th>ผู้เบิก</th><th>ประเภท</th><th>รายละเอียด</th><th class="ta-r">ยอด (บาท)</th><th>เอกสาร</th><th></th></tr></thead>'+
           '<tbody id="edBody"></tbody></table></div>';
       } else { EDLIST=[]; h+='<div class="card"><div class="emptybox">เดือน '+esc(ymThai(r.ym))+' ยังไม่มีรายการ</div></div>'; }
       $('main').innerHTML=h;
