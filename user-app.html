@@ -599,6 +599,10 @@
       <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span id="navExpDashLabel">สรุปค่าใช้จ่าย</span></button>
     <button class="nav-btn" data-view="reimb" aria-label="ตั้งเบิกลูกค้า" id="navReimb" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6Z"/><path d="M14 3v5h5M9 12h6M9 16h4"/></svg><span>ตั้งเบิกลูกค้า</span></button>
+    <button class="nav-btn" data-view="bizdash" aria-label="ภาพรวมธุรกิจ" id="navBizDash" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>ภาพรวมธุรกิจ</span></button>
+    <button class="nav-btn" data-view="sales" aria-label="รายรับ" id="navSales" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M4.5 5.5h15v13h-15z"/><path d="M8 9.5h8M8 13h8M8 16h4"/></svg><span>รายรับ</span></button>
     <button class="nav-btn" data-view="payout" aria-label="จ่ายออก" id="navPayout" style="display:none">
       <svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6.5 12h.01M17.5 12h.01"/></svg><span>จ่ายออก</span></button>
     <button class="nav-btn" data-view="clock" aria-label="ลงเวลา">
@@ -651,7 +655,7 @@
     home:['🏠','ภาพรวม'], clock:['🕐','ลงเวลา'],
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
     expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติเบิกจ่าย'],
-    expdash:['📊','สรุปค่าใช้จ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','จ่ายออก'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📊','รายงานจ่ายออก']
+    expdash:['📊','สรุปค่าใช้จ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','จ่ายออก'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📊','รายงานจ่ายออก'], sales:['💰','รายรับ'], bizdash:['📊','ภาพรวมธุรกิจ']
   };
   var PROJECTS=[], COMPANIES=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ) · COMPANIES=บริษัท auto (หน้าจัดการ)
   var ALL_TASKS=[], PJ_SEL='', MB_STATUSES=[];   // มุมมอง Project (dropdown เลือก · แยก 6 สถานะ + %) · MB_STATUSES=รายการสถานะ (ฟอร์มแก้งานมือถือ)
@@ -715,7 +719,7 @@
     if(gi) $('tbIcon').innerHTML=gi; else $('tbIcon').textContent=meta[0];
     $('tbTitle').textContent=meta[1];
     mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
-    ({ home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport }[v] || soon)();
+    ({ home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, bizdash:renderBizDash }[v] || soon)();
   }
 
   // ───── มือถือ: เมนูกลุ่ม (ล่าง) + แท็บย่อย (บน) · คอมใช้ sidebar เดิม ไม่เกี่ยว ─────
@@ -727,7 +731,7 @@
     { key:'home', icon:'🏠', label:'ภาพรวม', views:['home'] },
     { key:'work', icon:'📊', label:'งาน',    views:['projects','mytasks','review','senddoc','appt','announce','trash'] },
     { key:'hr',   icon:'👥', label:'HR',     views:['approve','otapprove','hrreport'] },
-    { key:'fin',  icon:'💰', label:'การเงิน', views:['expdash','reimb','payout','poreport','finreport','taxdoc'] },   /* payout = จ่ายออกของบริษัท (พี่คนเดียว) */   /* taxdoc ซ่อนไว้ก่อน — เปิดตอน ภ.ง.ด. v2 */
+    { key:'fin',  icon:'💰', label:'การเงิน', views:['bizdash','sales','expdash','reimb','payout','poreport','finreport','taxdoc'] },   /* payout = จ่ายออกของบริษัท (พี่คนเดียว) */   /* taxdoc ซ่อนไว้ก่อน — เปิดตอน ภ.ง.ด. v2 */
     { key:'me',   icon:'🙋', label:'ส่วนตัว', views:['clock','leave','ot','expense','docs'] }
   ];
   // ไอคอนหัวกลุ่มบน sidebar คอม = SVG เส้นสีเดียว (พี่กี้ขอ 30 ก.ค.: เรียบ ๆ ไม่สีสัน)
@@ -4142,6 +4146,338 @@
   }
   window.exSetProof=exSetProof; window.exSetProofDo=exSetProofDo;
 
+  // ═══════════ VIEW: 💰 รายรับ (ฝั่งขาย) + 📊 ภาพรวมธุรกิจ — พี่/HR เท่านั้น ═══════════
+  // spec: docs/spec-sales-revenue.md · ใช้ตาราง + เมนู ⋮ ตามมาตรฐาน (spec-finance-table-ui.md)
+  var SALES = null, SALES_ITEMS = [], SALES_KIND_F = '';
+
+  function renderSales(){
+    skel();
+    jsonp({action:'waSalesInit',uid:UID,kind:SALES_KIND_F}).then(function(r){
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      SALES=r;
+      var h='<div class="section-h">💰 รายรับ (ใบเสนอราคา · ใบแจ้งหนี้ · ใบเสร็จ)</div>';
+      // ยังไม่มีทะเบียน = ทำอะไรไม่ได้ → บอกทางออกให้ชัดก่อนเลย
+      if(!r.customers.length || !r.services.length){
+        h+='<div class="m-hint" style="color:#C8730B">⚠️ ยังตั้งทะเบียนไม่ครบ: '+
+          (!r.customers.length?'<b>ทะเบียนลูกค้า</b>ว่าง ':'')+(!r.services.length?'<b>ทะเบียนบริการ</b>ว่าง':'')+
+          '<br>เพิ่มได้ที่ปุ่มด้านล่าง หรือกดเมนูในชีต ⚙️ → 👥 ดึงลูกค้าจากกลุ่ม LINE เข้าทะเบียน</div>';
+      }
+      if(r.missingCustomers && r.missingCustomers.length){
+        h+='<div class="m-hint">👥 ลูกค้าที่มีกลุ่ม LINE แต่ยังไม่อยู่ในทะเบียน '+r.missingCustomers.length+' ราย: '+
+          esc(r.missingCustomers.slice(0,5).join(', '))+(r.missingCustomers.length>5?' …':'')+'</div>';
+      }
+      h+='<div class="tax-acts" style="margin:0 0 12px">'+
+        '<button class="btn btn-primary" onclick="salesNew()">➕ ออกเอกสารใหม่</button>'+
+        '<button class="btn btn-ghost" onclick="svcManage()">🧰 ทะเบียนบริการ ('+r.services.length+')</button>'+
+        '<button class="btn btn-ghost" onclick="custManage()">👥 ทะเบียนลูกค้า ('+r.customers.length+')</button></div>';
+      h+='<div class="ed-filter"><select id="skf" onchange="salesFilter(this.value)">'+
+        '<option value="">ชนิด: ทั้งหมด</option>'+
+        r.kinds.map(function(k){ return '<option value="'+esc(k.key)+'"'+(k.key===SALES_KIND_F?' selected':'')+'>'+esc(k.label)+'</option>'; }).join('')+
+        '</select></div>';
+      h+='<div id="salesTbl"></div>';
+      $('main').innerHTML=h;
+      paintSalesTable(r.docs||[]);
+    }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
+  }
+  function salesFilter(v){ SALES_KIND_F=v; renderSales(); }
+
+  /** เมนู ⋮ ของเอกสารขาย — เงื่อนไขตรงกับด่าน backend (ใบรับเงินแล้วยกเลิกไม่ได้) */
+  function salesRowActions(d){
+    var q="'"+String(d.no).replace(/'/g,"\\'")+"'";
+    var a=[], canceled=String(d.status).indexOf('ยกเลิก')>=0;
+    if(d.pdfLink) a.push({key:'pdf',label:'📄 เปิดเอกสาร',href:d.pdfLink});
+    if(a.length) a.push({sep:true});
+    if(!canceled){
+      a.push({key:'send',label:'📤 ส่งเข้ากลุ่มลูกค้า',call:'salesSend('+q+')'});
+      a.push({key:'repdf',label:(d.pdfLink?'🔄 ออกไฟล์ใหม่':'📄 ออกไฟล์ PDF'),call:'salesPdf('+q+')'});
+      a.push({sep:true});
+      if(!(d.paidAmt>0)) a.push({key:'cancel',label:'🚫 ยกเลิกเอกสาร',call:'salesCancel('+q+')',danger:true});
+    }
+    return a;
+  }
+  function paintSalesTable(docs){
+    var box=$('salesTbl'); if(!box) return;
+    if(!docs.length){ box.innerHTML='<div class="card"><div class="emptybox">ยังไม่มีเอกสารขาย 😊</div></div>'; return; }
+    var cols=[{label:'เลขที่',w:'150px'},{label:'วันที่',w:'92px'},{label:'ลูกค้า',w:'160px'},
+      {label:'เรื่อง'},{label:'ยอดรวม',cls:'ta-r',w:'112px'},{label:'คงค้าง',cls:'ta-r',w:'106px'},
+      {label:'สถานะ',w:'116px'},{label:'ครบกำหนด',w:'96px'},{label:'',w:'46px'}];
+    var rows=docs.map(function(d){
+      SALES_BYNO[d.no]=d;
+      var due=d.dueDate?fmtDate(d.dueDate):'—';
+      var overdue=(d.balance>0 && d.dueDate && new Date(d.dueDate)<new Date());
+      return '<tr>'+
+        '<td>'+esc(d.no)+'</td>'+
+        '<td>'+esc(d.docDate?fmtDate(d.docDate):'-')+'</td>'+
+        '<td>'+esc(d.customer||'-')+'</td>'+
+        '<td class="dt-detail">'+esc(d.title||'-')+(d.vat>0?'<br><span style="color:#8A94A6;font-size:11.5px">VAT '+money(d.vat)+'</span>':'')+'</td>'+
+        '<td class="dt-amt">'+money(d.total)+'</td>'+
+        '<td class="dt-amt">'+(d.balance>0?money(d.balance):'—')+'</td>'+
+        '<td><span class="tk-badge '+salesBadge(d.status)+'">'+esc(d.status)+'</span></td>'+
+        '<td'+(overdue?' style="color:#DC2626;font-weight:600"':'')+'>'+esc(due)+(overdue?' ⚠️':'')+'</td>'+
+        dtActCell('sl-'+d.no, salesRowActions(d))+'</tr>';
+    });
+    var sum=docs.reduce(function(a,d){ return a+(Number(d.total)||0); },0);
+    var total=docs.length>1?'<tr class="tax-total"><td colspan="4" style="text-align:right">รวม '+docs.length+' ใบ</td>'+
+      '<td class="dt-amt">'+money(sum)+'</td><td colspan="4"></td></tr>':'';
+    box.innerHTML=dtTable(cols, rows, total);
+  }
+  var SALES_BYNO={};
+  function salesBadge(s){ s=String(s||'');
+    if(s.indexOf('ยกเลิก')>=0) return 'b-cancel';
+    if(s.indexOf('รับครบ')>=0) return 'b-done';
+    if(s.indexOf('ค้างรับ')>=0||s.indexOf('บางส่วน')>=0) return 'b-doing';
+    return 'b-new'; }
+  function fmtDate(d){ try{ var x=new Date(d); return ('0'+x.getDate()).slice(-2)+'/'+('0'+(x.getMonth()+1)).slice(-2)+'/'+x.getFullYear(); }catch(e){ return ''; } }
+
+  /** ฟอร์มออกเอกสารใหม่ */
+  function salesNew(){
+    if(!SALES) return;
+    if(!SALES.customers.length){ toast('เพิ่มลูกค้าในทะเบียนก่อนค่ะ'); custManage(); return; }
+    SALES_ITEMS=[{}];
+    var kinds=SALES.kinds.map(function(k){ return '<option value="'+esc(k.key)+'">'+esc(k.label)+'</option>'; }).join('');
+    var ents=SALES.entities.map(function(e){ return '<option value="'+esc(e.code)+'">'+esc(e.name)+(e.vatReg?' (จด VAT)':'')+'</option>'; }).join('');
+    var custs=SALES.customers.map(function(c){ return '<option value="'+esc(c.name)+'">'+esc(c.name)+'</option>'; }).join('');
+    modal('<h3>➕ ออกเอกสารขาย</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="fld"><label>ชนิดเอกสาร</label><select id="slKind" onchange="salesPreview()">'+kinds+'</select></div>'+
+      '<div class="fld"><label>ออกในนามบริษัท</label><select id="slEnt" onchange="salesPreview()">'+ents+'</select></div>'+
+      '<div class="fld"><label>ลูกค้า</label><select id="slCust">'+custs+'</select></div>'+
+      '<div class="fld"><label>วันที่เอกสาร</label><input id="slDate" type="date" value="'+todayISO()+'"></div>'+
+      '<div class="fld"><label>เรื่อง</label><input id="slTitle" placeholder="เช่น ค่าบริการบัญชี ก.ย. 2569"></div>'+
+      '<div class="fld"><label>รายการ</label><div id="slItems"></div>'+
+        '<button class="btn btn-ghost" style="width:100%;margin-top:6px" onclick="salesAddItem()">➕ เพิ่มบรรทัด</button></div>'+
+      '<div class="fld"><label>ส่วนลดท้ายบิล (บาท)</label><input id="slDisc" inputmode="decimal" value="0" oninput="salesPreview()"></div>'+
+      '<div class="fld"><label>หมายเหตุ</label><textarea id="slNote" placeholder="เงื่อนไขการชำระเงิน ฯลฯ"></textarea></div>'+
+      '<div id="slSum" class="m-hint"></div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" onclick="salesSave()">ออกเอกสาร</button></div>');
+    paintSalesItems();
+  }
+  function salesAddItem(){ salesReadItems(); SALES_ITEMS.push({}); paintSalesItems(); }
+  function salesDelItem(i){ salesReadItems(); SALES_ITEMS.splice(i,1); if(!SALES_ITEMS.length) SALES_ITEMS=[{}]; paintSalesItems(); }
+  /** อ่านค่าที่พิมพ์ไว้ก่อน re-render (ไม่งั้นพิมพ์แล้วหายตอนเพิ่มบรรทัด) */
+  function salesReadItems(){
+    SALES_ITEMS=SALES_ITEMS.map(function(it,i){
+      return {
+        service:(($('si'+i)||{}).value)||'',
+        detail:(($('sd'+i)||{}).value)||'',
+        qty:(($('sq'+i)||{}).value)||'',
+        price:(($('sp'+i)||{}).value)||''
+      };
+    });
+  }
+  function paintSalesItems(){
+    var box=$('slItems'); if(!box) return;
+    var opts='<option value="">— พิมพ์เอง —</option>'+SALES.services.map(function(s){
+      return '<option value="'+esc(s.code)+'">'+esc(s.name)+' ('+money(s.price)+')</option>'; }).join('');
+    box.innerHTML=SALES_ITEMS.map(function(it,i){
+      return '<div style="border:1px solid var(--line);border-radius:10px;padding:8px;margin-bottom:6px">'+
+        '<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">'+
+          '<select id="si'+i+'" style="flex:1" onchange="salesPickService('+i+')">'+opts+'</select>'+
+          (SALES_ITEMS.length>1?'<button class="btn btn-ghost" style="width:auto;padding:6px 10px" onclick="salesDelItem('+i+')">✕</button>':'')+
+        '</div>'+
+        '<input id="sd'+i+'" placeholder="รายละเอียด" value="'+esc(it.detail||'')+'" style="margin-bottom:6px">'+
+        '<div style="display:flex;gap:6px">'+
+          '<input id="sq'+i+'" inputmode="decimal" placeholder="จำนวน" value="'+esc(it.qty||'1')+'" oninput="salesPreview()" style="flex:1">'+
+          '<input id="sp'+i+'" inputmode="decimal" placeholder="ราคา/หน่วย" value="'+esc(it.price||'')+'" oninput="salesPreview()" style="flex:1">'+
+        '</div></div>';
+    }).join('');
+    SALES_ITEMS.forEach(function(it,i){ var el=$('si'+i); if(el&&it.service) el.value=it.service; });
+    salesPreview();
+  }
+  /** เลือกบริการ → เติมชื่อ/ราคาให้ (ยังแก้ได้ · ค่าที่บันทึกคือค่าที่เห็นตอนนี้ = snapshot) */
+  function salesPickService(i){
+    var code=($('si'+i)||{}).value;
+    var s=null; SALES.services.forEach(function(x){ if(x.code===code) s=x; });
+    if(s){ if($('sd'+i)) $('sd'+i).value=s.name; if($('sp'+i)) $('sp'+i).value=s.price; }
+    salesPreview();
+  }
+  /** พรีวิวยอด — คิดแบบเดียวกับ backend (VAT ตามบริษัทที่เลือก) */
+  function salesPreview(){
+    var box=$('slSum'); if(!box||!SALES) return;
+    var ent=null, code=($('slEnt')||{}).value;
+    SALES.entities.forEach(function(e){ if(e.code===code) ent=e; });
+    var sub=0;
+    SALES_ITEMS.forEach(function(it,i){
+      var q=Number((($('sq'+i)||{}).value||'0').replace(/,/g,''))||0;
+      var p=Number((($('sp'+i)||{}).value||'0').replace(/,/g,''))||0;
+      sub+=q*p;
+    });
+    var disc=Number((($('slDisc')||{}).value||'0').replace(/,/g,''))||0;
+    if(disc>sub) disc=sub;
+    var base=sub-disc;
+    var vat=(ent&&ent.vatReg)?Math.round(base*SALES.vatRate)/100:0;
+    box.innerHTML='รวมรายการ <b>'+money(sub)+'</b>'+(disc>0?' · ส่วนลด '+money(disc):'')+
+      (ent&&ent.vatReg?' · VAT '+SALES.vatRate+'% '+money(vat):' · ไม่มี VAT (บริษัทไม่ได้จด)')+
+      '<br>ยอดรวมทั้งสิ้น <b style="font-size:15px">'+money(base+vat)+'</b> บาท';
+  }
+  function salesSave(){
+    salesReadItems();
+    var items=SALES_ITEMS.filter(function(it){ return (it.detail||'').trim() || it.service; });
+    if(!items.length){ mErr('ใส่รายการอย่างน้อย 1 บรรทัดค่ะ'); return; }
+    var p={action:'waSalesCreate',uid:UID,
+      kind:($('slKind')||{}).value, entity:($('slEnt')||{}).value, customer:($('slCust')||{}).value,
+      docDate:($('slDate')||{}).value, title:(($('slTitle')||{}).value||'').trim(),
+      note:(($('slNote')||{}).value||'').trim(), discount:($('slDisc')||{}).value||'0',
+      items:JSON.stringify(items)};
+    callBusy('กำลังออกเอกสาร…', jsonpPost(p), 'ออกเอกสารแล้ว').then(function(r){
+      if(!r||!r.ok){ mErr((r&&r.error)||'ออกเอกสารไม่สำเร็จ'); return; }
+      closeModal();
+      toast('✅ '+r.no+' · '+money(r.total)+' บาท'+(r.warn?' (⚠️ '+r.warn+')':''));
+      renderSales();
+    }).catch(function(e){ mErr(e.message); });
+  }
+  function salesSend(no){
+    callBusy('กำลังส่งเข้ากลุ่มลูกค้า…', jsonp({action:'waSalesSend',uid:UID,no:no}), 'ส่งแล้ว').then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'ส่งไม่สำเร็จ'); return; }
+      toast('📤 ส่ง '+no+' เข้ากลุ่ม '+(r.customer||'')+' แล้ว'); renderSales();
+    }).catch(function(e){ toast(e.message); });
+  }
+  function salesPdf(no){
+    callBusy('กำลังออกไฟล์…', jsonp({action:'waSalesPdf',uid:UID,no:no}), 'ออกไฟล์แล้ว').then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'ออกไฟล์ไม่สำเร็จ'); return; }
+      toast('📄 ออกไฟล์ใหม่แล้ว'); renderSales();
+    }).catch(function(e){ toast(e.message); });
+  }
+  function salesCancel(no){
+    modal('<h3>🚫 ยกเลิกเอกสาร</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">ยกเลิก <b>'+esc(no)+'</b> — เอกสารจะไม่ถูกนับในรายงาน<br>'+
+      '<span style="color:#C8730B">ใบที่รับเงินมาแล้วยกเลิกไม่ได้ (ต้องออกใบลดหนี้แทน)</span></div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button>'+
+      '<button class="btn btn-danger" onclick="salesCancelDo(\''+esc(no)+'\')">ยกเลิกเอกสาร</button></div>');
+  }
+  function salesCancelDo(no){
+    callBusy('กำลังยกเลิก…', jsonp({action:'waSalesCancel',uid:UID,no:no}), 'ยกเลิกแล้ว').then(function(r){
+      if(!r||!r.ok){ mErr((r&&r.error)||'ยกเลิกไม่สำเร็จ'); return; }
+      closeModal(); toast('🚫 ยกเลิก '+no+' แล้ว'); renderSales();
+    }).catch(function(e){ mErr(e.message); });
+  }
+
+  /** 🧰 ทะเบียนบริการ */
+  function svcManage(){
+    var rows=(SALES.services||[]).map(function(s){
+      return '<tr><td>'+esc(s.code)+'</td><td>'+esc(s.name)+'</td><td>'+esc(s.unit||'-')+'</td>'+
+        '<td class="ta-r">'+money(s.price)+'</td></tr>'; }).join('');
+    modal('<h3>🧰 ทะเบียนบริการ</h3><div id="mErr" class="m-err hidden"></div>'+
+      (rows?'<div class="tax-tbl-wrap" style="max-height:200px;overflow-y:auto"><table class="tax-tbl">'+
+        '<thead><tr><th>รหัส</th><th>ชื่อบริการ</th><th>หน่วย</th><th class="ta-r">ราคา</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
+        :'<div class="m-hint">ยังไม่มีบริการในทะเบียน</div>')+
+      '<div class="fld" style="margin-top:12px"><label>ชื่อบริการใหม่</label><input id="svName" placeholder="เช่น ทำบัญชีรายเดือน"></div>'+
+      '<div style="display:flex;gap:6px">'+
+        '<div class="fld" style="flex:1"><label>หน่วย</label><input id="svUnit" placeholder="เดือน / งาน"></div>'+
+        '<div class="fld" style="flex:1"><label>ราคา</label><input id="svPrice" inputmode="decimal" placeholder="3500"></div></div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button>'+
+      '<button class="btn btn-primary" onclick="svcSave()">เพิ่มบริการ</button></div>');
+  }
+  function svcSave(){
+    var n=(($('svName')||{}).value||'').trim();
+    if(!n){ mErr('กรอกชื่อบริการก่อนค่ะ'); return; }
+    callBusy('กำลังบันทึก…', jsonp({action:'waServiceSave',uid:UID,name:n,
+      unit:($('svUnit')||{}).value||'',price:($('svPrice')||{}).value||'0'}), 'บันทึกแล้ว').then(function(r){
+      if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+      closeModal(); toast('✅ เพิ่ม '+r.code+' แล้ว'); renderSales();
+    }).catch(function(e){ mErr(e.message); });
+  }
+
+  /** 👥 ทะเบียนลูกค้า — เลขผู้เสียภาษี + ที่อยู่ ต้องมีก่อนออกใบกำกับ */
+  function custManage(){
+    var miss=(SALES.missingCustomers||[]);
+    var opts=miss.length?('<div class="fld"><label>ลูกค้าที่มีกลุ่ม LINE แล้ว (เลือกเพื่อเติมชื่อ)</label>'+
+      '<select onchange="if(this.value)$(\'cuName\').value=this.value"><option value="">— เลือก —</option>'+
+      miss.map(function(n){ return '<option value="'+esc(n)+'">'+esc(n)+'</option>'; }).join('')+'</select></div>'):'';
+    var rows=(SALES.customers||[]).map(function(c){
+      return '<tr><td>'+esc(c.name)+'</td><td>'+esc(c.taxId||'—')+'</td><td>'+c.creditDays+' วัน</td></tr>'; }).join('');
+    modal('<h3>👥 ทะเบียนลูกค้า</h3><div id="mErr" class="m-err hidden"></div>'+
+      (rows?'<div class="tax-tbl-wrap" style="max-height:170px;overflow-y:auto"><table class="tax-tbl">'+
+        '<thead><tr><th>ลูกค้า</th><th>เลขผู้เสียภาษี</th><th>เครดิต</th></tr></thead><tbody>'+rows+'</tbody></table></div>':'')+
+      opts+
+      '<div class="fld"><label>ชื่อลูกค้า (ต้องตรงกับชีตกลุ่มลูกค้า)</label><input id="cuName"></div>'+
+      '<div class="fld"><label>ชื่อเต็มตามหนังสือรับรอง (ขึ้นบนเอกสาร)</label><input id="cuLegal"></div>'+
+      '<div class="fld"><label>เลขประจำตัวผู้เสียภาษี (13 หลัก)</label><input id="cuTax" inputmode="numeric"></div>'+
+      '<div class="fld"><label>ที่อยู่ (สำหรับใบกำกับภาษี)</label><textarea id="cuAddr"></textarea></div>'+
+      '<div class="fld"><label>เครดิตเทอม (วัน)</label><input id="cuCredit" inputmode="numeric" value="'+(SALES.creditDays||15)+'"></div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button>'+
+      '<button class="btn btn-primary" onclick="custSave()">บันทึกลูกค้า</button></div>');
+  }
+  function custSave(){
+    var n=(($('cuName')||{}).value||'').trim();
+    if(!n){ mErr('กรอกชื่อลูกค้าก่อนค่ะ'); return; }
+    callBusy('กำลังบันทึก…', jsonpPost({action:'waCustomerSave',uid:UID,name:n,
+      legalName:($('cuLegal')||{}).value||'', taxId:($('cuTax')||{}).value||'',
+      address:($('cuAddr')||{}).value||'', creditDays:($('cuCredit')||{}).value||''}), 'บันทึกแล้ว').then(function(r){
+      if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+      closeModal(); toast('✅ บันทึก '+r.name+' แล้ว'); renderSales();
+    }).catch(function(e){ mErr(e.message); });
+  }
+  window.renderSales=renderSales; window.salesFilter=salesFilter; window.salesNew=salesNew;
+  window.salesAddItem=salesAddItem; window.salesDelItem=salesDelItem; window.salesPickService=salesPickService;
+  window.salesPreview=salesPreview; window.salesSave=salesSave; window.salesSend=salesSend;
+  window.salesPdf=salesPdf; window.salesCancel=salesCancel; window.salesCancelDo=salesCancelDo;
+  window.svcManage=svcManage; window.svcSave=svcSave; window.custManage=custManage; window.custSave=custSave;
+
+  // ═══════════ VIEW: 📊 ภาพรวมธุรกิจ (พี่กี้ขอตามคอนเซปต์ SMEAccFlow) ═══════════
+  var BIZ_YM='';
+  function renderBizDash(){
+    skel();
+    jsonp({action:'waBizDash',uid:UID,ym:BIZ_YM}).then(function(r){
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      BIZ_YM=r.ym;
+      var h='<div class="hm-hero"><h2>📊 ภาพรวมธุรกิจ</h2><span class="hp">'+esc(r.monthThai)+'</span></div>';
+      h+='<div class="ds-sel"><select id="bizYm" onchange="bizSetYm(this.value)">'+
+        r.months.slice().reverse().map(function(m){
+          return '<option value="'+esc(m)+'"'+(m===r.ym?' selected':'')+'>'+esc(ymThai(m))+'</option>'; }).join('')+
+        '</select></div>';
+      // ── การ์ดตัวเลขหลัก ──
+      h+='<div class="ds-grid">'+
+        statCard('กำไรเบื้องต้น', money(r.profit), 'รายได้ − รายจ่ายเดือนนี้', r.profit<0?'ds-warn':'')+
+        statCard('รายได้ (ออกบิล)', money(r.income), 'รับเงินแล้ว '+money(r.incomeReceived))+
+        statCard('รายจ่ายรวม', money(r.outgo), 'เบิกพนักงาน '+money(r.expense.amt)+' · จ่ายออก '+money(r.payout.amt))+
+        statCard('ภาษีขาย (VAT)', money(r.vatSale), r.vatBuyReady?'':'ยังไม่มีข้อมูลภาษีซื้อ')+
+        '</div>';
+      // ── ลูกหนี้ ──
+      h+='<div class="ds-grid" style="margin-top:2px">'+
+        statCard('ค้างรับทั้งหมด', money(r.outstanding.amt), r.outstanding.n+' ใบ','ds-wait')+
+        statCard('เกินกำหนดชำระ', money(r.overdue.amt), r.overdue.n+' ใบ', r.overdue.n?'ds-warn':'')+
+        '</div>';
+      // ── งานที่ต้องทำ ──
+      var todo=[['⏳ ใบเบิกรออนุมัติ', r.todo.pendingExpense, 'expapprove'],
+                ['⏳ ใบจ่ายออกรออนุมัติ', r.todo.pendingPayout, 'payout'],
+                ['💸 อนุมัติแล้วยังไม่โอน', r.todo.unpaidPayout, 'payout'],
+                ['⚠️ ใบแจ้งหนี้เกินกำหนด', r.todo.overdueInvoice, 'sales']];
+      h+='<div class="card"><div class="ds-h">งานที่ต้องทำ</div>'+
+        todo.map(function(x){
+          return '<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);cursor:pointer" onclick="switchView(\''+x[2]+'\')">'+
+            '<span>'+esc(x[0])+'</span><b'+(x[1].n?' style="color:#C8730B"':'')+'>'+x[1].n+' ใบ · '+money(x[1].amt)+'</b></div>';
+        }).join('')+'</div>';
+      // ── กราฟ 6 เดือน (รายรับ vs รายจ่าย · CSS ล้วน ไม่พึ่งไลบรารีนอก) ──
+      var mx=1; r.trend.forEach(function(x){ mx=Math.max(mx,x.income,x.outgo); });
+      h+='<div class="card"><div class="ds-h">รายรับ vs รายจ่าย 6 เดือน</div><div class="ds-bars">'+
+        r.trend.map(function(x){
+          var hi=Math.round((x.income/mx)*90), ho=Math.round((x.outgo/mx)*90);
+          return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px">'+
+            '<div style="display:flex;gap:2px;align-items:flex-end;height:96px">'+
+              '<div title="รายรับ '+money(x.income)+'" style="width:14px;height:'+Math.max(hi,2)+'px;background:#1E9E5A;border-radius:3px 3px 0 0"></div>'+
+              '<div title="รายจ่าย '+money(x.outgo)+'" style="width:14px;height:'+Math.max(ho,2)+'px;background:#E5484D;border-radius:3px 3px 0 0"></div>'+
+            '</div><span style="font-size:11px;color:#8A94A6">'+esc(ymShort(x.ym))+'</span></div>';
+        }).join('')+'</div>'+
+        '<div style="font-size:12px;color:#8A94A6;margin-top:6px"><span style="color:#1E9E5A">■</span> รายรับ · <span style="color:#E5484D">■</span> รายจ่าย</div></div>';
+      // ── เอกสารขายล่าสุด ──
+      if(r.recent.length){
+        h+='<div class="card"><div class="ds-h">เอกสารขายล่าสุด</div>'+
+          r.recent.map(function(d){
+            return '<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)">'+
+              '<span>'+(d.link?'<a class="ex-lk" href="'+esc(d.link)+'" target="_blank">'+esc(d.no)+'</a>':esc(d.no))+
+              ' · '+esc(d.customer)+'<br><span style="font-size:11.5px;color:#8A94A6">'+esc(d.date)+' · '+esc(d.status)+'</span></span>'+
+              '<b>'+money(d.total)+'</b></div>';
+          }).join('')+'</div>';
+      } else {
+        h+='<div class="card"><div class="emptybox">ยังไม่มีเอกสารขาย — กด 💰 รายรับ เพื่อออกใบแรก</div></div>';
+      }
+      $('main').innerHTML=h;
+    }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
+  }
+  function bizSetYm(v){ BIZ_YM=v; renderBizDash(); }
+  window.renderBizDash=renderBizDash; window.bizSetYm=bizSetYm;
+
   // ═══════════ VIEW: 📊 สรุปค่าใช้จ่าย + 🧾 ตั้งเบิกลูกค้า (dashboard) ═══════════
   // สิทธิ์: พนักงานเห็นของตัวเอง · พี่เห็นทั้งบริษัท (backend กรองให้ · หน้าจอแค่แสดงตามที่ได้มา)
   var DASH_YM='';
@@ -5108,6 +5444,8 @@
         var noa=$('navOtAppr'); if(noa) noa.style.display='';              // แท็บอนุมัติ OT = เฉพาะพี่/HR
         var nhr=$('navHrReport'); if(nhr) nhr.style.display='';            // รายงาน HR = เฉพาะพี่/HR (ข้อมูลทั้งทีม)
         var npo=$('navPayout'); if(npo) npo.style.display='';               // 💵 จ่ายออก = พี่คนเดียว (รวมข้อมูลบริษัทลูกค้า)
+        var nbd=$('navBizDash'); if(nbd) nbd.style.display='';             // 📊 ภาพรวมธุรกิจ = พี่/HR
+        var nsl=$('navSales'); if(nsl) nsl.style.display='';               // 💰 รายรับ (ฝั่งขาย) = พี่/HR
         var npr=$('navPoReport'); if(npr) npr.style.display=''; }           // 📊 รายงานจ่ายออก = พี่คนเดียว (backend poGate_ กันซ้ำอีกชั้น)
       // รายงานการเงินรวม = พี่ + HR ที่ตั้งใน Script Property (backend ตัดสิน ไม่ผูกกับ IS_OWNER)
       CAN_FIN=!!r.canFinance;
