@@ -2298,7 +2298,7 @@
       return '<div class="tk"><div class="tk-top"><span class="tk-no">'+esc(x.no)+'</span>'+
         '<span class="tk-badge '+expBadge(x.status)+'">'+esc(x.status)+'</span></div>'+
         (IS_OWNER&&x.nick?'<div class="tk-cust">👤 '+esc(x.nick)+'</div>':'')+
-        '<div class="ex-amt"><span class="ex-t">'+esc(x.type)+'</span> · '+money+' บาท</div>'+
+        '<div class="ex-amt"><span class="ex-t">'+esc(x.type)+'</span>'+(IS_OWNER?exTypeBtn(x.no):'')+' · '+money+' บาท</div>'+
         (x.detail?'<div class="tk-detail">'+esc(x.detail)+'</div>':'')+
         '<div class="ex-meta">'+esc(x.createdAt||'')+bankHtml+(links?'<br>'+links:'')+'</div></div>';
     }).join('');
@@ -3188,7 +3188,7 @@
       var box=$(cid); if(!box) return;   // คอนเทนเนอร์หายไปแล้ว (เปลี่ยนหน้า)
       if(!r||!r.ok){ box.innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
       var pd=r.pending||[], tp=r.topay||[], aw=r.awaitSign||[];
-      SECTIONS=r.sections||SECTIONS; KIND_CO=r.companyKind||KIND_CO;
+      SECTIONS=r.sections||SECTIONS; KIND_CO=r.companyKind||KIND_CO; EXTYPES=r.types||EXTYPES;
       var html='';
       html+=exSecHd('⏳ รออนุมัติ ('+pd.length+')','');
       html+= pd.length ? pd.map(function(x){ return exApprCard(x,false); }).join('')
@@ -3320,6 +3320,7 @@
     EX_WHT_KIND=kind; exSectChange();
   }
   var SECTIONS=[], KIND_CO='นิติบุคคล', EX_WHT_KIND='บุคคลธรรมดา';
+  var EXTYPES=[];   // ประเภทค่าใช้จ่าย (มาจาก backend · ใช้ทำ dropdown แก้ประเภทที่พนักงานเลือกผิด)
   /** เปลี่ยนมาตรา → เติมอัตรา default (ถ้าพี่ยังไม่แก้เอง) + อัปเดตบรรทัด "จะเข้าแบบไหน" */
   function exSectChange(rateEdited){
     var sc=($('exSect')||{}).value, rs=$('exWht'), note=$('exFormNote');
@@ -3385,6 +3386,44 @@
       if(VIEW==='expdash') renderExpDash(); else if(VIEW==='expapprove') renderExpenseApprove(); else renderExpense();
     }).catch(function(e){ mErr(e.message); });
   }
+  /** ปุ่มแก้ประเภทค่าใช้จ่าย (เฉพาะพี่) — เล็ก ๆ ข้างประเภท ไม่แย่งที่ปุ่มอนุมัติ */
+  function exTypeBtn(no,slim){
+    return '<a class="'+(slim?'exl-lk':'ex-lk')+'" style="cursor:pointer;margin-left:6px;font-size:12px" onclick="exEditType(\''+esc(no)+'\')">✏️'+(slim?'':' ประเภท')+'</a>';
+  }
+  /** ข้อมูลใบเบิกจากที่ไหนก็ได้ที่หน้านี้โหลดไว้ (การ์ดอนุมัติ / ตารางในหน้าสรุป) */
+  function exFind(no){
+    if(EXP_BYNO[no]) return EXP_BYNO[no];
+    var arr=(typeof EDLIST!=='undefined'&&EDLIST)||[];   // ตารางหน้าสรุปประกาศทีหลังในไฟล์
+    for(var i=0;i<arr.length;i++){ if(arr[i].no===no) return arr[i]; }
+    return null;
+  }
+  /** แก้ประเภทที่พนักงานเลือกผิด — ใช้ได้ทั้งก่อนอนุมัติและย้อนหลัง (ไม่กระทบเอกสาร/ภาษี/ยอดเงิน) */
+  function exEditType(no){
+    var x=exFind(no)||{};
+    if(!EXTYPES.length){ toast('ยังโหลดรายการประเภทไม่เสร็จ ลองรีเฟรชนะคะ'); return; }
+    var cur=x.type||'';
+    var opts=EXTYPES.map(function(t){
+      return '<option value="'+esc(t.key)+'"'+(t.label===cur?' selected':'')+'>'+esc(t.label)+'</option>';
+    }).join('');
+    modal('<h3>✏️ แก้ประเภทใบเบิก '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">ประเภทมีผลกับ<b>รายงานสรุปตามประเภท</b>อย่างเดียว — ไม่กระทบยอดเงิน เอกสาร หรือภาษี'+
+        (x.status&&x.status.indexOf('รออนุมัติ')<0?' · ใบนี้ '+esc(x.status)+' แล้ว แก้ย้อนหลังได้ค่ะ':'')+'</div>'+
+      (x.detail?'<div class="m-hint">รายละเอียดที่พนักงานพิมพ์: <b>'+esc(x.detail)+'</b></div>':'')+
+      '<div class="fld"><label>ประเภทค่าใช้จ่าย</label><select id="etSel">'+opts+'</select></div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" onclick="exSaveType(\''+esc(no)+'\')">บันทึก</button></div>');
+  }
+  function exSaveType(no){
+    var k=($('etSel')||{}).value||'';
+    if(!k){ mErr('เลือกประเภทก่อนค่ะ'); return; }
+    callBusy('กำลังบันทึก…', jsonp({action:'waExpSetType',uid:UID,no:no,type:k}), 'บันทึกแล้ว').then(function(r){
+      if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+      closeModal();
+      toast(r.changed?'✅ เปลี่ยนเป็น '+r.type:'ประเภทเดิมอยู่แล้วค่ะ');
+      if(VIEW==='expdash') renderExpDash(); else if(VIEW==='expapprove') renderExpenseApprove(); else renderExpense();
+    }).catch(function(e){ mErr(e.message); });
+  }
+  window.exTypeBtn=exTypeBtn; window.exEditType=exEditType; window.exSaveType=exSaveType;
   window.exEditPayee=exEditPayee; window.exSavePayee=exSavePayee;
   /** ไม่อนุมัติ → ถามเหตุผลก่อน (ลงคอลัมน์หมายเหตุ + แจ้งผู้แจ้ง) */
   function exReject(no){
@@ -3957,7 +3996,7 @@
       if(x.dossier) links+='<a class="exl-lk" href="'+esc(x.dossier)+'" target="_blank">🗂️ แฟ้ม</a>';
       return '<tr><td>'+(i+1)+'</td><td>'+esc(x.no)+'</td>'+
         '<td><span class="tk-badge '+expBadge(x.status)+'">'+esc(x.status)+'</span></td>'+
-        '<td>'+esc(x.nick||'-')+'</td><td>'+esc(x.type||'-')+'</td>'+
+        '<td>'+esc(x.nick||'-')+'</td><td>'+esc(x.type||'-')+(IS_OWNER?exTypeBtn(x.no,1):'')+'</td>'+
         '<td class="exl-detail">'+esc(x.detail||'-')+'</td>'+
         '<td class="exl-amt">'+money(x.amount)+'</td>'+
         '<td class="exl-doc">'+(links||'—')+'</td></tr>';
