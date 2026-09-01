@@ -2239,7 +2239,7 @@
     skel();
     jsonp({action:'waExpenseInit', uid:UID}).then(function(r){
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
-      EXP_TYPES=r.types||[];
+      EXP_TYPES=r.types||EXP_TYPES;
       MYBANK=r.myBank||{name:'',acct:'',owner:''}; BANK_LIST=r.banks||[]; HAS_BANK=!!r.hasBank;
       paintExpense(r.expenses||[]);
       sigRefresh();
@@ -2288,7 +2288,10 @@
           (x.dossier?'🔄 สร้างแฟ้มใหม่':'🗂️ สร้างแฟ้มครบชุด')+'</a>';
       // แก้ประเภทเอกสาร (เฉพาะพี่ · ไม่ใช่ RV) — พนักงานกดผิด แนบใบเสร็จ ⇄ ไม่มีใบเสร็จ (ออก SR)
       if(IS_OWNER && !isRv(x))
-        links+='<a class="ex-lk" href="#" onclick="exSetProof(\''+esc(x.no)+'\');return false" style="color:#1B72E8">✏️ แก้ประเภท</a>';
+        links+='<a class="ex-lk" href="#" onclick="exSetProof(\''+esc(x.no)+'\');return false" style="color:#1B72E8">🧾 แก้หลักฐาน (ใบเสร็จ/SR)</a>';
+      // แก้ประเภทค่าใช้จ่าย (เฉพาะพี่ · ทุกสถานะ) — คนละเรื่องกับหลักฐาน: อันนี้คือ เดินทาง/อาหาร/อุปกรณ์…
+      if(IS_OWNER)
+        links+='<a class="ex-lk" href="#" onclick="exEditType(\''+esc(x.no)+'\');return false" style="color:#1B72E8">✏️ ประเภทค่าใช้จ่าย</a>';
       // แก้ไฟล์แนบ (พี่ + เจ้าของใบ) — แนบผิดไฟล์ → อัปใหม่ + รวมแฟ้มใหม่
       links+='<a class="ex-lk" href="#" onclick="exEditRcp(\''+esc(x.no)+'\');return false" style="color:#1B72E8">📎 แก้ไฟล์แนบ</a>';
       // ยกเลิกใบเบิก (เฉพาะพี่ · ทุกสถานะ) — ย้ายไปถังขยะก่อน (soft-delete · กู้คืนได้)
@@ -3188,7 +3191,7 @@
       var box=$(cid); if(!box) return;   // คอนเทนเนอร์หายไปแล้ว (เปลี่ยนหน้า)
       if(!r||!r.ok){ box.innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
       var pd=r.pending||[], tp=r.topay||[], aw=r.awaitSign||[];
-      SECTIONS=r.sections||SECTIONS; KIND_CO=r.companyKind||KIND_CO; EXTYPES=r.types||EXTYPES;
+      SECTIONS=r.sections||SECTIONS; KIND_CO=r.companyKind||KIND_CO; EXP_TYPES=r.types||EXP_TYPES;   // หน้าอนุมัติก็ต้องมีลิสต์ประเภท (waExpenseInit ไม่ได้ถูกเรียกในหน้านี้)
       var html='';
       html+=exSecHd('⏳ รออนุมัติ ('+pd.length+')','');
       html+= pd.length ? pd.map(function(x){ return exApprCard(x,false); }).join('')
@@ -3320,7 +3323,6 @@
     EX_WHT_KIND=kind; exSectChange();
   }
   var SECTIONS=[], KIND_CO='นิติบุคคล', EX_WHT_KIND='บุคคลธรรมดา';
-  var EXTYPES=[];   // ประเภทค่าใช้จ่าย (มาจาก backend · ใช้ทำ dropdown แก้ประเภทที่พนักงานเลือกผิด)
   /** เปลี่ยนมาตรา → เติมอัตรา default (ถ้าพี่ยังไม่แก้เอง) + อัปเดตบรรทัด "จะเข้าแบบไหน" */
   function exSectChange(rateEdited){
     var sc=($('exSect')||{}).value, rs=$('exWht'), note=$('exFormNote');
@@ -3400,9 +3402,9 @@
   /** แก้ประเภทที่พนักงานเลือกผิด — ใช้ได้ทั้งก่อนอนุมัติและย้อนหลัง (ไม่กระทบเอกสาร/ภาษี/ยอดเงิน) */
   function exEditType(no){
     var x=exFind(no)||{};
-    if(!EXTYPES.length){ toast('ยังโหลดรายการประเภทไม่เสร็จ ลองรีเฟรชนะคะ'); return; }
+    if(!EXP_TYPES.length){ toast('ยังโหลดรายการประเภทไม่เสร็จ ลองรีเฟรชนะคะ'); return; }
     var cur=x.type||'';
-    var opts=EXTYPES.map(function(t){
+    var opts=EXP_TYPES.map(function(t){
       return '<option value="'+esc(t.key)+'"'+(t.label===cur?' selected':'')+'>'+esc(t.label)+'</option>';
     }).join('');
     modal('<h3>✏️ แก้ประเภทใบเบิก '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
@@ -3910,7 +3912,7 @@
   function exSetProof(no){
     var x=EXP_BYNO[no]||{};
     var isSr=(String(x.docType||'').indexOf('ใบรับรอง')>=0);
-    modal('<h3>✏️ แก้ประเภทเอกสาร</h3>'+
+    modal('<h3>🧾 แก้หลักฐานประกอบใบเบิก</h3>'+
       '<div class="m-hint" style="margin:0 0 12px">ใบ <b>'+esc(no)+'</b> ตอนนี้: '+esc(x.docType||'🧾 แนบใบเสร็จ')+'</div>'+
       '<button class="btn '+(isSr?'btn-ghost':'btn-ok')+'" style="width:100%;margin-bottom:8px" onclick="exSetProofDo(\''+esc(no)+'\',\'sr\')">📄 ไม่มีใบเสร็จ → ออกใบรับรองแทน (SR)</button>'+
       '<button class="btn btn-ghost" style="width:100%;margin-bottom:12px" onclick="exSetProofDo(\''+esc(no)+'\',\'rcp\')">🧾 แนบใบเสร็จ (มีหลักฐานแล้ว)</button>'+
