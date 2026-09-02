@@ -4200,6 +4200,8 @@
       // ── ต่อยอดเป็นใบถัดไปในสายเอกสาร ──
       if(d.kind==='QT' && !salesRefBy(d,'IV').length)
         a.push({key:'toiv',label:'➡️ ออกใบแจ้งหนี้จากใบนี้',call:'salesToInvoice('+q+')'});
+      if(d.kind==='IV' && d.balance>0)
+        a.push({key:'recv',label:'💵 บันทึกรับชำระ',call:'recvOpen('+q+')'});
       if(d.kind==='IV' && d.balance>0 && !salesRefBy(d,'BN').length)
         a.push({key:'tobn',label:'📑 รวมออกใบวางบิล',call:'salesBnOpen('+q+')'});
       a.push({key:'send',label:'📤 ส่งเข้ากลุ่มลูกค้า',call:'salesSend('+q+')'});
@@ -4450,6 +4452,119 @@
     }).catch(function(e){ mErr(e.message); });
   }
 
+  // ═══════════ 💵 รับชำระ + ใบเสร็จ/ใบกำกับภาษี (เฟส A4) ═══════════
+  // ยอดคงค้างมาจาก backend เสมอ (ชีตรับชำระ = แหล่งความจริงเดียว) — หน้าเว็บไม่คิดยอดเอง
+  var RECV = null;
+
+  function recvOpen(ivNo){
+    busy('กำลังเปิดใบแจ้งหนี้…');
+    jsonp({action:'waRecvInit',uid:UID,no:ivNo}).then(function(r){
+      unbusy();
+      if(!r||!r.ok){ toast((r&&r.error)||'เปิดไม่สำเร็จ'); return; }
+      RECV=r;
+      var mOpts=(r.methods||[]).map(function(m){ return '<option value="'+esc(m)+'">'+esc(m)+'</option>'; }).join('');
+      modal('<h3>💵 บันทึกรับชำระ</h3><div id="mErr" class="m-err hidden"></div>'+
+        '<div class="m-hint"><b>'+esc(r.no)+'</b> · '+esc(r.customer)+'<br>'+
+        'ยอดตามใบ '+money(r.total)+' บาท'+(r.paidAmt>0?' · รับแล้ว '+money(r.paidAmt):'')+
+        (r.whtPaid>0?' · ถูกหักภาษี '+money(r.whtPaid):'')+
+        '<br>คงค้าง <b style="font-size:15px">'+money(r.balance)+'</b> บาท'+
+        (r.dueDate?' · ครบกำหนด '+esc(r.dueDate):'')+'</div>'+
+        recvHistoryHtml(r.history)+
+        '<div class="fld"><label>เงินที่เข้าบัญชีจริง (บาท)</label>'+
+          '<input id="rvAmt" inputmode="decimal" value="'+esc(String(r.balance))+'" oninput="recvPreview()"></div>'+
+        '<div class="fld"><label>ภาษีที่ลูกค้าหักไว้ (บาท · ไม่มีใส่ 0)</label>'+
+          '<input id="rvWht" inputmode="decimal" value="0" oninput="recvPreview()"></div>'+
+        '<div id="rvSum" class="m-hint"></div>'+
+        '<div class="fld"><label>วันที่รับเงิน</label><input id="rvDate" type="date" value="'+todayISO()+'"></div>'+
+        '<div class="fld"><label>ช่องทาง</label><select id="rvMethod">'+mOpts+'</select></div>'+
+        '<div class="fld"><label>บัญชีที่รับเข้า (ไม่ใส่ก็ได้)</label><input id="rvBank" placeholder="เช่น กสิกร xxx-x-x1234-x"></div>'+
+        imgsFldHtml('rvSlip','📎 สลิป/หลักฐานเงินเข้า')+
+        imgsFldHtml('rvCert','🧾 50 ทวิ ที่ลูกค้าออกให้ (ถ้าได้มาแล้ว)')+
+        '<div class="fld"><label>หมายเหตุ</label><input id="rvNote" placeholder="เช่น โอนเข้าบัญชีบริษัท"></div>'+
+        '<label style="display:flex;gap:8px;align-items:center;font-size:13px;margin:6px 0 2px">'+
+          '<input type="checkbox" id="rvIssue" checked> ออกใบเสร็จ/ใบกำกับภาษีให้เลย</label>'+
+        '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+        '<button class="btn btn-primary" id="rvBtn" onclick="recvSave(\''+esc(ivNo)+'\')">บันทึกรับชำระ</button></div>');
+      imgsFldBind('rvSlip'); imgsFldBind('rvCert'); recvPreview();
+    }).catch(function(e){ unbusy(); toast(e.message); });
+  }
+  /** ประวัติรับชำระของใบนี้ (รวมรายการที่ยกเลิกไว้ให้เห็น — เงินต้องตามรอยได้) */
+  function recvHistoryHtml(h){
+    if(!h||!h.length) return '';
+    return '<div class="fld"><label>ประวัติรับชำระ</label>'+h.map(function(x){
+      var voided=String(x.status).indexOf('ยกเลิก')>=0;
+      return '<div style="padding:6px 8px;border:1px solid var(--line);border-radius:9px;margin-bottom:5px;font-size:12.5px'+
+        (voided?';opacity:.55;text-decoration:line-through':'')+'">'+
+        '<b>'+esc(x.no)+'</b> · '+esc(x.date)+' · '+money(x.amount)+' บาท'+
+        (x.wht>0?' <span style="color:#C8730B">(หัก '+money(x.wht)+')</span>':'')+
+        (x.reNo?' · ใบเสร็จ '+esc(x.reNo):'')+
+        (x.slip?' <a href="'+esc(x.slip)+'" target="_blank">สลิป</a>':'')+
+        (x.whtCert?' <a href="'+esc(x.whtCert)+'" target="_blank">50ทวิ</a>':
+          (x.wht>0?' <a href="#" onclick="recvCertOpen(\''+esc(x.no)+'\');return false" style="color:#C8730B">แนบ 50 ทวิ</a>':''))+
+        (!voided&&!x.reNo?' · <a href="#" onclick="recvVoid(\''+esc(x.no)+'\');return false" style="color:#DC2626">ยกเลิก</a>':'')+
+        '</div>';
+    }).join('')+'</div>';
+  }
+  /** พรีวิว: เงินเข้า + ภาษีที่ถูกหัก = ยอดที่ปิดหนี้ (กติกาเดียวกับ backend) */
+  function recvPreview(){
+    var box=$('rvSum'); if(!box||!RECV) return;
+    var amt=Number(((($('rvAmt')||{}).value)||'0').replace(/,/g,''))||0;
+    var wht=Number(((($('rvWht')||{}).value)||'0').replace(/,/g,''))||0;
+    var settled=Math.round((amt+wht)*100)/100;
+    var left=Math.round((RECV.balance-settled)*100)/100;
+    var over=settled>RECV.balance+0.005;
+    box.innerHTML='ปิดหนี้รอบนี้ <b>'+money(settled)+'</b> บาท (เงินเข้า '+money(amt)+
+      (wht>0?' + ภาษีที่ถูกหัก '+money(wht):'')+')'+
+      (over?'<br><span style="color:#DC2626">⚠️ เกินยอดคงค้าง '+money(RECV.balance)+' บาท</span>'
+           :'<br>คงเหลือหลังรอบนี้ <b>'+money(left<0?0:left)+'</b> บาท'+(left<=0.005?' · ปิดใบ ✅':''));
+  }
+  function recvSave(ivNo){
+    var amt=((($('rvAmt')||{}).value)||'').trim();
+    var p={action:'waRecvSave',uid:UID,no:ivNo,amount:amt,
+      wht:((($('rvWht')||{}).value)||'0').trim(),
+      recvDate:(($('rvDate')||{}).value)||'', method:(($('rvMethod')||{}).value)||'',
+      bank:((($('rvBank')||{}).value)||'').trim(), note:((($('rvNote')||{}).value)||'').trim(),
+      issueRe:(($('rvIssue')||{}).checked?'1':'0')};
+    var slips=IMGS['rvSlip']||[], certs=IMGS['rvCert']||[];
+    if(slips.length) p.slips=JSON.stringify(slips);
+    if(certs.length) p.certs=JSON.stringify(certs);
+    var btn=$('rvBtn'); if(btn){ btn.disabled=true; btn.textContent='กำลังบันทึก…'; }
+    callBusy('กำลังบันทึกรับชำระ…', jsonpPost(p), 'บันทึกแล้ว').then(function(r){
+      if(!r||!r.ok){ if(btn){btn.disabled=false;btn.textContent='บันทึกรับชำระ';} mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+      closeModal(); IMGS['rvSlip']=[]; IMGS['rvCert']=[];
+      toast('💵 '+r.no+(r.reNo?' · ออกใบเสร็จ '+r.reNo:'')+' · คงค้าง '+money(r.balance)+
+        (r.warn?' ⚠️ '+r.warn:''));
+      if(VIEW==='ar') renderAr(); else renderSales();
+    }).catch(function(e){ if(btn){btn.disabled=false;btn.textContent='บันทึกรับชำระ';} mErr(e.message); });
+  }
+  function recvVoid(no){
+    callBusy('กำลังยกเลิก…', jsonp({action:'waRecvVoid',uid:UID,no:no}), 'ยกเลิกแล้ว').then(function(r){
+      if(!r||!r.ok){ mErr((r&&r.error)||'ยกเลิกไม่สำเร็จ'); return; }
+      closeModal(); toast('🚫 ยกเลิก '+no+' แล้ว · คงค้าง '+money(r.balance));
+      if(VIEW==='ar') renderAr(); else renderSales();
+    }).catch(function(e){ mErr(e.message); });
+  }
+  /** แนบ 50 ทวิ ที่ลูกค้าออกให้ (เอกสารจากลูกค้ามาทีหลังเสมอ) */
+  function recvCertOpen(no){
+    modal('<h3>🧾 แนบ 50 ทวิ ที่ลูกค้าออกให้</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">รายการ <b>'+esc(no)+'</b><br>'+
+      'เอกสารนี้ใช้เครดิตภาษีตอนยื่น ภ.ง.ด.50 — ไม่เก็บไว้คือเสียเงินจริงค่ะ</div>'+
+      imgsFldHtml('rvCert2','🧾 ไฟล์ 50 ทวิ (รูป หรือ PDF)')+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" onclick="recvCertSave(\''+esc(no)+'\')">บันทึก</button></div>');
+    imgsFldBind('rvCert2');
+  }
+  function recvCertSave(no){
+    var certs=IMGS['rvCert2']||[];
+    if(!certs.length){ mErr('ยังไม่ได้แนบไฟล์ค่ะ'); return; }
+    callBusy('กำลังบันทึก…', jsonpPost({action:'waRecvCert',uid:UID,no:no,certs:JSON.stringify(certs)}), 'บันทึกแล้ว')
+      .then(function(r){
+        if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+        closeModal(); IMGS['rvCert2']=[]; toast('🧾 แนบ 50 ทวิ แล้ว');
+        if(VIEW==='ar') renderAr(); else renderSales();
+      }).catch(function(e){ mErr(e.message); });
+  }
+
   // ═══════════ VIEW: 📊 ลูกหนี้ค้างรับ (อายุหนี้) — พี่/HR เท่านั้น ═══════════
   // นับจาก "ใบแจ้งหนี้" เท่านั้น (ใบเสนอราคายังไม่ใช่หนี้ · ใบวางบิลคือใบเดิมที่รวมมาวาง)
   function renderAr(){
@@ -4478,6 +4593,7 @@
             return '<div style="padding:5px 2px;border-bottom:1px solid var(--line)">'+
               (d.pdfLink?'<a href="'+esc(d.pdfLink)+'" target="_blank"><b>'+esc(d.no)+'</b></a>':'<b>'+esc(d.no)+'</b>')+
               ' · '+money(d.balance)+' บาท'+(d.paidAmt>0?' <span style="color:#C8730B">(รับแล้ว '+money(d.paidAmt)+' จาก '+money(d.total)+')</span>':'')+
+              ' <a href="#" onclick="recvOpen(\''+esc(d.no)+'\');return false">💵 รับชำระ</a>'+
               '<br><span style="color:#8A94A6;font-size:11.5px">'+esc(d.title||'-')+' · ลงวันที่ '+esc(d.docDate||'-')+
               ' · ครบกำหนด <span'+(d.overdue?' style="color:#DC2626;font-weight:600"':'')+'>'+esc(d.dueDate||'-')+(d.overdue?' ⚠️':'')+'</span></span></div>';
           }).join('')+'</td></tr>';
