@@ -122,12 +122,15 @@
   .tax-tbl tr.tax-total td{ font-weight:700; background:#FAFAFC; border-top:2px solid #D9DDE6; }
   /* ═══ ตารางรายการหมวดการเงิน (พี่กี้เคาะ 1 ก.ย. 2569: ตาราง + เมนู ⋮ แทนการ์ดปุ่มเยอะ) ═══ */
   /* ต่อยอด .tax-tbl เดิม — ลำดับคอลัมน์ตายตัว ยอดชิดขวา ปุ่มสั่งงานอยู่ที่เดียวทุกแถว */
-  .dt-tbl{ min-width:960px; max-width:1240px; table-layout:fixed; }   /* จอกว้าง: ไม่ยืดจนคอลัมน์ห่างกันเกินไป (พี่กี้ 3 ก.ย. 69) */   /* fixed = ทุกตารางในหน้าตรงคอลัมน์กันเป๊ะ (auto จะกว้างตามเนื้อหาของแต่ละตาราง) */
+  /* กว้างเต็มพื้นที่หน้าจอ (พี่กี้ 3 ก.ย. 69) — คอลัมน์ตัวเลข/สถานะล็อกเป็น px
+     ส่วนคอลัมน์ข้อความ (ลูกค้า/เรื่อง) ยืดตามจอ จึงพอดีทั้งจอเล็กและจอกว้าง */
+  .dt-tbl{ width:100%; min-width:960px; table-layout:fixed; }   /* fixed = ทุกตารางในหน้าตรงคอลัมน์กันเป๊ะ (auto จะกว้างตามเนื้อหาของแต่ละตาราง) */
   .dt-tbl th, .dt-tbl td{ overflow-wrap:anywhere; }
   /* ⚠️ .tax-tbl เดิมตั้ง white-space:nowrap → ชื่อลูกค้า/เรื่องยาวจะไม่ตัดบรรทัด แล้วล้นไปทับคอลัมน์ข้าง ๆ
      (พี่กี้เจอกับตารางรายรับ 3 ก.ย. 69) · ตารางนี้ fixed layout อยู่แล้ว ให้ตัดคำในเซลล์เสมอ */
   .dt-tbl td{ vertical-align:middle; white-space:normal; }
   .dt-tbl td.dt-detail{ white-space:normal; color:#5B6472; line-height:1.45; }
+  .dt-tbl td.dt-nw, .dt-tbl th.dt-nw{ white-space:nowrap; }   /* วันที่/เลขที่ ห้ามตัดกลางคำ */
   .dt-tbl td.dt-amt{ text-align:right; font-variant-numeric:tabular-nums; font-weight:600; white-space:nowrap; }
   .dt-tbl td.dt-doc a{ color:var(--red); text-decoration:none; font-size:12px; margin-right:7px; white-space:nowrap; }
   .dt-tbl td.dt-act{ text-align:center; width:44px; }
@@ -4311,22 +4314,25 @@
   function paintSalesTable(docs){
     var box=$('salesTbl'); if(!box) return;
     if(!docs.length){ box.innerHTML='<div class="card"><div class="emptybox">ยังไม่มีเอกสารขาย 😊</div></div>'; return; }
-    var cols=[{label:'เลขที่',w:'156px'},{label:'วันที่',w:'86px'},{label:'ลูกค้า',w:'170px'},
-      {label:'เรื่อง',w:'260px'},{label:'ยอดรวม',cls:'ta-r',w:'110px'},{label:'คงค้าง',cls:'ta-r',w:'104px'},
-      {label:'สถานะ',w:'118px'},{label:'ครบกำหนด',w:'96px'},{label:'',w:'44px'}];
+    // ทุกคอลัมน์เป็น % (รวม 100) → ตารางพอดีจอทุกขนาด · จอแคบกว่า min-width ค่อยเลื่อนแนวนอน
+    // (ผสม px กับ % แล้วจอกลาง ๆ คอลัมน์ "เรื่อง" จะโดนบีบจนตัวอักษรเรียงลงแนวตั้ง)
+    // ⚠️ ปล่อย "เรื่อง" ไม่ระบุความกว้าง — ให้กินที่ที่เหลือ ผลรวมจะไม่มีทางเกิน 100% (ไม่เกิดแถบเลื่อนแนวนอน)
+    var cols=[{label:'เลขที่',cls:'dt-nw',w:'14%'},{label:'วันที่',cls:'dt-nw',w:'9%'},{label:'ลูกค้า',w:'16%'},
+      {label:'เรื่อง'},{label:'ยอดรวม',cls:'ta-r',w:'10%'},{label:'คงค้าง',cls:'ta-r',w:'9%'},
+      {label:'สถานะ',w:'10%'},{label:'ครบกำหนด',cls:'dt-nw',w:'9%'},{label:'',w:'46px'}];
     var rows=docs.map(function(d){
       SALES_BYNO[d.no]=d;
       var due=d.dueDate?fmtDate(d.dueDate):'—';
       var overdue=(d.balance>0 && d.dueDate && new Date(d.dueDate)<new Date());
       return '<tr>'+
-        '<td>'+esc(d.no)+(d.refNo?'<br><span style="color:#8A94A6;font-size:11px">↩ '+esc(d.refNo)+'</span>':'')+'</td>'+
-        '<td>'+esc(d.docDate?fmtDate(d.docDate):'-')+'</td>'+
+        '<td class="dt-nw">'+esc(d.no)+(d.refNo?'<br><span style="color:#8A94A6;font-size:11px">↩ '+esc(d.refNo)+'</span>':'')+'</td>'+
+        '<td class="dt-nw">'+esc(d.docDate?fmtDate(d.docDate):'-')+'</td>'+
         '<td>'+esc(d.customer||'-')+'</td>'+
         '<td class="dt-detail">'+esc(d.title||'-')+(d.vat>0?'<br><span style="color:#8A94A6;font-size:11.5px">VAT '+money(d.vat)+'</span>':'')+'</td>'+
         '<td class="dt-amt">'+money(d.total)+'</td>'+
         '<td class="dt-amt">'+(d.balance>0?money(d.balance):'—')+'</td>'+
         '<td><span class="tk-badge '+salesBadge(d.status)+'">'+esc(d.status)+'</span></td>'+
-        '<td'+(overdue?' style="color:#DC2626;font-weight:600"':'')+'>'+esc(due)+(overdue?' ⚠️':'')+'</td>'+
+        '<td class="dt-nw"'+(overdue?' style="color:#DC2626;font-weight:600"':'')+'>'+esc(due)+(overdue?' ⚠️':'')+'</td>'+
         dtActCell('sl-'+d.no, salesRowActions(d))+'</tr>';
     });
     var sum=docs.reduce(function(a,d){ return a+(Number(d.total)||0); },0);
