@@ -148,15 +148,16 @@
   .tax-acts .btn{ width:auto; flex:1; min-width:150px; text-align:center; text-decoration:none; }
   .tax-inp{ width:100%; box-sizing:border-box; padding:9px 12px; border:1px solid var(--line); border-radius:10px; font-size:14px; font-family:inherit; }
   /* ═══ 📐 ภ.ง.ด.51 ประมาณการภาษีครึ่งปี (spec-pnd51 §7) ═══ */
-  /* จอกว้าง = 2 คอลัมน์ ฝั่งขวาเกาะจอ (สรุปผลต้องเห็นตลอดขณะกรอก) · มือถือพับเป็นคอลัมน์เดียว */
+  /* จอกว้าง = 2 คอลัมน์ เลื่อนไปพร้อมกัน · มือถือพับเป็นคอลัมน์เดียว */
   .p51-split{ display:grid; grid-template-columns:1fr; gap:12px; }
   /* ⚠️ grid item ค่าเริ่มต้นคือ min-width:auto → ตารางข้างในที่ตั้ง min-width ไว้ (.dt-tbl 960px,
      .p51-grid 430px) จะดันคอลัมน์ให้กว้างเกินจอ ทั้งหน้าเลยเลื่อนแนวนอน (เจอตอนถ่ายจอ 390px) */
   .p51-split > *{ min-width:0; }
   @media (min-width:900px){
     .p51-split{ grid-template-columns:minmax(0,1.35fr) minmax(300px,.85fr); align-items:start; }
-    .p51-side{ position:sticky; top:12px; }
   }
+  /* ⛔ ห้ามใส่ position:sticky ให้ฝั่งขวา — พี่กี้ 2 ก.ย. 69: ฝั่งซ้าย/ขวาเลื่อนไม่เท่ากันแล้วเวียนหัว
+     สองคอลัมน์ต้องเลื่อนไปพร้อมกันเสมอ (เริ่มบรรทัดบนตรงกันด้วย align-items:start) */
   .p51-side .card{ margin-bottom:12px; }
   .p51-gauge{ text-align:center; }
   .p51-gauge svg{ width:100%; max-width:230px; height:auto; }
