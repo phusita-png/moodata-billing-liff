@@ -147,6 +147,61 @@
   .tax-acts{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
   .tax-acts .btn{ width:auto; flex:1; min-width:150px; text-align:center; text-decoration:none; }
   .tax-inp{ width:100%; box-sizing:border-box; padding:9px 12px; border:1px solid var(--line); border-radius:10px; font-size:14px; font-family:inherit; }
+  /* ═══ 📐 ภ.ง.ด.51 ประมาณการภาษีครึ่งปี (spec-pnd51 §7) ═══ */
+  /* จอกว้าง = 2 คอลัมน์ ฝั่งขวาเกาะจอ (สรุปผลต้องเห็นตลอดขณะกรอก) · มือถือพับเป็นคอลัมน์เดียว */
+  .p51-split{ display:grid; grid-template-columns:1fr; gap:12px; }
+  /* ⚠️ grid item ค่าเริ่มต้นคือ min-width:auto → ตารางข้างในที่ตั้ง min-width ไว้ (.dt-tbl 960px,
+     .p51-grid 430px) จะดันคอลัมน์ให้กว้างเกินจอ ทั้งหน้าเลยเลื่อนแนวนอน (เจอตอนถ่ายจอ 390px) */
+  .p51-split > *{ min-width:0; }
+  @media (min-width:900px){
+    .p51-split{ grid-template-columns:minmax(0,1.35fr) minmax(300px,.85fr); align-items:start; }
+    .p51-side{ position:sticky; top:12px; }
+  }
+  .p51-side .card{ margin-bottom:12px; }
+  .p51-gauge{ text-align:center; }
+  .p51-gauge svg{ width:100%; max-width:230px; height:auto; }
+  .p51-gauge .g-vl{ font-size:23px; font-weight:700; color:#1F2733; margin-top:-16px; letter-spacing:-.3px; }
+  .p51-gauge .g-lb{ font-size:12px; color:var(--muted); margin-top:2px; line-height:1.5; }
+  .p51-total{ background:#0f6e56; color:#fff; border-radius:14px; padding:14px 16px; }
+  .p51-total .t-lb{ font-size:12.5px; opacity:.9; }
+  .p51-total .t-vl{ font-size:27px; font-weight:800; letter-spacing:-.5px; margin-top:2px; font-variant-numeric:tabular-nums; }
+  .p51-total .t-sub{ font-size:11.5px; opacity:.85; margin-top:4px; line-height:1.5; }
+  .p51-total.is-refund{ background:#1B5E9E; }
+  .p51-bd{ font-size:13px; }
+  .p51-bd .r{ display:flex; justify-content:space-between; gap:10px; padding:7px 0; border-bottom:1px solid var(--line); }
+  .p51-bd .r:last-child{ border-bottom:0; }
+  .p51-bd .r.total{ font-weight:700; border-top:2px solid #D9DDE6; margin-top:2px; }
+  .p51-bd .r .n{ color:var(--muted); font-weight:400; margin-right:5px; }
+  .p51-bd .r .v{ font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .p51-sc{ display:flex; gap:6px; }
+  .p51-sc button{ flex:1; padding:9px 6px; border:1px solid var(--line); background:#fff; border-radius:10px;
+    font-family:inherit; font-size:12.5px; cursor:pointer; color:#4A5262; line-height:1.4; }
+  .p51-sc button.on{ border-color:#0f6e56; background:#E8F4F0; color:#0B4E3D; font-weight:700; }
+  .p51-sc button .sc-b{ display:block; font-size:10.5px; font-weight:600; margin-top:3px; }
+  .p51-warn{ font-size:12.5px; background:#FFF7E8; border:1px solid #F5DFAE; color:#8A5B0B;
+    border-radius:10px; padding:9px 11px; margin-bottom:10px; line-height:1.55; }
+  .p51-warn ul{ margin:4px 0 0; padding-left:17px; } .p51-warn li{ margin:2px 0; }
+  .p51-note{ font-size:11.5px; color:var(--muted); line-height:1.55; margin-top:8px; }
+  .p51-src{ font-size:11.5px; color:var(--muted); margin-top:3px; line-height:1.45; }
+  .p51-grid{ overflow-x:auto; }
+  .p51-grid table{ border-collapse:collapse; width:100%; min-width:430px; font-size:12.5px; }
+  .p51-grid th,.p51-grid td{ border-bottom:1px solid var(--line); padding:5px 6px; text-align:left; }
+  .p51-grid th{ background:#EDEDF2; font-weight:700; color:#4A5262; white-space:nowrap; }
+  .p51-grid th.sc-on{ background:#E8F4F0; color:#0B4E3D; }
+  .p51-grid td input{ width:100%; box-sizing:border-box; padding:6px 8px; border:1px solid var(--line);
+    border-radius:8px; font:inherit; font-size:12.5px; text-align:right; font-variant-numeric:tabular-nums; }
+  .p51-grid td.rl{ white-space:nowrap; color:#4A5262; }
+  .p51-fr{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .p51-fr select, .p51-fr input{ min-width:0; }            /* ไม่งั้น select ชื่อบริษัทยาว ดันกริดล้นการ์ด */
+  @media (max-width:520px){ .p51-fr{ grid-template-columns:1fr; } }
+  /* ปุ่มในหน้านี้ปล่อยให้ย่อตามการ์ดได้ (min-width 150px ของ .tax-acts ทำให้ล้นขอบบนจอ 390px) */
+  .p51-acts .btn{ min-width:0; }
+  .p51-fr .fl{ font-size:12px; color:var(--muted); display:block; margin-bottom:4px; }
+  .p51-kv{ font-size:13px; color:#4A5262; line-height:1.75; }
+  .p51-kv b{ color:#1F2733; }
+  .p51-badge{ display:inline-block; font-size:11.5px; padding:2px 9px; border-radius:999px; font-weight:600; }
+  .p51-b-safe{ background:#E4F5EA; color:#1E7A48; } .p51-b-watch{ background:#FDF0E1; color:#B4740F; }
+  .p51-b-risk{ background:#FCE7E7; color:#C22B2B; }
   .ds-bars{ display:flex; align-items:flex-end; gap:6px; height:110px; padding-top:6px; }
   .ds-bar{ flex:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; height:100%; }
   .ds-bar .bar{ width:100%; background:linear-gradient(180deg,#F2707A,#E5484D); border-radius:6px 6px 0 0; min-height:2px; }
@@ -627,6 +682,8 @@
       <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/><circle cx="10" cy="4" r="1.6"/></svg><span>รายงาน HR</span></button>
     <button class="nav-btn" data-view="poreport" aria-label="รายงานจ่ายออก" id="navPoReport" style="display:none">
       <svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M7 9.5h10M7 13h7M7 16.5h4"/></svg><span>รายงานจ่ายออก</span></button>
+    <button class="nav-btn" data-view="pnd51" aria-label="ภ.ง.ด.51" id="navPnd51" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M6 3.5h12v17H6z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg><span>ภ.ง.ด.51</span></button>
     <button class="nav-btn" data-view="finreport" aria-label="รายงานการเงิน" id="navFinReport" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/><circle cx="16" cy="13" r="1.6"/></svg><span>รายงานการเงิน</span></button>
   </nav>
@@ -657,7 +714,7 @@
     home:['🏠','ภาพรวม'], clock:['🕐','ลงเวลา'],
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
     expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติเบิกจ่าย'],
-    expdash:['📊','สรุปค่าใช้จ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','จ่ายออก'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📊','รายงานจ่ายออก'], sales:['💰','รายรับ'], ar:['📊','ลูกหนี้ค้างรับ'], bizdash:['📊','ภาพรวมธุรกิจ']
+    expdash:['📊','สรุปค่าใช้จ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','จ่ายออก'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📊','รายงานจ่ายออก'], sales:['💰','รายรับ'], ar:['📊','ลูกหนี้ค้างรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51']
   };
   var PROJECTS=[], COMPANIES=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ) · COMPANIES=บริษัท auto (หน้าจัดการ)
   var ALL_TASKS=[], PJ_SEL='', MB_STATUSES=[];   // มุมมอง Project (dropdown เลือก · แยก 6 สถานะ + %) · MB_STATUSES=รายการสถานะ (ฟอร์มแก้งานมือถือ)
@@ -721,7 +778,7 @@
     if(gi) $('tbIcon').innerHTML=gi; else $('tbIcon').textContent=meta[0];
     $('tbTitle').textContent=meta[1];
     mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
-    ({ home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, ar:renderAr, bizdash:renderBizDash }[v] || soon)();
+    ({ home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, ar:renderAr, bizdash:renderBizDash, pnd51:renderPnd51 }[v] || soon)();
   }
 
   // ───── มือถือ: เมนูกลุ่ม (ล่าง) + แท็บย่อย (บน) · คอมใช้ sidebar เดิม ไม่เกี่ยว ─────
@@ -733,7 +790,7 @@
     { key:'home', icon:'🏠', label:'ภาพรวม', views:['home'] },
     { key:'work', icon:'📊', label:'งาน',    views:['projects','mytasks','review','senddoc','appt','announce','trash'] },
     { key:'hr',   icon:'👥', label:'HR',     views:['approve','otapprove','hrreport'] },
-    { key:'fin',  icon:'💰', label:'การเงิน', views:['bizdash','sales','ar','expdash','reimb','payout','poreport','finreport','taxdoc'] },   /* payout = จ่ายออกของบริษัท (พี่คนเดียว) */   /* taxdoc ซ่อนไว้ก่อน — เปิดตอน ภ.ง.ด. v2 */
+    { key:'fin',  icon:'💰', label:'การเงิน', views:['bizdash','sales','ar','expdash','reimb','payout','poreport','pnd51','finreport','taxdoc'] },   /* payout = จ่ายออกของบริษัท (พี่คนเดียว) */   /* taxdoc ซ่อนไว้ก่อน — เปิดตอน ภ.ง.ด. v2 */
     { key:'me',   icon:'🙋', label:'ส่วนตัว', views:['clock','leave','ot','expense','docs'] }
   ];
   // ไอคอนหัวกลุ่มบน sidebar คอม = SVG เส้นสีเดียว (พี่กี้ขอ 30 ก.ค.: เรียบ ๆ ไม่สีสัน)
@@ -762,10 +819,10 @@
     expdash:'สรุป', reimb:'ตั้งเบิกลูกค้า', payout:'จ่ายออก',
     ot:'OT ของฉัน', otapprove:'อนุมัติ OT', docs:'เอกสาร',
     hrreport:'รายงาน HR', finreport:'รายงานการเงิน', taxdoc:'ภาษี/เอกสาร',
-    bizdash:'ภาพรวม', sales:'รายรับ', ar:'ลูกหนี้', poreport:'รายงานจ่ายออก' };
+    bizdash:'ภาพรวม', sales:'รายรับ', ar:'ลูกหนี้', poreport:'รายงานจ่ายออก', pnd51:'ภ.ง.ด.51' };
   // แท็บที่เห็นเฉพาะพี่/ผู้ดูแล · reimb = ตั้งเบิกลูกค้า (ชีตไม่มีเจ้าของรายคน + เป็นข้อมูลรายได้)
   // ⚠️ ซ่อนแท็บ ≠ กันข้อมูล — backend กรองสิทธิ์เองอีกชั้นเสมอ
-  var OWNER_VIEWS={ review:1, approve:1, expapprove:1, otapprove:1, reimb:1, taxdoc:1, payout:1, hrreport:1, finreport:1, ar:1 };
+  var OWNER_VIEWS={ review:1, approve:1, expapprove:1, otapprove:1, reimb:1, taxdoc:1, payout:1, hrreport:1, finreport:1, ar:1, pnd51:1 };
   var MGROUP='', MG_LAST={};
   function mVisibleViews(g){ return g.views.filter(function(v){ return IS_OWNER || !OWNER_VIEWS[v]; }); }
   function mGroupOf(v){ for(var i=0;i<NAV_GROUPS.length;i++){ if(NAV_GROUPS[i].views.indexOf(v)>=0) return NAV_GROUPS[i]; } return null; }
@@ -4452,6 +4509,453 @@
     }).catch(function(e){ mErr(e.message); });
   }
 
+  // ═══════════ VIEW: 📐 ภ.ง.ด.51 ประมาณการภาษีครึ่งปี (spec-pnd51.md §7 · 2 ก.ย. 2569) ═══════════
+  // ⚠️ เครดิตภาษีของหน้านี้ = ภาษีที่ "ลูกค้าหักเรา" เท่านั้น (ชีตรับชำระ)
+  //    ทะเบียน 50 ทวิ / ภ.ง.ด.1-3-53 ของระบบ = ภาษีที่เราหักคนอื่น ห้ามเอามาเครดิต
+  // ⚠️ คำนวณสดฝั่งนี้ระหว่างพิมพ์เพื่อความลื่น — แต่ "บันทึกจริง" backend คำนวณซ้ำเสมอ
+  //    (ฟังก์ชัน p51Profit/p51HalfTax/p51Risk ต้องให้ผลตรงกับ Pnd51.gs เป๊ะ · เทสเทียบสองฝั่งไว้แล้ว)
+  var P51 = { init:null, mode:'list', ent:'', year:0, sc:{}, key:'mid', wht:'', whtSrc:'manual',
+    other:'', expected:'', sme:null, auto:null, period:null, history:[], growth:null, job:null };
+  var P51_FIELDS = [
+    { k:'revenue',          label:'รายได้' },
+    { k:'cost',             label:'ต้นทุน' },
+    { k:'otherIncome',      label:'รายได้อื่น' },
+    { k:'adminExpense',     label:'ค่าใช้จ่ายบริหาร' },
+    { k:'addBack',          label:'บวกกลับ (รายจ่ายต้องห้าม)' },
+    { k:'lossCarryforward', label:'ขาดทุนสะสมยกมา' }
+  ];
+  var P51_KEYS = ['low','mid','high'];
+  var P51_SCLB = { low:'ต่ำ', mid:'กลาง', high:'สูง' };
+
+  // ── ฟังก์ชันคำนวณ (ฝาแฝดของ Pnd51.gs · เทส pluck ทั้งสองฝั่งมาเทียบกัน) ──
+  function p51n(v){ var n = parseFloat(String(v == null ? '' : v).replace(/,/g, '')); return isNaN(n) ? 0 : n; }
+  // ⚠️ ต้องปัดแบบเดียวกับ toSatang_ ของ backend เป๊ะ — Math.round ตรง ๆ ให้ผลต่างกัน 1 สตางค์
+  //    ในเคสที่ทศนิยมลอย (1.005*100 = 100.4999… → ปัดได้ 100 แทนที่จะเป็น 101)
+  //    เจอจากเทสสุ่ม 300 เคส (test-pnd51-ui.js) — ต่างกัน 2 เคส · หน้าเว็บโชว์เลขหนึ่ง ชีตบันทึกอีกเลข
+  function p51r2(n){ return Math.round(Number(((Number(n) || 0) * 100).toPrecision(15))) / 100; }
+  /** ประมาณการกำไรสุทธิทางภาษีทั้งปี — ขาดทุนยกมาหักได้ไม่เกินกำไร */
+  function p51Profit(s){
+    s = s || {};
+    var forTax = p51n(s.revenue) - p51n(s.cost) + p51n(s.otherIncome) - p51n(s.adminExpense) + p51n(s.addBack);
+    return p51r2(forTax - Math.min(p51n(s.lossCarryforward), Math.max(forTax, 0)));
+  }
+  /** ภาษีครึ่งปี — ขั้นบันได SME คิดกับ "กึ่งหนึ่งของกำไรทั้งปี" ตามแบบ ภ.ง.ด.51 */
+  function p51HalfTax(annualProfit, isSME){
+    // ปัด "กึ่งหนึ่งของกำไร" ก่อนเข้าอัตราเสมอ — ตรงกับ pnd51HalfBase_ ของ backend
+    // (ไม่ปัดก่อน = ต่างกัน 1 สตางค์เมื่อกำไรเป็นเลขคี่ทศนิยม · เจอจากเทสสุ่ม)
+    var half = p51r2(Math.max(p51n(annualProfit), 0) / 2);
+    if(!isSME) return p51r2(half * 0.20);
+    return p51r2(Math.min(Math.max(half - 300000, 0), 2700000) * 0.15 + Math.max(half - 3000000, 0) * 0.20);
+  }
+  /** เพดานเสี่ยง = ประมาณการ × 1.25 (เกณฑ์เฝ้าระวังของทีม ไม่ใช่คำวินิจฉัยของสรรพากร) */
+  function p51Risk(est, expected){
+    var e = Math.max(p51n(est), 0), x = Math.max(p51n(expected), 0);
+    var ceiling = p51r2(e * 1.25), ratio = e > 0 ? x / e : 0;
+    var level = 'ปลอดภัย';
+    if(e > 0){ if(ratio > 1.25) level = 'เสี่ยง'; else if(ratio > 1) level = 'เฝ้าระวัง'; }
+    return { ceiling:ceiling, isRisky:x > ceiling, level:level,
+      excess: x > ceiling ? p51r2(x - ceiling) : 0,
+      excessPct: e > 0 ? p51r2((ratio - 1) * 100) : 0,
+      gaugeRatio: p51r2(Math.min(ratio, 1.5)) };
+  }
+  /** ผลลัพธ์ครบชุดของฉากทัศน์ที่เลือก (ใช้ทั้งฝั่งขวาและปุ่มสลับฉากทัศน์) */
+  function p51Calc(st){
+    var s = (st.sc || {})[st.key] || {};
+    var profit = p51Profit(s);
+    var isSME = st.sme !== false;
+    var halfTax = p51HalfTax(profit, isSME);
+    var net = p51r2(halfTax - p51n(st.wht) - p51n(st.other));
+    var expected = st.expected === '' || st.expected == null ? p51Profit((st.sc || {}).mid || s) : p51n(st.expected);
+    return { profit:profit, half:p51r2(Math.max(profit, 0) / 2), isSME:isSME, halfTax:halfTax,
+      taxDue: net > 0 ? net : 0, refundable: net < 0 ? p51r2(-net) : 0,
+      expected:expected, expectedIsDefault: st.expected === '' || st.expected == null,
+      risk: p51Risk(profit, expected),
+      penalty: (function(){
+        var r = p51Risk(profit, expected);
+        return r.isRisky ? p51r2(Math.max(p51HalfTax(expected, isSME) - halfTax, 0) * 0.20) : 0;
+      })() };
+  }
+  window.p51Profit = p51Profit; window.p51HalfTax = p51HalfTax; window.p51Risk = p51Risk; window.p51Calc = p51Calc;
+
+  /** เกจครึ่งวงกลม — เขียว <1.0 · เหลือง 1.0–1.25 · แดง >1.25 (สเกล 0–1.5 เท่า) */
+  function p51Gauge(ratio, level){
+    var cx = 110, cy = 104, r = 84;
+    function pt(t){ var a = Math.PI * (1 - Math.min(Math.max(t, 0), 1.5) / 1.5);
+      return [p51r2(cx + r * Math.cos(a)), p51r2(cy - r * Math.sin(a))]; }
+    function arc(t1, t2, color){
+      var a = pt(t1), b = pt(t2);
+      return '<path d="M' + a[0] + ' ' + a[1] + ' A' + r + ' ' + r + ' 0 0 1 ' + b[0] + ' ' + b[1] +
+        '" fill="none" stroke="' + color + '" stroke-width="15" stroke-linecap="round"/>';
+    }
+    var n = pt(ratio), tail = pt(0);
+    var col = level === 'เสี่ยง' ? '#DC2626' : (level === 'เฝ้าระวัง' ? '#C8730B' : '#0f6e56');
+    return '<svg viewBox="0 0 220 128" role="img" aria-label="ระดับความเสี่ยง ' + esc(level) + '">' +
+      arc(0, 1.0, '#BFE3D5') + arc(1.0, 1.25, '#F3D9A6') + arc(1.25, 1.5, '#F3B4B4') +
+      '<line x1="' + cx + '" y1="' + cy + '" x2="' + n[0] + '" y2="' + n[1] + '" stroke="' + col + '" stroke-width="3.5" stroke-linecap="round"/>' +
+      '<circle cx="' + cx + '" cy="' + cy + '" r="5.5" fill="' + col + '"/>' +
+      '<text x="' + (tail[0] + 2) + '" y="' + (cy + 16) + '" font-size="10" fill="#8A94A6">0%</text>' +
+      '<text x="' + cx + '" y="14" font-size="10" fill="#8A94A6" text-anchor="middle">+25% (เพดาน)</text>' +
+      '</svg>';
+  }
+  function p51RiskBadge(level){
+    var c = level === 'เสี่ยง' ? 'p51-b-risk' : (level === 'เฝ้าระวัง' ? 'p51-b-watch' : 'p51-b-safe');
+    return '<span class="p51-badge ' + c + '">' + esc(level) + '</span>';
+  }
+  function p51DateText(d){ if(!d) return '-'; var x = new Date(d);
+    return x.getDate() + ' ' + (['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'][x.getMonth()]) + ' ' + (x.getFullYear() + 543); }
+  function p51DaysLeft(d){ if(!d) return null;
+    return Math.ceil((new Date(d).setHours(0,0,0,0) - new Date().setHours(0,0,0,0)) / 86400000); }
+
+  // ───────────── Screen A: รายการงาน ─────────────
+  function renderPnd51(){
+    if(!IS_OWNER){ $('main').innerHTML = '<div class="card"><div class="emptybox">เฉพาะผู้ดูแลค่ะ</div></div>'; return; }
+    skel();
+    jsonp({ action:'waPnd51Init', uid:UID }).then(function(r){
+      if(!r || !r.ok){ $('main').innerHTML = '<div class="card"><div class="emptybox">' + esc((r && r.error) || 'โหลดไม่สำเร็จ') + '</div></div>'; return; }
+      P51.init = r; P51.mode = 'list';
+      p51List();
+    }).catch(function(e){ $('main').innerHTML = '<div class="card"><div class="emptybox">' + esc(e.message) + '</div></div>'; });
+  }
+  function p51List(){
+    var r = P51.init, jobs = r.jobs || [];
+    var h = '<div class="section-h">📐 ภ.ง.ด.51 — ประมาณการภาษีครึ่งปี</div>';
+
+    // เริ่มงานใหม่ / เปิดงานเดิม
+    h += '<div class="card"><div class="ds-h">เริ่มคำนวณ</div><div class="p51-fr">' +
+      '<div><label class="fl">นิติบุคคล</label><select id="p51Ent" class="tax-inp">' +
+      (r.entities || []).map(function(e){ return '<option value="' + esc(e.code) + '"' + (e.code === r.defaultEntity ? ' selected' : '') + '>' + esc(e.name || e.code) + '</option>'; }).join('') +
+      '</select></div>' +
+      '<div><label class="fl">ปีรอบบัญชี (พ.ศ.)</label><select id="p51Year" class="tax-inp">' +
+      (r.years || []).map(function(y){ return '<option value="' + y + '"' + (y === r.thisYear ? ' selected' : '') + '>' + y + '</option>'; }).join('') +
+      '</select></div></div>' +
+      '<div class="tax-acts p51-acts"><button class="btn btn-ok" onclick="p51Open($(\'p51Ent\').value,$(\'p51Year\').value)">เปิดหน้าคำนวณ</button></div>' +
+      '<div class="p51-note">เกณฑ์ภาษีที่ใช้: ' + esc(r.ruleVersion) + ' · ' + esc(r.riskNote) + '</div></div>';
+
+    // ครบกำหนดยื่นของแต่ละบริษัท (เห็นทันทีว่าที่ไหนใกล้เดดไลน์)
+    var ents = (r.entities || []).slice().sort(function(a, b){ return new Date(a.dueDate) - new Date(b.dueDate); });
+    if(ents.length){
+      h += '<div class="card"><div class="ds-h">⏰ กำหนดยื่นปี ' + r.thisYear + '</div><div class="p51-grid"><table><thead><tr>' +
+        '<th>บริษัท</th><th>รอบบัญชี</th><th>ครบกำหนด</th><th>เหลือ</th></tr></thead><tbody>' +
+        ents.map(function(e){
+          var dl = p51DaysLeft(e.dueDate);
+          var txt = dl === null ? '-' : (dl < 0 ? '<b style="color:#DC2626">เลยกำหนด ' + Math.abs(dl) + ' วัน</b>' :
+            (dl <= 30 ? '<b style="color:#C8730B">' + dl + ' วัน</b>' : dl + ' วัน'));
+          return '<tr><td class="rl">' + esc(e.name || e.code) + '</td>' +
+            '<td class="rl">' + (e.isCalendar ? 'ปฏิทิน (1 ม.ค.)' : esc(e.fiscalStart || '-')) + '</td>' +
+            '<td class="rl">' + esc(p51DateText(e.dueDate)) + '</td><td class="rl">' + txt + '</td></tr>';
+        }).join('') + '</tbody></table></div></div>';
+    }
+
+    // งานที่บันทึกไว้
+    h += '<div class="card"><div class="ds-h">📋 งานที่บันทึกไว้</div>';
+    if(!jobs.length){ h += '<div class="emptybox">ยังไม่มีงานที่บันทึก — เลือกบริษัทกับปีด้านบนแล้วกดเปิดหน้าคำนวณ</div>'; }
+    else {
+      var rows = jobs.map(function(j){
+        var id = 'p51_' + j.no;
+        var acts = [{ key:'open', label:'📐 เปิดหน้าคำนวณ', call:"p51Open('" + j.entity + "'," + j.year + ")" }];
+        if(j.pdfLink) acts.push({ key:'pdf', label:'📄 กระดาษทำการ', href:j.pdfLink });
+        acts.push({ key:'doc', label:'🖨️ ออกกระดาษทำการใหม่', call:"p51Doc('" + j.entity + "'," + j.year + ")" });
+        if(j.status === 'ยื่นแล้ว') acts.push({ key:'reopen', label:'✏️ เปิดแก้อีกครั้ง', call:"p51Reopen('" + j.entity + "'," + j.year + ")" });
+        return '<tr><td>' + esc(j.no) + '</td><td>' + esc(j.entityName || j.entity) + '</td>' +
+          '<td>' + esc(p51DateText(j.dueDate)) + '</td>' +
+          '<td class="dt-amt">' + money(j.taxableProfit) + '</td>' +
+          '<td class="dt-amt">' + (j.refundable > 0 ? '(' + money(j.refundable) + ')' : money(j.taxDue)) + '</td>' +
+          '<td>' + p51RiskBadge(j.risk || 'ปลอดภัย') + '</td><td>' + esc(j.status) + '</td>' +
+          dtActCell(id, acts) + '</tr>';
+      });
+      h += dtTable([{ label:'เลขที่งาน', w:'150px' }, { label:'บริษัท', w:'200px' }, { label:'ครบกำหนดยื่น', w:'130px' },
+        { label:'ประมาณการกำไร', cls:'ta-r', w:'130px' }, { label:'ต้องชำระ/(ขอคืน)', cls:'ta-r', w:'140px' },
+        { label:'ความเสี่ยง', w:'100px' }, { label:'สถานะ', w:'100px' }, { label:'', w:'44px' }], rows);
+    }
+    h += '</div>';
+    $('main').innerHTML = h;
+  }
+
+  // ───────────── Screen B: หน้าคำนวณ ─────────────
+  function p51Open(ent, year){
+    P51.ent = String(ent || ''); P51.year = parseInt(year, 10) || 0;
+    P51.mode = 'calc';
+    skel();
+    jsonp({ action:'waPnd51Load', uid:UID, entity:P51.ent, year:P51.year }).then(function(r){
+      if(!r || !r.ok){ toast((r && r.error) || 'โหลดไม่สำเร็จ'); return p51List(); }
+      P51.entity = r.entity; P51.period = r.period; P51.history = r.history || []; P51.growth = r.growth;
+      P51.job = r.job || null;
+      if(r.job && r.job.scenarios && r.job.scenarios[r.job.scenarioKey]){
+        P51.sc = r.job.scenarios; P51.key = r.job.scenarioKey;
+        P51.wht = r.job.whtCredit || ''; P51.whtSrc = r.job.whtSource || 'manual';
+        P51.other = r.job.otherCredit || ''; P51.expected = r.job.expectedProfit || '';
+        P51.auto = r.job.auto || null;
+        P51.sme = null;
+        p51Calcview();
+      } else {
+        p51PullAuto(true);   // งานใหม่ = ดึงครึ่งปีจริงมาตั้งต้นให้เลย
+      }
+    }).catch(function(e){ toast(e.message); p51List(); });
+  }
+
+  /** ดึงครึ่งปีจริงจากระบบ → ตั้งฉากทัศน์ให้ (พี่แก้ทับได้ทุกช่อง) */
+  function p51PullAuto(first){
+    if(!first) busy('กำลังดึงยอดครึ่งปีแรกจากระบบ…');
+    jsonp({ action:'waPnd51Auto', uid:UID, entity:P51.ent, year:P51.year }).then(function(r){
+      unbusy();
+      if(!r || !r.ok){ toast((r && r.error) || 'ดึงข้อมูลไม่สำเร็จ'); if(first) p51List(); return; }
+      P51.auto = r.auto; P51.period = r.period || P51.period;
+      P51.sc = r.scenarios;
+      if(!first) P51.key = P51.key || 'mid';
+      if(r.auto && r.auto.whtReady && r.auto.wht){ P51.wht = r.auto.wht; P51.whtSrc = 'auto'; }
+      p51Calcview();
+      if(!first) toast('ดึงยอดครึ่งปีแรกมาแล้ว — ปรับตัวเลขได้ตามจริง');
+    }).catch(function(e){ unbusy(); toast(e.message); if(first) p51List(); });
+  }
+
+  function p51Calcview(){
+    var e = P51.entity || {}, per = P51.period || {};
+    var h = '<div class="section-h">📐 ภ.ง.ด.51 · ' + esc(e.name || e.code || '') + ' · ปี ' + P51.year + '</div>' +
+      '<div class="tax-acts p51-acts" style="margin:0 0 12px"><button class="btn btn-ghost" style="flex:0 0 auto;min-width:120px" onclick="p51Back()">← กลับรายการ</button></div>' +
+      '<div class="p51-split"><div class="p51-form">';
+
+    // ① ข้อมูลกิจการ
+    var dl = p51DaysLeft(per.dueDate);
+    h += '<div class="card"><div class="ds-h">① ข้อมูลกิจการ</div><div class="p51-kv">' +
+      '<div>เลขประจำตัวผู้เสียภาษี: <b>' + esc(e.taxId || '—') + '</b></div>' +
+      '<div>รอบบัญชี: <b>' + esc(p51DateText(per.start)) + ' – ' + esc(p51DateText(per.end)) + '</b></div>' +
+      '<div>ครึ่งปีแรกสิ้นสุด: <b>' + esc(p51DateText(per.h1End)) + '</b></div>' +
+      '<div>ครบกำหนดยื่น: <b>' + esc(p51DateText(per.dueDate)) + '</b>' +
+      (dl === null ? '' : (dl < 0 ? ' <span style="color:#DC2626">(เลยกำหนด ' + Math.abs(dl) + ' วัน)</span>'
+        : ' <span style="color:' + (dl <= 30 ? '#C8730B' : '#8A94A6') + '">(เหลือ ' + dl + ' วัน)</span>')) + '</div>' +
+      '<div>ทุนจดทะเบียนชำระแล้ว: <b>' + (e.paidCapital ? money(e.paidCapital) : '— ยังไม่กรอกในชีตนิติบุคคล') + '</b></div>' +
+      '</div>' +
+      '<div style="margin-top:10px"><label class="fl" style="font-size:12px;color:#8A94A6">อัตราภาษีที่ใช้</label>' +
+      '<select id="p51Sme" class="tax-inp" onchange="p51Touch()">' +
+      '<option value="">ให้ระบบตัดสินจากทุน + รายได้ปีก่อน</option>' +
+      '<option value="1"' + (P51.sme === true ? ' selected' : '') + '>SME — ขั้นบันได (ยกเว้น ≤300,000 · 15% · 20%)</option>' +
+      '<option value="0"' + (P51.sme === false ? ' selected' : '') + '>ไม่เข้าเกณฑ์ SME — 20% ทั้งก้อน</option>' +
+      '</select></div></div>';
+
+    // ② อ้างอิงปีก่อน
+    h += '<div class="card"><div class="ds-h">② ผลประกอบการย้อนหลัง</div>';
+    if(!P51.history.length){
+      h += '<div class="emptybox">ยังไม่มีข้อมูลย้อนหลัง — กรอกในชีต "ผลประกอบการรายปี" แล้วเปิดหน้านี้ใหม่</div>';
+    } else {
+      h += '<div class="p51-grid"><table><thead><tr><th>ปี</th><th>ประเภท</th><th>รายได้</th><th>กำไรสุทธิ</th><th>อัตรากำไร</th><th>ภ.ง.ด.50</th><th></th></tr></thead><tbody>' +
+        P51.history.map(function(y){
+          return '<tr><td class="rl">' + y.year + '</td><td class="rl">' + esc(y.kind) + '</td>' +
+            '<td class="rl" style="text-align:right">' + money(y.revenue) + '</td>' +
+            '<td class="rl" style="text-align:right">' + money(y.netProfit) + '</td>' +
+            '<td class="rl" style="text-align:right">' + y.profitMargin + '%</td>' +
+            '<td class="rl" style="text-align:right">' + (y.annualTax ? money(y.annualTax) : '-') + '</td>' +
+            '<td class="rl"><button class="btn btn-ghost" style="padding:4px 9px;font-size:11.5px;width:auto" onclick="p51UseRef(' + y.year + ')">ใช้ค่านี้</button></td></tr>';
+        }).join('') + '</tbody></table></div>';
+      if(P51.growth && P51.growth.ready){
+        h += '<div class="p51-src">📈 รายได้เติบโตเฉลี่ย (CAGR) ' + P51.growth.rate + '% ต่อปี จาก ' + P51.growth.years + ' ปีที่เป็นข้อมูลจริง</div>';
+      } else {
+        h += '<div class="p51-src">ข้อมูลจริงยังไม่ถึง 2 ปี — ยังคำนวณอัตราเติบโตให้ไม่ได้</div>';
+      }
+    }
+    h += '</div>';
+
+    // ③ ประมาณการ 3 ฉากทัศน์
+    h += '<div class="card"><div class="ds-h">③ ประมาณการทั้งปี — 3 ฉากทัศน์</div>' +
+      '<div class="tax-acts p51-acts" style="margin:0 0 10px"><button class="btn btn-ghost" onclick="p51PullAuto(false)">🔄 ดึงยอดครึ่งปีแรกจากระบบ (× 2)</button></div>' +
+      '<div class="p51-grid"><table><thead><tr><th>รายการ</th>' +
+      P51_KEYS.map(function(k){ return '<th class="' + (k === P51.key ? 'sc-on' : '') + '" style="text-align:right">' + esc(P51_SCLB[k]) + '</th>'; }).join('') +
+      '</tr></thead><tbody>' +
+      P51_FIELDS.map(function(f){
+        return '<tr><td class="rl">' + esc(f.label) + '</td>' + P51_KEYS.map(function(k){
+          var v = ((P51.sc || {})[k] || {})[f.k];
+          return '<td><input id="p51_' + k + '_' + f.k + '" inputmode="decimal" value="' + esc(v == null || v === '' ? '' : v) + '" oninput="p51Touch()"></td>';
+        }).join('') + '</tr>';
+      }).join('') +
+      '<tr><td class="rl"><b>กำไรทางภาษี</b></td>' +
+      P51_KEYS.map(function(k){ return '<td class="rl" style="text-align:right" id="p51sum_' + k + '">-</td>'; }).join('') + '</tr>' +
+      '</tbody></table></div>' +
+      '<div class="p51-note">ระบบไม่ตัดอายุขาดทุนสะสม 5 ปีให้ — กรอกเฉพาะยอดที่ใช้สิทธิ์ได้จริงในปีนี้</div></div>';
+
+    // ④ กำไรจริงที่คาด + ⑤ เครดิตภาษี
+    h += '<div class="card"><div class="ds-h">④ คาดการณ์กำไรจริงปลายปี (ใช้เช็คความเสี่ยงเงินเพิ่ม)</div>' +
+      '<input id="p51Exp" class="tax-inp" inputmode="decimal" placeholder="ไม่กรอก = ใช้ฉากทัศน์กลาง" value="' + esc(P51.expected === '' ? '' : P51.expected) + '" oninput="p51Touch()">' +
+      '<div class="p51-note">ถ้ากำไรจริงปลายปีสูงกว่าประมาณการเกิน 25% อาจถูกเรียกเงินเพิ่ม 20% ของภาษีที่ชำระขาด (ม.67 ตรี)</div></div>';
+
+    var whtSrc = P51.auto && P51.auto.parts && P51.auto.parts.wht;
+    h += '<div class="card"><div class="ds-h">⑤ เครดิตภาษี</div><div class="p51-fr">' +
+      '<div><label class="fl">ภาษีที่ลูกค้าหักเรา (50 ทวิ)</label>' +
+      '<input id="p51Wht" class="tax-inp" inputmode="decimal" value="' + esc(P51.wht === '' ? '' : P51.wht) + '" oninput="p51WhtManual()">' +
+      '<div class="p51-src">' + esc(whtSrc ? whtSrc.source : 'กรอกยอดรวมจาก 50 ทวิ ที่ลูกค้าออกให้เรา ในครึ่งปีแรก') + '</div></div>' +
+      '<div><label class="fl">เครดิตภาษีอื่น</label>' +
+      '<input id="p51Other" class="tax-inp" inputmode="decimal" value="' + esc(P51.other === '' ? '' : P51.other) + '" oninput="p51Touch()"></div>' +
+      '</div><div class="p51-note">⚠️ ใช้เฉพาะภาษีที่ <b>ลูกค้าหักเรา</b> · ภาษีที่เราหักคนอื่นแล้วนำส่ง (ภ.ง.ด.1/3/53) เอามาเครดิตไม่ได้</div></div>';
+
+    // ที่มาของตัวเลขที่ระบบดึงมา
+    if(P51.auto && P51.auto.sources){
+      h += '<div class="card"><div class="ds-h">📥 ตัวเลขครึ่งปีแรกที่ระบบดึงมา</div><div class="p51-grid"><table><tbody>' +
+        P51.auto.sources.map(function(s){
+          return '<tr><td class="rl">' + esc(s.label) + '</td><td class="rl" style="text-align:right">' + money(s.amount) + '</td>' +
+            '<td class="rl" style="color:#8A94A6;white-space:normal">' + esc(s.from) + '</td></tr>';
+        }).join('') + '</tbody></table></div></div>';
+    }
+
+    h += '</div><div class="p51-side" id="p51Side"></div></div>';
+    $('main').innerHTML = h;
+    p51Recalc();
+  }
+
+  /** อ่านค่าจากฟอร์ม → state (จุดเดียวที่ sync ฟอร์ม→state) */
+  function p51Read(){
+    P51_KEYS.forEach(function(k){
+      P51.sc[k] = P51.sc[k] || {};
+      P51_FIELDS.forEach(function(f){
+        var el = $('p51_' + k + '_' + f.k);
+        if(el) P51.sc[k][f.k] = el.value;
+      });
+    });
+    var ex = $('p51Exp'), w = $('p51Wht'), o = $('p51Other'), sme = $('p51Sme');
+    if(ex) P51.expected = ex.value;
+    if(w) P51.wht = w.value;
+    if(o) P51.other = o.value;
+    if(sme) P51.sme = sme.value === '1' ? true : (sme.value === '0' ? false : null);
+  }
+  function p51Touch(){ p51Read(); p51Recalc(); }
+  function p51WhtManual(){ P51.whtSrc = 'manual'; p51Touch(); }
+  function p51SetScenario(k){ p51Read(); P51.key = k; p51Calcview(); }
+  function p51Back(){ P51.mode = 'list'; renderPnd51(); }
+
+  /** เติมฉากทัศน์จากปีอ้างอิง (คูณให้เท่าปีเต็ม ไม่ใช่ครึ่งปี) */
+  function p51UseRef(year){
+    var y = P51.history.filter(function(x){ return x.year === year; })[0];
+    if(!y) return;
+    p51Read();
+    P51_KEYS.forEach(function(k){
+      var f = k === 'low' ? 0.9 : (k === 'high' ? 1.1 : 1);
+      P51.sc[k] = P51.sc[k] || {};
+      P51.sc[k].revenue = p51r2(y.revenue * f);
+      P51.sc[k].cost = P51.sc[k].cost || 0;
+      P51.sc[k].adminExpense = P51.sc[k].adminExpense || 0;
+    });
+    p51Calcview();
+    toast('ใส่รายได้จากปี ' + year + ' ให้แล้ว — ปรับต้นทุน/ค่าใช้จ่ายต่อได้เลย');
+  }
+
+  /** วาดฝั่งขวา (เกจ + ยอด + ที่มาของตัวเลข) — เรียกทุกครั้งที่พิมพ์ */
+  function p51Recalc(){
+    var side = $('p51Side'); if(!side) return;
+    var c = p51Calc(P51);
+    P51_KEYS.forEach(function(k){
+      var el = $('p51sum_' + k);
+      if(el) el.textContent = money(p51Profit(P51.sc[k] || {}));
+    });
+    var warn = [];
+    if(c.expectedIsDefault) warn.push('ยังไม่กรอกกำไรจริงที่คาดการณ์ — ใช้ค่าจากฉากทัศน์กลางแทน');
+    if(!p51n(P51.wht)) warn.push('ยังไม่มีภาษีที่ลูกค้าหักเรา — ถ้ามี 50 ทวิ ที่ลูกค้าออกให้ ต้องกรอกเอง');
+    if(P51.entity && !p51n(P51.entity.paidCapital) && P51.sme === null) warn.push('ยังไม่กรอกทุนจดทะเบียนในชีตนิติบุคคล — ระบบเดาให้ว่าเป็น SME');
+    if(P51.auto && P51.auto.warnings) P51.auto.warnings.forEach(function(w){ if(warn.indexOf(w) < 0) warn.push(w); });
+
+    var h = '<div class="card"><div class="p51-gauge">' + p51Gauge(c.risk.gaugeRatio, c.risk.level) +
+      '<div class="g-vl">' + (c.risk.excessPct >= 0 ? '+' : '') + c.risk.excessPct + '%</div>' +
+      '<div class="g-lb">กำไรจริงที่คาด ' + money(c.expected) + ' เทียบกับประมาณการ<br>เพดานปลอดภัย ' + money(c.risk.ceiling) + ' · ' + p51RiskBadge(c.risk.level) + '</div>' +
+      (c.penalty ? '<div class="g-lb" style="color:#DC2626;margin-top:6px">อาจถูกเรียกเงินเพิ่มราว ' + money(c.penalty) + ' บาท</div>' : '') +
+      '</div><div class="p51-note">เกณฑ์ ×1.25 นี้เป็นการเฝ้าระวังของทีม ไม่ใช่คำวินิจฉัยของสรรพากร</div></div>';
+
+    h += '<div class="card"><div class="p51-total' + (c.refundable > 0 ? ' is-refund' : '') + '">' +
+      '<div class="t-lb">' + (c.refundable > 0 ? 'ภาษีที่ขอคืน' : 'ภาษีที่ต้องชำระเพิ่มเติม') + '</div>' +
+      '<div class="t-vl">' + money(c.refundable > 0 ? c.refundable : c.taxDue) + '</div>' +
+      '<div class="t-sub">ฉากทัศน์' + esc(P51_SCLB[P51.key]) + ' · ' + (c.isSME ? 'SME ขั้นบันได' : 'อัตราปกติ 20%') + '</div></div>';
+
+    h += '<div class="p51-bd" style="margin-top:12px">' +
+      p51Row(1, 'ประมาณการกำไรสุทธิทั้งปี', c.profit) +
+      p51Row(2, 'กึ่งหนึ่งของประมาณการ', c.half) +
+      '<div class="r"><div><span class="n">3</span>อัตราภาษีที่ใช้</div><div class="v">' + (c.isSME ? 'SME' : '20%') + '</div></div>' +
+      p51Row(4, 'ภาษีที่คำนวณได้', c.halfTax) +
+      p51Row(5, 'หัก ภาษีหัก ณ ที่จ่าย', -p51n(P51.wht)) +
+      p51Row(6, 'หัก เครดิตภาษีอื่น', -p51n(P51.other)) +
+      '<div class="r total"><div>' + (c.refundable > 0 ? 'ภาษีที่ขอคืน' : 'รวมต้องชำระเพิ่มเติม') + '</div>' +
+      '<div class="v">' + money(c.refundable > 0 ? c.refundable : c.taxDue) + '</div></div></div>';
+
+    h += '<div class="ds-h" style="margin:14px 0 7px">เปรียบเทียบฉากทัศน์</div><div class="p51-sc">' +
+      P51_KEYS.map(function(k){
+        var st = { sc:P51.sc, key:k, sme:P51.sme, wht:P51.wht, other:P51.other, expected:P51.expected };
+        var cc = p51Calc(st);
+        return '<button class="' + (k === P51.key ? 'on' : '') + '" onclick="p51SetScenario(\'' + k + '\')">' + esc(P51_SCLB[k]) +
+          '<span class="sc-b">' + money(cc.taxDue) + '</span>' +
+          '<span class="sc-b" style="font-weight:400;color:' + (cc.risk.level === 'เสี่ยง' ? '#DC2626' : (cc.risk.level === 'เฝ้าระวัง' ? '#C8730B' : '#1E7A48')) + '">' + esc(cc.risk.level) + '</span></button>';
+      }).join('') + '</div>';
+
+    h += '<div class="tax-acts p51-acts"><button class="btn btn-ok" onclick="p51Save()">💾 บันทึกร่าง</button>' +
+      '<button class="btn btn-ghost" onclick="p51Doc(P51.ent,P51.year)">📄 กระดาษทำการ</button>' +
+      '<button class="btn btn-ghost" onclick="p51Filed()">✅ ทำเครื่องหมายว่ายื่นแล้ว</button></div>';
+    if(P51.job && P51.job.status === 'ยื่นแล้ว'){
+      h += '<div class="p51-warn" style="margin-top:10px">งานนี้ทำเครื่องหมาย "ยื่นแล้ว" ' +
+        (P51.job.filedAmt ? '(' + money(P51.job.filedAmt) + ' บาท) ' : '') + '— บันทึกทับไม่ได้จนกว่าจะกดเปิดแก้' +
+        '<div class="tax-acts p51-acts"><button class="btn btn-ghost" onclick="p51Reopen(P51.ent,P51.year)">✏️ เปิดแก้อีกครั้ง</button></div></div>';
+    }
+    if(warn.length){
+      h += '<div class="p51-warn" style="margin-top:10px">⚠️ สิ่งที่ต้องรู้ก่อนใช้ตัวเลขนี้<ul>' +
+        warn.map(function(w){ return '<li>' + esc(w) + '</li>'; }).join('') + '</ul></div>';
+    }
+    h += '</div>';
+    side.innerHTML = h;
+  }
+  function p51Row(n, label, v){
+    return '<div class="r"><div><span class="n">' + n + '</span>' + esc(label) + '</div>' +
+      '<div class="v">' + (v < 0 ? '(' + money(-v) + ')' : money(v)) + '</div></div>';
+  }
+
+  // ───────────── บันทึก / เอกสาร / สถานะ ─────────────
+  function p51Save(status){
+    p51Read();
+    busy('กำลังบันทึก…');
+    jsonpPost({ action:'waPnd51Save', uid:UID, entity:P51.ent, year:P51.year, scenario:P51.key,
+      scenarios:JSON.stringify(P51.sc), auto:JSON.stringify(P51.auto || null),
+      wht:p51n(P51.wht), whtSource:P51.whtSrc, otherCredit:p51n(P51.other),
+      expected:P51.expected === '' ? '' : p51n(P51.expected),
+      sme:P51.sme === true ? '1' : (P51.sme === false ? '0' : ''),
+      status:status || '' }).then(function(r){
+      unbusy();
+      if(!r || !r.ok){ toast((r && r.error) || 'บันทึกไม่สำเร็จ'); return; }
+      toast('บันทึกแล้ว · ' + r.no);
+      // backend คำนวณซ้ำเสมอ — ถ้าต่างจากฝั่งเว็บ ให้เชื่อ backend
+      if(r.result){
+        P51.job = P51.job || {};
+        P51.job.status = status || (P51.job.status || 'ร่าง');
+        p51Recalc();
+      }
+    }).catch(function(e){ unbusy(); toast(e.message); });
+  }
+  function p51Doc(ent, year){
+    busy('กำลังออกกระดาษทำการ…');
+    jsonp({ action:'waPnd51Doc', uid:UID, entity:ent, year:year }).then(function(r){
+      unbusy();
+      if(!r || !r.ok){ toast((r && r.error) || 'ออกเอกสารไม่สำเร็จ'); return; }
+      toast('ออกกระดาษทำการแล้ว');
+      if(r.link) window.open(r.link, '_blank');
+    }).catch(function(e){ unbusy(); toast(e.message); });
+  }
+  function p51Filed(){
+    var amt = prompt('ยอดภาษีที่ยื่นจริง (บาท)', String(p51Calc(P51).taxDue));
+    if(amt === null) return;
+    var d = prompt('วันที่ยื่น (YYYY-MM-DD)', new Date().toISOString().slice(0, 10));
+    if(d === null) return;
+    busy('กำลังบันทึก…');
+    jsonp({ action:'waPnd51Filed', uid:UID, entity:P51.ent, year:P51.year, filedAt:d, filedAmt:p51n(amt) })
+      .then(function(r){ unbusy();
+        if(!r || !r.ok){ toast((r && r.error) || 'บันทึกไม่สำเร็จ'); return; }
+        toast('ทำเครื่องหมายว่ายื่นแล้ว');
+        p51Open(P51.ent, P51.year);
+      }).catch(function(e){ unbusy(); toast(e.message); });
+  }
+  function p51Reopen(ent, year){
+    busy('กำลังเปิดแก้…');
+    jsonp({ action:'waPnd51Filed', uid:UID, entity:ent, year:year, reopen:'1' }).then(function(r){
+      unbusy();
+      if(!r || !r.ok){ toast((r && r.error) || 'ทำรายการไม่สำเร็จ'); return; }
+      toast('เปิดแก้ได้แล้ว');
+      p51Open(ent, year);
+    }).catch(function(e){ unbusy(); toast(e.message); });
+  }
+  window.p51Open = p51Open; window.p51Back = p51Back; window.p51Touch = p51Touch;
+  window.p51WhtManual = p51WhtManual; window.p51SetScenario = p51SetScenario; window.p51UseRef = p51UseRef;
+  window.p51PullAuto = p51PullAuto; window.p51Save = p51Save; window.p51Doc = p51Doc;
+  window.p51Filed = p51Filed; window.p51Reopen = p51Reopen;
+
   // ═══════════ 💵 รับชำระ + ใบเสร็จ/ใบกำกับภาษี (เฟส A4) ═══════════
   // ยอดคงค้างมาจาก backend เสมอ (ชีตรับชำระ = แหล่งความจริงเดียว) — หน้าเว็บไม่คิดยอดเอง
   var RECV = null;
@@ -5704,7 +6208,8 @@
         var nbd=$('navBizDash'); if(nbd) nbd.style.display='';             // 📊 ภาพรวมธุรกิจ = พี่/HR
         var nsl=$('navSales'); if(nsl) nsl.style.display='';               // 💰 รายรับ (ฝั่งขาย) = พี่/HR
         var nar=$('navAr'); if(nar) nar.style.display='';                   // 📊 ลูกหนี้ค้างรับ = พี่/HR
-        var npr=$('navPoReport'); if(npr) npr.style.display=''; }           // 📊 รายงานจ่ายออก = พี่คนเดียว (backend poGate_ กันซ้ำอีกชั้น)
+        var npr=$('navPoReport'); if(npr) npr.style.display='';           // 📊 รายงานจ่ายออก = พี่คนเดียว (backend poGate_ กันซ้ำอีกชั้น)
+        var n51=$('navPnd51'); if(n51) n51.style.display=''; }              // 📐 ภ.ง.ด.51 = พี่คนเดียว (backend pnd51Gate_ กันซ้ำอีกชั้น)           // 📊 รายงานจ่ายออก = พี่คนเดียว (backend poGate_ กันซ้ำอีกชั้น)
       // รายงานการเงินรวม = พี่ + HR ที่ตั้งใน Script Property (backend ตัดสิน ไม่ผูกกับ IS_OWNER)
       CAN_FIN=!!r.canFinance;
       if(CAN_FIN){ var nfr=$('navFinReport'); if(nfr) nfr.style.display=''; }
