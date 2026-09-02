@@ -5478,15 +5478,17 @@
       '<select onchange="if(this.value)$(\'cuName\').value=this.value"><option value="">— เลือก —</option>'+
       miss.map(function(n){ return '<option value="'+esc(n)+'">'+esc(n)+'</option>'; }).join('')+'</select></div>'):'';
     var rows=(SALES.customers||[]).map(function(c){
-      return '<tr><td>'+esc(c.name)+'</td><td>'+esc(c.taxId||'—')+'</td><td>'+c.creditDays+' วัน</td></tr>'; }).join('');
+      return '<tr><td>'+esc(c.name)+'</td><td>'+esc(c.taxId||'—')+'</td><td>'+esc(c.branch||'สำนักงานใหญ่')+
+        '</td><td>'+c.creditDays+' วัน</td></tr>'; }).join('');
     modal('<h3>👥 ทะเบียนลูกค้า</h3><div id="mErr" class="m-err hidden"></div>'+
       (rows?'<div class="tax-tbl-wrap" style="max-height:170px;overflow-y:auto"><table class="tax-tbl">'+
-        '<thead><tr><th>ลูกค้า</th><th>เลขผู้เสียภาษี</th><th>เครดิต</th></tr></thead><tbody>'+rows+'</tbody></table></div>':'')+
+        '<thead><tr><th>ลูกค้า</th><th>เลขผู้เสียภาษี</th><th>สาขา</th><th>เครดิต</th></tr></thead><tbody>'+rows+'</tbody></table></div>':'')+
       opts+
       '<div class="fld"><label>ชื่อลูกค้า (ต้องตรงกับชีตกลุ่มลูกค้า)</label><input id="cuName"></div>'+
       '<div class="fld"><label>ชื่อเต็มตามหนังสือรับรอง (ขึ้นบนเอกสาร)</label><input id="cuLegal"></div>'+
       '<div class="fld"><label>เลขประจำตัวผู้เสียภาษี (13 หลัก)</label><input id="cuTax" inputmode="numeric"></div>'+
       '<div class="fld"><label>ที่อยู่ (สำหรับใบกำกับภาษี)</label><textarea id="cuAddr"></textarea></div>'+
+      branchFieldHtml('cu','')+
       '<div class="fld"><label>เครดิตเทอม (วัน)</label><input id="cuCredit" inputmode="numeric" value="'+(SALES.creditDays||15)+'"></div>'+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button>'+
       '<button class="btn btn-primary" onclick="custSave()">บันทึกลูกค้า</button></div>');
@@ -5496,11 +5498,36 @@
     if(!n){ mErr('กรอกชื่อลูกค้าก่อนค่ะ'); return; }
     callBusy('กำลังบันทึก…', jsonpPost({action:'waCustomerSave',uid:UID,name:n,
       legalName:($('cuLegal')||{}).value||'', taxId:($('cuTax')||{}).value||'',
-      address:($('cuAddr')||{}).value||'', creditDays:($('cuCredit')||{}).value||''}), 'บันทึกแล้ว').then(function(r){
+      address:($('cuAddr')||{}).value||'', branch:branchValue('cu'),
+      creditDays:($('cuCredit')||{}).value||''}), 'บันทึกแล้ว').then(function(r){
       if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
       closeModal(); toast('✅ บันทึก '+r.name+' แล้ว'); renderSales();
     }).catch(function(e){ mErr(e.message); });
   }
+  /** ช่อง "สำนักงานใหญ่/สาขา" — แยกจากที่อยู่ (พี่กี้เคาะ 3 ก.ย. 69)
+   *  เลือกสำนักงานใหญ่ = จบ · เลือกสาขา = พิมพ์เลขสาขา (backend เติมคำว่า "สาขาที่" ให้เอง) */
+  function branchFieldHtml(k, val){
+    var v=String(val||'').trim();
+    var isHq=(!v || v==='สำนักงานใหญ่');
+    var no=isHq?'':v.replace(/^สาขาที่\s*/,'');
+    return '<div class="fld"><label>สำนักงานใหญ่ / สาขา</label>'+
+      '<select id="'+k+'BrKind" onchange="branchToggle(\''+k+'\')">'+
+        '<option value="hq"'+(isHq?' selected':'')+'>สำนักงานใหญ่</option>'+
+        '<option value="br"'+(isHq?'':' selected')+'>สาขา (ระบุเลขที่)</option>'+
+      '</select>'+
+      '<input id="'+k+'BrNo" class="'+(isHq?'hidden':'')+'" style="margin-top:6px" '+
+        'placeholder="เลขที่สาขา เช่น 00002" value="'+esc(no)+'"></div>';
+  }
+  function branchToggle(k){
+    var kind=(($(k+'BrKind')||{}).value)||'hq', el=$(k+'BrNo');
+    if(el) el.classList.toggle('hidden', kind!=='br');
+  }
+  /** ค่าที่จะส่งขึ้น backend ('สำนักงานใหญ่' หรือเลขสาขา · ว่าง = สำนักงานใหญ่) */
+  function branchValue(k){
+    if(((($(k+'BrKind')||{}).value)||'hq')!=='br') return 'สำนักงานใหญ่';
+    return ((($(k+'BrNo')||{}).value)||'').trim();
+  }
+
   /** 🏢 จัดการนิติบุคคล — ตั้งค่า "จด VAT" ได้จากที่นี่ ไม่ต้องพิมพ์ในชีต
    *  ⚠️ ค่าที่แก้มีผลกับใบที่ออก "หลังจากนี้" เท่านั้น (ใบเก่าเก็บ snapshot ของตัวเองไว้แล้ว) */
   var ENTS=[];
@@ -5513,6 +5540,7 @@
       var rows=ENTS.map(function(e,i){
         return '<tr style="cursor:pointer" onclick="entEdit('+i+')"><td><b>'+esc(e.code)+'</b></td>'+
           '<td>'+esc(e.name)+'</td>'+
+          '<td>'+esc(e.branch||'สำนักงานใหญ่')+'</td>'+
           '<td>'+(e.vatReg?'✅ จด':'—')+'</td>'+
           '<td>'+(String(e.status).indexOf('ปิด')>=0?'🚫 ปิด':'ใช้งาน')+'</td>'+
           '<td style="color:#1E8FE1">แก้ไข</td></tr>'; }).join('');
@@ -5521,7 +5549,7 @@
         'และใบเสร็จจะเป็น "ใบเสร็จรับเงิน/ใบกำกับภาษี" หรือ "ใบเสร็จรับเงิน" เฉย ๆ<br>'+
         '<b>ดูตามบริษัทที่ออกเอกสาร ไม่ใช่ตามลูกค้า</b> · แก้แล้วมีผลกับใบที่ออกหลังจากนี้เท่านั้น</div>'+
         (rows?'<div class="tax-tbl-wrap" style="max-height:190px;overflow-y:auto"><table class="tax-tbl">'+
-          '<thead><tr><th>รหัส</th><th>ชื่อ</th><th>VAT</th><th>สถานะ</th><th></th></tr></thead>'+
+          '<thead><tr><th>รหัส</th><th>ชื่อ</th><th>สาขา</th><th>VAT</th><th>สถานะ</th><th></th></tr></thead>'+
           '<tbody>'+rows+'</tbody></table></div>':'<div class="emptybox">ยังไม่มีนิติบุคคลในระบบ</div>')+
         '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button>'+
         '<button class="btn btn-primary" onclick="entEdit(-1)">➕ เพิ่มบริษัท</button></div>');
@@ -5539,6 +5567,7 @@
       '<div class="fld"><label>เลขประจำตัวผู้เสียภาษี (13 หลัก)</label>'+
         '<input id="enTax" inputmode="numeric" value="'+esc(e.taxId||'')+'"></div>'+
       '<div class="fld"><label>ที่อยู่บนเอกสาร</label><textarea id="enAddr">'+esc(e.address||'')+'</textarea></div>'+
+      branchFieldHtml('en', e.branch)+
       '<div class="fld"><label>ผู้มีอำนาจลงนาม (ชื่อใต้ลายเซ็น)</label><input id="enSigner" value="'+esc(e.signerName||'')+'"></div>'+
       '<label style="display:flex;gap:9px;align-items:flex-start;padding:10px;border:1px solid var(--line);border-radius:10px;margin:8px 0">'+
         '<input type="checkbox" id="enVat"'+(e.vatReg?' checked':'')+' style="margin-top:3px">'+
@@ -5566,6 +5595,7 @@
     callBusy('กำลังบันทึก…', jsonpPost({action:'waEntitySave',uid:UID,
       code:code, name:name,
       taxId:((($('enTax')||{}).value)||'').trim(), address:((($('enAddr')||{}).value)||'').trim(),
+      branch:branchValue('en'),
       signerName:((($('enSigner')||{}).value)||'').trim(),
       vatReg:(($('enVat')||{}).checked?'1':'0'),
       paidCapital:((($('enCap')||{}).value)||'').trim(),
@@ -5578,6 +5608,7 @@
     }).catch(function(e){ mErr(e.message); });
   }
   window.entManage=entManage; window.entEdit=entEdit; window.entSave=entSave;
+  window.branchToggle=branchToggle;
 
   window.renderSales=renderSales; window.salesFilter=salesFilter; window.salesNew=salesNew;
   window.salesAddItem=salesAddItem; window.salesDelItem=salesDelItem; window.salesPickService=salesPickService;
