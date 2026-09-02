@@ -192,6 +192,34 @@
   .p51-grid td input{ width:100%; box-sizing:border-box; padding:6px 8px; border:1px solid var(--line);
     border-radius:8px; font:inherit; font-size:12.5px; text-align:right; font-variant-numeric:tabular-nums; }
   .p51-grid td.rl{ white-space:nowrap; color:#4A5262; }
+  /* ── ฟอร์มตามแบบราชการ: ตัวเลือกแบบ radio (พี่กี้ขอ 2 ก.ย. 69 · อ้างแบบ ภ.ง.ด.51 จริง) ── */
+  .p51-opt{ display:flex; flex-direction:column; gap:7px; }
+  .p51-opt label{ display:flex; gap:9px; align-items:flex-start; padding:9px 11px; border:1px solid var(--line);
+    border-radius:10px; cursor:pointer; font-size:13px; line-height:1.5; background:#fff; }
+  .p51-opt label.on{ border-color:#0f6e56; background:#F1F8F5; }
+  .p51-opt input{ margin:2px 0 0; accent-color:#0f6e56; flex:0 0 auto; }
+  .p51-opt .o-sub{ display:block; font-size:11.5px; color:var(--muted); margin-top:2px; }
+  /* ── กระดาษทำการบนจอ (ดูก่อนออก PDF) ── */
+  .p51-doc{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:22px 20px; }
+  .p51-doc h3{ font-size:16px; margin:0 0 2px; text-align:center; }
+  .p51-doc .d-sub{ text-align:center; font-size:12.5px; color:var(--muted); margin-bottom:14px; }
+  .p51-doc table{ width:100%; border-collapse:collapse; font-size:13px; }
+  .p51-doc td{ padding:7px 6px; border-bottom:1px solid var(--line); vertical-align:top; }
+  .p51-doc td.n{ width:26px; color:var(--muted); }
+  .p51-doc td.v{ text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .p51-doc tr.total td{ font-weight:700; background:#EAF6F1; border-top:2px solid #0f6e56; }
+  .p51-doc .d-sec{ font-weight:700; font-size:13px; margin:16px 0 6px; color:#4A5262; }
+  .p51-doc .d-sign{ display:flex; gap:14px; margin-top:26px; flex-wrap:wrap; }
+  .p51-doc .d-sign div{ flex:1; min-width:150px; text-align:center; font-size:12px; color:#4A5262;
+    border-top:1px solid #98A2B3; padding-top:6px; }
+  .p51-doc .d-foot{ font-size:11px; color:var(--muted); margin-top:16px; text-align:center; }
+  @media print{
+    body *{ visibility:hidden; }
+    #p51DocView, #p51DocView *{ visibility:visible; }
+    #p51DocView{ position:absolute; inset:0; margin:0; padding:0; }
+    .p51-doc{ border:0; box-shadow:none; padding:0; }
+    .p51-noprint{ display:none !important; }
+  }
   .p51-fr{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
   .p51-fr select, .p51-fr input{ min-width:0; }            /* ไม่งั้น select ชื่อบริษัทยาว ดันกริดล้นการ์ด */
   @media (max-width:520px){ .p51-fr{ grid-template-columns:1fr; } }
@@ -4520,7 +4548,13 @@
   // ⚠️ คำนวณสดฝั่งนี้ระหว่างพิมพ์เพื่อความลื่น — แต่ "บันทึกจริง" backend คำนวณซ้ำเสมอ
   //    (ฟังก์ชัน p51Profit/p51HalfTax/p51Risk ต้องให้ผลตรงกับ Pnd51.gs เป๊ะ · เทสเทียบสองฝั่งไว้แล้ว)
   var P51 = { init:null, mode:'list', ent:'', year:0, sc:{}, key:'mid', wht:'', whtSrc:'manual',
-    other:'', expected:'', sme:null, auto:null, period:null, history:[], growth:null, job:null };
+    other:'', expected:'', sme:null, auto:null, period:null, history:[], growth:null, job:null,
+    // ฟอร์มตามแบบราชการ · method ว่าง = ประมาณการ ม.67 ทวิ (1)
+    method:'', filing:'', filingSeq:'', h1Profit:'' };
+  var P51_M_EST = 'ประมาณการ (ม.67 ทวิ (1))';
+  var P51_M_ACT = 'กำไรจริงครึ่งรอบ (ม.67 ทวิ (2))';
+  var P51_F_NORMAL = 'ยื่นปกติ', P51_F_EXTRA = 'ยื่นเพิ่มเติม';
+  function p51IsActual(){ return P51.method === P51_M_ACT; }
   var P51_FIELDS = [
     { k:'revenue',          label:'รายได้' },
     { k:'cost',             label:'ต้นทุน' },
@@ -4545,12 +4579,16 @@
     return p51r2(forTax - Math.min(p51n(s.lossCarryforward), Math.max(forTax, 0)));
   }
   /** ภาษีครึ่งปี — ขั้นบันได SME คิดกับ "กึ่งหนึ่งของกำไรทั้งปี" ตามแบบ ภ.ง.ด.51 */
+  /** ภาษีจาก "ฐาน" ที่ให้มาตรง ๆ — ฝาแฝดของ pnd51TaxOnBase_ (ใช้ร่วมทั้ง 2 วิธีของแบบ) */
+  function p51TaxOnBase(base, isSME){
+    var b = Math.max(p51n(base), 0);
+    if(!isSME) return p51r2(b * 0.20);
+    return p51r2(Math.min(Math.max(b - 300000, 0), 2700000) * 0.15 + Math.max(b - 3000000, 0) * 0.20);
+  }
   function p51HalfTax(annualProfit, isSME){
     // ปัด "กึ่งหนึ่งของกำไร" ก่อนเข้าอัตราเสมอ — ตรงกับ pnd51HalfBase_ ของ backend
     // (ไม่ปัดก่อน = ต่างกัน 1 สตางค์เมื่อกำไรเป็นเลขคี่ทศนิยม · เจอจากเทสสุ่ม)
-    var half = p51r2(Math.max(p51n(annualProfit), 0) / 2);
-    if(!isSME) return p51r2(half * 0.20);
-    return p51r2(Math.min(Math.max(half - 300000, 0), 2700000) * 0.15 + Math.max(half - 3000000, 0) * 0.20);
+    return p51TaxOnBase(p51r2(Math.max(p51n(annualProfit), 0) / 2), isSME);
   }
   /** เพดานเสี่ยง = ประมาณการ × 1.25 (เกณฑ์เฝ้าระวังของทีม ไม่ใช่คำวินิจฉัยของสรรพากร) */
   function p51Risk(est, expected){
@@ -4568,19 +4606,25 @@
     var s = (st.sc || {})[st.key] || {};
     var profit = p51Profit(s);
     var isSME = st.sme !== false;
-    var halfTax = p51HalfTax(profit, isSME);
+    // วิธี (2) ม.67 ทวิ (2): ฐานภาษี = กำไรจริงครึ่งรอบตรง ๆ (ไม่หารครึ่ง) · ไม่มีเรื่องประมาณการขาด
+    var actual = st.method === P51_M_ACT;
+    var base = actual ? Math.max(p51n(st.h1Profit), 0) : p51r2(Math.max(profit, 0) / 2);
+    var halfTax = p51TaxOnBase(base, isSME);
     var net = p51r2(halfTax - p51n(st.wht) - p51n(st.other));
     var expected = st.expected === '' || st.expected == null ? p51Profit((st.sc || {}).mid || s) : p51n(st.expected);
-    return { profit:profit, half:p51r2(Math.max(profit, 0) / 2), isSME:isSME, halfTax:halfTax,
+    return { profit:profit, half:base, isActual:actual, isSME:isSME, halfTax:halfTax,
       taxDue: net > 0 ? net : 0, refundable: net < 0 ? p51r2(-net) : 0,
       expected:expected, expectedIsDefault: st.expected === '' || st.expected == null,
-      risk: p51Risk(profit, expected),
+      risk: actual
+        ? { ceiling:0, isRisky:false, excess:0, excessPct:0, gaugeRatio:0, level:'ปลอดภัย', notApplicable:true }
+        : p51Risk(profit, expected),
       penalty: (function(){
+        if(actual) return 0;   // ไม่มีประมาณการ = ไม่มีเงินเพิ่ม ม.67 ตรี
         var r = p51Risk(profit, expected);
         return r.isRisky ? p51r2(Math.max(p51HalfTax(expected, isSME) - halfTax, 0) * 0.20) : 0;
       })() };
   }
-  window.p51Profit = p51Profit; window.p51HalfTax = p51HalfTax; window.p51Risk = p51Risk; window.p51Calc = p51Calc;
+  window.p51Profit = p51Profit; window.p51HalfTax = p51HalfTax; window.p51TaxOnBase = p51TaxOnBase; window.p51Risk = p51Risk; window.p51Calc = p51Calc;
 
   /** เกจครึ่งวงกลม — เขียว <1.0 · เหลือง 1.0–1.25 · แดง >1.25 (สเกล 0–1.5 เท่า) */
   function p51Gauge(ratio, level){
@@ -4659,7 +4703,8 @@
         var id = 'p51_' + j.no;
         var acts = [{ key:'open', label:'📐 เปิดหน้าคำนวณ', call:"p51Open('" + j.entity + "'," + j.year + ")" }];
         if(j.pdfLink) acts.push({ key:'pdf', label:'📄 กระดาษทำการ', href:j.pdfLink });
-        acts.push({ key:'doc', label:'🖨️ ออกกระดาษทำการใหม่', call:"p51Doc('" + j.entity + "'," + j.year + ")" });
+        acts.push({ key:'view', label:'👁️ ดูกระดาษทำการบนจอ', call:"p51OpenDoc('" + j.entity + "'," + j.year + ")" });
+        acts.push({ key:'doc', label:'🖨️ ออกไฟล์ PDF ใหม่', call:"p51Doc('" + j.entity + "'," + j.year + ")" });
         if(j.status === 'ยื่นแล้ว') acts.push({ key:'reopen', label:'✏️ เปิดแก้อีกครั้ง', call:"p51Reopen('" + j.entity + "'," + j.year + ")" });
         return '<tr><td>' + esc(j.no) + '</td><td>' + esc(j.entityName || j.entity) + '</td>' +
           '<td>' + esc(p51DateText(j.dueDate)) + '</td>' +
@@ -4691,12 +4736,16 @@
         P51.other = r.job.otherCredit || ''; P51.expected = r.job.expectedProfit || '';
         P51.auto = r.job.auto || null;
         P51.sme = null;
+        P51.method = r.job.method || ''; P51.filing = r.job.filingType || '';
+        P51.filingSeq = r.job.filingSeq || ''; P51.h1Profit = r.job.h1Profit || '';
         p51Calcview();
+        if(P51.pendingDoc){ P51.pendingDoc = false; p51Preview(); }
       } else {
         // งานใหม่: โชว์ฟอร์มเปล่าทันที (ไม่ให้พี่มองจอว่าง) แล้วดึงยอดครึ่งปีจริงตามมาเติม
         P51.sc = { low:{}, mid:{}, high:{} }; P51.key = 'mid';
         P51.wht = ''; P51.whtSrc = 'manual'; P51.other = ''; P51.expected = '';
         P51.auto = null; P51.sme = null; P51.autoLoading = true;
+        P51.method = ''; P51.filing = ''; P51.filingSeq = ''; P51.h1Profit = '';
         p51Calcview();
         p51PullAuto(true);
       }
@@ -4755,8 +4804,34 @@
       '<option value="0"' + (P51.sme === false ? ' selected' : '') + '>ไม่เข้าเกณฑ์ SME — 20% ทั้งก้อน</option>' +
       '</select></div></div>';
 
+    // ①b ฟอร์มตามแบบ ภ.ง.ด.51 (วิธีคำนวณ + ประเภทการยื่น)
+    var isAct = p51IsActual();
+    h += '<div class="card"><div class="ds-h">②  วิธีคำนวณตามแบบ ภ.ง.ด.51</div><div class="p51-opt">' +
+      '<label class="' + (isAct ? '' : 'on') + '"><input type="radio" name="p51m" value="est"' + (isAct ? '' : ' checked') + ' onchange="p51SetMethod(\'est\')">' +
+      '<span><b>(1) ประมาณการกำไรสุทธิทั้งรอบ</b> — มาตรา 67 ทวิ (1)' +
+      '<span class="o-sub">บริษัททั่วไปใช้วิธีนี้ · เสียภาษีจากกึ่งหนึ่งของประมาณการ · ประมาณการขาดเกิน 25% มีเงินเพิ่ม 20%</span></span></label>' +
+      '<label class="' + (isAct ? 'on' : '') + '"><input type="radio" name="p51m" value="act"' + (isAct ? ' checked' : '') + ' onchange="p51SetMethod(\'act\')">' +
+      '<span><b>(2) กำไรสุทธิจริงของครึ่งรอบแรก</b> — มาตรา 67 ทวิ (2)' +
+      '<span class="o-sub">เฉพาะบริษัทจดทะเบียน/ธนาคาร/บริษัทที่มีผู้สอบบัญชีสอบทานงบครึ่งปี · ไม่มีเรื่องประมาณการขาด</span></span></label>' +
+      '</div>';
+    if(isAct){
+      h += '<div style="margin-top:10px"><label class="fl">กำไรสุทธิจริงของครึ่งรอบแรก (บาท)</label>' +
+        '<input id="p51H1" class="tax-inp" inputmode="decimal" value="' + esc(P51.h1Profit === '' ? '' : P51.h1Profit) + '" oninput="p51Touch()">' +
+        '<div class="p51-note">ยอดนี้เอาไปคิดภาษีตรง ๆ ไม่หารครึ่ง · ต้องมาจากงบครึ่งปีที่สอบทานแล้ว</div></div>';
+    }
+    var isExtra = P51.filing === P51_F_EXTRA;
+    h += '<div class="ds-h" style="margin:14px 0 8px">ประเภทการยื่น</div><div class="p51-opt">' +
+      '<label class="' + (isExtra ? '' : 'on') + '"><input type="radio" name="p51f" value="n"' + (isExtra ? '' : ' checked') + ' onchange="p51SetFiling(\'n\')"><span>ยื่นปกติ</span></label>' +
+      '<label class="' + (isExtra ? 'on' : '') + '"><input type="radio" name="p51f" value="x"' + (isExtra ? ' checked' : '') + ' onchange="p51SetFiling(\'x\')"><span>ยื่นเพิ่มเติม</span></label>' +
+      '</div>';
+    if(isExtra){
+      h += '<div style="margin-top:8px"><label class="fl">ยื่นเพิ่มเติมครั้งที่</label>' +
+        '<input id="p51Seq" class="tax-inp" inputmode="numeric" value="' + esc(P51.filingSeq || '1') + '" oninput="p51Touch()"></div>';
+    }
+    h += '</div>';
+
     // ② อ้างอิงปีก่อน
-    h += '<div class="card"><div class="ds-h">② ผลประกอบการย้อนหลัง</div>';
+    h += '<div class="card"><div class="ds-h">③ ผลประกอบการย้อนหลัง</div>';
     if(!P51.history.length){
       h += '<div class="emptybox">ยังไม่มีข้อมูลย้อนหลัง — กรอกในชีต "ผลประกอบการรายปี" แล้วเปิดหน้านี้ใหม่</div>';
     } else {
@@ -4778,7 +4853,7 @@
     h += '</div>';
 
     // ③ ประมาณการ 3 ฉากทัศน์
-    h += '<div class="card"><div class="ds-h">③ ประมาณการทั้งปี — 3 ฉากทัศน์</div>' +
+    h += '<div class="card"><div class="ds-h">④ ประมาณการทั้งปี — 3 ฉากทัศน์</div>' +
       '<div class="tax-acts p51-acts" style="margin:0 0 10px"><button class="btn btn-ghost" onclick="p51PullAuto(false)">🔄 ดึงยอดครึ่งปีแรกล่าสุดจากระบบ (× 2)</button></div>' +
       '<div class="p51-grid"><table><thead><tr><th>รายการ</th>' +
       P51_KEYS.map(function(k){ return '<th class="' + (k === P51.key ? 'sc-on' : '') + '" style="text-align:right">' + esc(P51_SCLB[k]) + '</th>'; }).join('') +
@@ -4795,12 +4870,12 @@
       '<div class="p51-note">ระบบไม่ตัดอายุขาดทุนสะสม 5 ปีให้ — กรอกเฉพาะยอดที่ใช้สิทธิ์ได้จริงในปีนี้</div></div>';
 
     // ④ กำไรจริงที่คาด + ⑤ เครดิตภาษี
-    h += '<div class="card"><div class="ds-h">④ คาดการณ์กำไรจริงปลายปี (ใช้เช็คความเสี่ยงเงินเพิ่ม)</div>' +
+    h += '<div class="card"><div class="ds-h">⑤ คาดการณ์กำไรจริงปลายปี (ใช้เช็คความเสี่ยงเงินเพิ่ม)</div>' +
       '<input id="p51Exp" class="tax-inp" inputmode="decimal" placeholder="ไม่กรอก = ใช้ฉากทัศน์กลาง" value="' + esc(P51.expected === '' ? '' : P51.expected) + '" oninput="p51Touch()">' +
       '<div class="p51-note">ถ้ากำไรจริงปลายปีสูงกว่าประมาณการเกิน 25% อาจถูกเรียกเงินเพิ่ม 20% ของภาษีที่ชำระขาด (ม.67 ตรี)</div></div>';
 
     var whtSrc = P51.auto && P51.auto.parts && P51.auto.parts.wht;
-    h += '<div class="card"><div class="ds-h">⑤ เครดิตภาษี</div><div class="p51-fr">' +
+    h += '<div class="card"><div class="ds-h">⑥ เครดิตภาษี</div><div class="p51-fr">' +
       '<div><label class="fl">ภาษีที่ลูกค้าหักเรา (50 ทวิ)</label>' +
       '<input id="p51Wht" class="tax-inp" inputmode="decimal" value="' + esc(P51.wht === '' ? '' : P51.wht) + '" oninput="p51WhtManual()">' +
       '<div class="p51-src">' + esc(whtSrc ? whtSrc.source : 'กรอกยอดรวมจาก 50 ทวิ ที่ลูกค้าออกให้เรา ในครึ่งปีแรก') + '</div></div>' +
@@ -4831,6 +4906,9 @@
         if(el) P51.sc[k][f.k] = el.value;
       });
     });
+    var h1 = $('p51H1'), sq = $('p51Seq');
+    if(h1) P51.h1Profit = h1.value;
+    if(sq) P51.filingSeq = sq.value;
     var ex = $('p51Exp'), w = $('p51Wht'), o = $('p51Other'), sme = $('p51Sme');
     if(ex) P51.expected = ex.value;
     if(w) P51.wht = w.value;
@@ -4840,6 +4918,8 @@
   function p51Touch(){ p51Read(); p51Recalc(); }
   function p51WhtManual(){ P51.whtSrc = 'manual'; p51Touch(); }
   function p51SetScenario(k){ p51Read(); P51.key = k; p51Calcview(); }
+  function p51SetMethod(m){ p51Read(); P51.method = (m === 'act') ? P51_M_ACT : P51_M_EST; p51Calcview(); }
+  function p51SetFiling(f){ p51Read(); P51.filing = (f === 'x') ? P51_F_EXTRA : P51_F_NORMAL; p51Calcview(); }
   function p51Back(){ P51.mode = 'list'; renderPnd51(); }
 
   /** เติมฉากทัศน์จากปีอ้างอิง (คูณให้เท่าปีเต็ม ไม่ใช่ครึ่งปี) */
@@ -4901,7 +4981,8 @@
 
     h += '<div class="ds-h" style="margin:14px 0 7px">เปรียบเทียบฉากทัศน์</div><div class="p51-sc">' +
       P51_KEYS.map(function(k){
-        var st = { sc:P51.sc, key:k, sme:P51.sme, wht:P51.wht, other:P51.other, expected:P51.expected };
+        var st = { sc:P51.sc, key:k, sme:P51.sme, wht:P51.wht, other:P51.other, expected:P51.expected,
+          method:P51.method, h1Profit:P51.h1Profit };
         var cc = p51Calc(st);
         return '<button class="' + (k === P51.key ? 'on' : '') + '" onclick="p51SetScenario(\'' + k + '\')">' + esc(P51_SCLB[k]) +
           '<span class="sc-b">' + money(cc.taxDue) + '</span>' +
@@ -4909,7 +4990,8 @@
       }).join('') + '</div>';
 
     h += '<div class="tax-acts p51-acts"><button class="btn btn-ok" onclick="p51Save()">💾 บันทึกร่าง</button>' +
-      '<button class="btn btn-ghost" onclick="p51Doc(P51.ent,P51.year)">📄 กระดาษทำการ</button>' +
+      '<button class="btn btn-ghost" onclick="p51Preview()">👁️ ดูกระดาษทำการ</button>' +
+      '<button class="btn btn-ghost" onclick="p51Doc(P51.ent,P51.year)">📄 ออกไฟล์ PDF</button>' +
       '<button class="btn btn-ghost" onclick="p51Filed()">✅ ทำเครื่องหมายว่ายื่นแล้ว</button></div>';
     if(P51.job && P51.job.status === 'ยื่นแล้ว'){
       h += '<div class="p51-warn" style="margin-top:10px">งานนี้ทำเครื่องหมาย "ยื่นแล้ว" ' +
@@ -4928,6 +5010,85 @@
       '<div class="v">' + (v < 0 ? '(' + money(-v) + ')' : money(v)) + '</div></div>';
   }
 
+  // ───────────── กระดาษทำการบนจอ (ดูก่อนออก PDF · พิมพ์ · ก๊อปลิงก์ · พี่กี้ขอ 2 ก.ย. 69) ─────────────
+  /** วาดเอกสารจากผลคำนวณชุดเดียวกับที่ backend ใช้ออก PDF — ตัวเลขต้องตรงกันเป๊ะ */
+  function p51DocHtml(){
+    var c = p51Calc(P51), e = P51.entity || {}, per = P51.period || {};
+    var isAct = p51IsActual();
+    var rows = [
+      [1, isAct ? 'กำไรสุทธิจริงของครึ่งรอบระยะเวลาบัญชีแรก' : 'ประมาณการกำไรสุทธิทั้งปี', isAct ? p51n(P51.h1Profit) : c.profit],
+      [2, isAct ? 'ฐานที่ใช้คำนวณภาษี (ไม่หารครึ่ง ตาม ม.67 ทวิ (2))' : 'กึ่งหนึ่งของประมาณการกำไรสุทธิ', c.half],
+      [3, 'อัตราภาษีที่ใช้', c.isSME ? 'SME ขั้นบันได (ยกเว้น ≤300,000 · 15% · 20%)' : 'อัตราปกติ 20%'],
+      [4, 'ภาษีที่คำนวณได้', c.halfTax],
+      [5, 'หัก ภาษีหัก ณ ที่จ่าย (ลูกค้าหักเรา)', -p51n(P51.wht)],
+      [6, 'หัก เครดิตภาษีอื่น', -p51n(P51.other)]
+    ];
+    var h = '<div class="p51-doc" id="p51DocPaper">' +
+      '<h3>' + esc(e.name || e.code || '') + '</h3>' +
+      '<div class="d-sub">แบบ ภ.ง.ด.51 — กระดาษทำการประมาณการภาษีครึ่งปี<br>' +
+      'เลขประจำตัวผู้เสียภาษี ' + esc(e.taxId || '-') + ' · รอบบัญชี ' + esc(p51DateText(per.start)) + ' – ' + esc(p51DateText(per.end)) + '<br>' +
+      esc(P51.method || P51_M_EST) + ' · ' + esc(P51.filing || P51_F_NORMAL) +
+      ((P51.filing === P51_F_EXTRA && P51.filingSeq) ? ' ครั้งที่ ' + esc(P51.filingSeq) : '') +
+      ' · ครบกำหนดยื่น ' + esc(p51DateText(per.dueDate)) + '</div>' +
+      '<table><tbody>' +
+      rows.map(function(r){
+        var v = (typeof r[2] === 'string') ? esc(r[2]) : (r[2] < 0 ? '(' + money(-r[2]) + ')' : money(r[2]));
+        return '<tr><td class="n">' + r[0] + '</td><td>' + esc(r[1]) + '</td><td class="v">' + v + '</td></tr>';
+      }).join('') +
+      '<tr class="total"><td class="n">7</td><td>' + (c.refundable > 0 ? 'ภาษีที่ขอคืน' : 'รวมภาษีที่ต้องชำระเพิ่มเติม') +
+      '</td><td class="v">' + money(c.refundable > 0 ? c.refundable : c.taxDue) + '</td></tr>' +
+      '</tbody></table>';
+
+    if(!isAct){
+      h += '<div class="d-sec">การประเมินความเสี่ยง (ม.67 ตรี)</div><table><tbody>' +
+        '<tr><td>กำไรจริงที่คาดการณ์ปลายปี</td><td class="v">' + money(c.expected) + (c.expectedIsDefault ? ' *' : '') + '</td></tr>' +
+        '<tr><td>เพดานที่ยังปลอดภัย (ประมาณการ × 1.25)</td><td class="v">' + money(c.risk.ceiling) + '</td></tr>' +
+        '<tr><td>สถานะ</td><td class="v">' + esc(c.risk.level) + '</td></tr>' +
+        '<tr><td>ประมาณการเงินเพิ่ม 20% (ถ้ากำไรจริงเป็นไปตามคาด)</td><td class="v">' + money(c.penalty) + '</td></tr>' +
+        '</tbody></table>' +
+        '<div class="d-foot" style="text-align:left;margin-top:6px">' +
+        (c.expectedIsDefault ? '* ใช้ค่าจากฉากทัศน์กลางแทน (ยังไม่ได้กรอกเอง)<br>' : '') +
+        'เกณฑ์ × 1.25 เป็นเกณฑ์เฝ้าระวังของทีม ไม่ใช่คำวินิจฉัยของสรรพากร (ตัวบทกฎหมายใช้กำไรจริงเป็นฐาน)</div>';
+    } else {
+      h += '<div class="d-foot" style="text-align:left;margin-top:10px">' +
+        'วิธี ม.67 ทวิ (2) ใช้ได้เฉพาะบริษัทจดทะเบียน/ธนาคาร/บริษัทที่มีผู้สอบบัญชีสอบทานงบครึ่งปี ' +
+        '— วิธีนี้ไม่มีเรื่องประมาณการกำไรขาดเกิน 25% จึงไม่มีเงินเพิ่มตาม ม.67 ตรี</div>';
+    }
+    h += '<div class="d-sign"><div>ผู้จัดทำ</div><div>ผู้ตรวจสอบ</div><div>ผู้อนุมัติ</div></div>' +
+      '<div class="d-foot">เอกสารภายใน — ลงนามด้วยลายมือ · เกณฑ์ภาษี ' + esc((P51.init && P51.init.ruleVersion) || '') +
+      ' · ออกเมื่อ ' + esc(p51DateText(new Date())) + '</div></div>';
+    return h;
+  }
+
+  /** หน้าดูกระดาษทำการ (ยังไม่ออกไฟล์) */
+  function p51Preview(){
+    p51Read();
+    var h = '<div class="section-h p51-noprint">📄 กระดาษทำการ · ' + esc((P51.entity && P51.entity.name) || '') + ' ปี ' + P51.year + '</div>' +
+      '<div class="tax-acts p51-acts p51-noprint" style="margin:0 0 12px">' +
+      '<button class="btn btn-ghost" onclick="p51BackCalc()">← กลับหน้าคำนวณ</button>' +
+      '<button class="btn btn-ghost" onclick="window.print()">🖨️ พิมพ์</button>' +
+      '<button class="btn btn-ok" onclick="p51Doc(P51.ent,P51.year)">📄 ออกไฟล์ PDF เก็บใน Drive</button>' +
+      ((P51.job && P51.job.pdfLink) ? '<button class="btn btn-ghost" onclick="p51CopyLink()">🔗 ก๊อปลิงก์ไฟล์</button>' : '') +
+      '</div>' +
+      '<div id="p51DocView">' + p51DocHtml() + '</div>' +
+      '<div class="p51-note p51-noprint">ตัวเลขชุดนี้คือชุดเดียวกับที่ไฟล์ PDF ใช้ · กด "ออกไฟล์ PDF" เมื่อตรวจแล้วว่าถูกต้อง</div>';
+    $('main').innerHTML = h;
+    P51.mode = 'doc';
+  }
+  function p51BackCalc(){ P51.mode = 'calc'; p51Calcview(); }
+  function p51CopyLink(){
+    var link = (P51.job && P51.job.pdfLink) || '';
+    if(!link){ toast('ยังไม่มีไฟล์ — กดออกไฟล์ PDF ก่อนค่ะ'); return; }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(link).then(function(){ toast('ก๊อปลิงก์แล้ว'); },
+        function(){ window.open(link, '_blank'); });
+    } else { window.open(link, '_blank'); }
+  }
+  /** เปิดงานจากหน้ารายการแล้วไปหน้าดูกระดาษทำการเลย */
+  function p51OpenDoc(ent, year){ P51.pendingDoc = true; p51Open(ent, year); }
+  window.p51Preview = p51Preview; window.p51BackCalc = p51BackCalc;
+  window.p51CopyLink = p51CopyLink; window.p51OpenDoc = p51OpenDoc;
+
   // ───────────── บันทึก / เอกสาร / สถานะ ─────────────
   function p51Save(status){
     p51Read();
@@ -4936,6 +5097,8 @@
       scenarios:JSON.stringify(P51.sc), auto:JSON.stringify(P51.auto || null),
       wht:p51n(P51.wht), whtSource:P51.whtSrc, otherCredit:p51n(P51.other),
       expected:P51.expected === '' ? '' : p51n(P51.expected),
+      method:P51.method || '', filingType:P51.filing || '',
+      filingSeq:P51.filingSeq || '', h1Profit:P51.h1Profit === '' ? '' : p51n(P51.h1Profit),
       sme:P51.sme === true ? '1' : (P51.sme === false ? '0' : ''),
       status:status || '' }).then(function(r){
       unbusy();
@@ -4955,7 +5118,7 @@
       unbusy();
       if(!r || !r.ok){ toast((r && r.error) || 'ออกเอกสารไม่สำเร็จ'); return; }
       toast('ออกกระดาษทำการแล้ว');
-      if(r.link) window.open(r.link, '_blank');
+      if(r.link){ P51.job = P51.job || {}; P51.job.pdfLink = r.link; window.open(r.link, '_blank'); }
     }).catch(function(e){ unbusy(); toast(e.message); });
   }
   function p51Filed(){
@@ -4981,7 +5144,7 @@
     }).catch(function(e){ unbusy(); toast(e.message); });
   }
   window.p51Open = p51Open; window.p51Back = p51Back; window.p51Touch = p51Touch;
-  window.p51WhtManual = p51WhtManual; window.p51SetScenario = p51SetScenario; window.p51UseRef = p51UseRef;
+  window.p51WhtManual = p51WhtManual; window.p51SetScenario = p51SetScenario; window.p51SetMethod = p51SetMethod; window.p51SetFiling = p51SetFiling; window.p51UseRef = p51UseRef;
   window.p51PullAuto = p51PullAuto; window.p51Save = p51Save; window.p51Doc = p51Doc;
   window.p51Filed = p51Filed; window.p51Reopen = p51Reopen;
 
