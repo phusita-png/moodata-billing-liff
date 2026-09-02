@@ -4263,6 +4263,7 @@
         '<button class="btn btn-ghost" onclick="salesBnOpen(\'\')">📑 ออกใบวางบิล</button>'+
         '<button class="btn btn-ghost" onclick="svcManage()">🧰 ทะเบียนบริการ ('+r.services.length+')</button>'+
         '<button class="btn btn-ghost" onclick="custManage()">👥 ทะเบียนลูกค้า ('+r.customers.length+')</button>'+
+        '<button class="btn btn-ghost" onclick="entManage()">🏢 นิติบุคคล</button>'+
         '<button class="btn btn-ghost" onclick="reimbMigrate()">📥 ย้ายตั้งเบิกเดิม</button></div>';
       h+='<div class="ed-filter"><select id="skf" onchange="salesFilter(this.value)">'+
         '<option value="">ชนิด: ทั้งหมด</option>'+
@@ -5500,6 +5501,84 @@
       closeModal(); toast('✅ บันทึก '+r.name+' แล้ว'); renderSales();
     }).catch(function(e){ mErr(e.message); });
   }
+  /** 🏢 จัดการนิติบุคคล — ตั้งค่า "จด VAT" ได้จากที่นี่ ไม่ต้องพิมพ์ในชีต
+   *  ⚠️ ค่าที่แก้มีผลกับใบที่ออก "หลังจากนี้" เท่านั้น (ใบเก่าเก็บ snapshot ของตัวเองไว้แล้ว) */
+  var ENTS=[];
+  function entManage(){
+    busy('กำลังโหลดนิติบุคคล…');
+    jsonp({action:'waEntities',uid:UID}).then(function(r){
+      unbusy();
+      if(!r||!r.ok){ toast((r&&r.error)||'โหลดไม่สำเร็จ'); return; }
+      ENTS=r.entities||[];
+      var rows=ENTS.map(function(e,i){
+        return '<tr style="cursor:pointer" onclick="entEdit('+i+')"><td><b>'+esc(e.code)+'</b></td>'+
+          '<td>'+esc(e.name)+'</td>'+
+          '<td>'+(e.vatReg?'✅ จด':'—')+'</td>'+
+          '<td>'+(String(e.status).indexOf('ปิด')>=0?'🚫 ปิด':'ใช้งาน')+'</td>'+
+          '<td style="color:#1E8FE1">แก้ไข</td></tr>'; }).join('');
+      modal('<h3>🏢 นิติบุคคล (บริษัทที่ออกเอกสาร)</h3><div id="mErr" class="m-err hidden"></div>'+
+        '<div class="m-hint">ช่อง <b>จด VAT</b> ตัดสินว่าเอกสารขายมีบรรทัด VAT 7% ไหม '+
+        'และใบเสร็จจะเป็น "ใบเสร็จรับเงิน/ใบกำกับภาษี" หรือ "ใบเสร็จรับเงิน" เฉย ๆ<br>'+
+        '<b>ดูตามบริษัทที่ออกเอกสาร ไม่ใช่ตามลูกค้า</b> · แก้แล้วมีผลกับใบที่ออกหลังจากนี้เท่านั้น</div>'+
+        (rows?'<div class="tax-tbl-wrap" style="max-height:190px;overflow-y:auto"><table class="tax-tbl">'+
+          '<thead><tr><th>รหัส</th><th>ชื่อ</th><th>VAT</th><th>สถานะ</th><th></th></tr></thead>'+
+          '<tbody>'+rows+'</tbody></table></div>':'<div class="emptybox">ยังไม่มีนิติบุคคลในระบบ</div>')+
+        '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button>'+
+        '<button class="btn btn-primary" onclick="entEdit(-1)">➕ เพิ่มบริษัท</button></div>');
+    }).catch(function(e){ unbusy(); toast(e.message); });
+  }
+  /** i = index ใน ENTS · -1 = เพิ่มใหม่ */
+  function entEdit(i){
+    var e=(i>=0?ENTS[i]:null)||{};
+    var isNew=(i<0);
+    modal('<h3>'+(isNew?'➕ เพิ่มนิติบุคคล':'✏️ แก้ '+esc(e.code))+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="fld"><label>รหัสบริษัท (ไปอยู่ในเลขเอกสาร เช่น IV-<b>RM89</b>-6809-001)</label>'+
+        '<input id="enCode" value="'+esc(e.code||'')+'"'+(isNew?'':' readonly style="background:#F3F4F7"')+
+        ' placeholder="เช่น RM89"></div>'+
+      '<div class="fld"><label>ชื่อนิติบุคคล (ชื่อเต็มบนเอกสาร)</label><input id="enName" value="'+esc(e.name||'')+'"></div>'+
+      '<div class="fld"><label>เลขประจำตัวผู้เสียภาษี (13 หลัก)</label>'+
+        '<input id="enTax" inputmode="numeric" value="'+esc(e.taxId||'')+'"></div>'+
+      '<div class="fld"><label>ที่อยู่บนเอกสาร</label><textarea id="enAddr">'+esc(e.address||'')+'</textarea></div>'+
+      '<div class="fld"><label>ผู้มีอำนาจลงนาม (ชื่อใต้ลายเซ็น)</label><input id="enSigner" value="'+esc(e.signerName||'')+'"></div>'+
+      '<label style="display:flex;gap:9px;align-items:flex-start;padding:10px;border:1px solid var(--line);border-radius:10px;margin:8px 0">'+
+        '<input type="checkbox" id="enVat"'+(e.vatReg?' checked':'')+' style="margin-top:3px">'+
+        '<span><b>จดภาษีมูลค่าเพิ่ม (VAT)</b><br>'+
+        '<span style="color:#8A94A6;font-size:12px">ติ๊ก = เอกสารขายบวก VAT 7% และใบเสร็จเป็นใบกำกับภาษีในตัว</span></span></label>'+
+      '<div class="fld"><label>ทุนจดทะเบียนที่ชำระแล้ว (ใช้ตัดสิน SME ใน ภ.ง.ด.51 · ไม่ใส่ก็ได้)</label>'+
+        '<input id="enCap" inputmode="decimal" value="'+esc(e.paidCapital||'')+'"></div>'+
+      '<div class="fld"><label>วันเริ่มรอบบัญชี (MM-DD · ว่าง = 01-01)</label>'+
+        '<input id="enFiscal" value="'+esc(e.fiscalStart||'')+'" placeholder="01-01"></div>'+
+      '<div class="fld"><label>สถานะ</label><select id="enStatus">'+
+        '<option value="ใช้งาน"'+(String(e.status||'').indexOf('ปิด')>=0?'':' selected')+'>ใช้งาน</option>'+
+        '<option value="ปิด"'+(String(e.status||'').indexOf('ปิด')>=0?' selected':'')+'>ปิด (ไม่ให้เลือกตอนออกเอกสาร)</option>'+
+      '</select></div>'+
+      '<div class="fld"><label>หมายเหตุ</label><input id="enNote" value="'+esc(e.note||'')+'"></div>'+
+      '<div class="m-hint">โลโก้กับลายเซ็นยังตั้งในชีตเหมือนเดิมค่ะ (ต้องใส่ file id ของ Drive) — '+
+      'ไม่ใส่ลายเซ็น = ใช้ลายเซ็นพี่กี้</div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="entManage()">ย้อนกลับ</button>'+
+      '<button class="btn btn-primary" onclick="entSave()">บันทึก</button></div>');
+  }
+  function entSave(){
+    var code=((($('enCode')||{}).value)||'').trim();
+    var name=((($('enName')||{}).value)||'').trim();
+    if(!code){ mErr('ใส่รหัสบริษัทค่ะ'); return; }
+    if(!name){ mErr('ใส่ชื่อนิติบุคคลค่ะ'); return; }
+    callBusy('กำลังบันทึก…', jsonpPost({action:'waEntitySave',uid:UID,
+      code:code, name:name,
+      taxId:((($('enTax')||{}).value)||'').trim(), address:((($('enAddr')||{}).value)||'').trim(),
+      signerName:((($('enSigner')||{}).value)||'').trim(),
+      vatReg:(($('enVat')||{}).checked?'1':'0'),
+      paidCapital:((($('enCap')||{}).value)||'').trim(),
+      fiscalStart:((($('enFiscal')||{}).value)||'').trim(),
+      status:(($('enStatus')||{}).value)||'ใช้งาน',
+      note:((($('enNote')||{}).value)||'').trim()}), 'บันทึกแล้ว').then(function(r){
+      if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+      toast('🏢 บันทึก '+r.code+' แล้ว'+(r.isNew?' (บริษัทใหม่)':''));
+      entManage();
+    }).catch(function(e){ mErr(e.message); });
+  }
+  window.entManage=entManage; window.entEdit=entEdit; window.entSave=entSave;
+
   window.renderSales=renderSales; window.salesFilter=salesFilter; window.salesNew=salesNew;
   window.salesAddItem=salesAddItem; window.salesDelItem=salesDelItem; window.salesPickService=salesPickService;
   window.salesPreview=salesPreview; window.salesSave=salesSave; window.salesSend=salesSend;
