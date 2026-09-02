@@ -122,9 +122,11 @@
   .tax-tbl tr.tax-total td{ font-weight:700; background:#FAFAFC; border-top:2px solid #D9DDE6; }
   /* ═══ ตารางรายการหมวดการเงิน (พี่กี้เคาะ 1 ก.ย. 2569: ตาราง + เมนู ⋮ แทนการ์ดปุ่มเยอะ) ═══ */
   /* ต่อยอด .tax-tbl เดิม — ลำดับคอลัมน์ตายตัว ยอดชิดขวา ปุ่มสั่งงานอยู่ที่เดียวทุกแถว */
-  .dt-tbl{ min-width:960px; table-layout:fixed; }   /* fixed = ทุกตารางในหน้าตรงคอลัมน์กันเป๊ะ (auto จะกว้างตามเนื้อหาของแต่ละตาราง) */
+  .dt-tbl{ min-width:960px; max-width:1240px; table-layout:fixed; }   /* จอกว้าง: ไม่ยืดจนคอลัมน์ห่างกันเกินไป (พี่กี้ 3 ก.ย. 69) */   /* fixed = ทุกตารางในหน้าตรงคอลัมน์กันเป๊ะ (auto จะกว้างตามเนื้อหาของแต่ละตาราง) */
   .dt-tbl th, .dt-tbl td{ overflow-wrap:anywhere; }
-  .dt-tbl td{ vertical-align:middle; }
+  /* ⚠️ .tax-tbl เดิมตั้ง white-space:nowrap → ชื่อลูกค้า/เรื่องยาวจะไม่ตัดบรรทัด แล้วล้นไปทับคอลัมน์ข้าง ๆ
+     (พี่กี้เจอกับตารางรายรับ 3 ก.ย. 69) · ตารางนี้ fixed layout อยู่แล้ว ให้ตัดคำในเซลล์เสมอ */
+  .dt-tbl td{ vertical-align:middle; white-space:normal; }
   .dt-tbl td.dt-detail{ white-space:normal; color:#5B6472; line-height:1.45; }
   .dt-tbl td.dt-amt{ text-align:right; font-variant-numeric:tabular-nums; font-weight:600; white-space:nowrap; }
   .dt-tbl td.dt-doc a{ color:var(--red); text-decoration:none; font-size:12px; margin-right:7px; white-space:nowrap; }
@@ -4259,12 +4261,12 @@
           esc(r.missingCustomers.slice(0,5).join(', '))+(r.missingCustomers.length>5?' …':'')+'</div>';
       }
       h+='<div class="tax-acts" style="margin:0 0 12px">'+
-        '<button class="btn btn-primary" onclick="salesNew()">➕ ออกเอกสารใหม่</button>'+
-        '<button class="btn btn-ghost" onclick="salesBnOpen(\'\')">📑 ออกใบวางบิล</button>'+
-        '<button class="btn btn-ghost" onclick="svcManage()">🧰 ทะเบียนบริการ ('+r.services.length+')</button>'+
-        '<button class="btn btn-ghost" onclick="custManage()">👥 ทะเบียนลูกค้า ('+r.customers.length+')</button>'+
-        '<button class="btn btn-ghost" onclick="entManage()">🏢 นิติบุคคล</button>'+
-        '<button class="btn btn-ghost" onclick="reimbMigrate()">📥 ย้ายตั้งเบิกเดิม</button></div>';
+        '<button class="btn btn-primary" onclick="salesNew()">ออกเอกสารใหม่</button>'+
+        '<button class="btn btn-ghost" onclick="salesBnOpen(\'\')">ออกใบวางบิล</button>'+
+        '<button class="btn btn-ghost" onclick="svcManage()">ทะเบียนบริการ</button>'+
+        '<button class="btn btn-ghost" onclick="custManage()">ทะเบียนลูกค้า</button>'+
+        '<button class="btn btn-ghost" onclick="entManage()">นิติบุคคล</button>'+
+        '<button class="btn btn-ghost" onclick="reimbMigrate()">ย้ายตั้งเบิกเดิม</button></div>';
       h+='<div class="ed-filter"><select id="skf" onchange="salesFilter(this.value)">'+
         '<option value="">ชนิด: ทั้งหมด</option>'+
         r.kinds.map(function(k){ return '<option value="'+esc(k.key)+'"'+(k.key===SALES_KIND_F?' selected':'')+'>'+esc(k.label)+'</option>'; }).join('')+
@@ -4288,6 +4290,8 @@
     if(d.pdfLink) a.push({key:'pdf',label:'📄 เปิดเอกสาร',href:d.pdfLink});
     if(a.length) a.push({sep:true});
     if(!canceled){
+      // แก้ไขได้ทุกใบที่ยังไม่ยกเลิก — แก้ได้แค่ไหน backend ตัดสิน (salesEditScope_) แล้วฟอร์มปรับตาม
+      a.push({key:'edit',label:'✏️ แก้ไขเอกสาร',call:'salesEdit('+q+')'});
       // ── ต่อยอดเป็นใบถัดไปในสายเอกสาร ──
       if(d.kind==='QT' && !salesRefBy(d,'IV').length)
         a.push({key:'toiv',label:'➡️ ออกใบแจ้งหนี้จากใบนี้',call:'salesToInvoice('+q+')'});
@@ -4307,9 +4311,9 @@
   function paintSalesTable(docs){
     var box=$('salesTbl'); if(!box) return;
     if(!docs.length){ box.innerHTML='<div class="card"><div class="emptybox">ยังไม่มีเอกสารขาย 😊</div></div>'; return; }
-    var cols=[{label:'เลขที่',w:'150px'},{label:'วันที่',w:'92px'},{label:'ลูกค้า',w:'160px'},
-      {label:'เรื่อง'},{label:'ยอดรวม',cls:'ta-r',w:'112px'},{label:'คงค้าง',cls:'ta-r',w:'106px'},
-      {label:'สถานะ',w:'116px'},{label:'ครบกำหนด',w:'96px'},{label:'',w:'46px'}];
+    var cols=[{label:'เลขที่',w:'156px'},{label:'วันที่',w:'86px'},{label:'ลูกค้า',w:'170px'},
+      {label:'เรื่อง',w:'260px'},{label:'ยอดรวม',cls:'ta-r',w:'110px'},{label:'คงค้าง',cls:'ta-r',w:'104px'},
+      {label:'สถานะ',w:'118px'},{label:'ครบกำหนด',w:'96px'},{label:'',w:'44px'}];
     var rows=docs.map(function(d){
       SALES_BYNO[d.no]=d;
       var due=d.dueDate?fmtDate(d.dueDate):'—';
@@ -4404,7 +4408,8 @@
   function salesPreview(){
     var box=$('slSum'); if(!box||!SALES) return;
     var ent=null, code=($('slEnt')||{}).value;
-    SALES.entities.forEach(function(e){ if(e.code===code) ent=e; });
+    if(!$('slEnt') && EDIT_DOC){ ent={ vatReg: !!EDIT_DOC.vatReg }; }   // ฟอร์มแก้ไข = บริษัทเดิมของใบนั้น
+    else SALES.entities.forEach(function(e){ if(e.code===code) ent=e; });
     var sub=0;
     SALES_ITEMS.forEach(function(it,i){
       var q=Number((($('sq'+i)||{}).value||'0').replace(/,/g,''))||0;
@@ -4435,6 +4440,69 @@
       renderSales();
     }).catch(function(e){ mErr(e.message); });
   }
+  /** ✏️ แก้เอกสารที่ออกไปแล้ว — โหลดค่าเดิมมาให้ แล้วออกไฟล์ใหม่ทับตอนบันทึก
+   *  ใบที่รับเงินแล้ว/ใบเสร็จ/ใบวางบิล จะแก้ได้แค่เรื่องกับหมายเหตุ (backend เป็นคนตัดสิน) */
+  var EDIT_DOC=null;
+  function salesEdit(no){
+    busy('กำลังโหลดเอกสาร…');
+    jsonp({action:'waSalesGet',uid:UID,no:no}).then(function(r){
+      unbusy();
+      if(!r||!r.ok){ toast((r&&r.error)||'โหลดไม่สำเร็จ'); return; }
+      if(!r.canEdit){ toast(r.why||'ใบนี้แก้ไขไม่ได้ค่ะ'); return; }
+      EDIT_DOC=r;
+      var d=r.doc;
+      SALES_ITEMS=(r.items||[]).map(function(it){
+        return { service:it.service||'', detail:it.detail||'', qty:it.qty, price:it.price };
+      });
+      if(!SALES_ITEMS.length) SALES_ITEMS=[{}];
+      var custs=(SALES&&SALES.customers||[]).map(function(c){
+        return '<option value="'+esc(c.name)+'"'+(c.name===d.customer?' selected':'')+'>'+esc(c.name)+'</option>'; }).join('');
+      var full=r.canAmount;
+      modal('<h3>✏️ แก้ '+esc(d.kindLabel)+' '+esc(d.no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+        '<div class="m-hint">ออกในนาม <b>'+esc(d.entityName||d.entity)+'</b> · สถานะ '+esc(d.status)+
+        (d.sent?'<br><span style="color:#C8730B">⚠️ ใบนี้ส่งเข้ากลุ่มลูกค้าไปแล้ว — แก้เสร็จต้องกดส่งใหม่ ลูกค้าถึงจะได้ไฟล์ล่าสุด</span>':'')+
+        (full?'':'<br><span style="color:#C8730B">⚠️ '+esc(r.why)+'</span>')+'</div>'+
+        (full?('<div class="fld"><label>ลูกค้า</label><select id="edCust">'+custs+'</select></div>'+
+          '<div class="fld"><label>วันที่เอกสาร</label><input id="edDate" type="date" value="'+esc(d.docDate||'')+'"></div>'):'')+
+        '<div class="fld"><label>เรื่อง</label><input id="edTitle" value="'+esc(d.title||'')+'"></div>'+
+        (full?('<div class="fld"><label>รายการ</label><div id="slItems"></div>'+
+          '<button class="btn btn-ghost" style="width:100%;margin-top:6px" onclick="salesAddItem()">➕ เพิ่มบรรทัด</button></div>'+
+          '<div class="fld"><label>ส่วนลดท้ายบิล (บาท)</label>'+
+            '<input id="slDisc" inputmode="decimal" value="'+esc(String(d.discount||0))+'" oninput="salesPreview()"></div>'):'')+
+        '<div class="fld"><label>หมายเหตุ</label><textarea id="edNote">'+esc(d.note||'')+'</textarea></div>'+
+        (full?'<div id="slSum" class="m-hint"></div>':'<div class="m-hint">ยอดรวม '+money(d.total)+' บาท (แก้ไม่ได้)</div>')+
+        '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+        '<button class="btn btn-primary" onclick="salesEditSave(\''+esc(no)+'\')">บันทึกการแก้ไข</button></div>');
+      if(full){
+        // ใช้ตัวแก้รายการชุดเดียวกับฟอร์มออกเอกสาร (ของจริงกับที่นี่ต้องคิดยอดเหมือนกัน)
+        var ent=null; (SALES&&SALES.entities||[]).forEach(function(x){ if(x.code===d.entity) ent=x; });
+        EDIT_DOC.vatReg=ent?ent.vatReg:false;
+        paintSalesItems();
+      }
+    }).catch(function(e){ unbusy(); toast(e.message); });
+  }
+  function salesEditSave(no){
+    var p={action:'waSalesEdit',uid:UID,no:no,
+      title:((($('edTitle')||{}).value)||'').trim(), note:((($('edNote')||{}).value)||'').trim()};
+    if(EDIT_DOC && EDIT_DOC.canAmount){
+      salesReadItems();
+      var items=SALES_ITEMS.filter(function(it){ return (it.detail||'').trim() || it.service; });
+      if(!items.length){ mErr('ใส่รายการอย่างน้อย 1 บรรทัดค่ะ'); return; }
+      p.items=JSON.stringify(items);
+      p.customer=($('edCust')||{}).value||'';
+      p.docDate=($('edDate')||{}).value||'';
+      p.discount=($('slDisc')||{}).value||'0';
+    }
+    callBusy('กำลังบันทึก…', jsonpPost(p), 'บันทึกแล้ว').then(function(r){
+      if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+      closeModal();
+      if(!(r.changed||[]).length){ toast('ไม่มีอะไรเปลี่ยนค่ะ'); return; }
+      toast('✏️ แก้ '+(r.changed||[]).join(', ')+' แล้ว · ออกไฟล์ใหม่ให้'+
+        (r.resent?' — อย่าลืมกดส่งเข้ากลุ่มใหม่':'')+(r.warn?' ⚠️ '+r.warn:''));
+      renderSales();
+    }).catch(function(e){ mErr(e.message); });
+  }
+
   function salesSend(no){
     callBusy('กำลังส่งเข้ากลุ่มลูกค้า…', jsonp({action:'waSalesSend',uid:UID,no:no}), 'ส่งแล้ว').then(function(r){
       if(!r||!r.ok){ toast((r&&r.error)||'ส่งไม่สำเร็จ'); return; }
@@ -5615,6 +5683,7 @@
   window.salesPreview=salesPreview; window.salesSave=salesSave; window.salesSend=salesSend;
   window.salesPdf=salesPdf; window.salesCancel=salesCancel; window.salesCancelDo=salesCancelDo;
   window.svcManage=svcManage; window.svcSave=svcSave; window.custManage=custManage; window.custSave=custSave;
+  window.salesEdit=salesEdit; window.salesEditSave=salesEditSave;
 
   // ═══════════ VIEW: 📊 ภาพรวมธุรกิจ (พี่กี้ขอตามคอนเซปต์ SMEAccFlow) ═══════════
   var BIZ_YM='';
