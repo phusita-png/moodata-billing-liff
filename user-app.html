@@ -661,6 +661,8 @@
       <svg viewBox="0 0 24 24"><path d="M4.5 5.5h15v13h-15z"/><path d="M8 9.5h8M8 13h8M8 16h4"/></svg><span>รายรับ</span></button>
     <button class="nav-btn" data-view="ar" aria-label="ลูกหนี้" id="navAr" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M3 20h18"/><path d="M6.5 17V10M11.5 17V6M16.5 17v-4"/></svg><span>ลูกหนี้</span></button>
+    <button class="nav-btn" data-view="salesreport" aria-label="รายงานรายรับ" id="navSalesReport" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M4 19.5h16"/><path d="M7 16V8.5M12 16V5M17 16v-5.5"/></svg><span>รายงานรายรับ</span></button>
     <button class="nav-btn" data-view="payout" aria-label="จ่ายออก" id="navPayout" style="display:none">
       <svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6.5 12h.01M17.5 12h.01"/></svg><span>จ่ายออก</span></button>
     <button class="nav-btn" data-view="clock" aria-label="ลงเวลา">
@@ -715,7 +717,7 @@
     home:['🏠','ภาพรวม'], clock:['🕐','ลงเวลา'],
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
     expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติเบิกจ่าย'],
-    expdash:['📊','สรุปค่าใช้จ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','จ่ายออก'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📊','รายงานจ่ายออก'], sales:['💰','รายรับ'], ar:['📊','ลูกหนี้ค้างรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51']
+    expdash:['📊','สรุปค่าใช้จ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','จ่ายออก'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📊','รายงานจ่ายออก'], sales:['💰','รายรับ'], ar:['📊','ลูกหนี้ค้างรับ'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51']
   };
   var PROJECTS=[], COMPANIES=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ) · COMPANIES=บริษัท auto (หน้าจัดการ)
   var ALL_TASKS=[], PJ_SEL='', MB_STATUSES=[];   // มุมมอง Project (dropdown เลือก · แยก 6 สถานะ + %) · MB_STATUSES=รายการสถานะ (ฟอร์มแก้งานมือถือ)
@@ -779,7 +781,7 @@
     if(gi) $('tbIcon').innerHTML=gi; else $('tbIcon').textContent=meta[0];
     $('tbTitle').textContent=meta[1];
     mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
-    ({ home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, ar:renderAr, bizdash:renderBizDash, pnd51:renderPnd51 }[v] || soon)();
+    ({ home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51 }[v] || soon)();
   }
 
   // ───── มือถือ: เมนูกลุ่ม (ล่าง) + แท็บย่อย (บน) · คอมใช้ sidebar เดิม ไม่เกี่ยว ─────
@@ -791,7 +793,7 @@
     { key:'home', icon:'🏠', label:'ภาพรวม', views:['home'] },
     { key:'work', icon:'📊', label:'งาน',    views:['projects','mytasks','review','senddoc','appt','announce','trash'] },
     { key:'hr',   icon:'👥', label:'HR',     views:['approve','otapprove','hrreport'] },
-    { key:'fin',  icon:'💰', label:'การเงิน', views:['bizdash','sales','ar','expdash','reimb','payout','poreport','pnd51','finreport','taxdoc'] },   /* payout = จ่ายออกของบริษัท (พี่คนเดียว) */   /* taxdoc ซ่อนไว้ก่อน — เปิดตอน ภ.ง.ด. v2 */
+    { key:'fin',  icon:'💰', label:'การเงิน', views:['bizdash','sales','ar','salesreport','expdash','reimb','payout','poreport','pnd51','finreport','taxdoc'] },   /* payout = จ่ายออกของบริษัท (พี่คนเดียว) */   /* taxdoc ซ่อนไว้ก่อน — เปิดตอน ภ.ง.ด. v2 */
     { key:'me',   icon:'🙋', label:'ส่วนตัว', views:['clock','leave','ot','expense','docs'] }
   ];
   // ไอคอนหัวกลุ่มบน sidebar คอม = SVG เส้นสีเดียว (พี่กี้ขอ 30 ก.ค.: เรียบ ๆ ไม่สีสัน)
@@ -820,10 +822,10 @@
     expdash:'สรุป', reimb:'ตั้งเบิกลูกค้า', payout:'จ่ายออก',
     ot:'OT ของฉัน', otapprove:'อนุมัติ OT', docs:'เอกสาร',
     hrreport:'รายงาน HR', finreport:'รายงานการเงิน', taxdoc:'ภาษี/เอกสาร',
-    bizdash:'ภาพรวม', sales:'รายรับ', ar:'ลูกหนี้', poreport:'รายงานจ่ายออก', pnd51:'ภ.ง.ด.51' };
+    bizdash:'ภาพรวม', sales:'รายรับ', ar:'ลูกหนี้', salesreport:'รายงานรายรับ', poreport:'รายงานจ่ายออก', pnd51:'ภ.ง.ด.51' };
   // แท็บที่เห็นเฉพาะพี่/ผู้ดูแล · reimb = ตั้งเบิกลูกค้า (ชีตไม่มีเจ้าของรายคน + เป็นข้อมูลรายได้)
   // ⚠️ ซ่อนแท็บ ≠ กันข้อมูล — backend กรองสิทธิ์เองอีกชั้นเสมอ
-  var OWNER_VIEWS={ review:1, approve:1, expapprove:1, otapprove:1, reimb:1, taxdoc:1, payout:1, hrreport:1, finreport:1, ar:1, pnd51:1 };
+  var OWNER_VIEWS={ review:1, approve:1, expapprove:1, otapprove:1, reimb:1, taxdoc:1, payout:1, hrreport:1, finreport:1, ar:1, pnd51:1, salesreport:1 };
   var MGROUP='', MG_LAST={};
   function mVisibleViews(g){ return g.views.filter(function(v){ return IS_OWNER || !OWNER_VIEWS[v]; }); }
   function mGroupOf(v){ for(var i=0;i<NAV_GROUPS.length;i++){ if(NAV_GROUPS[i].views.indexOf(v)>=0) return NAV_GROUPS[i]; } return null; }
@@ -4231,7 +4233,8 @@
         '<button class="btn btn-primary" onclick="salesNew()">➕ ออกเอกสารใหม่</button>'+
         '<button class="btn btn-ghost" onclick="salesBnOpen(\'\')">📑 ออกใบวางบิล</button>'+
         '<button class="btn btn-ghost" onclick="svcManage()">🧰 ทะเบียนบริการ ('+r.services.length+')</button>'+
-        '<button class="btn btn-ghost" onclick="custManage()">👥 ทะเบียนลูกค้า ('+r.customers.length+')</button></div>';
+        '<button class="btn btn-ghost" onclick="custManage()">👥 ทะเบียนลูกค้า ('+r.customers.length+')</button>'+
+        '<button class="btn btn-ghost" onclick="reimbMigrate()">📥 ย้ายตั้งเบิกเดิม</button></div>';
       h+='<div class="ed-filter"><select id="skf" onchange="salesFilter(this.value)">'+
         '<option value="">ชนิด: ทั้งหมด</option>'+
         r.kinds.map(function(k){ return '<option value="'+esc(k.key)+'"'+(k.key===SALES_KIND_F?' selected':'')+'>'+esc(k.label)+'</option>'; }).join('')+
@@ -4956,6 +4959,145 @@
   window.p51WhtManual = p51WhtManual; window.p51SetScenario = p51SetScenario; window.p51UseRef = p51UseRef;
   window.p51PullAuto = p51PullAuto; window.p51Save = p51Save; window.p51Doc = p51Doc;
   window.p51Filed = p51Filed; window.p51Reopen = p51Reopen;
+
+  // ═══════════ VIEW: 📊 รายงานรายรับรายเดือน (เฟส A5) — พี่/HR เท่านั้น ═══════════
+  // ตัวเลขทุกก้อนมาจาก backend (salesReportData_) — หน้าเว็บไม่คิดยอดเอง
+  var SRP_MONTH='', SRP_ENT='';
+
+  function renderSalesReport(){
+    if(!IS_OWNER){ $('main').innerHTML='<div class="card"><div class="emptybox">เฉพาะผู้ดูแล (พี่/HR) ค่ะ</div></div>'; return; }
+    skel();
+    jsonp({action:'waSalesReport',uid:UID,month:SRP_MONTH,entity:SRP_ENT}).then(function(r){
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      SRP_MONTH=r.month;
+      var s=r.sum, rc=r.recv, ar=r.receivable||{total:0,count:0,overdue:0};
+      var months=taxMonths(); if(months.indexOf(SRP_MONTH)<0) months.unshift(SRP_MONTH);
+      var h='<div class="section-h">📊 รายงานรายรับรายเดือน</div>'+
+        '<div class="ds-sel"><select id="srpYm" onchange="srpSetMonth(this.value)">'+
+        months.map(function(m){ return '<option value="'+esc(m)+'"'+(m===SRP_MONTH?' selected':'')+'>'+esc(ymThai(m))+'</option>'; }).join('')+
+        '</select><select id="srpEnt" onchange="srpSetEnt(this.value)">'+
+        '<option value="">ทุกบริษัท</option>'+
+        (r.entities||[]).map(function(e){ return '<option value="'+esc(e.code)+'"'+(e.code===SRP_ENT?' selected':'')+'>'+esc(e.name)+'</option>'; }).join('')+
+        '</select></div>';
+
+      h+='<div class="ds-grid">'+
+        statCard('ออกบิลเดือนนี้',money(s.billed.amt),s.billed.n+' ใบ (ใบแจ้งหนี้)')+
+        statCard('เงินเข้าจริง',money(rc.amount),rc.n+' ครั้ง · ตามชีตรับชำระ')+
+        statCard('ภาษีขาย (VAT)',money(s.vatSale),'จากใบเสร็จ '+s.receipt.n+' ใบ')+
+        statCard('ลูกหนี้คงค้าง',money(ar.total),ar.count+' ใบ · เกินกำหนด '+money(ar.overdue),ar.overdue?'ds-warn':'')+
+        '</div>';
+
+      // เตือนเรื่องที่ต้องลงมือ: 50 ทวิ ที่ลูกค้ายังไม่ส่งมา = เครดิตภาษีที่จะหายไป
+      if(rc.missingCert){
+        h+='<div class="m-hint" style="color:#C8730B">⚠️ มีการรับเงินที่ถูกหักภาษี '+rc.missingCert+
+          ' รายการ ที่ยังไม่ได้ไฟล์ 50 ทวิ จากลูกค้า — ไม่มีเอกสารคือเครดิตภาษีตอนยื่น ภ.ง.ด.50 ไม่ได้ค่ะ</div>';
+      }
+
+      h+='<div class="card"><div class="ds-h">① สรุปตามลูกค้า · '+esc(r.monthText)+'</div>';
+      if(!(r.byCustomer||[]).length){ h+='<div class="emptybox">เดือนนี้ยังไม่ได้ออกใบแจ้งหนี้</div>'; }
+      else {
+        h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
+          '<th>ลูกค้า</th><th>ใบ</th><th>ยอดออกบิล</th><th>รับแล้วเดือนนี้</th><th>คงค้างของใบเดือนนี้</th>'+
+          '</tr></thead><tbody>'+
+          r.byCustomer.map(function(c){
+            return '<tr><td>'+esc(c.customer)+'</td><td>'+c.n+'</td><td class="ta-r">'+money(c.billed)+'</td>'+
+              '<td class="ta-r">'+(c.received?money(c.received):'—')+'</td>'+
+              '<td class="ta-r"'+(c.balance>0?' style="color:#C8730B"':'')+'>'+(c.balance?money(c.balance):'—')+'</td></tr>'; }).join('')+
+          '<tr class="tax-total"><td>รวม</td><td>'+s.billed.n+'</td><td class="ta-r">'+money(s.billed.amt)+'</td>'+
+          '<td class="ta-r">'+money(rc.amount)+'</td><td></td></tr></tbody></table></div>';
+      }
+      h+='</div>';
+
+      // ── เงินเข้าของเดือน ──
+      h+='<div class="card"><div class="ds-h">② เงินเข้าของเดือนนี้</div>';
+      if(!(r.recvRows||[]).length){ h+='<div class="emptybox">เดือนนี้ยังไม่มีเงินเข้า</div>'; }
+      else {
+        h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
+          '<th>เลขที่</th><th>วันที่</th><th>ใบแจ้งหนี้</th><th>ลูกค้า</th><th>เงินเข้า</th>'+
+          '<th>ภาษีถูกหัก</th><th>ช่องทาง</th><th>ใบเสร็จ</th><th>50 ทวิ</th></tr></thead><tbody>'+
+          r.recvRows.map(function(x){
+            return '<tr><td>'+esc(x.no)+'</td><td>'+esc(x.dateText||'')+'</td><td>'+esc(x.ivNo)+'</td>'+
+              '<td>'+esc(x.customer||'-')+'</td><td class="ta-r">'+money(x.amount)+'</td>'+
+              '<td class="ta-r">'+(x.wht?money(x.wht):'—')+'</td><td>'+esc(x.method||'')+'</td>'+
+              '<td>'+esc(x.reNo||'—')+'</td>'+
+              '<td>'+(x.wht>0?(x.whtCert?'<a href="'+esc(x.whtCert)+'" target="_blank">มีแล้ว</a>'
+                :'<a href="#" onclick="recvCertOpen(\''+esc(x.no)+'\');return false" style="color:#C8730B">⚠️ แนบ</a>'):'—')+'</td></tr>'; }).join('')+
+          '<tr class="tax-total"><td colspan="4">รวม '+rc.n+' ครั้ง</td><td class="ta-r">'+money(rc.amount)+'</td>'+
+          '<td class="ta-r">'+money(rc.wht)+'</td><td colspan="3"></td></tr></tbody></table></div>';
+      }
+      h+='</div>';
+
+      // ── ทะเบียนเอกสารขายของเดือน ──
+      h+='<div class="card"><div class="ds-h">③ เอกสารขายที่ออกเดือนนี้ · '+esc(r.entityName||'ทุกบริษัท')+'</div>';
+      if(!(r.rows||[]).length){ h+='<div class="emptybox">เดือนนี้ไม่มีเอกสารขาย</div>'; }
+      else {
+        h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
+          '<th>เลขที่</th><th>วันที่</th><th>ชนิด</th><th>ลูกค้า</th><th>ยอดรวม</th><th>คงค้าง</th><th>สถานะ</th>'+
+          '</tr></thead><tbody>'+
+          r.rows.map(function(x){
+            return '<tr><td>'+(x.pdfLink?'<a href="'+esc(x.pdfLink)+'" target="_blank">'+esc(x.no)+'</a>':esc(x.no))+'</td>'+
+              '<td>'+esc(x.dateText||'')+'</td><td>'+esc(x.kindLabel)+'</td><td>'+esc(x.customer)+'</td>'+
+              '<td class="ta-r">'+money(x.total)+'</td><td class="ta-r">'+(x.balance?money(x.balance):'—')+'</td>'+
+              '<td>'+esc(x.status)+'</td></tr>'; }).join('')+
+          '</tbody></table></div>';
+      }
+      h+='</div>';
+
+      h+='<div class="tax-acts">'+
+        (r.sheetUrl?'<a class="btn btn-ghost" href="'+esc(r.sheetUrl)+'" target="_blank">📗 เปิดแท็บในชีต</a>':'')+
+        '<button class="btn btn-primary" onclick="srpPdf()">📄 ออก PDF</button>'+
+        '<button class="btn btn-ghost" onclick="switchView(\'ar\')">ดูลูกหนี้ทั้งหมด</button></div>'+
+        '<div class="m-hint" style="margin-top:10px">เดือนของเอกสาร = วันที่บนเอกสาร · เดือนของเงินเข้า = วันที่รับเงินจริง '+
+        '(ใบลงวันที่ย้อนหลังจะอยู่เดือนตามวันที่บนใบ)</div>';
+      $('main').innerHTML=h;
+    }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
+  }
+  function srpSetMonth(v){ SRP_MONTH=v; renderSalesReport(); }
+  function srpSetEnt(v){ SRP_ENT=v; renderSalesReport(); }
+  function srpPdf(){
+    callBusy('กำลังสร้างรายงาน…', jsonp({action:'waSalesReportPdf',uid:UID,month:SRP_MONTH,entity:SRP_ENT}), 'สร้าง PDF แล้ว')
+      .then(function(r){
+        if(!r||!r.ok){ toast((r&&r.error)||'สร้างไม่สำเร็จ'); return; }
+        toast('📄 สร้าง PDF แล้ว'); window.open(r.pdfUrl,'_blank');
+      }).catch(function(e){ toast(e.message); });
+  }
+
+  /** 📥 ย้ายใบตั้งเบิกเดิมเข้าระบบรายรับ — ดูก่อน (dry-run) แล้วค่อยเลือกโหมด */
+  function reimbMigrate(){
+    busy('กำลังตรวจใบตั้งเบิกเดิม…');
+    jsonp({action:'waReimbMigrate',uid:UID}).then(function(r){
+      unbusy();
+      if(!r||!r.ok){ toast((r&&r.error)||'ตรวจไม่สำเร็จ'); return; }
+      if(!r.ready){
+        modal('<h3>📥 ย้ายตั้งเบิกเดิม</h3><div class="m-hint">ไม่มีใบที่ต้องย้ายแล้วค่ะ<br>'+
+          'ย้ายไปแล้ว <b>'+r.done+'</b> ใบ · ข้ามเพราะข้อมูลไม่พอ <b>'+r.skip+'</b> ใบ</div>'+
+          '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button></div>');
+        return;
+      }
+      modal('<h3>📥 ย้ายตั้งเบิกเดิม → ระบบรายรับ</h3><div id="mErr" class="m-err hidden"></div>'+
+        '<div class="m-hint">จะย้าย <b>'+r.ready+'</b> ใบ · ยอดรวม <b>'+money(r.totalAmt)+'</b> บาท<br>'+
+        'ย้ายไปแล้ว '+r.done+' ใบ · ข้ามเพราะข้อมูลไม่พอ '+r.skip+' ใบ<br><br>'+
+        'ใบเดิมจะกลายเป็น <b>ใบแจ้งหนี้</b> ยอดเท่าเดิมทุกบาท ไม่คิด VAT เพิ่ม · ลิงก์ชี้ไฟล์เดิม (ไม่ออก PDF ใหม่)</div>'+
+        '<div class="fld"><label>สถานะของใบที่ย้ายมา</label><select id="rmMode">'+
+          '<option value="closed">ปิดใบแล้ว — ไม่ขึ้นเป็นลูกหนี้ (แนะนำ)</option>'+
+          '<option value="unpaid">ยังไม่ได้เงิน — ขึ้นเป็นลูกหนี้ค้างรับทุกใบ</option>'+
+        '</select></div>'+
+        '<div class="m-hint">ระบบตั้งเบิกเดิมไม่ได้เก็บว่าเก็บเงินได้แล้วหรือยัง — เลือก "ยังไม่ได้เงิน" '+
+        'เฉพาะตอนที่รู้ว่าใบพวกนี้ยังค้างจริง ไม่งั้นยอดลูกหนี้จะพองผิดค่ะ</div>'+
+        '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยังไม่ย้าย</button>'+
+        '<button class="btn btn-primary" onclick="reimbMigrateDo()">ย้ายเลย</button></div>');
+    }).catch(function(e){ unbusy(); toast(e.message); });
+  }
+  function reimbMigrateDo(){
+    var mode=(($('rmMode')||{}).value)||'closed';
+    callBusy('กำลังย้ายข้อมูล…', jsonp({action:'waReimbMigrate',uid:UID,run:'1',mode:mode}), 'ย้ายแล้ว')
+      .then(function(r){
+        if(!r||!r.ok){ mErr((r&&r.error)||'ย้ายไม่สำเร็จ'); return; }
+        closeModal();
+        toast('📥 ย้ายแล้ว '+r.moved+' ใบ'+((r.failed||[]).length?' · พลาด '+r.failed.length+' ใบ':''));
+        renderSales();
+      }).catch(function(e){ mErr(e.message); });
+  }
 
   // ═══════════ 💵 รับชำระ + ใบเสร็จ/ใบกำกับภาษี (เฟส A4) ═══════════
   // ยอดคงค้างมาจาก backend เสมอ (ชีตรับชำระ = แหล่งความจริงเดียว) — หน้าเว็บไม่คิดยอดเอง
@@ -6209,6 +6351,7 @@
         var nbd=$('navBizDash'); if(nbd) nbd.style.display='';             // 📊 ภาพรวมธุรกิจ = พี่/HR
         var nsl=$('navSales'); if(nsl) nsl.style.display='';               // 💰 รายรับ (ฝั่งขาย) = พี่/HR
         var nar=$('navAr'); if(nar) nar.style.display='';                   // 📊 ลูกหนี้ค้างรับ = พี่/HR
+        var nsr=$('navSalesReport'); if(nsr) nsr.style.display='';           // 📊 รายงานรายรับ = พี่/HR
         var npr=$('navPoReport'); if(npr) npr.style.display='';           // 📊 รายงานจ่ายออก = พี่คนเดียว (backend poGate_ กันซ้ำอีกชั้น)
         var n51=$('navPnd51'); if(n51) n51.style.display=''; }              // 📐 ภ.ง.ด.51 = พี่คนเดียว (backend pnd51Gate_ กันซ้ำอีกชั้น)           // 📊 รายงานจ่ายออก = พี่คนเดียว (backend poGate_ กันซ้ำอีกชั้น)
       // รายงานการเงินรวม = พี่ + HR ที่ตั้งใน Script Property (backend ตัดสิน ไม่ผูกกับ IS_OWNER)
