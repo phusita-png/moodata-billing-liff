@@ -746,17 +746,18 @@
     return p.then(function(r){ if(r&&r.ok) busyOk(okMsg||'สำเร็จแล้ว'); else unbusy(); return r; },
                   function(e){ unbusy(); throw e; }); }
 
-  function jsonp(params, _try){
+  function jsonp(params, _try, timeoutMs){
     _try=_try||0;
     return new Promise(function(resolve,reject){
       var cb='cb_'+Date.now()+'_'+Math.floor(Math.random()*1e6);
-      var timer=setTimeout(function(){cleanup();reject(new Error('หมดเวลาเชื่อมต่อ'));},60000);
+      // ปกติ 60 วิ · action ที่อ่านชีตหลายใบ (เช่น waPnd51Auto) ส่งเวลารอมาเองได้
+      var timer=setTimeout(function(){cleanup();reject(new Error('หมดเวลาเชื่อมต่อ'));}, timeoutMs||60000);
       window[cb]=function(d){cleanup();resolve(d);};
       function cleanup(){clearTimeout(timer);delete window[cb];if(s.parentNode)s.parentNode.removeChild(s);}
       var qs=Object.keys(params).map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(params[k]);}).join('&');
       var s=document.createElement('script'); s.src=EXEC_URL+'?'+qs+'&callback='+cb;
       s.onerror=function(){ cleanup();
-        if(_try<2){ setTimeout(function(){ jsonp(params,_try+1).then(resolve,reject); }, 700); }
+        if(_try<2){ setTimeout(function(){ jsonp(params,_try+1,timeoutMs).then(resolve,reject); }, 700); }
         else reject(new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้')); };
       document.body.appendChild(s);
     });
@@ -4692,7 +4693,12 @@
         P51.sme = null;
         p51Calcview();
       } else {
-        p51PullAuto(true);   // งานใหม่ = ดึงครึ่งปีจริงมาตั้งต้นให้เลย
+        // งานใหม่: โชว์ฟอร์มเปล่าทันที (ไม่ให้พี่มองจอว่าง) แล้วดึงยอดครึ่งปีจริงตามมาเติม
+        P51.sc = { low:{}, mid:{}, high:{} }; P51.key = 'mid';
+        P51.wht = ''; P51.whtSrc = 'manual'; P51.other = ''; P51.expected = '';
+        P51.auto = null; P51.sme = null; P51.autoLoading = true;
+        p51Calcview();
+        p51PullAuto(true);
       }
     }).catch(function(e){ toast(e.message); p51List(); });
   }
@@ -4700,16 +4706,29 @@
   /** ดึงครึ่งปีจริงจากระบบ → ตั้งฉากทัศน์ให้ (พี่แก้ทับได้ทุกช่อง) */
   function p51PullAuto(first){
     if(!first) busy('กำลังดึงยอดครึ่งปีแรกจากระบบ…');
-    jsonp({ action:'waPnd51Auto', uid:UID, entity:P51.ent, year:P51.year }).then(function(r){
+    P51.autoLoading = true;
+    if(first) p51Recalc();   // โชว์ป้าย "กำลังดึงยอด…" บนกล่องขวา
+    // อ่านชีตขาย/จ่ายออก/ใบเบิก/เงินเดือน 6 เดือน/รับชำระ → ต้องรอนานกว่า 60 วิ (backend แคชผลไว้ 5 นาที)
+    // ปุ่ม 🔄 (ไม่ใช่ครั้งแรก) = fresh=1 ข้ามแคช เอายอดล่าสุด
+    jsonp({ action:'waPnd51Auto', uid:UID, entity:P51.ent, year:P51.year, fresh:first?'':'1' }, 0, 150000).then(function(r){
       unbusy();
-      if(!r || !r.ok){ toast((r && r.error) || 'ดึงข้อมูลไม่สำเร็จ'); if(first) p51List(); return; }
+      P51.autoLoading = false;
+      if(!r || !r.ok){
+        toast((r && r.error) || 'ดึงข้อมูลไม่สำเร็จ');
+        if(first) p51Recalc();   // ฟอร์มยังอยู่ กรอกเองต่อได้ (ไม่เด้งกลับหน้ารายการ)
+        return;
+      }
       P51.auto = r.auto; P51.period = r.period || P51.period;
       P51.sc = r.scenarios;
       if(!first) P51.key = P51.key || 'mid';
       if(r.auto && r.auto.whtReady && r.auto.wht){ P51.wht = r.auto.wht; P51.whtSrc = 'auto'; }
       p51Calcview();
       if(!first) toast('ดึงยอดครึ่งปีแรกมาแล้ว — ปรับตัวเลขได้ตามจริง');
-    }).catch(function(e){ unbusy(); toast(e.message); if(first) p51List(); });
+    }).catch(function(e){
+      unbusy(); P51.autoLoading = false;
+      toast(e.message + ' — กรอกตัวเลขเองได้เลย หรือกดปุ่ม 🔄 ลองใหม่');
+      if(first) p51Recalc();
+    });
   }
 
   function p51Calcview(){
@@ -4760,7 +4779,7 @@
 
     // ③ ประมาณการ 3 ฉากทัศน์
     h += '<div class="card"><div class="ds-h">③ ประมาณการทั้งปี — 3 ฉากทัศน์</div>' +
-      '<div class="tax-acts p51-acts" style="margin:0 0 10px"><button class="btn btn-ghost" onclick="p51PullAuto(false)">🔄 ดึงยอดครึ่งปีแรกจากระบบ (× 2)</button></div>' +
+      '<div class="tax-acts p51-acts" style="margin:0 0 10px"><button class="btn btn-ghost" onclick="p51PullAuto(false)">🔄 ดึงยอดครึ่งปีแรกล่าสุดจากระบบ (× 2)</button></div>' +
       '<div class="p51-grid"><table><thead><tr><th>รายการ</th>' +
       P51_KEYS.map(function(k){ return '<th class="' + (k === P51.key ? 'sc-on' : '') + '" style="text-align:right">' + esc(P51_SCLB[k]) + '</th>'; }).join('') +
       '</tr></thead><tbody>' +
@@ -4853,7 +4872,13 @@
     if(P51.entity && !p51n(P51.entity.paidCapital) && P51.sme === null) warn.push('ยังไม่กรอกทุนจดทะเบียนในชีตนิติบุคคล — ระบบเดาให้ว่าเป็น SME');
     if(P51.auto && P51.auto.warnings) P51.auto.warnings.forEach(function(w){ if(warn.indexOf(w) < 0) warn.push(w); });
 
-    var h = '<div class="card"><div class="p51-gauge">' + p51Gauge(c.risk.gaugeRatio, c.risk.level) +
+    var h = '';
+    if(P51.autoLoading){
+      h += '<div class="p51-warn" style="background:#EEF4FF;border-color:#C7D8F5;color:#1B4E9B">' +
+        '⏳ กำลังดึงยอดครึ่งปีแรกจากระบบ… (อ่านชีตขาย/จ่ายออก/ใบเบิก/เงินเดือน) ' +
+        'ระหว่างนี้กรอกตัวเลขเองได้เลย พอดึงเสร็จจะเติมให้</div>';
+    }
+    h += '<div class="card"><div class="p51-gauge">' + p51Gauge(c.risk.gaugeRatio, c.risk.level) +
       '<div class="g-vl">' + (c.risk.excessPct >= 0 ? '+' : '') + c.risk.excessPct + '%</div>' +
       '<div class="g-lb">กำไรจริงที่คาด ' + money(c.expected) + ' เทียบกับประมาณการ<br>เพดานปลอดภัย ' + money(c.risk.ceiling) + ' · ' + p51RiskBadge(c.risk.level) + '</div>' +
       (c.penalty ? '<div class="g-lb" style="color:#DC2626;margin-top:6px">อาจถูกเรียกเงินเพิ่มราว ' + money(c.penalty) + ' บาท</div>' : '') +
