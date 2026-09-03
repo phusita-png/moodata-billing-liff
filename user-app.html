@@ -4270,9 +4270,10 @@
         '<button class="btn btn-ghost" onclick="custManage()">ทะเบียนลูกค้า</button>'+
         '<button class="btn btn-ghost" onclick="entManage()">นิติบุคคล</button>'+
         '<button class="btn btn-ghost" onclick="reimbMigrate()">ย้ายตั้งเบิกเดิม</button></div>';
+      // ตัวกรองใช้ "ทุกชนิด" (allKinds) ไม่ใช่ชนิดที่ออกจากฟอร์มได้ — ไม่งั้นหาใบเสร็จ/วางบิล/ลดหนี้ไม่เจอ
       h+='<div class="ed-filter"><select id="skf" onchange="salesFilter(this.value)">'+
         '<option value="">ชนิด: ทั้งหมด</option>'+
-        r.kinds.map(function(k){ return '<option value="'+esc(k.key)+'"'+(k.key===SALES_KIND_F?' selected':'')+'>'+esc(k.label)+'</option>'; }).join('')+
+        (r.allKinds||r.kinds).map(function(k){ return '<option value="'+esc(k.key)+'"'+(k.key===SALES_KIND_F?' selected':'')+'>'+esc(k.label)+'</option>'; }).join('')+
         '</select></div>';
       h+='<div id="salesTbl"></div>';
       $('main').innerHTML=h;
@@ -4302,11 +4303,21 @@
         a.push({key:'recv',label:'💵 บันทึกรับชำระ',call:'recvOpen('+q+')'});
       if(d.kind==='IV' && d.balance>0 && !salesRefBy(d,'BN').length)
         a.push({key:'tobn',label:'📑 รวมออกใบวางบิล',call:'salesBnOpen('+q+')'});
+      // ใบเสร็จ → ออกใบลดหนี้ (ทางเดียวที่แก้ใบเสร็จที่ออกไปแล้วได้ · spec §12)
+      if(d.kind==='RE')
+        a.push({key:'cn',label:'🧾 ออกใบลดหนี้',call:'cnOpen('+q+')'});
+      // ใบลดหนี้ที่ยังไม่ปิดเรื่องเงินคืน → บันทึกผล (คืนแล้ว/หักกลบ/ไม่ต้องคืน)
+      if(d.kind==='CN' && String(d.refundStatus||'').indexOf('รอคืนเงิน')>=0)
+        a.push({key:'cnref',label:'💸 บันทึกเงินคืน',call:'cnRefundOpen('+q+')'});
+      if(d.kind==='CN' && d.refundSlip)
+        a.push({key:'cnslip',label:'📎 สลิปคืนเงิน',href:d.refundSlip});
       a.push({key:'send',label:'📤 ส่งเข้ากลุ่มลูกค้า',call:'salesSend('+q+')'});
       a.push({key:'repdf',label:(d.pdfLink?'🔄 ออกไฟล์ใหม่':'📄 ออกไฟล์ PDF'),call:'salesPdf('+q+')'});
       a.push({sep:true});
       // ยกเลิกได้เฉพาะใบที่ยังไม่รับเงิน และยังไม่มีใบไหนอ้างถึง (ตรงกับ cancelSalesDoc_)
-      if(!(d.paidAmt>0) && !salesRefBy(d,'').length)
+      // ใบลดหนี้ที่คืนเงินไปแล้ว = เงินออกจริง ยกเลิกไม่ได้ (ตรงกับด่านใน cancelSalesDoc_)
+      var cnPaidBack=(d.kind==='CN' && String(d.refundStatus||'').indexOf('คืนเงินแล้ว')>=0);
+      if(!(d.paidAmt>0) && !salesRefBy(d,'').length && !cnPaidBack)
         a.push({key:'cancel',label:'🚫 ยกเลิกเอกสาร',call:'salesCancel('+q+')',danger:true});
     }
     return a;
@@ -4328,14 +4339,18 @@
         '<td class="dt-nw">'+esc(d.no)+(d.refNo?'<br><span style="color:#8A94A6;font-size:11px">↩ '+esc(d.refNo)+'</span>':'')+'</td>'+
         '<td class="dt-nw">'+esc(d.docDate?fmtDate(d.docDate):'-')+'</td>'+
         '<td>'+esc(d.customer||'-')+'</td>'+
-        '<td class="dt-detail">'+esc(d.title||'-')+'</td>'+
-        '<td class="dt-amt">'+money(d.total)+'</td>'+
+        '<td class="dt-detail">'+esc(d.title||'-')+
+          (d.kind==='CN'&&d.refundStatus?'<br><span style="color:#8A94A6;font-size:11px">'+esc(d.refundStatus)+'</span>':'')+'</td>'+
+        // ใบลดหนี้ = ยอดที่หักออกจากยอดขาย → แสดงติดลบสีแดง (ชีตเก็บเป็นบวก)
+        '<td class="dt-amt"'+(d.kind==='CN'?' style="color:#DC2626"':'')+'>'+
+          (d.kind==='CN'?'-':'')+money(d.total)+'</td>'+
         '<td class="dt-amt">'+(d.balance>0?money(d.balance):'—')+'</td>'+
         '<td><span class="tk-badge '+salesBadge(d.status)+'">'+esc(d.status)+'</span></td>'+
         '<td class="dt-nw"'+(overdue?' style="color:#DC2626;font-weight:600"':'')+'>'+esc(due)+(overdue?' ⚠️':'')+'</td>'+
         dtActCell('sl-'+d.no, salesRowActions(d))+'</tr>';
     });
-    var sum=docs.reduce(function(a,d){ return a+(Number(d.total)||0); },0);
+    // ยอดรวมท้ายตาราง: ใบลดหนี้หักออก (ไม่งั้นยอดที่พี่เห็นบวมกว่าที่ออกบิลจริง)
+    var sum=docs.reduce(function(a,d){ var v=Number(d.total)||0; return a+(d.kind==='CN'?-v:v); },0);
     var total=docs.length>1?'<tr class="tax-total"><td colspan="4" style="text-align:right">รวม '+docs.length+' ใบ</td>'+
       '<td class="dt-amt">'+money(sum)+'</td><td colspan="4"></td></tr>':'';
     box.innerHTML=dtTable(cols, rows, total);
@@ -5473,6 +5488,146 @@
         closeModal(); IMGS['rvCert2']=[]; toast('🧾 แนบ 50 ทวิ แล้ว');
         if(VIEW==='ar') renderAr(); else renderSales();
       }).catch(function(e){ mErr(e.message); });
+  }
+
+  // ═══════════ 🧾 ใบลดหนี้ (CN) — ออกจากใบเสร็จเท่านั้น · spec §12 ═══════════
+  // ⚠️ เงื่อนไขบนหน้านี้ต้องตรงกับด่าน backend เป๊ะ: ลดเกินยอดที่เหลือไม่ได้ ·
+  //    เลือก "อื่น ๆ" ต้องพิมพ์เหตุผล (กฎหมายบังคับให้พิมพ์เหตุผลบนใบลดหนี้)
+  var CNI = null, CN_ITEMS = [];
+
+  function cnOpen(reNo){
+    busy('กำลังเปิดใบเสร็จ…');
+    jsonp({action:'waCnInit',uid:UID,no:reNo}).then(function(r){
+      unbusy();
+      if(!r||!r.ok){ toast((r&&r.error)||'เปิดไม่สำเร็จ'); return; }
+      CNI=r; CN_ITEMS=[{}];
+      var reasons=(r.reasons||[]).map(function(x){ return '<option value="'+esc(x.key)+'">'+esc(x.label)+'</option>'; }).join('');
+      modal('<h3>🧾 ออกใบลดหนี้</h3><div id="mErr" class="m-err hidden"></div>'+
+        '<div class="m-hint">ลดจากใบเสร็จ <b>'+esc(r.re.no)+'</b> · '+esc(r.re.customer)+
+          (r.re.docDate?' · '+esc(r.re.docDate):'')+'<br>'+
+          'ยอดตามใบ '+money(r.re.total)+' บาท'+
+          (r.credited.n?' · ลดไปแล้ว '+money(r.credited.total)+' ('+r.credited.n+' ใบ)':'')+
+          '<br>ลดได้อีก <b style="font-size:15px">'+money(r.remain.total)+'</b> บาท'+
+          (r.re.wht>0?'<br><span style="color:#C8730B">ใบนี้ลูกค้าหักภาษีไว้ '+money(r.re.wht)+' บาท — เงินที่ต้องคืนจะหักส่วนนี้ออก</span>':'')+
+        '</div>'+
+        '<div class="fld"><label>ลดเท่าไร</label><select id="cnMode" onchange="cnModeChange()">'+
+          '<option value="full">ลดเต็มจำนวนที่เหลือ ('+money(r.remain.total)+' บาท)</option>'+
+          '<option value="partial">ลดบางส่วน (ระบุรายการ)</option></select></div>'+
+        '<div id="cnItemsBox" class="hidden"><label class="field-lb">รายการที่ลด</label>'+
+          '<div id="cnItems"></div>'+
+          '<button class="btn btn-ghost" style="margin:2px 0 8px" onclick="cnAddItem()">+ เพิ่มบรรทัด</button></div>'+
+        '<div class="fld"><label>เหตุผลการลดหนี้ (พิมพ์ลงบนใบ)</label>'+
+          '<select id="cnReason" onchange="cnPreview()">'+reasons+'</select></div>'+
+        '<div class="fld"><label>รายละเอียดเหตุผลเพิ่มเติม</label>'+
+          '<input id="cnReasonText" placeholder="เลือก &quot;อื่น ๆ&quot; ต้องพิมพ์ช่องนี้" oninput="cnPreview()"></div>'+
+        '<div class="fld"><label>วันที่ใบลดหนี้</label><input id="cnDate" type="date" value="'+todayISO()+'"></div>'+
+        '<div class="fld"><label>หมายเหตุ (ไม่ใส่ก็ได้)</label><input id="cnNote"></div>'+
+        '<div id="cnSum" class="m-hint"></div>'+
+        '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+        '<button class="btn btn-primary" id="cnBtn" onclick="cnSave()">ออกใบลดหนี้</button></div>');
+      paintCnItems(); cnPreview();
+    }).catch(function(e){ unbusy(); toast(e.message); });
+  }
+  function cnModeChange(){
+    var box=$('cnItemsBox'); if(box) box.className=(($('cnMode')||{}).value==='partial')?'':'hidden';
+    cnPreview();
+  }
+  function cnReadItems(){
+    CN_ITEMS=[];
+    var n=document.querySelectorAll('#cnItems .cn-it').length;
+    for(var i=0;i<n;i++){
+      CN_ITEMS.push({ detail:((($('cnD'+i)||{}).value)||'').trim(),
+        price:((($('cnP'+i)||{}).value)||'').trim() });
+    }
+    if(!CN_ITEMS.length) CN_ITEMS=[{}];
+  }
+  function paintCnItems(){
+    var box=$('cnItems'); if(!box) return;
+    box.innerHTML=CN_ITEMS.map(function(it,i){
+      return '<div class="cn-it" style="display:flex;gap:6px;margin-bottom:6px">'+
+        '<input id="cnD'+i+'" placeholder="รายการที่ลด" value="'+esc(it.detail||'')+'" style="flex:1" oninput="cnPreview()">'+
+        '<input id="cnP'+i+'" inputmode="decimal" placeholder="ยอดก่อน VAT" value="'+esc(it.price||'')+'" style="width:120px" oninput="cnPreview()">'+
+        (CN_ITEMS.length>1?'<button class="btn btn-ghost" onclick="cnDelItem('+i+')">✕</button>':'')+
+        '</div>';
+    }).join('');
+  }
+  function cnAddItem(){ cnReadItems(); CN_ITEMS.push({}); paintCnItems(); }
+  function cnDelItem(i){ cnReadItems(); CN_ITEMS.splice(i,1); if(!CN_ITEMS.length) CN_ITEMS=[{}]; paintCnItems(); }
+  /** พรีวิวยอด — ใช้อัตรา VAT/WHT ของ "ใบเสร็จต้นทาง" ตามกติกาเดียวกับ backend
+   *  (ตัวเลขจริงที่บันทึกมาจาก backend เสมอ · ตรงนี้ให้พี่เห็นก่อนกดเท่านั้น) */
+  function cnPreview(){
+    var box=$('cnSum'); if(!box||!CNI) return;
+    var full=(($('cnMode')||{}).value||'full')!=='partial';
+    var re=CNI.re, rem=CNI.remain, base,vat,total;
+    if(full){ base=rem.base; vat=rem.vat; total=rem.total; }
+    else{
+      cnReadItems();
+      base=0; CN_ITEMS.forEach(function(it){ base+=Number(String(it.price||'0').replace(/,/g,''))||0; });
+      base=Math.round(base*100)/100;
+      vat=Math.round(base*re.vatRate)/100;
+      total=Math.round((base+vat)*100)/100;
+    }
+    var wht=full?rem.wht:Math.round(base*re.whtRate)/100;
+    var refund=Math.round((total-wht)*100)/100;
+    var over=total>rem.total+0.005;
+    var rs=(($('cnReason')||{}).value)||'', rt=((($('cnReasonText')||{}).value)||'').trim();
+    box.innerHTML='ยอดที่ลด <b>'+money(total)+'</b> บาท'+(re.vatRate>0?' (ฐาน '+money(base)+' + VAT '+money(vat)+')':'')+
+      (wht>0?'<br>ภาษีที่ลูกค้าหักไว้ '+money(wht)+' → <b>เงินที่ต้องคืนลูกค้า '+money(refund)+' บาท</b>'
+            :'<br><b>เงินที่ต้องคืนลูกค้า '+money(refund)+' บาท</b>')+
+      (over?'<br><span style="color:#DC2626">⚠️ เกินยอดที่ลดได้ '+money(rem.total)+' บาท</span>':'')+
+      (rs==='other'&&!rt?'<br><span style="color:#DC2626">⚠️ เลือก "อื่น ๆ" ต้องพิมพ์เหตุผล</span>':'');
+  }
+  function cnSave(){
+    if(!CNI) return;
+    var mode=(($('cnMode')||{}).value)||'full';
+    var p={action:'waCnCreate',uid:UID,no:CNI.re.no,mode:mode,
+      reason:(($('cnReason')||{}).value)||'',
+      reasonText:((($('cnReasonText')||{}).value)||'').trim(),
+      docDate:(($('cnDate')||{}).value)||'', note:((($('cnNote')||{}).value)||'').trim()};
+    if(mode==='partial'){
+      cnReadItems();
+      var items=CN_ITEMS.filter(function(it){ return it.detail||it.price; })
+        .map(function(it){ return { detail:it.detail, qty:1, price:it.price }; });
+      if(!items.length){ mErr('ใส่รายการที่จะลดอย่างน้อย 1 บรรทัดค่ะ'); return; }
+      p.items=JSON.stringify(items);
+    }
+    var btn=$('cnBtn'); if(btn){ btn.disabled=true; btn.textContent='กำลังออกใบ…'; }
+    callBusy('กำลังออกใบลดหนี้…', jsonpPost(p), 'ออกใบแล้ว').then(function(r){
+      if(!r||!r.ok){ if(btn){btn.disabled=false;btn.textContent='ออกใบลดหนี้';} mErr((r&&r.error)||'ออกใบไม่สำเร็จ'); return; }
+      closeModal();
+      toast('🧾 '+r.no+' · ลด '+money(r.total)+' · ต้องคืนลูกค้า '+money(r.refund)+(r.warn?' ⚠️ '+r.warn:''));
+      renderSales();
+    }).catch(function(e){ if(btn){btn.disabled=false;btn.textContent='ออกใบลดหนี้';} mErr(e.message); });
+  }
+
+  /** บันทึกผลเงินคืนของใบลดหนี้ (คืนแล้ว / หักกลบใบถัดไป / ไม่ต้องคืน) */
+  function cnRefundOpen(no){
+    var d=SALES_BYNO[no]||{};
+    var opts=['✅ คืนเงินแล้ว','🔁 หักกลบใบถัดไป','— ไม่ต้องคืน']
+      .map(function(x){ return '<option value="'+esc(x)+'">'+esc(x)+'</option>'; }).join('');
+    modal('<h3>💸 บันทึกเงินคืน</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">ใบลดหนี้ <b>'+esc(no)+'</b>'+(d.customer?' · '+esc(d.customer):'')+
+        (d.total?'<br>ยอดที่ลด '+money(d.total)+' บาท':'')+'</div>'+
+      '<div class="fld"><label>ผลการคืนเงิน</label><select id="cnRs">'+opts+'</select></div>'+
+      '<div class="fld"><label>วันที่คืน / หักกลบ</label><input id="cnRd" type="date" value="'+todayISO()+'"></div>'+
+      '<div class="fld"><label>อ้างอิง (ไม่ใส่ก็ได้)</label><input id="cnRr" placeholder="เช่น โอนคืน กสิกร / หักกับ IV เดือนหน้า"></div>'+
+      imgsFldHtml('cnSlip','📎 สลิปคืนเงิน (ถ้ามี)')+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" id="cnRBtn" onclick="cnRefundSave(\''+esc(no)+'\')">บันทึก</button></div>');
+    imgsFldBind('cnSlip');
+  }
+  function cnRefundSave(no){
+    var p={action:'waCnRefund',uid:UID,no:no,status:(($('cnRs')||{}).value)||'',
+      refundAt:(($('cnRd')||{}).value)||'', ref:((($('cnRr')||{}).value)||'').trim()};
+    var slips=IMGS['cnSlip']||[];
+    if(slips.length) p.slipImgs=JSON.stringify(slips);
+    var btn=$('cnRBtn'); if(btn){ btn.disabled=true; btn.textContent='กำลังบันทึก…'; }
+    callBusy('กำลังบันทึก…', jsonpPost(p), 'บันทึกแล้ว').then(function(r){
+      if(!r||!r.ok){ if(btn){btn.disabled=false;btn.textContent='บันทึก';} mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+      closeModal(); IMGS['cnSlip']=[];
+      toast('💸 '+no+' · '+r.status+(r.warn?' ⚠️ '+r.warn:''));
+      renderSales();
+    }).catch(function(e){ if(btn){btn.disabled=false;btn.textContent='บันทึก';} mErr(e.message); });
   }
 
   // ═══════════ VIEW: 📊 ลูกหนี้ค้างรับ (อายุหนี้) — พี่/HR เท่านั้น ═══════════
