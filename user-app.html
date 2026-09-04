@@ -2365,6 +2365,7 @@
     jsonp({action:'waExpenseInit', uid:UID}).then(function(r){
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
       EXP_TYPES=r.types||EXP_TYPES; SECTIONS=r.sections||SECTIONS;   // sections ไว้ให้ปุ่มแก้ภาษีในหน้านี้
+      ENTITIES=r.entities||ENTITIES; DEF_ENT=r.defaultEntity||DEF_ENT;   // บริษัทผู้ออกเอกสาร (E1)
       MYBANK=r.myBank||{name:'',acct:'',owner:''}; BANK_LIST=r.banks||[]; HAS_BANK=!!r.hasBank;
       paintExpense(r.expenses||[]);
       sigRefresh();
@@ -2432,7 +2433,7 @@
    *  แต่ปุ่มที่กดแล้วโดนปฏิเสธเสมอไม่ควรมีให้กด)
    * @return {Array} [{key,label,call|href,danger,sep}]
    */
-  function expRowActions(x, isOwner){
+  function expRowActions(x, isOwner, hasManyEnt){
     var st = String(x.status || '');
     var paid = st.indexOf('จ่ายแล้ว') >= 0;
     var pending = st.indexOf('รออนุมัติ') >= 0;
@@ -2455,7 +2456,8 @@
     if(a.length) a.push({ sep:true });
     // ── งานหลักตามสถานะ (อยู่บนสุดของกลุ่มคำสั่ง) ──
     if(pending){
-      a.push({ key:'approve', label:'✅ อนุมัติ', call:(x.payeeName ? 'exOpenWht(' + q + ')' : 'exDecide(' + q + ",'approve','')") });
+      // ใบธรรมดาผ่าน exApprove — มีหลายนิติบุคคลถึงจะถามบริษัทก่อน (บริษัทเดียว = อนุมัติทันทีเหมือนเดิม)
+      a.push({ key:'approve', label:'✅ อนุมัติ', call:(x.payeeName ? 'exOpenWht(' + q + ')' : 'exApprove(' + q + ')') });
       a.push({ key:'reject',  label:'❌ ไม่อนุมัติ', call:'exReject(' + q + ')' });
     }
     if(approved && !paid){
@@ -2470,6 +2472,8 @@
     if(!paid) a.push({ key:'amount', label:'✏️ แก้ยอด/รายละเอียด', call:'exEditAmount(' + q + ')' });
     if(x.payeeName && !x.whtNo) a.push({ key:'whtedit', label:'🧾 แก้ภาษีหัก ณ ที่จ่าย', call:'exEditWht(' + q + ')' });
     if(!rv) a.push({ key:'proofType', label:'🧾 แก้หลักฐาน (ใบเสร็จ/SR)', call:'exSetProof(' + q + ')' });
+    // บริษัทผู้ออกเอกสาร — เปลี่ยนได้จนกว่าจะออกกระดาษ (เงื่อนไขเดียวกับด่าน setExpenseEntity_)
+    if(hasManyEnt && !hasDoc) a.push({ key:'entity', label:'🏢 บริษัทผู้ออกเอกสาร', call:'exSetEntity(' + q + ')' });
     if(rv)  a.push({ key:'payee', label:'✏️ แก้ข้อมูลผู้รับเงิน', call:'exEditPayee(' + q + ')' });
     a.push({ key:'rcp', label:'📎 แก้ไฟล์แนบ', call:'exEditRcp(' + q + ')' });
     if(paid) a.push({ key:'editslip', label:'📎 แก้สลิปโอนคืน', call:'exEditSlip(' + q + ')' });
@@ -2509,6 +2513,8 @@
     if(x.docType && x.docType.indexOf('ใบสำคัญ') >= 0 && !x.docNo) flag += '<br><span style="color:#C8730B">✍️ รอผู้รับเงินลงนาม</span>';
     else if(x.docType && x.docType.indexOf('ใบรับรอง') >= 0 && !x.docNo) flag += '<br><span style="color:#C8730B">📄 รอออกใบรับรองแทนใบเสร็จ</span>';
     // บัญชีรับโอน: โชว์เฉพาะใบที่ยังไม่จ่าย — จ่ายแล้วไม่ต้องรกตา (ยังก๊อปได้จากเมนู ⋮)
+    // ใบที่ออกในนามบริษัทอื่น — ต้องเห็นจากตารางเลย (เอกสาร/ภาษีเดินตามบริษัทนี้)
+    if(x.entity) flag += '<br><span style="color:#1B72E8">🏢 ' + esc(entName(x.entity)) + '</span>';
     if(x.bankAcct && String(x.status || '').indexOf('จ่ายแล้ว') < 0)
       flag += '<br><span style="color:#1B7F4B">🏦 ' + esc(x.bankName || '') + ' · <b>' + esc(x.bankAcct) + '</b>' +
               (x.bankOwner ? ' · ' + esc(x.bankOwner) : '') + '</span>';
@@ -2521,7 +2527,7 @@
       '<td class="dt-amt">' + money(x.amount) + '</td>' +
       '<td><span class="tk-badge ' + expBadge(x.status) + '">' + esc(x.status) + '</span></td>' +
       '<td class="dt-doc">' + (docs || '—') + '</td>' +
-      dtActCell('ex-' + x.no, expRowActions(x, IS_OWNER)) +
+      dtActCell('ex-' + x.no, expRowActions(x, IS_OWNER, multiEnt())) +
       '</tr>';
   }
   /** ตารางใบเบิก 1 ก้อน (หัวข้อ + ตาราง + แถวรวม) */
@@ -3479,6 +3485,7 @@
       if(!r||!r.ok){ box.innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
       var pd=r.pending||[], tp=r.topay||[], aw=r.awaitSign||[];
       SECTIONS=r.sections||SECTIONS; KIND_CO=r.companyKind||KIND_CO; EXP_TYPES=r.types||EXP_TYPES;   // หน้าอนุมัติก็ต้องมีลิสต์ประเภท (waExpenseInit ไม่ได้ถูกเรียกในหน้านี้)
+      ENTITIES=r.entities||ENTITIES; DEF_ENT=r.defaultEntity||DEF_ENT;   // บริษัทผู้ออกเอกสาร (E1)
       // ตาราง 3 ก้อนตามงานที่ต้องทำ (พี่กี้เคาะ 1 ก.ย. 69: ตาราง + เมนู ⋮ แทนการ์ดปุ่มเยอะ)
       var html='';
       html+=expTable('⏳ รออนุมัติ', pd, true, 'ไม่มีใบเบิกรออนุมัติ 🎉');
@@ -3545,6 +3552,7 @@
     modal('<h3>✅ อนุมัติ'+(rv?'ใบสำคัญรับเงิน ':'ใบเบิก ')+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
       '<div class="m-hint">ผู้รับเงิน: <b>'+esc(x.payeeName||'-')+'</b> ('+esc(kind)+')'+
         (rv?' — อนุมัติแล้วระบบจะออกลิงก์ให้ผู้รับเงินเซ็น':' — มีใบเสร็จ/ใบกำกับแล้ว ไม่ต้องเซ็น ออก 50 ทวิ ตอนจ่าย')+'</div>'+
+      entField('exEnt', x.entity, 'บริษัทผู้ออกเอกสาร')+
       '<div class="fld"><label>ประเภทเงินได้ (มาตรา)</label><select id="exSect" onchange="exSectChange()">'+opts+'</select></div>'+
       '<div class="fld"><label>อัตราหัก ณ ที่จ่าย</label><select id="exWht" onchange="exSectChange(1)">'+
         '<option value="0">0% — ยกเว้น / ไม่หัก</option>'+
@@ -3557,11 +3565,31 @@
       '<div class="fld"><label>วันที่จ่าย'+(rv?' / วันที่บนใบสำคัญรับเงิน':'')+'</label><input id="rvPayDate" type="date" value="'+todayISO()+'">'+
         '<div class="m-hint" style="margin-top:4px">ค่าเริ่มต้น = วันนี้ · เลือกย้อนหลังได้ (เป็นวันบนเอกสาร + วันจ่ายจริง + เดือนที่นำส่งภาษี)</div></div>'+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
-      '<button class="btn btn-primary" onclick="exDecide(\''+esc(no)+'\',\'approve\',\'\',$(\'exWht\').value,$(\'rvPayDate\').value,$(\'exSect\').value)">'+
+      '<button class="btn btn-primary" onclick="exDecide(\''+esc(no)+'\',\'approve\',\'\',$(\'exWht\').value,$(\'rvPayDate\').value,$(\'exSect\').value,entVal(\'exEnt\'))">'+
         (rv?'อนุมัติ + ออกลิงก์เซ็น':'อนุมัติ')+'</button></div>');
     EX_WHT_KIND=kind; exSectChange();
   }
   var SECTIONS=[], KIND_CO='นิติบุคคล', EX_WHT_KIND='บุคคลธรรมดา';
+  // นิติบุคคลที่ออกเอกสารได้ (E1) — โหลดจาก waExpPending/waExpenseInit · มีบริษัทเดียว = ไม่ต้องถามพี่เลย
+  var ENTITIES=[], DEF_ENT='';
+  /** ชื่อบริษัทจากรหัส (ว่าง = บริษัทเริ่มต้น) */
+  function entName(code){
+    var c=String(code||'')||DEF_ENT;
+    for(var i=0;i<ENTITIES.length;i++) if(ENTITIES[i].code===c) return ENTITIES[i].name||c;
+    return c;
+  }
+  /** ต้องให้พี่เลือกบริษัทไหม — มีให้เลือกมากกว่า 1 เท่านั้น */
+  function multiEnt(){ return ENTITIES.length>1; }
+  /** dropdown บริษัทผู้ออกเอกสาร (คืน '' ถ้ามีบริษัทเดียว — ฟอร์มจะได้ไม่รกโดยเปล่าประโยชน์) */
+  function entField(id, cur, label){
+    if(!multiEnt()) return '';
+    var c=String(cur||'')||DEF_ENT;
+    var opts=ENTITIES.map(function(e){
+      return '<option value="'+esc(e.code)+'"'+(e.code===c?' selected':'')+'>'+esc(e.name||e.code)+'</option>';
+    }).join('');
+    return '<div class="fld"><label>'+esc(label||'บริษัทผู้ออกเอกสาร')+'</label><select id="'+id+'">'+opts+'</select>'+
+      '<div class="m-hint" style="margin-top:4px">เอกสาร (ใบรับรองแทนใบเสร็จ / ใบสำคัญรับเงิน / 50 ทวิ) จะออกในนามบริษัทนี้ · ออกแล้วเปลี่ยนไม่ได้</div></div>';
+  }
   /** เปลี่ยนมาตรา → เติมอัตรา default (ถ้าพี่ยังไม่แก้เอง) + อัปเดตบรรทัด "จะเข้าแบบไหน" */
   function exSectChange(rateEdited){
     var sc=($('exSect')||{}).value, rs=$('exWht'), note=$('exFormNote');
@@ -3573,6 +3601,43 @@
     note.innerHTML = rate>0
       ? '📋 จะเข้าแบบ <b>'+esc(form)+'</b> ของเดือนที่จ่าย'+(form==='ภ.ง.ด.1'?' (ต้องนำไปรวมกับ ภ.ง.ด.1 เงินเดือน)':'')
       : '📋 ไม่หักภาษี — ไม่เข้าแบบยื่นใด และไม่ออก 50 ทวิ';
+  }
+  /** ค่าที่เลือกใน dropdown บริษัท (ไม่มีช่อง = มีบริษัทเดียว → ส่งค่าว่าง = บริษัทเริ่มต้น) */
+  function entVal(id){ var el=$(id); return el?el.value:''; }
+  /**
+   * อนุมัติใบเบิกธรรมดา (ไม่มีหักภาษี) — ถามบริษัทผู้ออกเอกสารก่อน เฉพาะตอนมีหลายบริษัท
+   * มีบริษัทเดียว = อนุมัติทันทีเหมือนเดิม (ไม่เพิ่มขั้นตอนให้พี่โดยเปล่าประโยชน์)
+   */
+  function exApprove(no){
+    if(!multiEnt()){ exDecide(no,'approve',''); return; }
+    var x=exFind(no)||{};
+    modal('<h3>✅ อนุมัติใบเบิก '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">'+esc(x.type||'')+' · <b>'+money(x.amount)+'</b> บาท'+(x.nick?' · '+esc(x.nick):'')+'</div>'+
+      (x.detail?'<div class="m-hint">'+esc(x.detail)+'</div>':'')+
+      entField('exEnt2', x.entity, 'บริษัทผู้ออกเอกสาร')+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" onclick="exDecide(\''+esc(no)+'\',\'approve\',\'\',\'0\',\'\',\'\',entVal(\'exEnt2\'))">อนุมัติ</button></div>');
+  }
+  /**
+   * เปลี่ยนบริษัทผู้ออกเอกสารของใบที่ยังไม่ออกกระดาษ (E1)
+   * ⚠️ เงื่อนไขต้องตรงกับด่าน backend setExpenseEntity_ (มี docNo/whtNo = ปฏิเสธ)
+   */
+  function exSetEntity(no){
+    if(!multiEnt()){ toast('ระบบมีนิติบุคคลเดียวค่ะ'); return; }
+    var x=exFind(no)||{};
+    modal('<h3>🏢 บริษัทผู้ออกเอกสาร — '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">ปัจจุบัน: <b>'+esc(entName(x.entity))+'</b> · เอกสารที่ออกไปแล้วเปลี่ยนไม่ได้</div>'+
+      entField('exEnt3', x.entity, 'เปลี่ยนเป็น')+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" onclick="exSaveEntity(\''+esc(no)+'\')">บันทึก</button></div>');
+  }
+  function exSaveEntity(no){
+    callBusy('กำลังบันทึก…', jsonp({action:'waExpSetEntity',uid:UID,no:no,entity:entVal('exEnt3')}), 'บันทึกแล้ว').then(function(r){
+      if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+      closeModal();
+      toast(r.changed?'✅ ออกเอกสารในนาม '+(r.name||entName(r.code)):'บริษัทเดิมอยู่แล้วค่ะ');
+      if(VIEW==='expdash') renderExpDash(); else if(VIEW==='expapprove') renderExpenseApprove(); else renderExpense();
+    }).catch(function(e){ mErr(e.message); });
   }
   /** ชื่อเดิม — การ์ด/ลิงก์เก่าที่ LINE แคชไว้ยังเรียก exOpenRv อยู่ */
   function exOpenRv(no){ exOpenWht(no); }
@@ -3661,6 +3726,7 @@
     }).catch(function(e){ mErr(e.message); });
   }
   window.exEditType=exEditType; window.exSaveType=exSaveType;
+  window.exApprove=exApprove; window.exSetEntity=exSetEntity; window.exSaveEntity=exSaveEntity; window.entVal=entVal;
   /** ↩️ ย้อนสถานะ (กดอนุมัติ/ไม่อนุมัติผิดใบ) — กลับไป "รออนุมัติ" แล้วตัดสินใหม่ */
   function exUndo(no){
     var x=exFind(no)||{};
@@ -3743,9 +3809,9 @@
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
       '<button class="btn btn-danger" onclick="exDecide(\''+esc(no)+'\',\'reject\',$(\'exNote\').value.trim())">ไม่อนุมัติ</button></div>');
   }
-  function exDecide(no,decision,note,wht,payDate,section){
+  function exDecide(no,decision,note,wht,payDate,section,entity){
     toast(decision==='approve'?'กำลังอนุมัติ…':'กำลังบันทึก…');
-    callBusy(decision==='approve'?'กำลังสร้างเอกสาร…':'กำลังบันทึก…', jsonpPost({action:'waExpDecide',uid:UID,no:no,decision:decision,note:note||'',wht:wht||'0',payDate:payDate||'',section:section||''}), decision==='approve'?'อนุมัติแล้ว':'บันทึกแล้ว').then(function(r){
+    callBusy(decision==='approve'?'กำลังสร้างเอกสาร…':'กำลังบันทึก…', jsonpPost({action:'waExpDecide',uid:UID,no:no,decision:decision,note:note||'',wht:wht||'0',payDate:payDate||'',section:section||'',entity:entity||''}), decision==='approve'?'อนุมัติแล้ว':'บันทึกแล้ว').then(function(r){
       if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; }
       closeModal();
       if(r.docError) toast('✅ อนุมัติแล้ว · ⚠️ ออกเอกสารไม่สำเร็จ: '+r.docError);
@@ -5979,7 +6045,7 @@
         '<td class="exl-detail">'+esc(x.detail||'-')+'</td>'+
         '<td class="exl-amt">'+money(x.amount)+'</td>'+
         '<td class="exl-doc">'+(links||'—')+'</td>'+
-        dtActCell('ed-'+x.no, expRowActions(x, IS_OWNER))+'</tr>';
+        dtActCell('ed-'+x.no, expRowActions(x, IS_OWNER, multiEnt()))+'</tr>';
     }).join('')+
     '<tr class="tax-total"><td colspan="6" style="text-align:right">รวม '+arr.length+' ใบ</td><td class="exl-amt">'+money(sum)+'</td><td colspan="2"></td></tr>';
   }
