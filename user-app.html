@@ -720,6 +720,8 @@
       <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/><circle cx="10" cy="4" r="1.6"/></svg><span>รายงาน HR</span></button>
     <button class="nav-btn" data-view="poreport" aria-label="รายงานจ่ายออก" id="navPoReport" style="display:none">
       <svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M7 9.5h10M7 13h7M7 16.5h4"/></svg><span>รายงานจ่ายออก</span></button>
+    <button class="nav-btn" data-view="expreport" aria-label="รายงานรายจ่าย" id="navExpReport" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M4 19.5h16"/><path d="M7 16V9M12 16V6M17 16v-4"/><path d="M3 4.5h6"/></svg><span>รายงานรายจ่าย</span></button>
     <button class="nav-btn" data-view="vatbuy" aria-label="ภาษีซื้อ" id="navVatBuy" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M5 3.5h14v17l-3-1.6-2 1.6-2-1.6-2 1.6-2-1.6L5 20.5z"/><path d="M9 8.5h6M9 12h6M9 15.5h3"/></svg><span>ภาษีซื้อ/ภ.พ.30</span></button>
     <button class="nav-btn" data-view="pnd51" aria-label="ภ.ง.ด.51" id="navPnd51" style="display:none">
@@ -754,7 +756,7 @@
     home:['🏠','ภาพรวม'], clock:['🕐','ลงเวลา'],
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
     expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติเบิกจ่าย'],
-    expdash:['📊','สรุปค่าใช้จ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ทะเบียนการจ่าย'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','ภาษีซื้อ/ภ.พ.30'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📊','รายงานจ่ายออก'], sales:['💰','รายรับ'], ar:['📊','ลูกหนี้ค้างรับ'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51']
+    expdash:['📊','สรุปค่าใช้จ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ทะเบียนการจ่าย'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','ภาษีซื้อ/ภ.พ.30'], expreport:['📊','รายงานรายจ่าย'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📊','รายงานจ่ายออก'], sales:['💰','รายรับ'], ar:['📊','ลูกหนี้ค้างรับ'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51']
   };
   var PROJECTS=[], COMPANIES=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ) · COMPANIES=บริษัท auto (หน้าจัดการ)
   var ALL_TASKS=[], PJ_SEL='', MB_STATUSES=[];   // มุมมอง Project (dropdown เลือก · แยก 6 สถานะ + %) · MB_STATUSES=รายการสถานะ (ฟอร์มแก้งานมือถือ)
@@ -819,7 +821,7 @@
     if(gi) $('tbIcon').innerHTML=gi; else $('tbIcon').textContent=meta[0];
     $('tbTitle').textContent=meta[1];
     mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
-    ({ home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51 }[v] || soon)();
+    ({ home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, expreport:renderExpReport, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51 }[v] || soon)();
   }
 
   // ───── มือถือ: เมนูกลุ่ม (ล่าง) + แท็บย่อย (บน) · คอมใช้ sidebar เดิม ไม่เกี่ยว ─────
@@ -831,7 +833,7 @@
     { key:'home', icon:'🏠', label:'ภาพรวม', views:['home'] },
     { key:'work', icon:'📊', label:'งาน',    views:['projects','mytasks','review','senddoc','appt','announce','trash'] },
     { key:'hr',   icon:'👥', label:'HR',     views:['approve','otapprove','hrreport'] },
-    { key:'fin',  icon:'💰', label:'การเงิน', views:['bizdash','sales','ar','salesreport','expdash','reimb','petty','payout','poreport','vatbuy','pnd51','finreport','taxdoc'] },   /* payout = จ่ายออกของบริษัท (พี่คนเดียว) */   /* taxdoc ซ่อนไว้ก่อน — เปิดตอน ภ.ง.ด. v2 */
+    { key:'fin',  icon:'💰', label:'การเงิน', views:['bizdash','sales','ar','salesreport','expdash','reimb','petty','payout','poreport','expreport','vatbuy','pnd51','finreport','taxdoc'] },   /* payout = จ่ายออกของบริษัท (พี่คนเดียว) */   /* taxdoc ซ่อนไว้ก่อน — เปิดตอน ภ.ง.ด. v2 */
     { key:'me',   icon:'🙋', label:'ส่วนตัว', views:['clock','leave','ot','expense','docs'] }
   ];
   // ไอคอนหัวกลุ่มบน sidebar คอม = SVG เส้นสีเดียว (พี่กี้ขอ 30 ก.ค.: เรียบ ๆ ไม่สีสัน)
@@ -857,13 +859,13 @@
   var VIEW_TAB={ home:'ภาพรวม', projects:'บอร์ดงาน', mytasks:'งานของฉัน', review:'รอตรวจ', trash:'ถังขยะ',
     senddoc:'ส่งงานลูกค้า', appt:'นัดประชุม', announce:'ประกาศ',
     leave:'ลาของฉัน', approve:'อนุมัติลา', expense:'เบิกของฉัน', expapprove:'อนุมัติเบิก',
-    expdash:'สรุป', reimb:'ตั้งเบิกลูกค้า', petty:'เงินสดย่อย', payout:'ทะเบียนการจ่าย', vatbuy:'ภาษีซื้อ',
+    expdash:'สรุป', reimb:'ตั้งเบิกลูกค้า', petty:'เงินสดย่อย', payout:'ทะเบียนการจ่าย', expreport:'รายงานรายจ่าย', vatbuy:'ภาษีซื้อ',
     ot:'OT ของฉัน', otapprove:'อนุมัติ OT', docs:'เอกสาร',
     hrreport:'รายงาน HR', finreport:'รายงานการเงิน', taxdoc:'ภาษี/เอกสาร',
     bizdash:'ภาพรวม', sales:'รายรับ', ar:'ลูกหนี้', salesreport:'รายงานรายรับ', poreport:'รายงานจ่ายออก', pnd51:'ภ.ง.ด.51' };
   // แท็บที่เห็นเฉพาะพี่/ผู้ดูแล · reimb = ตั้งเบิกลูกค้า (ชีตไม่มีเจ้าของรายคน + เป็นข้อมูลรายได้)
   // ⚠️ ซ่อนแท็บ ≠ กันข้อมูล — backend กรองสิทธิ์เองอีกชั้นเสมอ
-  var OWNER_VIEWS={ review:1, approve:1, expapprove:1, otapprove:1, reimb:1, taxdoc:1, petty:1, payout:1, vatbuy:1, hrreport:1, finreport:1, ar:1, pnd51:1, salesreport:1 };
+  var OWNER_VIEWS={ review:1, approve:1, expapprove:1, otapprove:1, reimb:1, taxdoc:1, petty:1, payout:1, vatbuy:1, expreport:1, hrreport:1, finreport:1, ar:1, pnd51:1, salesreport:1 };
   var MGROUP='', MG_LAST={};
   function mVisibleViews(g){ return g.views.filter(function(v){ return IS_OWNER || !OWNER_VIEWS[v]; }); }
   function mGroupOf(v){ for(var i=0;i<NAV_GROUPS.length;i++){ if(NAV_GROUPS[i].views.indexOf(v)>=0) return NAV_GROUPS[i]; } return null; }
@@ -2857,6 +2859,113 @@
   //                        จ่ายออก = บริษัทจ่ายเองให้ผู้รับเงิน (ค่าเช่า/ค่าจ้าง/ซัพพลาย/ค่าตอบแทนพนักงาน)
   // เฟสนี้: ตั้งเรื่อง → อนุมัติ → จ่าย + แนบสลิป (เอกสาร PV/50 ทวิ = เฟสถัดไป)
   var PO=null, PO_EDIT='';   // PO = ข้อมูลจาก waPoInit · PO_EDIT = เลขใบที่กำลังแก้ ('' = ใบใหม่)
+  /* ═══════════ 📊 รายงานรายจ่าย + เจ้าหนี้ (E5 · spec-expense-side.md §6) ═══════════
+     รายจ่ายทั้งบริษัทในช่วงวันที่ที่เลือก — รวม 3 ทาง (ใบเบิก · จ่ายออก · จ่ายสดเงินสดย่อย)
+     เจ้าหนี้ = ที่อนุมัติแล้วยังไม่จ่าย · ไม่ผูกกับช่วงวันที่ (หนี้เดือนก่อนต้องไม่หายจากสายตา) */
+  var ER_FROM='', ER_TO='', ER_ENT='';
+  function erSetEnt(v){ ER_ENT=v||''; renderExpReport(); }
+  function erApply(){ ER_FROM=($('erFrom')||{}).value||''; ER_TO=($('erTo')||{}).value||''; renderExpReport(); }
+  function renderExpReport(){
+    if(!IS_OWNER){ $('main').innerHTML='<div class="card"><div class="emptybox">เฉพาะผู้ดูแลค่ะ</div></div>'; return; }
+    skel();
+    jsonp({action:'waExpReport',uid:UID,from:ER_FROM,to:ER_TO,entity:ER_ENT}).then(function(r){
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      ER_FROM=r.from; ER_TO=r.to;
+      var s=r.sum||{}, ap=r.payables||{sum:{n:0,amt:0},rows:[],aging:[]};
+      var h='<div class="section-h">📊 รายงานรายจ่าย · เจ้าหนี้</div>'+
+        '<div class="card"><div class="ds-h">ช่วงวันที่</div>'+
+        '<div class="fld"><label>ตั้งแต่</label><input id="erFrom" type="date" value="'+esc(ER_FROM)+'"></div>'+
+        '<div class="fld"><label>ถึง</label><input id="erTo" type="date" value="'+esc(ER_TO)+'"></div>'+
+        ((r.entities||[]).length>1?'<div class="fld"><label>บริษัท</label><select id="erEnt" onchange="erSetEnt(this.value)">'+
+          '<option value="">ทุกบริษัท</option>'+
+          (r.entities||[]).map(function(e){ return '<option value="'+esc(e.code)+'"'+(e.code===ER_ENT?' selected':'')+'>'+esc(e.name)+'</option>'; }).join('')+
+          '</select></div>':'')+
+        '<div class="tax-acts"><button class="btn btn-primary" onclick="erApply()">ดูรายงาน</button>'+
+        '<button class="btn btn-ghost" onclick="erPdf()">📄 ออกไฟล์ (แท็บ + PDF)</button></div></div>';
+
+      h+='<div class="ds-grid">'+
+        statCard('รายจ่ายรวม',money(s.amount),s.n+' รายการ')+
+        statCard('หัก ณ ที่จ่าย',money(s.wht),'ภาษีที่เราหักไว้นำส่ง')+
+        statCard('จ่ายจริง',money(s.net),'หลังหักภาษี')+
+        statCard('เจ้าหนี้คงค้าง',money(ap.sum.amt),ap.sum.n+' รายการ (ทุกช่วงเวลา)',ap.sum.n?'ds-warn':'')+
+        '</div>';
+
+      // ① ตามทางที่เงินออก
+      h+='<div class="card"><div class="ds-h">① เงินออกทางไหนบ้าง</div>'+
+        '<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr><th>ทาง</th><th>รายการ</th><th>ยอดเต็ม</th><th>จ่ายจริง</th></tr></thead><tbody>'+
+        (r.byChannel||[]).map(function(c){
+          return '<tr><td>'+esc(c.label)+'</td><td>'+c.n+'</td><td class="ta-r">'+money(c.amount)+'</td><td class="ta-r">'+money(c.net)+'</td></tr>';
+        }).join('')+
+        '<tr class="tax-total"><td>รวม</td><td>'+s.n+'</td><td class="ta-r">'+money(s.amount)+'</td><td class="ta-r">'+money(s.net)+'</td></tr>'+
+        '</tbody></table></div>'+
+        '<div class="m-hint" style="margin-top:8px">จ่ายสดจากเงินสดย่อยนับเฉพาะที่พี่จ่ายเอง — รายการที่มาจากใบเบิกไม่ถูกนับซ้ำ '+
+        'และใบจ่ายออกที่เป็นการคืนเงินสดย่อยก็ถูกหักออกแล้ว</div></div>';
+
+      // ② ตามประเภท
+      h+='<div class="card"><div class="ds-h">② สรุปตามประเภทค่าใช้จ่าย</div>';
+      if(!(r.byType||[]).length) h+='<div class="emptybox">ช่วงนี้ยังไม่มีรายจ่าย</div>';
+      else h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr><th>ประเภท</th><th>รายการ</th><th>ยอดเต็ม</th><th>จ่ายจริง</th></tr></thead><tbody>'+
+        r.byType.map(function(t2){
+          return '<tr><td>'+esc(t2.label)+'</td><td>'+t2.n+'</td><td class="ta-r">'+money(t2.amount)+'</td><td class="ta-r">'+money(t2.net)+'</td></tr>';
+        }).join('')+'</tbody></table></div>';
+      h+='</div>';
+
+      // ③ ภาษีหัก ณ ที่จ่ายที่เราหักไว้
+      if((r.wht||[]).length){
+        h+='<div class="card"><div class="ds-h">③ ภาษีหัก ณ ที่จ่ายที่ต้องนำส่ง</div>'+
+          '<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr><th>แบบยื่น</th><th>ราย</th><th>ฐานเงินได้</th><th>ภาษีหัก</th></tr></thead><tbody>'+
+          r.wht.map(function(w){
+            return '<tr><td>'+esc(w.label)+'</td><td>'+w.n+'</td><td class="ta-r">'+money(w.base)+'</td><td class="ta-r">'+money(w.wht)+'</td></tr>';
+          }).join('')+'</tbody></table></div>'+
+          '<div class="tax-acts"><button class="btn btn-ghost" onclick="switchView(\'taxdoc\')">ไปหน้าแบบยื่นภาษี</button></div></div>';
+      }
+
+      // ④ เจ้าหนี้
+      h+='<div class="card"><div class="ds-h">④ เจ้าหนี้คงค้าง — อนุมัติแล้วยังไม่จ่าย (ทุกช่วงเวลา)</div>';
+      if(!ap.rows.length) h+='<div class="emptybox">ไม่มีเจ้าหนี้ค้างจ่าย 🎉</div>';
+      else {
+        h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
+          '<th>ประเภท</th><th>เลขที่</th><th>ผู้รับเงิน</th><th>รายละเอียด</th><th>ค้างมา</th><th>ค้างจ่าย</th></tr></thead><tbody>'+
+          ap.rows.map(function(x){
+            return '<tr><td>'+esc(x.kindLabel)+'</td><td>'+esc(x.no)+'</td><td>'+esc(x.payee||'-')+'</td>'+
+              '<td style="white-space:normal">'+esc(x.detail||'-')+'</td>'+
+              '<td class="dt-nw">'+x.days+' วัน</td><td class="ta-r dt-nw">'+money(x.amount)+'</td></tr>';
+          }).join('')+
+          '<tr class="tax-total"><td colspan="5">รวม '+ap.sum.n+' รายการ</td><td class="ta-r">'+money(ap.sum.amt)+'</td></tr>'+
+          '</tbody></table></div>';
+        if((ap.aging||[]).length){
+          h+='<div class="tax-tbl-wrap" style="margin-top:10px"><table class="tax-tbl"><thead><tr><th>อายุหนี้</th><th>รายการ</th><th>ยอด</th></tr></thead><tbody>'+
+            ap.aging.map(function(b){ return '<tr><td>'+esc(b.label)+'</td><td>'+b.n+'</td><td class="ta-r">'+money(b.amt)+'</td></tr>'; }).join('')+
+            '</tbody></table></div>';
+        }
+      }
+      h+='</div>';
+
+      // ⑤ ทะเบียนรายจ่าย
+      h+='<div class="card"><div class="ds-h">⑤ ทะเบียนรายจ่ายในช่วงนี้</div>';
+      if(!(r.rows||[]).length) h+='<div class="emptybox">ช่วงนี้ยังไม่มีรายจ่าย</div>';
+      else h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
+        '<th>วันที่</th><th>เลขที่</th><th>รายการ</th><th>ผู้รับเงิน</th><th>ยอดเต็ม</th><th>จ่ายจริง</th><th>สถานะ</th></tr></thead><tbody>'+
+        r.rows.map(function(x){
+          return '<tr><td class="dt-nw">'+esc(x.date)+'</td><td>'+esc(x.no)+'</td>'+
+            '<td style="white-space:normal">'+esc(x.detail||'-')+
+              '<br><span style="font-size:12px;color:#8A94A6">'+esc(x.type||'')+
+              ({expense:' · ใบเบิก',payout:' · จ่ายออก',petty:' · เงินสดย่อย'}[x.channel]||'')+'</span></td>'+
+            '<td>'+esc(x.payee||'-')+'</td><td class="ta-r dt-nw">'+money(x.amount)+'</td>'+
+            '<td class="ta-r dt-nw">'+money(x.net)+'</td><td>'+esc(x.status)+'</td></tr>';
+        }).join('')+'</tbody></table></div>';
+      h+='</div>';
+      $('main').innerHTML=h;
+    }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
+  }
+  function erPdf(){
+    callBusy('กำลังออกรายงาน…', jsonp({action:'waExpReportPdf',uid:UID,from:ER_FROM,to:ER_TO,entity:ER_ENT}), 'ออกรายงานแล้ว').then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'ออกรายงานไม่สำเร็จ'); return; }
+      toast('📄 ออกรายงานแล้ว (แท็บ '+r.sheet+')'); if(r.pdfUrl) window.open(r.pdfUrl,'_blank');
+    }).catch(function(e){ toast(e.message); });
+  }
+  window.renderExpReport=renderExpReport; window.erSetEnt=erSetEnt; window.erApply=erApply; window.erPdf=erPdf;
+
   /* ═══════════ 🧾 ภาษีซื้อ + ภ.พ.30 (E4 · spec-expense-side.md §6) ═══════════
      ภาษีซื้อ = VAT ที่จ่ายให้ผู้ขาย (ต้องมีใบกำกับตัวจริง) → หักกับภาษีขาย = ภ.พ.30 ที่ต้องยื่นทุกเดือน */
   var VB_MONTH='', VB_ENT='';
@@ -7322,6 +7431,7 @@
         var nar=$('navAr'); if(nar) nar.style.display='';                   // 📊 ลูกหนี้ค้างรับ = พี่/HR
         var nsr=$('navSalesReport'); if(nsr) nsr.style.display='';           // 📊 รายงานรายรับ = พี่/HR
         var npr=$('navPoReport'); if(npr) npr.style.display='';           // 📊 รายงานจ่ายออก = พี่คนเดียว (backend poGate_ กันซ้ำอีกชั้น)
+        var ner=$('navExpReport'); if(ner) ner.style.display='';           // 📊 รายงานรายจ่าย + เจ้าหนี้ = พี่คนเดียว
         var nvb=$('navVatBuy'); if(nvb) nvb.style.display='';             // 🧾 ภาษีซื้อ/ภ.พ.30 = พี่คนเดียว
         var n51=$('navPnd51'); if(n51) n51.style.display=''; }              // 📐 ภ.ง.ด.51 = พี่คนเดียว (backend pnd51Gate_ กันซ้ำอีกชั้น)           // 📊 รายงานจ่ายออก = พี่คนเดียว (backend poGate_ กันซ้ำอีกชั้น)
       // รายงานการเงินรวม = พี่ + HR ที่ตั้งใน Script Property (backend ตัดสิน ไม่ผูกกับ IS_OWNER)
