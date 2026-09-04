@@ -2859,6 +2859,111 @@
   //                        จ่ายออก = บริษัทจ่ายเองให้ผู้รับเงิน (ค่าเช่า/ค่าจ้าง/ซัพพลาย/ค่าตอบแทนพนักงาน)
   // เฟสนี้: ตั้งเรื่อง → อนุมัติ → จ่าย + แนบสลิป (เอกสาร PV/50 ทวิ = เฟสถัดไป)
   var PO=null, PO_EDIT='';   // PO = ข้อมูลจาก waPoInit · PO_EDIT = เลขใบที่กำลังแก้ ('' = ใบใหม่)
+  /* ═══════════ 📋 รายการย่อยใบจ่ายออก + สรุปเอกสารเบิกจ่าย (เฟส F) ═══════════
+     1 การจ่าย = ใบแจ้งหนี้ของผู้ขายหลายใบ → ตารางรายการ + ออก PDF สรุปให้แนบใบ
+     ⚠️ ยอดใบจ่ายออกถูกเขียนทับด้วยผลรวมรายการเสมอ (backend) — ที่นี่แค่โชว์ยอดให้เห็นก่อนบันทึก */
+  var PI_NO='', PI_ROWS=[], PI_VAT=7;
+  function piBlank(){ return { docNo:'', docDate:'', ref:'', detail:'', qty:'', unitPrice:'', base:'', vat:'' }; }
+  function piCalc(x){
+    var qty=Number(x.qty)||0, up=Number(x.unitPrice)||0;
+    var base=(String(x.base||'').trim()==='')?Math.round(qty*up*100)/100:(Number(x.base)||0);
+    var vat=(String(x.vat||'').trim()==='')?Math.round(base*PI_VAT)/100:(Number(x.vat)||0);
+    return { base:base, vat:vat, total:Math.round((base+vat)*100)/100 };
+  }
+  function piSum(){
+    var s={base:0,vat:0,total:0};
+    PI_ROWS.forEach(function(x){ var c=piCalc(x); s.base+=c.base; s.vat+=c.vat; s.total+=c.total; });
+    var el=$('piSum'); if(el) el.innerHTML='<b>รวม '+PI_ROWS.length+' ฉบับ · มูลค่าก่อนภาษี '+money(s.base)+
+      ' · VAT '+money(s.vat)+' · จำนวนเงินทั้งสิ้น '+money(s.total)+' บาท</b>';
+  }
+  /** อ่านค่าที่พิมพ์อยู่ในตารางกลับเข้า PI_ROWS (เรียกก่อนวาดใหม่/ก่อนบันทึก) */
+  function piRead(){
+    PI_ROWS.forEach(function(x,i){
+      ['docNo','docDate','ref','detail','qty','unitPrice','base','vat'].forEach(function(k){
+        var el=$('pi_'+k+'_'+i); if(el) x[k]=el.value;
+      });
+    });
+  }
+  function piAdd(){ piRead(); PI_ROWS.push(piBlank()); piPaint(); }
+  function piDel(i){ piRead(); PI_ROWS.splice(i,1); if(!PI_ROWS.length) PI_ROWS.push(piBlank()); piPaint(); }
+  function piChange(){ piRead(); piSum(); }
+  function piPaint(){
+    var body=PI_ROWS.map(function(x,i){
+      var c=piCalc(x);
+      return '<tr>'+
+        '<td>'+(i+1)+'</td>'+
+        '<td><input id="pi_docNo_'+i+'" value="'+esc(x.docNo||'')+'" placeholder="IV-xxx" style="width:110px" onchange="piChange()"></td>'+
+        '<td><input id="pi_docDate_'+i+'" type="date" value="'+esc(x.docDate||'')+'" style="width:130px" onchange="piChange()"></td>'+
+        '<td><input id="pi_ref_'+i+'" value="'+esc(x.ref||'')+'" style="width:110px" onchange="piChange()"></td>'+
+        '<td><input id="pi_detail_'+i+'" value="'+esc(x.detail||'')+'" style="width:160px" onchange="piChange()"></td>'+
+        '<td><input id="pi_qty_'+i+'" type="number" value="'+esc(x.qty||'')+'" style="width:64px" onchange="piChange()"></td>'+
+        '<td><input id="pi_unitPrice_'+i+'" type="number" value="'+esc(x.unitPrice||'')+'" style="width:74px" onchange="piChange()"></td>'+
+        '<td><input id="pi_base_'+i+'" type="number" value="'+esc(x.base||'')+'" placeholder="'+c.base+'" style="width:88px" onchange="piChange()"></td>'+
+        '<td><input id="pi_vat_'+i+'" type="number" value="'+esc(x.vat||'')+'" placeholder="'+c.vat+'" style="width:74px" onchange="piChange()"></td>'+
+        '<td class="ta-r dt-nw">'+money(c.total)+'</td>'+
+        '<td><a class="ex-lk" href="#" onclick="piDel('+i+');return false">🗑️</a></td></tr>';
+    }).join('');
+    var el=$('piBody'); if(el) el.innerHTML=body;
+    piSum();
+  }
+  /** เปิดตัวจัดการรายการย่อยของใบจ่ายออก 1 ใบ */
+  function poItems(no){
+    PI_NO=no;
+    callBusy('กำลังโหลด…', jsonp({action:'waPoItems',uid:UID,no:no}), '').then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'โหลดไม่สำเร็จ'); return; }
+      PI_VAT=Number(r.vatRate)||7;
+      PI_ROWS=(r.items||[]).map(function(x){
+        return { docNo:x.docNo, docDate:x.docDate, ref:x.ref, detail:x.detail,
+          qty:x.qty||'', unitPrice:x.unitPrice||'', base:x.base||'', vat:x.vat||'' };
+      });
+      if(!PI_ROWS.length) PI_ROWS=[piBlank(),piBlank()];
+      modal('<h3>📋 รายการย่อย + สรุปเอกสารเบิกจ่าย — '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+        '<div class="m-hint">ใบจ่าย 1 ใบที่รวมใบแจ้งหนี้ผู้ขายหลายฉบับ — ระบบจะออก PDF สรุปให้ '+
+          'แล้วเขียนยอดในใบให้ตรงกับผลรวมอัตโนมัติ (ภาษีหัก ณ ที่จ่ายคิดจากมูลค่าก่อน VAT ตามกฎหมาย)</div>'+
+        '<div class="fld"><label>ชื่อหัวคอลัมน์อ้างอิงบนเอกสาร</label>'+
+          '<input id="piRefLabel" value="'+esc(r.refLabel||'')+'" placeholder="เช่น Domain / โครงการ / ทะเบียนรถ"></div>'+
+        '<div class="fld"><label>หน่วยของช่องจำนวน</label>'+
+          '<input id="piUnit" value="'+esc(r.unitLabel||'')+'" placeholder="เช่น คน / ชิ้น / เดือน"></div>'+
+        '<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
+          '<th>#</th><th>เลขที่เอกสาร</th><th>วันที่</th><th>อ้างอิง</th><th>รายละเอียด</th>'+
+          '<th>จำนวน</th><th>ราคา/หน่วย</th><th>มูลค่าก่อนภาษี</th><th>VAT</th><th>รวม</th><th></th>'+
+          '</tr></thead><tbody id="piBody"></tbody></table></div>'+
+        '<div class="m-hint" id="piSum"></div>'+
+        '<div class="tax-acts"><button class="btn btn-ghost" onclick="piAdd()">➕ เพิ่มบรรทัด</button></div>'+
+        '<div class="fld"><label>หมายเหตุท้ายเอกสาร (พิมพ์เพิ่มเอง)</label>'+
+          '<textarea id="piNote" placeholder="ระบบเติมให้อยู่แล้ว: จำนวนรวม · ภาษีหัก ณ ที่จ่าย · บัญชีที่ชำระ">'+esc(r.note||'')+'</textarea></div>'+
+        (r.summaryLink?'<div class="m-hint">📄 เอกสารล่าสุด: <a class="ex-lk" href="'+esc(r.summaryLink)+'" target="_blank">เปิดสรุปเอกสารเบิกจ่าย</a></div>':'')+
+        '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button>'+
+        '<button class="btn btn-primary" onclick="piSave()">บันทึก + ออกเอกสารสรุป</button></div>');
+      piPaint();
+    }).catch(function(e){ toast(e.message); });
+  }
+  function piSave(){
+    piRead();
+    var items=PI_ROWS.filter(function(x){ return String(x.docNo||'').trim()||String(x.detail||'').trim(); });
+    if(!items.length){ mErr('ใส่รายการอย่างน้อย 1 บรรทัดค่ะ'); return; }
+    callBusy('กำลังบันทึก + ออกเอกสาร…', jsonpPost({action:'waPoItemsSave',uid:UID,no:PI_NO,
+      items:JSON.stringify(items), refLabel:(($('piRefLabel')||{}).value||''),
+      unitLabel:(($('piUnit')||{}).value||''), note:(($('piNote')||{}).value||'')}), 'บันทึกแล้ว').then(function(r){
+      if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+      closeModal();
+      toast('✅ บันทึก '+r.n+' รายการ · ยอดใบ '+money(r.total)+' บาท'+(r.wht?' · หักภาษี '+money(r.wht):''));
+      if(r.summaryLink) setTimeout(function(){ window.open(r.summaryLink,'_blank'); },400);
+      else if(r.docError) setTimeout(function(){ toast('⚠️ ออกเอกสารสรุปไม่สำเร็จ: '+r.docError); },1200);
+      if(VIEW==='payout') renderPayout();
+    }).catch(function(e){ mErr(e.message); });
+  }
+  /** ออก/ออกทับเอกสารสรุปเอง (ไม่ต้องแก้รายการ) */
+  function poSummary(no){
+    callBusy('กำลังออกเอกสาร…', jsonp({action:'waPoSummary',uid:UID,no:no}), 'ออกเอกสารแล้ว').then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'ออกเอกสารไม่สำเร็จ'); return; }
+      toast('📄 ออกสรุปเอกสารเบิกจ่ายแล้ว'); if(r.url) window.open(r.url,'_blank');
+      if(VIEW==='payout') renderPayout();
+    }).catch(function(e){ toast(e.message); });
+  }
+  window.poItems=poItems; window.piAdd=piAdd; window.piDel=piDel; window.piChange=piChange;
+  window.piSave=piSave; window.poSummary=poSummary;
+
   /* ═══════════ 📊 รายงานรายจ่าย + เจ้าหนี้ (E5 · spec-expense-side.md §6) ═══════════
      รายจ่ายทั้งบริษัทในช่วงวันที่ที่เลือก — รวม 3 ทาง (ใบเบิก · จ่ายออก · จ่ายสดเงินสดย่อย)
      เจ้าหนี้ = ที่อนุมัติแล้วยังไม่จ่าย · ไม่ผูกกับช่วงวันที่ (หนี้เดือนก่อนต้องไม่หายจากสายตา) */
@@ -3356,6 +3461,11 @@
     // ใบกำกับภาษีซื้อ (E4) — กรอกได้ทุกสถานะ (ใบกำกับมักมาถึงทีหลัง) · ไม่แตะยอด/เอกสารของใบ
     a.push({ key:'vat', label:'🧾 ใบกำกับภาษีซื้อ',
       call:"vatOpen('payout'," + q + ',' + (Number(x.amount) || 0) + ')' });
+    // รายการย่อย (เฟส F) — ใบจ่าย 1 ใบที่รวมใบแจ้งหนี้ผู้ขายหลายฉบับ
+    // แก้รายการได้เฉพาะ "รออนุมัติ" (ยอดต้องนิ่งหลังอนุมัติ · ตรงกับด่าน savePayoutItems_)
+    if(mode === 'pending') a.push({ key:'items', label:'📋 รายการย่อย / สรุปเบิกจ่าย', call:'poItems(' + q + ')' });
+    if(x.summaryLink) a.push({ key:'summary', label:'📄 สรุปเอกสารเบิกจ่าย', href:x.summaryLink });
+    else if(mode !== 'pending') a.push({ key:'mksummary', label:'📄 ออกสรุปเอกสารเบิกจ่าย', call:'poSummary(' + q + ')' });
     if(x.bank && x.bank.acct)
       a.push({ key:'copy', label:'📋 ก๊อปเลขบัญชี ' + x.bank.acct, call:"copyTxt('" + String(x.bank.acct).replace(/'/g, "\\'") + "')" });
     if(mode !== 'done'){
