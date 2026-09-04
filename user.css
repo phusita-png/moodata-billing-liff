@@ -745,7 +745,10 @@ textarea:focus,input[type=time]:focus{border-color:var(--red)}
   /* เนื้อกลุ่ม: หุบ = สูง 0 · คลี่ = โผล่ทั้งหมด (max-height เผื่อไว้ให้ transition ทำงาน) */
   .nav-gb{display:flex; flex-direction:column; gap:2px; overflow:hidden;
     max-height:0; transition:max-height .18s ease; padding-left:16px}
-  .nav-g.open > .nav-gb{max-height:420px}
+  /* ⚠️ เพดานนี้ต้องสูงกว่ากลุ่มที่ยาวที่สุดเสมอ — เดิม 420px ตัดหมวดการเงิน (15 เมนู ≈ 630px)
+     เหลือโชว์แค่ 10 เมนู พี่กี้เห็นเมนูภาษี/50 ทวิ หายไปทั้งที่ปุ่มอยู่ใน DOM ครบ (4 ก.ย. 69)
+     เพิ่มเมนูใหม่ในกลุ่มไหนก็ตาม ต้องเช็คว่ายังไม่ชนเพดานนี้ */
+  .nav-g.open > .nav-gb{max-height:1200px}
   .nav-gb .nav-btn{padding:9px 12px; font-size:13px}
   .nav-gb .nav-btn span{font-size:13px}
   .nav-gb .nav-btn svg{width:18px; height:18px}
