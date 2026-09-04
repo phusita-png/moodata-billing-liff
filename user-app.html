@@ -750,7 +750,7 @@
     home:['🏠','ภาพรวม'], clock:['🕐','ลงเวลา'],
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
     expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติเบิกจ่าย'],
-    expdash:['📊','สรุปค่าใช้จ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','จ่ายออก'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📊','รายงานจ่ายออก'], sales:['💰','รายรับ'], ar:['📊','ลูกหนี้ค้างรับ'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51']
+    expdash:['📊','สรุปค่าใช้จ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','จ่ายออก'], petty:['💵','เงินสดย่อย'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📊','รายงานจ่ายออก'], sales:['💰','รายรับ'], ar:['📊','ลูกหนี้ค้างรับ'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51']
   };
   var PROJECTS=[], COMPANIES=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ) · COMPANIES=บริษัท auto (หน้าจัดการ)
   var ALL_TASKS=[], PJ_SEL='', MB_STATUSES=[];   // มุมมอง Project (dropdown เลือก · แยก 6 สถานะ + %) · MB_STATUSES=รายการสถานะ (ฟอร์มแก้งานมือถือ)
@@ -815,7 +815,7 @@
     if(gi) $('tbIcon').innerHTML=gi; else $('tbIcon').textContent=meta[0];
     $('tbTitle').textContent=meta[1];
     mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
-    ({ home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51 }[v] || soon)();
+    ({ home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51 }[v] || soon)();
   }
 
   // ───── มือถือ: เมนูกลุ่ม (ล่าง) + แท็บย่อย (บน) · คอมใช้ sidebar เดิม ไม่เกี่ยว ─────
@@ -827,7 +827,7 @@
     { key:'home', icon:'🏠', label:'ภาพรวม', views:['home'] },
     { key:'work', icon:'📊', label:'งาน',    views:['projects','mytasks','review','senddoc','appt','announce','trash'] },
     { key:'hr',   icon:'👥', label:'HR',     views:['approve','otapprove','hrreport'] },
-    { key:'fin',  icon:'💰', label:'การเงิน', views:['bizdash','sales','ar','salesreport','expdash','reimb','payout','poreport','pnd51','finreport','taxdoc'] },   /* payout = จ่ายออกของบริษัท (พี่คนเดียว) */   /* taxdoc ซ่อนไว้ก่อน — เปิดตอน ภ.ง.ด. v2 */
+    { key:'fin',  icon:'💰', label:'การเงิน', views:['bizdash','sales','ar','salesreport','expdash','reimb','petty','payout','poreport','pnd51','finreport','taxdoc'] },   /* payout = จ่ายออกของบริษัท (พี่คนเดียว) */   /* taxdoc ซ่อนไว้ก่อน — เปิดตอน ภ.ง.ด. v2 */
     { key:'me',   icon:'🙋', label:'ส่วนตัว', views:['clock','leave','ot','expense','docs'] }
   ];
   // ไอคอนหัวกลุ่มบน sidebar คอม = SVG เส้นสีเดียว (พี่กี้ขอ 30 ก.ค.: เรียบ ๆ ไม่สีสัน)
@@ -853,13 +853,13 @@
   var VIEW_TAB={ home:'ภาพรวม', projects:'บอร์ดงาน', mytasks:'งานของฉัน', review:'รอตรวจ', trash:'ถังขยะ',
     senddoc:'ส่งงานลูกค้า', appt:'นัดประชุม', announce:'ประกาศ',
     leave:'ลาของฉัน', approve:'อนุมัติลา', expense:'เบิกของฉัน', expapprove:'อนุมัติเบิก',
-    expdash:'สรุป', reimb:'ตั้งเบิกลูกค้า', payout:'จ่ายออก',
+    expdash:'สรุป', reimb:'ตั้งเบิกลูกค้า', petty:'เงินสดย่อย', payout:'จ่ายออก',
     ot:'OT ของฉัน', otapprove:'อนุมัติ OT', docs:'เอกสาร',
     hrreport:'รายงาน HR', finreport:'รายงานการเงิน', taxdoc:'ภาษี/เอกสาร',
     bizdash:'ภาพรวม', sales:'รายรับ', ar:'ลูกหนี้', salesreport:'รายงานรายรับ', poreport:'รายงานจ่ายออก', pnd51:'ภ.ง.ด.51' };
   // แท็บที่เห็นเฉพาะพี่/ผู้ดูแล · reimb = ตั้งเบิกลูกค้า (ชีตไม่มีเจ้าของรายคน + เป็นข้อมูลรายได้)
   // ⚠️ ซ่อนแท็บ ≠ กันข้อมูล — backend กรองสิทธิ์เองอีกชั้นเสมอ
-  var OWNER_VIEWS={ review:1, approve:1, expapprove:1, otapprove:1, reimb:1, taxdoc:1, payout:1, hrreport:1, finreport:1, ar:1, pnd51:1, salesreport:1 };
+  var OWNER_VIEWS={ review:1, approve:1, expapprove:1, otapprove:1, reimb:1, taxdoc:1, petty:1, payout:1, hrreport:1, finreport:1, ar:1, pnd51:1, salesreport:1 };
   var MGROUP='', MG_LAST={};
   function mVisibleViews(g){ return g.views.filter(function(v){ return IS_OWNER || !OWNER_VIEWS[v]; }); }
   function mGroupOf(v){ for(var i=0;i<NAV_GROUPS.length;i++){ if(NAV_GROUPS[i].views.indexOf(v)>=0) return NAV_GROUPS[i]; } return null; }
@@ -2366,6 +2366,7 @@
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
       EXP_TYPES=r.types||EXP_TYPES; SECTIONS=r.sections||SECTIONS;   // sections ไว้ให้ปุ่มแก้ภาษีในหน้านี้
       ENTITIES=r.entities||ENTITIES; DEF_ENT=r.defaultEntity||DEF_ENT;   // บริษัทผู้ออกเอกสาร (E1)
+      PETTY_ENTS=r.pettyEntities||PETTY_ENTS; PAY_CHANNELS=r.payChannels||PAY_CHANNELS;   // เงินสดย่อย (E2)
       MYBANK=r.myBank||{name:'',acct:'',owner:''}; BANK_LIST=r.banks||[]; HAS_BANK=!!r.hasBank;
       paintExpense(r.expenses||[]);
       sigRefresh();
@@ -2849,6 +2850,192 @@
   //                        จ่ายออก = บริษัทจ่ายเองให้ผู้รับเงิน (ค่าเช่า/ค่าจ้าง/ซัพพลาย/ค่าตอบแทนพนักงาน)
   // เฟสนี้: ตั้งเรื่อง → อนุมัติ → จ่าย + แนบสลิป (เอกสาร PV/50 ทวิ = เฟสถัดไป)
   var PO=null, PO_EDIT='';   // PO = ข้อมูลจาก waPoInit · PO_EDIT = เลขใบที่กำลังแก้ ('' = ใบใหม่)
+  /* ═══════════ 💵 เงินสดย่อย (E2 · spec-expense-side.md §4) ═══════════
+     วงเงินหมุน: เงินออกจากมือ → ติ๊กรวมเป็นใบสรุปเบิก (PC) → ตั้งเบิกต่อ → บริษัทคืนเงิน วงเงินกลับเต็ม
+     ⚠️ ฟอร์มทุกอันเป็น "ฟอร์มในหน้า" ไม่ใช่ป็อบอัพซ้อน (พี่กี้ขอ — รายรับจะตามแบบนี้ทีหลัง) */
+  var PT_ENT='', PT_DATA=null, PT_SEL={}, PT_FORM='';
+  function ptSetEnt(v){ PT_ENT=v||''; PT_SEL={}; PT_FORM=''; renderPetty(); }
+  function ptForm(kind){ PT_FORM=(PT_FORM===kind?'':kind); ptPaint(); }
+  /** ติ๊ก/เอาติ๊กออก 1 รายการ → อัปเดตปุ่มออกใบสรุปทันที (ไม่โหลดหน้าใหม่) */
+  function ptToggle(no,on){ if(on) PT_SEL[no]=1; else delete PT_SEL[no]; ptSum(); }
+  function ptSelected(){ return Object.keys(PT_SEL); }
+  function ptSum(){
+    var items=(PT_DATA&&PT_DATA.items)||[], sel=ptSelected(), total=0;
+    items.forEach(function(x){ if(PT_SEL[x.no]) total+=Number(x.amount)||0; });
+    var el=$('ptClaimBar'); if(!el) return;
+    el.innerHTML = sel.length
+      ? '<b>ติ๊กไว้ '+sel.length+' รายการ · รวม '+money(total)+' บาท</b>'+
+        '<button class="btn btn-primary" onclick="ptClaim()">📑 ออกใบสรุปเบิก</button>'
+      : '<span class="m-hint">ติ๊กรายการที่จะเบิกคืนจากบริษัท แล้วกดออกใบสรุปเบิก</span>';
+  }
+  function renderPetty(){
+    if(!IS_OWNER){ $('main').innerHTML='<div class="card"><div class="emptybox">เฉพาะผู้ดูแลค่ะ</div></div>'; return; }
+    skel();
+    jsonp({action:'waPettyInit',uid:UID,entity:PT_ENT}).then(function(r){
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      PT_DATA=r; PT_ENT=r.entity||''; ptPaint();
+    }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
+  }
+  /** วาดหน้าจากข้อมูลที่โหลดไว้แล้ว (ใช้ตอนเปิด/ปิดฟอร์มโดยไม่ยิงใหม่) */
+  function ptPaint(){
+    var r=PT_DATA; if(!r) return;
+    var b=r.balance||{}, ents=r.entities||[], items=r.items||[], claims=r.claims||[];
+    var h='<div class="section-h">💵 เงินสดย่อย</div>';
+    if(ents.length>1){
+      h+='<div class="ds-sel"><select id="ptEnt" onchange="ptSetEnt(this.value)">'+
+        ents.map(function(e){
+          var v=e.isDefault?'':e.code;
+          return '<option value="'+esc(v)+'"'+(v===PT_ENT?' selected':'')+'>'+esc(e.name||e.code)+'</option>';
+        }).join('')+'</select></div>';
+    }
+
+    if(!b.hasFund){
+      h+='<div class="card"><div class="emptybox">บริษัทนี้ยังไม่ได้ตั้งวงเงินเงินสดย่อย<br>'+
+        '<span class="m-hint">ตั้งวงเงินก่อน ถึงจะบันทึกรายการที่จ่ายออกได้ค่ะ</span></div>'+
+        '<div class="tax-acts"><button class="btn btn-primary" onclick="ptForm(\'fund\')">⚙️ ตั้งวงเงิน</button></div></div>';
+    } else {
+      // ── กราฟวงเงิน: จ่ายออกแล้วยังไม่เบิกคืน / คงเหลือในมือ (ตัวเลขกำกับทุกก้อน) ──
+      var lim=Number(b.limit)||0, sp=Number(b.spent)||0;
+      var pct=lim>0?Math.min(100,Math.round(sp*100/lim)):100;
+      h+='<div class="ds-grid">'+
+        statCard('วงเงินที่ตั้งไว้',money(b.limit),'ผู้ถือเงิน: '+esc(b.holder||'-'))+
+        statCard('จ่ายออก · ยังไม่เบิกคืน',money(b.spent),b.count+' รายการ',b.over?'ds-warn':'')+
+        statCard('เงินสดที่ควรมีในมือ',money(b.onHand),b.over?'⚠️ จ่ายเกินวงเงินแล้ว':'วงเงิน − ที่จ่ายออกไป',b.over?'ds-warn':'')+
+        '</div>'+
+        '<div class="card"><div class="ds-h">สัดส่วนวงเงิน</div>'+
+        '<div style="height:14px;border-radius:7px;background:#E8F0E9;overflow:hidden;display:flex">'+
+          '<div style="width:'+pct+'%;background:'+(b.over?'#E5484D':'#C8730B')+'"></div>'+
+        '</div>'+
+        '<div class="m-hint" style="margin-top:6px">🟠 จ่ายออกยังไม่เบิกคืน '+money(b.spent)+
+          ' · 🟢 เหลือในมือ '+money(b.onHand)+' · วงเงิน '+money(b.limit)+'</div>'+
+        '<div class="tax-acts">'+
+          '<button class="btn btn-primary" onclick="ptForm(\'cash\')">➕ บันทึกจ่ายสด</button>'+
+          '<button class="btn btn-ghost" onclick="ptForm(\'fund\')">⚙️ แก้วงเงิน</button>'+
+        '</div></div>';
+    }
+
+    // ── ฟอร์มในหน้า (ไม่ใช่ป็อบอัพ) ──
+    if(PT_FORM==='fund'){
+      h+='<div class="card"><div class="ds-h">⚙️ ตั้ง/แก้วงเงินเงินสดย่อย</div><div id="mErr" class="m-err hidden"></div>'+
+        '<div class="fld"><label>วงเงิน (บาท)</label><input id="ptFundAmt" type="number" inputmode="decimal" value="'+(b.limit||'')+'"></div>'+
+        '<div class="fld"><label>ผู้ถือเงิน (คนที่บริษัทต้องจ่ายคืน)</label><input id="ptFundHolder" value="'+esc(b.holder||'')+'"></div>'+
+        '<div class="m-hint">แก้วงเงินได้ตลอด · ระบบบันทึกผู้แก้ + เวลาไว้ทุกครั้ง</div>'+
+        '<div class="tax-acts"><button class="btn btn-ghost" onclick="ptForm(\'fund\')">ปิด</button>'+
+        '<button class="btn btn-primary" onclick="ptSaveFund()">บันทึกวงเงิน</button></div></div>';
+    }
+    if(PT_FORM==='cash'){
+      var topts=(r.types||[]).map(function(t){ return '<option value="'+esc(t.key)+'">'+esc(t.label)+'</option>'; }).join('');
+      h+='<div class="card"><div class="ds-h">➕ บันทึกค่าใช้จ่ายที่จ่ายสด (ไม่ผ่านการอนุมัติ)</div><div id="mErr" class="m-err hidden"></div>'+
+        '<div class="fld"><label>วันที่จ่าย</label><input id="ptcDate" type="date" value="'+todayISO()+'"></div>'+
+        '<div class="fld"><label>ประเภทค่าใช้จ่าย</label><select id="ptcType">'+topts+'</select></div>'+
+        '<div class="fld"><label>จ่ายให้ใคร</label><input id="ptcPayee" placeholder="ร้าน/คนที่รับเงิน"></div>'+
+        '<div class="fld"><label>รายละเอียด</label><input id="ptcDetail" placeholder="จ่ายค่าอะไร"></div>'+
+        '<div class="fld"><label>จำนวนเงิน (บาท)</label><input id="ptcAmt" type="number" inputmode="decimal"></div>'+
+        imgsFldHtml('ptcImgs','📎 บิล/ใบเสร็จ — รูป หรือ PDF (แนบหลายใบได้)')+
+        '<div class="tax-acts"><button class="btn btn-ghost" onclick="ptForm(\'cash\')">ปิด</button>'+
+        '<button class="btn btn-primary" id="ptcSend" onclick="ptSaveCash()">บันทึกรายการ</button></div></div>';
+    }
+
+    // ── รายการเงินสดย่อย ──
+    h+='<div class="card"><div class="ds-h">📋 รายการที่จ่ายออกจากเงินสดย่อย</div>';
+    if(!items.length){ h+='<div class="emptybox">ยังไม่มีรายการ</div>'; }
+    else {
+      // คอลัมน์น้อยที่สุดที่ยังอ่านครบ — ผู้รับเงิน/ที่มา/บิล ยุบเป็นบรรทัดเล็กใต้รายละเอียด
+      // (ตารางกว้างเกินจอ = สิ่งที่พี่กี้บ่นมาตลอด · §7.13)
+      h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
+        '<th style="width:34px"></th><th>วันที่</th><th>รายการ</th>'+
+        '<th>ยอด</th><th>สถานะ</th><th style="width:34px"></th></tr></thead><tbody>'+
+        items.map(function(x){
+          var locked=!!x.claimNo;   // เข้าใบสรุปแล้ว = ติ๊กซ้ำไม่ได้ (ด่านเดียวกับ backend)
+          var q="'"+String(x.no).replace(/'/g,"\\'")+"'";
+          var sub='<br><span style="font-size:12px;color:#8A94A6">'+esc(x.type)+(x.payee?' · '+esc(x.payee):'')+
+            ' · '+(x.source===r.cashSource?'💵 จ่ายสด':'ใบเบิก '+esc(x.source))+'</span>'+
+            (x.proof?' <a class="ex-lk" href="'+esc(x.proof)+'" target="_blank">🔍 บิล</a>':'');
+          return '<tr'+(locked?' style="opacity:.55"':'')+'>'+
+            '<td>'+(locked?'🔒':'<input type="checkbox" onchange="ptToggle('+q+',this.checked)"'+(PT_SEL[x.no]?' checked':'')+'>')+'</td>'+
+            '<td class="dt-nw">'+esc(x.date)+'</td>'+
+            '<td style="white-space:normal">'+esc(x.detail)+sub+'</td>'+
+            '<td class="ta-r dt-nw">'+money(x.amount)+'</td>'+
+            '<td class="dt-nw">'+(locked?'<span style="font-size:12px;color:#8A94A6">เบิกคืนแล้ว<br>'+esc(x.claimNo)+'</span>'
+              :'<span style="color:#C8730B">รอเบิกคืน</span>')+'</td>'+
+            '<td>'+(locked?'':'<a class="ex-lk" href="#" onclick="ptVoid('+q+');return false">🗑️</a>')+'</td></tr>';
+        }).join('')+'</tbody></table></div>'+
+        '<div id="ptClaimBar" class="tax-acts"></div>';
+    }
+    h+='</div>';
+
+    // ── ทะเบียนใบสรุปเบิก ──
+    h+='<div class="card"><div class="ds-h">📑 ใบสรุปเบิกเงินสดย่อย</div>';
+    if(!claims.length){ h+='<div class="emptybox">ยังไม่มีใบสรุปเบิก</div>'; }
+    else {
+      h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
+        '<th>เลขที่</th><th>วันที่</th><th>ช่วงรายการ</th><th>รายการ</th><th>ยอดรวม</th><th>สถานะ</th><th></th></tr></thead><tbody>'+
+        claims.map(function(c){
+          var q="'"+String(c.no).replace(/'/g,"\\'")+"'";
+          var canCancel = c.status.indexOf('รอตั้งเบิก')>=0 && !c.payoutNo;
+          return '<tr><td>'+esc(c.no)+'</td><td>'+esc(c.date)+'</td><td>'+esc(c.range||'-')+'</td>'+
+            '<td>'+c.count+'</td><td class="ta-r">'+money(c.total)+'</td>'+
+            '<td>'+esc(c.status)+(c.payoutNo?' · '+esc(c.payoutNo):'')+'</td>'+
+            '<td>'+(canCancel?'<a class="ex-lk" href="#" onclick="ptCancelClaim('+q+');return false">ยกเลิก</a>':'')+'</td></tr>';
+        }).join('')+'</tbody></table></div>';
+    }
+    h+='</div>';
+
+    $('main').innerHTML=h;
+    if(PT_FORM==='cash') imgsFldBind('ptcImgs');
+    ptSum();
+  }
+  function ptSaveFund(){
+    var amt=($('ptFundAmt')||{}).value, holder=(($('ptFundHolder')||{}).value||'').trim();
+    if(!(Number(amt)>0)){ mErr('ใส่วงเงินเป็นตัวเลขมากกว่า 0 ค่ะ'); return; }
+    if(!holder){ mErr('ใส่ชื่อผู้ถือเงินค่ะ'); return; }
+    callBusy('กำลังบันทึก…', jsonp({action:'waPettyFund',uid:UID,entity:PT_ENT,amount:amt,holder:holder}), 'บันทึกแล้ว').then(function(r){
+      if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+      PT_FORM=''; toast('✅ บันทึกวงเงินแล้ว'); renderPetty();
+    }).catch(function(e){ mErr(e.message); });
+  }
+  function ptSaveCash(){
+    var detail=(($('ptcDetail')||{}).value||'').trim(), amt=($('ptcAmt')||{}).value;
+    if(!detail){ mErr('กรอกรายละเอียดค่ะ'); return; }
+    if(!(Number(amt)>0)){ mErr('จำนวนเงินไม่ถูกต้องค่ะ'); return; }
+    var b=$('ptcSend'); if(b){ b.disabled=true; b.textContent='กำลังบันทึก…'; }
+    callBusy('กำลังบันทึก…', jsonpPost({action:'waPettyCash',uid:UID,entity:PT_ENT,
+      payDate:($('ptcDate')||{}).value||'', type:($('ptcType')||{}).value||'',
+      payee:(($('ptcPayee')||{}).value||'').trim(), detail:detail, amount:amt,
+      imgs:JSON.stringify(IMGS['ptcImgs']||[])}), 'บันทึกแล้ว').then(function(r){
+      if(!r||!r.ok){ if(b){b.disabled=false;b.textContent='บันทึกรายการ';} mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+      IMGS['ptcImgs']=[]; PT_FORM='';
+      toast('✅ บันทึกแล้ว '+(r.no||''));
+      if(r.warn) setTimeout(function(){ toast('⚠️ '+r.warn); },1200);   // จ่ายเกินวงเงิน = เตือน ไม่ใช่ error
+      renderPetty();
+    }).catch(function(e){ if(b){b.disabled=false;b.textContent='บันทึกรายการ';} mErr(e.message); });
+  }
+  function ptVoid(no){
+    if(!confirm('ยกเลิกรายการ '+no+' ?\n(ใช้กับรายการที่บันทึกผิด/ซ้ำ)')) return;
+    callBusy('กำลังยกเลิก…', jsonp({action:'waPettyVoid',uid:UID,no:no}), 'ยกเลิกแล้ว').then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'ยกเลิกไม่สำเร็จ'); return; }
+      delete PT_SEL[no]; toast('🗑️ ยกเลิกรายการแล้ว'); renderPetty();
+    }).catch(function(e){ toast(e.message); });
+  }
+  function ptClaim(){
+    var nos=ptSelected();
+    if(!nos.length){ toast('ติ๊กรายการก่อนค่ะ'); return; }
+    callBusy('กำลังออกใบสรุปเบิก…', jsonp({action:'waPettyClaim',uid:UID,entity:PT_ENT,nos:nos.join(',')}), 'ออกใบแล้ว').then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'ออกใบไม่สำเร็จ'); return; }
+      PT_SEL={}; toast('📑 ออกใบสรุปเบิก '+r.no+' · '+r.count+' รายการ · '+money(r.total)+' บาท'); renderPetty();
+    }).catch(function(e){ toast(e.message); });
+  }
+  function ptCancelClaim(no){
+    if(!confirm('ยกเลิกใบสรุปเบิก '+no+' ?\nรายการในใบจะกลับมาติ๊กใหม่ได้')) return;
+    callBusy('กำลังยกเลิก…', jsonp({action:'waPettyClaimCancel',uid:UID,no:no}), 'ยกเลิกแล้ว').then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'ยกเลิกไม่สำเร็จ'); return; }
+      toast('ยกเลิกใบสรุปแล้ว · ปลดล็อก '+(r.freed||0)+' รายการ'); renderPetty();
+    }).catch(function(e){ toast(e.message); });
+  }
+  window.renderPetty=renderPetty; window.ptSetEnt=ptSetEnt; window.ptForm=ptForm; window.ptToggle=ptToggle;
+  window.ptSaveFund=ptSaveFund; window.ptSaveCash=ptSaveCash; window.ptVoid=ptVoid;
+  window.ptClaim=ptClaim; window.ptCancelClaim=ptCancelClaim;
+
   function renderPayout(){
     skel();
     jsonp({action:'waPoInit', uid:UID}).then(function(r){
@@ -3486,6 +3673,7 @@
       var pd=r.pending||[], tp=r.topay||[], aw=r.awaitSign||[];
       SECTIONS=r.sections||SECTIONS; KIND_CO=r.companyKind||KIND_CO; EXP_TYPES=r.types||EXP_TYPES;   // หน้าอนุมัติก็ต้องมีลิสต์ประเภท (waExpenseInit ไม่ได้ถูกเรียกในหน้านี้)
       ENTITIES=r.entities||ENTITIES; DEF_ENT=r.defaultEntity||DEF_ENT;   // บริษัทผู้ออกเอกสาร (E1)
+      PETTY_ENTS=r.pettyEntities||PETTY_ENTS; PAY_CHANNELS=r.payChannels||PAY_CHANNELS;   // เงินสดย่อย (E2)
       // ตาราง 3 ก้อนตามงานที่ต้องทำ (พี่กี้เคาะ 1 ก.ย. 69: ตาราง + เมนู ⋮ แทนการ์ดปุ่มเยอะ)
       var html='';
       html+=expTable('⏳ รออนุมัติ', pd, true, 'ไม่มีใบเบิกรออนุมัติ 🎉');
@@ -3572,6 +3760,8 @@
   var SECTIONS=[], KIND_CO='นิติบุคคล', EX_WHT_KIND='บุคคลธรรมดา';
   // นิติบุคคลที่ออกเอกสารได้ (E1) — โหลดจาก waExpPending/waExpenseInit · มีบริษัทเดียว = ไม่ต้องถามพี่เลย
   var ENTITIES=[], DEF_ENT='';
+  // เงินสดย่อย (E2): บริษัทที่ตั้งวงเงินไว้แล้ว + ช่องทางจ่ายคืนที่เลือกได้
+  var PETTY_ENTS=[], PAY_CHANNELS=['เงินสดย่อย','โอนจากบัญชีบริษัท'];
   /** ชื่อบริษัทจากรหัส (ว่าง = บริษัทเริ่มต้น) */
   function entName(code){
     var c=String(code||'')||DEF_ENT;
@@ -3825,8 +4015,17 @@
    *  ⚠️ เดิมใช้ช่องรูปเดี่ยว (canvas) → สลิป PDF จากแอปธนาคารแนบไม่ติดแบบเงียบ (พี่กี้เจอจริง 29 ก.ค.) */
   function exOpenPay(no,nick,amount,unsigned){
     var money=(Number(amount)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+    // ช่องทางจ่ายคืน (E2) — ถามเฉพาะบริษัทที่ตั้งวงเงินเงินสดย่อยไว้แล้ว
+    // เงินสดย่อย = ตัดวงเงินในมือ + เข้ารายการรอเบิกคืน · โอนจากบัญชีบริษัท = ไม่แตะวงเงิน
+    var x0=exFind(no)||{}, hasPetty=PETTY_ENTS.indexOf(String(x0.entity||''))>=0;
+    var chFld = hasPetty
+      ? '<div class="fld"><label>จ่ายคืนด้วยเงินก้อนไหน</label><select id="payCh">'+
+          PAY_CHANNELS.map(function(c){ return '<option value="'+esc(c)+'">'+esc(c)+'</option>'; }).join('')+
+        '</select><div class="m-hint" style="margin-top:4px">เงินสดย่อย = ตัดวงเงินในมือ แล้วรอเบิกคืนจากบริษัท · โอนจากบัญชีบริษัท = ไม่แตะวงเงิน</div></div>'
+      : '';
     modal('<h3>💰 จ่ายคืน '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
       '<div class="m-hint">โอนคืน <b>'+esc(nick)+'</b> · '+money+' บาท</div>'+
+      chFld+
       // จ่ายก่อนผู้รับเซ็นได้ แต่ต้องรู้ว่ายังต้องตามลายเซ็น (เอกสาร+50 ทวิ ออกตอนเซ็นเสร็จ)
       (unsigned?'<div class="m-hint" style="color:#C8730B">⚠️ ผู้รับเงิน<b>ยังไม่ได้ลงนาม</b> — บันทึกจ่ายได้เลยค่ะ '+
         'แต่ใบสำคัญรับเงินกับ 50 ทวิ จะออกให้ตอนผู้รับเซ็นเสร็จ (ระบบรวมแฟ้มใหม่ให้เอง) · อย่าลืมตามลิงก์เซ็นนะคะ</div>':'')+
@@ -3845,13 +4044,16 @@
     }
     var b=$('pSend'); if(b){ b.disabled=true; b.textContent='กำลังบันทึก…'; }
     toast('กำลังบันทึก…');
-    callBusy('กำลังสร้างเอกสาร + แฟ้ม…', jsonpPost({action:'waExpPay',uid:UID,no:no,imgs:JSON.stringify(slips)}), 'บันทึกจ่ายคืนแล้ว').then(function(r){
+    callBusy('กำลังสร้างเอกสาร + แฟ้ม…', jsonpPost({action:'waExpPay',uid:UID,no:no,imgs:JSON.stringify(slips),channel:(($('payCh')||{}).value||'')}), 'บันทึกจ่ายคืนแล้ว').then(function(r){
       if(!r||!r.ok){ if(b){b.disabled=false;b.textContent='บันทึกจ่ายคืน';} mErr((r&&r.error)||'ไม่สำเร็จ'); return; }
       closeModal(); IMGS['pSlips']=[];
       // แฟ้มครบชุดรวมให้เองตอนนี้ · ไม่เกิด/ขาดชิ้น = ไม่ใช่เรื่องใหญ่ (เงินจ่ายแล้ว) แต่ต้องบอกให้รู้
       toast(r.dossier
         ? ('💰 จ่ายคืนแล้ว · 🗂️ รวมแฟ้มครบชุดให้แล้ว'+missTxt(r.missing))
         : '💰 จ่ายคืนแล้ว · แฟ้มยังไม่รวม (กด 🗂️ ที่รายการเพื่อสร้าง)');
+      // เงินสดย่อย: บอกว่าตัดวงเงินแล้ว + เตือนถ้าจ่ายเกินวงเงิน (เงินออกไปแล้ว บันทึกเสมอ)
+      if(r.pettyNo) setTimeout(function(){ toast('💵 ตัดวงเงินเงินสดย่อยแล้ว ('+r.pettyNo+')'+(r.pettyWarn?' · '+r.pettyWarn:'')); },1200);
+      else if(r.pettyError) setTimeout(function(){ toast('⚠️ บันทึกเงินสดย่อยไม่สำเร็จ: '+r.pettyError); },1200);
       exFade(no);
     }).catch(function(e){ if(b){b.disabled=false;b.textContent='บันทึกจ่ายคืน';} mErr(e.message); });
   }
