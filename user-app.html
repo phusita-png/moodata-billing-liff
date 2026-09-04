@@ -2896,19 +2896,24 @@
         '<span class="m-hint">ตั้งวงเงินก่อน ถึงจะบันทึกรายการที่จ่ายออกได้ค่ะ</span></div>'+
         '<div class="tax-acts"><button class="btn btn-primary" onclick="ptForm(\'fund\')">⚙️ ตั้งวงเงิน</button></div></div>';
     } else {
-      // ── กราฟวงเงิน: จ่ายออกแล้วยังไม่เบิกคืน / คงเหลือในมือ (ตัวเลขกำกับทุกก้อน) ──
-      var lim=Number(b.limit)||0, sp=Number(b.spent)||0;
-      var pct=lim>0?Math.min(100,Math.round(sp*100/lim)):100;
+      // ── กราฟวงเงิน 3 ก้อน: รอตั้งเบิก · ตั้งเบิกแล้วรอรับเงินคืน · เหลือในมือ ──
+      // ⚠️ เงินกลับเข้ามือเมื่อ "บริษัทจ่ายคืนจริง" เท่านั้น — ออกใบสรุปเบิกเฉย ๆ ยังไม่คืนวงเงิน
+      var lim=Number(b.limit)||0;
+      var wt=(b.waiting&&Number(b.waiting.amt))||0, ic=(b.inClaim&&Number(b.inClaim.amt))||0;
+      var pw=lim>0?Math.min(100,wt*100/lim):0, pi=lim>0?Math.min(100-pw,ic*100/lim):0;
       h+='<div class="ds-grid">'+
         statCard('วงเงินที่ตั้งไว้',money(b.limit),'ผู้ถือเงิน: '+esc(b.holder||'-'))+
-        statCard('จ่ายออก · ยังไม่เบิกคืน',money(b.spent),b.count+' รายการ',b.over?'ds-warn':'')+
-        statCard('เงินสดที่ควรมีในมือ',money(b.onHand),b.over?'⚠️ จ่ายเกินวงเงินแล้ว':'วงเงิน − ที่จ่ายออกไป',b.over?'ds-warn':'')+
+        statCard('จ่ายออก · รอตั้งเบิก',money(wt),((b.waiting&&b.waiting.n)||0)+' รายการ')+
+        statCard('ตั้งเบิกแล้ว · รอรับเงินคืน',money(ic),((b.inClaim&&b.inClaim.n)||0)+' รายการ')+
+        statCard('เงินสดที่ควรมีในมือ',money(b.onHand),b.over?'⚠️ จ่ายเกินวงเงินแล้ว':'วงเงิน − ที่ยังไม่ได้คืน',b.over?'ds-warn':'')+
         '</div>'+
         '<div class="card"><div class="ds-h">สัดส่วนวงเงิน</div>'+
         '<div style="height:14px;border-radius:7px;background:#E8F0E9;overflow:hidden;display:flex">'+
-          '<div style="width:'+pct+'%;background:'+(b.over?'#E5484D':'#C8730B')+'"></div>'+
+          '<div style="width:'+pw+'%;background:'+(b.over?'#E5484D':'#C8730B')+'"></div>'+
+          '<div style="width:'+pi+'%;background:#1B72E8"></div>'+
         '</div>'+
-        '<div class="m-hint" style="margin-top:6px">🟠 จ่ายออกยังไม่เบิกคืน '+money(b.spent)+
+        '<div class="m-hint" style="margin-top:6px">🟠 รอตั้งเบิก '+money(wt)+
+          ' · 🔵 รอรับเงินคืนจากบริษัท '+money(ic)+
           ' · 🟢 เหลือในมือ '+money(b.onHand)+' · วงเงิน '+money(b.limit)+'</div>'+
         '<div class="tax-acts">'+
           '<button class="btn btn-primary" onclick="ptForm(\'cash\')">➕ บันทึกจ่ายสด</button>'+
@@ -2952,7 +2957,10 @@
           var q="'"+String(x.no).replace(/'/g,"\\'")+"'";
           var sub='<br><span style="font-size:12px;color:#8A94A6">'+esc(x.type)+(x.payee?' · '+esc(x.payee):'')+
             ' · '+(x.source===r.cashSource?'💵 จ่ายสด':'ใบเบิก '+esc(x.source))+'</span>'+
-            (x.proof?' <a class="ex-lk" href="'+esc(x.proof)+'" target="_blank">🔍 บิล</a>':'');
+            (x.proof?' <a class="ex-lk" href="'+esc(x.proof)+'" target="_blank">🔍 บิล</a>':'')+
+            // เอกสารรายจ่าย: มีแล้วโชว์ลิงก์ · ยังไม่มีและไม่มีบิล = กดออกใบรับรองแทนใบเสร็จได้
+            (x.docNo?' <a class="ex-lk" href="'+esc(x.docLink||'#')+'" target="_blank">📄 '+esc(x.docNo)+'</a>'
+              :(x.proof?'':' <a class="ex-lk" href="#" onclick="ptDoc('+q+');return false">📄 ออกใบรับรองแทนใบเสร็จ</a>'));
           return '<tr'+(locked?' style="opacity:.55"':'')+'>'+
             '<td>'+(locked?'🔒':'<input type="checkbox" onchange="ptToggle('+q+',this.checked)"'+(PT_SEL[x.no]?' checked':'')+'>')+'</td>'+
             '<td class="dt-nw">'+esc(x.date)+'</td>'+
@@ -2974,12 +2982,20 @@
         '<th>เลขที่</th><th>วันที่</th><th>ช่วงรายการ</th><th>รายการ</th><th>ยอดรวม</th><th>สถานะ</th><th></th></tr></thead><tbody>'+
         claims.map(function(c){
           var q="'"+String(c.no).replace(/'/g,"\\'")+"'";
-          var canCancel = c.status.indexOf('รอตั้งเบิก')>=0 && !c.payoutNo;
-          return '<tr><td>'+esc(c.no)+'</td><td>'+esc(c.date)+'</td><td>'+esc(c.range||'-')+'</td>'+
-            '<td>'+c.count+'</td><td class="ta-r">'+money(c.total)+'</td>'+
-            '<td>'+esc(c.status)+(c.payoutNo?' · '+esc(c.payoutNo):'')+'</td>'+
-            '<td>'+(canCancel?'<a class="ex-lk" href="#" onclick="ptCancelClaim('+q+');return false">ยกเลิก</a>':'')+'</td></tr>';
-        }).join('')+'</tbody></table></div>';
+          var waiting = c.status.indexOf('รอตั้งเบิก')>=0 && !c.payoutNo;   // ยังไม่ส่งเข้าทะเบียนการจ่าย
+          var settled = c.status.indexOf('จ่ายคืนแล้ว')>=0;
+          var act = waiting
+            ? '<a class="ex-lk" href="#" onclick="ptClaimPayout('+q+');return false">📤 ตั้งเบิกจากบริษัท</a>'+
+              '<br><a class="ex-lk" href="#" onclick="ptCancelClaim('+q+');return false">ยกเลิก</a>'
+            : (settled ? '' : '<a class="ex-lk" href="#" onclick="ptSettleClaim('+q+');return false">✅ บันทึกรับเงินคืน</a>');
+          return '<tr><td>'+esc(c.no)+'</td><td class="dt-nw">'+esc(c.date)+'</td><td>'+esc(c.range||'-')+'</td>'+
+            '<td>'+c.count+'</td><td class="ta-r dt-nw">'+money(c.total)+'</td>'+
+            '<td>'+esc(c.status)+(c.payoutNo?'<br><span style="font-size:12px;color:#8A94A6">'+esc(c.payoutNo)+'</span>':'')+'</td>'+
+            '<td>'+act+'</td></tr>';
+        }).join('')+'</tbody></table></div>'+
+        '<div class="m-hint" style="margin-top:8px">📤 ตั้งเบิกจากบริษัท = สร้างใบจ่ายออกให้อัตโนมัติ '+
+        '(ผู้รับเงิน = ผู้ถือเงินสดย่อย · ไม่หักภาษี) → พออนุมัติและกดจ่ายที่หน้า 💵 จ่ายออก '+
+        'ระบบจะปิดใบสรุปให้เอง แล้ววงเงินกลับเข้ามือ</div>';
     }
     h+='</div>';
 
@@ -3007,8 +3023,9 @@
       imgs:JSON.stringify(IMGS['ptcImgs']||[])}), 'บันทึกแล้ว').then(function(r){
       if(!r||!r.ok){ if(b){b.disabled=false;b.textContent='บันทึกรายการ';} mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
       IMGS['ptcImgs']=[]; PT_FORM='';
-      toast('✅ บันทึกแล้ว '+(r.no||''));
+      toast('✅ บันทึกแล้ว '+(r.no||'')+(r.docNo?' · 📄 ออกใบรับรองแทนใบเสร็จ '+r.docNo:''));
       if(r.warn) setTimeout(function(){ toast('⚠️ '+r.warn); },1200);   // จ่ายเกินวงเงิน = เตือน ไม่ใช่ error
+      else if(r.docError) setTimeout(function(){ toast('⚠️ ออกเอกสารไม่สำเร็จ: '+r.docError+' (กดออกเองที่รายการได้)'); },1200);
       renderPetty();
     }).catch(function(e){ if(b){b.disabled=false;b.textContent='บันทึกรายการ';} mErr(e.message); });
   }
@@ -3034,6 +3051,32 @@
       toast('ยกเลิกใบสรุปแล้ว · ปลดล็อก '+(r.freed||0)+' รายการ'); renderPetty();
     }).catch(function(e){ toast(e.message); });
   }
+  /** ออกใบรับรองแทนใบเสร็จให้รายการจ่ายสดที่ไม่มีบิล */
+  function ptDoc(no){
+    callBusy('กำลังออกเอกสาร…', jsonp({action:'waPettyDoc',uid:UID,no:no}), 'ออกเอกสารแล้ว').then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'ออกเอกสารไม่สำเร็จ'); return; }
+      toast(r.skip?('มีเอกสารอยู่แล้ว '+r.no):('📄 ออกใบรับรองแทนใบเสร็จ '+r.no+' แล้ว')); renderPetty();
+    }).catch(function(e){ toast(e.message); });
+  }
+  /** ตั้งเบิกจากบริษัท → สร้างใบจ่ายออก (E3) */
+  function ptClaimPayout(no){
+    if(!confirm('ตั้งเบิกใบสรุป '+no+' จากบริษัท?\nระบบจะสร้างใบจ่ายออกให้ผู้ถือเงินสดย่อย (รออนุมัติ)')) return;
+    callBusy('กำลังตั้งเบิก…', jsonp({action:'waPettyClaimPayout',uid:UID,no:no}), 'ตั้งเบิกแล้ว').then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'ตั้งเบิกไม่สำเร็จ'); return; }
+      toast('📤 สร้างใบจ่ายออก '+r.payoutNo+' แล้ว — ไปอนุมัติที่หน้า 💵 จ่ายออก');
+      if(r.warn) setTimeout(function(){ toast('⚠️ '+r.warn); },1400);
+      renderPetty();
+    }).catch(function(e){ toast(e.message); });
+  }
+  /** บันทึกว่าบริษัทจ่ายคืนแล้ว (กรณีโอนคืนนอกระบบ) → วงเงินกลับเข้ามือ */
+  function ptSettleClaim(no){
+    if(!confirm('ยืนยันว่าได้รับเงินคืนจากบริษัทตามใบสรุป '+no+' แล้ว?\nวงเงินในมือจะกลับเต็มตามยอดนี้')) return;
+    callBusy('กำลังบันทึก…', jsonp({action:'waPettyClaimSettle',uid:UID,no:no}), 'บันทึกแล้ว').then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+      toast('✅ รับเงินคืนแล้ว · วงเงินกลับเข้ามือ'); renderPetty();
+    }).catch(function(e){ toast(e.message); });
+  }
+  window.ptDoc=ptDoc; window.ptClaimPayout=ptClaimPayout; window.ptSettleClaim=ptSettleClaim;
   window.renderPetty=renderPetty; window.ptSetEnt=ptSetEnt; window.ptForm=ptForm; window.ptToggle=ptToggle;
   window.ptSaveFund=ptSaveFund; window.ptSaveCash=ptSaveCash; window.ptVoid=ptVoid;
   window.ptClaim=ptClaim; window.ptCancelClaim=ptCancelClaim;
