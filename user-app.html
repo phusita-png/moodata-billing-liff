@@ -503,6 +503,11 @@
 
   /* ── มือถือ: เมนู "กลุ่ม" ล่าง + แท็บย่อยบน (คอมไม่แตะ · ยังใช้ sidebar เดิม) ── */
   .mtabs, .mnav{ display:none; }
+  /* ⚠️ กฎนี้อยู่ในหน้า (ไม่ใช่ user.css) ตั้งใจ — user.css ถูกเบราว์เซอร์แคชค้างจนเมนูหมวดการเงิน
+     ถูกตัดที่เพดานเดิม 420px แล้วพี่กี้ไม่เห็นเมนูภาษี/50 ทวิ อยู่หลายรอบ (4 ก.ย. 69)
+     หน้าเว็บมี meta no-cache จึงมาถึงผู้ใช้แน่นอนกว่าไฟล์ CSS แยก
+     เพิ่มเมนูใหม่ในกลุ่มไหนก็ตาม เพดานนี้ต้องสูงกว่าจำนวนเมนู × ~42px เสมอ */
+  .nav-g.open > .nav-gb{ max-height:1600px !important; }
   @media(max-width:1023px){
     .nav{ display:none !important; }   /* ซ่อนแถบ 10 ปุ่มเดิม → ใช้ 5 กลุ่มแทน */
     .mtabs{ display:flex; gap:6px; overflow-x:auto; -webkit-overflow-scrolling:touch;
