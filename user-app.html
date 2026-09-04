@@ -720,6 +720,8 @@
       <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/><circle cx="10" cy="4" r="1.6"/></svg><span>รายงาน HR</span></button>
     <button class="nav-btn" data-view="poreport" aria-label="รายงานจ่ายออก" id="navPoReport" style="display:none">
       <svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M7 9.5h10M7 13h7M7 16.5h4"/></svg><span>รายงานจ่ายออก</span></button>
+    <button class="nav-btn" data-view="vatbuy" aria-label="ภาษีซื้อ" id="navVatBuy" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M5 3.5h14v17l-3-1.6-2 1.6-2-1.6-2 1.6-2-1.6L5 20.5z"/><path d="M9 8.5h6M9 12h6M9 15.5h3"/></svg><span>ภาษีซื้อ/ภ.พ.30</span></button>
     <button class="nav-btn" data-view="pnd51" aria-label="ภ.ง.ด.51" id="navPnd51" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M6 3.5h12v17H6z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg><span>ภ.ง.ด.51</span></button>
     <button class="nav-btn" data-view="finreport" aria-label="รายงานการเงิน" id="navFinReport" style="display:none">
@@ -752,7 +754,7 @@
     home:['🏠','ภาพรวม'], clock:['🕐','ลงเวลา'],
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
     expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติเบิกจ่าย'],
-    expdash:['📊','สรุปค่าใช้จ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ทะเบียนการจ่าย'], petty:['💵','เงินสดย่อย'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📊','รายงานจ่ายออก'], sales:['💰','รายรับ'], ar:['📊','ลูกหนี้ค้างรับ'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51']
+    expdash:['📊','สรุปค่าใช้จ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ทะเบียนการจ่าย'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','ภาษีซื้อ/ภ.พ.30'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📊','รายงานจ่ายออก'], sales:['💰','รายรับ'], ar:['📊','ลูกหนี้ค้างรับ'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51']
   };
   var PROJECTS=[], COMPANIES=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ) · COMPANIES=บริษัท auto (หน้าจัดการ)
   var ALL_TASKS=[], PJ_SEL='', MB_STATUSES=[];   // มุมมอง Project (dropdown เลือก · แยก 6 สถานะ + %) · MB_STATUSES=รายการสถานะ (ฟอร์มแก้งานมือถือ)
@@ -817,7 +819,7 @@
     if(gi) $('tbIcon').innerHTML=gi; else $('tbIcon').textContent=meta[0];
     $('tbTitle').textContent=meta[1];
     mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
-    ({ home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51 }[v] || soon)();
+    ({ home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51 }[v] || soon)();
   }
 
   // ───── มือถือ: เมนูกลุ่ม (ล่าง) + แท็บย่อย (บน) · คอมใช้ sidebar เดิม ไม่เกี่ยว ─────
@@ -829,7 +831,7 @@
     { key:'home', icon:'🏠', label:'ภาพรวม', views:['home'] },
     { key:'work', icon:'📊', label:'งาน',    views:['projects','mytasks','review','senddoc','appt','announce','trash'] },
     { key:'hr',   icon:'👥', label:'HR',     views:['approve','otapprove','hrreport'] },
-    { key:'fin',  icon:'💰', label:'การเงิน', views:['bizdash','sales','ar','salesreport','expdash','reimb','petty','payout','poreport','pnd51','finreport','taxdoc'] },   /* payout = จ่ายออกของบริษัท (พี่คนเดียว) */   /* taxdoc ซ่อนไว้ก่อน — เปิดตอน ภ.ง.ด. v2 */
+    { key:'fin',  icon:'💰', label:'การเงิน', views:['bizdash','sales','ar','salesreport','expdash','reimb','petty','payout','poreport','vatbuy','pnd51','finreport','taxdoc'] },   /* payout = จ่ายออกของบริษัท (พี่คนเดียว) */   /* taxdoc ซ่อนไว้ก่อน — เปิดตอน ภ.ง.ด. v2 */
     { key:'me',   icon:'🙋', label:'ส่วนตัว', views:['clock','leave','ot','expense','docs'] }
   ];
   // ไอคอนหัวกลุ่มบน sidebar คอม = SVG เส้นสีเดียว (พี่กี้ขอ 30 ก.ค.: เรียบ ๆ ไม่สีสัน)
@@ -855,13 +857,13 @@
   var VIEW_TAB={ home:'ภาพรวม', projects:'บอร์ดงาน', mytasks:'งานของฉัน', review:'รอตรวจ', trash:'ถังขยะ',
     senddoc:'ส่งงานลูกค้า', appt:'นัดประชุม', announce:'ประกาศ',
     leave:'ลาของฉัน', approve:'อนุมัติลา', expense:'เบิกของฉัน', expapprove:'อนุมัติเบิก',
-    expdash:'สรุป', reimb:'ตั้งเบิกลูกค้า', petty:'เงินสดย่อย', payout:'ทะเบียนการจ่าย',
+    expdash:'สรุป', reimb:'ตั้งเบิกลูกค้า', petty:'เงินสดย่อย', payout:'ทะเบียนการจ่าย', vatbuy:'ภาษีซื้อ',
     ot:'OT ของฉัน', otapprove:'อนุมัติ OT', docs:'เอกสาร',
     hrreport:'รายงาน HR', finreport:'รายงานการเงิน', taxdoc:'ภาษี/เอกสาร',
     bizdash:'ภาพรวม', sales:'รายรับ', ar:'ลูกหนี้', salesreport:'รายงานรายรับ', poreport:'รายงานจ่ายออก', pnd51:'ภ.ง.ด.51' };
   // แท็บที่เห็นเฉพาะพี่/ผู้ดูแล · reimb = ตั้งเบิกลูกค้า (ชีตไม่มีเจ้าของรายคน + เป็นข้อมูลรายได้)
   // ⚠️ ซ่อนแท็บ ≠ กันข้อมูล — backend กรองสิทธิ์เองอีกชั้นเสมอ
-  var OWNER_VIEWS={ review:1, approve:1, expapprove:1, otapprove:1, reimb:1, taxdoc:1, petty:1, payout:1, hrreport:1, finreport:1, ar:1, pnd51:1, salesreport:1 };
+  var OWNER_VIEWS={ review:1, approve:1, expapprove:1, otapprove:1, reimb:1, taxdoc:1, petty:1, payout:1, vatbuy:1, hrreport:1, finreport:1, ar:1, pnd51:1, salesreport:1 };
   var MGROUP='', MG_LAST={};
   function mVisibleViews(g){ return g.views.filter(function(v){ return IS_OWNER || !OWNER_VIEWS[v]; }); }
   function mGroupOf(v){ for(var i=0;i<NAV_GROUPS.length;i++){ if(NAV_GROUPS[i].views.indexOf(v)>=0) return NAV_GROUPS[i]; } return null; }
@@ -2479,6 +2481,9 @@
     if(hasManyEnt && !hasDoc) a.push({ key:'entity', label:'🏢 บริษัทผู้ออกเอกสาร', call:'exSetEntity(' + q + ')' });
     if(rv)  a.push({ key:'payee', label:'✏️ แก้ข้อมูลผู้รับเงิน', call:'exEditPayee(' + q + ')' });
     a.push({ key:'rcp', label:'📎 แก้ไฟล์แนบ', call:'exEditRcp(' + q + ')' });
+    // ใบกำกับภาษีซื้อ (E4) — กรอกได้ทุกสถานะ เพราะใบกำกับมาถึงทีหลังบ่อย · ไม่แตะยอด/เอกสารของใบ
+    a.push({ key:'vat', label:'🧾 ใบกำกับภาษีซื้อ',
+      call:"vatOpen('expense'," + q + ',' + (Number(x.amount) || 0) + ')' });
     if(paid) a.push({ key:'editslip', label:'📎 แก้สลิปโอนคืน', call:'exEditSlip(' + q + ')' });
     if(approved || paid) a.push({ key:'rebuild', label:(x.dossier ? '🔄 สร้างแฟ้มใหม่' : '🗂️ สร้างแฟ้มครบชุด'), call:'exRebuild(' + q + ')' });
 
@@ -2852,6 +2857,114 @@
   //                        จ่ายออก = บริษัทจ่ายเองให้ผู้รับเงิน (ค่าเช่า/ค่าจ้าง/ซัพพลาย/ค่าตอบแทนพนักงาน)
   // เฟสนี้: ตั้งเรื่อง → อนุมัติ → จ่าย + แนบสลิป (เอกสาร PV/50 ทวิ = เฟสถัดไป)
   var PO=null, PO_EDIT='';   // PO = ข้อมูลจาก waPoInit · PO_EDIT = เลขใบที่กำลังแก้ ('' = ใบใหม่)
+  /* ═══════════ 🧾 ภาษีซื้อ + ภ.พ.30 (E4 · spec-expense-side.md §6) ═══════════
+     ภาษีซื้อ = VAT ที่จ่ายให้ผู้ขาย (ต้องมีใบกำกับตัวจริง) → หักกับภาษีขาย = ภ.พ.30 ที่ต้องยื่นทุกเดือน */
+  var VB_MONTH='', VB_ENT='';
+  function vbSetMonth(v){ VB_MONTH=v; renderVatBuy(); }
+  function vbSetEnt(v){ VB_ENT=v||''; renderVatBuy(); }
+  function renderVatBuy(){
+    if(!IS_OWNER){ $('main').innerHTML='<div class="card"><div class="emptybox">เฉพาะผู้ดูแลค่ะ</div></div>'; return; }
+    skel();
+    jsonp({action:'waVatBuy',uid:UID,month:VB_MONTH,entity:VB_ENT}).then(function(r){
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      VB_MONTH=r.month;
+      var pp=r.pp30||{}, rows=r.rows||[], sum=r.sum||{n:0,base:0,vat:0};
+      var months=taxMonths(); if(months.indexOf(VB_MONTH)<0) months.unshift(VB_MONTH);
+      var h='<div class="section-h">🧾 ภาษีซื้อ · ภ.พ.30</div>'+
+        '<div class="ds-sel"><select id="vbYm" onchange="vbSetMonth(this.value)">'+
+        months.map(function(m){ return '<option value="'+esc(m)+'"'+(m===VB_MONTH?' selected':'')+'>'+esc(ymThai(m))+'</option>'; }).join('')+
+        '</select><select id="vbEnt" onchange="vbSetEnt(this.value)"><option value="">ทุกบริษัท</option>'+
+        (r.entities||[]).map(function(e){ return '<option value="'+esc(e.code)+'"'+(e.code===VB_ENT?' selected':'')+'>'+esc(e.name)+'</option>'; }).join('')+
+        '</select></div>';
+
+      // ── ภ.พ.30: ภาษีขาย − ภาษีซื้อ = ต้องชำระ / ชำระเกิน ──
+      var pay=Number(pp.payable)||0, cre=Number(pp.credit)||0;
+      h+='<div class="ds-grid">'+
+        statCard('ภาษีขาย',money((pp.sale&&pp.sale.vat)||0),'จากใบเสร็จ/ใบกำกับที่ออก (หักใบลดหนี้แล้ว)')+
+        statCard('ภาษีซื้อ',money((pp.buy&&pp.buy.vat)||0),sum.n+' ฉบับ')+
+        statCard(pay>0?'ภาษีที่ต้องชำระ':'ภาษีชำระเกิน (ยกไป/ขอคืน)',money(pay>0?pay:cre),
+          pay>0?'ยื่นแบบ ภ.พ.30 ภายในวันที่ 15 ของเดือนถัดไป':'ภาษีซื้อมากกว่าภาษีขาย',pay>0?'ds-warn':'')+
+        '</div>';
+      if((r.warn||[]).length){
+        h+='<div class="card"><div class="m-hint" style="color:#C8730B;margin:0">'+
+          r.warn.map(function(w){ return '⚠️ '+esc(w); }).join('<br>')+'</div></div>';
+      }
+
+      // ── รายงานภาษีซื้อ (ตัวที่ต้องแนบยื่น) ──
+      h+='<div class="card"><div class="ds-h">📋 รายงานภาษีซื้อ · '+esc(r.monthText||'')+'</div>';
+      if(!rows.length){
+        h+='<div class="emptybox">เดือนนี้ยังไม่มีใบกำกับภาษีซื้อ<br>'+
+          '<span class="m-hint">กรอกได้จากเมนู ⋮ ของใบเบิก/ใบจ่ายออก → 🧾 ใบกำกับภาษีซื้อ</span></div>';
+      } else {
+        h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
+          '<th>วันที่</th><th>เลขที่ใบกำกับ</th><th>ผู้ขาย</th><th>รายการ</th><th>มูลค่า</th><th>ภาษีซื้อ</th></tr></thead><tbody>'+
+          rows.map(function(x){
+            return '<tr><td class="dt-nw">'+esc(x.date)+'</td><td>'+esc(x.invNo)+'</td>'+
+              '<td style="white-space:normal">'+esc(x.seller||'-')+
+                (x.sellerId?'<br><span style="font-size:12px;color:#8A94A6">'+esc(x.sellerId)+'</span>'
+                  :'<br><span style="font-size:12px;color:#E5484D">ยังไม่มีเลขผู้เสียภาษี</span>')+'</td>'+
+              '<td style="white-space:normal">'+esc(x.detail||'-')+
+                '<br><span style="font-size:12px;color:#8A94A6">'+esc(x.docNo)+'</span></td>'+
+              '<td class="ta-r dt-nw">'+money(x.base)+'</td><td class="ta-r dt-nw">'+money(x.vat)+'</td></tr>';
+          }).join('')+
+          '<tr class="tax-total"><td colspan="4">รวม '+sum.n+' ฉบับ</td>'+
+          '<td class="ta-r">'+money(sum.base)+'</td><td class="ta-r">'+money(sum.vat)+'</td></tr>'+
+          '</tbody></table></div>';
+      }
+      h+='<div class="tax-acts"><button class="btn btn-ghost" onclick="vbSheet()">📄 สร้างแท็บรายงานในชีต</button></div></div>';
+      $('main').innerHTML=h;
+    }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
+  }
+  function vbSheet(){
+    callBusy('กำลังสร้างแท็บ…', jsonp({action:'waVatBuySheet',uid:UID,month:VB_MONTH,entity:VB_ENT}), 'สร้างแล้ว').then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'สร้างไม่สำเร็จ'); return; }
+      toast('📄 สร้างแท็บ "'+r.sheet+'" ในชีตแล้ว ('+r.rows+' ฉบับ)');
+    }).catch(function(e){ toast(e.message); });
+  }
+  /**
+   * กรอกใบกำกับภาษีซื้อของใบเบิก/ใบจ่ายออก (พี่กรอกจากใบกำกับตัวจริงที่ผู้ขายออกให้)
+   * ไม่กรอก "มูลค่าก่อน VAT" = ระบบแยก 7% จากยอดในใบให้เอง
+   */
+  function vatOpen(kind,no,amount){
+    var a=Number(amount)||0, sp=a>0?(Math.round(a*100/1.07)/100):0;
+    modal('<h3>🧾 ใบกำกับภาษีซื้อ — '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">กรอกจาก<b>ใบกำกับภาษีตัวจริง</b>ที่ผู้ขายออกในนามบริษัทเรา — ไม่มีใบกำกับ = เครดิตภาษีซื้อไม่ได้</div>'+
+      '<div class="fld"><label>เลขที่ใบกำกับภาษี</label><input id="vtNo" placeholder="เช่น INV-2569/0912"></div>'+
+      '<div class="fld"><label>วันที่บนใบกำกับ</label><input id="vtDate" type="date" value="'+todayISO()+'">'+
+        '<div class="m-hint" style="margin-top:4px">วันที่นี้เป็นตัวกำหนดว่าภาษีซื้อเข้าเดือนไหน</div></div>'+
+      '<div class="fld"><label>ชื่อผู้ขาย</label><input id="vtSeller" placeholder="ชื่อร้าน/บริษัทผู้ขาย"></div>'+
+      '<div class="fld"><label>เลขประจำตัวผู้เสียภาษีผู้ขาย (13 หลัก)</label><input id="vtSid" inputmode="numeric" placeholder="0105xxxxxxxxx"></div>'+
+      '<div class="fld"><label>มูลค่าก่อน VAT</label><input id="vtBase" type="number" inputmode="decimal" value="'+(sp||'')+'">'+
+        '<div class="m-hint" style="margin-top:4px">ยอดในใบ '+money(a)+' บาท · เว้นว่างไว้ = ระบบแยก VAT 7% ให้เอง</div></div>'+
+      '<div class="fld"><label>ภาษีซื้อ (VAT)</label><input id="vtVat" type="number" inputmode="decimal" value="'+(a>0?(Math.round((a-sp)*100)/100):'')+'"></div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-danger" onclick="vatSave(\''+esc(kind)+'\',\''+esc(no)+'\',1)">ล้างข้อมูล</button>'+
+      '<button class="btn btn-primary" onclick="vatSave(\''+esc(kind)+'\',\''+esc(no)+'\')">บันทึก</button></div>');
+  }
+  function vatSave(kind,no,clear){
+    var p={action:'waVatSet',uid:UID,kind:kind,no:no};
+    if(clear) p.clear='1';
+    else {
+      p.invNo=(($('vtNo')||{}).value||'').trim();
+      p.invDate=($('vtDate')||{}).value||'';
+      p.seller=(($('vtSeller')||{}).value||'').trim();
+      p.sellerId=(($('vtSid')||{}).value||'').trim();
+      p.base=($('vtBase')||{}).value||'';
+      p.vat=($('vtVat')||{}).value||'';
+      if(!p.invNo){ mErr('ใส่เลขที่ใบกำกับภาษีค่ะ'); return; }
+    }
+    callBusy('กำลังบันทึก…', jsonp(p), 'บันทึกแล้ว').then(function(r){
+      if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+      closeModal();
+      toast(r.cleared?'ล้างข้อมูลภาษีซื้อแล้ว':('🧾 บันทึกภาษีซื้อ '+money(r.vat)+' บาทแล้ว'));
+      if(r.warn) setTimeout(function(){ toast('⚠️ '+r.warn); },1300);
+      if(VIEW==='vatbuy') renderVatBuy(); else if(VIEW==='payout') renderPayout();
+      else if(VIEW==='expdash') renderExpDash(); else if(VIEW==='expapprove') renderExpenseApprove();
+    }).catch(function(e){ mErr(e.message); });
+  }
+  window.renderVatBuy=renderVatBuy; window.vbSetMonth=vbSetMonth; window.vbSetEnt=vbSetEnt;
+  window.vbSheet=vbSheet; window.vatOpen=vatOpen; window.vatSave=vatSave;
+
   /* ═══════════ 💵 เงินสดย่อย (E2 · spec-expense-side.md §4) ═══════════
      วงเงินหมุน: เงินออกจากมือ → ติ๊กรวมเป็นใบสรุปเบิก (PC) → ตั้งเบิกต่อ → บริษัทคืนเงิน วงเงินกลับเต็ม
      ⚠️ ฟอร์มทุกอันเป็น "ฟอร์มในหน้า" ไม่ใช่ป็อบอัพซ้อน (พี่กี้ขอ — รายรับจะตามแบบนี้ทีหลัง) */
@@ -3131,6 +3244,9 @@
       if(!x.paidSlip) a.push({ key:'slipadd', label:'📎 แนบสลิปโอน (ยังไม่มี)', call:'poOpenPay(' + q + ')', danger:true });
       a.push({ key:'redoc', label:(x.docNo ? '🔄 ออกเอกสารใหม่' : '📄 ออกเอกสาร'), call:'poDocs(' + q + ')' });
     }
+    // ใบกำกับภาษีซื้อ (E4) — กรอกได้ทุกสถานะ (ใบกำกับมักมาถึงทีหลัง) · ไม่แตะยอด/เอกสารของใบ
+    a.push({ key:'vat', label:'🧾 ใบกำกับภาษีซื้อ',
+      call:"vatOpen('payout'," + q + ',' + (Number(x.amount) || 0) + ')' });
     if(x.bank && x.bank.acct)
       a.push({ key:'copy', label:'📋 ก๊อปเลขบัญชี ' + x.bank.acct, call:"copyTxt('" + String(x.bank.acct).replace(/'/g, "\\'") + "')" });
     if(mode !== 'done'){
@@ -7206,6 +7322,7 @@
         var nar=$('navAr'); if(nar) nar.style.display='';                   // 📊 ลูกหนี้ค้างรับ = พี่/HR
         var nsr=$('navSalesReport'); if(nsr) nsr.style.display='';           // 📊 รายงานรายรับ = พี่/HR
         var npr=$('navPoReport'); if(npr) npr.style.display='';           // 📊 รายงานจ่ายออก = พี่คนเดียว (backend poGate_ กันซ้ำอีกชั้น)
+        var nvb=$('navVatBuy'); if(nvb) nvb.style.display='';             // 🧾 ภาษีซื้อ/ภ.พ.30 = พี่คนเดียว
         var n51=$('navPnd51'); if(n51) n51.style.display=''; }              // 📐 ภ.ง.ด.51 = พี่คนเดียว (backend pnd51Gate_ กันซ้ำอีกชั้น)           // 📊 รายงานจ่ายออก = พี่คนเดียว (backend poGate_ กันซ้ำอีกชั้น)
       // รายงานการเงินรวม = พี่ + HR ที่ตั้งใน Script Property (backend ตัดสิน ไม่ผูกกับ IS_OWNER)
       CAN_FIN=!!r.canFinance;
