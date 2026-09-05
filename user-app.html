@@ -958,7 +958,9 @@
     if(VIEW==='clock' && v!=='clock') clkStop();   // ออกจากหน้าลงเวลา = ปิดกล้องเสมอ
     VIEW=v;
     // โมดูลต้องตามหน้าที่เปิดเสมอ — ลิงก์ตรงจากแชท (?p=leave) ก็เข้าโมดูลถูกตัว
-    setModule(v==='portal' ? '' : ((modOfView(v)||{}).key || CURMOD));
+    // ⚠️ หน้าที่หาโมดูลไม่เจอ (view ใหม่ที่ลืมใส่ใน MODULES) ต้องไม่ตกไปโหมดเต็มจอ
+    //    ไม่งั้นแถบซ้ายหาย = ผู้ใช้ติดอยู่ในหน้านั้น ออกไปไหนไม่ได้เลย (พี่กี้เจอจริง ?p=expapprove)
+    setModule(v==='portal' ? '' : ((modOfView(v)||{}).key || CURMOD || 'work'));
     if(CURMOD) MG_LAST[CURMOD]=v;
     Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(b){ b.classList.toggle('active', b.dataset.view===v); });
     var meta=VIEW_META[v]||['•',v];
@@ -1033,6 +1035,7 @@
   var MODULES=[
     { key:'fin',     th:'ระบบการเงิน',  en:'FINANCE',     color:'#1E8FE1', g:['#38bdf8','#1d4ed8'], own:true,
       views:['bizdash','sales','ar','salesreport','reimb','expdash','petty','payout','poreport','expreport','finreport'],
+      extra:['expapprove'],
       sec:[ ['', ['bizdash']],
             ['รายรับ', ['sales','ar','salesreport','reimb']],
             ['รายจ่าย', ['expdash','petty','payout','poreport']],
@@ -1045,7 +1048,7 @@
       soon:'ยังไม่กำหนดขอบเขต — จองที่ไว้ก่อน' },
 
     { key:'work',    th:'ระบบงาน',      en:'WORK',        color:'#3f4658', g:['#64748b','#1e293b'], own:false,
-      views:['home','projects','mytasks','review','senddoc','appt','announce','trash'] },
+      views:['home','projects','mytasks','review','senddoc','appt','announce','trash'], extra:['alltasks'] },
     { key:'hr',      th:'ระบบบุคคล',    en:'HR & PAYROLL',color:'#168a52', g:['#34d399','#047857'], own:true,
       views:['approve','otapprove','hrreport','payroll'],
       sec:[ ['', ['approve','otapprove','hrreport']], ['เงินเดือน', ['payroll']] ] },
@@ -1061,7 +1064,9 @@
   ];
   function modOfView(v){
     for(var i=0;i<MODULES.length;i++){ var m=MODULES[i];
-      if(m.views && m.views.indexOf(v)>=0) return m; }
+      if(m.views && m.views.indexOf(v)>=0) return m;
+      if(m.extra && m.extra.indexOf(v)>=0) return m;   // เข้าได้จากลิงก์ตรง แต่ไม่โชว์เป็นเมนู
+    }
     return null;
   }
   /* เปลี่ยนโมดูล → สร้างแถบซ้าย/แถบมือถือใหม่ · '' = หน้าเลือกโมดูล (ซ่อนแถบทั้งหมด เต็มจอ) */
