@@ -65,6 +65,20 @@
       grid-template-areas:"nav top" "nav room" "nav main" !important; }
     .rm-bar{ grid-area:room; padding:10px 30px; }
   }
+  /* ปุ่มเข้าห้องในหน้ารายการห้องลูกค้า */
+  .hr-go{ margin-left:auto; flex:0 0 auto; padding:7px 14px; border:1px solid var(--red);
+    border-radius:999px; background:#fff; color:var(--red); font:inherit; font-size:12.5px;
+    font-weight:700; cursor:pointer; white-space:nowrap; }
+  .hr-go:hover{ background:var(--red); color:#fff; }
+  /* แถบแจ้งเวอร์ชันใหม่ — ไม่ reload เอง กันข้อมูลที่พี่กรอกค้างหาย */
+  .upd-bar{ position:fixed; left:50%; transform:translateX(-50%); bottom:88px; z-index:60;
+    display:flex; align-items:center; gap:12px; padding:11px 15px; border-radius:14px;
+    background:#0f172a; color:#fff; font-size:13px; font-weight:600;
+    box-shadow:0 8px 26px rgba(10,25,60,.35); }
+  .upd-bar button{ padding:6px 14px; border:none; border-radius:999px; background:#38bdf8;
+    color:#08243d; font:inherit; font-size:12.5px; font-weight:800; cursor:pointer; }
+  @media (min-width:1024px){ .upd-bar{ bottom:26px; } }
+
   /* ⚙️ หน้าตั้งค่าห้อง (T5) */
   .rs-h{ font-size:16px; font-weight:800; color:#1F2733; }
   .rs-sub{ font-size:12.5px; color:var(--muted); margin:4px 0 13px; line-height:1.6; }
@@ -1423,14 +1437,28 @@
       if(VIEW!=='hubrooms') return;
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
       var rooms=r.rooms||[];
+      var cur=(ROOM&&ROOM.code)||'MOODATA';
       var html='<div class="hm-hero"><h2>ห้องลูกค้า</h2><span class="hp">'+rooms.length+' ห้อง</span></div>';
       html+='<div class="card"><div class="pb">'+ (rooms.length ? rooms.map(function(t){
         var mods=(t.modules||'').split(',').filter(Boolean);
+        var here=t.code===cur;
         return '<div class="hm-row"><div class="hm-l"><b>'+esc(t.name||t.code)+'</b>'+
           '<small>'+esc(t.code)+' · '+(mods.length?esc(mods.join(' · ')):'เปิดครบทุกโมดูล')+'</small></div>'+
-          (t.code===ROOM.code?'<span class="lvb lvb-ok">กำลังอยู่</span>':'')+'</div>';
+          (here ? '<span class="lvb lvb-ok">กำลังอยู่</span>'
+                : '<button class="hr-go" type="button" data-room="'+esc(t.code)+
+                  '" data-name="'+esc(t.name||t.code)+'">เข้าห้องนี้ →</button>')+'</div>';
       }).join('') : '<div class="emptybox">ยังไม่มีห้องลูกค้าค่ะ</div>') +'</div></div>';
       $('main').innerHTML=html;
+      // กดจากหน้านี้ = เข้าห้องเหมือนปุ่ม 🏢 บนแถบบน (พี่กี้กดตรงนี้เป็นธรรมชาติกว่า)
+      Array.prototype.forEach.call(document.querySelectorAll('.hr-go'), function(b){
+        b.addEventListener('click', function(){
+          var code=b.getAttribute('data-room'), name=b.getAttribute('data-name');
+          if(code==='MOODATA'){ roomEnter('','Moodata'); return; }
+          if(!confirm('เข้าไปดูแลห้อง "'+name+'" ?'+String.fromCharCode(10,10)+
+            'ทุกอย่างที่ทำต่อจากนี้จะลงห้องของลูกค้า และระบบจะบันทึกไว้ว่าเราเข้าเมื่อไหร่')) return;
+          roomEnter(code, name);
+        });
+      });
     }).catch(function(e){ if(VIEW==='hubrooms') $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
   }
 
@@ -8760,7 +8788,37 @@
      วิธีแก้: ถามไฟล์ version.json (bust ด้วย ?t=) ถ้าเลข build ไม่ตรง → โหลดหน้าใหม่ด้วย ?v=<build>
      ⚠️ URL ที่ต่างกันเท่านั้นที่ bypass แคชได้จริง — reload เฉย ๆ ยังได้ไฟล์เก่าจากแคชเหมือนเดิม
      ⚠️ กันวนซ้ำ: ถ้า ?v= ตรงกับ build บนเซิร์ฟเวอร์แล้วยังไม่ตรงกับหน้า = ยอมแพ้ ไม่ reload อีก */
-  var APP_BUILD='20260905-2250';
+  /* เช็คซ้ำตอนกลับมาที่แท็บ — แท็บที่เปิดค้างทั้งวันไม่มีจังหวะโหลดใหม่เลย
+     พี่กี้เจอจริง 5 ก.ย.: แท็บค้างที่ build เก่าข้ามรอบ deploy ไป 4 รอบ
+     ⚠️ ไม่ reload เอง — แสดงแถบให้กด กันข้อมูลที่กรอกค้างอยู่หาย */
+  function watchBuild_(){
+    var shown=false, last=0;
+    function look(){
+      if(shown || document.hidden) return;
+      if(Date.now()-last < 60000) return;   // ไม่ยิงถี่เกิน
+      last=Date.now();
+      fetch('version.json?t='+Date.now(), {cache:'no-store'})
+        .then(function(r){ return r.ok ? r.json() : null; })
+        .then(function(j){
+          if(!j || !j.build || j.build===APP_BUILD || shown) return;
+          shown=true;
+          var b=document.createElement('div');
+          b.className='upd-bar';
+          b.innerHTML='<span>✨ มีเวอร์ชันใหม่ของยินดีแล้วค่ะ</span>'+
+            '<button type="button">อัปเดตเลย</button>';
+          b.querySelector('button').addEventListener('click', function(){
+            location.replace(location.pathname+'?v='+encodeURIComponent(j.build)+location.hash);
+          });
+          document.body.appendChild(b);
+        })
+        .catch(function(){});
+    }
+    document.addEventListener('visibilitychange', look);
+    window.addEventListener('focus', look);
+    setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
+  }
+
+  var APP_BUILD='20260905-2255';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
@@ -8774,6 +8832,7 @@
         })
         .catch(function(){});
     }catch(e){}
+    watchBuild_();
   })();
 
   (function init(){
