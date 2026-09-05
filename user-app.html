@@ -48,7 +48,7 @@
   .nav-mods .nm:hover, .nav-mods .nm.on{ opacity:1; }
   .nav-mods .nm svg{ width:15px; height:15px; fill:none; stroke:#fff; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
   #navPool{ display:none; }
-  /* ปุ่ม "ทุกโมดูล" บนแถบบน — ทางออกจากทุกหน้า (พี่กี้ขอ 5 ก.ย.) */
+  /* ปุ่ม "กลับสู่เมนูหลัก" บนแถบบน — ทางออกจากทุกหน้า (พี่กี้ขอ 5 ก.ย.) */
   .tb-all{ display:flex; align-items:center; gap:6px; flex:0 0 auto; margin-right:2px;
     padding:7px 12px 7px 9px; border:1px solid rgba(255,255,255,.42); border-radius:999px;
     background:rgba(255,255,255,.16); color:#fff; font:inherit; font-size:13px; font-weight:600; cursor:pointer;
@@ -798,9 +798,9 @@
   <div id="topbar" class="topbar">
     <!-- ปุ่มกลับหน้าเลือกโมดูล — อยู่บนแถบบนเพื่อให้เห็นจากทุกหน้า ไม่ต้องพึ่งแถบซ้าย
          (พี่กี้ 5 ก.ย.: เข้าโมดูลแล้วต้องมีทางกดออกมาตั้งหลักเสมอ) · ซ่อนเองตอนอยู่หน้าเลือกโมดูล -->
-    <button class="tb-all" id="tbAll" type="button" aria-label="ทุกโมดูล">
+    <button class="tb-all" id="tbAll" type="button" aria-label="กลับสู่เมนูหลัก">
       <svg viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="7" rx="1.6"/><rect x="14" y="4" width="7" height="7" rx="1.6"/><rect x="3" y="14" width="7" height="6" rx="1.6"/><rect x="14" y="14" width="7" height="6" rx="1.6"/></svg>
-      <span>ทุกโมดูล</span>
+      <span>กลับสู่เมนูหลัก</span>
     </button>
     <span class="tb-icon" id="tbIcon">📝</span>
     <div class="tb-mid"><div class="tb-title" id="tbTitle">การลา</div><div class="tb-sub">Moodata</div></div>
@@ -814,7 +814,7 @@
 
     <div class="nav-sec">ภาพรวม</div>
     <button class="nav-btn active" data-view="portal" aria-label="หน้าแรก">
-      <svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10V20h13V10"/><path d="M10 20v-5h4v5"/></svg><span>หน้าแรก</span></button>
+      <svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10V20h13V10"/><path d="M10 20v-5h4v5"/></svg><span>เมนูหลัก</span></button>
 
     <div class="nav-sec">งาน</div>
     <button class="nav-btn" data-view="projects" aria-label="บอร์ดงาน">
@@ -911,7 +911,7 @@
   var TH_DOW = ['อา','จ','อ','พ','พฤ','ศ','ส'];
   var MENAME='', MEUID='', TEAM=[], CUSTOMERS=[];   // งาน (MEUID = userId ผู้ใช้ · ใช้กรอง "งานของฉัน" + ตัดตัวเองจาก dropdown มอบหมาย)
   var VIEW_META = {
-    portal:['🧭','หน้าแรก'], payroll:['💰','ระบบเงินเดือน'], modsoon:['🚧','กำลังพัฒนา'], home:['🏠','ภาพรวมประจำวัน'], clock:['🕐','ลงเวลา'],
+    portal:['🧭','เมนูหลัก'], payroll:['💰','ระบบเงินเดือน'], modsoon:['🚧','กำลังพัฒนา'], home:['🏠','ภาพรวมประจำวัน'], clock:['🕐','ลงเวลา'],
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
     expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติเบิกจ่าย'],
     expdash:['📊','รายจ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ทะเบียนการจ่าย'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','ภาษีซื้อ/ภ.พ.30'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ทะเบียนใบสำคัญจ่าย'], sales:['💰','รายรับ'], ar:['📊','ลูกหนี้ค้างรับ'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51']
@@ -999,7 +999,7 @@
   //    เพราะพี่สวม 2 บทบาท เมนูเดิมปนกัน (กลุ่ม "ลา" มีทั้งลาของฉันและอนุมัติลา)
   //    ลำดับ: งานบริษัทก่อน (งาน → HR → การเงิน) แล้วปิดท้ายด้วยเรื่องของตัวเอง (พี่กี้ขอ 30 ก.ค.)
   var NAV_GROUPS=[
-    { key:'home', icon:'🏠', label:'หน้าแรก', views:['portal'] },   // หน้าแรก = เลือกโมดูล + สรุปประจำวัน (5 ก.ย.)
+    { key:'home', icon:'🏠', label:'เมนูหลัก', views:['portal'] },   // หน้าแรก = เลือกโมดูล + สรุปประจำวัน (5 ก.ย.)
     { key:'work', icon:'📊', label:'งาน',    views:['projects','mytasks','review','senddoc','appt','announce','trash'] },
     { key:'hr',   icon:'👥', label:'HR',     views:['approve','otapprove','hrreport'] },
     { key:'fin',  icon:'💰', label:'การเงิน', views:['bizdash','sales','ar','salesreport','reimb','expdash','petty','payout','poreport','expreport','taxhub','vatbuy','pnd51','whtin','finreport','taxdoc'] },
@@ -1206,7 +1206,7 @@
       if(i>=0){ fin.views.splice(i,1); if(me.views.indexOf('expdash')<0) me.views.push('expdash'); }
     });
   }
-  var VIEW_TAB={ portal:'หน้าแรก', payroll:'ระบบเงินเดือน', modsoon:'กำลังพัฒนา', home:'ภาพรวมประจำวัน', projects:'บอร์ดงาน', mytasks:'งานของฉัน', review:'รอตรวจ', trash:'ถังขยะ',
+  var VIEW_TAB={ portal:'เมนูหลัก', payroll:'ระบบเงินเดือน', modsoon:'กำลังพัฒนา', home:'ภาพรวมประจำวัน', projects:'บอร์ดงาน', mytasks:'งานของฉัน', review:'รอตรวจ', trash:'ถังขยะ',
     senddoc:'ส่งงานลูกค้า', appt:'นัดประชุม', announce:'ประกาศ',
     leave:'ลาของฉัน', approve:'อนุมัติลา', expense:'เบิกของฉัน', expapprove:'อนุมัติเบิก',
     expdash:'รายจ่าย', reimb:'ตั้งเบิกลูกค้า', petty:'เงินสดย่อย', payout:'ทะเบียนการจ่าย', expreport:'รายงานรายจ่าย', taxhub:'รายงานภาษี', whtin:'50 ทวิ ที่ถูกหัก', vatbuy:'ภาษีซื้อ',
@@ -1222,7 +1222,7 @@
   function mBuildGroupBar(){
     var el=$('mnav'); if(!el) return;
     // ปุ่มแรก = กลับหน้าเลือกโมดูล · ที่เหลือ = โมดูลที่ผู้ใช้คนนี้มีสิทธิ์ (คู่มือ/ออกจากระบบ อยู่บนหน้าเลือกโมดูล)
-    var html='<button class="mnav-btn" data-mnav="__home"><span class="mn-ic">'+GROUP_ICON.home+'</span>หน้าแรก</button>';
+    var html='<button class="mnav-btn" data-mnav="__home"><span class="mn-ic">'+GROUP_ICON.home+'</span>เมนูหลัก</button>';
     html+=MODULES.filter(function(m){ return !m.act && modVisible(m) && modViews(m).length; }).map(function(m){
       return '<button class="mnav-btn'+(m.key===CURMOD?' on':'')+'" data-mnav="'+esc(m.key)+'">'+
         '<span class="mn-ic">'+MOD_ICON[m.key]+'</span>'+esc(m.th)+'</button>';
@@ -1279,7 +1279,7 @@
 
     var back=document.createElement('button');
     back.type='button'; back.className='nav-back';
-    back.innerHTML='<svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M15 5l-7 7 7 7"/></svg>ทุกโมดูล';
+    back.innerHTML='<svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M15 5l-7 7 7 7"/></svg>กลับสู่เมนูหลัก';
     back.addEventListener('click', function(){ switchView('portal'); });
     nav.appendChild(back);
 
