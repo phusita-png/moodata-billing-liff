@@ -1307,7 +1307,9 @@
     nav.appendChild(back);
 
     var mods=document.createElement('div'); mods.className='nav-mods';
-    MODULES.filter(function(x){ return !x.act && modVisible(x); }).forEach(function(x){
+    // รวมคู่มือไว้ในแถวนี้ด้วย (พี่กี้ 5 ก.ย.) — เปิดอ่านได้จากทุกโมดูลโดยไม่ต้องกลับเมนูหลัก
+    // ไม่ใส่ "ออกจากระบบ" เพราะปุ่มเล็กติดกัน กดพลาดแล้วหลุดออกจากระบบเลย
+    MODULES.filter(function(x){ return (!x.act || x.key==='guide') && modVisible(x); }).forEach(function(x){
       var b=document.createElement('button');
       b.type='button'; b.className='nm'+(x.key===CURMOD?' on':''); b.title=x.th;
       b.style.background=x.color; b.innerHTML=MOD_ICON[x.key];
@@ -8280,7 +8282,7 @@
      วิธีแก้: ถามไฟล์ version.json (bust ด้วย ?t=) ถ้าเลข build ไม่ตรง → โหลดหน้าใหม่ด้วย ?v=<build>
      ⚠️ URL ที่ต่างกันเท่านั้นที่ bypass แคชได้จริง — reload เฉย ๆ ยังได้ไฟล์เก่าจากแคชเหมือนเดิม
      ⚠️ กันวนซ้ำ: ถ้า ?v= ตรงกับ build บนเซิร์ฟเวอร์แล้วยังไม่ตรงกับหน้า = ยอมแพ้ ไม่ reload อีก */
-  var APP_BUILD='20260905-1201';
+  var APP_BUILD='20260905-1204';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
