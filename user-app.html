@@ -55,28 +55,39 @@
      และเป็นหน้าปลายทางหลังกดออกจากระบบ (ในแอป LINE จะล็อกอินกลับเอง — อย่างน้อยผู้ใช้เห็นว่าออกแล้ว) */
   .wc{ position:fixed; inset:0; z-index:60; display:flex; align-items:center; justify-content:center; padding:24px;
     overflow:auto;
+    /* ก้อนสีอิ่ม ๆ หลายชั้น — กระจกต้องมี "อะไรอยู่ข้างหลัง" ให้เบลอ ไม่งั้นดูเป็นการ์ดขาวธรรมดา
+       (เทียบกับหน้า Monster Act ที่มีภาพฉากจริงอยู่หลังกระจก) */
     background:
-      radial-gradient(720px 460px at 6% -8%, rgba(56,189,248,.40), transparent 62%),
-      radial-gradient(660px 430px at 94% 4%, rgba(167,139,250,.34), transparent 60%),
-      radial-gradient(600px 440px at 82% 92%, rgba(45,212,191,.30), transparent 62%),
-      radial-gradient(540px 400px at 10% 98%, rgba(251,191,36,.24), transparent 60%),
-      linear-gradient(160deg,#eef6ff 0%,#eef1f8 100%); }
-  .wc-box{ width:100%; max-width:880px; display:grid; grid-template-columns:1.05fr .95fr;
-    background:rgba(255,255,255,.55); border:1px solid rgba(255,255,255,.75); border-radius:26px;
-    -webkit-backdrop-filter:blur(18px) saturate(150%); backdrop-filter:blur(18px) saturate(150%);
-    box-shadow:0 20px 60px rgba(31,63,120,.18), inset 0 1px 0 rgba(255,255,255,.7); overflow:hidden; }
-  .wc-l{ padding:34px 32px; }
+      radial-gradient(520px 520px at 12% 14%, rgba(56,189,248,.85), transparent 58%),
+      radial-gradient(460px 460px at 88% 10%, rgba(139,92,246,.72), transparent 58%),
+      radial-gradient(520px 480px at 84% 88%, rgba(20,184,166,.68), transparent 58%),
+      radial-gradient(420px 420px at 8% 92%, rgba(251,191,36,.58), transparent 58%),
+      radial-gradient(680px 520px at 50% 50%, rgba(255,255,255,.45), transparent 70%),
+      linear-gradient(150deg,#dcecff 0%,#e6e3fb 46%,#dff5f1 100%); }
+  /* จุดประกายเบา ๆ ให้พื้นหลังมีเนื้อ ไม่แบนเป็นสีเดียว */
+  .wc::before{ content:''; position:absolute; inset:0; pointer-events:none;
+    background-image:radial-gradient(rgba(255,255,255,.55) 1px, transparent 1px);
+    background-size:26px 26px; opacity:.42; }
+  .wc-box{ position:relative; width:100%; max-width:900px; display:grid; grid-template-columns:1.05fr .95fr;
+    background:rgba(255,255,255,.34); border:1px solid rgba(255,255,255,.62); border-radius:28px;
+    -webkit-backdrop-filter:blur(26px) saturate(170%); backdrop-filter:blur(26px) saturate(170%);
+    box-shadow:0 30px 80px rgba(23,44,90,.26), 0 2px 0 rgba(255,255,255,.55) inset,
+               0 0 0 1px rgba(255,255,255,.18); overflow:hidden; }
+  .wc-l{ padding:34px 32px; background:rgba(255,255,255,.10); }
   .wc-l .wc-logo img{ width:132px; max-width:60%; height:auto; }
-  .wc-l h1{ margin:12px 0 2px; font-size:27px; font-weight:800; color:#15325c; letter-spacing:-.01em; }
+  .wc-l h1{ margin:12px 0 2px; font-size:28px; font-weight:800; color:#12294d; letter-spacing:-.01em; }
   .wc-l .wc-sub{ font-size:13.5px; color:#5b6b86; margin-bottom:18px; }
   .wc-mods{ display:flex; flex-direction:column; gap:8px; }
-  .wc-m{ display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:13px;
-    background:rgba(255,255,255,.62); border:1px solid rgba(255,255,255,.8); font-size:13.5px; font-weight:600; color:#22314a; }
+  .wc-m{ display:flex; align-items:center; gap:10px; padding:10px 13px; border-radius:14px;
+    background:rgba(255,255,255,.44); border:1px solid rgba(255,255,255,.66);
+    -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+    box-shadow:0 2px 10px rgba(23,44,90,.08), inset 0 1px 0 rgba(255,255,255,.55);
+    font-size:13.5px; font-weight:600; color:#1c2c46; }
   .wc-m .wm-ic{ width:26px; height:26px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex:0 0 auto; }
   .wc-m .wm-ic svg{ width:14px; height:14px; fill:none; stroke:#fff; stroke-width:2.1; stroke-linecap:round; stroke-linejoin:round; }
-  .wc-r{ padding:34px 32px; background:rgba(255,255,255,.42); border-left:1px solid rgba(255,255,255,.7);
+  .wc-r{ padding:34px 32px; background:rgba(255,255,255,.30); border-left:1px solid rgba(255,255,255,.55);
     display:flex; flex-direction:column; justify-content:center; }
-  .wc-r h2{ margin:0 0 4px; font-size:21px; font-weight:800; color:#15325c; }
+  .wc-r h2{ margin:0 0 4px; font-size:21px; font-weight:800; color:#12294d; }
   .wc-r .wc-hint{ font-size:13px; color:#5b6b86; margin-bottom:20px; }
   .wc-btn{ display:flex; align-items:center; justify-content:center; gap:9px; width:100%; padding:15px 16px; border:none;
     border-radius:15px; background:#06C755; color:#fff; font:inherit; font-size:15.5px; font-weight:700; cursor:pointer;
@@ -85,7 +96,9 @@
   .wc-btn:active{ transform:translateY(0) scale(.995); }
   .wc-note{ margin-top:14px; font-size:12px; color:#6b7a92; line-height:1.65; }
   .wc-bye{ display:flex; align-items:center; gap:8px; margin-bottom:16px; padding:10px 13px; border-radius:12px;
-    background:rgba(255,255,255,.72); border:1px solid rgba(120,150,200,.28); font-size:13px; font-weight:600; color:#22314a; }
+    background:rgba(255,255,255,.48); border:1px solid rgba(255,255,255,.6);
+    -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+    font-size:13px; font-weight:600; color:#1c2c46; }
   @media (max-width:760px){
     .wc{ padding:14px; align-items:flex-start; }
     .wc-box{ grid-template-columns:1fr; max-width:460px; margin:auto; }
@@ -8282,7 +8295,7 @@
      วิธีแก้: ถามไฟล์ version.json (bust ด้วย ?t=) ถ้าเลข build ไม่ตรง → โหลดหน้าใหม่ด้วย ?v=<build>
      ⚠️ URL ที่ต่างกันเท่านั้นที่ bypass แคชได้จริง — reload เฉย ๆ ยังได้ไฟล์เก่าจากแคชเหมือนเดิม
      ⚠️ กันวนซ้ำ: ถ้า ?v= ตรงกับ build บนเซิร์ฟเวอร์แล้วยังไม่ตรงกับหน้า = ยอมแพ้ ไม่ reload อีก */
-  var APP_BUILD='20260905-1204';
+  var APP_BUILD='20260905-1207';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
