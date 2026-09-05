@@ -1252,9 +1252,13 @@
 
     { key:'work',    th:'ระบบงาน',      en:'WORK',        color:'#3f4658', g:['#64748b','#1e293b'], own:false,
       views:['home','projects','mytasks','review','senddoc','appt','announce','trash'], extra:['alltasks'] },
-    { key:'hr',      th:'ระบบบุคคล',    en:'HR & PAYROLL',color:'#168a52', g:['#34d399','#047857'], own:true,
-      views:['approve','otapprove','hrreport','payroll'],
-      sec:[ ['', ['approve','otapprove','hrreport']], ['เงินเดือน', ['payroll']] ] },
+    { key:'hr',      th:'ระบบบุคคล',    en:'HR',          color:'#168a52', g:['#34d399','#047857'], own:true,
+      views:['approve','otapprove','hrreport'] },
+    /* 💵 เงินเดือน — แยกจากบุคคล (พี่กี้เคาะ 5 ก.ย. เย็น)
+       ลูกค้าแพ็กการเงินก็ต้องทำเงินเดือน (ภ.ง.ด.1 ต้องมี 40(1)) แต่ไม่ต้องพา
+       พนักงานทั้งบริษัทมาลงเวลา/ลา — คนละภาระกันคนละเรื่อง */
+    { key:'payroll', th:'ระบบเงินเดือน', en:'PAYROLL',     color:'#0e7490', g:['#22d3ee','#0e7490'], own:true,
+      views:['payroll'] },
     { key:'docsys',  th:'ระบบเอกสาร',   en:'DOCUMENTS',   color:'#a16207', g:['#fbbf24','#a16207'], own:true, views:[],
       soon:'เอกสารภายในบริษัท — สัญญา · หนังสือรับรอง · ระเบียบบริษัท · แฟ้มเอกสารกลาง' },
     { key:'me',      th:'พนักงาน',      en:'MY PROFILE',  color:'#0EA5A5', g:['#2dd4bf','#0f766e'], own:false,
@@ -8818,7 +8822,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260905-2255';
+  var APP_BUILD='20260905-2328';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
