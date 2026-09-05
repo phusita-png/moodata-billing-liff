@@ -51,6 +51,22 @@
   .nav-mods .nm:hover, .nav-mods .nm.on{ opacity:1; }
   .nav-mods .nm svg{ width:15px; height:15px; fill:none; stroke:#fff; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
   #navPool{ display:none; }
+  /* 🏛️ คำขอสมัคร (T2) */
+  .hq-info{ font-size:13.5px; color:#4A5262; display:flex; flex-direction:column; gap:3px; margin-bottom:12px; }
+  .hq-pks{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+  .hq-pk{ display:flex; align-items:center; gap:6px; padding:8px 12px; border:1px solid var(--line);
+    border-radius:11px; font-size:13.5px; font-weight:600; cursor:pointer; background:#fff; }
+  .hq-pk input{ width:16px; height:16px; }
+  .hq-btns{ display:flex; gap:8px; }
+  .hq-btns button{ flex:1; padding:12px; border-radius:12px; border:none; font:inherit; font-size:14px;
+    font-weight:700; cursor:pointer; }
+  .hq-btns .btn-ok{ background:var(--green); color:#fff; }
+  .hq-btns .btn-no{ flex:0 0 110px; background:#fff; border:1px solid var(--line); color:var(--muted); }
+  .hm-row{ display:flex; align-items:center; gap:10px; padding:11px 15px; border-bottom:1px solid var(--line); }
+  .hm-row:last-child{ border-bottom:none; }
+  .hm-row .hm-l{ flex:1; min-width:0; }
+  .hm-row .hm-l b{ display:block; font-size:14px; color:#1F2733; }
+  .hm-row .hm-l small{ font-size:12px; color:var(--muted); }
   /* ═══ หน้าต้อนรับ / ล็อกอิน (M5 · spec §9) — พี่กี้เคาะ 5 ก.ย.: เข้าด้วย LINE อย่างเดียว ═══
      ยินดีไม่มีระบบอีเมล/รหัสผ่านของตัวเอง · หน้านี้มีไว้ให้ผู้ใช้ "กดเอง" แทนที่จะเด้ง LINE ทันที
      และเป็นหน้าปลายทางหลังกดออกจากระบบ (ในแอป LINE จะล็อกอินกลับเอง — อย่างน้อยผู้ใช้เห็นว่าออกแล้ว) */
@@ -117,6 +133,19 @@
     .wc-box h1{ font-size:26px; }
   }
 
+/* หน้าสมัครใช้งาน (T2) */
+  .ap-box{ max-width:480px; }
+  .ap-form{ display:flex; flex-direction:column; gap:12px; text-align:left; margin-bottom:20px; }
+  .ap-f{ display:flex; flex-direction:column; gap:5px; }
+  .ap-f > span{ font-size:12.5px; font-weight:600; color:#3f5878; }
+  .ap-f > span b{ color:#dc2626; }
+  .ap-f input{ padding:12px 13px; border:1px solid rgba(255,255,255,.7); border-radius:12px;
+    background:rgba(255,255,255,.62); font:inherit; font-size:14.5px; color:#1c2c46; }
+  .ap-f input:focus{ outline:none; border-color:var(--red); background:#fff; }
+  .ap-picks{ display:flex; flex-wrap:wrap; gap:7px; }
+  .ap-picks .hq-pk{ background:rgba(255,255,255,.62); border-color:rgba(255,255,255,.7); font-size:12.5px; padding:7px 10px; }
+  .ap-note{ margin-top:13px; font-size:12.5px; color:#3f5878; line-height:1.6; }
+  .ap-done{ font-size:15px; font-weight:700; color:#12294d; line-height:1.7; }
   /* ═══ หน้าเลือกโมดูล (portal) — พี่กี้เคาะ 5 ก.ย. 2569 · spec docs/spec-module-portal.md ═══ */
   /* ⚠️ กฎพวกนี้ต้องอยู่ในหน้า ไม่ใช่ user.css — เครื่องพี่แคช css ค้างจนเมนูเพี้ยนมาแล้ว (4 ก.ย.) */
   /* พื้นหลังไล่สีหลายจุด — กระจกฝ้าต้องมีอะไรให้เบลอ ไม่งั้นการ์ดจะดูแบนเหมือนเดิม
@@ -790,6 +819,32 @@
   </div>
 </div>
 
+<!-- หน้าสมัครใช้งาน (T2) — สำหรับคนนอกที่ยังไม่มีห้อง จึงไม่ผ่าน waBootstrap
+     เปิดด้วย ?p=apply จาก Rich Menu ชุดคนนอก -->
+<div id="applyPage" class="wc hidden">
+  <div class="wc-bg" id="apBg" aria-hidden="true"></div>
+  <div class="wc-box ap-box">
+    <div class="wc-logo"><img src="mascot-wave2.png" alt="Yindee"></div>
+    <h1>สมัครใช้งาน</h1>
+    <div class="wc-sub">กรอกข้อมูลบริษัท แล้วทีมงานจะเปิดห้องให้ค่ะ</div>
+    <div class="ap-form">
+      <label class="ap-f"><span>ชื่อบริษัท <b>*</b></span><input id="apCompany" type="text" placeholder="บจก. ตัวอย่าง จำกัด"></label>
+      <label class="ap-f"><span>เลขประจำตัวผู้เสียภาษี</span><input id="apTax" type="tel" inputmode="numeric" maxlength="13" placeholder="13 หลัก"></label>
+      <label class="ap-f"><span>ชื่อผู้ติดต่อ</span><input id="apContact" type="text" placeholder="ชื่อ-สกุล"></label>
+      <label class="ap-f"><span>เบอร์ / อีเมล</span><input id="apPhone" type="text" placeholder="08x-xxx-xxxx หรือ name@company.com"></label>
+      <div class="ap-f"><span>สนใจระบบไหน</span>
+        <div class="ap-picks">
+          <label class="hq-pk"><input type="checkbox" data-want="การเงิน"> การเงิน + ภาษี</label>
+          <label class="hq-pk"><input type="checkbox" data-want="บุคคล"> บุคคล + เงินเดือน</label>
+          <label class="hq-pk"><input type="checkbox" data-want="งาน"> งาน</label>
+        </div>
+      </div>
+    </div>
+    <button class="wc-btn" id="apSend" type="button">ส่งคำขอสมัคร</button>
+    <div class="ap-note" id="apNote">ทีมงานจะติดต่อกลับและเปิดห้องให้ภายใน 1 วันทำการค่ะ</div>
+  </div>
+</div>
+
 <div id="loader" class="loader">
   <div class="loader-logo"><img src="mascot-wave2.png" alt="ยินดี"></div>
   <div class="loader-bar"><i></i></div>
@@ -908,6 +963,8 @@
   var UID='', IDTOKEN='', NICK='', VIEW='', IS_OWNER=false, CAN_FIN=false;
   var CURMOD='';   // โมดูลที่กำลังเปิด ('' = อยู่หน้าเลือกโมดูล → แถบซ้ายซ่อน)
   var MODS_OPEN=null;   // โมดูลที่บริษัทเปิดใช้ (M6) · null/[] = เปิดครบ · backend ส่งมากับ waBootstrap
+  var IS_SUPER=false;   // ผู้ดูแลระบบ (พี่กี้) — เห็นโมดูล 🏛️ ผู้ดูแลระบบ
+  var ROOM={code:'MOODATA',name:'Moodata',isHome:true};   // ห้องที่กำลังอยู่
   var TYPES=[], QUOTA=null, LEAVES=[], HOLIDAYS=[], SCHEDULE=null, LV_TEAM=[];
   var CAL=new Date();   // เดือนที่ปฏิทินแสดงอยู่
   var LF = { type:'sick', start:null, end:null, period:'full', reason:'', stime:'', etime:'' };  // start/end = Date|null
@@ -916,7 +973,8 @@
   var TH_DOW = ['อา','จ','อ','พ','พฤ','ศ','ส'];
   var MENAME='', MEUID='', TEAM=[], CUSTOMERS=[];   // งาน (MEUID = userId ผู้ใช้ · ใช้กรอง "งานของฉัน" + ตัดตัวเองจาก dropdown มอบหมาย)
   var VIEW_META = {
-    portal:['🧭','เมนูหลัก'], payroll:['💰','ระบบเงินเดือน'], modsoon:['🚧','กำลังพัฒนา'], home:['🏠','ภาพรวมประจำวัน'], clock:['🕐','ลงเวลา'],
+    portal:['🧭','เมนูหลัก'], payroll:['💰','ระบบเงินเดือน'], modsoon:['🚧','กำลังพัฒนา'],
+    hubreq:['🏛️','คำขอสมัคร'], hubrooms:['🏢','ห้องลูกค้า'], home:['🏠','ภาพรวมประจำวัน'], clock:['🕐','ลงเวลา'],
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
     expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติเบิกจ่าย'],
     expdash:['📊','รายจ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ทะเบียนการจ่าย'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','ภาษีซื้อ/ภ.พ.30'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ทะเบียนใบสำคัญจ่าย'], sales:['💰','รายรับ'], ar:['📊','ลูกหนี้ค้างรับ'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51']
@@ -995,7 +1053,7 @@
     if(gi) $('tbIcon').innerHTML=gi.replace('stroke-width="1.9"','stroke-width="2"'); else $('tbIcon').textContent=meta[0];
     $('tbTitle').textContent=meta[1];
     mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
-    ({ portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51 }[v] || soon)();
+    ({ portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, hubreq:renderHubReq, hubrooms:renderHubRooms, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51 }[v] || soon)();
   }
 
   // ───── มือถือ: เมนูกลุ่ม (ล่าง) + แท็บย่อย (บน) · คอมใช้ sidebar เดิม ไม่เกี่ยว ─────
@@ -1030,6 +1088,8 @@
      ⚠️ ซ่อนการ์ด ≠ กันข้อมูล — backend กรองสิทธิ์เองอีกชั้นเสมอ */
   /* ไอคอนปุ่มเมนูที่ระบบสร้างเอง (ไม่มีใน markup) — เส้นสีเดียวเข้าชุดกับปุ่มอื่น */
   var VIEW_ICON_EXTRA={
+    hubreq:'<svg viewBox="0 0 24 24"><path d="M6 3.5h9l4 4V20a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1z"/><path d="M14.5 3.6V8H19"/><path d="M8.5 13h7M8.5 16.5h4.5"/></svg>',
+    hubrooms:'<svg viewBox="0 0 24 24"><path d="M4 20V7.5l6-3.5v16"/><path d="M10 10.5l8 3V20"/><path d="M3 20h18"/><path d="M13.5 15.5h1M13.5 18h1"/></svg>',
     home:'<svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10V20h13V10"/><path d="M10 20v-5h4v5"/></svg>',
     payroll:'<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9.5h18"/><path d="M7 14h4M15.5 14h1.5"/></svg>'
   };
@@ -1044,6 +1104,7 @@
     docsys:'<svg viewBox="0 0 24 24"><path d="M4 6.5A1.5 1.5 0 0 1 5.5 5h4l1.6 2H19a1.5 1.5 0 0 1 1.5 1.5V18a1.5 1.5 0 0 1-1.5 1.5H5.5A1.5 1.5 0 0 1 4 18z"/></svg>',
     audit:'<svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="5.5"/><path d="M14.6 14.6 20 20"/><path d="M8.2 10.6l1.7 1.7 3-3.2"/></svg>',
     dev:'<svg viewBox="0 0 24 24"><path d="M8.5 9 5 12.5 8.5 16"/><path d="M15.5 9l3.5 3.5-3.5 3.5"/><path d="M13 6.5l-2 11"/></svg>',
+    admin:'<svg viewBox="0 0 24 24"><path d="M12 3.5 4.5 6.5v5c0 4.2 3.1 7.6 7.5 9 4.4-1.4 7.5-4.8 7.5-9v-5z"/><path d="M9.4 12.2l1.9 1.9 3.4-3.6"/></svg>',
     guide:'<svg viewBox="0 0 24 24"><path d="M4 5.5A2 2 0 0 1 6 4h5v16H6a2 2 0 0 0-2 1.5z"/><path d="M20 5.5A2 2 0 0 0 18 4h-5v16h5a2 2 0 0 1 2 1.5z"/></svg>',
     logout:'<svg viewBox="0 0 24 24"><path d="M12 4v8"/><path d="M7.5 6.5a7.5 7.5 0 1 0 9 0"/></svg>'
   };
@@ -1079,6 +1140,9 @@
 
     { key:'dev',     th:'ระบบพัฒนา',    en:'FEEDBACK',    color:'#4f46e5', g:['#818cf8','#4338ca'], own:false, views:[],
       soon:'รับคอมเมนต์ · แจ้งบั๊ก · คำขอปรับปรุงจากผู้ใช้และลูกค้า → เก็บเป็นรายการไว้พัฒนาต่อ' },
+    /* 🏛️ ผู้ดูแลระบบ — เห็นเฉพาะพี่กี้ (super) · จัดการลูกค้าที่สมัครเข้ามา */
+    { key:'admin',   th:'ผู้ดูแลระบบ',   en:'ADMIN',       color:'#0f172a', g:['#475569','#0f172a'],
+      own:true, sup:true, views:['hubreq','hubrooms'] },
     { key:'guide',   th:'คู่มือการใช้งาน', en:'USER MANUAL', color:'#64748b', g:['#94a3b8','#475569'], own:false, act:'guide' },
     { key:'logout',  th:'ออกจากระบบ',   en:'LOG OUT',     color:'#94a3b8', g:['#cbd5e1','#64748b'], own:false, act:'logout' }
   ];
@@ -1102,7 +1166,7 @@
   /* view ที่ผู้ใช้คนนี้เข้าได้จริงในโมดูล (กรองด้วย OWNER_VIEWS ชุดเดิม ไม่คิดกติกาใหม่) */
   function modViews(m){ return (m.views||[]).filter(function(v){ return IS_OWNER || !OWNER_VIEWS[v]; }); }
   /* โมดูลนี้บริษัทเปิดใช้ไหม (M6) — ด่านจริงอยู่ backend นี่แค่ไม่โชว์การ์ดที่กดไม่ได้ */
-  var MOD_CORE={ work:1, me:1, dev:1 };
+  var MOD_CORE={ work:1, me:1, dev:1, admin:1 };
   function modOpen(key){
     if(!MODS_OPEN) return true;                  // ว่าง = เปิดครบ
     if(MOD_CORE[key]) return true;
@@ -1110,10 +1174,101 @@
   }
   function modVisible(m){
     if(m.act) return true;                       // คู่มือ/ออกจากระบบ = ทุกคน
+    if(m.sup) return IS_SUPER;                   // โมดูลผู้ดูแลระบบ — พี่กี้เท่านั้น
     if(!modOpen(m.key)) return false;
     if(m.own && !IS_OWNER) return false;
     if(m.soon) return true;                      // โมดูลที่จองที่ไว้ — โชว์การ์ด กดแล้วบอกว่ากำลังจะมา
     return modViews(m).length>0;
+  }
+
+  // ═══════════ 🏛️ ผู้ดูแลระบบ: คำขอสมัคร (T2) ═══════════
+  var HUB_PACKS=[];
+  function renderHubReq(){
+    skel();
+    jsonp({action:'waHubReqs',uid:UID,all:1}).then(function(r){
+      if(VIEW!=='hubreq') return;
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      HUB_PACKS=r.packs||[];
+      var reqs=r.reqs||[];
+      var pend=reqs.filter(function(x){ return x.status==='รออนุมัติ'; });
+      var done=reqs.filter(function(x){ return x.status!=='รออนุมัติ'; });
+      var html='<div class="hm-hero"><h2>คำขอสมัครใช้งาน</h2><span class="hp">รออนุมัติ '+pend.length+' ราย</span></div>';
+      html+= pend.length ? pend.map(hubReqCard).join('')
+        : '<div class="card"><div class="emptybox">ยังไม่มีคำขอใหม่ค่ะ</div></div>';
+      if(done.length){
+        html+='<div class="pt-sec" style="margin:18px 0 10px">ดำเนินการแล้ว ('+done.length+')</div>';
+        html+='<div class="card"><div class="pb">'+done.slice(0,20).map(function(q){
+          return '<div class="hm-row"><div class="hm-l"><b>'+esc(q.company)+'</b><small>'+esc(q.no)+
+            (q.tenant?(' · ห้อง '+esc(q.tenant)):'')+'</small></div>'+
+            '<span class="lvb '+(q.status==='อนุมัติ'?'lvb-ok':'lvb-no')+'">'+esc(q.status)+'</span></div>';
+        }).join('')+'</div></div>';
+      }
+      $('main').innerHTML=html;
+      bindHubReq();
+    }).catch(function(e){ if(VIEW==='hubreq') $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
+  }
+  function hubReqCard(q){
+    var packs=HUB_PACKS.map(function(p){
+      return '<label class="hq-pk"><input type="checkbox" data-pk="'+esc(p.key)+'"> '+esc(p.label)+'</label>';
+    }).join('');
+    return '<div class="card hq" data-no="'+esc(q.no)+'"><div class="pb" style="padding:16px 18px">'+
+      '<div style="font-size:17px;font-weight:800;color:#1F2733">'+esc(q.company)+'</div>'+
+      '<div style="font-size:12.5px;color:var(--muted);margin:3px 0 12px">'+esc(q.no)+
+        (q.taxId?(' · เลขภาษี '+esc(q.taxId)):'')+'</div>'+
+      '<div class="hq-info">'+
+        (q.contact?('<div>👤 '+esc(q.contact)+'</div>'):'')+
+        (q.phone?('<div>📞 '+esc(q.phone)+'</div>'):'')+
+        (q.want?('<div>📦 สนใจ: '+esc(q.want)+'</div>'):'')+
+      '</div>'+
+      '<div class="hq-pks">'+packs+'</div>'+
+      '<div class="hq-btns">'+
+        '<button class="btn-ok" data-act="ok">✅ อนุมัติ + เปิดห้อง</button>'+
+        '<button class="btn-no" data-act="no">ปฏิเสธ</button>'+
+      '</div></div></div>';
+  }
+  function bindHubReq(){
+    Array.prototype.forEach.call(document.querySelectorAll('.hq'), function(card){
+      var no=card.getAttribute('data-no');
+      var bOk=card.querySelector('.btn-ok'), bNo=card.querySelector('.btn-no');
+      if(bOk) bOk.addEventListener('click', function(){
+        var packs=[];
+        Array.prototype.forEach.call(card.querySelectorAll('input[data-pk]'), function(cb){
+          if(cb.checked) packs.push(cb.getAttribute('data-pk'));
+        });
+        if(!packs.length){ toast('เลือกแพ็กอย่างน้อย 1 อย่างก่อนค่ะ'); return; }
+        if(!confirm('อนุมัติและเปิดห้องให้ลูกค้ารายนี้?')) return;
+        callBusy('กำลังสร้างห้อง…',
+          jsonp({action:'waHubApprove',uid:UID,no:no,packs:packs.join(',')}, 0, 120000), 'เปิดห้องแล้ว')
+          .then(function(r){ if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; } renderHubReq(); })
+          .catch(function(e){ toast(e.message); });
+      });
+      if(bNo) bNo.addEventListener('click', function(){
+        var why=prompt('เหตุผลที่ปฏิเสธ (ไม่บังคับ)');
+        if(why===null) return;
+        jsonp({action:'waHubReject',uid:UID,no:no,reason:why||''}).then(function(r){
+          if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; }
+          toast('ปฏิเสธแล้ว'); renderHubReq();
+        }).catch(function(e){ toast(e.message); });
+      });
+    });
+  }
+
+  // ═══════════ 🏢 ห้องลูกค้าทั้งหมด ═══════════
+  function renderHubRooms(){
+    skel();
+    jsonp({action:'waHubRooms',uid:UID}).then(function(r){
+      if(VIEW!=='hubrooms') return;
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      var rooms=r.rooms||[];
+      var html='<div class="hm-hero"><h2>ห้องลูกค้า</h2><span class="hp">'+rooms.length+' ห้อง</span></div>';
+      html+='<div class="card"><div class="pb">'+ (rooms.length ? rooms.map(function(t){
+        var mods=(t.modules||'').split(',').filter(Boolean);
+        return '<div class="hm-row"><div class="hm-l"><b>'+esc(t.name||t.code)+'</b>'+
+          '<small>'+esc(t.code)+' · '+(mods.length?esc(mods.join(' · ')):'เปิดครบทุกโมดูล')+'</small></div>'+
+          (t.code===ROOM.code?'<span class="lvb lvb-ok">กำลังอยู่</span>':'')+'</div>';
+      }).join('') : '<div class="emptybox">ยังไม่มีห้องลูกค้าค่ะ</div>') +'</div></div>';
+      $('main').innerHTML=html;
+    }).catch(function(e){ if(VIEW==='hubrooms') $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
   }
 
   // ═══════════ VIEW: 🧭 เลือกโมดูล (หน้าแรกใหม่) ═══════════
@@ -1143,6 +1298,55 @@
     switchView(MG_LAST[key] && vs.indexOf(MG_LAST[key])>=0 ? MG_LAST[key] : vs[0]);
   }
   window.openModule=openModule;
+/* หน้าสมัครใช้งาน (T2) — คนนอกยังไม่มีสิทธิ์อะไร จึงไม่เรียก waBootstrap */
+  function showApply(){
+    var lo=$('loader'); if(lo) lo.classList.add('hidden');
+    var ap=$('app'); if(ap) ap.classList.add('hidden');
+    var w=$('welcome'); if(w) w.classList.add('hidden');
+    var p=$('applyPage'); if(!p) return;
+    applyPaintBg();
+    p.classList.remove('hidden');
+    var btn=$('apSend');
+    if(btn && !btn.dataset.bound){
+      btn.dataset.bound='1';
+      btn.addEventListener('click', applySubmit);
+    }
+  }
+  /* ฉากหลังเบลอ = การ์ดโมดูล (ชุดเดียวกับหน้าล็อกอิน) */
+  function applyPaintBg(){
+    var bg=$('apBg'); if(!bg || bg.dataset.done) return;
+    bg.dataset.done='1';
+    bg.innerHTML='<div class="wcbg-top"><span class="wcbg-logo"><img src="mascot-wave2.png" alt=""></span>'+
+      '<span class="wcbg-brand">Moodata Yindee<small>Moodata</small></span><span class="wcbg-av"></span></div>'+
+      '<div class="wcbg-body"><div class="pt-grid">'+MODULES.slice(0,8).map(function(m){
+        return '<div class="pt-c"><div class="pt-ic" style="background:linear-gradient(140deg,'+
+          (m.g?m.g[0]:m.color)+','+(m.g?m.g[1]:m.color)+')">'+MOD_ICON[m.key]+'</div>'+
+          '<div class="pt-th">'+esc(m.th)+'</div><div class="pt-en">'+esc(m.en)+'</div>'+
+          '<div class="pt-go">เข้าใช้งาน →</div></div>';
+      }).join('')+'</div></div>';
+  }
+  function applySubmit(){
+    var company=($('apCompany').value||'').trim();
+    if(!company){ toast('กรุณากรอกชื่อบริษัทค่ะ'); $('apCompany').focus(); return; }
+    var want=[];
+    Array.prototype.forEach.call(document.querySelectorAll('#applyPage input[data-want]'), function(cb){
+      if(cb.checked) want.push(cb.getAttribute('data-want'));
+    });
+    var btn=$('apSend'); btn.disabled=true; btn.textContent='กำลังส่ง…';
+    jsonp({ action:'waHubApply', uid:UID, company:company,
+      taxId:($('apTax').value||'').trim(), contact:($('apContact').value||'').trim(),
+      phone:($('apPhone').value||'').trim(), want:want.join(' · ') })
+      .then(function(r){
+        if(!r||!r.ok){ toast((r&&r.error)||'ส่งไม่สำเร็จ'); btn.disabled=false; btn.textContent='ส่งคำขอสมัคร'; return; }
+        var box=document.querySelector('#applyPage .wc-box');
+        box.innerHTML='<div class="wc-logo"><img src="mascot-wave2.png" alt=""></div>'+
+          '<h1>ส่งคำขอแล้ว</h1>'+
+          '<div class="ap-done">ขอบคุณค่ะ 🙏<br>ทีมงานได้รับคำขอของ<br><b>'+esc(company)+'</b><br>เรียบร้อยแล้ว</div>'+
+          '<div class="ap-note">เลขที่คำขอ '+esc(r.no||'')+'<br>เราจะเปิดห้องให้และแจ้งกลับทาง LINE ค่ะ</div>';
+      })
+      .catch(function(e){ toast(e.message); btn.disabled=false; btn.textContent='ส่งคำขอสมัคร'; });
+  }
+
   /* หน้าต้อนรับ (M5) — โชว์แทนการเด้ง liff.login() ทันที ให้ผู้ใช้กดเอง
      bye=true → มาจากการกดออกจากระบบ (โชว์แถบยืนยันว่าออกแล้ว) */
   function showWelcome(bye){
@@ -1226,7 +1430,7 @@
       if(i>=0){ fin.views.splice(i,1); if(me.views.indexOf('expdash')<0) me.views.push('expdash'); }
     });
   }
-  var VIEW_TAB={ portal:'เมนูหลัก', payroll:'ระบบเงินเดือน', modsoon:'กำลังพัฒนา', home:'ภาพรวมประจำวัน', projects:'บอร์ดงาน', mytasks:'งานของฉัน', review:'รอตรวจ', trash:'ถังขยะ',
+  var VIEW_TAB={ portal:'เมนูหลัก', payroll:'ระบบเงินเดือน', modsoon:'กำลังพัฒนา', hubreq:'คำขอสมัคร', hubrooms:'ห้องลูกค้า', home:'ภาพรวมประจำวัน', projects:'บอร์ดงาน', mytasks:'งานของฉัน', review:'รอตรวจ', trash:'ถังขยะ',
     senddoc:'ส่งงานลูกค้า', appt:'นัดประชุม', announce:'ประกาศ',
     leave:'ลาของฉัน', approve:'อนุมัติลา', expense:'เบิกของฉัน', expapprove:'อนุมัติเบิก',
     expdash:'รายจ่าย', reimb:'ตั้งเบิกลูกค้า', petty:'เงินสดย่อย', payout:'ทะเบียนการจ่าย', expreport:'รายงานรายจ่าย', taxhub:'รายงานภาษี', whtin:'50 ทวิ ที่ถูกหัก', vatbuy:'ภาษีซื้อ',
@@ -8294,6 +8498,8 @@
       CAN_FIN=!!r.canFinance;
       // โมดูลที่เปิดใช้ (M6) — ว่าง/ไม่ส่งมา = เปิดครบ (ระบบเดิมไม่กระทบ)
       MODS_OPEN=(r.modules && r.modules.length) ? r.modules : null;
+      IS_SUPER=!!r.isSuper;
+      if(r.room) ROOM=r.room;
       if(CAN_FIN){ var nfr=$('navFinReport'); if(nfr) nfr.style.display=''; }
       navApplyRole();     // จัดหมวดตามสิทธิ์ (พนักงาน: สรุปค่าใช้จ่าย → หมวดส่วนตัว)
       buildNavGroups();   // จัดกลุ่ม sidebar (ต้องรู้ IS_OWNER ก่อน — กลุ่มของผู้ดูแลจะไม่โผล่ให้พนักงาน)
@@ -8315,7 +8521,7 @@
      วิธีแก้: ถามไฟล์ version.json (bust ด้วย ?t=) ถ้าเลข build ไม่ตรง → โหลดหน้าใหม่ด้วย ?v=<build>
      ⚠️ URL ที่ต่างกันเท่านั้นที่ bypass แคชได้จริง — reload เฉย ๆ ยังได้ไฟล์เก่าจากแคชเหมือนเดิม
      ⚠️ กันวนซ้ำ: ถ้า ?v= ตรงกับ build บนเซิร์ฟเวอร์แล้วยังไม่ตรงกับหน้า = ยอมแพ้ ไม่ reload อีก */
-  var APP_BUILD='20260905-1245';
+  var APP_BUILD='20260905-1817';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
@@ -8339,11 +8545,16 @@
       location.replace(_t + (_pp.kind ? '?kind='+encodeURIComponent(_pp.kind) : '')); return;
     }
     var ov=uidOverride();
-    if(ov){ UID=ov; start(); return; }
+    if(ov){ UID=ov; if(startParam()==='apply'){ showApply(); return; } start(); return; }
     var _bye=''; try{ _bye=sessionStorage.getItem('yd_bye')||''; sessionStorage.removeItem('yd_bye'); }catch(e){}
     liff.init({liffId:LIFF_ID}).then(function(){
       // ยังไม่ล็อกอิน → หน้าต้อนรับ ให้ผู้ใช้กดเอง (ในแอป LINE จะ isLoggedIn อยู่แล้ว = ไม่เห็นหน้านี้)
       if(!liff.isLoggedIn()){ showWelcome(!!_bye); return; }
+      // ?p=apply = คนนอกกดจาก Rich Menu ชุดสมัคร → เข้าหน้าสมัครตรง ไม่ผ่านด่านทีม
+      if(startParam()==='apply'){
+        return liff.getProfile().then(function(pf){ UID=pf.userId; showApply(); })
+          .catch(function(){ showApply(); });
+      }
       if(_bye){ showWelcome(true); return; }   // เพิ่งกดออกจากระบบบนคอม แต่ LINE ยังจำ session
 
       try{ IDTOKEN=liff.getIDToken()||''; }catch(e){ IDTOKEN=''; }
