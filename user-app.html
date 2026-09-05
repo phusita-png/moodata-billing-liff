@@ -8277,6 +8277,28 @@
       setTimeout(function(){ if(!LVCACHE.data) _leaveFetch(true); if(IDTOKEN && !DOCCACHE.data) _docsFetch(true); if(!APPT_CUST.length) apFetchMeta(); if(!ANNOUNCE_GROUPS.length) anFetchGroups(); }, 900);
     }).catch(function(e){ fatal(e.message); });
   }
+  /* ═══ ตัวเช็คเวอร์ชัน — กัน GitHub Pages แคชไฟล์เก่าค้าง (พี่กี้เจอ 4-5 ก.ย. 2 วันติด) ═══
+     Pages ส่ง Cache-Control: max-age=600 ที่ระดับ HTTP → <meta http-equiv> ในหน้าเอาชนะไม่ได้
+     ผู้ใช้จึงเห็นของเก่าได้นานถึง 10 นาทีหลัง deploy (และนานกว่านั้นถ้าแท็บเปิดค้างไว้)
+     วิธีแก้: ถามไฟล์ version.json (bust ด้วย ?t=) ถ้าเลข build ไม่ตรง → โหลดหน้าใหม่ด้วย ?v=<build>
+     ⚠️ URL ที่ต่างกันเท่านั้นที่ bypass แคชได้จริง — reload เฉย ๆ ยังได้ไฟล์เก่าจากแคชเหมือนเดิม
+     ⚠️ กันวนซ้ำ: ถ้า ?v= ตรงกับ build บนเซิร์ฟเวอร์แล้วยังไม่ตรงกับหน้า = ยอมแพ้ ไม่ reload อีก */
+  var APP_BUILD='20260905-1152';
+  (function checkBuild(){
+    try{
+      var cur=new URLSearchParams(location.search).get('v')||'';
+      fetch('version.json?t='+Date.now(), {cache:'no-store'})
+        .then(function(r){ return r.ok ? r.json() : null; })
+        .then(function(j){
+          if(!j || !j.build || j.build===APP_BUILD) return;   // ใหม่สุดอยู่แล้ว
+          if(cur===j.build) return;                            // ลองแล้วยังไม่ตรง = อย่าวนซ้ำ
+          var u=location.pathname+'?v='+encodeURIComponent(j.build)+location.hash;
+          location.replace(u);
+        })
+        .catch(function(){});
+    }catch(e){}
+  })();
+
   (function init(){
     // Face Scan: LIFF endpoint ชี้มาที่ user-app → เด้งต่อไปหน้าสแกนหน้า/ลงทะเบียน (คง kind)
     var _pp=allParams(), _p=String(_pp.p||'').toLowerCase();
