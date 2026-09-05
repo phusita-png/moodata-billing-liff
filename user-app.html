@@ -25,6 +25,46 @@
   .lvb{ margin-left:auto; font-size:12px; padding:3px 11px; border-radius:999px; font-weight:600; white-space:nowrap; }
   .lvb-wait{ background:var(--ot-tint); color:var(--ot); } .lvb-ok{ background:var(--green-tint); color:var(--green); }
   .lvb-no{ background:#fbe7e7; color:#c0392b; }
+  /* ══ 🏢 ตัวสลับห้อง (T3) — เห็นเฉพาะผู้ดูแลระบบ ══ */
+  .rm-btn{ display:none; align-items:center; gap:6px; flex:0 0 auto; margin-right:8px; align-self:center;
+    padding:7px 12px; border:1px solid rgba(255,255,255,.45); border-radius:999px;
+    background:rgba(255,255,255,.16); color:#fff; font:inherit; font-size:12.5px; font-weight:700;
+    cursor:pointer; max-width:190px; }
+  .rm-btn:hover{ background:rgba(255,255,255,.30); }
+  .rm-btn .rm-lb{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .rm-btn .rm-ca{ opacity:.8; font-size:10px; }
+  /* อยู่ห้องลูกค้า = เปลี่ยนสีทั้งแถบ + มีแถบเตือน */
+  .app.inroom .hd, .app.inroom .topbar, .app.inroom .nav-brand{ background:#B45309 !important; }
+  .app.inroom .hd{ box-shadow:0 2px 12px rgba(120,53,15,.30) !important; }
+  .rm-bar{ display:none; flex-wrap:wrap; align-items:center; gap:8px 10px; padding:10px 16px;
+    background:#FEF3C7; border-bottom:1px solid #FCD34D;
+    font-size:13px; font-weight:600; color:#78350F; line-height:1.5; }
+  .app.inroom .rm-bar{ display:flex; }
+  .rm-bar b{ font-weight:800; }
+  .rm-bar button{ margin-left:auto; flex:0 0 auto; padding:6px 13px; border:1px solid #D97706;
+    border-radius:999px; background:#fff; color:#92400E; font:inherit; font-size:12.5px;
+    font-weight:700; cursor:pointer; }
+  .rm-list{ display:flex; flex-direction:column; gap:9px; margin:4px 0 2px; max-height:56vh; overflow:auto; }
+  .rm-i{ display:flex; align-items:center; gap:11px; padding:12px 14px; border:1px solid var(--line);
+    border-radius:13px; background:#fff; font:inherit; text-align:left; cursor:pointer; width:100%; }
+  .rm-i:hover{ border-color:var(--red); }
+  .rm-i.on{ border-color:var(--red); background:var(--red-soft,#eef4ff); }
+  .rm-i .ri-l{ flex:1; min-width:0; }
+  .rm-i .ri-l b{ display:block; font-size:14.5px; color:#1F2733; }
+  .rm-i .ri-l small{ display:block; font-size:12px; color:var(--muted); margin-top:2px; }
+  /* มือถือ: แถบแดงแคบ — โชว์แค่ไอคอน (ชื่อห้องอ่านได้จากแถบเตือนอยู่แล้ว)
+     ถ้าโชว์ชื่อเต็มด้วย รูปมาสคอต+ชื่อระบบ+avatar จะดันกันจนล้นขอบจอ */
+  @media (max-width:1023px){
+    .rm-btn{ max-width:none; padding:7px 10px; margin-right:6px; }
+    .rm-btn .rm-lb{ display:none; }
+    .rm-bar button{ margin-left:0; }
+  }
+  @media (min-width:1024px){
+    /* แถบเตือนแทรกเป็นแถวกลางของ grid (ซ่อนอยู่ = แถวสูง 0) */
+    .app{ grid-template-rows:auto auto 1fr !important;
+      grid-template-areas:"nav top" "nav room" "nav main" !important; }
+    .rm-bar{ grid-area:room; padding:10px 30px; }
+  }
   /* ── โหมดหน้าเลือกโมดูล: เต็มจอ ไม่มีแถบซ้าย (พี่กี้ 5 ก.ย. — เอาแบบ TRCloud) ──
      .pmode ใส่ที่ #app ตอน VIEW==='portal' · เข้าโมดูลแล้วถอดออก แถบซ้ายกลับมา */
   .app.pmode .nav{ display:none !important; }
@@ -865,6 +905,7 @@
   <header class="hd">
     <div class="hd-logo"><img src="mascot-wave2.png" alt="ยินดี"></div>
     <div class="hd-mid"><div class="hd-title"><span class="hb-name">Moodata</span><span class="hb-sub">Yindee <span class="hb-heart">♥</span></span></div><div class="hd-sub" id="hdSub">ทีมงาน</div></div>
+    <button class="rm-btn" id="rmBtnM" type="button" style="display:none"><span class="rm-ic">🏢</span><span class="rm-lb">Moodata</span><span class="rm-ca">▾</span></button>
     <div class="hd-avatar" id="avatar">🙂</div>
   </header>
 
@@ -873,8 +914,12 @@
   <div id="topbar" class="topbar">
     <span class="tb-icon" id="tbIcon">📝</span>
     <div class="tb-mid"><div class="tb-title" id="tbTitle">การลา</div><div class="tb-sub">Moodata</div></div>
+    <button class="rm-btn" id="rmBtn" type="button" style="display:none"><span class="rm-ic">🏢</span><span class="rm-lb">Moodata</span><span class="rm-ca">▾</span></button>
     <div class="tb-avatar" id="tbAvatar">🙂</div>
   </div>
+
+  <!-- ⚠️ แถบเตือนตอนอยู่ห้องลูกค้า (T3) -->
+  <div id="rmBar" class="rm-bar"></div>
 
   <main id="main" class="main"></main>
 
@@ -1015,8 +1060,35 @@
     return p.then(function(r){ if(r&&r.ok) busyOk(okMsg||'สำเร็จแล้ว'); else unbusy(); return r; },
                   function(e){ unbusy(); throw e; }); }
 
+  /* ═══ 🏢 ตัวสลับห้อง (T3) — เฉพาะผู้ดูแลระบบ ═══
+     ห้องที่เลือกเก็บใน sessionStorage (แท็บใครแท็บมัน · ปิดแท็บ = กลับห้องตัวเอง)
+     แล้ว withRoom_() แนบ room= ไปกับทุกคำขอ — จุดเดียว ไม่ต้องไล่แก้ทีละ action
+     ⚠️ backend ตรวจสิทธิ์ซ้ำเสมอ (setTenantContext_) — ส่ง room= มาเองโดยไม่ใช่ super จะไม่มีผล */
+  function roomSel(){ try{ return sessionStorage.getItem('yd_room')||''; }catch(e){ return ''; } }
+  function roomSet(c){ try{ if(c) sessionStorage.setItem('yd_room',c); else sessionStorage.removeItem('yd_room'); }catch(e){} }
+  function withRoom_(params){
+    var r=roomSel(); if(!r || !params || params.room) return params;
+    var o={}; for(var k in params){ if(Object.prototype.hasOwnProperty.call(params,k)) o[k]=params[k]; }
+    o.room=r; return o;
+  }
+
+  /* รายการที่ "เงินขยับจริง" หรือยกเลิกแล้วย้อนไม่ได้ — ตอนอยู่ห้องลูกค้าต้องยืนยันซ้ำ
+     (พี่กี้: กดจ่ายเงินผิดห้องคือเรื่องใหญ่ · spec docs/spec-multi-tenant.md §T3)
+     ⚠️ เพิ่ม action ใหม่ที่จ่าย/อนุมัติจ่าย ต้องมาเติมในลิสต์นี้ด้วย */
+  var MONEY_ACT={ waExpPay:1, waExpDecide:1, waPoPay:1, waPoDecide:1, waPoCancel:1,
+    waPettyFund:1, waPettyClaimPayout:1, waPettyClaimSettle:1, waPettyVoid:1,
+    waRecvSave:1, waRecvVoid:1, waCnRefund:1, waSalesCancel:1, waCompanyCancel:1 };
+  function roomGuard_(params){
+    if(!params || !MONEY_ACT[params.action]) return true;
+    var r=roomSel(); if(!r) return true;
+    return confirm('⚠️ ตอนนี้อยู่ในห้องของลูกค้า "'+((ROOM&&ROOM.name)||r)+'"'+
+      String.fromCharCode(10,10)+'รายการเงินนี้จะบันทึกลงห้องลูกค้า ไม่ใช่ห้อง Moodata'+
+      String.fromCharCode(10)+'ยืนยันทำต่อไหมคะ?');
+  }
+
   function jsonp(params, _try, timeoutMs){
-    _try=_try||0;
+    _try=_try||0; params=withRoom_(params);
+    if(!_try && !roomGuard_(params)) return Promise.reject(new Error('ยกเลิกแล้ว — ยังอยู่ในห้องลูกค้า'));
     return new Promise(function(resolve,reject){
       var cb='cb_'+Date.now()+'_'+Math.floor(Math.random()*1e6);
       // ปกติ 60 วิ · action ที่อ่านชีตหลายใบ (เช่น waPnd51Auto) ส่งเวลารอมาเองได้
@@ -1035,6 +1107,8 @@
   // POST (fetch · form-urlencoded) — ใช้กับ action ที่ส่ง text ยาว เลี่ยง URL limit ของ JSONP GET
   // backend (doPost) route wa* → handler เดิม · ไม่ส่ง callback → ตอบ JSON ตรง
   function jsonpPost(params){
+    params=withRoom_(params);
+    if(!roomGuard_(params)) return Promise.reject(new Error('ยกเลิกแล้ว — ยังอยู่ในห้องลูกค้า'));
     var body=Object.keys(params).map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(params[k]);}).join('&');
     return fetch(EXEC_URL,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:body})
       .then(function(r){ if(!r.ok) throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้'); return r.json(); });
@@ -1278,6 +1352,69 @@
       }).join('') : '<div class="emptybox">ยังไม่มีห้องลูกค้าค่ะ</div>') +'</div></div>';
       $('main').innerHTML=html;
     }).catch(function(e){ if(VIEW==='hubrooms') $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
+  }
+
+  /* ═════ 🏢 สลับห้อง (T3) ═════ */
+
+  /* ทาสีห้องปัจจุบัน — เรียกหลัง bootstrap ทุกครั้งที่ ROOM เปลี่ยน */
+  function paintRoom(){
+    var app=$('app'); if(!app) return;
+    var inRoom=!!(ROOM && ROOM.code && ROOM.code!=='MOODATA');
+    app.classList.toggle('inroom', inRoom);
+    Array.prototype.forEach.call(document.querySelectorAll('.rm-btn'), function(b){
+      b.style.display = IS_SUPER ? 'flex' : 'none';
+      var lb=b.querySelector('.rm-lb'); if(lb) lb.textContent=(ROOM&&ROOM.name)||'Moodata';
+      if(!b.dataset.bound){ b.dataset.bound='1'; b.addEventListener('click', openRoomPicker); }
+    });
+    var bar=$('rmBar'); if(!bar) return;
+    bar.innerHTML = inRoom
+      ? ('<span>⚠️ กำลังดูแลห้องของลูกค้า <b>'+esc(ROOM.name||ROOM.code)+
+         '</b> — ทุกอย่างที่ทำจะบันทึกลงห้องนี้</span>'+
+         '<button type="button" id="rmBack">กลับห้อง Moodata</button>')
+      : '';
+    var back=$('rmBack');
+    if(back) back.addEventListener('click', function(){ roomEnter('', 'Moodata'); });
+  }
+
+  /* เลือกห้อง */
+  function openRoomPicker(){
+    if(!IS_SUPER) return;
+    busy('กำลังโหลดรายชื่อห้อง…');
+    jsonp({action:'waHubRooms',uid:UID}).then(function(r){
+      unbusy();
+      if(!r||!r.ok){ toast((r&&r.error)||'โหลดไม่สำเร็จ'); return; }
+      var cur=(ROOM&&ROOM.code)||'MOODATA';
+      var rows=[{code:'MOODATA',name:'Moodata (ห้องทีมงาน)',modules:''}].concat(r.rooms||[]);
+      modal('<h3>🏢 เลือกห้องที่จะดูแล</h3>'+
+        '<div class="rm-list">'+rows.map(function(t){
+          var mods=String(t.modules||'').split(',').filter(Boolean);
+          return '<button class="rm-i'+(t.code===cur?' on':'')+'" data-room="'+esc(t.code)+
+            '" data-name="'+esc(t.name||t.code)+'"><span class="ri-l"><b>'+esc(t.name||t.code)+'</b><small>'+
+            esc(t.code)+(t.code==='MOODATA'?'':(' · '+(mods.length?esc(mods.join(' · ')):'เปิดครบทุกโมดูล')))+
+            '</small></span>'+(t.code===cur?'<span class="lvb lvb-ok">กำลังอยู่</span>':'')+'</button>';
+        }).join('')+'</div>'+
+        '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button></div>');
+      Array.prototype.forEach.call(document.querySelectorAll('.rm-i'), function(b){
+        b.addEventListener('click', function(){
+          var code=b.getAttribute('data-room'), name=b.getAttribute('data-name');
+          if(code===cur){ closeModal(); return; }
+          if(code!=='MOODATA' && !confirm('เข้าไปดูแลห้อง "'+name+'" ?'+String.fromCharCode(10,10)+
+            'ทุกอย่างที่ทำต่อจากนี้จะลงห้องของลูกค้า และระบบจะบันทึกไว้ว่าเราเข้าเมื่อไหร่')) return;
+          closeModal(); roomEnter(code==='MOODATA'?'':code, name);
+        });
+      });
+    }).catch(function(e){ unbusy(); toast(e.message); });
+  }
+
+  /* เข้าห้อง → backend บันทึก log → โหลดหน้าใหม่ทั้งหมด
+     ต้อง reload จริง — แคชทุกตัว (LVCACHE/DOCCACHE/…) เป็นของห้องเก่า ค้างไว้ไม่ได้ */
+  function roomEnter(code, name){
+    busy('กำลังเข้าห้อง '+(name||'Moodata')+'…');
+    jsonp({action:'waHubEnter',uid:UID,room:code||'MOODATA'}).then(function(r){
+      if(!r||!r.ok){ unbusy(); toast((r&&r.error)||'เข้าห้องไม่สำเร็จ'); return; }
+      roomSet(code||'');
+      location.reload();
+    }).catch(function(e){ unbusy(); toast(e.message); });
   }
 
   // ═══════════ VIEW: 🧭 เลือกโมดูล (หน้าแรกใหม่) ═══════════
@@ -8513,6 +8650,7 @@
       MODS_OPEN=(r.modules && r.modules.length) ? r.modules : null;
       IS_SUPER=!!r.isSuper;
       if(r.room) ROOM=r.room;
+      paintRoom();   // 🏢 ทาสี/แถบเตือนตามห้องที่อยู่จริง (backend เป็นคนตอบ)
       if(CAN_FIN){ var nfr=$('navFinReport'); if(nfr) nfr.style.display=''; }
       navApplyRole();     // จัดหมวดตามสิทธิ์ (พนักงาน: สรุปค่าใช้จ่าย → หมวดส่วนตัว)
       buildNavGroups();   // จัดกลุ่ม sidebar (ต้องรู้ IS_OWNER ก่อน — กลุ่มของผู้ดูแลจะไม่โผล่ให้พนักงาน)
@@ -8526,7 +8664,12 @@
       switchView('portal');   // switchView → mSyncNav สร้างเมนูกลุ่มล่าง + แท็บบนให้เอง
       // อุ่นแคชเบื้องหลัง → คลิกการลา/เอกสารครั้งแรกเด้งทันที (ไม่แย่งจอแรกโหลด)
       setTimeout(function(){ if(!LVCACHE.data) _leaveFetch(true); if(IDTOKEN && !DOCCACHE.data) _docsFetch(true); if(!APPT_CUST.length) apFetchMeta(); if(!ANNOUNCE_GROUPS.length) anFetchGroups(); }, 900);
-    }).catch(function(e){ fatal(e.message); });
+    }).catch(function(e){
+      /* กันล็อกเอาต์ตัวเอง: ถ้าค้างอยู่ในห้องลูกค้าที่เปิดไม่ได้ (ไฟล์ถูกลบ/ถอนสิทธิ์)
+         waBootstrap จะพังทุกครั้งจนกดอะไรไม่ได้เลย → ทิ้งห้องที่เลือกแล้วโหลดใหม่ 1 รอบ */
+      if(roomSel()){ roomSet(''); location.reload(); return; }
+      fatal(e.message);
+    });
   }
   /* ═══ ตัวเช็คเวอร์ชัน — กัน GitHub Pages แคชไฟล์เก่าค้าง (พี่กี้เจอ 4-5 ก.ย. 2 วันติด) ═══
      Pages ส่ง Cache-Control: max-age=600 ที่ระดับ HTTP → <meta http-equiv> ในหน้าเอาชนะไม่ได้
@@ -8534,7 +8677,7 @@
      วิธีแก้: ถามไฟล์ version.json (bust ด้วย ?t=) ถ้าเลข build ไม่ตรง → โหลดหน้าใหม่ด้วย ?v=<build>
      ⚠️ URL ที่ต่างกันเท่านั้นที่ bypass แคชได้จริง — reload เฉย ๆ ยังได้ไฟล์เก่าจากแคชเหมือนเดิม
      ⚠️ กันวนซ้ำ: ถ้า ?v= ตรงกับ build บนเซิร์ฟเวอร์แล้วยังไม่ตรงกับหน้า = ยอมแพ้ ไม่ reload อีก */
-  var APP_BUILD='20260905-1827';
+  var APP_BUILD='20260905-2138';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
