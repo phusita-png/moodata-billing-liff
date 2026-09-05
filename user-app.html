@@ -37,6 +37,11 @@
   .nav-mh .mh-ic{ width:30px; height:30px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex:0 0 auto; }
   .nav-mh .mh-ic svg{ width:17px; height:17px; fill:none; stroke:#fff; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
   .nav-mh .mh-tx{ font-size:14.5px; font-weight:700; color:var(--ink); min-width:0; }
+  /* ปุ่ม "กลับสู่เมนูหลัก" — บนสุดของแถบซ้าย เหนือรายการเมนู (พี่กี้เคาะ 5 ก.ย.) */
+  .nav-back{ display:flex; align-items:center; gap:7px; margin:0 10px 10px; padding:9px 10px; width:calc(100% - 20px);
+    border:1px solid var(--line); border-radius:11px; background:#fff; font:inherit; font-size:12.5px; font-weight:600;
+    color:var(--muted); cursor:pointer; }
+  .nav-back:hover{ color:var(--red); border-color:var(--red-soft); }
   /* แถวสลับโมดูลเร็วท้ายแถบ — ไม่ต้องกลับหน้าแรกทุกครั้ง */
   .nav-mods{ margin-top:auto; padding:10px 10px 14px; border-top:1px solid var(--line); display:flex; flex-wrap:wrap; gap:5px; }
   .nav-mods .nm{ width:27px; height:27px; border-radius:8px; border:none; cursor:pointer; display:flex;
@@ -44,15 +49,6 @@
   .nav-mods .nm:hover, .nav-mods .nm.on{ opacity:1; }
   .nav-mods .nm svg{ width:15px; height:15px; fill:none; stroke:#fff; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
   #navPool{ display:none; }
-  /* ปุ่ม "กลับสู่เมนูหลัก" บนแถบบน — ทางออกจากทุกหน้า (พี่กี้ขอ 5 ก.ย.) */
-  .tb-all{ display:flex; align-items:center; gap:6px; flex:0 0 auto; margin-right:2px;
-    padding:7px 12px 7px 9px; border:1px solid rgba(255,255,255,.42); border-radius:999px;
-    background:rgba(255,255,255,.16); color:#fff; font:inherit; font-size:13px; font-weight:600; cursor:pointer;
-    transition:background .14s; }
-  .tb-all:hover{ background:rgba(255,255,255,.30); }
-  .tb-all svg{ width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
-  .app.pmode .tb-all{ display:none; }          /* อยู่หน้าเลือกโมดูลอยู่แล้ว ไม่ต้องมีปุ่ม */
-  @media (max-width:560px){ .tb-all span{ display:none; } .tb-all{ padding:7px 9px; } }
   /* ═══ หน้าต้อนรับ / ล็อกอิน (M5 · spec §9) — พี่กี้เคาะ 5 ก.ย.: เข้าด้วย LINE อย่างเดียว ═══
      ยินดีไม่มีระบบอีเมล/รหัสผ่านของตัวเอง · หน้านี้มีไว้ให้ผู้ใช้ "กดเอง" แทนที่จะเด้ง LINE ทันที
      และเป็นหน้าปลายทางหลังกดออกจากระบบ (ในแอป LINE จะล็อกอินกลับเอง — อย่างน้อยผู้ใช้เห็นว่าออกแล้ว) */
@@ -792,12 +788,6 @@
   <div id="mtabs" class="mtabs"></div>
 
   <div id="topbar" class="topbar">
-    <!-- ปุ่มกลับหน้าเลือกโมดูล — อยู่บนแถบบนเพื่อให้เห็นจากทุกหน้า ไม่ต้องพึ่งแถบซ้าย
-         (พี่กี้ 5 ก.ย.: เข้าโมดูลแล้วต้องมีทางกดออกมาตั้งหลักเสมอ) · ซ่อนเองตอนอยู่หน้าเลือกโมดูล -->
-    <button class="tb-all" id="tbAll" type="button" aria-label="กลับสู่เมนูหลัก">
-      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="7" rx="1.6"/><rect x="14" y="4" width="7" height="7" rx="1.6"/><rect x="3" y="14" width="7" height="6" rx="1.6"/><rect x="14" y="14" width="7" height="6" rx="1.6"/></svg>
-      <span>กลับสู่เมนูหลัก</span>
-    </button>
     <span class="tb-icon" id="tbIcon">📝</span>
     <div class="tb-mid"><div class="tb-title" id="tbTitle">การลา</div><div class="tb-sub">Moodata</div></div>
     <div class="tb-avatar" id="tbAvatar">🙂</div>
@@ -1272,6 +1262,13 @@
     mh.innerHTML='<span class="mh-ic" style="background:'+m.color+'">'+MOD_ICON[m.key]+'</span>'+
       '<span class="mh-tx">'+esc(m.th)+'</span>';
     nav.appendChild(mh);
+
+    // ปุ่มกลับ อยู่บนสุดเหนือรายการเมนู (พี่กี้เคาะ 5 ก.ย.) — ตำแหน่งที่คนมองหาปุ่มย้อนกลับ
+    var back=document.createElement('button');
+    back.type='button'; back.className='nav-back';
+    back.innerHTML='<svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M15 5l-7 7 7 7"/></svg>กลับสู่เมนูหลัก';
+    back.addEventListener('click', function(){ switchView('portal'); });
+    nav.appendChild(back);
 
     var vs=modViews(m), secs=m.sec||null, done={};
     /* ปุ่มส่วนใหญ่มีอยู่ใน markup แล้ว (ไอคอน SVG เดิมครบ) — view ที่เกิดทีหลังอย่าง
@@ -8268,7 +8265,6 @@
       $('loader').classList.add('hidden'); $('app').classList.remove('hidden');
       Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(b){
         b.addEventListener('click', function(){ switchView(b.dataset.view); }); });
-      var _tba=$('tbAll'); if(_tba) _tba.addEventListener('click', function(){ switchView('portal'); });
       // พี่กี้เคาะ 5 ก.ย. 2569: **เข้ามาหลังล็อกอินต้องเจอหน้าเลือกโมดูลก่อนเสมอ**
       // ลิงก์เก่าที่มี ?p= (Rich Menu · การ์ดในแชท · bookmark) จึงไม่พาเข้าหน้านั้นตรงอีกต่อไป
       // — ยังอ่านค่า p ไว้ให้ลิงก์ไม่ error เฉย ๆ · ถ้าวันหลังอยากให้เข้าตรงได้อีก แก้ที่จุดนี้จุดเดียว
@@ -8283,7 +8279,7 @@
      วิธีแก้: ถามไฟล์ version.json (bust ด้วย ?t=) ถ้าเลข build ไม่ตรง → โหลดหน้าใหม่ด้วย ?v=<build>
      ⚠️ URL ที่ต่างกันเท่านั้นที่ bypass แคชได้จริง — reload เฉย ๆ ยังได้ไฟล์เก่าจากแคชเหมือนเดิม
      ⚠️ กันวนซ้ำ: ถ้า ?v= ตรงกับ build บนเซิร์ฟเวอร์แล้วยังไม่ตรงกับหน้า = ยอมแพ้ ไม่ reload อีก */
-  var APP_BUILD='20260905-1152';
+  var APP_BUILD='20260905-1157';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
