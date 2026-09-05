@@ -44,7 +44,8 @@
     color:var(--muted); cursor:pointer; }
   .nav-back:hover{ color:var(--red); border-color:var(--red-soft); }
   /* แถวสลับโมดูลเร็วท้ายแถบ — ไม่ต้องกลับหน้าแรกทุกครั้ง */
-  .nav-mods{ padding:10px 10px 14px; border-top:1px solid var(--line); display:flex; flex-wrap:wrap; gap:5px; }
+  .nav-mods{ padding:12px 10px 14px; border-top:1px solid var(--line);
+    display:grid; grid-template-columns:repeat(5,1fr); gap:7px; justify-items:center; }
   .nav-mods .nm{ width:27px; height:27px; border-radius:8px; border:none; cursor:pointer; display:flex;
     align-items:center; justify-content:center; opacity:.42; transition:opacity .12s; }
   .nav-mods .nm:hover, .nav-mods .nm.on{ opacity:1; }
@@ -8321,7 +8322,7 @@
      วิธีแก้: ถามไฟล์ version.json (bust ด้วย ?t=) ถ้าเลข build ไม่ตรง → โหลดหน้าใหม่ด้วย ?v=<build>
      ⚠️ URL ที่ต่างกันเท่านั้นที่ bypass แคชได้จริง — reload เฉย ๆ ยังได้ไฟล์เก่าจากแคชเหมือนเดิม
      ⚠️ กันวนซ้ำ: ถ้า ?v= ตรงกับ build บนเซิร์ฟเวอร์แล้วยังไม่ตรงกับหน้า = ยอมแพ้ ไม่ reload อีก */
-  var APP_BUILD='20260905-1240';
+  var APP_BUILD='20260905-1243';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
