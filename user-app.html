@@ -25,6 +25,69 @@
   .lvb{ margin-left:auto; font-size:12px; padding:3px 11px; border-radius:999px; font-weight:600; white-space:nowrap; }
   .lvb-wait{ background:var(--ot-tint); color:var(--ot); } .lvb-ok{ background:var(--green-tint); color:var(--green); }
   .lvb-no{ background:#fbe7e7; color:#c0392b; }
+  /* ── โหมดหน้าเลือกโมดูล: เต็มจอ ไม่มีแถบซ้าย (พี่กี้ 5 ก.ย. — เอาแบบ TRCloud) ──
+     .pmode ใส่ที่ #app ตอน VIEW==='portal' · เข้าโมดูลแล้วถอดออก แถบซ้ายกลับมา */
+  .app.pmode .nav{ display:none !important; }
+  .app.pmode .mnav, .app.pmode .mtabs{ display:none !important; }
+  @media (min-width:900px){
+    .app.pmode{ grid-template-columns:1fr; grid-template-areas:"top" "main"; }
+  }
+  /* หัวแถบซ้าย = โมดูลที่กำลังเปิด + ปุ่มกลับหน้าเลือกโมดูล */
+  .nav-mh{ display:flex; align-items:center; gap:9px; padding:12px 14px 10px; }
+  .nav-mh .mh-ic{ width:30px; height:30px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex:0 0 auto; }
+  .nav-mh .mh-ic svg{ width:17px; height:17px; fill:none; stroke:#fff; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  .nav-mh .mh-tx{ font-size:14.5px; font-weight:700; color:var(--ink); min-width:0; }
+  .nav-back{ display:flex; align-items:center; gap:7px; margin:0 10px 8px; padding:8px 10px; width:calc(100% - 20px);
+    border:1px solid var(--line); border-radius:11px; background:#fff; font:inherit; font-size:12.5px; font-weight:600;
+    color:var(--muted); cursor:pointer; }
+  .nav-back:hover{ color:var(--red); border-color:var(--red-soft); }
+  /* แถวสลับโมดูลเร็วท้ายแถบ — ไม่ต้องกลับหน้าแรกทุกครั้ง */
+  .nav-mods{ margin-top:auto; padding:10px 10px 14px; border-top:1px solid var(--line); display:flex; flex-wrap:wrap; gap:5px; }
+  .nav-mods .nm{ width:27px; height:27px; border-radius:8px; border:none; cursor:pointer; display:flex;
+    align-items:center; justify-content:center; opacity:.42; transition:opacity .12s; }
+  .nav-mods .nm:hover, .nav-mods .nm.on{ opacity:1; }
+  .nav-mods .nm svg{ width:15px; height:15px; fill:none; stroke:#fff; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  #navPool{ display:none; }
+  /* ═══ หน้าเลือกโมดูล (portal) — พี่กี้เคาะ 5 ก.ย. 2569 · spec docs/spec-module-portal.md ═══ */
+  /* ⚠️ กฎพวกนี้ต้องอยู่ในหน้า ไม่ใช่ user.css — เครื่องพี่แคช css ค้างจนเมนูเพี้ยนมาแล้ว (4 ก.ย.) */
+  /* พื้นหลังไล่สีหลายจุด — กระจกฝ้าต้องมีอะไรให้เบลอ ไม่งั้นการ์ดจะดูแบนเหมือนเดิม
+     ใส่ที่ .main เฉพาะโหมดหน้าเลือกโมดูล (หน้าอื่นพื้นเรียบเหมือนเดิม) */
+  .app.pmode .main{
+    background:
+      radial-gradient(680px 420px at 8% -6%, rgba(56,189,248,.32), transparent 62%),
+      radial-gradient(620px 400px at 92% 2%, rgba(167,139,250,.30), transparent 60%),
+      radial-gradient(560px 420px at 78% 88%, rgba(45,212,191,.26), transparent 62%),
+      radial-gradient(520px 380px at 12% 96%, rgba(251,191,36,.22), transparent 60%),
+      linear-gradient(160deg,#f7fbff 0%,#f4f6fb 100%);
+  }
+  .pt-hero{ margin:2px 0 18px; }
+  .pt-hero h2{ font-size:21px; font-weight:800; color:#1F2733; margin:0 0 4px; }
+  .pt-hero p{ font-size:13.5px; color:var(--muted); margin:0; }
+  .pt-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:22px; }
+  /* การ์ดกระจกฝ้า (glassmorphism) — โปร่งแสง + เบลอพื้นหลังไล่สีด้านหลัง + ขอบขาวจับแสง
+     ⚠️ backdrop-filter ต้องมี -webkit- ด้วย (Safari / LINE ในแอป iOS)
+        เบราว์เซอร์ที่ไม่รองรับจะเห็นเป็นการ์ดขาวโปร่ง อ่านออกปกติ ไม่พัง */
+  .pt-c{ background:rgba(255,255,255,.55); border:1px solid rgba(255,255,255,.75);
+    -webkit-backdrop-filter:blur(16px) saturate(150%); backdrop-filter:blur(16px) saturate(150%);
+    border-radius:var(--radius); box-shadow:0 8px 26px rgba(31,63,120,.10), inset 0 1px 0 rgba(255,255,255,.65);
+    padding:20px 18px 0; text-align:center; font:inherit; cursor:pointer; display:flex; flex-direction:column; min-width:0;
+    transition:box-shadow .16s, transform .08s, background .16s; }
+  .pt-c:hover{ background:rgba(255,255,255,.72); transform:translateY(-2px);
+    box-shadow:0 14px 34px rgba(31,63,120,.16), inset 0 1px 0 rgba(255,255,255,.8); }
+  .pt-c:active{ transform:translateY(0) scale(.995); }
+  .pt-ic{ width:58px; height:58px; border-radius:17px; margin:0 auto 14px; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 6px 16px rgba(31,63,120,.22), inset 0 1px 0 rgba(255,255,255,.35); }
+  .pt-ic svg{ width:28px; height:28px; fill:none; stroke:#fff; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
+  .pt-c .pt-th{ font-size:16.5px; font-weight:700; color:#1F2733; }
+  .pt-c .pt-en{ font-size:11px; font-weight:600; letter-spacing:.10em; color:var(--muted); margin-top:3px; text-transform:uppercase; }
+  .pt-c .pt-go{ margin-top:16px; padding:13px 0 15px; border-top:1px solid rgba(120,150,200,.22);
+    font-size:13.5px; font-weight:600; color:var(--red); }
+  .pt-sec{ font-size:13px; font-weight:700; color:var(--muted); margin:0 0 10px; letter-spacing:.02em; }
+  @media (max-width:980px){ .pt-grid{ grid-template-columns:repeat(2,1fr); gap:12px; } }
+  @media (max-width:560px){ .pt-grid{ grid-template-columns:repeat(2,1fr); gap:10px; }
+    .pt-c{ padding:16px 10px 0; } .pt-ic{ width:48px; height:48px; border-radius:14px; margin-bottom:10px; }
+    .pt-ic svg{ width:24px; height:24px; } .pt-c .pt-th{ font-size:14.5px; } .pt-c .pt-en{ font-size:10px; }
+    .pt-c .pt-go{ margin-top:12px; padding:10px 0 12px; font-size:12.5px; } }
   /* ═══ หน้า 🏠 ภาพรวม — dashboard มาตรฐาน (พี่กี้เคาะ 30 ก.ค. 2569: ตัวเลขสำคัญบนสุด → สิ่งที่ต้องทำ → รายการล่าสุด → ตารางสรุป) ═══ */
   .hm-hero{ display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
   .hm-hero h2{ font-size:19px; font-weight:700; color:#1F2733; }
@@ -496,10 +559,6 @@
   #board-wrap .bd-typehd{ display:flex; align-items:center; gap:8px; font-weight:700; font-size:15px; margin:18px 2px 11px; padding-left:11px; border-left:4px solid; }
   #board-wrap .bd-typehd:first-child{ margin-top:2px; }
 
-  /* ปุ่มคู่มือ: ชิดมุมล่างขวา ไม่บังเนื้อหา (แก้ .help-fab ซ้ำใน user.css ที่ดันขึ้น bottom:82px) */
-  .help-fab{ bottom:14px !important; right:16px !important; padding:9px 14px; font-size:13.5px; box-shadow:0 4px 12px rgba(27,114,232,.32); opacity:.92; }
-  .help-fab:hover{ opacity:1; }
-  @media(max-width:1023px){ .help-fab{ bottom:84px !important; right:12px !important; } }  /* มือถือ: เหนือแถบเมนูล่าง */
 
   /* ── มือถือ: เมนู "กลุ่ม" ล่าง + แท็บย่อยบน (คอมไม่แตะ · ยังใช้ sidebar เดิม) ── */
   .mtabs, .mnav{ display:none; }
@@ -672,8 +731,8 @@
     <div class="nav-brand"><span class="nb-logo"><img src="mascot-wave2.png" alt="ยินดี"></span><div class="nb-txt">Moodata Yindee<small>ทีมงาน</small></div></div>
 
     <div class="nav-sec">ภาพรวม</div>
-    <button class="nav-btn active" data-view="home" aria-label="ภาพรวม">
-      <svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10V20h13V10"/><path d="M10 20v-5h4v5"/></svg><span>ภาพรวม</span></button>
+    <button class="nav-btn active" data-view="portal" aria-label="หน้าแรก">
+      <svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10V20h13V10"/><path d="M10 20v-5h4v5"/></svg><span>หน้าแรก</span></button>
 
     <div class="nav-sec">งาน</div>
     <button class="nav-btn" data-view="projects" aria-label="บอร์ดงาน">
@@ -746,7 +805,8 @@
 
   <nav id="mnav" class="mnav"></nav>
 
-  <button id="helpFab" class="help-fab" type="button" aria-label="คู่มือการใช้งาน" onclick="openHelp()"><span class="hf-ic">📖</span><span class="hf-tx">คู่มือ</span></button>
+  <!-- ปุ่มคู่มือลอยมุมขวาล่าง ถอดออก 5 ก.ย. 2569 — มีการ์ด 📖 คู่มือการใช้งาน บนหน้าเลือกโมดูลแล้ว
+       (openHelp() ยังอยู่ ใช้จากการ์ดนั้น) -->
 </div>
 
 <div id="toast" class="toast"></div>
@@ -759,6 +819,7 @@
   // ═══════════════════════════════
 
   var UID='', IDTOKEN='', NICK='', VIEW='', IS_OWNER=false, CAN_FIN=false;
+  var CURMOD='';   // โมดูลที่กำลังเปิด ('' = อยู่หน้าเลือกโมดูล → แถบซ้ายซ่อน)
   var TYPES=[], QUOTA=null, LEAVES=[], HOLIDAYS=[], SCHEDULE=null, LV_TEAM=[];
   var CAL=new Date();   // เดือนที่ปฏิทินแสดงอยู่
   var LF = { type:'sick', start:null, end:null, period:'full', reason:'', stime:'', etime:'' };  // start/end = Date|null
@@ -767,7 +828,7 @@
   var TH_DOW = ['อา','จ','อ','พ','พฤ','ศ','ส'];
   var MENAME='', MEUID='', TEAM=[], CUSTOMERS=[];   // งาน (MEUID = userId ผู้ใช้ · ใช้กรอง "งานของฉัน" + ตัดตัวเองจาก dropdown มอบหมาย)
   var VIEW_META = {
-    home:['🏠','ภาพรวม'], clock:['🕐','ลงเวลา'],
+    portal:['🧭','หน้าแรก'], payroll:['💰','ระบบเงินเดือน'], modsoon:['🚧','กำลังพัฒนา'], home:['🏠','ภาพรวมประจำวัน'], clock:['🕐','ลงเวลา'],
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
     expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติเบิกจ่าย'],
     expdash:['📊','รายจ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ทะเบียนการจ่าย'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','ภาษีซื้อ/ภ.พ.30'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ทะเบียนใบสำคัญจ่าย'], sales:['💰','รายรับ'], ar:['📊','ลูกหนี้ค้างรับ'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51']
@@ -828,14 +889,23 @@
   function switchView(v){
     if(VIEW==='clock' && v!=='clock') clkStop();   // ออกจากหน้าลงเวลา = ปิดกล้องเสมอ
     VIEW=v;
+    // โมดูลต้องตามหน้าที่เปิดเสมอ — ลิงก์ตรงจากแชท (?p=leave) ก็เข้าโมดูลถูกตัว
+    setModule(v==='portal' ? '' : ((modOfView(v)||{}).key || CURMOD));
+    if(CURMOD) MG_LAST[CURMOD]=v;
     Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(b){ b.classList.toggle('active', b.dataset.view===v); });
     var meta=VIEW_META[v]||['•',v];
     // ไอคอนแถบบน = ไอคอนเส้นของหมวดที่หน้านี้อยู่ (เรียบ ไม่สีสัน · พี่กี้ขอ 30 ก.ค.) · fallback emoji
-    var g=mGroupOf(v), gi=g&&GROUP_ICON[g.key];
-    if(gi) $('tbIcon').innerHTML=gi; else $('tbIcon').textContent=meta[0];
+    if(v==='portal'){   // หน้าเลือกโมดูล = แถบบนเป็นแบรนด์ ไม่ใช่ชื่อเมนู
+      $('tbIcon').innerHTML='<img src="mascot-wave2.png" alt="" style="width:26px;height:26px;object-fit:contain;vertical-align:middle">';
+      $('tbTitle').textContent='Moodata Yindee';
+      mSyncNav(v); renderPortal(); return;
+    }
+    var mm=modOfView(v), gi=mm&&MOD_ICON[mm.key];
+    // ไอคอนแถบบน = ไอคอนโมดูลของหน้านี้ (สีเดียว ไม่ใช่พื้นสี — อยู่บนแถบสีอยู่แล้ว)
+    if(gi) $('tbIcon').innerHTML=gi.replace('stroke-width="1.9"','stroke-width="2"'); else $('tbIcon').textContent=meta[0];
     $('tbTitle').textContent=meta[1];
     mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
-    ({ home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51 }[v] || soon)();
+    ({ portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51 }[v] || soon)();
   }
 
   // ───── มือถือ: เมนูกลุ่ม (ล่าง) + แท็บย่อย (บน) · คอมใช้ sidebar เดิม ไม่เกี่ยว ─────
@@ -844,7 +914,7 @@
   //    เพราะพี่สวม 2 บทบาท เมนูเดิมปนกัน (กลุ่ม "ลา" มีทั้งลาของฉันและอนุมัติลา)
   //    ลำดับ: งานบริษัทก่อน (งาน → HR → การเงิน) แล้วปิดท้ายด้วยเรื่องของตัวเอง (พี่กี้ขอ 30 ก.ค.)
   var NAV_GROUPS=[
-    { key:'home', icon:'🏠', label:'ภาพรวม', views:['home'] },
+    { key:'home', icon:'🏠', label:'หน้าแรก', views:['portal'] },   // หน้าแรก = เลือกโมดูล + สรุปประจำวัน (5 ก.ย.)
     { key:'work', icon:'📊', label:'งาน',    views:['projects','mytasks','review','senddoc','appt','announce','trash'] },
     { key:'hr',   icon:'👥', label:'HR',     views:['approve','otapprove','hrreport'] },
     { key:'fin',  icon:'💰', label:'การเงิน', views:['bizdash','sales','ar','salesreport','reimb','expdash','petty','payout','poreport','expreport','taxhub','vatbuy','pnd51','whtin','finreport','taxdoc'] },
@@ -862,18 +932,160 @@
     hr:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3.2"/><path d="M3 19.5c0-3.2 2.7-5 6-5s6 1.8 6 5"/><path d="M16 6.2a3.2 3.2 0 0 1 0 6"/><path d="M17.5 14.8c2.1.5 3.5 2 3.5 4.7"/></svg>',
     fin:'<svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="11" rx="2"/><circle cx="12" cy="12" r="2.4"/><path d="M6.5 9.5v5M17.5 9.5v5"/></svg>'
   };
+  /* ═══════════ โมดูล (หน้าเลือกโมดูล) — spec docs/spec-module-portal.md ═══════════
+     พี่กี้ 5 ก.ย. 2569: อยากให้หน้าเว็บแยกเป็นโมดูลแบบ TRCloud แทนที่จะยัดทุกเมนูรวมกัน
+     (หมวด 💰 การเงินบวมเป็น 17 เมนู จนโดน CSS ตัดเมนูหายมาแล้ว 4 ก.ย.)
+     ⚠️ views ที่นี่ต้องครบทุก view ของ NAV_GROUPS — ไม่งั้นเมนูหายไปจากระบบเงียบ ๆ
+     ⚠️ own:true = เห็นเฉพาะพี่/ผู้ดูแล · การ์ดที่ไม่มีสิทธิ์ "ไม่แสดง" ไม่ใช่แสดงแบบจาง
+     ⚠️ ซ่อนการ์ด ≠ กันข้อมูล — backend กรองสิทธิ์เองอีกชั้นเสมอ */
+  /* ไอคอนปุ่มเมนูที่ระบบสร้างเอง (ไม่มีใน markup) — เส้นสีเดียวเข้าชุดกับปุ่มอื่น */
+  var VIEW_ICON_EXTRA={
+    home:'<svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10V20h13V10"/><path d="M10 20v-5h4v5"/></svg>',
+    payroll:'<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9.5h18"/><path d="M7 14h4M15.5 14h1.5"/></svg>'
+  };
+  var MOD_ICON={
+    fin:'<svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="11" rx="2"/><circle cx="12" cy="12" r="2.4"/><path d="M6.5 9.5v5M17.5 9.5v5"/></svg>',
+    tax:'<svg viewBox="0 0 24 24"><path d="M3 10 12 4l9 6"/><path d="M5 10v9M12 10v9M19 10v9"/><path d="M3 20h18"/></svg>',
+    hr:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3.2"/><path d="M3 19.5c0-3.2 2.7-5 6-5s6 1.8 6 5"/><path d="M16 6.2a3.2 3.2 0 0 1 0 6"/><path d="M17.5 14.8c2.1.5 3.5 2 3.5 4.7"/></svg>',
+    payroll:'<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9.5h18"/><path d="M7 14h4M15.5 14h1.5"/></svg>',
+    work:'<svg viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="7" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="6" rx="1.5"/><rect x="14" y="14" width="7" height="6" rx="1.5"/></svg>',
+    me:'<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c0-3.6 3.1-5.6 7-5.6s7 2 7 5.6"/></svg>',
+    acct:'<svg viewBox="0 0 24 24"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H18a2 2 0 0 1 2 2v14H6a2 2 0 0 1-2-2z"/><path d="M8 8.5h7M8 12h7M8 15.5h4"/></svg>',
+    docsys:'<svg viewBox="0 0 24 24"><path d="M4 6.5A1.5 1.5 0 0 1 5.5 5h4l1.6 2H19a1.5 1.5 0 0 1 1.5 1.5V18a1.5 1.5 0 0 1-1.5 1.5H5.5A1.5 1.5 0 0 1 4 18z"/></svg>',
+    audit:'<svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="5.5"/><path d="M14.6 14.6 20 20"/><path d="M8.2 10.6l1.7 1.7 3-3.2"/></svg>',
+    dev:'<svg viewBox="0 0 24 24"><path d="M8.5 9 5 12.5 8.5 16"/><path d="M15.5 9l3.5 3.5-3.5 3.5"/><path d="M13 6.5l-2 11"/></svg>',
+    guide:'<svg viewBox="0 0 24 24"><path d="M4 5.5A2 2 0 0 1 6 4h5v16H6a2 2 0 0 0-2 1.5z"/><path d="M20 5.5A2 2 0 0 0 18 4h-5v16h5a2 2 0 0 1 2 1.5z"/></svg>',
+    logout:'<svg viewBox="0 0 24 24"><path d="M12 4v8"/><path d="M7.5 6.5a7.5 7.5 0 1 0 9 0"/></svg>'
+  };
+  /* ลำดับการ์ดตามที่พี่กี้เรียง 5 ก.ย. (4 ใบต่อแถวบนจอคอม):
+     แถว 1 การเงิน · บัญชี · ภาษี · ตรวจสอบ
+     แถว 2 งาน · บุคคล · เอกสาร · พนักงาน
+     แถว 3 พัฒนา · คู่มือ · ออกจากระบบ
+     g = สีไล่ระดับของไอคอน (2 สี) — การ์ดเป็นกระจกฝ้า สีจึงมาจากไอคอนเป็นหลัก */
+  var MODULES=[
+    { key:'fin',     th:'ระบบการเงิน',  en:'FINANCE',     color:'#1E8FE1', g:['#38bdf8','#1d4ed8'], own:true,
+      views:['bizdash','sales','ar','salesreport','reimb','expdash','petty','payout','poreport','expreport','finreport'],
+      sec:[ ['', ['bizdash']],
+            ['รายรับ', ['sales','ar','salesreport','reimb']],
+            ['รายจ่าย', ['expdash','petty','payout','poreport']],
+            ['รายงาน', ['expreport','finreport']] ] },
+    { key:'acct',    th:'ระบบบัญชี',    en:'ACCOUNTING',  color:'#1e3a8a', g:['#818cf8','#1e3a8a'], own:true, views:[],
+      soon:'ผังบัญชี · สมุดรายวัน · งบทดลอง · งบการเงิน' },
+    { key:'tax',     th:'ระบบภาษี',     en:'TAX',         color:'#7A5AF8', g:['#c084fc','#6d28d9'], own:true,
+      views:['taxhub','vatbuy','pnd51','whtin','taxdoc'] },
+    { key:'audit',   th:'ระบบตรวจสอบ',  en:'AUDIT',       color:'#be123c', g:['#fb7185','#9f1239'], own:true, views:[],
+      soon:'ยังไม่กำหนดขอบเขต — จองที่ไว้ก่อน' },
+
+    { key:'work',    th:'ระบบงาน',      en:'WORK',        color:'#3f4658', g:['#64748b','#1e293b'], own:false,
+      views:['home','projects','mytasks','review','senddoc','appt','announce','trash'] },
+    { key:'hr',      th:'ระบบบุคคล',    en:'HR & PAYROLL',color:'#168a52', g:['#34d399','#047857'], own:true,
+      views:['approve','otapprove','hrreport','payroll'],
+      sec:[ ['', ['approve','otapprove','hrreport']], ['เงินเดือน', ['payroll']] ] },
+    { key:'docsys',  th:'ระบบเอกสาร',   en:'DOCUMENTS',   color:'#a16207', g:['#fbbf24','#a16207'], own:true, views:[],
+      soon:'เอกสารภายในบริษัท — สัญญา · หนังสือรับรอง · ระเบียบบริษัท · แฟ้มเอกสารกลาง' },
+    { key:'me',      th:'พนักงาน',      en:'MY PROFILE',  color:'#0EA5A5', g:['#2dd4bf','#0f766e'], own:false,
+      views:['clock','leave','ot','expense','docs'] },
+
+    { key:'dev',     th:'ระบบพัฒนา',    en:'FEEDBACK',    color:'#4f46e5', g:['#818cf8','#4338ca'], own:false, views:[],
+      soon:'รับคอมเมนต์ · แจ้งบั๊ก · คำขอปรับปรุงจากผู้ใช้และลูกค้า → เก็บเป็นรายการไว้พัฒนาต่อ' },
+    { key:'guide',   th:'คู่มือการใช้งาน', en:'USER MANUAL', color:'#64748b', g:['#94a3b8','#475569'], own:false, act:'guide' },
+    { key:'logout',  th:'ออกจากระบบ',   en:'LOG OUT',     color:'#94a3b8', g:['#cbd5e1','#64748b'], own:false, act:'logout' }
+  ];
+  function modOfView(v){
+    for(var i=0;i<MODULES.length;i++){ var m=MODULES[i];
+      if(m.views && m.views.indexOf(v)>=0) return m; }
+    return null;
+  }
+  /* เปลี่ยนโมดูล → สร้างแถบซ้าย/แถบมือถือใหม่ · '' = หน้าเลือกโมดูล (ซ่อนแถบทั้งหมด เต็มจอ) */
+  var _modInit=false;
+  function setModule(key){
+    key=key||'';
+    if(_modInit && CURMOD===key) return;   // ครั้งแรกต้องผ่านเสมอ — ไม่งั้น class pmode ไม่ถูกใส่
+    _modInit=true; CURMOD=key;
+    var app=$('app'); if(app) app.classList.toggle('pmode', !CURMOD);
+    buildNavForModule();
+  }
+  function modOf(key){ for(var i=0;i<MODULES.length;i++){ if(MODULES[i].key===key) return MODULES[i]; } return null; }
+  /* view ที่ผู้ใช้คนนี้เข้าได้จริงในโมดูล (กรองด้วย OWNER_VIEWS ชุดเดิม ไม่คิดกติกาใหม่) */
+  function modViews(m){ return (m.views||[]).filter(function(v){ return IS_OWNER || !OWNER_VIEWS[v]; }); }
+  function modVisible(m){
+    if(m.act) return true;                       // คู่มือ/ออกจากระบบ = ทุกคน
+    if(m.own && !IS_OWNER) return false;
+    if(m.soon) return true;                      // โมดูลที่จองที่ไว้ — โชว์การ์ด กดแล้วบอกว่ากำลังจะมา
+    return modViews(m).length>0;
+  }
+
+  // ═══════════ VIEW: 🧭 เลือกโมดูล (หน้าแรกใหม่) ═══════════
+  // การ์ดโมดูลด้านบน + สรุปประจำวัน (renderHome เดิม) ต่อท้ายในหน้าเดียว — เปิดเว็บมาเห็นครบ ไม่ต้องกดเพิ่ม
+  function renderPortal(){
+    var cards=MODULES.filter(modVisible).map(function(m){
+      return '<button class="pt-c" data-mod="'+esc(m.key)+'">'+
+        '<div class="pt-ic" style="background:linear-gradient(140deg,'+(m.g?m.g[0]:m.color)+','+(m.g?m.g[1]:m.color)+')">'+MOD_ICON[m.key]+'</div>'+
+        '<div class="pt-th">'+esc(m.th)+'</div><div class="pt-en">'+esc(m.en)+'</div>'+
+        '<div class="pt-go">เข้าใช้งาน →</div></button>';
+    }).join('');
+    // พี่กี้ 5 ก.ย.: ไม่เอาชื่อผู้ใช้ในคำทักทาย — ใช้ "สวัสดีค่ะ ยินดีค่ะ" เหมือนกันทุกคน
+    $('main').innerHTML='<div class="pt-hero"><h2>สวัสดีค่ะ ยินดีค่ะ</h2>'+
+      '<p>เลือกระบบที่ต้องการเข้าใช้งาน · Choose an application</p></div>'+
+      '<div class="pt-grid">'+cards+'</div>';
+    Array.prototype.forEach.call(document.querySelectorAll('.pt-c'), function(b){
+      b.addEventListener('click', function(){ openModule(b.getAttribute('data-mod')); }); });
+  }
+  /* กดการ์ด → เข้าเมนูแรกของโมดูล (หรือเมนูล่าสุดที่เคยอยู่) · การ์ดพิเศษทำงานของตัวเอง */
+  function openModule(key){
+    var m=modOf(key); if(!m) return;
+    if(m.act==='guide'){ openHelp(); return; }   // ฟังก์ชันเดิมของระบบ (เปิดคู่มือผ่าน liff.openWindow)
+    if(m.act==='logout'){ doLogout(); return; }
+    var vs=modViews(m);
+    if(!vs.length){ setModule(key); switchView('modsoon'); return; }
+    setModule(key);
+    switchView(MG_LAST[key] && vs.indexOf(MG_LAST[key])>=0 ? MG_LAST[key] : vs[0]);
+  }
+  window.openModule=openModule;
+  /* ⏻ ออกจากระบบ — ยินดีล็อกอินด้วย LINE ไม่มีหน้าล็อกอินของตัวเอง
+     บนคอม: liff.logout() ได้ผลจริง → reload แล้ว liff.login() เด้งหน้า LINE Login
+     ในแอป LINE: LINE ล็อกอินกลับให้อัตโนมัติ = เหมือนไม่มีอะไรเกิดขึ้น
+     → M5 จะทำหน้าต้อนรับคั่นให้รู้สึกว่าออกจริงทั้ง 2 ที่ (spec §9) */
+  function doLogout(){
+    if(!confirm('ออกจากระบบ?')) return;
+    try{ localStorage.clear(); }catch(e){}
+    try{ if(window.liff && liff.logout) liff.logout(); }catch(e){}
+    location.reload();
+  }
+  /* โมดูลที่จองที่ไว้ (ยังไม่มีเมนู) — บอกให้ชัดว่าจะมีอะไร ไม่ใช่กดแล้วเจอหน้าว่าง */
+  function renderModSoon(){
+    var m=modOf(CURMOD);
+    if(!m){ renderPortal(); return; }
+    $('main').innerHTML='<div class="card"><div class="soon-wrap">'+
+      '<div class="e-emo" style="display:inline-flex;width:56px;height:56px;border-radius:15px;align-items:center;justify-content:center;background:'+m.color+'">'+
+      MOD_ICON[m.key]+'</div>'+
+      '<b style="display:block;margin-top:12px;font-size:16px">'+esc(m.th)+' — กำลังพัฒนา</b>'+
+      '<span style="font-size:13px">'+esc(m.soon||'')+'</span></div></div>';
+  }
+  /* 💰 ระบบเงินเดือน — ยังทำงานผ่านเมนูในชีตล้วน (Payroll.gs / PayrollSlip.gs ไม่มี route wa* สักตัว)
+     พี่กี้เคาะ 5 ก.ย.: รอบนี้เอาการ์ดขึ้นก่อน หน้าเว็บจริงคุยรอบหน้า */
+  function renderPayrollStub(){
+    $('main').innerHTML='<div class="card"><div class="soon-wrap"><div class="e-emo">💰</div>'+
+      '<b>ระบบเงินเดือนยังทำงานผ่านเมนูในชีต</b><br>'+
+      '<span style="font-size:13px">เปิดไฟล์เงินเดือน → เมนู 💰 แล้วใช้: สร้างชีตเดือนใหม่ · คำนวณ YTD · ออกสลิป · ส่งสลิปเข้า LINE<br>'+
+      'หน้าเว็บของระบบเงินเดือนกำลังจะตามมาค่ะ</span></div></div>';
+  }
+
+
   /** พนักงาน: หน้า "สรุปค่าใช้จ่าย" (expdash) เป็นของตัวเอง → ย้ายไปหมวดส่วนตัว
    *  พี่/HR: หน้าเดียวกันคือ "สรุป/อนุมัติเบิก" ของทั้งทีม → คงอยู่หมวดการเงิน
    *  (mutate NAV_GROUPS ครั้งเดียวหลังรู้สิทธิ์ → ทั้ง sidebar และแถบมือถือเห็นชุดเดียวกัน) */
   function navApplyRole(){
     if(IS_OWNER) return;
-    var fin=NAV_GROUPS.filter(function(g){ return g.key==='fin'; })[0];
-    var me=NAV_GROUPS.filter(function(g){ return g.key==='me'; })[0];
-    if(!fin||!me) return;
-    var i=fin.views.indexOf('expdash');
-    if(i>=0){ fin.views.splice(i,1); if(me.views.indexOf('expdash')<0) me.views.push('expdash'); }
+    [NAV_GROUPS, MODULES].forEach(function(list){
+      var fin=list.filter(function(g){ return g.key==='fin'; })[0];
+      var me=list.filter(function(g){ return g.key==='me'; })[0];
+      if(!fin||!me) return;
+      var i=fin.views.indexOf('expdash');
+      if(i>=0){ fin.views.splice(i,1); if(me.views.indexOf('expdash')<0) me.views.push('expdash'); }
+    });
   }
-  var VIEW_TAB={ home:'ภาพรวม', projects:'บอร์ดงาน', mytasks:'งานของฉัน', review:'รอตรวจ', trash:'ถังขยะ',
+  var VIEW_TAB={ portal:'หน้าแรก', payroll:'ระบบเงินเดือน', modsoon:'กำลังพัฒนา', home:'ภาพรวมประจำวัน', projects:'บอร์ดงาน', mytasks:'งานของฉัน', review:'รอตรวจ', trash:'ถังขยะ',
     senddoc:'ส่งงานลูกค้า', appt:'นัดประชุม', announce:'ประกาศ',
     leave:'ลาของฉัน', approve:'อนุมัติลา', expense:'เบิกของฉัน', expapprove:'อนุมัติเบิก',
     expdash:'รายจ่าย', reimb:'ตั้งเบิกลูกค้า', petty:'เงินสดย่อย', payout:'ทะเบียนการจ่าย', expreport:'รายงานรายจ่าย', taxhub:'รายงานภาษี', whtin:'50 ทวิ ที่ถูกหัก', vatbuy:'ภาษีซื้อ',
@@ -888,71 +1100,118 @@
   function mGroupOf(v){ for(var i=0;i<NAV_GROUPS.length;i++){ if(NAV_GROUPS[i].views.indexOf(v)>=0) return NAV_GROUPS[i]; } return null; }
   function mBuildGroupBar(){
     var el=$('mnav'); if(!el) return;
-    // กลุ่มที่ทุก view เป็นของผู้ดูแล (เช่น 📊 รายงาน) ต้องไม่โผล่ให้พนักงาน — ไม่งั้นกดแล้วไม่มีอะไรเกิดขึ้น
-    el.innerHTML=NAV_GROUPS.filter(function(g){ return mVisibleViews(g).length; }).map(function(g){
-      return '<button class="mnav-btn'+(g.key===MGROUP?' on':'')+'" onclick="mSelectGroup(\''+g.key+'\')">'+
-        '<span class="mn-ic">'+(GROUP_ICON[g.key]||g.icon)+'</span>'+esc(g.label)+'</button>';
+    // ปุ่มแรก = กลับหน้าเลือกโมดูล · ที่เหลือ = โมดูลที่ผู้ใช้คนนี้มีสิทธิ์ (คู่มือ/ออกจากระบบ อยู่บนหน้าเลือกโมดูล)
+    var html='<button class="mnav-btn" data-mnav="__home"><span class="mn-ic">'+GROUP_ICON.home+'</span>หน้าแรก</button>';
+    html+=MODULES.filter(function(m){ return !m.act && modVisible(m); }).map(function(m){
+      return '<button class="mnav-btn'+(m.key===CURMOD?' on':'')+'" data-mnav="'+esc(m.key)+'">'+
+        '<span class="mn-ic">'+MOD_ICON[m.key]+'</span>'+esc(m.th)+'</button>';
     }).join('');
+    el.innerHTML=html;
+    Array.prototype.forEach.call(el.querySelectorAll('.mnav-btn'), function(b){
+      b.addEventListener('click', function(){
+        var k=b.getAttribute('data-mnav');
+        if(k==='__home') switchView('portal'); else openModule(k);
+      });
+    });
   }
   function mRenderTabs(){
     var el=$('mtabs'); if(!el) return;
-    var g=mGroupOf(VIEW); if(!g){ el.innerHTML=''; return; }
-    var vis=mVisibleViews(g);
-    if(vis.length<=1){ el.innerHTML=''; return; }   // กลุ่มมีหัวข้อเดียว → ไม่ต้องโชว์แท็บ
+    var m=modOf(CURMOD); if(!m || m.act){ el.innerHTML=''; return; }
+    var vis=modViews(m);
+    if(vis.length<=1){ el.innerHTML=''; return; }
     el.innerHTML=vis.map(function(v){
-      return '<button class="mtab'+(v===VIEW?' on':'')+'" onclick="switchView(\''+v+'\')">'+esc(VIEW_TAB[v]||v)+'</button>';
+      return '<button class="mtab'+(v===VIEW?' on':'')+'" data-mtab="'+esc(v)+'">'+esc(VIEW_TAB[v]||v)+'</button>';
     }).join('');
+    Array.prototype.forEach.call(el.querySelectorAll('.mtab'), function(b){
+      b.addEventListener('click', function(){ switchView(b.getAttribute('data-mtab')); });
+    });
   }
   function mSyncNav(v){
-    var g=mGroupOf(v); if(g){ MGROUP=g.key; MG_LAST[g.key]=v; }
-    mBuildGroupBar(); mRenderTabs(); navSyncGroups(v);
+    mBuildGroupBar(); mRenderTabs();
   }
 
   // ───── คอม: sidebar จัดกลุ่มแบบพับ/คลี่ (พี่กี้เคาะ 30 ก.ค. 2569 — ให้เป็นกลุ่มเหมือนแอปมือถือ) ─────
   // ใช้ NAV_GROUPS ชุดเดียวกับแถบมือถือ (source เดียว ไม่ drift) · ย้ายปุ่มเดิมใน markup เข้ากลุ่ม
   // (ไม่ generate ปุ่มใหม่ → ไอคอน SVG เดิมอยู่ครบ) · กลุ่มที่มีหัวข้อเดียวไม่ต้องพับ กดเข้าได้เลย
-  function buildNavGroups(){
-    var nav=document.querySelector('.nav'); if(!nav || nav.dataset.grouped) return;
-    Array.prototype.forEach.call(nav.querySelectorAll('.nav-sec'), function(s){ s.parentNode.removeChild(s); });
-    NAV_GROUPS.forEach(function(g){
-      var btns=mVisibleViews(g).map(function(v){ return nav.querySelector('.nav-btn[data-view="'+v+'"]'); })
-        .filter(function(b){ return !!b; });
-      if(!btns.length) return;
-      var wrap=document.createElement('div'); wrap.className='nav-g'; wrap.setAttribute('data-g',g.key);
-      if(btns.length===1){ btns[0].classList.add('solo'); wrap.appendChild(btns[0]); }   // กลุ่มเดี่ยว = ปุ่มเดียวจบ
-      else {
-        var head=document.createElement('button');
-        head.type='button'; head.className='nav-gh';
-        head.innerHTML='<span class="gi">'+(GROUP_ICON[g.key]||g.icon)+'</span>'+
-          '<span class="gl">'+esc(g.label)+'</span><span class="gc">›</span>';
-        head.addEventListener('click', function(){ navToggleGroup(g.key); });
-        var body=document.createElement('div'); body.className='nav-gb';
-        btns.forEach(function(b){ body.appendChild(b); });
-        wrap.appendChild(head); wrap.appendChild(body);
-      }
-      nav.appendChild(wrap);
-    });
-    // ปุ่มที่ไม่ได้เข้ากลุ่มไหน (สิทธิ์ไม่ถึง / ยังไม่เปิดใช้ เช่น ภาษี-เอกสาร) ต้องไม่ค้างลอยท้ายเมนู
-    // ⚠️ ต้อง copy เป็น array ก่อนลบ — nav.children เป็น live collection ลบไปวนไป index เลื่อน ลบไม่ครบ
-    Array.prototype.slice.call(nav.children).forEach(function(el){
-      if(el.classList.contains('nav-btn')) el.parentNode.removeChild(el);
-    });
-    nav.dataset.grouped='1';
-    navSyncGroups(VIEW);
+  /* สร้างแถบซ้ายใหม่ตาม "โมดูลที่กำลังเปิด" (พี่กี้เคาะ 5 ก.ย.: โชว์ทุกเมนู ไม่พับ)
+     ⚠️ ปุ่มเมนูเป็น markup คงที่ — เวลาไม่ใช้ต้อง "เก็บ" เข้า #navPool ไม่ใช่ลบทิ้ง
+        (โค้ดเดิมลบทิ้ง ถ้าทำแบบนั้นกับโมดูล พอสลับกลับมาจะไม่มีปุ่มเหลือ)
+     ⚠️ สร้างใหม่ได้ทุกครั้ง — ไม่ล็อกด้วย dataset.grouped เหมือนเดิม */
+  function navPool_(){
+    var el=$('navPool');
+    if(!el){ el=document.createElement('div'); el.id='navPool'; document.body.appendChild(el); }
+    return el;
   }
+  function buildNavForModule(){
+    var nav=document.querySelector('.nav'); if(!nav) return;
+    var pool=navPool_();
+    Array.prototype.forEach.call(nav.querySelectorAll('.nav-btn'), function(b){ pool.appendChild(b); });
+    Array.prototype.slice.call(nav.children).forEach(function(el){
+      if(!el.classList.contains('nav-brand')) nav.removeChild(el);      // เหลือแบรนด์ไว้ตัวเดียว
+    });
+    var m=modOf(CURMOD); if(!m || m.act) return;                        // อยู่หน้าเลือกโมดูล = ไม่ต้องมีเมนู
+
+    var mh=document.createElement('div'); mh.className='nav-mh';
+    mh.innerHTML='<span class="mh-ic" style="background:'+m.color+'">'+MOD_ICON[m.key]+'</span>'+
+      '<span class="mh-tx">'+esc(m.th)+'</span>';
+    nav.appendChild(mh);
+
+    var back=document.createElement('button');
+    back.type='button'; back.className='nav-back';
+    back.innerHTML='<svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M15 5l-7 7 7 7"/></svg>ทุกโมดูล';
+    back.addEventListener('click', function(){ switchView('portal'); });
+    nav.appendChild(back);
+
+    var vs=modViews(m), secs=m.sec||null, done={};
+    /* ปุ่มส่วนใหญ่มีอยู่ใน markup แล้ว (ไอคอน SVG เดิมครบ) — view ที่เกิดทีหลังอย่าง
+       home/payroll ไม่มีปุ่ม ให้สร้างให้เอง ไม่งั้นเมนูหายไปเงียบ ๆ */
+    function mkBtn(v){
+      var b=document.createElement('button');
+      b.type='button'; b.className='nav-btn'; b.setAttribute('data-view',v);
+      b.setAttribute('aria-label', VIEW_TAB[v]||v);
+      b.innerHTML=(VIEW_ICON_EXTRA[v]||GROUP_ICON.home)+'<span>'+esc(VIEW_TAB[v]||v)+'</span>';
+      b.addEventListener('click', function(){ switchView(v); });
+      return b;
+    }
+    function addBtn(v){
+      var b=pool.querySelector('.nav-btn[data-view="'+v+'"]') || nav.querySelector('.nav-btn[data-view="'+v+'"]');
+      if(!b) b=mkBtn(v);
+      if(done[v]) return;
+      b.style.display='';        // สิทธิ์กรองด้วย modViews แล้ว — ปลดที่ซ่อนไว้ใน markup
+      b.classList.remove('solo');
+      nav.appendChild(b); done[v]=1;
+    }
+    function addSec(label){ var d=document.createElement('div');
+      d.className='nav-sec has-items';   // ⚠️ .nav-sec เปล่า ๆ ถูก CSS ซ่อน (display:none) ต้องมี has-items
+      d.textContent=label; nav.appendChild(d); }
+    if(secs){
+      secs.forEach(function(sc){
+        var list=sc[1].filter(function(v){ return vs.indexOf(v)>=0; });
+        if(!list.length) return;
+        if(sc[0]) addSec(sc[0]);
+        list.forEach(addBtn);
+      });
+    }
+    vs.forEach(addBtn);          // เมนูที่ไม่ได้อยู่ในช่วงไหน (หรือโมดูลที่ไม่แบ่งช่วง) ต่อท้ายเสมอ
+
+    var mods=document.createElement('div'); mods.className='nav-mods';
+    MODULES.filter(function(x){ return !x.act && modVisible(x); }).forEach(function(x){
+      var b=document.createElement('button');
+      b.type='button'; b.className='nm'+(x.key===CURMOD?' on':''); b.title=x.th;
+      b.style.background=x.color; b.innerHTML=MOD_ICON[x.key];
+      b.addEventListener('click', function(){ openModule(x.key); });
+      mods.appendChild(b);
+    });
+    nav.appendChild(mods);
+  }
+  function buildNavGroups(){ buildNavForModule(); }   // ชื่อเดิมที่ start() เรียกอยู่
+
   function navToggleGroup(key){
     var el=document.querySelector('.nav-g[data-g="'+key+'"]');
     if(el) el.classList.toggle('open');
   }
-  /** คลี่กลุ่มของหน้าที่กำลังเปิด (กลุ่มอื่นที่ผู้ใช้คลี่ไว้เอง ปล่อยไว้ ไม่หุบให้) */
-  function navSyncGroups(v){
-    var g=mGroupOf(v); if(!g) return;
-    var el=document.querySelector('.nav-g[data-g="'+g.key+'"]');
-    if(el) el.classList.add('open');
-    Array.prototype.forEach.call(document.querySelectorAll('.nav-g'), function(x){
-      x.classList.toggle('cur', x.getAttribute('data-g')===g.key);
-    });
-  }
+  /* ไม่มีกลุ่มพับแล้ว (แยกโมดูลแทน) — ปุ่ม active จัดการใน switchView */
+  function navSyncGroups(v){ }
   window.navToggleGroup=navToggleGroup;
   function mSelectGroup(gkey){
     var g=null; for(var i=0;i<NAV_GROUPS.length;i++){ if(NAV_GROUPS[i].key===gkey){ g=NAV_GROUPS[i]; break; } }
@@ -970,19 +1229,24 @@
   // dashboard มาตรฐาน 4 ชั้น: ① ตัวเลขสำคัญ (KPI) ② ⚡ ต้องทำ ③ รายการล่าสุด ④ ตารางสรุป HR/การเงิน
   // พนักงานเห็นของตัวเอง · พี่เห็นทั้งทีม — ทุกตัวเลขมาจาก backend (waHomeDash) ที่กรองสิทธิ์แล้ว
   // หน้าจอไม่คำนวณเอง ไม่ตัดสินสิทธิ์เอง (ยกเว้นเลือกว่าจะโชว์ช่องไหน จาก r.isOwner ที่ backend ส่งมา)
-  function renderHome(){
-    skel();
+  function renderHome(target){
+    var TG=target||'main';                       // portal ส่ง 'ptDash' มา → วาดสรุปใต้การ์ดโมดูล
+    function box(){ return $(TG)||$('main'); }
+    if(TG==='main') skel();
     jsonp({action:'waHomeDash',uid:UID}).then(function(r){
       if(VIEW!=='home') return;
-      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      var $main=box(); if(!$main) return;
+      if(!r||!r.ok){ $main.innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
       var own=!!r.isOwner;
-      var html='<div class="hm-hero"><h2>สวัสดีค่ะ '+esc(r.nick||'')+'</h2>'+
-        '<span class="hp">ข้อมูลเดือน '+esc(r.monthThai||r.ym||'')+'</span></div>';
+      var html = (TG==='main')
+        ? ('<div class="hm-hero"><h2>สวัสดีค่ะ ยินดีค่ะ</h2>'+
+           '<span class="hp">ข้อมูลเดือน '+esc(r.monthThai||r.ym||'')+'</span></div>')
+        : '';   // ใน portal หัวทักทายอยู่บนการ์ดโมดูลแล้ว — ไม่วาดซ้ำ
       html+=hmKpis(r,own);
       html+='<div class="hm-2">'+hmTodoPanel(r.todo||[])+hmRecentPanel(r.recent)+'</div>';
       html+='<div class="hm-2">'+hmHrPanel(r,own)+hmMoneyPanel(r,own)+'</div>';
-      $('main').innerHTML=html;
-    }).catch(function(e){ if(VIEW==='home') $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
+      $main.innerHTML=html;
+    }).catch(function(e){ var b=box(); if(b && (VIEW==='home'||VIEW==='portal')) b.innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
   }
   /** ① แถวตัวเลขสำคัญ — 4 ช่อง กดแล้วเด้งไปหน้านั้น · พี่เห็นเลขทีม พนักงานเห็นเลขตัวเอง */
   function hmKpis(r,own){
@@ -7895,7 +8159,7 @@
       // 'reports' = ชื่อเดิมของหน้ารายงาน (ก่อนแยก HR/การเงิน) — คงรับไว้ให้ลิงก์เก่าเปิดได้
       var spv = sp==='reports' ? 'hrreport' : sp;
       var startView = spv==='docs' ? 'docs' : ((spv==='projects'||spv==='tasks') ? 'projects' : (spv==='expense' ? 'expense' :
-        (spv==='leave' ? 'leave' : ((spv==='approve'||spv==='expapprove'||spv==='hrreport'||spv==='finreport') && IS_OWNER ? spv : 'home'))));
+        (spv==='leave' ? 'leave' : ((spv==='approve'||spv==='expapprove'||spv==='hrreport'||spv==='finreport') && IS_OWNER ? spv : 'portal'))));
       switchView(startView);   // switchView → mSyncNav สร้างเมนูกลุ่มล่าง + แท็บบนให้เอง
       // อุ่นแคชเบื้องหลัง → คลิกการลา/เอกสารครั้งแรกเด้งทันที (ไม่แย่งจอแรกโหลด)
       setTimeout(function(){ if(!LVCACHE.data) _leaveFetch(true); if(IDTOKEN && !DOCCACHE.data) _docsFetch(true); if(!APPT_CUST.length) apFetchMeta(); if(!ANNOUNCE_GROUPS.length) anFetchGroups(); }, 900);
