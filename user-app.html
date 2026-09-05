@@ -887,6 +887,7 @@
 
   var UID='', IDTOKEN='', NICK='', VIEW='', IS_OWNER=false, CAN_FIN=false;
   var CURMOD='';   // โมดูลที่กำลังเปิด ('' = อยู่หน้าเลือกโมดูล → แถบซ้ายซ่อน)
+  var MODS_OPEN=null;   // โมดูลที่บริษัทเปิดใช้ (M6) · null/[] = เปิดครบ · backend ส่งมากับ waBootstrap
   var TYPES=[], QUOTA=null, LEAVES=[], HOLIDAYS=[], SCHEDULE=null, LV_TEAM=[];
   var CAL=new Date();   // เดือนที่ปฏิทินแสดงอยู่
   var LF = { type:'sick', start:null, end:null, period:'full', reason:'', stime:'', etime:'' };  // start/end = Date|null
@@ -1075,8 +1076,16 @@
   function modOf(key){ for(var i=0;i<MODULES.length;i++){ if(MODULES[i].key===key) return MODULES[i]; } return null; }
   /* view ที่ผู้ใช้คนนี้เข้าได้จริงในโมดูล (กรองด้วย OWNER_VIEWS ชุดเดิม ไม่คิดกติกาใหม่) */
   function modViews(m){ return (m.views||[]).filter(function(v){ return IS_OWNER || !OWNER_VIEWS[v]; }); }
+  /* โมดูลนี้บริษัทเปิดใช้ไหม (M6) — ด่านจริงอยู่ backend นี่แค่ไม่โชว์การ์ดที่กดไม่ได้ */
+  var MOD_CORE={ work:1, me:1, dev:1 };
+  function modOpen(key){
+    if(!MODS_OPEN) return true;                  // ว่าง = เปิดครบ
+    if(MOD_CORE[key]) return true;
+    return MODS_OPEN.indexOf(key)>=0;
+  }
   function modVisible(m){
     if(m.act) return true;                       // คู่มือ/ออกจากระบบ = ทุกคน
+    if(!modOpen(m.key)) return false;
     if(m.own && !IS_OWNER) return false;
     if(m.soon) return true;                      // โมดูลที่จองที่ไว้ — โชว์การ์ด กดแล้วบอกว่ากำลังจะมา
     return modViews(m).length>0;
@@ -8237,6 +8246,8 @@
         var n51=$('navPnd51'); if(n51) n51.style.display=''; }              // 📐 ภ.ง.ด.51 = พี่คนเดียว (backend pnd51Gate_ กันซ้ำอีกชั้น)           // 📊 ทะเบียนใบสำคัญจ่าย = พี่คนเดียว (backend poGate_ กันซ้ำอีกชั้น)
       // รายงานการเงินรวม = พี่ + HR ที่ตั้งใน Script Property (backend ตัดสิน ไม่ผูกกับ IS_OWNER)
       CAN_FIN=!!r.canFinance;
+      // โมดูลที่เปิดใช้ (M6) — ว่าง/ไม่ส่งมา = เปิดครบ (ระบบเดิมไม่กระทบ)
+      MODS_OPEN=(r.modules && r.modules.length) ? r.modules : null;
       if(CAN_FIN){ var nfr=$('navFinReport'); if(nfr) nfr.style.display=''; }
       navApplyRole();     // จัดหมวดตามสิทธิ์ (พนักงาน: สรุปค่าใช้จ่าย → หมวดส่วนตัว)
       buildNavGroups();   // จัดกลุ่ม sidebar (ต้องรู้ IS_OWNER ก่อน — กลุ่มของผู้ดูแลจะไม่โผล่ให้พนักงาน)
