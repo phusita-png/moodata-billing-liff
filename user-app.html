@@ -88,7 +88,11 @@
   .app.pmode .nav{ display:none !important; }
   .app.pmode .mnav, .app.pmode .mtabs{ display:none !important; }
   @media (min-width:900px){
-    .app.pmode{ grid-template-columns:1fr; grid-template-areas:"top" "main"; }
+    /* ⚠️ ต้องมี !important สู้กับกฎ grid ของแถบเตือนห้อง (T3) ที่ใส่ !important ไว้
+       ไม่งั้นหน้าเลือกโมดูลจะยังเป็น 2 คอลัมน์ แล้วเนื้อหาถูกดันไปครึ่งจอขวา */
+    .app.pmode{ grid-template-columns:1fr !important;
+      grid-template-rows:auto auto 1fr !important;
+      grid-template-areas:"top" "room" "main" !important; }
   }
   /* หัวแถบซ้าย = โมดูลที่กำลังเปิด + ปุ่มกลับหน้าเลือกโมดูล */
   .nav-mh{ display:flex; align-items:center; gap:9px; padding:12px 14px 10px; }
@@ -8756,7 +8760,7 @@
      วิธีแก้: ถามไฟล์ version.json (bust ด้วย ?t=) ถ้าเลข build ไม่ตรง → โหลดหน้าใหม่ด้วย ?v=<build>
      ⚠️ URL ที่ต่างกันเท่านั้นที่ bypass แคชได้จริง — reload เฉย ๆ ยังได้ไฟล์เก่าจากแคชเหมือนเดิม
      ⚠️ กันวนซ้ำ: ถ้า ?v= ตรงกับ build บนเซิร์ฟเวอร์แล้วยังไม่ตรงกับหน้า = ยอมแพ้ ไม่ reload อีก */
-  var APP_BUILD='20260905-2153';
+  var APP_BUILD='20260905-2250';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
