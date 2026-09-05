@@ -65,6 +65,24 @@
       grid-template-areas:"nav top" "nav room" "nav main" !important; }
     .rm-bar{ grid-area:room; padding:10px 30px; }
   }
+  /* ⚙️ หน้าตั้งค่าห้อง (T5) */
+  .rs-h{ font-size:16px; font-weight:800; color:#1F2733; }
+  .rs-sub{ font-size:12.5px; color:var(--muted); margin:4px 0 13px; line-height:1.6; }
+  .rs-st{ display:flex; flex-direction:column; gap:3px; padding:12px 14px; border-radius:13px; margin-bottom:14px; }
+  .rs-st b{ font-size:14px; }
+  .rs-st span{ font-size:12.5px; }
+  .rs-st a{ font-size:12.5px; font-weight:700; margin-top:3px; }
+  .rs-ok{ background:var(--green-tint); color:var(--green); }
+  .rs-no{ background:#FEF3C7; color:#78350F; }
+  .rs-steps{ background:var(--bg,#f6f8fb); border-radius:13px; padding:13px 15px; font-size:12.5px; color:#3f5878; line-height:1.75; }
+  .rs-steps b{ display:block; margin-bottom:5px; color:#1F2733; font-size:13px; }
+  .rs-steps ol{ margin:0; padding-left:19px; }
+  .rs-f{ margin-top:14px; }
+  .rs-f label{ display:block; font-size:12.5px; font-weight:600; color:#3f5878; margin-bottom:5px; }
+  .rs-f input{ width:100%; box-sizing:border-box; padding:12px 13px; border:1.5px solid var(--line);
+    border-radius:12px; font:inherit; font-size:14px; color:var(--ink); background:#fff; }
+  .rs-f input:focus{ outline:none; border-color:var(--red); }
+  .rs-note{ margin-top:11px; font-size:12px; color:var(--muted); line-height:1.65; }
   /* ── โหมดหน้าเลือกโมดูล: เต็มจอ ไม่มีแถบซ้าย (พี่กี้ 5 ก.ย. — เอาแบบ TRCloud) ──
      .pmode ใส่ที่ #app ตอน VIEW==='portal' · เข้าโมดูลแล้วถอดออก แถบซ้ายกลับมา */
   .app.pmode .nav{ display:none !important; }
@@ -85,7 +103,7 @@
   .nav-back:hover{ color:var(--red); border-color:var(--red-soft); }
   /* แถวสลับโมดูลเร็วท้ายแถบ — ไม่ต้องกลับหน้าแรกทุกครั้ง */
   .nav-mods{ padding:12px 10px 14px; border-top:1px solid var(--line);
-    display:grid; grid-template-columns:repeat(5,1fr); gap:7px; justify-items:center; }
+    display:flex; flex-wrap:wrap; gap:8px 6px; justify-content:center; }
   .nav-mods .nm{ width:27px; height:27px; border-radius:8px; border:none; cursor:pointer; display:flex;
     align-items:center; justify-content:center; opacity:.42; transition:opacity .12s; }
   .nav-mods .nm:hover, .nav-mods .nm.on{ opacity:1; }
@@ -1018,6 +1036,7 @@
   var CURMOD='';   // โมดูลที่กำลังเปิด ('' = อยู่หน้าเลือกโมดูล → แถบซ้ายซ่อน)
   var MODS_OPEN=null;   // โมดูลที่บริษัทเปิดใช้ (M6) · null/[] = เปิดครบ · backend ส่งมากับ waBootstrap
   var IS_SUPER=false;   // ผู้ดูแลระบบ (พี่กี้) — เห็นโมดูล 🏛️ ผู้ดูแลระบบ
+  var IS_ROOMADM=false; // ตั้งค่าห้องนี้ได้ (ผู้ดูแลระบบ หรือผู้ดูแลของห้องนี้เอง · T5)
   var ROOM={code:'MOODATA',name:'Moodata',isHome:true};   // ห้องที่กำลังอยู่
   var TYPES=[], QUOTA=null, LEAVES=[], HOLIDAYS=[], SCHEDULE=null, LV_TEAM=[];
   var CAL=new Date();   // เดือนที่ปฏิทินแสดงอยู่
@@ -1028,7 +1047,7 @@
   var MENAME='', MEUID='', TEAM=[], CUSTOMERS=[];   // งาน (MEUID = userId ผู้ใช้ · ใช้กรอง "งานของฉัน" + ตัดตัวเองจาก dropdown มอบหมาย)
   var VIEW_META = {
     portal:['🧭','เมนูหลัก'], payroll:['💰','ระบบเงินเดือน'], modsoon:['🚧','กำลังพัฒนา'],
-    hubreq:['🏛️','คำขอสมัคร'], hubrooms:['🏢','ห้องลูกค้า'], home:['🏠','ภาพรวมประจำวัน'], clock:['🕐','ลงเวลา'],
+    hubreq:['🏛️','คำขอสมัคร'], hubrooms:['🏢','ห้องลูกค้า'], roomset:['⚙️','ตั้งค่าห้อง'], home:['🏠','ภาพรวมประจำวัน'], clock:['🕐','ลงเวลา'],
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
     expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติเบิกจ่าย'],
     expdash:['📊','รายจ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ทะเบียนการจ่าย'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','ภาษีซื้อ/ภ.พ.30'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ทะเบียนใบสำคัญจ่าย'], sales:['💰','รายรับ'], ar:['📊','ลูกหนี้ค้างรับ'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51']
@@ -1136,7 +1155,7 @@
     if(gi) $('tbIcon').innerHTML=gi.replace('stroke-width="1.9"','stroke-width="2"'); else $('tbIcon').textContent=meta[0];
     $('tbTitle').textContent=meta[1];
     mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
-    ({ portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, hubreq:renderHubReq, hubrooms:renderHubRooms, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51 }[v] || soon)();
+    ({ portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51 }[v] || soon)();
   }
 
   // ───── มือถือ: เมนูกลุ่ม (ล่าง) + แท็บย่อย (บน) · คอมใช้ sidebar เดิม ไม่เกี่ยว ─────
@@ -1173,6 +1192,7 @@
   var VIEW_ICON_EXTRA={
     hubreq:'<svg viewBox="0 0 24 24"><path d="M6 3.5h9l4 4V20a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1z"/><path d="M14.5 3.6V8H19"/><path d="M8.5 13h7M8.5 16.5h4.5"/></svg>',
     hubrooms:'<svg viewBox="0 0 24 24"><path d="M4 20V7.5l6-3.5v16"/><path d="M10 10.5l8 3V20"/><path d="M3 20h18"/><path d="M13.5 15.5h1M13.5 18h1"/></svg>',
+    roomset:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 14a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V20a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H4a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H10a1.6 1.6 0 0 0 1-1.5V4a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V10a1.6 1.6 0 0 0 1.5 1H20a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>',
     home:'<svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10V20h13V10"/><path d="M10 20v-5h4v5"/></svg>',
     payroll:'<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9.5h18"/><path d="M7 14h4M15.5 14h1.5"/></svg>'
   };
@@ -1189,6 +1209,7 @@
     dev:'<svg viewBox="0 0 24 24"><path d="M8.5 9 5 12.5 8.5 16"/><path d="M15.5 9l3.5 3.5-3.5 3.5"/><path d="M13 6.5l-2 11"/></svg>',
     admin:'<svg viewBox="0 0 24 24"><path d="M12 3.5 4.5 6.5v5c0 4.2 3.1 7.6 7.5 9 4.4-1.4 7.5-4.8 7.5-9v-5z"/><path d="M9.4 12.2l1.9 1.9 3.4-3.6"/></svg>',
     guide:'<svg viewBox="0 0 24 24"><path d="M4 5.5A2 2 0 0 1 6 4h5v16H6a2 2 0 0 0-2 1.5z"/><path d="M20 5.5A2 2 0 0 0 18 4h-5v16h5a2 2 0 0 1 2 1.5z"/></svg>',
+    roomcfg:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 14a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V20a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H4a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H10a1.6 1.6 0 0 0 1-1.5V4a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V10a1.6 1.6 0 0 0 1.5 1H20a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>',
     logout:'<svg viewBox="0 0 24 24"><path d="M12 4v8"/><path d="M7.5 6.5a7.5 7.5 0 1 0 9 0"/></svg>'
   };
   /* ลำดับการ์ดตามที่พี่กี้เรียง 5 ก.ย. (4 ใบต่อแถวบนจอคอม):
@@ -1226,6 +1247,9 @@
     /* 🏛️ ผู้ดูแลระบบ — เห็นเฉพาะพี่กี้ (super) · จัดการลูกค้าที่สมัครเข้ามา */
     { key:'admin',   th:'ผู้ดูแลระบบ',   en:'ADMIN',       color:'#0f172a', g:['#475569','#0f172a'],
       own:true, sup:true, views:['hubreq','hubrooms'] },
+    /* ⚙️ ตั้งค่าห้อง — ผู้ดูแลระบบ + ผู้ดูแลของห้องนั้น (ลูกค้าผูก Drive ตัวเองที่นี่ · T5) */
+    { key:'roomcfg', th:'ตั้งค่าห้อง',     en:'ROOM SETUP',   color:'#475569', g:['#94a3b8','#334155'],
+      adm:true, views:['roomset'] },
     { key:'guide',   th:'คู่มือการใช้งาน', en:'USER MANUAL', color:'#64748b', g:['#94a3b8','#475569'], own:false, act:'guide' },
     { key:'logout',  th:'ออกจากระบบ',   en:'LOG OUT',     color:'#94a3b8', g:['#cbd5e1','#64748b'], own:false, act:'logout' }
   ];
@@ -1258,6 +1282,7 @@
   function modVisible(m){
     if(m.act) return true;                       // คู่มือ/ออกจากระบบ = ทุกคน
     if(m.sup) return IS_SUPER;                   // โมดูลผู้ดูแลระบบ — พี่กี้เท่านั้น
+    if(m.adm) return IS_SUPER || IS_ROOMADM;     // ตั้งค่าห้อง — พี่กี้ หรือผู้ดูแลของห้องนั้น
     if(!modOpen(m.key)) return false;
     if(m.own && !IS_OWNER) return false;
     if(m.soon) return true;                      // โมดูลที่จองที่ไว้ — โชว์การ์ด กดแล้วบอกว่ากำลังจะมา
@@ -1336,6 +1361,57 @@
     });
   }
 
+
+  // ═══════════ ⚙️ ตั้งค่าห้อง — โฟลเดอร์เอกสาร (T5) ═══════════
+  /* ลูกค้าเก็บเอกสารไว้ใน Drive ตัวเอง เราแค่มีสิทธิ์เขียน
+     → ต้อง "ทดสอบเขียนไฟล์จริง" ตอนกดบันทึก ไม่ใช่รอไปพังตอนออกเอกสารใบแรก */
+  function renderRoomSet(){
+    skel();
+    jsonp({action:'waRoomFolder',uid:UID}).then(function(r){
+      if(VIEW!=='roomset') return;
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      $('main').innerHTML=roomSetHtml(r.info||{}, r.room||ROOM);
+      bindRoomSet();
+    }).catch(function(e){ if(VIEW==='roomset') $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
+  }
+
+  function roomSetHtml(info, room){
+    var st = info.ok
+      ? '<div class="rs-st rs-ok"><b>✅ ผูกเรียบร้อย</b><span>'+esc(info.folderName)+'</span>'+
+        (info.url?('<a href="'+esc(info.url)+'" target="_blank" rel="noopener">เปิดโฟลเดอร์ ↗</a>'):'')+'</div>'
+      : '<div class="rs-st rs-no"><b>⚠️ '+esc(info.error||'ยังไม่ได้ผูกโฟลเดอร์')+'</b>'+
+        '<span>เอกสารจะยังออกได้ แต่ไปเก็บในโฟลเดอร์ที่ระบบสร้างให้ชั่วคราว</span></div>';
+    return '<div class="hm-hero"><h2>ตั้งค่าห้อง</h2><span class="hp">'+esc((room&&room.name)||'Moodata')+'</span></div>'+
+      '<div class="card"><div class="pb" style="padding:16px 18px">'+
+        '<div class="rs-h">📁 โฟลเดอร์เก็บเอกสาร</div>'+
+        '<div class="rs-sub">ใบเสร็จ · ใบสำคัญจ่าย · 50 ทวิ · สลิปเงินเดือน จะถูกเก็บไว้ในโฟลเดอร์นี้</div>'+
+        st+
+        '<div class="rs-steps"><b>วิธีผูกโฟลเดอร์ของตัวเอง</b>'+
+          '<ol><li>สร้างโฟลเดอร์ใน Google Drive ของบริษัท</li>'+
+          '<li>กดแชร์ → ใส่อีเมลระบบ → เลือกสิทธิ์ <b>ผู้แก้ไข</b></li>'+
+          '<li>คัดลอกลิงก์โฟลเดอร์มาวางด้านล่าง แล้วกดบันทึก</li></ol></div>'+
+        '<div class="rs-f"><label>ลิงก์โฟลเดอร์</label>'+
+          '<input id="rsLink" type="text" placeholder="https://drive.google.com/drive/folders/..." value=""></div>'+
+        '<button class="btn btn-primary" id="rsSave" type="button" style="width:100%;margin-top:12px">ทดสอบและบันทึก</button>'+
+        '<div class="rs-note">🔒 ระบบจะลองสร้างไฟล์ทดสอบในโฟลเดอร์แล้วลบทิ้งทันที '+
+        'ผ่านแล้วถึงจะบันทึก — กันบันทึกผ่านแต่ไปพังตอนออกเอกสารจริง</div>'+
+      '</div></div>';
+  }
+
+  function bindRoomSet(){
+    var b=$('rsSave'); if(!b) return;
+    b.addEventListener('click', function(){
+      var link=($('rsLink').value||'').trim();
+      if(!link){ toast('วางลิงก์โฟลเดอร์ก่อนค่ะ'); $('rsLink').focus(); return; }
+      callBusy('กำลังทดสอบเขียนไฟล์…',
+        jsonp({action:'waRoomFolderSave',uid:UID,link:link}, 0, 90000), 'ผูกโฟลเดอร์แล้ว')
+        .then(function(r){
+          if(!r||!r.ok){ toast((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+          renderRoomSet();
+        }).catch(function(e){ toast(e.message); });
+    });
+  }
+
   // ═══════════ 🏢 ห้องลูกค้าทั้งหมด ═══════════
   function renderHubRooms(){
     skel();
@@ -1366,6 +1442,8 @@
       var lb=b.querySelector('.rm-lb'); if(lb) lb.textContent=(ROOM&&ROOM.name)||'Moodata';
       if(!b.dataset.bound){ b.dataset.bound='1'; b.addEventListener('click', openRoomPicker); }
     });
+    var sub=document.querySelector('.tb-sub');
+    if(sub) sub.textContent=(ROOM&&ROOM.name)||'Moodata';
     var bar=$('rmBar'); if(!bar) return;
     bar.innerHTML = inRoom
       ? ('<span>⚠️ กำลังดูแลห้องของลูกค้า <b>'+esc(ROOM.name||ROOM.code)+
@@ -1580,7 +1658,7 @@
       if(i>=0){ fin.views.splice(i,1); if(me.views.indexOf('expdash')<0) me.views.push('expdash'); }
     });
   }
-  var VIEW_TAB={ portal:'เมนูหลัก', payroll:'ระบบเงินเดือน', modsoon:'กำลังพัฒนา', hubreq:'คำขอสมัคร', hubrooms:'ห้องลูกค้า', home:'ภาพรวมประจำวัน', projects:'บอร์ดงาน', mytasks:'งานของฉัน', review:'รอตรวจ', trash:'ถังขยะ',
+  var VIEW_TAB={ portal:'เมนูหลัก', payroll:'ระบบเงินเดือน', modsoon:'กำลังพัฒนา', hubreq:'คำขอสมัคร', hubrooms:'ห้องลูกค้า', roomset:'ตั้งค่าห้อง', home:'ภาพรวมประจำวัน', projects:'บอร์ดงาน', mytasks:'งานของฉัน', review:'รอตรวจ', trash:'ถังขยะ',
     senddoc:'ส่งงานลูกค้า', appt:'นัดประชุม', announce:'ประกาศ',
     leave:'ลาของฉัน', approve:'อนุมัติลา', expense:'เบิกของฉัน', expapprove:'อนุมัติเบิก',
     expdash:'รายจ่าย', reimb:'ตั้งเบิกลูกค้า', petty:'เงินสดย่อย', payout:'ทะเบียนการจ่าย', expreport:'รายงานรายจ่าย', taxhub:'รายงานภาษี', whtin:'50 ทวิ ที่ถูกหัก', vatbuy:'ภาษีซื้อ',
@@ -8649,6 +8727,7 @@
       // โมดูลที่เปิดใช้ (M6) — ว่าง/ไม่ส่งมา = เปิดครบ (ระบบเดิมไม่กระทบ)
       MODS_OPEN=(r.modules && r.modules.length) ? r.modules : null;
       IS_SUPER=!!r.isSuper;
+      IS_ROOMADM=!!r.canRoom;   // ⚙️ ตั้งค่าห้อง (T5)
       if(r.room) ROOM=r.room;
       paintRoom();   // 🏢 ทาสี/แถบเตือนตามห้องที่อยู่จริง (backend เป็นคนตอบ)
       if(CAN_FIN){ var nfr=$('navFinReport'); if(nfr) nfr.style.display=''; }
@@ -8677,7 +8756,7 @@
      วิธีแก้: ถามไฟล์ version.json (bust ด้วย ?t=) ถ้าเลข build ไม่ตรง → โหลดหน้าใหม่ด้วย ?v=<build>
      ⚠️ URL ที่ต่างกันเท่านั้นที่ bypass แคชได้จริง — reload เฉย ๆ ยังได้ไฟล์เก่าจากแคชเหมือนเดิม
      ⚠️ กันวนซ้ำ: ถ้า ?v= ตรงกับ build บนเซิร์ฟเวอร์แล้วยังไม่ตรงกับหน้า = ยอมแพ้ ไม่ reload อีก */
-  var APP_BUILD='20260905-2138';
+  var APP_BUILD='20260905-2153';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
