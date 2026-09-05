@@ -71,11 +71,7 @@
     background-size:26px 26px; opacity:.42; }
   .wc-bg{ position:absolute; inset:0; padding:0; overflow:hidden; pointer-events:none; background:var(--bg);
     filter:blur(13px) saturate(125%); opacity:.9;
-    transition:filter .55s cubic-bezier(.22,.9,.3,1), opacity .55s ease, transform .55s cubic-bezier(.22,.9,.3,1); }
-  /* กดเข้าสู่ระบบ → ฉากหลังชัดขึ้น กล่องจางหาย เหมือนกำลังเดินเข้าไปในระบบ */
-  .wc.wc-go .wc-bg{ filter:blur(0) saturate(100%); opacity:1; transform:scale(1.015); }
-  .wc.wc-go .wc-box{ opacity:0; transform:translateY(10px) scale(.97);
-    transition:opacity .38s ease, transform .38s cubic-bezier(.22,.9,.3,1); }
+ }
   .wc-bg .pt-grid{ margin:0; }
   .wc-bg .pt-c{ cursor:default; }
   /* แถบฟ้าด้านบน — จำลองแถบจริงของหน้าเมนูหลัก ให้ตอนชัดขึ้นแล้วต่อเป็นหน้าเดียวกันพอดี */
@@ -91,7 +87,7 @@
     .wc-bg{ filter:blur(11px) saturate(125%); }
     .wcbg-top{ height:56px; padding:0 14px; } .wcbg-body{ padding:16px 14px; }
     .wcbg-h2{ font-size:18px; } }
-  .wc-box{ position:relative; z-index:2; width:100%; max-width:420px; transition:opacity .38s ease, transform .38s ease; padding:34px 30px 32px; text-align:center;
+  .wc-box{ position:relative; z-index:2; width:100%; max-width:420px; padding:34px 30px 32px; text-align:center;
     background:rgba(255,255,255,.30); border:1px solid rgba(255,255,255,.66); border-radius:28px;
     -webkit-backdrop-filter:blur(20px) saturate(160%); backdrop-filter:blur(20px) saturate(160%);
     box-shadow:0 30px 80px rgba(23,44,90,.26), 0 2px 0 rgba(255,255,255,.55) inset,
@@ -1180,11 +1176,8 @@
     if(btn && !btn.dataset.bound){
       btn.dataset.bound='1';
       btn.addEventListener('click', function(){
-        var w=$('welcome'); if(w) w.classList.add('wc-go');   // ฉากหลังชัดขึ้นก่อนเด้งไป LINE
-        setTimeout(function(){
-          try{ if(window.liff && liff.login){ liff.login({redirectUri:location.href}); return; } }catch(e){}
-          location.reload();   // ไม่มี LIFF (เปิดนอกไลน์/เทส) → โหลดใหม่ให้ init ทำงานอีกรอบ
-        }, 420);
+        try{ if(window.liff && liff.login){ liff.login({redirectUri:location.href}); return; } }catch(e){}
+        location.reload();   // ไม่มี LIFF (เปิดนอกไลน์/เทส) → โหลดใหม่ให้ init ทำงานอีกรอบ
       });
     }
   }
@@ -8322,7 +8315,7 @@
      วิธีแก้: ถามไฟล์ version.json (bust ด้วย ?t=) ถ้าเลข build ไม่ตรง → โหลดหน้าใหม่ด้วย ?v=<build>
      ⚠️ URL ที่ต่างกันเท่านั้นที่ bypass แคชได้จริง — reload เฉย ๆ ยังได้ไฟล์เก่าจากแคชเหมือนเดิม
      ⚠️ กันวนซ้ำ: ถ้า ?v= ตรงกับ build บนเซิร์ฟเวอร์แล้วยังไม่ตรงกับหน้า = ยอมแพ้ ไม่ reload อีก */
-  var APP_BUILD='20260905-1243';
+  var APP_BUILD='20260905-1245';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
