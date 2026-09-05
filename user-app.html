@@ -8276,15 +8276,10 @@
       Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(b){
         b.addEventListener('click', function(){ switchView(b.dataset.view); }); });
       var _tba=$('tbAll'); if(_tba) _tba.addEventListener('click', function(){ switchView('portal'); });
-      var sp=startParam();
-      // ลิงก์จาก Google Chat/แชท → เปิดแท็บตรง · ไม่มี p= → หน้า "ภาพรวม" (พี่กี้เคาะ 29 ก.ค.)
-      // ⚠️ p=work = ปุ่ม "เปิดระบบ" (Rich Menu/การ์ดแชท) เจตนา "เข้าระบบ" ไม่ใช่ "ไปบอร์ดงาน" → หน้าภาพรวม
-      //    (Rich Menu ที่ทีมมีอยู่ฝัง p=work ไว้แล้ว · เข้าบอร์ดงานตรงใช้ p=projects/p=tasks)
-      // 'reports' = ชื่อเดิมของหน้ารายงาน (ก่อนแยก HR/การเงิน) — คงรับไว้ให้ลิงก์เก่าเปิดได้
-      var spv = sp==='reports' ? 'hrreport' : sp;
-      var startView = spv==='docs' ? 'docs' : ((spv==='projects'||spv==='tasks') ? 'projects' : (spv==='expense' ? 'expense' :
-        (spv==='leave' ? 'leave' : ((spv==='approve'||spv==='expapprove'||spv==='hrreport'||spv==='finreport') && IS_OWNER ? spv : 'portal'))));
-      switchView(startView);   // switchView → mSyncNav สร้างเมนูกลุ่มล่าง + แท็บบนให้เอง
+      // พี่กี้เคาะ 5 ก.ย. 2569: **เข้ามาหลังล็อกอินต้องเจอหน้าเลือกโมดูลก่อนเสมอ**
+      // ลิงก์เก่าที่มี ?p= (Rich Menu · การ์ดในแชท · bookmark) จึงไม่พาเข้าหน้านั้นตรงอีกต่อไป
+      // — ยังอ่านค่า p ไว้ให้ลิงก์ไม่ error เฉย ๆ · ถ้าวันหลังอยากให้เข้าตรงได้อีก แก้ที่จุดนี้จุดเดียว
+      switchView('portal');   // switchView → mSyncNav สร้างเมนูกลุ่มล่าง + แท็บบนให้เอง
       // อุ่นแคชเบื้องหลัง → คลิกการลา/เอกสารครั้งแรกเด้งทันที (ไม่แย่งจอแรกโหลด)
       setTimeout(function(){ if(!LVCACHE.data) _leaveFetch(true); if(IDTOKEN && !DOCCACHE.data) _docsFetch(true); if(!APPT_CUST.length) apFetchMeta(); if(!ANNOUNCE_GROUPS.length) anFetchGroups(); }, 900);
     }).catch(function(e){ fatal(e.message); });
