@@ -37,12 +37,13 @@
   .nav-mh .mh-ic{ width:30px; height:30px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex:0 0 auto; }
   .nav-mh .mh-ic svg{ width:17px; height:17px; fill:none; stroke:#fff; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
   .nav-mh .mh-tx{ font-size:14.5px; font-weight:700; color:var(--ink); min-width:0; }
-  .nav-back{ display:flex; align-items:center; gap:7px; margin:0 10px 8px; padding:8px 10px; width:calc(100% - 20px);
+  .nav-back{ display:flex; align-items:center; gap:7px; margin:14px 10px 10px; padding:9px 10px; width:calc(100% - 20px);
+    margin-top:auto;   /* ดันไปอยู่ท้ายแถบเสมอ แม้เมนูสั้น */
     border:1px solid var(--line); border-radius:11px; background:#fff; font:inherit; font-size:12.5px; font-weight:600;
     color:var(--muted); cursor:pointer; }
   .nav-back:hover{ color:var(--red); border-color:var(--red-soft); }
   /* แถวสลับโมดูลเร็วท้ายแถบ — ไม่ต้องกลับหน้าแรกทุกครั้ง */
-  .nav-mods{ margin-top:auto; padding:10px 10px 14px; border-top:1px solid var(--line); display:flex; flex-wrap:wrap; gap:5px; }
+  .nav-mods{ padding:10px 10px 14px; border-top:1px solid var(--line); display:flex; flex-wrap:wrap; gap:5px; }
   .nav-mods .nm{ width:27px; height:27px; border-radius:8px; border:none; cursor:pointer; display:flex;
     align-items:center; justify-content:center; opacity:.42; transition:opacity .12s; }
   .nav-mods .nm:hover, .nav-mods .nm.on{ opacity:1; }
@@ -1277,12 +1278,6 @@
       '<span class="mh-tx">'+esc(m.th)+'</span>';
     nav.appendChild(mh);
 
-    var back=document.createElement('button');
-    back.type='button'; back.className='nav-back';
-    back.innerHTML='<svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M15 5l-7 7 7 7"/></svg>กลับสู่เมนูหลัก';
-    back.addEventListener('click', function(){ switchView('portal'); });
-    nav.appendChild(back);
-
     var vs=modViews(m), secs=m.sec||null, done={};
     /* ปุ่มส่วนใหญ่มีอยู่ใน markup แล้ว (ไอคอน SVG เดิมครบ) — view ที่เกิดทีหลังอย่าง
        home/payroll ไม่มีปุ่ม ให้สร้างให้เอง ไม่งั้นเมนูหายไปเงียบ ๆ */
@@ -1314,6 +1309,13 @@
       });
     }
     vs.forEach(addBtn);          // เมนูที่ไม่ได้อยู่ในช่วงไหน (หรือโมดูลที่ไม่แบ่งช่วง) ต่อท้ายเสมอ
+
+    // ปุ่มกลับ อยู่ "ใต้รายการเมนู" (พี่กี้ขอ 5 ก.ย.) — จบเมนูของโมดูลแล้วค่อยเจอทางออก
+    var back=document.createElement('button');
+    back.type='button'; back.className='nav-back';
+    back.innerHTML='<svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M15 5l-7 7 7 7"/></svg>กลับสู่เมนูหลัก';
+    back.addEventListener('click', function(){ switchView('portal'); });
+    nav.appendChild(back);
 
     var mods=document.createElement('div'); mods.className='nav-mods';
     MODULES.filter(function(x){ return !x.act && modVisible(x); }).forEach(function(x){
