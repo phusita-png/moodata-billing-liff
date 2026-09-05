@@ -180,6 +180,15 @@
   .pt-c .pt-en{ font-size:11px; font-weight:600; letter-spacing:.10em; color:var(--muted); margin-top:3px; text-transform:uppercase; }
   .pt-c .pt-go{ margin-top:16px; padding:13px 0 15px; border-top:1px solid rgba(120,150,200,.22);
     font-size:13.5px; font-weight:600; color:var(--red); }
+  /* โมดูลที่ยังพัฒนาไม่เสร็จ — จางลงให้เห็นความต่างตั้งแต่หน้าแรก (พี่กี้ขอ 5 ก.ย.) */
+  .pt-c.pt-soon{ position:relative; opacity:.58; }
+  .pt-c.pt-soon:hover{ opacity:.82; }
+  .pt-c.pt-soon .pt-ic{ filter:grayscale(.35); box-shadow:0 3px 10px rgba(31,63,120,.14); }
+  .pt-c.pt-soon .pt-go{ color:var(--muted); }
+  .pt-badge{ position:absolute; top:11px; right:11px; padding:3px 9px; border-radius:999px;
+    background:rgba(120,150,200,.20); color:#42526b; font-size:10.5px; font-weight:700; letter-spacing:.02em; }
+  /* ฉากหลังหน้าล็อกอิน/สมัคร — ไม่ต้องจาง (เบลออยู่แล้ว จางซ้ำจะจืดเกิน) */
+  .wc-bg .pt-c.pt-soon{ opacity:1; } .wc-bg .pt-badge{ display:none; }
   .pt-sec{ font-size:13px; font-weight:700; color:var(--muted); margin:0 0 10px; letter-spacing:.02em; }
   @media (max-width:980px){ .pt-grid{ grid-template-columns:repeat(2,1fr); gap:12px; } }
   @media (max-width:560px){ .pt-grid{ grid-template-columns:repeat(2,1fr); gap:10px; }
@@ -1275,10 +1284,14 @@
   // การ์ดโมดูลด้านบน + สรุปประจำวัน (renderHome เดิม) ต่อท้ายในหน้าเดียว — เปิดเว็บมาเห็นครบ ไม่ต้องกดเพิ่ม
   function renderPortal(){
     var cards=MODULES.filter(modVisible).map(function(m){
-      return '<button class="pt-c" data-mod="'+esc(m.key)+'">'+
+      // โมดูลที่ยังไม่มีเมนู (m.soon) = ยังพัฒนาไม่เสร็จ → การ์ดจาง + ป้ายบอก
+      // ยังกดเข้าไปดูได้ว่าจะมีอะไร (ไม่ปิดตาย) แต่รู้ตั้งแต่หน้าแรกว่ายังไม่พร้อม
+      var soon = !!m.soon;
+      return '<button class="pt-c'+(soon?' pt-soon':'')+'" data-mod="'+esc(m.key)+'">'+
+        (soon?'<span class="pt-badge">เร็ว ๆ นี้</span>':'')+
         '<div class="pt-ic" style="background:linear-gradient(140deg,'+(m.g?m.g[0]:m.color)+','+(m.g?m.g[1]:m.color)+')">'+MOD_ICON[m.key]+'</div>'+
         '<div class="pt-th">'+esc(m.th)+'</div><div class="pt-en">'+esc(m.en)+'</div>'+
-        '<div class="pt-go">เข้าใช้งาน →</div></button>';
+        '<div class="pt-go">'+(soon?'ดูรายละเอียด':'เข้าใช้งาน →')+'</div></button>';
     }).join('');
     // พี่กี้ 5 ก.ย.: ไม่เอาชื่อผู้ใช้ในคำทักทาย — ใช้ "สวัสดีค่ะ ยินดีค่ะ" เหมือนกันทุกคน
     $('main').innerHTML='<div class="pt-hero"><h2>สวัสดีค่ะ ยินดีค่ะ</h2>'+
@@ -8521,7 +8534,7 @@
      วิธีแก้: ถามไฟล์ version.json (bust ด้วย ?t=) ถ้าเลข build ไม่ตรง → โหลดหน้าใหม่ด้วย ?v=<build>
      ⚠️ URL ที่ต่างกันเท่านั้นที่ bypass แคชได้จริง — reload เฉย ๆ ยังได้ไฟล์เก่าจากแคชเหมือนเดิม
      ⚠️ กันวนซ้ำ: ถ้า ?v= ตรงกับ build บนเซิร์ฟเวอร์แล้วยังไม่ตรงกับหน้า = ยอมแพ้ ไม่ reload อีก */
-  var APP_BUILD='20260905-1817';
+  var APP_BUILD='20260905-1827';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
