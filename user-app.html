@@ -48,6 +48,15 @@
   .nav-mods .nm:hover, .nav-mods .nm.on{ opacity:1; }
   .nav-mods .nm svg{ width:15px; height:15px; fill:none; stroke:#fff; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
   #navPool{ display:none; }
+  /* ปุ่ม "ทุกโมดูล" บนแถบบน — ทางออกจากทุกหน้า (พี่กี้ขอ 5 ก.ย.) */
+  .tb-all{ display:flex; align-items:center; gap:6px; flex:0 0 auto; margin-right:2px;
+    padding:7px 12px 7px 9px; border:1px solid rgba(255,255,255,.42); border-radius:999px;
+    background:rgba(255,255,255,.16); color:#fff; font:inherit; font-size:13px; font-weight:600; cursor:pointer;
+    transition:background .14s; }
+  .tb-all:hover{ background:rgba(255,255,255,.30); }
+  .tb-all svg{ width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
+  .app.pmode .tb-all{ display:none; }          /* อยู่หน้าเลือกโมดูลอยู่แล้ว ไม่ต้องมีปุ่ม */
+  @media (max-width:560px){ .tb-all span{ display:none; } .tb-all{ padding:7px 9px; } }
   /* ═══ หน้าต้อนรับ / ล็อกอิน (M5 · spec §9) — พี่กี้เคาะ 5 ก.ย.: เข้าด้วย LINE อย่างเดียว ═══
      ยินดีไม่มีระบบอีเมล/รหัสผ่านของตัวเอง · หน้านี้มีไว้ให้ผู้ใช้ "กดเอง" แทนที่จะเด้ง LINE ทันที
      และเป็นหน้าปลายทางหลังกดออกจากระบบ (ในแอป LINE จะล็อกอินกลับเอง — อย่างน้อยผู้ใช้เห็นว่าออกแล้ว) */
@@ -787,6 +796,12 @@
   <div id="mtabs" class="mtabs"></div>
 
   <div id="topbar" class="topbar">
+    <!-- ปุ่มกลับหน้าเลือกโมดูล — อยู่บนแถบบนเพื่อให้เห็นจากทุกหน้า ไม่ต้องพึ่งแถบซ้าย
+         (พี่กี้ 5 ก.ย.: เข้าโมดูลแล้วต้องมีทางกดออกมาตั้งหลักเสมอ) · ซ่อนเองตอนอยู่หน้าเลือกโมดูล -->
+    <button class="tb-all" id="tbAll" type="button" aria-label="ทุกโมดูล">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="7" rx="1.6"/><rect x="14" y="4" width="7" height="7" rx="1.6"/><rect x="3" y="14" width="7" height="6" rx="1.6"/><rect x="14" y="14" width="7" height="6" rx="1.6"/></svg>
+      <span>ทุกโมดูล</span>
+    </button>
     <span class="tb-icon" id="tbIcon">📝</span>
     <div class="tb-mid"><div class="tb-title" id="tbTitle">การลา</div><div class="tb-sub">Moodata</div></div>
     <div class="tb-avatar" id="tbAvatar">🙂</div>
@@ -1208,7 +1223,7 @@
     var el=$('mnav'); if(!el) return;
     // ปุ่มแรก = กลับหน้าเลือกโมดูล · ที่เหลือ = โมดูลที่ผู้ใช้คนนี้มีสิทธิ์ (คู่มือ/ออกจากระบบ อยู่บนหน้าเลือกโมดูล)
     var html='<button class="mnav-btn" data-mnav="__home"><span class="mn-ic">'+GROUP_ICON.home+'</span>หน้าแรก</button>';
-    html+=MODULES.filter(function(m){ return !m.act && modVisible(m); }).map(function(m){
+    html+=MODULES.filter(function(m){ return !m.act && modVisible(m) && modViews(m).length; }).map(function(m){
       return '<button class="mnav-btn'+(m.key===CURMOD?' on':'')+'" data-mnav="'+esc(m.key)+'">'+
         '<span class="mn-ic">'+MOD_ICON[m.key]+'</span>'+esc(m.th)+'</button>';
     }).join('');
@@ -8260,6 +8275,7 @@
       $('loader').classList.add('hidden'); $('app').classList.remove('hidden');
       Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(b){
         b.addEventListener('click', function(){ switchView(b.dataset.view); }); });
+      var _tba=$('tbAll'); if(_tba) _tba.addEventListener('click', function(){ switchView('portal'); });
       var sp=startParam();
       // ลิงก์จาก Google Chat/แชท → เปิดแท็บตรง · ไม่มี p= → หน้า "ภาพรวม" (พี่กี้เคาะ 29 ก.ค.)
       // ⚠️ p=work = ปุ่ม "เปิดระบบ" (Rich Menu/การ์ดแชท) เจตนา "เข้าระบบ" ไม่ใช่ "ไปบอร์ดงาน" → หน้าภาพรวม
