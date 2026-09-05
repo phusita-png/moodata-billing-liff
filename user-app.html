@@ -68,16 +68,25 @@
   .wc::before{ content:''; position:absolute; inset:0; pointer-events:none;
     background-image:radial-gradient(rgba(255,255,255,.55) 1px, transparent 1px);
     background-size:26px 26px; opacity:.42; }
-  .wc-box{ position:relative; width:100%; max-width:900px; display:grid; grid-template-columns:1.05fr .95fr;
-    background:rgba(255,255,255,.34); border:1px solid rgba(255,255,255,.62); border-radius:28px;
-    -webkit-backdrop-filter:blur(26px) saturate(170%); backdrop-filter:blur(26px) saturate(170%);
+  .wc-bg{ position:absolute; inset:0; padding:46px 40px; overflow:hidden; pointer-events:none;
+    filter:blur(13px) saturate(125%); opacity:.9;
+    transition:filter .55s cubic-bezier(.22,.9,.3,1), opacity .55s ease, transform .55s cubic-bezier(.22,.9,.3,1); }
+  /* กดเข้าสู่ระบบ → ฉากหลังชัดขึ้น กล่องจางหาย เหมือนกำลังเดินเข้าไปในระบบ */
+  .wc.wc-go .wc-bg{ filter:blur(0) saturate(100%); opacity:1; transform:scale(1.015); }
+  .wc.wc-go .wc-box{ opacity:0; transform:translateY(10px) scale(.97);
+    transition:opacity .38s ease, transform .38s cubic-bezier(.22,.9,.3,1); }
+  .wc-bg .pt-grid{ margin:0; }
+  .wc-bg .pt-c{ cursor:default; }
+  @media (max-width:760px){ .wc-bg{ padding:22px 16px; filter:blur(11px) saturate(125%); } }
+  .wc-box{ position:relative; z-index:2; width:100%; max-width:420px; transition:opacity .38s ease, transform .38s ease; padding:34px 30px 32px; text-align:center;
+    background:rgba(255,255,255,.30); border:1px solid rgba(255,255,255,.66); border-radius:28px;
+    -webkit-backdrop-filter:blur(20px) saturate(160%); backdrop-filter:blur(20px) saturate(160%);
     box-shadow:0 30px 80px rgba(23,44,90,.26), 0 2px 0 rgba(255,255,255,.55) inset,
-               0 0 0 1px rgba(255,255,255,.18); overflow:hidden; }
-  .wc-l{ padding:34px 32px; background:rgba(255,255,255,.10); }
-  .wc-l .wc-logo img{ width:132px; max-width:60%; height:auto; }
-  .wc-l h1{ margin:12px 0 2px; font-size:28px; font-weight:800; color:#12294d; letter-spacing:-.01em; }
-  .wc-l .wc-sub{ font-size:13.5px; color:#5b6b86; margin-bottom:18px; }
-  .wc-mods{ display:flex; flex-direction:column; gap:8px; }
+               0 0 0 1px rgba(255,255,255,.18); }
+  .wc-logo img{ width:128px; max-width:56%; height:auto; }
+  .wc-box h1{ margin:10px 0 2px; font-size:30px; font-weight:800; color:#12294d; letter-spacing:-.01em; }
+  .wc-sub{ font-size:14px; color:#3f5878; margin-bottom:20px; }
+  .wc-mods{ display:flex; flex-direction:column; gap:8px; text-align:left; }
   .wc-m{ display:flex; align-items:center; gap:10px; padding:10px 13px; border-radius:14px;
     background:rgba(255,255,255,.44); border:1px solid rgba(255,255,255,.66);
     -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
@@ -85,28 +94,20 @@
     font-size:13.5px; font-weight:600; color:#1c2c46; }
   .wc-m .wm-ic{ width:26px; height:26px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex:0 0 auto; }
   .wc-m .wm-ic svg{ width:14px; height:14px; fill:none; stroke:#fff; stroke-width:2.1; stroke-linecap:round; stroke-linejoin:round; }
-  .wc-r{ padding:34px 32px; background:rgba(255,255,255,.30); border-left:1px solid rgba(255,255,255,.55);
-    display:flex; flex-direction:column; justify-content:center; }
-  .wc-r h2{ margin:0 0 4px; font-size:21px; font-weight:800; color:#12294d; }
-  .wc-r .wc-hint{ font-size:13px; color:#5b6b86; margin-bottom:20px; }
+  .wc-hint{ font-size:13px; color:#3f5878; margin:20px 0 12px; }
+  /* ปุ่มเข้าระบบ = ฟ้ายินดี (พี่กี้เคาะ 5 ก.ย. — ไม่ใช้เขียว LINE) */
   .wc-btn{ display:flex; align-items:center; justify-content:center; gap:9px; width:100%; padding:15px 16px; border:none;
-    border-radius:15px; background:#06C755; color:#fff; font:inherit; font-size:15.5px; font-weight:700; cursor:pointer;
-    box-shadow:0 10px 24px rgba(6,199,85,.32); transition:transform .08s, box-shadow .16s; }
-  .wc-btn:hover{ box-shadow:0 14px 30px rgba(6,199,85,.42); transform:translateY(-1px); }
+    border-radius:15px; background:linear-gradient(140deg,#38bdf8,#1B72E8); color:#fff; font:inherit; font-size:15.5px;
+    font-weight:700; cursor:pointer; box-shadow:0 12px 26px rgba(27,114,232,.36); transition:transform .08s, box-shadow .16s; }
+  .wc-btn:hover{ box-shadow:0 16px 32px rgba(27,114,232,.46); transform:translateY(-1px); }
   .wc-btn:active{ transform:translateY(0) scale(.995); }
-  .wc-note{ margin-top:14px; font-size:12px; color:#6b7a92; line-height:1.65; }
-  .wc-bye{ display:flex; align-items:center; gap:8px; margin-bottom:16px; padding:10px 13px; border-radius:12px;
-    background:rgba(255,255,255,.48); border:1px solid rgba(255,255,255,.6);
-    -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
-    font-size:13px; font-weight:600; color:#1c2c46; }
   @media (max-width:760px){
-    .wc{ padding:14px; align-items:flex-start; }
-    .wc-box{ grid-template-columns:1fr; max-width:460px; margin:auto; }
-    .wc-l{ padding:26px 22px 4px; text-align:center; }
-    .wc-l .wc-logo img{ width:112px; }
-    .wc-mods{ display:none; }   /* มือถือ: ตัดรายการโมดูลออก ให้เห็นปุ่มเข้าระบบทันทีไม่ต้องเลื่อน */
-    .wc-r{ padding:22px; border-left:none; border-top:1px solid rgba(255,255,255,.7); }
+    .wc{ padding:16px; align-items:flex-start; }
+    .wc-box{ margin:auto; padding:28px 22px 26px; }
+    .wc-logo img{ width:110px; }
+    .wc-box h1{ font-size:26px; }
   }
+
   /* ═══ หน้าเลือกโมดูล (portal) — พี่กี้เคาะ 5 ก.ย. 2569 · spec docs/spec-module-portal.md ═══ */
   /* ⚠️ กฎพวกนี้ต้องอยู่ในหน้า ไม่ใช่ user.css — เครื่องพี่แคช css ค้างจนเมนูเพี้ยนมาแล้ว (4 ก.ย.) */
   /* พื้นหลังไล่สีหลายจุด — กระจกฝ้าต้องมีอะไรให้เบลอ ไม่งั้นการ์ดจะดูแบนเหมือนเดิม
@@ -764,24 +765,19 @@
 <!-- LOADING -->
 <!-- หน้าต้อนรับ/ล็อกอิน (M5) — ซ่อนไว้ จะโชว์เมื่อยังไม่ได้ล็อกอิน LINE หรือหลังกดออกจากระบบ -->
 <div id="welcome" class="wc hidden">
+  <!-- ฉากหลัง = การ์ดโมดูลจริงของระบบ แล้วเบลอทั้งชั้น (พี่กี้คิดออก 5 ก.ย.)
+       ทำให้กล่องล็อกอินดูเป็นกระจกที่มีของอยู่ข้างหลังจริง ๆ ไม่ใช่การ์ดขาวลอย ๆ -->
+  <div class="wc-bg" id="wcBg" aria-hidden="true"></div>
   <div class="wc-box">
-    <div class="wc-l">
-      <div class="wc-logo"><img src="mascot-wave2.png" alt="ยินดี"></div>
-      <h1>ยินดี</h1>
-      <div class="wc-sub">ผู้ช่วยงานบริษัท Moodata</div>
-      <div class="wc-mods" id="wcMods"></div>
-    </div>
-    <div class="wc-r">
-      <div id="wcBye"></div>
-      <h2>ยินดีต้อนรับ</h2>
-      <div class="wc-hint">เข้าสู่ระบบเพื่อเริ่มงาน · Sign in to continue</div>
-      <button class="wc-btn" id="wcBtn" type="button">
-        <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:none;stroke:#fff;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><path d="M21 11.2c0 4-4 7.2-9 7.2-.9 0-1.8-.1-2.6-.3L4.5 20l.9-3.1C3.9 15.5 3 13.5 3 11.2 3 7.2 7 4 12 4s9 3.2 9 7.2z"/><path d="M8.5 9.5v4M8.5 13.5h2.2M13.2 9.5v4M13.2 9.5l2.6 4M15.8 9.5v4"/></svg>
-        เข้าสู่ระบบด้วย LINE
-      </button>
-      <div class="wc-note">ยินดีใช้บัญชี LINE ของพี่ในการเข้าระบบ — ไม่ต้องจำรหัสผ่าน<br>
-        ถ้าเปิดจากในแอป LINE ระบบจะเข้าให้อัตโนมัติ</div>
-    </div>
+    <div class="wc-logo"><img src="mascot-wave2.png" alt="Yindee"></div>
+    <h1>Yindee</h1>
+    <div class="wc-sub">ผู้ช่วยงาน Moodata</div>
+    <div class="wc-mods" id="wcMods"></div>
+    <div class="wc-hint">เข้าสู่ระบบเพื่อเริ่มงาน · Sign in to continue</div>
+    <button class="wc-btn" id="wcBtn" type="button">
+      <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:none;stroke:#fff;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><path d="M21 11.2c0 4-4 7.2-9 7.2-.9 0-1.8-.1-2.6-.3L4.5 20l.9-3.1C3.9 15.5 3 13.5 3 11.2 3 7.2 7 4 12 4s9 3.2 9 7.2z"/><path d="M8.5 9.5v4M8.5 13.5h2.2M13.2 9.5v4M13.2 9.5l2.6 4M15.8 9.5v4"/></svg>
+      เข้าสู่ระบบด้วย LINE
+    </button>
   </div>
 </div>
 
@@ -1145,19 +1141,31 @@
     var ap=$('app'); if(ap) ap.classList.add('hidden');
     var w=$('welcome'); if(!w) return;
     // รายการโมดูลฝั่งซ้าย = ชุดเดียวกับหน้าเลือกโมดูล (ยังไม่รู้สิทธิ์ตอนนี้ → โชว์เฉพาะระบบหลัก)
+    // ฉากหลัง: การ์ดโมดูลชุดเดียวกับหน้าเมนูหลัก (ยังไม่รู้สิทธิ์ตอนนี้ → โชว์ทุกใบเป็นฉาก)
+    var bg=$('wcBg');
+    if(bg && !bg.dataset.done){
+      bg.dataset.done='1';
+      bg.innerHTML='<div class="pt-grid">'+MODULES.map(function(m){
+        return '<div class="pt-c"><div class="pt-ic" style="background:linear-gradient(140deg,'+
+          (m.g?m.g[0]:m.color)+','+(m.g?m.g[1]:m.color)+')">'+MOD_ICON[m.key]+'</div>'+
+          '<div class="pt-th">'+esc(m.th)+'</div><div class="pt-en">'+esc(m.en)+'</div>'+
+          '<div class="pt-go">เข้าใช้งาน →</div></div>';
+      }).join('')+'</div>';
+    }
     var show=['fin','acct','hr','work'], box=$('wcMods');
     if(box) box.innerHTML=show.map(function(k){ var m=modOf(k); if(!m) return '';
       return '<div class="wc-m"><span class="wm-ic" style="background:linear-gradient(140deg,'+
         (m.g?m.g[0]:m.color)+','+(m.g?m.g[1]:m.color)+')">'+MOD_ICON[k]+'</span>'+esc(m.th)+'</div>'; }).join('');
-    var b=$('wcBye');
-    if(b) b.innerHTML = bye ? '<div class="wc-bye">ออกจากระบบแล้วค่ะ</div>' : '';
     w.classList.remove('hidden');
     var btn=$('wcBtn');
     if(btn && !btn.dataset.bound){
       btn.dataset.bound='1';
       btn.addEventListener('click', function(){
-        try{ if(window.liff && liff.login){ liff.login({redirectUri:location.href}); return; } }catch(e){}
-        location.reload();   // ไม่มี LIFF (เปิดนอกไลน์/เทส) → โหลดใหม่ให้ init ทำงานอีกรอบ
+        var w=$('welcome'); if(w) w.classList.add('wc-go');   // ฉากหลังชัดขึ้นก่อนเด้งไป LINE
+        setTimeout(function(){
+          try{ if(window.liff && liff.login){ liff.login({redirectUri:location.href}); return; } }catch(e){}
+          location.reload();   // ไม่มี LIFF (เปิดนอกไลน์/เทส) → โหลดใหม่ให้ init ทำงานอีกรอบ
+        }, 420);
       });
     }
   }
@@ -8295,7 +8303,7 @@
      วิธีแก้: ถามไฟล์ version.json (bust ด้วย ?t=) ถ้าเลข build ไม่ตรง → โหลดหน้าใหม่ด้วย ?v=<build>
      ⚠️ URL ที่ต่างกันเท่านั้นที่ bypass แคชได้จริง — reload เฉย ๆ ยังได้ไฟล์เก่าจากแคชเหมือนเดิม
      ⚠️ กันวนซ้ำ: ถ้า ?v= ตรงกับ build บนเซิร์ฟเวอร์แล้วยังไม่ตรงกับหน้า = ยอมแพ้ ไม่ reload อีก */
-  var APP_BUILD='20260905-1207';
+  var APP_BUILD='20260905-1220';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
