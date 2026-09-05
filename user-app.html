@@ -68,7 +68,7 @@
   .wc::before{ content:''; position:absolute; inset:0; pointer-events:none;
     background-image:radial-gradient(rgba(255,255,255,.55) 1px, transparent 1px);
     background-size:26px 26px; opacity:.42; }
-  .wc-bg{ position:absolute; inset:0; padding:46px 40px; overflow:hidden; pointer-events:none;
+  .wc-bg{ position:absolute; inset:0; padding:0; overflow:hidden; pointer-events:none; background:var(--bg);
     filter:blur(13px) saturate(125%); opacity:.9;
     transition:filter .55s cubic-bezier(.22,.9,.3,1), opacity .55s ease, transform .55s cubic-bezier(.22,.9,.3,1); }
   /* กดเข้าสู่ระบบ → ฉากหลังชัดขึ้น กล่องจางหาย เหมือนกำลังเดินเข้าไปในระบบ */
@@ -77,7 +77,19 @@
     transition:opacity .38s ease, transform .38s cubic-bezier(.22,.9,.3,1); }
   .wc-bg .pt-grid{ margin:0; }
   .wc-bg .pt-c{ cursor:default; }
-  @media (max-width:760px){ .wc-bg{ padding:22px 16px; filter:blur(11px) saturate(125%); } }
+  /* แถบฟ้าด้านบน — จำลองแถบจริงของหน้าเมนูหลัก ให้ตอนชัดขึ้นแล้วต่อเป็นหน้าเดียวกันพอดี */
+  .wcbg-top{ display:flex; align-items:center; gap:11px; height:64px; padding:0 22px; background:var(--red); color:#fff; }
+  .wcbg-logo img{ width:34px; height:34px; object-fit:contain; display:block; }
+  .wcbg-brand{ font-size:15px; font-weight:800; line-height:1.15; display:flex; flex-direction:column; }
+  .wcbg-brand small{ font-size:11px; font-weight:500; opacity:.85; }
+  .wcbg-av{ margin-left:auto; width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,.22); }
+  .wcbg-body{ padding:22px 32px; }
+  .wcbg-h2{ font-size:21px; font-weight:800; color:#1F2733; }
+  .wcbg-p{ font-size:13.5px; color:var(--muted); margin:4px 0 18px; }
+  @media (max-width:760px){
+    .wc-bg{ filter:blur(11px) saturate(125%); }
+    .wcbg-top{ height:56px; padding:0 14px; } .wcbg-body{ padding:16px 14px; }
+    .wcbg-h2{ font-size:18px; } }
   .wc-box{ position:relative; z-index:2; width:100%; max-width:420px; transition:opacity .38s ease, transform .38s ease; padding:34px 30px 32px; text-align:center;
     background:rgba(255,255,255,.30); border:1px solid rgba(255,255,255,.66); border-radius:28px;
     -webkit-backdrop-filter:blur(20px) saturate(160%); backdrop-filter:blur(20px) saturate(160%);
@@ -1145,12 +1157,18 @@
     var bg=$('wcBg');
     if(bg && !bg.dataset.done){
       bg.dataset.done='1';
-      bg.innerHTML='<div class="pt-grid">'+MODULES.map(function(m){
+      var cards=MODULES.map(function(m){
         return '<div class="pt-c"><div class="pt-ic" style="background:linear-gradient(140deg,'+
           (m.g?m.g[0]:m.color)+','+(m.g?m.g[1]:m.color)+')">'+MOD_ICON[m.key]+'</div>'+
           '<div class="pt-th">'+esc(m.th)+'</div><div class="pt-en">'+esc(m.en)+'</div>'+
           '<div class="pt-go">เข้าใช้งาน →</div></div>';
-      }).join('')+'</div>';
+      }).join('');
+      bg.innerHTML=
+        '<div class="wcbg-top"><span class="wcbg-logo"><img src="mascot-wave2.png" alt=""></span>'+
+        '<span class="wcbg-brand">Moodata Yindee<small>Moodata</small></span><span class="wcbg-av"></span></div>'+
+        '<div class="wcbg-body"><div class="wcbg-h2">สวัสดีค่ะ ยินดีค่ะ</div>'+
+        '<div class="wcbg-p">เลือกระบบที่ต้องการเข้าใช้งาน · Choose an application</div>'+
+        '<div class="pt-grid">'+cards+'</div></div>';
     }
     var show=['fin','acct','hr','work'], box=$('wcMods');
     if(box) box.innerHTML=show.map(function(k){ var m=modOf(k); if(!m) return '';
@@ -8303,7 +8321,7 @@
      วิธีแก้: ถามไฟล์ version.json (bust ด้วย ?t=) ถ้าเลข build ไม่ตรง → โหลดหน้าใหม่ด้วย ?v=<build>
      ⚠️ URL ที่ต่างกันเท่านั้นที่ bypass แคชได้จริง — reload เฉย ๆ ยังได้ไฟล์เก่าจากแคชเหมือนเดิม
      ⚠️ กันวนซ้ำ: ถ้า ?v= ตรงกับ build บนเซิร์ฟเวอร์แล้วยังไม่ตรงกับหน้า = ยอมแพ้ ไม่ reload อีก */
-  var APP_BUILD='20260905-1220';
+  var APP_BUILD='20260905-1240';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
