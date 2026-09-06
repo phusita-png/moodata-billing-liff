@@ -450,6 +450,11 @@
   .dd-p.on .dd-p-n{ color:#B4242A; }
   .dd-p-u{ font-size:11.5px; color:#8A94A6; }
   .dd-plb{ font-size:12.5px; color:#6B7280; margin-top:8px; }
+  .dr-chips{ display:flex; flex-wrap:wrap; gap:7px; }
+  .dr-chip{ font-family:inherit; font-size:12.5px; padding:6px 12px; border-radius:999px;
+    border:1px solid var(--line); background:#fff; color:#4A5262; cursor:pointer; }
+  .dr-chip.on{ border-color:#1E8FE1; background:#E8F3FD; color:#1069A8; font-weight:700; }
+  .dr-sub2{ font-size:12px; color:#8A94A6; }
   .dr-pending td{ background:#FFFCF5; }
   .dr-bulk{ background:#F4F7FB; border:1px solid var(--line); border-radius:10px; padding:9px 12px; margin-bottom:9px;
     font-size:13px; display:flex; flex-wrap:wrap; align-items:center; gap:7px; }
@@ -1204,7 +1209,7 @@
     hubreq:['🏛️','คำขอสมัคร'], hubrooms:['🏢','ห้องลูกค้า'], roomset:['⚙️','ตั้งค่าห้อง'], home:['🏠','ภาพรวมประจำวัน'], clock:['🕐','ลงเวลา'],
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
     expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติเบิกจ่าย'],
-    expdash:['📊','รายจ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ทะเบียนการจ่าย'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','ภาษีซื้อ/ภ.พ.30'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ทะเบียนใบสำคัญจ่าย'], sales:['💰','รายรับ'], ar:['📊','ลูกหนี้ค้างรับ'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51'], docdash:['📊','ภาพรวม'], docreg:['🗂️','จัดการเอกสาร'], docreport:['📑','รายงานประจำเดือน'], doccat:['🏷️','จัดการหมวด'], hubmods:['🧩','โมดูลของแต่ละห้อง'], teamperm:['🔐','สิทธิ์ทีม'], kpiemp:['👥','ทะเบียนพนักงาน'], kpiperson:['📈','ประวัติรายคน'], kpidash:['📊','ภาพรวมเดือน'], kpientry:['✍️','กรอกผลงาน'], kpiscore:['⭐','คะแนนคุณลักษณะ'], kpidoc:['📄','ใบประเมิน']
+    expdash:['📊','รายจ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ทะเบียนการจ่าย'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','ภาษีซื้อ/ภ.พ.30'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ทะเบียนใบสำคัญจ่าย'], sales:['💰','รายรับ'], ar:['📊','ลูกหนี้ค้างรับ'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51'], docdash:['📊','ภาพรวม'], docreg:['🗂️','จัดการเอกสาร'], docbycat:['📑','รายงานตามประเภท'], docreport:['📦','รายงานประจำเดือน (ปิดรอบ)'], doccat:['🏷️','จัดการหมวด'], hubmods:['🧩','โมดูลของแต่ละห้อง'], teamperm:['🔐','สิทธิ์ทีม'], kpiemp:['👥','ทะเบียนพนักงาน'], kpiperson:['📈','ประวัติรายคน'], kpidash:['📊','ภาพรวมเดือน'], kpientry:['✍️','กรอกผลงาน'], kpiscore:['⭐','คะแนนคุณลักษณะ'], kpidoc:['📄','ใบประเมิน']
   };
   var PROJECTS=[], COMPANIES=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ) · COMPANIES=บริษัท auto (หน้าจัดการ)
   var ALL_TASKS=[], PJ_SEL='', MB_STATUSES=[];   // มุมมอง Project (dropdown เลือก · แยก 6 สถานะ + %) · MB_STATUSES=รายการสถานะ (ฟอร์มแก้งานมือถือ)
@@ -1309,7 +1314,7 @@
     if(gi) $('tbIcon').innerHTML=gi.replace('stroke-width="1.9"','stroke-width="2"'); else $('tbIcon').textContent=meta[0];
     $('tbTitle').textContent=meta[1];
     mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
-    ({ portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51, docreg:renderDocReg, docdash:renderDocDash, docreport:renderDocReport, doccat:renderDocCat, kpiemp:renderKpiEmp, kpiperson:renderKpiPerson, kpidash:renderKpiDash, kpientry:renderKpiEntry, kpiscore:renderKpiScore, kpidoc:renderKpiDoc }[v] || soon)();
+    ({ portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51, docreg:renderDocReg, docdash:renderDocDash, docbycat:renderDocByCat, docreport:renderDocReport, doccat:renderDocCat, kpiemp:renderKpiEmp, kpiperson:renderKpiPerson, kpidash:renderKpiDash, kpientry:renderKpiEntry, kpiscore:renderKpiScore, kpidoc:renderKpiDoc }[v] || soon)();
   }
 
   // ───── มือถือ: เมนูกลุ่ม (ล่าง) + แท็บย่อย (บน) · คอมใช้ sidebar เดิม ไม่เกี่ยว ─────
@@ -1358,6 +1363,7 @@
     payroll:'<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9.5h18"/><path d="M7 14h4M15.5 14h1.5"/></svg>',
     docreg:'<svg viewBox="0 0 24 24"><path d="M3.5 7.5a2 2 0 0 1 2-2h3.2l1.8 2.2h8a2 2 0 0 1 2 2v8.8a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/><path d="M8 13h8M8 16h5"/></svg>',
     docdash:'<svg viewBox="0 0 24 24"><path d="M4 19.5V13M9.3 19.5V8.5M14.7 19.5v-7M20 19.5V5"/><path d="M3 21h18"/></svg>',
+    docbycat:'<svg viewBox="0 0 24 24"><path d="M4 5.5h16M4 10h16M4 14.5h10M4 19h10"/></svg>',
     docreport:'<svg viewBox="0 0 24 24"><path d="M6.5 3.5h11a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1v-15a1 1 0 0 1 1-1z"/><path d="M9 8h6M9 12h6M9 16h3.5"/></svg>',
     doccat:'<svg viewBox="0 0 24 24"><path d="M3.5 8.5 10 4l10.5 4.2v7L10 20 3.5 15.5z"/><path d="M10 20V9.2l10.5-1"/></svg>',
     hubmods:'<svg viewBox="0 0 24 24"><rect x="3" y="3.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3.5" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><path d="M15 17.2h5M17.5 14.7v5"/></svg>',
@@ -1413,8 +1419,9 @@
        own:false = ทีมงาน/ลูกค้าเข้าได้ด้วย (ลูกค้าต้องอัปไฟล์เองได้ ไม่งั้นพี่ต้องอัปแทนทุกเดือน)
        เปิดฟรีทุกห้อง (MODULE_CORE ฝั่ง backend) */
     { key:'docsys',  th:'ระบบเอกสาร',   en:'DOCUMENTS',   color:'#a16207', g:['#fbbf24','#a16207'], own:false,
-      views:['docdash','docreg','docreport','doccat'],
-      sec:[ ['ทะเบียนเอกสาร', ['docdash','docreg','docreport']],
+      views:['docdash','docreg','docbycat','docreport','doccat'],
+      sec:[ ['ทะเบียนเอกสาร', ['docdash','docreg']],
+            ['รายงานเอกสาร', ['docbycat','docreport']],
             ['การตั้งค่า', ['doccat']] ] },
     /* 📊 ประเมินผลงาน (KPI · 6 ก.ย. 69) — บริการ HR-Service002 ของริชมอนด์ · spec docs/spec-kpi-eval.md
        own:false = HR/หัวหน้าของลูกค้าเข้ามากรอกเองได้ (ด่านจริงอยู่ backend: ปิดรอบ/ตั้งค่า = ทีมภายในเท่านั้น)
@@ -2075,7 +2082,7 @@
     expdash:'รายจ่าย', reimb:'ตั้งเบิกลูกค้า', petty:'เงินสดย่อย', payout:'ทะเบียนการจ่าย', expreport:'รายงานรายจ่าย', taxhub:'รายงานภาษี', whtin:'50 ทวิ ที่ถูกหัก', vatbuy:'ภาษีซื้อ',
     ot:'OT ของฉัน', otapprove:'อนุมัติ OT', docs:'เอกสาร',
     hrreport:'รายงาน HR', finreport:'รายงานการเงิน', taxdoc:'ภาษี/เอกสาร',
-    bizdash:'ภาพรวม', sales:'รายรับ', ar:'ลูกหนี้', salesreport:'รายงานรายรับ', poreport:'ทะเบียนใบสำคัญจ่าย', pnd51:'ภ.ง.ด.51', docdash:'ภาพรวมเอกสาร', docreg:'จัดการเอกสาร', docreport:'รายงานประจำเดือน', doccat:'จัดการหมวด', kpiemp:'ทะเบียนพนักงาน', kpiperson:'ประวัติรายคน', kpidash:'ภาพรวมเดือน', kpientry:'กรอกผลงาน', kpiscore:'คุณลักษณะ', kpidoc:'ใบประเมิน' };
+    bizdash:'ภาพรวม', sales:'รายรับ', ar:'ลูกหนี้', salesreport:'รายงานรายรับ', poreport:'ทะเบียนใบสำคัญจ่าย', pnd51:'ภ.ง.ด.51', docdash:'ภาพรวมเอกสาร', docreg:'จัดการเอกสาร', docbycat:'รายงานตามประเภทเอกสาร', docreport:'รายงานประจำเดือน (ปิดรอบ)', doccat:'จัดการหมวด', kpiemp:'ทะเบียนพนักงาน', kpiperson:'ประวัติรายคน', kpidash:'ภาพรวมเดือน', kpientry:'กรอกผลงาน', kpiscore:'คุณลักษณะ', kpidoc:'ใบประเมิน' };
   // แท็บที่เห็นเฉพาะพี่/ผู้ดูแล · reimb = ตั้งเบิกลูกค้า (ชีตไม่มีเจ้าของรายคน + เป็นข้อมูลรายได้)
   // ⚠️ ซ่อนแท็บ ≠ กันข้อมูล — backend กรองสิทธิ์เองอีกชั้นเสมอ
   var OWNER_VIEWS={ review:1, approve:1, expapprove:1, otapprove:1, reimb:1, taxdoc:1, petty:1, payout:1, vatbuy:1, expreport:1, taxhub:1, whtin:1, hrreport:1, finreport:1, ar:1, pnd51:1, salesreport:1, hubmods:1, teamperm:1 };
@@ -5399,7 +5406,8 @@
         ช่วงวันที่ = **วันที่บนหน้าเอกสาร** — อย่างอื่นไม่มีความหมายกับช่วงวัน */
   var DD_F = { mode:'month', year:'', from:'', to:'' };
 
-  function ddFilterBar(r){
+  function ddFilterBar(r, ns){
+    ns = ns || 'dd';
     var f=DD_F, yNow=parseInt(String(DR_MONTH||'2569-01').split('-')[0],10)||2569;
     if(f.mode==='year'&&f.year) yNow=parseInt(f.year,10)||yNow;
     var years=[]; for(var y=yNow;y>=yNow-4;y--) years.push(y);
@@ -5424,7 +5432,7 @@
       h+='<input type="date" id="ddFrom" value="'+esc(f.from)+'"><span class="dd-dash">–</span>'+
          '<input type="date" id="ddTo" value="'+esc(f.to)+'">';
     }
-    h+='<button class="btn btn-primary btn-sm" onclick="ddGo()">ดูข้อมูล</button></div>';
+    h+='<button class="btn btn-primary btn-sm" onclick="'+ns+'Go()">ดูข้อมูล</button></div>';
     if(f.mode==='range') h+='<div class="m-hint">ช่วงวันที่นับจาก <b>วันที่บนหน้าเอกสาร</b> ไม่ใช่รอบที่ส่งค่ะ</div>';
     return h;
   }
@@ -5642,6 +5650,90 @@
       }).catch(function(e){ toast(e.message); });
   }
 
+  /* ── ② รายงานตามประเภทเอกสาร — เลือกช่วงแล้วไล่ดูรายละเอียดทีละใบ ──
+     ต่างจาก "รายงานประจำเดือน (ปิดรอบ)" ที่เป็นยอดสรุปไว้ยืนยันรอบ */
+  var BC=null, BC_CAT='';
+
+  function renderDocByCat(){
+    skel();
+    jsonp(withRoom_({ action:'waDocByCat', uid:UID, month:DR_MONTH, entity:DR_ENT, cat:BC_CAT,
+                      mode:DD_F.mode, year:DD_F.year, from:DD_F.from, to:DD_F.to })).then(function(r){
+      if(VIEW!=='docbycat') return;
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      BC=r; DR_MONTH=r.month||DR_MONTH; bcPaint();
+    }).catch(function(e){ if(VIEW==='docbycat') $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
+  }
+
+  function bcPaint(){
+    var r=BC; if(!r) return;
+    var rg=r.range||{}, t=r.total||{};
+    var h='<div class="section-h">📑 รายงานตามประเภทเอกสาร</div>'+
+      '<div class="card">'+ddFilterBar(r,'bc')+
+      '<div class="dd-plb">📅 '+esc(ddRangeLabel(rg))+' · '+(t.count||0)+' ใบ · รวม '+money(t.amount||0)+' บาท</div>'+
+      // ชิปเลือกดูเฉพาะหมวดเดียว
+      '<div class="dr-chips" style="margin-top:9px">'+
+        '<button class="dr-chip'+(BC_CAT?'':' on')+'" onclick="bcCat(\'\')">ทุกหมวด <b>'+(t.count||0)+'</b></button>'+
+        (r.cats||[]).filter(function(c){ return c.count>0; }).map(function(c){
+          return '<button class="dr-chip'+(BC_CAT===c.code?' on':'')+'" onclick="bcCat(\''+esc(c.code)+'\')">'+
+            esc(c.name)+' <b>'+c.count+'</b></button>';
+        }).join('')+
+      '</div>'+
+      (rg.noDate?('<div class="rs-note">⚠️ มีอีก '+rg.noDate+' ใบที่ยังไม่รู้วันที่บนเอกสาร จึงไม่เข้าช่วงนี้ค่ะ</div>'):'')+
+      '</div>';
+
+    if(!(r.groups||[]).length){
+      h+='<div class="card"><div class="emptybox">ไม่มีเอกสารในช่วงนี้ค่ะ</div></div>';
+      $('main').innerHTML=h; return;
+    }
+
+    h+=(r.groups||[]).map(function(g){
+      return '<div class="card"><div class="ds-h">'+esc(g.name)+' · '+g.count+' ใบ</div>'+
+        '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl">'+
+        '<colgroup><col style="width:34px"><col style="width:11%"><col style="width:14%"><col style="width:25%">'+
+        '<col style="width:12%"><col style="width:10%"><col style="width:12%"><col style="width:70px"></colgroup>'+
+        '<thead><tr><th class="dr-idx">#</th><th>วันที่เอกสาร</th><th>เลขที่เอกสาร</th><th>คู่ค้า</th>'+
+        '<th class="dt-amt">มูลค่า</th><th class="dt-amt">ภาษี</th><th class="dt-amt">รวมทั้งสิ้น</th>'+
+        '<th>ไฟล์</th></tr></thead><tbody>'+
+        (g.docs||[]).map(function(x,i){
+          var base=x.base||(x.amount&&x.vat?(x.amount-x.vat):0);
+          return '<tr><td class="dr-idx">'+(i+1)+'</td>'+
+            '<td class="dt-nw">'+(x.docDate?esc(x.docDate):'<span style="color:#B4242A">—</span>')+'</td>'+
+            '<td class="dr-docno">'+(x.docNo?esc(x.docNo):'<span style="color:#B4242A">—</span>')+'</td>'+
+            '<td>'+esc(x.party||'')+
+              (x.linkNo?('<br><span class="dr-sub2">→ '+esc(x.linkLabel||'')+' '+esc(x.linkNo)+'</span>'):'')+'</td>'+
+            '<td class="dt-amt">'+(base?money(base):'—')+'</td>'+
+            '<td class="dt-amt">'+(x.vat?money(x.vat):'—')+'</td>'+
+            '<td class="dt-amt">'+(x.amount?money(x.amount):'—')+'</td>'+
+            '<td style="text-align:center">'+(x.url?'<a class="ex-lk" href="'+esc(x.url)+'" target="_blank">เปิด</a>':'')+'</td></tr>';
+        }).join('')+
+        '<tr><td colspan="4"><b>รวม '+esc(g.name)+'</b></td>'+
+        '<td class="dt-amt"><b>'+money(g.base||0)+'</b></td>'+
+        '<td class="dt-amt"><b>'+money(g.vat||0)+'</b></td>'+
+        '<td class="dt-amt"><b>'+money(g.amount||0)+'</b></td><td></td></tr>'+
+        '</tbody></table></div></div>';
+    }).join('');
+
+    h+='<div class="card"><div class="ds-h">รวมทุกหมวดในช่วงนี้</div>'+
+      '<div class="m-hint">'+(t.count||0)+' ใบ · มูลค่า '+money(t.base||0)+' · ภาษี '+money(t.vat||0)+
+      ' · รวมทั้งสิ้น <b>'+money(t.amount||0)+'</b> บาท</div>'+
+      (r.cut?('<div class="rs-note">⚠️ ช่วงนี้มีเอกสารเยอะมาก แสดงรายละเอียดได้ '+
+              (t.count-r.cut)+' ใบแรก (อีก '+r.cut+' ใบดูได้ที่หน้าจัดการเอกสาร)</div>'):'')+
+      '<div class="rs-note">⚠️ '+esc(r.moneyNote||'')+'</div></div>';
+
+    $('main').innerHTML=h;
+  }
+  function bcCat(c){ BC_CAT=c; renderDocByCat(); }
+  function bcSetMode(v){ DD_F.mode=v; bcPaint(); }
+  function bcGo(){
+    var m=$('ddMonth'), y=$('ddYear'), fr=$('ddFrom'), to=$('ddTo');
+    if(m && y) DR_MONTH=y.value+'-'+('0'+m.value).slice(-2);
+    if(y) DD_F.year=y.value;
+    if(fr) DD_F.from=fr.value;
+    if(to) DD_F.to=to.value;
+    if(DD_F.mode==='range' && (!DD_F.from || !DD_F.to)){ toast('เลือกช่วงวันที่ให้ครบค่ะ'); return; }
+    renderDocByCat();
+  }
+
   /* ── การตั้งค่า: จัดการหมวด (แยกออกมาเป็นหน้าของตัวเอง) ── */
   function renderDocCat(){
     skel();
@@ -5663,6 +5755,7 @@
   window.ddSetMode=ddSetMode; window.ddGo=ddGo;
   window.renderDocReport=renderDocReport; window.drpMonth=drpMonth; window.drpClose=drpClose;
   window.renderDocCat=renderDocCat;
+  window.renderDocByCat=renderDocByCat; window.bcCat=bcCat; window.bcSetMode=bcSetMode; window.bcGo=bcGo;
 
   window.drScan=drScan; window.drScanAll=drScanAll; window.drLinkForm=drLinkForm; window.drLinkSave=drLinkSave;
 
@@ -10563,7 +10656,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260906-2215';
+  var APP_BUILD='20260906-2238';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
