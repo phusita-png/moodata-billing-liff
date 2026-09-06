@@ -419,6 +419,13 @@
   .dr-chip.on .dr-n{ background:#F5D89A; color:#6B4104; }
   .dr-tag{ display:inline-block; background:#EEF1F5; color:#4A5262; border-radius:6px; padding:2px 8px; font-size:12px; }
   .dr-tag-wait{ background:#FDECEC; color:#B4242A; }      /* รอแยกหมวด = ต้องสะดุดตา ไม่ใช่กลืนไปกับหมวดจริง */
+  /* สถานะหมวด: ป้ายบอก "สภาพตอนนี้" ต้องคนละสีกับปุ่มที่บอก "สิ่งที่จะเกิดถ้ากด"
+     (เดิมมีแต่ปุ่มคำว่า เปิด/ปิด ปนกัน แยกไม่ออกว่าอันไหนคือสถานะ — พี่กี้ 6 ก.ย.) */
+  .dr-st{ display:inline-block; border-radius:999px; padding:2px 10px; font-size:12px; font-weight:600; }
+  .dr-st-on{ background:#E7F5EC; color:#1B7F4B; }
+  .dr-st-off{ background:#F0F1F4; color:#8A94A6; }
+  .btn-off{ color:#B4242A; border-color:#F2C7C7; }
+  .btn-on{ color:#1B7F4B; border-color:#BFE3CE; }
   .dr-pending td{ background:#FFFCF5; }
   .dr-bulk{ background:#F4F7FB; border:1px solid var(--line); border-radius:10px; padding:9px 12px; margin-bottom:9px;
     font-size:13px; display:flex; flex-wrap:wrap; align-items:center; gap:7px; }
@@ -5023,15 +5030,18 @@
       '<div class="m-hint">หมวดมาตรฐานเปลี่ยนชื่อได้ · เพิ่มหมวดของบริษัทเองได้ · '+
       'หมวดที่ยังมีไฟล์อยู่ปิดไม่ได้ค่ะ</div>'+
       '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl">'+
-      '<colgroup><col style="width:45%"><col style="width:20%"><col style="width:15%"><col style="width:20%"></colgroup>'+
-      '<thead><tr><th>หมวด</th><th>ชนิด</th><th>ไฟล์</th><th></th></tr></thead><tbody>'+
+      '<colgroup><col style="width:34%"><col style="width:12%"><col style="width:9%"><col style="width:13%">'+
+      '<col style="width:16%"><col style="width:16%"></colgroup>'+
+      '<thead><tr><th>หมวด</th><th>ชนิด</th><th>ไฟล์</th><th>สถานะ</th><th></th><th></th></tr></thead><tbody>'+
       all.map(function(c){
         var q="'"+String(c.code).replace(/'/g,"\\'")+"'";
+        var off = c.status==='ปิด';
         return '<tr><td>'+esc(c.name)+'</td><td>'+esc(c.kind||'')+'</td><td>'+(c.count||0)+'</td>'+
-          '<td><button class="btn btn-ghost btn-sm" onclick="drCatRename('+q+')">เปลี่ยนชื่อ</button> '+
-          (c.status==='ปิด'
-            ? '<button class="btn btn-ghost btn-sm" onclick="drCatOn('+q+',1)">เปิด</button>'
-            : '<button class="btn btn-ghost btn-sm" onclick="drCatOn('+q+',0)">ปิด</button>')+'</td></tr>';
+          '<td><span class="dr-st '+(off?'dr-st-off':'dr-st-on')+'">'+(off?'ปิดอยู่':'ใช้งาน')+'</span></td>'+
+          '<td><button class="btn btn-ghost btn-sm" onclick="drCatRename('+q+')">เปลี่ยนชื่อ</button></td>'+
+          '<td>'+(off
+            ? '<button class="btn btn-ghost btn-sm btn-on" onclick="drCatOn('+q+',1)">เปิดใช้อีกครั้ง</button>'
+            : '<button class="btn btn-ghost btn-sm btn-off" onclick="drCatOn('+q+',0)">ปิดหมวดนี้</button>')+'</td></tr>';
       }).join('')+'</tbody></table></div>'+
       '<div class="fld" style="margin-top:10px"><label>เพิ่มหมวดใหม่</label>'+
       '<input id="drCatNew" placeholder="ชื่อหมวด เช่น ค่าขนส่งพิเศษ"></div>'+
@@ -10237,7 +10247,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260906-1955';
+  var APP_BUILD='20260906-1958';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
