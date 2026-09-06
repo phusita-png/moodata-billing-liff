@@ -1316,7 +1316,10 @@
   /* view ที่ผู้ใช้คนนี้เข้าได้จริงในโมดูล (กรองด้วย OWNER_VIEWS ชุดเดิม ไม่คิดกติกาใหม่) */
   function modViews(m){ return (m.views||[]).filter(function(v){ return IS_OWNER || !OWNER_VIEWS[v]; }); }
   /* โมดูลนี้บริษัทเปิดใช้ไหม (M6) — ด่านจริงอยู่ backend นี่แค่ไม่โชว์การ์ดที่กดไม่ได้ */
-  var MOD_CORE={ work:1, me:1, dev:1, admin:1 };
+  /* โมดูลที่เปิดฟรีทุกห้อง — backend เป็นเจ้าของค่านี้ (bootstrap ส่ง modCore มา)
+     ค่าตั้งต้นนี้ใช้เฉพาะตอน backend ยังไม่ส่งมา · admin ไม่ได้อยู่ใน MODULE_CORE ฝั่ง backend
+     แต่การ์ดผู้ดูแลระบบกรองด้วย m.sup อยู่แล้ว จึงคงไว้ที่นี่ */
+  var MOD_CORE={ work:1, me:1, dev:1, admin:1, docsys:1 };
   function modOpen(key){
     if(!MODS_OPEN) return true;                  // ว่าง = เปิดครบ
     if(MOD_CORE[key]) return true;
@@ -9211,6 +9214,12 @@
       CAN_FIN=!!r.canFinance;
       // โมดูลที่เปิดใช้ (M6) — ว่าง/ไม่ส่งมา = เปิดครบ (ระบบเดิมไม่กระทบ)
       MODS_OPEN=(r.modules && r.modules.length) ? r.modules : null;
+      // โมดูลฟรีตามที่ backend บอก — เพิ่มโมดูลฟรีใหม่แล้วหน้าเว็บตามทันทีโดยไม่ต้องแก้ 2 ที่
+      if(r.modCore && r.modCore.length){
+        var mc={ admin:1 };   // การ์ดผู้ดูแลระบบกรองด้วย m.sup ไม่ได้อยู่ใน MODULE_CORE
+        r.modCore.forEach(function(k){ mc[k]=1; });
+        MOD_CORE=mc;
+      }
       IS_SUPER=!!r.isSuper;
       IS_ACCT=!!r.isAcct;       // 👩‍💼 นักบัญชี (D1.5)
       IS_ROOMADM=!!r.canRoom;   // ⚙️ ตั้งค่าห้อง (T5)
@@ -9272,7 +9281,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260906-1014';
+  var APP_BUILD='20260906-1041';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
