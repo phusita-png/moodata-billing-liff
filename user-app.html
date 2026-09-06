@@ -4875,8 +4875,7 @@
       '</select></div>'+
       '<div class="fld"><label>วันที่บนเอกสาร <span style="font-weight:400;color:#8A94A6">(เว้นว่างได้)</span></label>'+
         '<input id="drUpDate" type="date" value="">'+
-        '<div class="m-hint">เว้นว่าง = ระบบอ่านจากในเอกสารให้เอง · อ่านไม่ออกจึงเข้าเดือนที่เลือกอยู่ ('+esc(drMonthLabel(DR_MONTH))+')<br>'+
-        '⚠️ เดือนของเอกสารยึด<b>วันที่บนใบ</b>เสมอ — ใส่วันที่เดือนอื่น ไฟล์จะไปอยู่เดือนนั้น</div></div>'+
+        '<div class="m-hint">เว้นว่าง = ระบบอ่านจากในเอกสารให้เอง · เป็นข้อมูลบนใบเท่านั้น ไม่ย้ายรอบ</div></div>'+
       '<div class="fld"><label>คู่ค้า (ถ้ามี)</label><input id="drUpParty" placeholder="ชื่อร้าน/บริษัทบนเอกสาร"></div>'+
       '<div class="fld"><label>เลขที่บนเอกสาร (ถ้ามี)</label><input id="drUpNo" placeholder="เช่น INV-2569-001"></div>'+
       '<div class="fld"><label>ยอดรวมทั้งสิ้น (ถ้ามี)</label><input id="drUpAmt" type="number" inputmode="decimal">'+
@@ -10087,7 +10086,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260906-1531';
+  var APP_BUILD='20260906-1553';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
