@@ -438,7 +438,18 @@
   .dd-filter{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:12px; }
   .dd-filter select, .dd-filter input[type=date]{ font-family:inherit; font-size:13px; padding:8px 10px;
     border:1px solid var(--line); border-radius:9px; background:#fff; }
-  .dd-dash{ color:#8A94A6; }
+  .dd-dash{ display:grid; grid-template-columns:1fr; gap:12px; margin-bottom:14px; }
+  @media (min-width:1000px){ .dd-dash{ grid-template-columns:minmax(300px,380px) 1fr; align-items:stretch; } }
+  .dd-card{ margin-bottom:0; display:flex; flex-direction:column; }
+  .dd-pgrid{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:10px; }
+  @media (min-width:760px){ .dd-pgrid{ grid-template-columns:repeat(4,1fr); } }
+  .dd-p{ border:1px solid var(--line); border-radius:12px; padding:12px 10px; text-align:center; background:#FAFBFC; }
+  .dd-p.on{ border-color:#F2C7C7; background:#FDF3F3; }
+  .dd-p-t{ font-size:12.5px; color:#6B7280; }
+  .dd-p-n{ font-size:26px; font-weight:800; color:#1F2937; line-height:1.25; }
+  .dd-p.on .dd-p-n{ color:#B4242A; }
+  .dd-p-u{ font-size:11.5px; color:#8A94A6; }
+  .dd-plb{ font-size:12.5px; color:#6B7280; margin-top:8px; }
   .dr-pending td{ background:#FFFCF5; }
   .dr-bulk{ background:#F4F7FB; border:1px solid var(--line); border-radius:10px; padding:9px 12px; margin-bottom:9px;
     font-size:13px; display:flex; flex-wrap:wrap; align-items:center; gap:7px; }
@@ -5390,17 +5401,21 @@
 
   function ddFilterBar(r){
     var f=DD_F, yNow=parseInt(String(DR_MONTH||'2569-01').split('-')[0],10)||2569;
+    if(f.mode==='year'&&f.year) yNow=parseInt(f.year,10)||yNow;
     var years=[]; for(var y=yNow;y>=yNow-4;y--) years.push(y);
     var h='<div class="dd-filter"><select id="ddMode" onchange="ddSetMode(this.value)">'+
       [['month','เลือกเดือน'],['year','เลือกปี'],['range','ช่วงวันที่']].map(function(o){
         return '<option value="'+o[0]+'"'+(f.mode===o[0]?' selected':'')+'>'+o[1]+'</option>';
       }).join('')+'</select>';
     if(f.mode==='month'){
-      h+='<select id="ddMonth">'+(r.months||[]).map(function(m){
-        var ym=(m&&m.ym)||m, n=(m&&m.n)||0;
-        return '<option value="'+esc(ym)+'"'+(ym===DR_MONTH?' selected':'')+'>'+
-          esc(drMonthLabel(ym))+(n?(' · '+n+' ไฟล์'):' · ว่าง')+'</option>';
-      }).join('')+'</select>';
+      // แยกช่องเดือนกับช่องปี (แบบดิเอลฟ์) — เลือกเดือนไหนของปีไหนก็ได้ ไม่ต้องมีเอกสารอยู่ก่อน
+      var curM=parseInt(String(DR_MONTH||'').split('-')[1],10)||1;
+      h+='<select id="ddMonth">'+TH_MONTHS.map(function(nm,i){
+        return '<option value="'+(i+1)+'"'+((i+1)===curM?' selected':'')+'>'+nm+'</option>';
+      }).join('')+'</select>'+
+        '<select id="ddYear">'+years.map(function(y){
+          return '<option value="'+y+'"'+(yNow===y?' selected':'')+'>'+y+'</option>';
+        }).join('')+'</select>';
     } else if(f.mode==='year'){
       h+='<select id="ddYear">'+years.map(function(y){
         return '<option value="'+y+'"'+(String(f.year||yNow)===String(y)?' selected':'')+'>'+y+'</option>';
@@ -5417,7 +5432,7 @@
   function ddSetMode(v){ DD_F.mode=v; ddPaint(); }
   function ddGo(){
     var m=$('ddMonth'), y=$('ddYear'), fr=$('ddFrom'), to=$('ddTo');
-    if(m) DR_MONTH=m.value;
+    if(m && y) DR_MONTH=y.value+'-'+('0'+m.value).slice(-2);   // เดือน+ปี → รอบ YYYY-MM
     if(y) DD_F.year=y.value;
     if(fr) DD_F.from=fr.value;
     if(to) DD_F.to=to.value;
@@ -5464,21 +5479,32 @@
   function ddPaint(){
     var r=DD; if(!r) return;
     var s=r.summary||{}, m=r.money||{};
-    var rg=r.range||{};
-    var h='<div class="section-h">📊 ภาพรวมเอกสาร</div>'+ddFilterBar(r);
+    var rg=r.range||{}, all=r.all||{};
+    var h='<div class="section-h">📊 ภาพรวมเอกสาร</div>';
 
-    // 🍩 เอกสารทั้งหมดในช่วงที่เลือก แยกตามหมวด
-    h+='<div class="card"><div class="ds-h">เอกสารทั้งหมด · '+esc(ddRangeLabel(rg))+'</div>'+
-      ddDonut(r.cats||[], 'เอกสาร')+
-      (rg.noDate?('<div class="rs-note">⚠️ มีอีก '+rg.noDate+' ใบที่ยังไม่รู้วันที่บนเอกสาร จึงไม่เข้าช่วงนี้ค่ะ</div>'):'')+
-      '</div>';
-
-    h+='<div class="ds-grid">'+
-      statCard('เอกสารทั้งหมด', (s.total||0)+' ไฟล์', ddRangeLabel(rg))+
-      statCard('รอแยกหมวด', (s.pending||0)+' ไฟล์', s.pending?'ยังไม่รู้ว่าเป็นเอกสารประเภทไหน':'แยกครบแล้ว', s.pending?'ds-warn':'')+
-      statCard('ข้อมูลยังไม่ครบ', (s.incomplete||0)+' ไฟล์', s.incomplete?'ขาดวันที่/เลขที่/คู่ค้า/ยอด':'ครบทุกใบ', s.incomplete?'ds-warn':'')+
-      statCard('ยังไม่บันทึกเข้าเล่ม', (s.unlinked||0)+' ไฟล์', 'ใบกำกับ/50 ทวิ ที่ยังไม่เข้าระบบ')+
-      '</div>';
+    /* วางแบบเดียวกับแดชบอร์ดเอกสารของดิเอลฟ์ (พี่กี้ยืนยัน 6 ก.ย.):
+       ซ้าย = โดนัทสะสมทั้งหมดในระบบ (ไม่ขยับตามตัวกรอง)
+       ขวา  = ตัวกรองช่วงเวลา + ช่องตัวเลขของช่วงนั้น */
+    var box=function(label,n,unit,warn){
+      return '<div class="dd-p'+(warn&&n?' on':'')+'"><div class="dd-p-t">'+esc(label)+'</div>'+
+        '<div class="dd-p-n">'+(n||0)+'</div><div class="dd-p-u">'+esc(unit||'ไฟล์')+'</div></div>';
+    };
+    h+='<div class="dd-dash">'+
+      '<div class="card dd-card"><div class="ds-h">เอกสารทั้งหมดในระบบ</div>'+
+        ddDonut(all.cats||[], 'เอกสาร')+
+      '</div>'+
+      '<div class="card dd-card"><div class="ds-h">เอกสารตามช่วงที่เลือก</div>'+
+        ddFilterBar(r)+
+        '<div class="dd-plb">📅 '+esc(ddRangeLabel(rg))+'</div>'+
+        '<div class="dd-pgrid">'+
+          box('เอกสารในช่วงนี้', s.total)+
+          box('รอแยกหมวด', s.pending, 'ไฟล์', true)+
+          box('ข้อมูลยังไม่ครบ', s.incomplete, 'ไฟล์', true)+
+          box('ยังไม่บันทึกเข้าเล่ม', s.unlinked)+
+        '</div>'+
+        (rg.noDate?('<div class="rs-note">⚠️ มีอีก '+rg.noDate+' ใบที่ยังไม่รู้วันที่บนเอกสาร จึงไม่เข้าช่วงนี้ค่ะ</div>'):'')+
+      '</div>'+
+    '</div>';
 
     // สถานะปิดเดือน — บอกให้ชัดว่าเดือนนี้ส่งนักบัญชีไปหรือยัง
     h+='<div class="card"><div class="ds-h">สถานะเดือนนี้</div>'+
@@ -10537,7 +10563,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260906-2205';
+  var APP_BUILD='20260906-2215';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
