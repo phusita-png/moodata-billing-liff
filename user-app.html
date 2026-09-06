@@ -4581,6 +4581,11 @@
 
     h+='<div class="card"><div class="tax-acts">'+
       '<button class="btn btn-primary" onclick="drForm(\'up\')">⬆️ อัปโหลดเอกสาร</button>'+
+      (function(){
+        // ใบที่ยังไม่มี วันที่/ยอด/คู่ค้า = ยังไม่ได้อ่าน (เงื่อนไขเดียวกับ docScanPending_ ฝั่ง backend)
+        var un=(docs||[]).filter(function(x){ return !x.isSystem && (!x.docDate || !x.amount || !x.party); }).length;
+        return un ? ('<button class="btn btn-primary" onclick="drScanAll()">🔍 อ่านเอกสารที่ยังไม่ได้อ่าน ('+un+')</button>') : '';
+      })()+
       '<button class="btn btn-ghost" onclick="drSync()">🔄 ดึงเอกสารที่ระบบออกเอง</button>'+
       (own?'<button class="btn btn-ghost" onclick="drForm(\'cat\')">🗂️ จัดการหมวด</button>':'')+
       (own?'<button class="btn btn-ghost" onclick="drClose()">📦 ปิดเดือน · ออกสารบัญ</button>':'')+
@@ -4731,7 +4736,7 @@
     var files=IMGS['drFiles']||[];
     if(!files.length){ toast('ยังไม่ได้แนบไฟล์ค่ะ'); return; }
     var p={ action:'waDocUpload', uid:UID, files:JSON.stringify(files),
-      names:JSON.stringify(files.map(function(_,i){ return 'เอกสาร '+(i+1); })),
+      names:JSON.stringify((IMGS_NAMES['drFiles']||[]).map(function(n,i){ return n||('เอกสาร '+(i+1)); })),
       cat:($('drUpCat')||{}).value||'', docDate:($('drUpDate')||{}).value||'',
       party:($('drUpParty')||{}).value||'', docNo:($('drUpNo')||{}).value||'',
       amount:($('drUpAmt')||{}).value||'', entity:DR_ENT, month:DR_MONTH };
@@ -4947,7 +4952,30 @@
     }).catch(function(e){ toast(e.message); });
   }
 
-  window.drScan=drScan; window.drLinkForm=drLinkForm; window.drLinkSave=drLinkSave;
+  /** ไล่อ่านทีละชุดจนหมด — Apps Script ตายที่ 6 นาที จึงยิงเป็นรอบ ๆ แทนรวดเดียว */
+  function drScanAll(){
+    var total=0;
+    function round(){
+      return jsonp(withRoom_({ action:'waDocScanAll', uid:UID, month:DR_MONTH, entity:DR_ENT }))
+        .then(function(r){
+          if(!r||!r.ok) throw new Error((r&&r.error)||'อ่านไม่สำเร็จ');
+          total+=r.filled||0;
+          if(r.left>0 && r.done>0){
+            busy('กำลังอ่านเอกสาร… เหลืออีก '+r.left+' ใบ');
+            return round();          // ยังเหลือ + รอบนี้อ่านได้จริง → ไปต่อ (กันวนไม่รู้จบ)
+          }
+          return r;
+        });
+    }
+    busy('กำลังอ่านเอกสาร…');
+    round().then(function(){
+      unbusy();
+      toast(total ? ('อ่านข้อมูลจากเอกสารได้ '+total+' ใบ') : 'ไม่มีใบที่อ่านเพิ่มได้ค่ะ');
+      renderDocReg();
+    }).catch(function(e){ unbusy(); toast(e.message); renderDocReg(); });
+  }
+
+  window.drScan=drScan; window.drScanAll=drScanAll; window.drLinkForm=drLinkForm; window.drLinkSave=drLinkSave;
 
   window.renderDocReg=renderDocReg; window.drSetMonth=drSetMonth; window.drSetEnt=drSetEnt;
   window.drSetCat=drSetCat; window.drForm=drForm; window.drUpload=drUpload; window.drSel=drSel;
@@ -5737,6 +5765,9 @@
 
   // ───── ช่องแนบรูป "หลายใบ" (ใบเสร็จ/หลักฐาน) · หลายใบ = backend รวมเป็น PDF เดียวผ่าน Worker ─────
   var IMGS={};   // { fldId: [dataURL,…] }
+  /* ชื่อไฟล์จริงคู่กับ IMGS (index ตรงกัน) — หน้าทะเบียนเอกสารต้องใช้ตั้งชื่อเอกสาร
+     ⚠️ แยก array ไม่ยัดใน IMGS เพราะฟอร์มอื่น (ใบเบิก/สลิป) ใช้ IMGS ร่วมกันอยู่ */
+  var IMGS_NAMES={};
   function imgsFldHtml(id,label){
     return '<div class="fld"><label>'+esc(label)+'</label>'+
       '<input id="'+id+'" type="file" accept="image/*,application/pdf" multiple style="font-family:inherit;font-size:14px">'+
@@ -5744,7 +5775,7 @@
   }
   function readFileDataURL(f){ return new Promise(function(res,rej){ var fr=new FileReader(); fr.onload=function(){res(fr.result);}; fr.onerror=rej; fr.readAsDataURL(f); }); }
   function imgsFldBind(id){
-    IMGS[id]=[];
+    IMGS[id]=[]; IMGS_NAMES[id]=[];
     var el=$(id); if(!el) return;
     el.addEventListener('change', function(){
       var fs=el.files ? Array.prototype.slice.call(el.files) : [];
@@ -5755,7 +5786,12 @@
         return shrinkImage(f).catch(function(){ return null; });
       }))
         .then(function(ds){
-          ds.filter(Boolean).forEach(function(d){ if(IMGS[id].length<10) IMGS[id].push(d); });
+          ds.forEach(function(d,i){
+            if(!d) return;
+            if(IMGS[id].length>=10) return;
+            IMGS[id].push(d);
+            IMGS_NAMES[id].push((fs[i]&&fs[i].name)||'');
+          });
           el.value='';            // เคลียร์ input → เลือกไฟล์เดิมซ้ำได้ + กดเพิ่มทีละชุดได้
           imgsPaint(id);
         });
@@ -5776,7 +5812,7 @@
           'border-radius:50%;border:none;background:#E5484D;color:#fff;font-size:12px;line-height:1;cursor:pointer">×</button></span>';
       }).join('');
   }
-  function imgsDel(id,i){ (IMGS[id]||[]).splice(i,1); imgsPaint(id); }
+  function imgsDel(id,i){ (IMGS[id]||[]).splice(i,1); (IMGS_NAMES[id]||[]).splice(i,1); imgsPaint(id); }
   window.imgsDel=imgsDel;
 
   // (ลบช่องแนบ "รูปเดียว" ทิ้ง 29 ก.ค. — accept="image/*" ทำให้สลิป PDF แนบไม่ติดแบบเงียบ
@@ -9823,7 +9859,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260906-1209';
+  var APP_BUILD='20260906-1213';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
