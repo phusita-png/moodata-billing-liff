@@ -397,6 +397,14 @@
   .rs-mod input{ width:16px; height:16px; }
   .rs-mod-free{ background:#F4F7FB; color:#5B6472; cursor:default; }
   .rs-dep{ font-size:11.5px; color:#8A94A6; }
+  /* โหมดคีย์ข้อมูล — ช่องกรอกในตาราง */
+  .drk{ width:100%; box-sizing:border-box; padding:5px 7px; font:inherit; font-size:13px;
+    border:1px solid var(--line); border-radius:7px; background:#fff; }
+  .drk:focus{ outline:none; border-color:#1B72E8; box-shadow:0 0 0 2px rgba(27,114,232,.15); }
+  .drk-empty{ background:#FFF8E7; border-color:#E8C77A; }   /* ยังไม่มีค่า = ต้องกรอก */
+  .drk-dirty{ background:#EAF5EC; border-color:#7FBF8C; }   /* แก้แล้วยังไม่บันทึก */
+  .dr-keybar{ background:#FFF8E7; border:1px solid #E8C77A; border-radius:10px; padding:9px 12px;
+    margin-bottom:9px; font-size:13px; }
   .dr-chips{ display:flex; flex-wrap:wrap; gap:7px; }
   .dr-chip{ border:1px solid var(--line); background:#fff; border-radius:999px; padding:5px 12px; font-size:13px;
     color:#4A5262; cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; gap:6px; }
@@ -4761,6 +4769,71 @@
   }
   function drNoop(){}
 
+  /* ── ⌨️ โหมดคีย์ข้อมูล (6 ก.ย. 2569) ──
+     พี่กี้เลือกทาง "OCR อ่านเท่าที่ได้ แล้วคนแก้ส่วนที่เหลือ" เพื่อไม่ต้องจ่ายค่า AI
+     → การแก้ต้องเร็วพอที่จะทำ 10-30 ใบรวดเดียว: พิมพ์ในตารางตรง ๆ กด Tab ข้ามช่อง
+       แล้วบันทึกทีเดียวทั้งหน้า (ไม่ใช่เปิดฟอร์มทีละใบ)
+     ⚠️ ไม่มีการบันทึกอัตโนมัติ — คนกดบันทึกเองเสมอ จะได้รู้ว่าอะไรถูกเขียนลงไปแล้ว */
+  var DR_KEY = false;        // อยู่ในโหมดคีย์ข้อมูลไหม
+  var DR_DIRTY = {};         // { เลขที่ใบ: { field: value } } — เก็บเฉพาะช่องที่แก้จริง
+
+  function drKeyMode(on){
+    if(!on && Object.keys(DR_DIRTY).length &&
+       !window.confirm('มีข้อมูลที่แก้ไว้ยังไม่ได้บันทึก ออกจากโหมดคีย์ข้อมูลเลยไหม?')) return;
+    DR_KEY=!!on; DR_DIRTY={}; DR_EDIT=''; DR_FORM=''; DR_LINK='';
+    drPaint();
+  }
+  function drKeySet(no, field, val){
+    if(!DR_DIRTY[no]) DR_DIRTY[no]={};
+    DR_DIRTY[no][field]=val;
+    var b=$('drKeySave');
+    if(b) b.textContent='💾 บันทึก '+Object.keys(DR_DIRTY).length+' ใบ';
+  }
+  function drKeySave(){
+    var nos=Object.keys(DR_DIRTY);
+    if(!nos.length){ toast('ยังไม่ได้แก้อะไรค่ะ'); return; }
+    var rows=nos.map(function(no){
+      var o=DR_DIRTY[no]; o.no=no; return o;
+    });
+    callBusy('กำลังบันทึก '+nos.length+' ใบ…',
+      jsonpPost(withRoom_({ action:'waDocEditBulk', uid:UID, rows:JSON.stringify(rows) })), 'บันทึกแล้ว')
+      .then(function(r){
+        if(!r||!r.ok){ toast((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+        if(r.warn) toast(r.warn);
+        else toast('บันทึกแล้ว '+r.saved+' ใบ'+(r.skipped?(' · ไม่เปลี่ยน '+r.skipped):''));
+        DR_DIRTY={}; renderDocReg();
+      }).catch(function(e){ toast(e.message); });
+  }
+
+  /** ช่องกรอกในตาราง — data-no/data-f บอกว่าเป็นใบไหน ช่องอะไร */
+  function drCell(x, field, value, type){
+    var q=esc(x.no);
+    var cls = value ? 'drk' : 'drk drk-empty';   // ช่องว่าง = ไฮไลต์ให้เห็นว่าต้องกรอก
+    return '<input class="'+cls+'" data-no="'+q+'" data-f="'+field+'" type="'+(type||'text')+'"'+
+      (type==='number'?' inputmode="decimal"':'')+' value="'+esc(value==null?'':value)+'">';
+  }
+
+  /** ผูก event ครั้งเดียวหลังวาดตาราง (ไม่ใช้ inline onchange — ค่าที่มี ' หรือ " จะพัง) */
+  function drKeyBind(){
+    Array.prototype.forEach.call(document.querySelectorAll('.drk'), function(el){
+      el.addEventListener('change', function(){
+        drKeySet(el.getAttribute('data-no'), el.getAttribute('data-f'), el.value);
+        el.classList.remove('drk-empty');
+        el.classList.add('drk-dirty');
+      });
+      // Enter = ลงช่องเดียวกันของแถวถัดไป (คีย์ข้อมูลเป็นคอลัมน์เร็วกว่าไล่ทีละแถว)
+      el.addEventListener('keydown', function(ev){
+        if(ev.key!=='Enter') return;
+        ev.preventDefault();
+        var f=el.getAttribute('data-f');
+        var all=Array.prototype.slice.call(document.querySelectorAll('.drk[data-f="'+f+'"]'));
+        var i=all.indexOf(el);
+        if(i>=0 && i+1<all.length){ all[i+1].focus(); all[i+1].select(); }
+      });
+    });
+  }
+
+
   function renderDocReg(){
     skel();
     jsonp(withRoom_({ action:'waDocInit', uid:UID, month:DR_MONTH, entity:DR_ENT })).then(function(r){
@@ -4800,6 +4873,9 @@
 
     h+='<div class="card"><div class="tax-acts">'+
       '<button class="btn btn-primary" onclick="drForm(\'up\')">⬆️ อัปโหลดเอกสาร</button>'+
+      (DR_KEY ? '<button class="btn btn-primary" id="drKeySave" onclick="drKeySave()">💾 บันทึกที่แก้</button>'+
+                '<button class="btn btn-ghost" onclick="drKeyMode(0)">ออกจากโหมดคีย์ข้อมูล</button>'
+              : '<button class="btn btn-ghost" onclick="drKeyMode(1)">⌨️ โหมดคีย์ข้อมูล</button>')+
       (function(){
         // ใบที่ยังไม่มี วันที่/ยอด/คู่ค้า = ยังไม่ได้อ่าน (เงื่อนไขเดียวกับ docScanPending_ ฝั่ง backend)
         var un=(docs||[]).filter(function(x){ return !x.isSystem && (!x.docDate || !x.amount || !x.party); }).length;
@@ -4831,6 +4907,9 @@
     // ── ตาราง ──
     var list=DR_CAT ? docs.filter(function(x){ return x.cat===DR_CAT; }) : docs;
     h+='<div class="card"><div class="ds-h">รายการเอกสาร ('+list.length+')</div>';
+    if(DR_KEY) h+='<div class="dr-keybar">⌨️ <b>โหมดคีย์ข้อมูล</b> — พิมพ์ทับได้เลยในตาราง · '+
+      '<b>Tab</b> ไปช่องถัดไป · <b>Enter</b> ลงช่องเดียวกันของแถวถัดไป · ช่องเหลืองคือยังไม่มีค่า<br>'+
+      'แก้เสร็จกด <b>💾 บันทึกที่แก้</b> ด้านบน (ไม่บันทึกอัตโนมัติ)</div>';
     var nSel=Object.keys(DR_SEL).filter(function(k){ return DR_SEL[k]; }).length;
     if(nSel){
       h+='<div class="dr-bulk">เลือกไว้ '+nSel+' ไฟล์ → '+
@@ -4867,15 +4946,26 @@
           var base = x.base || (x.amount && x.vat ? (x.amount - x.vat) : 0);
           return '<tr'+(x.cat==='PENDING'?' class="dr-pending"':'')+'>'+
             '<td><input type="checkbox" '+(DR_SEL[x.no]?'checked':'')+' onchange="drSel('+q+',this.checked)"></td>'+
-            '<td class="dt-nw">'+(x.docDate?esc(x.docDate):'<span style="color:#B4242A">—</span>')+'</td>'+
-            '<td>'+esc(head)+
-              (sub.length?'<br><span style="font-size:12px;color:#8A94A6">'+sub.join(' · ')+'</span>':'')+'</td>'+
-            '<td>'+(x.cat==='PENDING'
-              ? '<span class="dr-tag dr-tag-wait">รอแยกหมวด</span>'
-              : '<span class="dr-tag">'+esc(x.catName)+'</span>')+'</td>'+
-            '<td class="dt-amt">'+(base?money(base):'—')+'</td>'+
-            '<td class="dt-amt">'+(x.vat?money(x.vat):'—')+'</td>'+
-            '<td class="dt-amt">'+(x.amount?money(x.amount):'—')+'</td>'+
+            (DR_KEY
+              ? '<td>'+drCell(x,'docDate',x.docDateIso,'date')+'</td>'+
+                '<td>'+drCell(x,'party',x.party)+
+                  '<div style="margin-top:3px">'+drCell(x,'docNo',x.docNo)+'</div></td>'+
+                '<td>'+(x.cat==='PENDING'
+                  ? '<span class="dr-tag dr-tag-wait">รอแยกหมวด</span>'
+                  : '<span class="dr-tag">'+esc(x.catName)+'</span>')+'</td>'+
+                '<td>'+drCell(x,'base',x.base||'','number')+'</td>'+
+                '<td>'+drCell(x,'vat',x.vat||'','number')+'</td>'+
+                '<td>'+drCell(x,'amount',x.amount||'','number')+'</td>'
+              : '<td class="dt-nw">'+(x.docDate?esc(x.docDate):'<span style="color:#B4242A">—</span>')+'</td>'+
+                '<td>'+esc(head)+
+                  (sub.length?'<br><span style="font-size:12px;color:#8A94A6">'+sub.join(' · ')+'</span>':'')+'</td>'+
+                '<td>'+(x.cat==='PENDING'
+                  ? '<span class="dr-tag dr-tag-wait">รอแยกหมวด</span>'
+                  : '<span class="dr-tag">'+esc(x.catName)+'</span>')+'</td>'+
+                '<td class="dt-amt">'+(base?money(base):'—')+'</td>'+
+                '<td class="dt-amt">'+(x.vat?money(x.vat):'—')+'</td>'+
+                '<td class="dt-amt">'+(x.amount?money(x.amount):'—')+'</td>'
+            )+
             '<td class="dt-nw" style="font-size:12px;color:#8A94A6">'+esc(x.addedAt||'')+'</td>'+
             '<td style="text-align:center">'+(x.url?'<a class="ex-lk" href="'+esc(x.url)+'" target="_blank">เปิดเอกสาร</a>':'')+'</td>'+
             dtActCell('dr_'+x.no, docRowActions(x, own))+
@@ -4885,6 +4975,7 @@
     h+='</div>';
     $('main').innerHTML=h;
     if(DR_FORM==='up') imgsFldBind('drFiles');
+    if(DR_KEY) drKeyBind();   // ผูก event ช่องกรอกหลังวาดตารางเสร็จ
   }
 
   function drMonthLabel(ym){
@@ -5236,6 +5327,7 @@
 
   window.drScan=drScan; window.drScanAll=drScanAll; window.drLinkForm=drLinkForm; window.drLinkSave=drLinkSave;
 
+  window.drKeyMode=drKeyMode; window.drKeySave=drKeySave;
   window.renderDocReg=renderDocReg; window.drSetMonth=drSetMonth; window.drSetEnt=drSetEnt;
   window.drSetCat=drSetCat; window.drForm=drForm; window.drUpload=drUpload; window.drSel=drSel;
   window.drSelClear=drSelClear; window.drBulkSet=drBulkSet; window.drPickCat=drPickCat;
@@ -10132,7 +10224,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260906-1700';
+  var APP_BUILD='20260906-1816';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
