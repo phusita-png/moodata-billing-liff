@@ -4816,21 +4816,22 @@
     if(!list.length){ h+='<div class="emptybox">ยังไม่มีเอกสารในเดือนนี้<br><span class="m-hint">กด ⬆️ อัปโหลดเอกสาร หรือ 🔄 ดึงเอกสารที่ระบบออกเอง</span></div>'; }
     else {
       h+='<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl">'+
-        '<colgroup><col style="width:34px"><col style="width:11%"><col style="width:34%"><col style="width:16%">'+
-        '<col style="width:14%"><col style="width:10%"><col style="width:46px"><col style="width:34px"></colgroup>'+
+        '<colgroup><col style="width:34px"><col style="width:10%"><col style="width:26%"><col style="width:14%">'+
+        '<col style="width:11%"><col style="width:9%"><col style="width:11%"><col style="width:9%"><col style="width:62px"><col style="width:34px"></colgroup>'+
         '<thead><tr><th><input type="checkbox" onchange="drSelAll(this.checked)" title="เลือกทั้งหมด"></th>'+
-        '<th>วันที่เอกสาร</th><th>คู่ค้า / รายละเอียด</th><th>หมวด</th><th class="dt-amt">ยอดเงิน</th>'+
+        '<th>วันที่เอกสาร</th><th>คู่ค้า / รายละเอียด</th><th>หมวด</th>'+
+        '<th class="dt-amt">มูลค่า</th><th class="dt-amt">ภาษี</th><th class="dt-amt">รวมทั้งสิ้น</th>'+
         '<th>วันที่อัป</th><th>ไฟล์</th><th></th></tr></thead><tbody>'+
         list.map(function(x){
           var q="'"+String(x.no).replace(/'/g,"\'")+"'";
-          /* ชื่อหลักของแถว = คู่ค้าบนเอกสาร (พี่กี้ 6 ก.ย.: ไม่ต้องมี "เอกสาร 1 2 3")
-             ยังไม่ได้อ่าน/ไม่มีคู่ค้า → ใช้ชื่อไฟล์แทน */
+          /* ชื่อแถว = คู่ค้าบนเอกสาร (พี่กี้: ไม่ต้องมี "เอกสาร 1 2 3" และไม่ต้องโชว์ที่อยู่) */
           var head = x.party || x.name || '(ยังไม่ได้อ่านข้อมูล)';
           var sub=[];
           if(x.docNo) sub.push('เลขที่ '+esc(x.docNo));
-          if(x.party && x.name && x.name!==x.party) sub.push(esc(x.name));
           if(x.isSystem) sub.push('จากระบบ');
           if(x.linkNo) sub.push('→ '+esc(x.linkLabel)+' '+esc(x.linkNo));
+          // มูลค่าก่อนภาษี: ใช้ค่าที่บันทึกไว้ ถ้าไม่มีก็คิดจาก รวม − ภาษี
+          var base = x.base || (x.amount && x.vat ? (x.amount - x.vat) : 0);
           return '<tr'+(x.cat==='PENDING'?' class="dr-pending"':'')+'>'+
             '<td><input type="checkbox" '+(DR_SEL[x.no]?'checked':'')+' onchange="drSel('+q+',this.checked)"></td>'+
             '<td class="dt-nw">'+(x.docDate?esc(x.docDate):'<span style="color:#B4242A">—</span>')+'</td>'+
@@ -4839,11 +4840,11 @@
             '<td>'+(x.cat==='PENDING'
               ? '<span class="dr-tag dr-tag-wait">รอแยกหมวด</span>'
               : '<span class="dr-tag">'+esc(x.catName)+'</span>')+'</td>'+
-            '<td class="dt-amt">'+(x.amount?money(x.amount):'—')+
-              (x.vat?('<br><span style="font-size:11px;color:#8A94A6;font-weight:400">ฐาน '+money(x.base||(x.amount-x.vat))+
-                ' · VAT '+money(x.vat)+'</span>'):'')+'</td>'+
+            '<td class="dt-amt">'+(base?money(base):'—')+'</td>'+
+            '<td class="dt-amt">'+(x.vat?money(x.vat):'—')+'</td>'+
+            '<td class="dt-amt">'+(x.amount?money(x.amount):'—')+'</td>'+
             '<td class="dt-nw" style="font-size:12px;color:#8A94A6">'+esc(x.addedAt||'')+'</td>'+
-            '<td style="text-align:center">'+(x.url?'<a class="ex-lk" href="'+esc(x.url)+'" target="_blank" title="เปิดไฟล์">เปิด</a>':'')+'</td>'+
+            '<td style="text-align:center">'+(x.url?'<a class="ex-lk" href="'+esc(x.url)+'" target="_blank">เปิดเอกสาร</a>':'')+'</td>'+
             dtActCell('dr_'+x.no, docRowActions(x, own))+
             '</tr>';
         }).join('')+'</tbody></table></div>';
@@ -10086,7 +10087,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260906-1520';
+  var APP_BUILD='20260906-1531';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
