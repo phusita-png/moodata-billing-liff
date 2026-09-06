@@ -385,6 +385,9 @@
   .dt-tbl td.dt-detail{ white-space:normal; color:#5B6472; line-height:1.45; }
   .dt-tbl td.dt-nw, .dt-tbl th.dt-nw{ white-space:nowrap; }   /* วันที่/เลขที่ ห้ามตัดกลางคำ */
   .dt-tbl td.dt-amt{ text-align:right; font-variant-numeric:tabular-nums; font-weight:600; white-space:nowrap; }
+  /* หัวคอลัมน์เงินต้องชิดขวาให้ตรงกับตัวเลขข้างล่าง (พี่กี้ทัก 6 ก.ย.) */
+  .dt-tbl th.dt-amt{ text-align:right; white-space:nowrap; }
+  .dr-sub{ font-size:12px; color:#8A94A6; white-space:normal; word-break:break-all; }
   .dt-tbl td.dt-doc a{ color:var(--red); text-decoration:none; font-size:12px; margin-right:7px; white-space:nowrap; }
   .dt-tbl td.dt-act{ text-align:center; width:44px; }
   .dt-tbl tbody tr:hover{ background:#FAFBFD; }
@@ -4928,18 +4931,19 @@
     if(!list.length){ h+='<div class="emptybox">ยังไม่มีเอกสารในเดือนนี้<br><span class="m-hint">กด ⬆️ อัปโหลดเอกสาร หรือ 🔄 ดึงเอกสารที่ระบบออกเอง</span></div>'; }
     else {
       h+='<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl">'+
-        '<colgroup><col style="width:34px"><col style="width:10%"><col style="width:26%"><col style="width:14%">'+
+        '<colgroup><col style="width:34px"><col style="width:14%"><col style="width:22%"><col style="width:14%">'+
         '<col style="width:11%"><col style="width:9%"><col style="width:11%"><col style="width:9%"><col style="width:62px"><col style="width:34px"></colgroup>'+
         '<thead><tr><th><input type="checkbox" onchange="drSelAll(this.checked)" title="เลือกทั้งหมด"></th>'+
-        '<th>วันที่เอกสาร</th><th>คู่ค้า / รายละเอียด</th><th>หมวด</th>'+
+        '<th>วันที่ · เลขที่เอกสาร</th><th>คู่ค้า / รายละเอียด</th><th>หมวด</th>'+
         '<th class="dt-amt">มูลค่า</th><th class="dt-amt">ภาษี</th><th class="dt-amt">รวมทั้งสิ้น</th>'+
         '<th>วันที่อัป</th><th>ไฟล์</th><th></th></tr></thead><tbody>'+
         list.map(function(x){
           var q="'"+String(x.no).replace(/'/g,"\'")+"'";
           /* ชื่อแถว = คู่ค้าบนเอกสาร (พี่กี้: ไม่ต้องมี "เอกสาร 1 2 3" และไม่ต้องโชว์ที่อยู่) */
           var head = x.party || x.name || '(ยังไม่ได้อ่านข้อมูล)';
+          /* เลขที่เอกสารย้ายไปอยู่ใต้วันที่ — เป็นข้อมูล "หัวใบ" ชุดเดียวกัน
+             ไม่ใช่รายละเอียดของคู่ค้า (พี่กี้ 6 ก.ย.) */
           var sub=[];
-          if(x.docNo) sub.push('เลขที่ '+esc(x.docNo));
           if(x.isSystem) sub.push('จากระบบ');
           if(x.linkNo) sub.push('→ '+esc(x.linkLabel)+' '+esc(x.linkNo));
           // มูลค่าก่อนภาษี: ใช้ค่าที่บันทึกไว้ ถ้าไม่มีก็คิดจาก รวม − ภาษี
@@ -4947,16 +4951,17 @@
           return '<tr'+(x.cat==='PENDING'?' class="dr-pending"':'')+'>'+
             '<td><input type="checkbox" '+(DR_SEL[x.no]?'checked':'')+' onchange="drSel('+q+',this.checked)"></td>'+
             (DR_KEY
-              ? '<td>'+drCell(x,'docDate',x.docDateIso,'date')+'</td>'+
-                '<td>'+drCell(x,'party',x.party)+
+              ? '<td>'+drCell(x,'docDate',x.docDateIso,'date')+
                   '<div style="margin-top:3px">'+drCell(x,'docNo',x.docNo)+'</div></td>'+
+                '<td>'+drCell(x,'party',x.party)+'</td>'+
                 '<td>'+(x.cat==='PENDING'
                   ? '<span class="dr-tag dr-tag-wait">รอแยกหมวด</span>'
                   : '<span class="dr-tag">'+esc(x.catName)+'</span>')+'</td>'+
                 '<td>'+drCell(x,'base',x.base||'','number')+'</td>'+
                 '<td>'+drCell(x,'vat',x.vat||'','number')+'</td>'+
                 '<td>'+drCell(x,'amount',x.amount||'','number')+'</td>'
-              : '<td class="dt-nw">'+(x.docDate?esc(x.docDate):'<span style="color:#B4242A">—</span>')+'</td>'+
+              : '<td class="dt-nw">'+(x.docDate?esc(x.docDate):'<span style="color:#B4242A">—</span>')+
+                  (x.docNo?'<div class="dr-sub">เลขที่ '+esc(x.docNo)+'</div>':'')+'</td>'+
                 '<td>'+esc(head)+
                   (sub.length?'<br><span style="font-size:12px;color:#8A94A6">'+sub.join(' · ')+'</span>':'')+'</td>'+
                 '<td>'+(x.cat==='PENDING'
@@ -10228,7 +10233,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260906-1933';
+  var APP_BUILD='20260906-1945';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
