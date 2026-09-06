@@ -1177,7 +1177,7 @@
     hubreq:['🏛️','คำขอสมัคร'], hubrooms:['🏢','ห้องลูกค้า'], roomset:['⚙️','ตั้งค่าห้อง'], home:['🏠','ภาพรวมประจำวัน'], clock:['🕐','ลงเวลา'],
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
     expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติเบิกจ่าย'],
-    expdash:['📊','รายจ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ทะเบียนการจ่าย'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','ภาษีซื้อ/ภ.พ.30'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ทะเบียนใบสำคัญจ่าย'], sales:['💰','รายรับ'], ar:['📊','ลูกหนี้ค้างรับ'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51'], docreg:['📄','ทะเบียนเอกสาร'], hubmods:['🧩','โมดูลของแต่ละห้อง'], teamperm:['🔐','สิทธิ์ทีม'], kpiemp:['👥','ทะเบียนพนักงาน'], kpiperson:['📈','ประวัติรายคน'], kpidash:['📊','ภาพรวมเดือน'], kpientry:['✍️','กรอกผลงาน'], kpiscore:['⭐','คะแนนคุณลักษณะ'], kpidoc:['📄','ใบประเมิน']
+    expdash:['📊','รายจ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ทะเบียนการจ่าย'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','ภาษีซื้อ/ภ.พ.30'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ทะเบียนใบสำคัญจ่าย'], sales:['💰','รายรับ'], ar:['📊','ลูกหนี้ค้างรับ'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51'], docdash:['📊','ภาพรวม'], docreg:['🗂️','จัดการเอกสาร'], docreport:['📑','รายงานประจำเดือน'], doccat:['🏷️','จัดการหมวด'], hubmods:['🧩','โมดูลของแต่ละห้อง'], teamperm:['🔐','สิทธิ์ทีม'], kpiemp:['👥','ทะเบียนพนักงาน'], kpiperson:['📈','ประวัติรายคน'], kpidash:['📊','ภาพรวมเดือน'], kpientry:['✍️','กรอกผลงาน'], kpiscore:['⭐','คะแนนคุณลักษณะ'], kpidoc:['📄','ใบประเมิน']
   };
   var PROJECTS=[], COMPANIES=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ) · COMPANIES=บริษัท auto (หน้าจัดการ)
   var ALL_TASKS=[], PJ_SEL='', MB_STATUSES=[];   // มุมมอง Project (dropdown เลือก · แยก 6 สถานะ + %) · MB_STATUSES=รายการสถานะ (ฟอร์มแก้งานมือถือ)
@@ -1282,7 +1282,7 @@
     if(gi) $('tbIcon').innerHTML=gi.replace('stroke-width="1.9"','stroke-width="2"'); else $('tbIcon').textContent=meta[0];
     $('tbTitle').textContent=meta[1];
     mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
-    ({ portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51, docreg:renderDocReg, kpiemp:renderKpiEmp, kpiperson:renderKpiPerson, kpidash:renderKpiDash, kpientry:renderKpiEntry, kpiscore:renderKpiScore, kpidoc:renderKpiDoc }[v] || soon)();
+    ({ portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51, docreg:renderDocReg, docdash:renderDocDash, docreport:renderDocReport, doccat:renderDocCat, kpiemp:renderKpiEmp, kpiperson:renderKpiPerson, kpidash:renderKpiDash, kpientry:renderKpiEntry, kpiscore:renderKpiScore, kpidoc:renderKpiDoc }[v] || soon)();
   }
 
   // ───── มือถือ: เมนูกลุ่ม (ล่าง) + แท็บย่อย (บน) · คอมใช้ sidebar เดิม ไม่เกี่ยว ─────
@@ -1330,6 +1330,9 @@
     home:'<svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10V20h13V10"/><path d="M10 20v-5h4v5"/></svg>',
     payroll:'<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9.5h18"/><path d="M7 14h4M15.5 14h1.5"/></svg>',
     docreg:'<svg viewBox="0 0 24 24"><path d="M3.5 7.5a2 2 0 0 1 2-2h3.2l1.8 2.2h8a2 2 0 0 1 2 2v8.8a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/><path d="M8 13h8M8 16h5"/></svg>',
+    docdash:'<svg viewBox="0 0 24 24"><path d="M4 19.5V13M9.3 19.5V8.5M14.7 19.5v-7M20 19.5V5"/><path d="M3 21h18"/></svg>',
+    docreport:'<svg viewBox="0 0 24 24"><path d="M6.5 3.5h11a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1v-15a1 1 0 0 1 1-1z"/><path d="M9 8h6M9 12h6M9 16h3.5"/></svg>',
+    doccat:'<svg viewBox="0 0 24 24"><path d="M3.5 8.5 10 4l10.5 4.2v7L10 20 3.5 15.5z"/><path d="M10 20V9.2l10.5-1"/></svg>',
     hubmods:'<svg viewBox="0 0 24 24"><rect x="3" y="3.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3.5" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><path d="M15 17.2h5M17.5 14.7v5"/></svg>',
     teamperm:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19.5c0-3.2 2.6-5 5.5-5 1 0 2 .2 2.8.6"/><rect x="14" y="14" width="7" height="6" rx="1.2"/><path d="M15.8 14v-1.8a1.7 1.7 0 0 1 3.4 0V14"/></svg>'
   };
@@ -1383,7 +1386,9 @@
        own:false = ทีมงาน/ลูกค้าเข้าได้ด้วย (ลูกค้าต้องอัปไฟล์เองได้ ไม่งั้นพี่ต้องอัปแทนทุกเดือน)
        เปิดฟรีทุกห้อง (MODULE_CORE ฝั่ง backend) */
     { key:'docsys',  th:'ระบบเอกสาร',   en:'DOCUMENTS',   color:'#a16207', g:['#fbbf24','#a16207'], own:false,
-      views:['docreg'] },
+      views:['docdash','docreg','docreport','doccat'],
+      sec:[ ['ทะเบียนเอกสาร', ['docdash','docreg','docreport']],
+            ['การตั้งค่า', ['doccat']] ] },
     /* 📊 ประเมินผลงาน (KPI · 6 ก.ย. 69) — บริการ HR-Service002 ของริชมอนด์ · spec docs/spec-kpi-eval.md
        own:false = HR/หัวหน้าของลูกค้าเข้ามากรอกเองได้ (ด่านจริงอยู่ backend: ปิดรอบ/ตั้งค่า = ทีมภายในเท่านั้น)
        ลำดับเมนู: ทะเบียน → ประวัติ → ภาพรวมเดือน → กรอก → คุณลักษณะ → ใบประเมิน (พี่กี้เคาะ) */
@@ -2043,7 +2048,7 @@
     expdash:'รายจ่าย', reimb:'ตั้งเบิกลูกค้า', petty:'เงินสดย่อย', payout:'ทะเบียนการจ่าย', expreport:'รายงานรายจ่าย', taxhub:'รายงานภาษี', whtin:'50 ทวิ ที่ถูกหัก', vatbuy:'ภาษีซื้อ',
     ot:'OT ของฉัน', otapprove:'อนุมัติ OT', docs:'เอกสาร',
     hrreport:'รายงาน HR', finreport:'รายงานการเงิน', taxdoc:'ภาษี/เอกสาร',
-    bizdash:'ภาพรวม', sales:'รายรับ', ar:'ลูกหนี้', salesreport:'รายงานรายรับ', poreport:'ทะเบียนใบสำคัญจ่าย', pnd51:'ภ.ง.ด.51', docreg:'ทะเบียนเอกสาร', kpiemp:'ทะเบียนพนักงาน', kpiperson:'ประวัติรายคน', kpidash:'ภาพรวมเดือน', kpientry:'กรอกผลงาน', kpiscore:'คุณลักษณะ', kpidoc:'ใบประเมิน' };
+    bizdash:'ภาพรวม', sales:'รายรับ', ar:'ลูกหนี้', salesreport:'รายงานรายรับ', poreport:'ทะเบียนใบสำคัญจ่าย', pnd51:'ภ.ง.ด.51', docdash:'ภาพรวมเอกสาร', docreg:'จัดการเอกสาร', docreport:'รายงานประจำเดือน', doccat:'จัดการหมวด', kpiemp:'ทะเบียนพนักงาน', kpiperson:'ประวัติรายคน', kpidash:'ภาพรวมเดือน', kpientry:'กรอกผลงาน', kpiscore:'คุณลักษณะ', kpidoc:'ใบประเมิน' };
   // แท็บที่เห็นเฉพาะพี่/ผู้ดูแล · reimb = ตั้งเบิกลูกค้า (ชีตไม่มีเจ้าของรายคน + เป็นข้อมูลรายได้)
   // ⚠️ ซ่อนแท็บ ≠ กันข้อมูล — backend กรองสิทธิ์เองอีกชั้นเสมอ
   var OWNER_VIEWS={ review:1, approve:1, expapprove:1, otapprove:1, reimb:1, taxdoc:1, petty:1, payout:1, vatbuy:1, expreport:1, taxhub:1, whtin:1, hrreport:1, finreport:1, ar:1, pnd51:1, salesreport:1, hubmods:1, teamperm:1 };
@@ -4894,8 +4899,6 @@
           (any ? '<button class="btn btn-ghost" onclick="drScanAll(1)">🔁 อ่านใหม่ทั้งเดือน</button>' : '');
       })()+
       '<button class="btn btn-ghost" onclick="drSync()">🔄 ดึงเอกสารที่ระบบออกเอง</button>'+
-      (own?'<button class="btn btn-ghost" onclick="drForm(\'cat\')">🗂️ จัดการหมวด</button>':'')+
-      (own?'<button class="btn btn-ghost" onclick="drClose()">📦 ปิดเดือน · ออกสารบัญ</button>':'')+
       '</div>'+
       '<div class="m-hint">เอกสารที่ระบบออกเอง (ใบสำคัญรับเงิน · 50 ทวิ · ใบสำคัญจ่าย · เอกสารขาย) '+
       'ขึ้นทะเบียนโดยชี้ไปที่ไฟล์เดิม ไม่สร้างสำเนาซ้ำค่ะ</div></div>';
@@ -5021,7 +5024,7 @@
       '<button class="btn btn-primary" id="drUpBtn" onclick="drUpload()">อัปโหลด</button></div></div>';
   }
 
-  function drCatForm(cats){
+  function drCatForm(cats, standalone){
     var all=(DR&&DR.catsAll)||cats;
     return '<div class="card"><div class="ds-h">🗂️ จัดการหมวดเอกสาร</div>'+
       '<div class="m-hint">หมวดมาตรฐานเปลี่ยนชื่อได้ · เพิ่มหมวดของบริษัทเองได้ · '+
@@ -5041,7 +5044,7 @@
       }).join('')+'</tbody></table></div>'+
       '<div class="fld" style="margin-top:10px"><label>เพิ่มหมวดใหม่</label>'+
       '<input id="drCatNew" placeholder="ชื่อหมวด เช่น ค่าขนส่งพิเศษ"></div>'+
-      '<div class="tax-acts"><button class="btn btn-ghost" onclick="drForm(\'cat\')">ปิด</button>'+
+      '<div class="tax-acts">'+(standalone?'':'<button class="btn btn-ghost" onclick="drForm(\'cat\')">ปิด</button>')+
       '<button class="btn btn-primary" onclick="drCatAdd()">เพิ่มหมวด</button></div></div>';
   }
 
@@ -5198,7 +5201,8 @@
     p.action='waDocCat'; p.uid=UID;
     callBusy('กำลังบันทึกหมวด…', jsonpPost(withRoom_(p)), 'บันทึกแล้ว').then(function(r){
       if(!r||!r.ok){ toast((r&&r.error)||'ทำรายการไม่สำเร็จ'); return; }
-      renderDocReg();
+      // จัดการหมวดเป็นหน้าของตัวเองแล้ว — วาดหน้าที่ผู้ใช้ยืนอยู่ ไม่ใช่เด้งกลับทะเบียนเสมอ
+      (VIEW==='doccat' ? renderDocCat : renderDocReg)();
     }).catch(function(e){ toast(e.message); });
   }
 
@@ -5343,6 +5347,196 @@
       renderDocReg();
     }).catch(function(e){ unbusy(); toast(e.message); renderDocReg(); });
   }
+
+
+  /* ═══════════ 📄 ระบบเอกสาร — ภาพรวม · รายงานประจำเดือน · จัดการหมวด (6 ก.ย. 2569) ═══════════
+     โครงที่พี่กี้เคาะ: ทะเบียนเอกสาร = [ภาพรวม · จัดการเอกสาร · รายงานประจำเดือน] · การตั้งค่า = [จัดการหมวด]
+     ทั้งสามหน้าใช้ตัวกรองเดือน/บริษัทชุดเดียวกัน (DR_MONTH · DR_ENT) — เปลี่ยนเดือนหน้าไหน
+     แล้วสลับเมนูต้องยังอยู่เดือนเดิม ไม่งั้นต้องเลือกใหม่ทุกครั้ง */
+  var DD=null, DRP=null;
+
+  function drFilterBar(r, fn){
+    var h='<div class="ds-sel"><select onchange="'+fn+'(this.value)">'+
+      (r.months||[]).map(function(m){
+        var ym=(m&&m.ym)||m, n=(m&&m.n)||0;
+        return '<option value="'+esc(ym)+'"'+(ym===DR_MONTH?' selected':'')+'>'+
+          esc(drMonthLabel(ym))+(n?(' · '+n+' ไฟล์'):' · ว่าง')+'</option>';
+      }).join('')+'</select></div>';
+    return h;
+  }
+
+  /* ── ① ภาพรวม — "เดือนนี้ยังต้องทำอะไรอีก" ── */
+  function renderDocDash(){
+    skel();
+    jsonp(withRoom_({ action:'waDocDash', uid:UID, month:DR_MONTH, entity:DR_ENT })).then(function(r){
+      if(VIEW!=='docdash') return;
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      DD=r; DR_MONTH=r.month||DR_MONTH; ddPaint();
+    }).catch(function(e){ if(VIEW==='docdash') $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
+  }
+
+  function ddPaint(){
+    var r=DD; if(!r) return;
+    var s=r.summary||{}, m=r.money||{};
+    var h='<div class="section-h">📊 ภาพรวมเอกสาร</div>'+drFilterBar(r,'ddMonth');
+
+    h+='<div class="ds-grid">'+
+      statCard('เอกสารเดือนนี้', (s.total||0)+' ไฟล์', drMonthLabel(DR_MONTH))+
+      statCard('รอแยกหมวด', (s.pending||0)+' ไฟล์', s.pending?'ยังไม่รู้ว่าเป็นเอกสารประเภทไหน':'แยกครบแล้ว', s.pending?'ds-warn':'')+
+      statCard('ข้อมูลยังไม่ครบ', (s.incomplete||0)+' ไฟล์', s.incomplete?'ขาดวันที่/เลขที่/คู่ค้า/ยอด':'ครบทุกใบ', s.incomplete?'ds-warn':'')+
+      statCard('ยังไม่บันทึกเข้าเล่ม', (s.unlinked||0)+' ไฟล์', 'ใบกำกับ/50 ทวิ ที่ยังไม่เข้าระบบ')+
+      '</div>';
+
+    // สถานะปิดเดือน — บอกให้ชัดว่าเดือนนี้ส่งนักบัญชีไปหรือยัง
+    h+='<div class="card"><div class="ds-h">สถานะเดือนนี้</div>'+
+      (r.closed
+        ? '<div class="m-hint">📦 ปิดเดือนแล้ว '+esc(r.closed.at||'')+' · '+(r.closed.files||0)+' ไฟล์'+
+          (r.closed.pending?(' · ตอนปิดยังรอแยกหมวด '+r.closed.pending+' ใบ'):'')+'</div>'+
+          '<div class="tax-acts">'+
+          (r.closed.indexUrl?'<a class="btn btn-ghost" href="'+esc(r.closed.indexUrl)+'" target="_blank">เปิดสารบัญ</a>':'')+
+          (r.closed.folderUrl?'<a class="btn btn-ghost" href="'+esc(r.closed.folderUrl)+'" target="_blank">เปิดโฟลเดอร์</a>':'')+
+          '</div>'
+        : '<div class="m-hint">ยังไม่ได้ปิดเดือน — ปิดเดือนได้ที่หน้า <b>รายงานประจำเดือน</b></div>')+
+      '</div>';
+
+    // งานค้าง = หัวใจของหน้านี้
+    h+='<div class="card"><div class="ds-h">🧰 งานค้างที่ต้องทำ</div>';
+    if(!(r.todo||[]).length){
+      h+='<div class="emptybox">ไม่มีงานค้างค่ะ ทุกใบข้อมูลครบแล้ว</div>';
+    } else {
+      h+='<div class="m-hint">กด "ไปแก้" เพื่อไปที่หน้าจัดการเอกสาร แล้วใช้โหมดคีย์ข้อมูลกรอกรวดเดียวได้ค่ะ</div>'+
+        '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl">'+
+        '<colgroup><col style="width:12%"><col style="width:34%"><col style="width:20%"><col style="width:22%"><col style="width:12%"></colgroup>'+
+        '<thead><tr><th>วันที่</th><th>คู่ค้า / ชื่อไฟล์</th><th>หมวด</th><th>ยังขาด</th><th></th></tr></thead><tbody>'+
+        r.todo.map(function(x){
+          return '<tr><td class="dt-nw">'+(x.docDate?esc(x.docDate):'<span style="color:#B4242A">—</span>')+'</td>'+
+            '<td>'+esc(x.name||'(ยังไม่ได้อ่านข้อมูล)')+'</td>'+
+            '<td>'+(x.cat==='PENDING'?'<span class="dr-tag dr-tag-wait">รอแยกหมวด</span>':'<span class="dr-tag">'+esc(x.catName||'')+'</span>')+'</td>'+
+            '<td><span class="dr-tag dr-tag-wait">'+esc((x.miss||[]).join(' · '))+'</span></td>'+
+            '<td style="text-align:center"><button class="btn btn-ghost btn-sm" onclick="ddGoFix()">ไปแก้</button></td></tr>';
+        }).join('')+'</tbody></table></div>'+
+        (r.todoMore?('<div class="m-hint">…และอีก '+r.todoMore+' ใบ</div>'):'');
+    }
+    h+='</div>';
+
+    // หมวดของเดือนนี้ + ยอดจากหน้าเอกสาร
+    if((r.cats||[]).length){
+      h+='<div class="card"><div class="ds-h">แยกตามหมวด · '+esc(drMonthLabel(DR_MONTH))+'</div>'+
+        '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl">'+
+        '<colgroup><col style="width:46%"><col style="width:18%"><col style="width:36%"></colgroup>'+
+        '<thead><tr><th>หมวด</th><th class="dt-amt">จำนวนใบ</th><th class="dt-amt">รวมทั้งสิ้น</th></tr></thead><tbody>'+
+        r.cats.map(function(c){
+          return '<tr><td>'+esc(c.name)+'</td><td class="dt-amt">'+(c.count||0)+'</td>'+
+            '<td class="dt-amt">'+(c.amount?money(c.amount):'—')+'</td></tr>';
+        }).join('')+
+        '<tr><td><b>รวม</b></td><td class="dt-amt"><b>'+(m.count||0)+'</b></td>'+
+        '<td class="dt-amt"><b>'+money(m.amount||0)+'</b></td></tr>'+
+        '</tbody></table></div>'+
+        '<div class="rs-note">⚠️ '+esc(r.moneyNote||'')+'</div></div>';
+    }
+
+    // แนวโน้มการส่งเอกสาร
+    if((r.history||[]).length>1){
+      h+='<div class="card"><div class="ds-h">ลูกค้าส่งเอกสารย้อนหลัง 6 เดือน</div>'+
+        barChart(r.history.slice().reverse(), function(x){ return drMonthShort(x.ym); }, function(x){ return x.n||0; })+
+        '</div>';
+    }
+    $('main').innerHTML=h;
+  }
+  function ddMonth(v){ DR_MONTH=v; renderDocDash(); }
+  function ddGoFix(){ switchView('docreg'); }
+
+  /* ── ③ รายงานประจำเดือน — สรุปหมวด + ย้อนหลัง + ปิดเดือน ── */
+  function renderDocReport(){
+    skel();
+    jsonp(withRoom_({ action:'waDocReport', uid:UID, month:DR_MONTH, entity:DR_ENT })).then(function(r){
+      if(VIEW!=='docreport') return;
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      DRP=r; DR_MONTH=r.month||DR_MONTH; drpPaint();
+    }).catch(function(e){ if(VIEW==='docreport') $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
+  }
+
+  function drpPaint(){
+    var r=DRP; if(!r) return;
+    var t=r.total||{}, own=!!r.isOwner;
+    var h='<div class="section-h">📑 รายงานประจำเดือน</div>'+drFilterBar(r,'drpMonth');
+
+    h+='<div class="card"><div class="ds-h">สรุปเอกสาร '+esc(drMonthLabel(DR_MONTH))+'</div>'+
+      '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl">'+
+      '<colgroup><col style="width:34%"><col style="width:12%"><col style="width:18%"><col style="width:16%"><col style="width:20%"></colgroup>'+
+      '<thead><tr><th>หมวด</th><th class="dt-amt">จำนวนใบ</th><th class="dt-amt">มูลค่า</th>'+
+      '<th class="dt-amt">ภาษี</th><th class="dt-amt">รวมทั้งสิ้น</th></tr></thead><tbody>'+
+      (r.rows||[]).map(function(c){
+        var zero=!c.count;
+        return '<tr'+(zero?' style="opacity:.5"':'')+'><td>'+esc(c.name)+'</td>'+
+          '<td class="dt-amt">'+(c.count||0)+'</td>'+
+          '<td class="dt-amt">'+(c.base?money(c.base):'—')+'</td>'+
+          '<td class="dt-amt">'+(c.vat?money(c.vat):'—')+'</td>'+
+          '<td class="dt-amt">'+(c.amount?money(c.amount):'—')+'</td></tr>';
+      }).join('')+
+      '<tr><td><b>รวมทุกหมวด</b></td><td class="dt-amt"><b>'+(t.count||0)+'</b></td>'+
+      '<td class="dt-amt"><b>'+money(t.base||0)+'</b></td>'+
+      '<td class="dt-amt"><b>'+money(t.vat||0)+'</b></td>'+
+      '<td class="dt-amt"><b>'+money(t.amount||0)+'</b></td></tr>'+
+      '</tbody></table></div>'+
+      '<div class="rs-note">⚠️ '+esc(r.moneyNote||'')+'</div>'+
+      '<div class="tax-acts">'+
+      (r.closed&&r.closed.indexUrl?'<a class="btn btn-ghost" href="'+esc(r.closed.indexUrl)+'" target="_blank">📄 เปิดสารบัญเดือนนี้</a>':'')+
+      (own?'<button class="btn btn-primary" onclick="drpClose()">📦 '+(r.closed?'ออกสารบัญใหม่':'ปิดเดือน · ออกสารบัญ')+'</button>':'')+
+      '</div>'+
+      (r.closed?('<div class="m-hint">ปิดเดือนล่าสุด '+esc(r.closed.at||'')+' · '+(r.closed.files||0)+' ไฟล์</div>')
+               :'<div class="m-hint">ปิดเดือน = ออกสารบัญ PDF ของเดือนนี้ให้นักบัญชี (ยังเพิ่ม/แก้เอกสารได้อยู่)</div>')+
+      '</div>';
+
+    // ย้อนหลัง
+    h+='<div class="card"><div class="ds-h">ย้อนหลัง 12 เดือน</div>'+
+      '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl">'+
+      '<colgroup><col style="width:26%"><col style="width:14%"><col style="width:24%"><col style="width:18%"><col style="width:18%"></colgroup>'+
+      '<thead><tr><th>เดือน</th><th class="dt-amt">จำนวนใบ</th><th class="dt-amt">รวมทั้งสิ้น</th>'+
+      '<th>ปิดเดือน</th><th>สารบัญ</th></tr></thead><tbody>'+
+      (r.history||[]).map(function(x){
+        return '<tr'+(x.ym===DR_MONTH?' style="background:#F7FAFF"':'')+'>'+
+          '<td><a class="ex-lk" href="javascript:void(0)" onclick="drpMonth(\''+esc(x.ym)+'\')">'+esc(drMonthLabel(x.ym))+'</a></td>'+
+          '<td class="dt-amt">'+(x.count||0)+'</td>'+
+          '<td class="dt-amt">'+(x.amount?money(x.amount):'—')+'</td>'+
+          '<td>'+(x.closed?'<span class="dr-tag">ปิดแล้ว</span>':'<span class="dr-tag dr-tag-wait">ยังไม่ปิด</span>')+'</td>'+
+          '<td>'+(x.indexUrl?'<a class="ex-lk" href="'+esc(x.indexUrl)+'" target="_blank">เปิด</a>':'—')+'</td></tr>';
+      }).join('')+'</tbody></table></div></div>';
+
+    $('main').innerHTML=h;
+  }
+  function drpMonth(v){ DR_MONTH=v; renderDocReport(); }
+  function drpClose(){
+    if(!window.confirm('ออกสารบัญเอกสารของ '+drMonthLabel(DR_MONTH)+' ?')) return;
+    callBusy('กำลังออกสารบัญ…', jsonp(withRoom_({ action:'waDocClose', uid:UID, month:DR_MONTH, entity:DR_ENT })), 'ออกสารบัญแล้ว')
+      .then(function(r){
+        if(!r||!r.ok){ toast((r&&r.error)||'ออกสารบัญไม่สำเร็จ'); return; }
+        if(r.warn) toast(r.warn);
+        if(r.url) window.open(r.url,'_blank');
+        renderDocReport();
+      }).catch(function(e){ toast(e.message); });
+  }
+
+  /* ── การตั้งค่า: จัดการหมวด (แยกออกมาเป็นหน้าของตัวเอง) ── */
+  function renderDocCat(){
+    skel();
+    jsonp(withRoom_({ action:'waDocInit', uid:UID, month:DR_MONTH, entity:DR_ENT })).then(function(r){
+      if(VIEW!=='doccat') return;
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      DR=r;
+      if(!r.isOwner){ $('main').innerHTML='<div class="card"><div class="emptybox">เฉพาะเจ้าของห้องค่ะ</div></div>'; return; }
+      $('main').innerHTML='<div class="section-h">🏷️ จัดการหมวดเอกสาร</div>'+drCatForm(r.cats, true);
+    }).catch(function(e){ if(VIEW==='doccat') $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
+  }
+
+  function drMonthShort(ym){
+    var TH=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+    var p=String(ym||'').split('-'); return TH[parseInt(p[1],10)-1]||p[1]||'';
+  }
+
+  window.renderDocDash=renderDocDash; window.ddMonth=ddMonth; window.ddGoFix=ddGoFix;
+  window.renderDocReport=renderDocReport; window.drpMonth=drpMonth; window.drpClose=drpClose;
+  window.renderDocCat=renderDocCat;
 
   window.drScan=drScan; window.drScanAll=drScanAll; window.drLinkForm=drLinkForm; window.drLinkSave=drLinkSave;
 
@@ -10243,7 +10437,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260906-2002';
+  var APP_BUILD='20260906-2145';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
