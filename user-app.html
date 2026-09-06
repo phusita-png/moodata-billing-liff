@@ -4616,13 +4616,21 @@
         '<select id="drBulkCat"><option value="">เลือกหมวด…</option>'+
         cats.map(function(c){ return '<option value="'+esc(c.code)+'">'+esc(c.name)+'</option>'; }).join('')+
         '</select> <button class="btn btn-primary btn-sm" onclick="drBulkSet()">ตั้งหมวดให้ทั้งหมด</button>'+
+        // ย้ายทั้งกองไปเดือนอื่น — ใช้ตอนอัปเข้าเดือนผิด (พี่กี้ 6 ก.ย.: ของรอบนี้เป็นของเดือน ก.ค.)
+        ' <span style="color:#8A94A6">|</span> <select id="drBulkMonth">'+
+        (r.months||[]).map(function(m){
+          var ym=(m&&m.ym)||m;
+          return '<option value="'+esc(ym)+'"'+(ym===DR_MONTH?' selected':'')+'>'+esc(drMonthLabel(ym))+'</option>';
+        }).join('')+
+        '</select> <button class="btn btn-ghost btn-sm" onclick="drBulkMonth()">ย้ายไปเดือนนี้</button>'+
         ' <button class="btn btn-ghost btn-sm" onclick="drSelClear()">ล้างที่เลือก</button></div>';
     }
     if(!list.length){ h+='<div class="emptybox">ยังไม่มีเอกสารในเดือนนี้<br><span class="m-hint">กด ⬆️ อัปโหลดเอกสาร หรือ 🔄 ดึงเอกสารที่ระบบออกเอง</span></div>'; }
     else {
       h+='<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl">'+
         '<colgroup><col style="width:34px"><col style="width:13%"><col style="width:40%"><col style="width:20%"><col style="width:15%"><col style="width:34px"></colgroup>'+
-        '<thead><tr><th></th><th>วันที่</th><th>เอกสาร</th><th>หมวด</th><th class="dt-amt">ยอดเงิน</th><th></th></tr></thead><tbody>'+
+        '<thead><tr><th><input type="checkbox" onchange="drSelAll(this.checked)" title="เลือกทั้งหมด"></th>'+
+        '<th>วันที่</th><th>เอกสาร</th><th>หมวด</th><th class="dt-amt">ยอดเงิน</th><th></th></tr></thead><tbody>'+
         list.map(function(x){
           var q="'"+String(x.no).replace(/'/g,"\\'")+"'";
           var sub=[];
@@ -4731,6 +4739,27 @@
   function drEditForm(no){ DR_EDIT=no||''; DR_FORM=''; drPaint(); }
   function drSel(no,on){ DR_SEL[no]=!!on; drPaint(); }
   function drSelClear(){ DR_SEL={}; drPaint(); }
+  /** ติ๊กทั้งหมด — เฉพาะแถวที่เห็นอยู่ (ตามตัวกรองหมวดที่เลือก) */
+  function drSelAll(on){
+    var docs=(DR&&DR.docs)||[];
+    var list=DR_CAT ? docs.filter(function(x){ return x.cat===DR_CAT; }) : docs;
+    DR_SEL={};
+    if(on) list.forEach(function(x){ DR_SEL[x.no]=true; });
+    drPaint();
+  }
+  function drBulkMonth(){
+    var ym=($('drBulkMonth')||{}).value||'';
+    var nos=Object.keys(DR_SEL).filter(function(k){ return DR_SEL[k]; });
+    if(!nos.length){ toast('ยังไม่ได้เลือกเอกสาร'); return; }
+    if(!ym){ toast('เลือกเดือนปลายทางก่อนค่ะ'); return; }
+    if(!window.confirm('ย้าย '+nos.length+' ไฟล์ไปเดือน '+drMonthLabel(ym)+' ?' + String.fromCharCode(10) + '(ไฟล์ใน Drive ย้ายโฟลเดอร์ตามด้วย)')) return;
+    callBusy('กำลังย้ายเดือน…', jsonpPost(withRoom_({ action:'waDocSetMonth', uid:UID, nos:JSON.stringify(nos), month:ym })), 'ย้ายแล้ว')
+      .then(function(r){
+        if(!r||!r.ok){ toast((r&&r.error)||'ย้ายไม่สำเร็จ'); return; }
+        if(r.warn) toast(r.warn);
+        DR_SEL={}; DR_MONTH=r.month||DR_MONTH; renderDocReg();
+      }).catch(function(e){ toast(e.message); });
+  }
 
   function drUpload(){
     var files=IMGS['drFiles']||[];
@@ -4980,6 +5009,7 @@
   window.renderDocReg=renderDocReg; window.drSetMonth=drSetMonth; window.drSetEnt=drSetEnt;
   window.drSetCat=drSetCat; window.drForm=drForm; window.drUpload=drUpload; window.drSel=drSel;
   window.drSelClear=drSelClear; window.drBulkSet=drBulkSet; window.drPickCat=drPickCat;
+  window.drSelAll=drSelAll; window.drBulkMonth=drBulkMonth;
   window.drEditForm=drEditForm; window.drEditSave=drEditSave; window.drDelete=drDelete;
   window.drSync=drSync; window.drClose=drClose; window.drCatAdd=drCatAdd;
   window.drCatRename=drCatRename; window.drCatOn=drCatOn; window.drNoop=drNoop;
@@ -9859,7 +9889,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260906-1213';
+  var APP_BUILD='20260906-1238';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
