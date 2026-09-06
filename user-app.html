@@ -5304,15 +5304,19 @@
   function drScanAll(force){
     if(force && !window.confirm('อ่านใหม่ทั้งเดือน แล้วทับข้อมูลเดิมที่ระบบเคยเดาไว้?' + String.fromCharCode(10) +
       '(ใช้ตอนใบถูกอ่านผิด เช่น วันที่กลายเป็นวันที่อัปโหลด)')) return;
-    var total=0;
+    var total=0, after='', rounds=0;
     function round(){
-      return jsonp(withRoom_({ action:'waDocScanAll', uid:UID, month:DR_MONTH, entity:DR_ENT, force:(force?'1':'') }))
+      return jsonp(withRoom_({ action:'waDocScanAll', uid:UID, month:DR_MONTH, entity:DR_ENT,
+                              force:(force?'1':''), after:after }))
         .then(function(r){
           if(!r||!r.ok) throw new Error((r&&r.error)||'อ่านไม่สำเร็จ');
           total+=r.filled||0;
-          if(r.left>0 && r.done>0){
+          /* ต้องขยับตัวชี้ทุกรอบ ไม่งั้นวนอ่านใบชุดเดิมไม่รู้จบ
+             (พี่กี้เจอ 6 ก.ย.: ค้างที่ "เหลืออีก 2 ใบ") · rounds = กันเหนียวชั้นสุดท้าย */
+          if(r.left>0 && r.last && r.last!==after && ++rounds<30){
+            after=r.last;
             busy('กำลังอ่านเอกสาร… เหลืออีก '+r.left+' ใบ');
-            return round();          // ยังเหลือ + รอบนี้อ่านได้จริง → ไปต่อ (กันวนไม่รู้จบ)
+            return round();
           }
           return r;
         });
@@ -10224,7 +10228,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260906-1816';
+  var APP_BUILD='20260906-1933';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
