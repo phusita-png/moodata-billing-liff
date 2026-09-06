@@ -895,6 +895,72 @@
   .pj-hero-barwrap{ flex:1; }
   .pj-hero .pbar{ background:rgba(255,255,255,.28); } .pj-hero .pbar-fill{ background:#fff !important; }
   .pj-hero-cnt{ font-size:12px; opacity:.92; margin-top:6px; }
+
+  /* ══ 📊 ระบบประเมินผลงาน (KPI) — คลาส prefix kp- ทั้งชุด กันชนกับหน้าอื่น ══ */
+  .kp-wrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .kp-tbl{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  .kp-tbl th,.kp-tbl td{ padding:9px 11px; text-align:left; border-bottom:1px solid #eef1f5; vertical-align:top; }
+  .kp-tbl thead th{ font-size:11.5px; color:#8A94A6; font-weight:700; background:#fafbfd; white-space:nowrap; }
+  .kp-tbl tbody tr:last-child td{ border-bottom:0; }
+  .kp-tbl .kp-r{ text-align:right; font-variant-numeric:tabular-nums; }
+  .kp-pill{ display:inline-block; font-size:11.5px; font-weight:600; padding:2px 9px; border-radius:99px; white-space:nowrap; }
+  .kp-pill-ok{ background:#e4f4ed; color:#0f7a52; }
+  .kp-pill-wait{ background:#fbf0dc; color:#9a6412; }
+  .kp-pill-no{ background:#fbe9e6; color:#b23a2e; }
+  .kp-pill-info{ background:#e8f3fc; color:#0b5c9e; }
+  .kp-g{ font-weight:800; font-variant-numeric:tabular-nums; }
+  .kp-g5{ color:#0f7a52; } .kp-g4{ color:#0b5c9e; } .kp-g3{ color:#3d5164; } .kp-g2,.kp-g1{ color:#b23a2e; }
+  .kp-check{ border:1px solid #f0d9a8; background:#fdf7ea; }
+  .kp-lock{ border:1px solid #bcdcf6; background:#eef7fd; color:#0b5c9e; }
+  .kp-ul{ margin:6px 0 0; padding-left:20px; font-size:13px; color:#3d5164; }
+  .kp-ul li{ margin:3px 0; }
+  .kp-warn{ display:block; font-size:11.5px; color:#9a6412; margin-top:2px; }
+  /* ตารางกรอกทั้งตำแหน่ง — ชื่อคนตรึงคอลัมน์ซ้ายเสมอ (กันกรอกผิดคนตอนเลื่อนตาราง) */
+  .kp-entry{ min-width:860px; }
+  .kp-entry td,.kp-entry th{ border-left:1px solid #f2f5f8; }
+  .kp-sticky{ position:sticky; left:0; background:#fff; z-index:2; min-width:130px; }
+  .kp-entry thead .kp-sticky{ background:#fafbfd; }
+  .kp-cell{ min-width:150px; }
+  .kp-pair{ display:flex; gap:6px; flex-wrap:wrap; }
+  .kp-f{ flex:1; min-width:62px; }
+  .kp-f label{ display:block; font-size:10.5px; color:#8A94A6; margin-bottom:2px; }
+  .kp-f input{ width:100%; padding:5px 7px; border:1px solid #e3e8ef; border-radius:7px;
+    font-size:13px; text-align:right; font-variant-numeric:tabular-nums; }
+  .kp-f input:disabled{ background:#f6f8fa; color:#8A94A6; }
+  .kp-skip{ display:flex; align-items:center; gap:5px; font-size:11px; color:#8A94A6; margin-top:5px; }
+  .kp-out{ margin-top:4px; font-size:12px; color:#3d5164; font-variant-numeric:tabular-nums; }
+  .kp-total b{ font-size:15px; display:block; font-variant-numeric:tabular-nums; }
+  /* ให้คะแนนคุณลักษณะ */
+  .kp-gname{ font-size:12.5px; font-weight:700; color:#0b5c9e; background:#e8f3fc;
+    padding:6px 11px; border-radius:7px; margin:12px 0 4px; }
+  .kp-q{ display:flex; align-items:center; gap:12px; padding:9px 2px; border-bottom:1px solid #f2f5f8; flex-wrap:wrap; }
+  .kp-q:last-child{ border-bottom:0; }
+  .kp-qt{ flex:1; min-width:210px; font-size:13.5px; }
+  .kp-scale{ display:flex; gap:5px; }
+  .kp-rate{ width:34px; height:34px; border-radius:8px; border:1px solid #e3e8ef; background:#fff;
+    font-weight:700; font-size:14px; cursor:pointer; color:#3d5164; }
+  .kp-rate.on{ background:#1E8FE1; border-color:#1E8FE1; color:#fff; }
+  .kp-rate:disabled{ opacity:.55; cursor:not-allowed; }
+  .kp-sumbar{ display:flex; align-items:center; gap:18px; flex-wrap:wrap; }
+  .kp-sumbar b{ font-size:16px; font-variant-numeric:tabular-nums; }
+  /* ใบประเมิน — ให้ดูเหมือนกระดาษฟอร์มเดิม + สั่งพิมพ์เป็น PDF ได้ */
+  .kp-paper{ max-width:780px; margin:0 auto; }
+  .kp-doc-h{ text-align:center; font-size:16px; margin:2px 0; }
+  .kp-doc-sub{ text-align:center; color:#8A94A6; font-size:12.5px; margin-bottom:16px; }
+  .kp-doc-emp{ display:grid; grid-template-columns:1fr 1fr; gap:0; }
+  .kp-doc-emp div{ border:1px solid #dbe3ec; padding:7px 10px; font-size:13px; margin:-1px 0 0 -1px; }
+  .kp-doc-emp span{ display:block; font-size:11px; color:#8A94A6; }
+  .kp-doc-sec{ background:#f2f5f8; border:1px solid #dbe3ec; border-bottom:0;
+    padding:6px 10px; font-size:12.5px; font-weight:700; margin-top:16px; }
+  .kp-doc-tb th,.kp-doc-tb td{ border:1px solid #dbe3ec; font-size:12.5px; }
+  .kp-doc-sum td{ background:#f2f5f8; font-weight:700; }
+  .kp-doc-verdict{ display:flex; gap:26px; align-items:center; flex-wrap:wrap;
+    border:1px solid #dbe3ec; background:#f8fafc; padding:13px 15px; margin-top:16px; }
+  .kp-doc-score{ font-size:34px; font-weight:800; letter-spacing:-.02em; font-variant-numeric:tabular-nums; }
+  .kp-doc-signs{ display:grid; grid-template-columns:1fr 1fr; gap:32px; margin-top:36px; font-size:12.5px; color:#3d5164; }
+  .kp-doc-line{ border-bottom:1px dotted #b9c6d3; height:30px; margin-bottom:5px; }
+  @media (max-width:640px){ .kp-doc-emp,.kp-doc-signs{ grid-template-columns:1fr; } }
+  @media print{ .kp-paper{ box-shadow:none; border:0; } }
 </style>
 </head>
 <body>
@@ -1085,7 +1151,7 @@
     hubreq:['🏛️','คำขอสมัคร'], hubrooms:['🏢','ห้องลูกค้า'], roomset:['⚙️','ตั้งค่าห้อง'], home:['🏠','ภาพรวมประจำวัน'], clock:['🕐','ลงเวลา'],
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
     expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติเบิกจ่าย'],
-    expdash:['📊','รายจ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ทะเบียนการจ่าย'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','ภาษีซื้อ/ภ.พ.30'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ทะเบียนใบสำคัญจ่าย'], sales:['💰','รายรับ'], ar:['📊','ลูกหนี้ค้างรับ'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51'], docreg:['📄','ทะเบียนเอกสาร']
+    expdash:['📊','รายจ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ทะเบียนการจ่าย'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','ภาษีซื้อ/ภ.พ.30'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ทะเบียนใบสำคัญจ่าย'], sales:['💰','รายรับ'], ar:['📊','ลูกหนี้ค้างรับ'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51'], docreg:['📄','ทะเบียนเอกสาร'], kpiemp:['👥','ทะเบียนพนักงาน'], kpiperson:['📈','ประวัติรายคน'], kpidash:['📊','ภาพรวมเดือน'], kpientry:['✍️','กรอกผลงาน'], kpiscore:['⭐','คะแนนคุณลักษณะ'], kpidoc:['📄','ใบประเมิน']
   };
   var PROJECTS=[], COMPANIES=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ) · COMPANIES=บริษัท auto (หน้าจัดการ)
   var ALL_TASKS=[], PJ_SEL='', MB_STATUSES=[];   // มุมมอง Project (dropdown เลือก · แยก 6 สถานะ + %) · MB_STATUSES=รายการสถานะ (ฟอร์มแก้งานมือถือ)
@@ -1190,7 +1256,7 @@
     if(gi) $('tbIcon').innerHTML=gi.replace('stroke-width="1.9"','stroke-width="2"'); else $('tbIcon').textContent=meta[0];
     $('tbTitle').textContent=meta[1];
     mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
-    ({ portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51, docreg:renderDocReg }[v] || soon)();
+    ({ portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51, docreg:renderDocReg, kpiemp:renderKpiEmp, kpiperson:renderKpiPerson, kpidash:renderKpiDash, kpientry:renderKpiEntry, kpiscore:renderKpiScore, kpidoc:renderKpiDoc }[v] || soon)();
   }
 
   // ───── มือถือ: เมนูกลุ่ม (ล่าง) + แท็บย่อย (บน) · คอมใช้ sidebar เดิม ไม่เกี่ยว ─────
@@ -1233,6 +1299,7 @@
     docreg:'<svg viewBox="0 0 24 24"><path d="M3.5 7.5a2 2 0 0 1 2-2h3.2l1.8 2.2h8a2 2 0 0 1 2 2v8.8a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/><path d="M8 13h8M8 16h5"/></svg>'
   };
   var MOD_ICON={
+    kpi:'<svg viewBox="0 0 24 24"><path d="M4 19.5V13M9.3 19.5V8.5M14.7 19.5v-7M20 19.5V5"/><path d="M3 21h18"/></svg>',
     fin:'<svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="11" rx="2"/><circle cx="12" cy="12" r="2.4"/><path d="M6.5 9.5v5M17.5 9.5v5"/></svg>',
     tax:'<svg viewBox="0 0 24 24"><path d="M3 10 12 4l9 6"/><path d="M5 10v9M12 10v9M19 10v9"/><path d="M3 20h18"/></svg>',
     hr:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3.2"/><path d="M3 19.5c0-3.2 2.7-5 6-5s6 1.8 6 5"/><path d="M16 6.2a3.2 3.2 0 0 1 0 6"/><path d="M17.5 14.8c2.1.5 3.5 2 3.5 4.7"/></svg>',
@@ -1282,6 +1349,13 @@
        เปิดฟรีทุกห้อง (MODULE_CORE ฝั่ง backend) */
     { key:'docsys',  th:'ระบบเอกสาร',   en:'DOCUMENTS',   color:'#a16207', g:['#fbbf24','#a16207'], own:false,
       views:['docreg'] },
+    /* 📊 ประเมินผลงาน (KPI · 6 ก.ย. 69) — บริการ HR-Service002 ของริชมอนด์ · spec docs/spec-kpi-eval.md
+       own:false = HR/หัวหน้าของลูกค้าเข้ามากรอกเองได้ (ด่านจริงอยู่ backend: ปิดรอบ/ตั้งค่า = ทีมภายในเท่านั้น)
+       ลำดับเมนู: ทะเบียน → ประวัติ → ภาพรวมเดือน → กรอก → คุณลักษณะ → ใบประเมิน (พี่กี้เคาะ) */
+    { key:'kpi',     th:'ประเมินผลงาน',  en:'PERFORMANCE', color:'#c2410c', g:['#fb923c','#c2410c'], own:false,
+      views:['kpiemp','kpiperson','kpidash','kpientry','kpiscore'], extra:['kpidoc'],
+      sec:[ ['พนักงาน', ['kpiemp','kpiperson']],
+            ['รอบประเมิน', ['kpidash','kpientry','kpiscore']] ] },
     { key:'me',      th:'พนักงาน',      en:'MY PROFILE',  color:'#0EA5A5', g:['#2dd4bf','#0f766e'], own:false,
       views:['clock','leave','ot','expense','docs'] },
 
@@ -1725,7 +1799,7 @@
     expdash:'รายจ่าย', reimb:'ตั้งเบิกลูกค้า', petty:'เงินสดย่อย', payout:'ทะเบียนการจ่าย', expreport:'รายงานรายจ่าย', taxhub:'รายงานภาษี', whtin:'50 ทวิ ที่ถูกหัก', vatbuy:'ภาษีซื้อ',
     ot:'OT ของฉัน', otapprove:'อนุมัติ OT', docs:'เอกสาร',
     hrreport:'รายงาน HR', finreport:'รายงานการเงิน', taxdoc:'ภาษี/เอกสาร',
-    bizdash:'ภาพรวม', sales:'รายรับ', ar:'ลูกหนี้', salesreport:'รายงานรายรับ', poreport:'ทะเบียนใบสำคัญจ่าย', pnd51:'ภ.ง.ด.51', docreg:'ทะเบียนเอกสาร' };
+    bizdash:'ภาพรวม', sales:'รายรับ', ar:'ลูกหนี้', salesreport:'รายงานรายรับ', poreport:'ทะเบียนใบสำคัญจ่าย', pnd51:'ภ.ง.ด.51', docreg:'ทะเบียนเอกสาร', kpiemp:'ทะเบียนพนักงาน', kpiperson:'ประวัติรายคน', kpidash:'ภาพรวมเดือน', kpientry:'กรอกผลงาน', kpiscore:'คุณลักษณะ', kpidoc:'ใบประเมิน' };
   // แท็บที่เห็นเฉพาะพี่/ผู้ดูแล · reimb = ตั้งเบิกลูกค้า (ชีตไม่มีเจ้าของรายคน + เป็นข้อมูลรายได้)
   // ⚠️ ซ่อนแท็บ ≠ กันข้อมูล — backend กรองสิทธิ์เองอีกชั้นเสมอ
   var OWNER_VIEWS={ review:1, approve:1, expapprove:1, otapprove:1, reimb:1, taxdoc:1, petty:1, payout:1, vatbuy:1, expreport:1, taxhub:1, whtin:1, hrreport:1, finreport:1, ar:1, pnd51:1, salesreport:1 };
@@ -8254,6 +8328,453 @@
     var p=String(ym||'').split('-'); var mi=parseInt(p[1],10)-1;
     return (['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'][mi]||p[1]);
   }
+  /* ══════════ 📊 ระบบประเมินผลงาน (KPI) — spec docs/spec-kpi-eval.md ══════════
+     ลำดับหน้า (พี่กี้เคาะ 6 ก.ย.): ทะเบียน → ประวัติรายคน → ภาพรวมเดือน → กรอก → คุณลักษณะ → ใบประเมิน
+     ⚠️ สูตรฝั่งนี้ใช้แสดงผลสด ๆ ระหว่างพิมพ์เท่านั้น — ค่าที่บันทึกจริงคิดใหม่ที่ Kpi.gs เสมอ */
+  var KP=null, KP_YM='', KP_POS='', KP_CODE='', KP_EDIT={}, KP_SUM=null;
+  var KP_TH=['','มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  function kpLabel(ym){ var p=String(ym||'').split('-'); return p.length===2?(KP_TH[+p[1]]+' '+p[0]):String(ym||''); }
+  function kpThisYm(){ var d=new Date(); var m=d.getMonth()+1; return (d.getFullYear()+543)+'-'+(m<10?'0'+m:m); }
+  function kpMonthOpts(sel){
+    var d=new Date(), out=[];
+    for(var i=0;i<12;i++){
+      var y=d.getFullYear()+543, m=d.getMonth()+1-i;
+      while(m<1){ m+=12; y-=1; }
+      var ym=y+'-'+(m<10?'0'+m:m);
+      out.push('<option value="'+ym+'"'+(ym===sel?' selected':'')+'>'+kpLabel(ym)+'</option>');
+    }
+    return out.join('');
+  }
+  function kpErr(m){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(m||'โหลดไม่สำเร็จ')+'</div></div>'; }
+  function kpGradePill(g){
+    if(g===null||g===undefined||g==='') return '<span class="m-hint">—</span>';
+    return '<b class="kp-g kp-g'+g+'">'+g+'</b>';
+  }
+  function kpNum(v){ return (v===null||v===undefined||v==='')?'—':Number(v).toFixed(2); }
+
+  /* ── 1 · ทะเบียนพนักงาน ── */
+  function renderKpiEmp(){
+    skel();
+    jsonp({ action:'waKpiEmps', uid:UID }).then(function(r){
+      if(!r||!r.ok) return kpErr(r&&r.error);
+      var h='<div class="section-h">ทะเบียนพนักงานที่อยู่ในระบบประเมิน</div>';
+      h+='<div class="ds-grid">'+
+        statCard('อยู่ในทะเบียนทั้งหมด', r.total+' คน','รวมคนที่ลาออกแล้ว')+
+        statCard('ทำงานอยู่', r.active+' คน','ประเมินในรอบปัจจุบัน')+
+        statCard('ลาออกแล้ว', r.left+' คน', r.left?'ประวัติยังเปิดดูได้':'—')+
+        statCard('คิดค่าบริการรอบนี้', r.billable+' คน','ตามจำนวนคนที่ยังทำงานอยู่')+'</div>';
+      h+='<div class="card"><div class="kp-wrap"><table class="kp-tbl"><thead><tr>'+
+        '<th>พนักงาน</th><th>ตำแหน่ง</th><th>สถานะ</th><th class="kp-r">รอบที่ประเมิน</th>'+
+        '<th class="kp-r">คะแนนเฉลี่ย</th><th class="kp-r">เกรดล่าสุด</th><th></th></tr></thead><tbody>';
+      if(!r.rows.length) h+='<tr><td colspan="7"><div class="emptybox">ยังไม่มีพนักงานในทะเบียน</div></td></tr>';
+      r.rows.forEach(function(e){
+        h+='<tr><td><b>'+esc(e.nick||e.name)+'</b><div class="m-hint">'+esc(e.name)+'</div></td>'+
+          '<td>'+esc(e.posName||e.pos)+'</td>'+
+          '<td>'+(e.left?'<span class="kp-pill kp-pill-no">'+esc(e.status)+'</span>':'<span class="kp-pill kp-pill-ok">ทำงานอยู่</span>')+'</td>'+
+          '<td class="kp-r">'+e.rounds+'</td><td class="kp-r">'+(e.avg===null?'—':e.avg.toFixed(1))+'</td>'+
+          '<td class="kp-r">'+kpGradePill(e.lastGrade)+'</td>'+
+          '<td><button class="btn btn-ghost btn-sm" onclick="kpOpenPerson(\''+esc(e.code)+'\')">ดูประวัติ</button></td></tr>';
+      });
+      h+='</tbody></table></div><div class="m-hint">คนที่ลาออกจะถูกถอดออกจากรอบใหม่และไม่ถูกคิดค่าบริการ '+
+        'แต่ประวัติกับใบประเมินเดิมยังเปิดดูได้ตลอดค่ะ</div></div>';
+      $('main').innerHTML=h;
+    }).catch(function(e){ kpErr(e.message); });
+  }
+  function kpOpenPerson(code){ KP_CODE=code; switchView('kpiperson'); }
+
+  /* ── 2 · ประวัติรายคน ── */
+  function renderKpiPerson(){
+    skel();
+    jsonp({ action:'waKpiPerson', uid:UID, code:KP_CODE }).then(function(r){
+      if(!r||!r.ok) return kpErr(r&&r.error||'ยังไม่ได้เลือกพนักงาน — กดจากหน้าทะเบียนได้เลยค่ะ');
+      var e=r.emp;
+      var h='<div class="section-h">'+esc(e.nick||e.name)+' · '+esc(e.name)+'</div>';
+      h+='<div class="card"><div class="m-hint">'+esc(e.posName)+' · '+esc(e.status)+
+        ' <button class="btn btn-ghost btn-sm" onclick="switchView(\'kpiemp\')">← กลับทะเบียน</button></div></div>';
+      var done=r.rows.filter(function(x){ return x.total!==null; });
+      var last=done.length?done[done.length-1]:null;
+      var trend=done.length>=2?(done[done.length-1].total-done[Math.max(0,done.length-4)].total):null;
+      h+='<div class="ds-grid">'+
+        statCard('ประเมินมาแล้ว', r.rounds+' รอบ','ตั้งแต่รอบแรกที่เข้าระบบ')+
+        statCard('คะแนนเฉลี่ย', r.avg===null?'—':r.avg.toFixed(1),'เฉพาะรอบที่มีผลแล้ว')+
+        statCard('เกรดล่าสุด', last?String(last.grade):'—', last?kpLabel(last.ym):'')+
+        statCard('แนวโน้ม 3 เดือนหลัง', trend===null?'—':((trend>=0?'+':'')+trend.toFixed(1)),
+          trend===null?'ข้อมูลยังไม่พอ':(trend>=0?'ดีขึ้น':'ลดลง'), trend!==null&&trend<0?'ds-warn':'')+'</div>';
+      if(done.length) h+='<div class="card"><div class="ds-h">คะแนนรวมรายเดือน</div>'+
+        barChart(done, function(x){ return kpLabel(x.ym).replace(/ \d+$/,''); }, function(x){ return x.total; })+'</div>';
+      h+='<div class="card"><div class="kp-wrap"><table class="kp-tbl"><thead><tr><th>เดือน</th>'+
+        '<th class="kp-r">ผลงาน</th><th class="kp-r">คุณลักษณะ</th><th class="kp-r">สถิติ</th><th class="kp-r">รวม</th>'+
+        '<th class="kp-r">เกรด</th><th>สถานะรอบ</th><th></th></tr></thead><tbody>';
+      if(!r.rows.length) h+='<tr><td colspan="8"><div class="emptybox">ยังไม่มีรอบประเมิน</div></td></tr>';
+      r.rows.forEach(function(x){
+        var closed=(x.total!==null);
+        h+='<tr><td><b>'+esc(kpLabel(x.ym))+'</b></td><td class="kp-r">'+kpNum(x.perf)+'</td>'+
+          '<td class="kp-r">'+(x.trait===null?'<span class="m-hint">—</span>':kpNum(x.trait))+'</td>'+
+          '<td class="kp-r">'+kpNum(x.stat)+'</td><td class="kp-r"><b>'+kpNum(x.total)+'</b></td>'+
+          '<td class="kp-r">'+kpGradePill(x.grade)+'</td>'+
+          '<td><span class="kp-pill '+(closed?'kp-pill-ok':'kp-pill-wait')+'">'+esc(x.status||'กำลังกรอก')+'</span></td>'+
+          '<td>'+(closed?'<button class="btn btn-ghost btn-sm" onclick="kpOpenDoc(\''+esc(x.ym)+'\')">เปิดใบ</button>':'')+'</td></tr>';
+      });
+      h+='</tbody></table></div></div>';
+      $('main').innerHTML=h;
+    }).catch(function(e){ kpErr(e.message); });
+  }
+  function kpOpenDoc(ym){ KP_YM=ym; switchView('kpidoc'); }
+
+  /* ── 3 · ภาพรวมเดือน ── */
+  function renderKpiDash(){
+    KP_YM=KP_YM||kpThisYm(); skel();
+    jsonp({ action:'waKpiMonth', uid:UID, ym:KP_YM }, 0, 90000).then(function(r){
+      if(!r||!r.ok) return kpErr(r&&r.error);
+      KP_SUM=r;
+      var done=r.rows.filter(function(x){ return x.status && x.status!=='กำลังกรอก'; }).length;
+      var h='<div class="section-h">ภาพรวมการประเมิน — '+esc(kpLabel(r.ym))+'</div>';
+      h+='<div class="ds-sel"><select onchange="kpSetYm(this.value)">'+kpMonthOpts(r.ym)+'</select></div>';
+      h+='<div class="ds-grid">'+
+        statCard('พนักงานที่ประเมิน', r.rows.length+' คน', kpLabel(r.ym))+
+        statCard('ยังกรอกไม่ครบ', r.issueCount+' รายการ', r.issueCount?'ต้องเคลียร์ก่อนปิดรอบ':'ครบแล้ว', r.issueCount?'ds-warn':'')+
+        statCard('คะแนนเฉลี่ย', r.avg===null?'รอปิดรอบ':r.avg.toFixed(1), r.isAdmin?'':'ลูกค้าเห็นหลังปิดรอบ')+
+        statCard('ปิดรอบแล้ว', done+'/'+r.rows.length+' คน','')+'</div>';
+      if(r.isAdmin) h+='<div class="card"><div class="tax-acts">'+
+        '<button class="btn '+(r.canClose?'btn-primary':'btn-ghost')+'"'+(r.canClose?'':' disabled')+
+        ' onclick="kpClose()">ปิดรอบ · เผยแพร่ผล</button>'+
+        '<button class="btn btn-ghost" onclick="kpReopen()">เปิดรอบให้แก้ใหม่</button></div></div>';
+      if(r.issues&&r.issues.length) h+='<div class="card kp-check"><div class="ds-h">ด่านตรวจก่อนปิดรอบ — ยังติด '+
+        r.issues.length+' รายการ</div><ul class="kp-ul">'+r.issues.map(function(m){ return '<li>'+esc(m)+'</li>'; }).join('')+'</ul></div>';
+      h+='<div class="card"><div class="kp-wrap"><table class="kp-tbl"><thead><tr><th>พนักงาน</th><th>ตำแหน่ง</th>'+
+        '<th>สถานะ</th><th class="kp-r">ผลงาน</th><th class="kp-r">คุณลักษณะ</th><th class="kp-r">สถิติ</th>'+
+        '<th class="kp-r">รวม</th><th class="kp-r">เกรด</th><th></th></tr></thead><tbody>';
+      if(!r.rows.length) h+='<tr><td colspan="9"><div class="emptybox">ยังไม่มีข้อมูลของเดือนนี้</div></td></tr>';
+      r.rows.forEach(function(x){
+        var closed=x.status&&x.status!=='กำลังกรอก';
+        h+='<tr><td><b>'+esc(x.name)+'</b></td><td>'+esc(x.pos)+'</td>'+
+          '<td><span class="kp-pill '+(closed?'kp-pill-ok':'kp-pill-wait')+'">'+esc(x.status||'กำลังกรอก')+'</span></td>'+
+          '<td class="kp-r">'+kpNum(x.perf)+'</td>'+
+          '<td class="kp-r">'+(x.trait?kpNum(x.trait):'<span class="m-hint">ไม่ใช้</span>')+'</td>'+
+          '<td class="kp-r">'+kpNum(x.stat)+'</td>'+
+          '<td class="kp-r"><b>'+(x.total===null?'<span class="m-hint">รอปิดรอบ</span>':x.total.toFixed(2))+'</b></td>'+
+          '<td class="kp-r">'+kpGradePill(x.grade)+'</td>'+
+          '<td>'+(x.total!==null?'<button class="btn btn-ghost btn-sm" onclick="kpDocOf(\''+esc(x.code)+'\')">ใบประเมิน</button>':'')+'</td></tr>';
+      });
+      h+='</tbody></table></div></div>';
+      $('main').innerHTML=h;
+    }).catch(function(e){ kpErr(e.message); });
+  }
+  function kpSetYm(v){ KP_YM=v; renderKpiDash(); }
+  function kpDocOf(code){ KP_CODE=code; switchView('kpidoc'); }
+  function kpClose(){
+    if(!confirm('ปิดรอบ '+kpLabel(KP_YM)+' แล้วลูกค้าจะเห็นคะแนนทันที และข้อมูลจะถูกล็อก ยืนยันไหมคะ')) return;
+    jsonp({ action:'waKpiClose', uid:UID, ym:KP_YM }).then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'ปิดรอบไม่สำเร็จ'); return; }
+      toast('ปิดรอบแล้ว '+r.closed+' คน'); renderKpiDash();
+    }).catch(function(e){ toast(e.message); });
+  }
+  function kpReopen(){
+    if(!confirm('เปิดรอบ '+kpLabel(KP_YM)+' ให้แก้ไขได้ใหม่ ยืนยันไหมคะ')) return;
+    jsonp({ action:'waKpiReopen', uid:UID, ym:KP_YM }).then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'ทำไม่สำเร็จ'); return; }
+      toast('เปิดรอบแล้ว '+r.reopened+' คน'); renderKpiDash();
+    }).catch(function(e){ toast(e.message); });
+  }
+
+  /* ── 4 · กรอกผลงาน (ทั้งตำแหน่งในตารางเดียว — ไม่มีตัวเลือกคน กรอกผิดคนไม่ได้) ── */
+  function renderKpiEntry(){
+    KP_YM=KP_YM||kpThisYm(); skel();
+    jsonp({ action:'waKpiEmps', uid:UID }).then(function(reg){
+      if(!reg||!reg.ok) return kpErr(reg&&reg.error);
+      var poss={}, order=[];
+      (reg.rows||[]).forEach(function(e){ if(e.left) return; if(!poss[e.pos]){ poss[e.pos]=e.posName||e.pos; order.push(e.pos); } });
+      if(!order.length) return kpErr('ยังไม่มีพนักงานที่ทำงานอยู่ในทะเบียน');
+      if(order.indexOf(KP_POS)<0) KP_POS=order[0];
+      return jsonp({ action:'waKpiEntryInit', uid:UID, ym:KP_YM, pos:KP_POS }).then(function(r){
+        if(!r||!r.ok) return kpErr(r&&r.error);
+        KP=r; KP.posList=order.map(function(k){ return { code:k, name:poss[k] }; }); KP_EDIT={}; kpEntryPaint();
+      });
+    }).catch(function(e){ kpErr(e.message); });
+  }
+  /* ค่าที่พิมพ์อยู่ (ยังไม่บันทึก) ทับค่าที่โหลดมา */
+  function kpVal(code,mid,f){
+    var k=code+'|'+mid+'|'+f;
+    if(KP_EDIT[k]!==undefined) return KP_EDIT[k]==='' ? null : Number(KP_EDIT[k]);
+    var p=kpPersonOf(code), e=p&&p.entries[mid];
+    var v=e?e[f]:null;
+    return (v===''||v===null||v===undefined)?null:Number(v);
+  }
+  function kpPersonOf(code){ for(var i=0;i<KP.people.length;i++) if(KP.people[i].code===code) return KP.people[i]; return null; }
+  function kpSkip(code,mid){
+    var k=code+'|'+mid+'|skip';
+    if(KP_EDIT[k]!==undefined) return !!KP_EDIT[k];
+    var p=kpPersonOf(code), e=p&&p.entries[mid];
+    return !!(e&&e.skip);
+  }
+  /* สูตรเดียวกับ Kpi.gs — ใช้แสดงสด ๆ เท่านั้น ค่าจริงคิดที่ backend */
+  function kpPct(m,code){
+    if(kpSkip(code,m.id)) return 'skip';
+    var t=String(m.type||'').toLowerCase(), pct=null;
+    if(t==='daily'){ var tot=kpVal(code,m.id,'total'), d=kpVal(code,m.id,'workDays');
+      if(tot===null||!d||!m.target) return null; pct=(tot/d)/m.target*100; }
+    else if(t==='monthly'){ var v=kpVal(code,m.id,'total'); if(v===null||!m.target) return null; pct=v/m.target*100; }
+    else if(t==='ratio'){ var b=kpVal(code,m.id,'base'), er=kpVal(code,m.id,'errors');
+      if(!b||er===null) return null; pct=(b-er)/b*100; if(m.target&&pct>=m.target) return 100; }
+    else if(t==='cap'){ var b2=kpVal(code,m.id,'base'), e2=kpVal(code,m.id,'errors');
+      if(!b2||e2===null) return null; var ep=e2/b2*100; if(ep<=m.target) return 100; pct=100-ep; }
+    else if(t==='rating'){ var rt=kpVal(code,m.id,'rating'); if(!rt) return null; pct=rt*20; }
+    else return null;
+    return Math.max(0, Math.min(100, pct));
+  }
+  function kpRowScore(p){
+    var w=KP.pos.weights, sumW=0, got=[];
+    p.metrics.forEach(function(m){ var pc=kpPct(m,p.code); if(pc==='skip'||pc===null) return; sumW+=Number(m.weight)||0; got.push({m:m,pct:pc}); });
+    var perf=0; got.forEach(function(g){ perf+=w.perf*((Number(g.m.weight)||0)/sumW)*g.pct/100; });
+    var ded=0; (KP.statRules||[]).forEach(function(s){ ded+=(kpVal(p.code,'__stat',s.key)||0)*(Number(s.deduct)||0); });
+    var st=Math.max(0,100-ded)*w.stat/100;
+    return { perf:perf, stat:st, sumW:sumW, filled:got.length>0, ded:ded, total:perf+st, share:function(mw){ return w.perf*(mw/sumW); } };
+  }
+  function kpInput(code,mid,f,label){
+    var v=kpVal(code,mid,f);
+    return '<div class="kp-f"><label>'+esc(label)+'</label><input type="number" step="any" value="'+(v===null?'':v)+'"'+
+      (KP.locked?' disabled':'')+' oninput="kpEdit(\''+esc(code)+'\',\''+esc(mid)+'\',\''+f+'\',this.value)"></div>';
+  }
+  function kpEdit(code,mid,f,v){ KP_EDIT[code+'|'+mid+'|'+f]=v; kpEntryRepaintScores(); }
+  function kpToggleSkip(code,mid,on){ KP_EDIT[code+'|'+mid+'|skip']=on; kpEntryPaint(); }
+  function kpEntryPaint(){
+    var r=KP, w=r.pos.weights;
+    var h='<div class="section-h">กรอกผลงาน — '+esc(r.pos.name)+' · '+esc(kpLabel(r.ym))+'</div>';
+    h+='<div class="ds-sel"><select onchange="kpSetPos(this.value)">'+
+      r.posList.map(function(p){ return '<option value="'+esc(p.code)+'"'+(p.code===KP_POS?' selected':'')+'>'+esc(p.name)+'</option>'; }).join('')+
+      '</select> <select onchange="kpSetEntryYm(this.value)">'+kpMonthOpts(r.ym)+'</select>'+
+      '<span class="kp-pill kp-pill-info">น้ำหนัก ผลงาน '+w.perf+' · คุณลักษณะ '+w.trait+' · สถิติ '+w.stat+'</span>'+
+      (r.pos.team?'<span class="kp-pill kp-pill-info">ประเมินแบบทีม — ผลงานชุดเดียวใช้ทั้งทีม</span>':'')+'</div>';
+    if(r.locked) h+='<div class="card kp-lock"><b>รอบนี้ปิดแล้ว</b> — แก้ไขไม่ได้'+
+      (r.isAdmin?' (ผู้ดูแลแก้ได้ แต่ต้องเปิดรอบก่อนถ้าจะให้ลูกค้าแก้)':' ต้องให้ผู้ดูแลเปิดรอบก่อนค่ะ')+'</div>';
+    h+='<div class="card"><div class="kp-wrap"><table class="kp-tbl kp-entry"><thead><tr><th class="kp-sticky">พนักงาน</th>'+
+      (r.people[0]?r.people[0].metrics.map(function(m){
+        return '<th>'+esc(m.name)+'<div class="m-hint">'+esc(kpTargetText(m))+' · น้ำหนัก '+m.weight+'</div></th>'; }).join(''):'')+
+      '<th>สถิติมาทำงาน<div class="m-hint">HR กรอกเองทั้ง 5 ช่อง</div></th><th class="kp-r">คะแนนรวม</th></tr></thead><tbody>';
+    r.people.forEach(function(p){
+      h+='<tr><td class="kp-sticky"><b>'+esc(p.nick||p.name)+'</b><div class="m-hint">'+esc(p.name)+'</div></td>';
+      p.metrics.forEach(function(m){
+        var skip=kpSkip(p.code,m.id);
+        h+='<td><div class="kp-cell">';
+        if(!skip) h+='<div class="kp-pair">'+kpFields(p.code,m)+'</div>';
+        h+='<label class="kp-skip"><input type="checkbox"'+(skip?' checked':'')+(r.locked?' disabled':'')+
+          ' onchange="kpToggleSkip(\''+esc(p.code)+'\',\''+esc(m.id)+'\',this.checked)"> ไม่ประเมิน</label>'+
+          '<div class="kp-out" id="ko-'+esc(p.code)+'-'+esc(m.id)+'"></div></div></td>';
+      });
+      h+='<td><div class="kp-pair">'+(r.statRules||[]).map(function(s){
+        return kpInput(p.code,'__stat',s.key,String(s.label).replace(/\s*\(.*\)/,'')); }).join('')+'</div>'+
+        '<div class="kp-out" id="ko-'+esc(p.code)+'-stat"></div></td>';
+      h+='<td class="kp-r kp-total"><b id="kt-'+esc(p.code)+'">—</b><div id="kg-'+esc(p.code)+'" class="m-hint"></div></td></tr>';
+    });
+    h+='</tbody></table></div>';
+    if(!r.locked) h+='<div class="tax-acts"><button class="btn btn-primary" onclick="kpEntryReview()">ตรวจแล้วบันทึก</button></div>';
+    h+='<div class="m-hint">ทั้งตำแหน่งอยู่ในตารางเดียว ไม่ต้องเลือกทีละคน — ระบบเตือนให้เองถ้าตัวเลขต่างจากเดือนก่อนมากผิดปกติ</div></div>';
+    h+='<div id="kpReview"></div>';
+    $('main').innerHTML=h;
+    kpEntryRepaintScores();
+  }
+  function kpFields(code,m){
+    var t=String(m.type||'').toLowerCase();
+    if(t==='daily') return kpInput(code,m.id,'total','ยอดรวม')+kpInput(code,m.id,'workDays','วันทำงาน');
+    if(t==='monthly') return kpInput(code,m.id,'total','ยอดรวม');
+    if(t==='ratio'||t==='cap') return kpInput(code,m.id,'base','ทั้งหมด')+kpInput(code,m.id,'errors','ที่ผิด');
+    if(t==='rating') return kpInput(code,m.id,'rating','ระดับ 1-5');
+    return '';
+  }
+  function kpTargetText(m){
+    var t=String(m.type||'').toLowerCase();
+    if(t==='daily') return 'เป้า '+m.target+' '+(m.unit||'')+'/วัน';
+    if(t==='monthly') return 'เป้า '+Number(m.target).toLocaleString()+' '+(m.unit||'');
+    if(t==='ratio') return 'ไม่น้อยกว่า '+m.target+'%';
+    if(t==='cap') return 'ไม่เกิน '+m.target+'%';
+    if(t==='rating') return 'หัวหน้าให้ระดับ 1-5';
+    return '';
+  }
+  /* ตัวเลขต่างจากเดือนก่อนเกิน 50% = ด่านกันกรอกผิดช่อง/ผิดคน */
+  function kpFlag(p,m){
+    var prev=p.prevEntries&&p.prevEntries[m.id]; if(!prev) return '';
+    var f=(String(m.type).toLowerCase()==='ratio'||String(m.type).toLowerCase()==='cap')?'base':'total';
+    var was=Number(prev[f]||0), now=kpVal(p.code,m.id,f);
+    if(!was||now===null) return '';
+    var d=(now-was)/was*100;
+    if(Math.abs(d)<50) return '';
+    return '<span class="kp-warn">ต่างจากเดือนก่อน '+(d>0?'+':'')+d.toFixed(0)+'% ('+kpLabel(KP.prevYm)+' = '+was.toLocaleString()+')</span>';
+  }
+  function kpEntryRepaintScores(){
+    if(!KP) return;
+    KP.people.forEach(function(p){
+      var sc=kpRowScore(p);
+      p.metrics.forEach(function(m){
+        var el=$('ko-'+p.code+'-'+m.id); if(!el) return;
+        var pc=kpPct(m,p.code);
+        if(pc==='skip'){ el.innerHTML='<span class="m-hint">เกลี่ยน้ำหนักให้ข้ออื่น</span>'; return; }
+        if(pc===null){ el.innerHTML='<span class="m-hint">รอกรอก</span>'; return; }
+        el.innerHTML='<b>'+pc.toFixed(1)+'%</b> · '+(sc.share(Number(m.weight)||0)*pc/100).toFixed(2)+' คะแนน'+kpFlag(p,m);
+      });
+      var se=$('ko-'+p.code+'-stat');
+      if(se) se.innerHTML=sc.ded>0?('หัก <b>'+sc.ded.toFixed(1)+'</b> · ได้ '+sc.stat.toFixed(2)):('ไม่มีหัก · ได้ <b>'+sc.stat.toFixed(2)+'</b>');
+      var te=$('kt-'+p.code), ge=$('kg-'+p.code);
+      if(!te) return;
+      if(!sc.filled){ te.textContent='—'; if(ge) ge.textContent='รอข้อมูล'; return; }
+      te.textContent=sc.total.toFixed(2);
+      var g=sc.total>=90?5:sc.total>=80?4:sc.total>=70?3:sc.total>=60?2:1;
+      if(ge) ge.innerHTML='เกรด '+kpGradePill(g)+(KP.pos.weights.trait?' <span class="m-hint">(ยังไม่รวมคุณลักษณะ)</span>':'');
+    });
+  }
+  function kpSetPos(v){ KP_POS=v; renderKpiEntry(); }
+  function kpSetEntryYm(v){ KP_YM=v; renderKpiEntry(); }
+  /* สรุปให้ดูก่อนบันทึกทุกครั้ง — บอกว่าจะบันทึกให้ใคร คะแนนเท่าไร ใครมีตัวเลขน่าสงสัย */
+  function kpEntryReview(){
+    var lines=KP.people.map(function(p){
+      var sc=kpRowScore(p);
+      if(!sc.filled) return '<li><b>'+esc(p.nick||p.name)+'</b> — ยังไม่มีข้อมูล จะยังไม่บันทึก</li>';
+      var flags=p.metrics.filter(function(m){ return kpFlag(p,m); }).map(function(m){ return esc(m.name); });
+      return '<li><b>'+esc(p.nick||p.name)+'</b> — คะแนนรวม <b>'+sc.total.toFixed(2)+'</b>'+
+        (flags.length?' · <span class="kp-warn">ตัวเลขผิดปกติ: '+flags.join(' · ')+'</span>':'')+'</li>';
+    }).join('');
+    $('kpReview').innerHTML='<div class="card"><div class="ds-h">ตรวจก่อนบันทึก — '+esc(KP.pos.name)+' · '+esc(kpLabel(KP.ym))+
+      '</div><ol class="kp-ul">'+lines+'</ol><div class="tax-acts">'+
+      '<button class="btn btn-primary" onclick="kpEntrySave()">ยืนยันบันทึก</button>'+
+      '<button class="btn btn-ghost" onclick="$(\'kpReview\').innerHTML=\'\'">กลับไปแก้</button></div></div>';
+    $('kpReview').scrollIntoView({block:'nearest'});
+  }
+  function kpEntrySave(){
+    var rows=KP.people.map(function(p){
+      var ms={};
+      p.metrics.forEach(function(m){
+        var t=String(m.type||'').toLowerCase(), o={};
+        if(kpSkip(p.code,m.id)) o.skip=true;
+        else if(t==='daily'){ o.total=kpVal(p.code,m.id,'total'); o.workDays=kpVal(p.code,m.id,'workDays'); }
+        else if(t==='monthly') o.total=kpVal(p.code,m.id,'total');
+        else if(t==='ratio'||t==='cap'){ o.base=kpVal(p.code,m.id,'base'); o.errors=kpVal(p.code,m.id,'errors'); }
+        else if(t==='rating') o.rating=kpVal(p.code,m.id,'rating');
+        ms[m.id]=o;
+      });
+      var stat={}; (KP.statRules||[]).forEach(function(s){ stat[s.key]=kpVal(p.code,'__stat',s.key)||0; });
+      return { code:p.code, owner:p.owner, metrics:ms, stat:stat };
+    });
+    $('kpReview').innerHTML='<div class="card"><div class="skel" style="height:60px"></div></div>';
+    jsonpPost({ action:'waKpiEntrySave', uid:UID, ym:KP.ym, rows:JSON.stringify(rows) }).then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'บันทึกไม่สำเร็จ'); $('kpReview').innerHTML=''; return; }
+      toast('บันทึกแล้ว');
+      var ch=(r.changes||[]).map(function(c){ return '<li>'+esc(c.code)+' · '+esc(c.metric)+': '+c.from+' → '+c.to+'</li>'; }).join('');
+      $('kpReview').innerHTML='<div class="card"><div class="ds-h">บันทึกแล้ว</div>'+
+        (ch?('<div class="m-hint">ค่าที่เปลี่ยนไปจากเดิม</div><ul class="kp-ul">'+ch+'</ul>'):'<div class="m-hint">บันทึกครบทุกช่อง</div>')+'</div>';
+      renderKpiEntry();
+    }).catch(function(e){ toast(e.message); $('kpReview').innerHTML=''; });
+  }
+
+  /* ── 5 · ให้คะแนนคุณลักษณะ ── */
+  var KPS=null, KPS_VAL={};
+  function renderKpiScore(){
+    KP_YM=KP_YM||kpThisYm(); skel();
+    jsonp({ action:'waKpiEmps', uid:UID }).then(function(reg){
+      if(!reg||!reg.ok) return kpErr(reg&&reg.error);
+      var list=(reg.rows||[]).filter(function(e){ return !e.left; });
+      if(!list.length) return kpErr('ยังไม่มีพนักงานให้ประเมิน');
+      if(!KP_CODE||!list.some(function(e){ return e.code===KP_CODE; })) KP_CODE=list[0].code;
+      return jsonp({ action:'waKpiTraitInit', uid:UID, ym:KP_YM, code:KP_CODE }).then(function(r){
+        if(!r||!r.ok) return kpErr(r&&r.error);
+        KPS=r; KPS.list=list; KPS_VAL={};
+        Object.keys(r.myScores||{}).forEach(function(k){ KPS_VAL[k]=Number(r.myScores[k]); });
+        kpsPaint();
+      });
+    }).catch(function(e){ kpErr(e.message); });
+  }
+  function kpsPaint(){
+    var r=KPS;
+    if(!r.items.length) return kpErr('ตำแหน่งนี้ไม่ได้ใช้ส่วนคุณลักษณะ (น้ำหนัก 0)');
+    var h='<div class="section-h">ให้คะแนนคุณลักษณะ — '+esc(r.emp.nick||r.emp.name)+'</div>';
+    h+='<div class="ds-sel"><select onchange="kpsSetCode(this.value)">'+
+      r.list.map(function(e){ return '<option value="'+esc(e.code)+'"'+(e.code===KP_CODE?' selected':'')+'>'+
+        esc(e.nick||e.name)+' · '+esc(e.posName||e.pos)+'</option>'; }).join('')+
+      '</select> <select onchange="kpsSetYm(this.value)">'+kpMonthOpts(r.ym)+'</select>'+
+      '<span class="kp-pill kp-pill-info">ผู้ประเมินที่กรอกแล้ว '+r.raterCount+' คน</span></div>';
+    if(r.locked) h+='<div class="card kp-lock"><b>รอบนี้ปิดแล้ว</b> — แก้ไขไม่ได้ค่ะ</div>';
+    h+='<div class="card"><div class="m-hint">1 = ต้องปรับปรุง · 2 = ปานกลาง · 3 = ดี · 4 = ดีมาก · 5 = ดีเยี่ยม</div>';
+    var lastGroup='';
+    r.items.forEach(function(it){
+      if(it.group&&it.group!==lastGroup){ lastGroup=it.group; h+='<div class="kp-gname">'+esc(it.group)+'</div>'; }
+      h+='<div class="kp-q"><div class="kp-qt">'+esc(it.name)+'</div><div class="kp-scale">'+
+        [1,2,3,4,5].map(function(v){
+          return '<button type="button" class="kp-rate'+(KPS_VAL[it.id]===v?' on':'')+'"'+(r.locked?' disabled':'')+
+            ' onclick="kpsSet(\''+esc(it.id)+'\','+v+')">'+v+'</button>'; }).join('')+'</div></div>';
+    });
+    h+='</div><div class="card kp-sumbar"><div><b id="kpsDone">0/'+r.items.length+'</b><span class="m-hint"> ให้คะแนนแล้ว</span></div>'+
+      '<div><b id="kpsPct">—</b><span class="m-hint"> คิดเป็น <span id="kpsW">0.00</span> / '+r.weight+' คะแนน</span></div>'+
+      (r.locked?'':'<button class="btn btn-primary" onclick="kpsSave()">บันทึกคะแนน</button>')+'</div>';
+    $('main').innerHTML=h; kpsTotal();
+  }
+  function kpsSet(id,v){ KPS_VAL[id]=v; kpsPaint(); }
+  function kpsSetCode(v){ KP_CODE=v; renderKpiScore(); }
+  function kpsSetYm(v){ KP_YM=v; renderKpiScore(); }
+  function kpsTotal(){
+    var r=KPS, ids=Object.keys(KPS_VAL), raw=0, full=0;
+    r.items.forEach(function(it){ full+=Number(it.full)||5; });
+    ids.forEach(function(k){ raw+=Number(KPS_VAL[k])||0; });
+    $('kpsDone').textContent=ids.length+'/'+r.items.length;
+    if(ids.length===r.items.length&&full>0){
+      var pct=raw/full*100;
+      $('kpsPct').textContent=pct.toFixed(1)+'%';
+      $('kpsW').textContent=(pct*r.weight/100).toFixed(2);
+    } else { $('kpsPct').textContent='—'; $('kpsW').textContent='0.00'; }
+  }
+  function kpsSave(){
+    jsonp({ action:'waKpiTraitSave', uid:UID, ym:KPS.ym, code:KP_CODE, scores:JSON.stringify(KPS_VAL) }).then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+      toast('บันทึกคะแนนแล้ว '+r.saved+' ข้อ'); renderKpiScore();
+    }).catch(function(e){ toast(e.message); });
+  }
+
+  /* ── 6 · ใบประเมิน (หน้าตาเดียวกับฟอร์มเดิม · สั่งพิมพ์เป็น PDF ได้) ── */
+  function renderKpiDoc(){
+    KP_YM=KP_YM||kpThisYm(); skel();
+    if(!KP_CODE) return kpErr('เลือกพนักงานจากหน้าทะเบียนหรือภาพรวมเดือนก่อนค่ะ');
+    jsonp({ action:'waKpiDoc', uid:UID, ym:KP_YM, code:KP_CODE }).then(function(r){
+      if(!r||!r.ok) return kpErr(r&&r.error);
+      var res=r.result, w=r.weights;
+      var h='<div class="ds-sel"><select onchange="kpDocYm(this.value)">'+kpMonthOpts(r.ym)+'</select>'+
+        '<button class="btn btn-ghost btn-sm" onclick="window.print()">พิมพ์ / บันทึกเป็น PDF</button>'+
+        '<button class="btn btn-ghost btn-sm" onclick="switchView(\'kpiperson\')">← ประวัติรายคน</button></div>';
+      h+='<div class="card kp-paper"><h3 class="kp-doc-h">แบบประเมินผลการปฏิบัติงาน ระดับ'+esc(r.emp.level||'เจ้าหน้าที่')+'</h3>'+
+        '<div class="kp-doc-sub">รอบการประเมิน '+esc(kpLabel(r.ym))+'</div>';
+      h+='<div class="kp-doc-emp"><div><span>ชื่อ – นามสกุล</span>'+esc(r.emp.name)+'</div>'+
+        '<div><span>ตำแหน่ง</span>'+esc(r.emp.posName)+'</div></div>';
+      h+='<div class="kp-doc-sec">ส่วนที่ 1 : ประเมินผลการปฏิบัติงาน (น้ำหนัก '+w.perf+')</div>'+
+        '<table class="kp-tbl kp-doc-tb"><thead><tr><th>ตัวชี้วัดผลงาน (KPI)</th><th class="kp-r">น้ำหนัก</th>'+
+        '<th class="kp-r">ทำได้จริง</th><th class="kp-r">คะแนนที่ได้</th></tr></thead><tbody>';
+      (res.detail||[]).forEach(function(d){
+        h+='<tr><td>'+esc(d.name)+'</td><td class="kp-r">'+d.weight.toFixed(2)+'</td>'+
+          '<td class="kp-r">'+d.pct.toFixed(2)+'%</td><td class="kp-r">'+d.score.toFixed(2)+'</td></tr>';
+      });
+      h+='<tr class="kp-doc-sum"><td>รวมส่วนผลงาน</td><td class="kp-r">'+w.perf.toFixed(2)+'</td><td></td>'+
+        '<td class="kp-r">'+res.perf.toFixed(2)+'</td></tr></tbody></table>';
+      if(w.trait>0){
+        h+='<div class="kp-doc-sec">ส่วนที่ 2 : ประเมินคุณลักษณะส่วนบุคคล (น้ำหนัก '+w.trait+')</div>'+
+          '<table class="kp-tbl kp-doc-tb"><tbody><tr><td>คะแนนเฉลี่ยจากผู้ประเมิน '+res.traitInfo.raters+' คน</td>'+
+          '<td class="kp-r">'+res.traitInfo.pct.toFixed(2)+'%</td><td class="kp-r">'+res.trait.toFixed(2)+'</td></tr></tbody></table>';
+      }
+      h+='<div class="kp-doc-sec">ส่วนที่ '+(w.trait>0?3:2)+' : สถิติการมาทำงานและความประพฤติ (น้ำหนัก '+w.stat+')</div>'+
+        '<table class="kp-tbl kp-doc-tb"><thead><tr><th>รายการ</th><th class="kp-r">หัก/ครั้ง</th>'+
+        '<th class="kp-r">จำนวน</th><th class="kp-r">รวมหัก</th></tr></thead><tbody>';
+      (r.statRules||[]).forEach(function(s){
+        var n=Number((r.statCounts||{})[s.key]||0);
+        h+='<tr><td>'+esc(s.label)+'</td><td class="kp-r">'+s.deduct+'</td><td class="kp-r">'+n+'</td>'+
+          '<td class="kp-r">'+(n*s.deduct).toFixed(2)+'</td></tr>';
+      });
+      h+='<tr class="kp-doc-sum"><td>คะแนนสุทธิ '+res.statInfo.netPct.toFixed(0)+' จาก 100</td><td></td>'+
+        '<td class="kp-r">หัก '+res.statInfo.deduct.toFixed(2)+'</td><td class="kp-r">'+res.stat.toFixed(2)+'</td></tr></tbody></table>';
+      h+='<div class="kp-doc-verdict"><div><span class="m-hint">คะแนนรวมการประเมิน</span>'+
+        '<div class="kp-doc-score">'+res.total.toFixed(2)+'</div></div>'+
+        '<div><span class="m-hint">เกรด</span><div><b class="kp-g kp-g'+res.grade+'">'+res.grade+'</b> '+esc(res.gradeLabel)+'</div>'+
+        '<div><span class="kp-pill '+(res.result==='ผ่าน'?'kp-pill-ok':'kp-pill-no')+'">ผลการประเมิน : '+esc(res.result)+'</span></div></div></div>';
+      h+='<div class="kp-doc-signs"><div><div class="kp-doc-line"></div>ลงชื่อ ผู้ถูกประเมิน</div>'+
+        '<div><div class="kp-doc-line"></div>ลงชื่อ ผู้ประเมิน</div></div></div>';
+      $('main').innerHTML=h;
+    }).catch(function(e){ kpErr(e.message); });
+  }
+  function kpDocYm(v){ KP_YM=v; renderKpiDoc(); }
+
   function statCard(label,value,sub,cls){
     return '<div class="ds-stat '+(cls||'')+'"><div class="ds-lb">'+esc(label)+'</div>'+
       '<div class="ds-vl">'+esc(value)+'</div>'+(sub?'<div class="ds-sub">'+esc(sub)+'</div>':'')+'</div>';
@@ -9284,7 +9805,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260906-1054';
+  var APP_BUILD='20260906-1114';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
