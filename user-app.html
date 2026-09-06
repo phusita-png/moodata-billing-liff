@@ -388,6 +388,8 @@
   /* หัวคอลัมน์เงินต้องชิดขวาให้ตรงกับตัวเลขข้างล่าง (พี่กี้ทัก 6 ก.ย.) */
   .dt-tbl th.dt-amt{ text-align:right; white-space:nowrap; }
   /* เลขที่เอกสารเป็นคอลัมน์ของตัวเอง (พี่กี้ 6 ก.ย.) — เลขยาว ๆ ให้ตัดบรรทัดได้ ไม่ดันตาราง */
+  /* ลำดับที่ในหน้าจอ (พี่กี้ 6 ก.ย.) — ไว้พูดถึงแถวกันได้ว่า "ใบที่ 3" ไม่ใช่เลขในทะเบียน */
+  .dt-tbl td.dr-idx, .dt-tbl th.dr-idx{ text-align:center; color:#8A94A6; font-size:12px; white-space:nowrap; }
   .dt-tbl td.dr-docno{ white-space:normal; word-break:break-all; font-size:13px; }
   .dt-tbl td.dt-doc a{ color:var(--red); text-decoration:none; font-size:12px; margin-right:7px; white-space:nowrap; }
   .dt-tbl td.dt-act{ text-align:center; width:44px; }
@@ -4932,13 +4934,13 @@
     if(!list.length){ h+='<div class="emptybox">ยังไม่มีเอกสารในเดือนนี้<br><span class="m-hint">กด ⬆️ อัปโหลดเอกสาร หรือ 🔄 ดึงเอกสารที่ระบบออกเอง</span></div>'; }
     else {
       h+='<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl">'+
-        '<colgroup><col style="width:34px"><col style="width:9%"><col style="width:12%"><col style="width:21%"><col style="width:12%">'+
+        '<colgroup><col style="width:34px"><col style="width:34px"><col style="width:9%"><col style="width:12%"><col style="width:21%"><col style="width:12%">'+
         '<col style="width:11%"><col style="width:9%"><col style="width:11%"><col style="width:8%"><col style="width:62px"><col style="width:34px"></colgroup>'+
         '<thead><tr><th><input type="checkbox" onchange="drSelAll(this.checked)" title="เลือกทั้งหมด"></th>'+
-        '<th>วันที่เอกสาร</th><th>เลขที่เอกสาร</th><th>คู่ค้า / รายละเอียด</th><th>หมวด</th>'+
+        '<th class="dr-idx">ลำดับ</th><th>วันที่เอกสาร</th><th>เลขที่เอกสาร</th><th>คู่ค้า / รายละเอียด</th><th>หมวด</th>'+
         '<th class="dt-amt">มูลค่า</th><th class="dt-amt">ภาษี</th><th class="dt-amt">รวมทั้งสิ้น</th>'+
         '<th>วันที่อัป</th><th>ไฟล์</th><th></th></tr></thead><tbody>'+
-        list.map(function(x){
+        list.map(function(x, idx){
           var q="'"+String(x.no).replace(/'/g,"\'")+"'";
           /* ชื่อแถว = คู่ค้าบนเอกสาร (พี่กี้: ไม่ต้องมี "เอกสาร 1 2 3" และไม่ต้องโชว์ที่อยู่) */
           var head = x.party || x.name || '(ยังไม่ได้อ่านข้อมูล)';
@@ -4951,6 +4953,7 @@
           var base = x.base || (x.amount && x.vat ? (x.amount - x.vat) : 0);
           return '<tr'+(x.cat==='PENDING'?' class="dr-pending"':'')+'>'+
             '<td><input type="checkbox" '+(DR_SEL[x.no]?'checked':'')+' onchange="drSel('+q+',this.checked)"></td>'+
+            '<td class="dr-idx">'+(idx+1)+'</td>'+
             (DR_KEY
               ? '<td>'+drCell(x,'docDate',x.docDateIso,'date')+'</td>'+
                 '<td>'+drCell(x,'docNo',x.docNo)+'</td>'+
@@ -10234,7 +10237,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260906-1950';
+  var APP_BUILD='20260906-1955';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
