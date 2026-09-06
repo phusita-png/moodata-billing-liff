@@ -389,6 +389,13 @@
   .dt-tbl td.dt-act{ text-align:center; width:44px; }
   .dt-tbl tbody tr:hover{ background:#FAFBFD; }
   /* ── 📄 ระบบเอกสาร (D1) — แถบหมวด + ป้ายหมวด + แถบเลือกหลายใบ ── */
+  /* ตั้งค่าห้อง → ติ๊กโมดูล */
+  .rs-mods{ display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:8px; margin-top:12px; }
+  .rs-mod{ display:flex; align-items:center; gap:8px; border:1px solid var(--line); border-radius:10px;
+    padding:9px 11px; font-size:13.5px; cursor:pointer; background:#fff; }
+  .rs-mod input{ width:16px; height:16px; }
+  .rs-mod-free{ background:#F4F7FB; color:#5B6472; cursor:default; }
+  .rs-dep{ font-size:11.5px; color:#8A94A6; }
   .dr-chips{ display:flex; flex-wrap:wrap; gap:7px; }
   .dr-chip{ border:1px solid var(--line); background:#fff; border-radius:999px; padding:5px 12px; font-size:13px;
     color:#4A5262; cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; gap:6px; }
@@ -1493,11 +1500,13 @@
   // ═══════════ ⚙️ ตั้งค่าห้อง — โฟลเดอร์เอกสาร (T5) ═══════════
   /* ลูกค้าเก็บเอกสารไว้ใน Drive ตัวเอง เราแค่มีสิทธิ์เขียน
      → ต้อง "ทดสอบเขียนไฟล์จริง" ตอนกดบันทึก ไม่ใช่รอไปพังตอนออกเอกสารใบแรก */
+  var RS_DATA=null;   // ผลจาก waRoomFolder — ใช้ต่อในส่วนติ๊กโมดูล
   function renderRoomSet(){
     skel();
     jsonp({action:'waRoomFolder',uid:UID}).then(function(r){
       if(VIEW!=='roomset') return;
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      RS_DATA=r;
       $('main').innerHTML=roomSetHtml(r.info||{}, r.room||ROOM);
       bindRoomSet();
     }).catch(function(e){ if(VIEW==='roomset') $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
@@ -1523,10 +1532,51 @@
         '<button class="btn btn-primary" id="rsSave" type="button" style="width:100%;margin-top:12px">ทดสอบและบันทึก</button>'+
         '<div class="rs-note">🔒 ระบบจะลองสร้างไฟล์ทดสอบในโฟลเดอร์แล้วลบทิ้งทันที '+
         'ผ่านแล้วถึงจะบันทึก — กันบันทึกผ่านแต่ไปพังตอนออกเอกสารจริง</div>'+
+      '</div></div>'+
+      roomModHtml();
+  }
+
+  /* ── โมดูลที่เปิดให้ห้องนี้ (พี่กี้ขอ 6 ก.ย.: ติ๊กเลือก ไม่ต้องพิมพ์ csv ในชีต) ──
+     ⚠️ backend ส่ง modList มาเฉพาะผู้ดูแลระบบ + ไม่ใช่ห้อง Moodata เอง
+        ไม่มี modList = ไม่ต้องวาดการ์ดนี้เลย (ลูกค้าเปิดโมดูลให้ตัวเองไม่ได้) */
+  function roomModHtml(){
+    var r=RS_DATA||{};
+    var list=r.modList||[];
+    if(!list.length) return '';
+    var open=r.mods||[];               // [] = เปิดครบทุกโมดูล (กติกาเดิมของระบบ)
+    var all=!open.length;
+    return '<div class="card"><div class="pb" style="padding:16px 18px">'+
+      '<div class="rs-h">🧩 โมดูลที่เปิดให้ห้องนี้</div>'+
+      '<div class="rs-sub">ติ๊กเฉพาะโมดูลที่ลูกค้าซื้อ · ไม่ติ๊กเลย = เปิดครบทุกโมดูล</div>'+
+      '<div class="rs-mods">'+list.map(function(m){
+        var on = m.free || all || open.indexOf(m.key)>=0;
+        var dep = (m.deps||[]).length ? (' <span class="rs-dep">ต้องมี '+esc(m.deps.join(' + '))+'</span>') : '';
+        return '<label class="rs-mod'+(m.free?' rs-mod-free':'')+'">'+
+          '<input type="checkbox" value="'+esc(m.key)+'"'+(on?' checked':'')+(m.free?' disabled':'')+'>'+
+          '<span>'+esc(m.label)+(m.free?' <span class="rs-dep">ฟรีทุกห้อง</span>':dep)+'</span></label>';
+      }).join('')+'</div>'+
+      '<button class="btn btn-primary" id="rsModSave" type="button" style="width:100%;margin-top:12px">บันทึกโมดูล</button>'+
+      '<div class="rs-note">ลูกค้าจะเห็นการ์ดเฉพาะโมดูลที่เปิดไว้ · '+
+      'ปิดโมดูลไหน ปุ่มของโมดูลนั้นหายจากหน้าเขาทันทีที่รีเฟรช</div>'+
       '</div></div>';
   }
 
   function bindRoomSet(){
+    var mb=$('rsModSave');
+    if(mb) mb.addEventListener('click', function(){
+      var picked=[];
+      Array.prototype.forEach.call(document.querySelectorAll('.rs-mods input[type=checkbox]'), function(c){
+        if(c.checked && !c.disabled) picked.push(c.value);
+      });
+      var room=(RS_DATA&&RS_DATA.room&&RS_DATA.room.code)||'';
+      callBusy('กำลังบันทึกโมดูล…',
+        jsonpPost(withRoom_({ action:'waHubSetModules', uid:UID, room:room, mods:JSON.stringify(picked) })), 'บันทึกแล้ว')
+        .then(function(r){
+          if(!r||!r.ok){ toast((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+          toast(r.all ? 'ห้องนี้เปิดครบทุกโมดูลแล้ว' : ('เปิด '+r.modules.length+' โมดูลให้ห้องนี้'));
+          renderRoomSet();
+        }).catch(function(e){ toast(e.message); });
+    });
     var b=$('rsSave'); if(!b) return;
     b.addEventListener('click', function(){
       var link=($('rsLink').value||'').trim();
@@ -9889,7 +9939,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260906-1257';
+  var APP_BUILD='20260906-1342';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
