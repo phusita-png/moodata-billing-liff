@@ -1400,7 +1400,7 @@
   /* โมดูลที่เปิดฟรีทุกห้อง — backend เป็นเจ้าของค่านี้ (bootstrap ส่ง modCore มา)
      ค่าตั้งต้นนี้ใช้เฉพาะตอน backend ยังไม่ส่งมา · admin ไม่ได้อยู่ใน MODULE_CORE ฝั่ง backend
      แต่การ์ดผู้ดูแลระบบกรองด้วย m.sup อยู่แล้ว จึงคงไว้ที่นี่ */
-  var MOD_CORE={ work:1, me:1, dev:1, admin:1, docsys:1 };
+  var MOD_CORE={ me:1, dev:1, admin:1 };   /* 6 ก.ย. 69: work/docsys ย้ายไปเป็นโมดูลขาย (backend เป็นเจ้าของค่าจริง) */
   function modOpen(key){
     if(!MODS_OPEN) return true;                  // ว่าง = เปิดครบ
     if(MOD_CORE[key]) return true;
@@ -9889,7 +9889,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260906-1238';
+  var APP_BUILD='20260906-1257';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
