@@ -9991,7 +9991,20 @@
   }
   function startParam(){ return String(allParams().p||'').toLowerCase(); }
   function uidOverride(){ try{ return new URLSearchParams(location.search).get('uid')||''; }catch(e){ return ''; } }
+  /* ลิงก์เชิญเข้าห้อง (6 ก.ย. 69) — เราเปิดห้อง+คีย์ข้อมูลให้ก่อน แล้วส่งลิงก์เดียวให้ลูกค้ากด
+     คนแรกที่กด = เจ้าของห้องนั้น · ต้องผูกให้เสร็จ "ก่อน" waBootstrap ไม่งั้นยังถูกมองเป็นคนนอก */
   function start(){
+    var tk=String(allParams().invite||'').trim();
+    if(!tk){ startBoot(); return; }
+    $('main').innerHTML='<div class="card"><div class="skel" style="height:90px"></div></div>';
+    jsonp({action:'waHubAccept', uid:UID, invite:tk, name:NICK||''}).then(function(r){
+      if(r&&r.ok){ if(!r.already) toast('ยินดีต้อนรับค่ะ 🎉'); }
+      else if(r&&r.error) toast(r.error);
+      try{ history.replaceState(null,'',location.pathname); }catch(e){}   // ลบ token ออกจาก URL
+      startBoot();
+    }).catch(function(){ startBoot(); });
+  }
+  function startBoot(){
     jsonp({action:'waBootstrap', uid:UID}).then(function(r){
       if(!r||!r.ok){ fatal((r&&r.error)||'โหลดข้อมูลไม่สำเร็จ'); return; }
       NICK=r.nick||''; if(NICK){ $('hdSub').textContent=NICK; }
@@ -10086,7 +10099,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260906-1553';
+  var APP_BUILD='20260906-1616';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
