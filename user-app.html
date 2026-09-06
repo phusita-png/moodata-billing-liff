@@ -425,6 +425,20 @@
      สีจะถูกทับจนปุ่มเทาหมดทั้งคอลัมน์ (พี่กี้เห็นเป็นสีเทาเหมือนกันหมด 6 ก.ย.) */
   .btn.btn-off{ color:#1069A8; border:1px solid #9CCDF0; background:#E8F3FD; }
   .btn.btn-on{ color:#8A94A6; border:1px solid #DDE1E7; background:#F1F2F5; }
+  /* 🍩 โดนัทเอกสาร + แถบช่วงเวลา — แบบเดียวกับแดชบอร์ดเอกสารของดิเอลฟ์ (พี่กี้ขอ 6 ก.ย.) */
+  .dd-wrap{ display:flex; align-items:center; gap:16px; margin-top:10px; flex-wrap:wrap; }
+  .dd-donut{ width:150px; height:150px; flex:none; }
+  .dd-n{ font-size:27px; font-weight:800; fill:#1F2937; }
+  .dd-l{ font-size:12px; fill:#8A94A6; }
+  .dd-lg{ flex:1; min-width:220px; }
+  .dd-row{ display:flex; align-items:center; gap:8px; font-size:13px; padding:3px 0; }
+  .dd-dot{ width:10px; height:10px; border-radius:50%; flex:none; }
+  .dd-name{ flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .dd-num{ color:#8A94A6; white-space:nowrap; flex:none; }
+  .dd-filter{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:12px; }
+  .dd-filter select, .dd-filter input[type=date]{ font-family:inherit; font-size:13px; padding:8px 10px;
+    border:1px solid var(--line); border-radius:9px; background:#fff; }
+  .dd-dash{ color:#8A94A6; }
   .dr-pending td{ background:#FFFCF5; }
   .dr-bulk{ background:#F4F7FB; border:1px solid var(--line); border-radius:10px; padding:9px 12px; margin-bottom:9px;
     font-size:13px; display:flex; flex-wrap:wrap; align-items:center; gap:7px; }
@@ -5368,10 +5382,79 @@
     return h;
   }
 
+  /* ── ช่วงเวลาของหน้าภาพรวม: เดือน · ปี · ช่วงวันที่ (แบบดิเอลฟ์) ──
+     🔴 ความหมายต่างกัน ต้องบอกผู้ใช้ให้ชัด:
+        เดือน/ปี = **รอบที่ลูกค้าส่งเอกสารมา** (กติกาแฟ้ม)
+        ช่วงวันที่ = **วันที่บนหน้าเอกสาร** — อย่างอื่นไม่มีความหมายกับช่วงวัน */
+  var DD_F = { mode:'month', year:'', from:'', to:'' };
+
+  function ddFilterBar(r){
+    var f=DD_F, yNow=parseInt(String(DR_MONTH||'2569-01').split('-')[0],10)||2569;
+    var years=[]; for(var y=yNow;y>=yNow-4;y--) years.push(y);
+    var h='<div class="dd-filter"><select id="ddMode" onchange="ddSetMode(this.value)">'+
+      [['month','เลือกเดือน'],['year','เลือกปี'],['range','ช่วงวันที่']].map(function(o){
+        return '<option value="'+o[0]+'"'+(f.mode===o[0]?' selected':'')+'>'+o[1]+'</option>';
+      }).join('')+'</select>';
+    if(f.mode==='month'){
+      h+='<select id="ddMonth">'+(r.months||[]).map(function(m){
+        var ym=(m&&m.ym)||m, n=(m&&m.n)||0;
+        return '<option value="'+esc(ym)+'"'+(ym===DR_MONTH?' selected':'')+'>'+
+          esc(drMonthLabel(ym))+(n?(' · '+n+' ไฟล์'):' · ว่าง')+'</option>';
+      }).join('')+'</select>';
+    } else if(f.mode==='year'){
+      h+='<select id="ddYear">'+years.map(function(y){
+        return '<option value="'+y+'"'+(String(f.year||yNow)===String(y)?' selected':'')+'>'+y+'</option>';
+      }).join('')+'</select>';
+    } else {
+      h+='<input type="date" id="ddFrom" value="'+esc(f.from)+'"><span class="dd-dash">–</span>'+
+         '<input type="date" id="ddTo" value="'+esc(f.to)+'">';
+    }
+    h+='<button class="btn btn-primary btn-sm" onclick="ddGo()">ดูข้อมูล</button></div>';
+    if(f.mode==='range') h+='<div class="m-hint">ช่วงวันที่นับจาก <b>วันที่บนหน้าเอกสาร</b> ไม่ใช่รอบที่ส่งค่ะ</div>';
+    return h;
+  }
+
+  function ddSetMode(v){ DD_F.mode=v; ddPaint(); }
+  function ddGo(){
+    var m=$('ddMonth'), y=$('ddYear'), fr=$('ddFrom'), to=$('ddTo');
+    if(m) DR_MONTH=m.value;
+    if(y) DD_F.year=y.value;
+    if(fr) DD_F.from=fr.value;
+    if(to) DD_F.to=to.value;
+    if(DD_F.mode==='range' && (!DD_F.from || !DD_F.to)){ toast('เลือกช่วงวันที่ให้ครบค่ะ'); return; }
+    renderDocDash();
+  }
+
+  /* 🍩 โดนัท — วาดสัดส่วนจากผลรวมของรายการเสมอ วงจะได้เต็มพอดี */
+  var DD_COLORS=['#1E8FE1','#F2994A','#27AE60','#9B51E0','#EB5757','#2D9CDB','#F2C94C','#56CCF2','#BB6BD9','#6FCF97','#828282'];
+  function ddDonut(items, centerLabel){
+    var list=(items||[]).filter(function(x){ return (x.count||0)>0; });
+    if(!list.length) return '<div class="emptybox">ยังไม่มีเอกสารในช่วงนี้ค่ะ</div>';
+    var total=list.reduce(function(a,x){ return a+(x.count||0); },0);
+    var R=54, C=2*Math.PI*R, off=0;
+    var arcs=list.map(function(d,i){
+      var col=DD_COLORS[i%DD_COLORS.length];
+      var len=C*(d.count/total);
+      var seg='<circle cx="70" cy="70" r="'+R+'" fill="none" stroke="'+col+'" stroke-width="22" '+
+        'stroke-dasharray="'+len.toFixed(2)+' '+(C-len).toFixed(2)+'" stroke-dashoffset="'+(-off).toFixed(2)+'" '+
+        'transform="rotate(-90 70 70)"></circle>';
+      off+=len; return seg;
+    }).join('');
+    var legend=list.map(function(d,i){
+      return '<div class="dd-row"><span class="dd-dot" style="background:'+DD_COLORS[i%DD_COLORS.length]+'"></span>'+
+        '<span class="dd-name">'+esc(d.name)+'</span><span class="dd-num">'+d.count+' ใบ</span></div>';
+    }).join('');
+    return '<div class="dd-wrap"><svg viewBox="0 0 140 140" class="dd-donut">'+arcs+
+      '<text x="70" y="64" text-anchor="middle" class="dd-n">'+total+'</text>'+
+      '<text x="70" y="82" text-anchor="middle" class="dd-l">'+esc(centerLabel||'')+'</text>'+
+      '</svg><div class="dd-lg">'+legend+'</div></div>';
+  }
+
   /* ── ① ภาพรวม — "เดือนนี้ยังต้องทำอะไรอีก" ── */
   function renderDocDash(){
     skel();
-    jsonp(withRoom_({ action:'waDocDash', uid:UID, month:DR_MONTH, entity:DR_ENT })).then(function(r){
+    jsonp(withRoom_({ action:'waDocDash', uid:UID, month:DR_MONTH, entity:DR_ENT,
+                     mode:DD_F.mode, year:DD_F.year, from:DD_F.from, to:DD_F.to })).then(function(r){
       if(VIEW!=='docdash') return;
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
       DD=r; DR_MONTH=r.month||DR_MONTH; ddPaint();
@@ -5381,10 +5464,17 @@
   function ddPaint(){
     var r=DD; if(!r) return;
     var s=r.summary||{}, m=r.money||{};
-    var h='<div class="section-h">📊 ภาพรวมเอกสาร</div>'+drFilterBar(r,'ddMonth');
+    var rg=r.range||{};
+    var h='<div class="section-h">📊 ภาพรวมเอกสาร</div>'+ddFilterBar(r);
+
+    // 🍩 เอกสารทั้งหมดในช่วงที่เลือก แยกตามหมวด
+    h+='<div class="card"><div class="ds-h">เอกสารทั้งหมด · '+esc(ddRangeLabel(rg))+'</div>'+
+      ddDonut(r.cats||[], 'เอกสาร')+
+      (rg.noDate?('<div class="rs-note">⚠️ มีอีก '+rg.noDate+' ใบที่ยังไม่รู้วันที่บนเอกสาร จึงไม่เข้าช่วงนี้ค่ะ</div>'):'')+
+      '</div>';
 
     h+='<div class="ds-grid">'+
-      statCard('เอกสารเดือนนี้', (s.total||0)+' ไฟล์', drMonthLabel(DR_MONTH))+
+      statCard('เอกสารทั้งหมด', (s.total||0)+' ไฟล์', ddRangeLabel(rg))+
       statCard('รอแยกหมวด', (s.pending||0)+' ไฟล์', s.pending?'ยังไม่รู้ว่าเป็นเอกสารประเภทไหน':'แยกครบแล้ว', s.pending?'ds-warn':'')+
       statCard('ข้อมูลยังไม่ครบ', (s.incomplete||0)+' ไฟล์', s.incomplete?'ขาดวันที่/เลขที่/คู่ค้า/ยอด':'ครบทุกใบ', s.incomplete?'ds-warn':'')+
       statCard('ยังไม่บันทึกเข้าเล่ม', (s.unlinked||0)+' ไฟล์', 'ใบกำกับ/50 ทวิ ที่ยังไม่เข้าระบบ')+
@@ -5422,9 +5512,9 @@
     }
     h+='</div>';
 
-    // หมวดของเดือนนี้ + ยอดจากหน้าเอกสาร
+    // ยอดจากหน้าเอกสาร แยกตามหมวด (ตัวเลข — โดนัทข้างบนบอกสัดส่วน)
     if((r.cats||[]).length){
-      h+='<div class="card"><div class="ds-h">แยกตามหมวด · '+esc(drMonthLabel(DR_MONTH))+'</div>'+
+      h+='<div class="card"><div class="ds-h">ยอดแยกตามหมวด · '+esc(ddRangeLabel(rg))+'</div>'+
         '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl">'+
         '<colgroup><col style="width:46%"><col style="width:18%"><col style="width:36%"></colgroup>'+
         '<thead><tr><th>หมวด</th><th class="dt-amt">จำนวนใบ</th><th class="dt-amt">รวมทั้งสิ้น</th></tr></thead><tbody>'+
@@ -5447,6 +5537,12 @@
     $('main').innerHTML=h;
   }
   function ddMonth(v){ DR_MONTH=v; renderDocDash(); }
+  /** ป้ายบอกช่วงที่กำลังดูอยู่ — เดือน/ปี = รอบที่ส่ง · ช่วงวันที่ = วันที่บนใบ */
+  function ddRangeLabel(rg){
+    if(!rg||rg.mode==='month') return drMonthLabel(DR_MONTH);
+    if(rg.mode==='year') return 'ปี '+(rg.year||'');
+    return (rg.from||'')+' – '+(rg.to||'');
+  }
   function ddGoFix(){ switchView('docreg'); }
 
   /* ── ③ รายงานประจำเดือน — สรุปหมวด + ย้อนหลัง + ปิดเดือน ── */
@@ -5538,6 +5634,7 @@
   }
 
   window.renderDocDash=renderDocDash; window.ddMonth=ddMonth; window.ddGoFix=ddGoFix;
+  window.ddSetMode=ddSetMode; window.ddGo=ddGo;
   window.renderDocReport=renderDocReport; window.drpMonth=drpMonth; window.drpClose=drpClose;
   window.renderDocCat=renderDocCat;
 
@@ -10440,7 +10537,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260906-2159';
+  var APP_BUILD='20260906-2205';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
