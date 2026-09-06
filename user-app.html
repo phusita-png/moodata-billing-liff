@@ -5619,6 +5619,7 @@
       '<div class="rs-note">⚠️ '+esc(r.moneyNote||'')+'</div>'+
       '<div class="tax-acts">'+
       (r.closed&&r.closed.indexUrl?'<a class="btn btn-ghost" href="'+esc(r.closed.indexUrl)+'" target="_blank">📄 เปิดสารบัญเดือนนี้</a>':'')+
+      '<button class="btn btn-ghost" onclick="drpExport()">📊 ออกไฟล์ Excel / ชีต</button>'+
       (own?'<button class="btn btn-primary" onclick="drpClose()">📦 '+(r.closed?'ออกสารบัญใหม่':'ปิดเดือน · ออกสารบัญ')+'</button>':'')+
       '</div>'+
       (r.closed?('<div class="m-hint">ปิดเดือนล่าสุด '+esc(r.closed.at||'')+' · '+(r.closed.files||0)+' ไฟล์</div>')
@@ -5643,6 +5644,15 @@
     $('main').innerHTML=h;
   }
   function drpMonth(v){ DR_MONTH=v; renderDocReport(); }
+  function drpExport(){
+    callBusy('กำลังออกไฟล์…', jsonp(withRoom_({ action:'waDocExport', uid:UID,
+      month:DR_MONTH, entity:DR_ENT, mode:'month' })), 'ออกไฟล์แล้ว')
+      .then(function(r){
+        if(!r||!r.ok){ toast((r&&r.error)||'ออกไฟล์ไม่สำเร็จ'); return; }
+        if(r.warn) toast(r.warn);
+        window.open(r.fileUrl||r.sheetUrl,'_blank');
+      }).catch(function(e){ toast(e.message); });
+  }
   function drpClose(){
     if(!window.confirm('ออกสารบัญเอกสารของ '+drMonthLabel(DR_MONTH)+' ?')) return;
     callBusy('กำลังออกสารบัญ…', jsonp(withRoom_({ action:'waDocClose', uid:UID, month:DR_MONTH, entity:DR_ENT })), 'ออกสารบัญแล้ว')
@@ -5656,7 +5666,7 @@
 
   /* ── ② รายงานตามประเภทเอกสาร — เลือกช่วงแล้วไล่ดูรายละเอียดทีละใบ ──
      ต่างจาก "รายงานประจำเดือน (ปิดรอบ)" ที่เป็นยอดสรุปไว้ยืนยันรอบ */
-  var BC=null, BC_CAT='';
+  var BC=null, BC_CAT='', BC_OUT=null;
 
   function renderDocByCat(){
     skel();
@@ -5683,6 +5693,11 @@
         }).join('')+
       '</div>'+
       (rg.noDate?('<div class="rs-note">⚠️ มีอีก '+rg.noDate+' ใบที่ยังไม่รู้วันที่บนเอกสาร จึงไม่เข้าช่วงนี้ค่ะ</div>'):'')+
+      '<div class="tax-acts"><button class="btn btn-ghost" onclick="bcExport()">📊 ออกไฟล์ Excel / ชีต</button></div>'+
+      (BC_OUT?('<div class="m-hint">✅ ออกไฟล์แล้ว: '+
+        (BC_OUT.fileUrl?'<a class="ex-lk" href="'+esc(BC_OUT.fileUrl)+'" target="_blank">ดาวน์โหลด Excel</a> · ':'')+
+        '<a class="ex-lk" href="'+esc(BC_OUT.sheetUrl)+'" target="_blank">เปิดในชีต</a>'+
+        (BC_OUT.warn?(' · '+esc(BC_OUT.warn)):'')+'</div>'):'')+
       '</div>';
 
     if(!(r.groups||[]).length){
@@ -5726,7 +5741,17 @@
 
     $('main').innerHTML=h;
   }
-  function bcCat(c){ BC_CAT=c; renderDocByCat(); }
+  function bcCat(c){ BC_CAT=c; BC_OUT=null; renderDocByCat(); }
+  /* ออกไฟล์: แท็บในชีต (ทีมใช้ต่อ) + .xlsx ในโฟลเดอร์เดือนนั้น (ส่งนักบัญชี) */
+  function bcExport(){
+    callBusy('กำลังออกไฟล์…', jsonp(withRoom_({ action:'waDocExport', uid:UID, month:DR_MONTH, entity:DR_ENT,
+      cat:BC_CAT, mode:DD_F.mode, year:DD_F.year, from:DD_F.from, to:DD_F.to })), 'ออกไฟล์แล้ว')
+      .then(function(r){
+        if(!r||!r.ok){ toast((r&&r.error)||'ออกไฟล์ไม่สำเร็จ'); return; }
+        BC_OUT=r; bcPaint();
+        if(r.fileUrl) window.open(r.fileUrl,'_blank');
+      }).catch(function(e){ toast(e.message); });
+  }
   function bcSetMode(v){ DD_F.mode=v; bcPaint(); }
   function bcGo(){
     var m=$('ddMonth'), y=$('ddYear'), fr=$('ddFrom'), to=$('ddTo');
@@ -5760,6 +5785,7 @@
   window.renderDocReport=renderDocReport; window.drpMonth=drpMonth; window.drpClose=drpClose;
   window.renderDocCat=renderDocCat;
   window.renderDocByCat=renderDocByCat; window.bcCat=bcCat; window.bcSetMode=bcSetMode; window.bcGo=bcGo;
+  window.bcExport=bcExport; window.drpExport=drpExport;
 
   window.drScan=drScan; window.drScanAll=drScanAll; window.drLinkForm=drLinkForm; window.drLinkSave=drLinkSave;
 
@@ -10660,7 +10686,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260906-2259';
+  var APP_BUILD='20260906-2320';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
