@@ -4442,6 +4442,14 @@
     a.push({ key:'cat', label:'🏷️ เปลี่ยนหมวด', call:'drPickCat('+q+')' });
     // ไฟล์ที่ระบบออกเอง = ข้อมูลเป็นของเล่มนั้น แก้ที่นี่แล้วจะไม่ตรงกับต้นทาง (กฎเหล็กข้อ 1)
     if(!x.isSystem) a.push({ key:'edit', label:'✏️ แก้ข้อมูลบนใบ', call:'drEditForm('+q+')' });
+    // D2: OCR อ่านไฟล์ (ไฟล์ของระบบไม่ต้องอ่าน ข้อมูลอยู่ในเล่มมันแล้ว)
+    if(!x.isSystem) a.push({ key:'scan', label:'🔍 อ่านไฟล์ด้วย OCR', call:'drScan('+q+')' });
+    // D2: ส่งต่อเข้าเล่ม — เฉพาะหมวดที่มีปลายทางรองรับจริง และยังไม่เคยผูก
+    if(isOwner && !x.linkKind && (x.link==='vatbuy' || x.link==='whtin')) {
+      a.push({ key:'link',
+        label: x.link==='vatbuy' ? '🧾 บันทึกเป็นภาษีซื้อ' : '🧾 เข้าทะเบียน 50 ทวิ ที่ถูกหัก',
+        call:'drLinkForm('+q+')' });
+    }
     if(x.linkNo) a.push({ key:'linked', label:'📌 อยู่ใน '+x.linkLabel+' '+x.linkNo, call:'drNoop()' });
     if(isOwner && !x.linkKind) a.push({ sep:true }, { key:'del', label:'🗑️ เอาออกจากทะเบียน', call:'drDelete('+q+')', danger:true });
     return a;
@@ -4495,6 +4503,7 @@
     if(DR_FORM==='up') h+=drUploadForm(cats);
     if(DR_FORM==='cat' && own) h+=drCatForm(cats);
     if(DR_EDIT) h+=drEditFormHtml(docs);
+    if(DR_LINK) h+=drLinkFormHtml();
 
     // ── แถบหมวด (กรอง) ──
     var byCat={}; docs.forEach(function(x){ byCat[x.cat]=(byCat[x.cat]||0)+1; });
@@ -4603,11 +4612,11 @@
     return '<div class="card"><div class="ds-h">✏️ แก้ข้อมูล '+esc(x.name)+'</div>'+
       '<div id="mErr" class="m-err hidden"></div>'+
       '<div class="fld"><label>ชื่อเอกสาร</label><input id="drEName" value="'+esc(x.name)+'"></div>'+
-      '<div class="fld"><label>วันที่บนเอกสาร</label><input id="drEDate" type="date" value="'+esc(x.docDateIso||'')+'">'+
+      '<div class="fld"><label>วันที่บนเอกสาร</label><input id="drEDate" type="date" value="'+esc(drVal(x,'docDateIso','docDate'))+'">'+
         '<div class="m-hint">เปลี่ยนข้ามเดือน = ไฟล์ย้ายไปโฟลเดอร์เดือนใหม่ให้เอง</div></div>'+
-      '<div class="fld"><label>คู่ค้า</label><input id="drEParty" value="'+esc(x.party||'')+'"></div>'+
-      '<div class="fld"><label>เลขที่บนเอกสาร</label><input id="drENo" value="'+esc(x.docNo||'')+'"></div>'+
-      '<div class="fld"><label>ยอดเงิน</label><input id="drEAmt" type="number" inputmode="decimal" value="'+(x.amount||'')+'"></div>'+
+      '<div class="fld"><label>คู่ค้า</label><input id="drEParty" value="'+esc(drVal(x,'party'))+'"></div>'+
+      '<div class="fld"><label>เลขที่บนเอกสาร</label><input id="drENo" value="'+esc(drVal(x,'docNo'))+'"></div>'+
+      '<div class="fld"><label>ยอดเงิน</label><input id="drEAmt" type="number" inputmode="decimal" value="'+(drVal(x,'amount')||'')+'"></div>'+
       '<div class="fld"><label>หมายเหตุ</label><input id="drENote" value="'+esc(x.note||'')+'"></div>'+
       '<div class="tax-acts"><button class="btn btn-ghost" onclick="drEditForm(\'\')">ปิด</button>'+
       '<button class="btn btn-primary" onclick="drEditSave()">บันทึก</button></div></div>';
@@ -4724,6 +4733,121 @@
       renderDocReg();
     }).catch(function(e){ toast(e.message); });
   }
+
+  /* ── D2: OCR + ส่งต่อเข้าเล่ม (spec-doc-module.md §6 ③) ──
+     หลักการ: ระบบ "เดา" แล้วเติมฟอร์มให้ตรวจ **ไม่บันทึกเอง** (เหมือนตัวอ่าน 50 ทวิ) */
+  var DR_SCAN = {};      // ผลอ่าน OCR ล่าสุดต่อใบ — ไว้เติมฟอร์มโดยไม่ยิงซ้ำ
+  var DR_LINK = '';      // ใบที่กำลังเปิดฟอร์มส่งต่อเข้าเล่ม
+  var DR_TARGETS = null; // ใบเบิก/ใบสั่งจ่ายที่ยังไม่มีใบกำกับซื้อ
+
+  function drScan(no){
+    callBusy('กำลังอ่านไฟล์…', jsonp(withRoom_({ action:'waDocScan', uid:UID, no:no })), 'อ่านเสร็จแล้ว')
+      .then(function(r){
+        if(!r||!r.ok){ toast((r&&r.error)||'อ่านไฟล์ไม่สำเร็จ'); return; }
+        DR_SCAN[no]=r;
+        DR_EDIT=no; DR_FORM='';        // เปิดฟอร์มแก้ข้อมูลพร้อมค่าที่อ่านได้ ให้คนตรวจก่อนบันทึก
+        drPaint();
+        var miss=(r.guess||[]).length ? ' · อ่านไม่ได้: '+r.guess.join(', ') : '';
+        toast('อ่านได้ '+(r.chars||0)+' ตัวอักษร'+(r.catName?(' · น่าจะเป็น "'+r.catName+'"'):'')+miss);
+      }).catch(function(e){ toast(e.message); });
+  }
+
+  /** ค่าที่จะเติมในฟอร์ม: ของที่ OCR อ่านได้ก่อน ถ้าไม่มีค่อยใช้ของเดิมในทะเบียน */
+  function drVal(x, key, scanKey){
+    var sc=DR_SCAN[x.no];
+    if(sc && sc[scanKey||key]) return sc[scanKey||key];
+    return x[key]||'';
+  }
+
+  function drLinkForm(no){
+    DR_LINK=(DR_LINK===no?'':no); DR_EDIT=''; DR_FORM='';
+    if(!DR_LINK){ drPaint(); return; }
+    var x=drDocByNo(no);
+    if(x && x.link==='vatbuy' && !DR_TARGETS){
+      busy('กำลังโหลดรายการใบ…');
+      jsonp(withRoom_({ action:'waDocTargets', uid:UID, entity:DR_ENT })).then(function(r){
+        unbusy();
+        DR_TARGETS=(r&&r.ok&&r.targets)||[];
+        drPaint();
+      }).catch(function(e){ unbusy(); toast(e.message); DR_TARGETS=[]; drPaint(); });
+      return;
+    }
+    drPaint();
+  }
+  function drDocByNo(no){
+    var docs=(DR&&DR.docs)||[];
+    for(var i=0;i<docs.length;i++) if(docs[i].no===no) return docs[i];
+    return null;
+  }
+
+  /** ฟอร์มส่งต่อเข้าเล่ม — คนละหน้าตาตามปลายทาง */
+  function drLinkFormHtml(){
+    var x=drDocByNo(DR_LINK); if(!x) return '';
+    var sc=DR_SCAN[x.no]||{};
+    var head='<div class="card"><div class="ds-h">🧾 บันทึก "'+esc(x.name)+'" เข้าเล่ม</div>'+
+      '<div id="mErr" class="m-err hidden"></div>';
+    var foot='<div class="tax-acts"><button class="btn btn-ghost" onclick="drLinkForm(\''+esc(x.no)+'\')">ปิด</button>'+
+      '<button class="btn btn-primary" onclick="drLinkSave()">บันทึกเข้าเล่ม</button></div></div>';
+
+    if(x.link==='vatbuy'){
+      var opts=(DR_TARGETS||[]).map(function(o){
+        return '<option value="'+esc(o.kind+'|'+o.no)+'">'+esc(o.label)+'</option>';
+      }).join('');
+      return head+
+        '<div class="m-hint">ภาษีซื้อผูกกับใบที่จ่ายเงินจริง — เลือกใบเบิก/ใบสั่งจ่ายที่ตรงกับใบกำกับนี้ค่ะ</div>'+
+        '<div class="fld"><label>ใบปลายทาง</label><select id="drLkTarget">'+
+          (opts||'<option value="">— ไม่มีใบที่ยังไม่ได้บันทึกภาษีซื้อ —</option>')+'</select></div>'+
+        '<div class="fld"><label>เลขที่ใบกำกับภาษี</label><input id="drLkInvNo" value="'+esc(sc.docNo||x.docNo||'')+'"></div>'+
+        '<div class="fld"><label>วันที่บนใบกำกับ</label><input id="drLkInvDate" type="date" value="'+esc(sc.docDate||x.docDateIso||'')+'">'+
+          '<div class="m-hint">เดือนของภาษีซื้อยึดวันที่บนใบกำกับ ไม่ใช่วันที่จ่ายเงิน</div></div>'+
+        '<div class="fld"><label>ชื่อผู้ขาย</label><input id="drLkSeller" value="'+esc(sc.party||x.party||'')+'"></div>'+
+        '<div class="fld"><label>เลขผู้เสียภาษีผู้ขาย (13 หลัก)</label><input id="drLkSellerId" inputmode="numeric" value="'+esc(sc.taxId||'')+'"></div>'+
+        '<div class="fld"><label>มูลค่าก่อน VAT (เว้นว่างได้ ระบบแยก 7% ให้)</label><input id="drLkBase" type="number" inputmode="decimal" value="'+
+          ((sc.amount&&sc.vat)?(Math.round((sc.amount-sc.vat)*100)/100):'')+'"></div>'+
+        '<div class="fld"><label>ภาษีซื้อ</label><input id="drLkVat" type="number" inputmode="decimal" value="'+(sc.vat||'')+'"></div>'+
+        foot;
+    }
+    // 50 ทวิ ที่ลูกค้าหักเรา
+    return head+
+      '<div class="m-hint">ใบที่ลูกค้าออกให้เรา = เครดิตภาษีของเรา (คนละเล่มกับ 50 ทวิ ที่เราออกให้คนอื่น)</div>'+
+      '<div class="fld"><label>ผู้จ่ายเงิน (ลูกค้าที่หักภาษีเรา)</label><input id="drLkPayer" value="'+esc(sc.party||x.party||'')+'"></div>'+
+      '<div class="fld"><label>เลขผู้เสียภาษีผู้จ่าย</label><input id="drLkPayerId" inputmode="numeric" value="'+esc(sc.taxId||'')+'"></div>'+
+      '<div class="fld"><label>เลขที่บนใบ</label><input id="drLkDocNo" value="'+esc(sc.docNo||x.docNo||'')+'"></div>'+
+      '<div class="fld"><label>วันที่จ่ายเงินบนใบ</label><input id="drLkPayDate" type="date" value="'+esc(sc.docDate||x.docDateIso||'')+'"></div>'+
+      '<div class="fld"><label>ยอดเงินที่จ่าย</label><input id="drLkAmount" type="number" inputmode="decimal" value="'+(sc.amount||x.amount||'')+'"></div>'+
+      '<div class="fld"><label>ภาษีที่ถูกหัก</label><input id="drLkTax" type="number" inputmode="decimal" value=""></div>'+
+      foot;
+  }
+
+  function drLinkSave(){
+    var x=drDocByNo(DR_LINK); if(!x) return;
+    var p={ action:'waDocLink', uid:UID, no:x.no, kind:x.link, entity:DR_ENT };
+    if(x.link==='vatbuy'){
+      var tv=(($('drLkTarget')||{}).value||'').split('|');
+      if(!tv[1]){ toast('เลือกใบปลายทางก่อนค่ะ'); return; }
+      p.targetKind=tv[0]; p.targetNo=tv[1];
+      p.invNo=($('drLkInvNo')||{}).value||'';
+      p.invDate=($('drLkInvDate')||{}).value||'';
+      p.seller=($('drLkSeller')||{}).value||'';
+      p.sellerId=($('drLkSellerId')||{}).value||'';
+      p.base=($('drLkBase')||{}).value||'';
+      p.vat=($('drLkVat')||{}).value||'';
+    } else {
+      p.payer=($('drLkPayer')||{}).value||'';
+      p.payerId=($('drLkPayerId')||{}).value||'';
+      p.docNo=($('drLkDocNo')||{}).value||'';
+      p.payDate=($('drLkPayDate')||{}).value||'';
+      p.amount=($('drLkAmount')||{}).value||'';
+      p.tax=($('drLkTax')||{}).value||'';
+    }
+    callBusy('กำลังบันทึกเข้าเล่ม…', jsonpPost(withRoom_(p)), 'บันทึกแล้ว').then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+      toast('บันทึกเข้า '+(r.label||'เล่ม')+' '+(r.no||'')+' แล้ว');
+      DR_LINK=''; DR_TARGETS=null; renderDocReg();
+    }).catch(function(e){ toast(e.message); });
+  }
+
+  window.drScan=drScan; window.drLinkForm=drLinkForm; window.drLinkSave=drLinkSave;
 
   window.renderDocReg=renderDocReg; window.drSetMonth=drSetMonth; window.drSetEnt=drSetEnt;
   window.drSetCat=drSetCat; window.drForm=drForm; window.drUpload=drUpload; window.drSel=drSel;
@@ -9146,7 +9270,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260906-0925';
+  var APP_BUILD='20260906-0954';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
