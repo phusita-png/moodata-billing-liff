@@ -4626,7 +4626,9 @@
             '<td>'+(x.cat==='PENDING'
               ? '<span class="dr-tag dr-tag-wait">รอแยกหมวด</span>'
               : '<span class="dr-tag">'+esc(x.catName)+'</span>')+'</td>'+
-            '<td class="dt-amt">'+(x.amount?money(x.amount):'—')+'</td>'+
+            '<td class="dt-amt">'+(x.amount?money(x.amount):'—')+
+              (x.vat?('<br><span style="font-size:11px;color:#8A94A6;font-weight:400">ฐาน '+money(x.base||(x.amount-x.vat))+
+                ' · VAT '+money(x.vat)+'</span>'):'')+'</td>'+
             dtActCell('dr_'+x.no, docRowActions(x, own))+
             '</tr>';
         }).join('')+'</tbody></table></div>';
@@ -4655,12 +4657,14 @@
         '<option value="">— ยังไม่แยกหมวด (เข้ากองรอแยก) —</option>'+
         cats.map(function(c){ return '<option value="'+esc(c.code)+'">'+esc(c.name)+'</option>'; }).join('')+
       '</select></div>'+
-      '<div class="fld"><label>วันที่บนเอกสาร</label><input id="drUpDate" type="date" value="'+todayISO()+'">'+
-        '<div class="m-hint">เดือนของเอกสารยึดวันที่บนใบ ไม่ใช่วันที่อัปค่ะ</div></div>'+
+      '<div class="fld"><label>วันที่บนเอกสาร <span style="font-weight:400;color:#8A94A6">(เว้นว่างได้)</span></label>'+
+        '<input id="drUpDate" type="date" value="">'+
+        '<div class="m-hint">เว้นว่าง = ระบบอ่านจากในเอกสารให้เอง · อ่านไม่ออกจึงเข้าเดือนที่เลือกอยู่ ('+esc(drMonthLabel(DR_MONTH))+')<br>'+
+        '⚠️ เดือนของเอกสารยึด<b>วันที่บนใบ</b>เสมอ — ใส่วันที่เดือนอื่น ไฟล์จะไปอยู่เดือนนั้น</div></div>'+
       '<div class="fld"><label>คู่ค้า (ถ้ามี)</label><input id="drUpParty" placeholder="ชื่อร้าน/บริษัทบนเอกสาร"></div>'+
       '<div class="fld"><label>เลขที่บนเอกสาร (ถ้ามี)</label><input id="drUpNo" placeholder="เช่น INV-2569-001"></div>'+
-      '<div class="fld"><label>ยอดเงิน (ถ้ามี)</label><input id="drUpAmt" type="number" inputmode="decimal">'+
-        '<div class="m-hint">ยอดนี้ใช้ค้นหา/ตรวจสอบเท่านั้น ไม่เข้ารายงานการเงิน</div></div>'+
+      '<div class="fld"><label>ยอดรวมทั้งสิ้น (ถ้ามี)</label><input id="drUpAmt" type="number" inputmode="decimal">'+
+        '<div class="m-hint">เว้นว่างได้ · ระบบอ่านยอด/ภาษีจากในเอกสารให้ · ยอดนี้ใช้ตรวจสอบเท่านั้น ไม่เข้ารายงานการเงิน</div></div>'+
       '<div class="tax-acts"><button class="btn btn-ghost" onclick="drForm(\'up\')">ปิด</button>'+
       '<button class="btn btn-primary" id="drUpBtn" onclick="drUpload()">อัปโหลด</button></div></div>';
   }
@@ -4699,6 +4703,9 @@
       '<div class="fld"><label>คู่ค้า</label><input id="drEParty" value="'+esc(drVal(x,'party'))+'"></div>'+
       '<div class="fld"><label>เลขที่บนเอกสาร</label><input id="drENo" value="'+esc(drVal(x,'docNo'))+'"></div>'+
       '<div class="fld"><label>ยอดเงิน</label><input id="drEAmt" type="number" inputmode="decimal" value="'+(drVal(x,'amount')||'')+'"></div>'+
+      '<div class="fld"><label>มูลค่าก่อนภาษี</label><input id="drEBase" type="number" inputmode="decimal" value="'+(x.base||'')+'"></div>'+
+      '<div class="fld"><label>ภาษีมูลค่าเพิ่ม</label><input id="drEVat" type="number" inputmode="decimal" value="'+(x.vat||'')+'"></div>'+
+      '<div class="fld"><label>เลขผู้เสียภาษีคู่ค้า</label><input id="drETax" inputmode="numeric" value="'+esc(x.taxId||'')+'"></div>'+
       '<div class="fld"><label>หมายเหตุ</label><input id="drENote" value="'+esc(x.note||'')+'"></div>'+
       '<div class="tax-acts"><button class="btn btn-ghost" onclick="drEditForm(\'\')">ปิด</button>'+
       '<button class="btn btn-primary" onclick="drEditSave()">บันทึก</button></div></div>';
@@ -4725,6 +4732,8 @@
       .then(function(r){
         if(!r||!r.ok){ toast((r&&r.error)||'อัปโหลดไม่สำเร็จ'); return; }
         if(r.warn) toast(r.warn);
+        else if(r.unread) toast('อัปแล้ว '+r.count+' ไฟล์ · เกิน '+r.unread+' ไฟล์ ระบบไม่อ่านให้อัตโนมัติ กด 🔍 ทีละใบได้ค่ะ');
+        else if(r.scanned) toast('อัปแล้ว '+r.count+' ไฟล์ · อ่านข้อมูลจากเอกสารให้ '+r.scanned+' ใบ');
         IMGS['drFiles']=[]; DR_FORM='';
         if(r.month && r.month!==DR_MONTH) DR_MONTH=r.month;   // ไฟล์ลงเดือนตามวันที่บนใบ → พาไปดูเดือนนั้น
         renderDocReg();
@@ -4760,7 +4769,9 @@
     var p={ action:'waDocEdit', uid:UID, no:DR_EDIT,
       name:($('drEName')||{}).value||'', docDate:($('drEDate')||{}).value||'',
       party:($('drEParty')||{}).value||'', docNo:($('drENo')||{}).value||'',
-      amount:($('drEAmt')||{}).value||'', note:($('drENote')||{}).value||'' };
+      amount:($('drEAmt')||{}).value||'', note:($('drENote')||{}).value||'',
+      base:($('drEBase')||{}).value||'', vat:($('drEVat')||{}).value||'',
+      taxId:($('drETax')||{}).value||'' };
     callBusy('กำลังบันทึก…', jsonpPost(withRoom_(p)), 'บันทึกแล้ว').then(function(r){
       if(!r||!r.ok){ toast((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
       DR_EDIT=''; renderDocReg();
@@ -9805,7 +9816,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260906-1114';
+  var APP_BUILD='20260906-1121';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
