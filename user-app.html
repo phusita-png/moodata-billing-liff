@@ -1669,12 +1669,33 @@
         '<div class="rs-note">🔒 ระบบจะลองสร้างไฟล์ทดสอบในโฟลเดอร์แล้วลบทิ้งทันที '+
         'ผ่านแล้วถึงจะบันทึก — กันบันทึกผ่านแต่ไปพังตอนออกเอกสารจริง</div>'+
       '</div></div>'+
-      roomModHtml();
+      roomModHtml() + roomAiHtml();
   }
 
   /* ── โมดูลที่เปิดให้ห้องนี้ (พี่กี้ขอ 6 ก.ย.: ติ๊กเลือก ไม่ต้องพิมพ์ csv ในชีต) ──
      ⚠️ backend ส่ง modList มาเฉพาะผู้ดูแลระบบ + ไม่ใช่ห้อง Moodata เอง
         ไม่มี modList = ไม่ต้องวาดการ์ดนี้เลย (ลูกค้าเปิดโมดูลให้ตัวเองไม่ได้) */
+  /* 🤖 ยินยอมให้ AI อ่านเอกสาร (6 ก.ย. 69 · พี่กี้: "เปิดเฉพาะห้องที่ยินยอม")
+     เห็นเฉพาะผู้ดูแลระบบ — เป็นข้อตกลงเรื่องข้อมูลของลูกค้า ไม่ใช่การตั้งค่าทั่วไป */
+  function roomAiHtml(){
+    var r=RS_DATA||{};
+    if(!r.isSuper || r.aiHome) return '';       // ห้อง Moodata ใช้ได้อยู่แล้ว ไม่ต้องถาม
+    var on=!!r.aiOn;
+    return '<div class="card"><div class="pb" style="padding:16px 18px">'+
+      '<div class="rs-h">🤖 ให้ AI ช่วยอ่านเอกสาร</div>'+
+      '<div class="rs-sub">เปิดแล้วระบบจะส่ง<b>ไฟล์เอกสารของห้องนี้</b>ไปให้ AI อ่าน '+
+      'เพื่อดึงวันที่ · คู่ค้า · มูลค่า · ภาษี · ยอดรวม แม่นกว่าการอ่านด้วยกฎมาก</div>'+
+      (on ? '<div class="rs-st rs-ok"><b>✅ เปิดอยู่</b><span>เอกสารที่อัปเข้ามาจะถูกอ่านด้วย AI</span></div>'
+          : '<div class="rs-st rs-no"><b>ปิดอยู่</b><span>ใช้การอ่านด้วยกฎในระบบ (ฟรี แต่แม่นน้อยกว่า)</span></div>')+
+      (r.aiHasKey ? '' : '<div class="rs-note">⚠️ ยังไม่ได้ตั้ง API key ในระบบ — เปิดแล้วจะยังใช้การอ่านแบบเดิมไปก่อน</div>')+
+      '<div class="rs-note">🔒 ต้องได้รับความยินยอมจากลูกค้าก่อนเปิด — เอกสารจะถูกส่งออกไปให้ผู้ให้บริการภายนอกอ่าน · '+
+      'ปิดเมื่อไหร่ก็ได้ ระบบกลับไปอ่านด้วยกฎทันที</div>'+
+      '<button class="btn '+(on?'btn-ghost':'btn-primary')+'" type="button" id="rsAiBtn" style="width:100%;margin-top:12px">'+
+      (on?'ปิดการอ่านด้วย AI':'เปิดให้ AI อ่านเอกสารของห้องนี้')+'</button>'+
+      '</div></div>';
+  }
+
+
   function roomModHtml(){
     var r=RS_DATA||{};
     var list=r.modList||[];
@@ -1698,6 +1719,18 @@
   }
 
   function bindRoomSet(){
+    var ab=$('rsAiBtn');
+    if(ab) ab.addEventListener('click', function(){
+      var on=!(RS_DATA&&RS_DATA.aiOn);
+      if(on && !window.confirm('เปิดให้ AI อ่านเอกสารของห้องนี้?' + String.fromCharCode(10) +
+        'ไฟล์เอกสารจะถูกส่งไปให้ผู้ให้บริการ AI อ่าน — ต้องได้รับความยินยอมจากลูกค้าแล้ว')) return;
+      callBusy('กำลังบันทึก…', jsonp(withRoom_({ action:'waRoomAi', uid:UID, on:(on?'1':'0') })), 'บันทึกแล้ว')
+        .then(function(r){
+          if(!r||!r.ok){ toast((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+          toast(r.on?'เปิดให้ AI อ่านเอกสารแล้ว':'ปิดการอ่านด้วย AI แล้ว');
+          renderRoomSet();
+        }).catch(function(e){ toast(e.message); });
+    });
     var mb=$('rsModSave');
     if(mb) mb.addEventListener('click', function(){
       var picked=[];
@@ -10099,7 +10132,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260906-1616';
+  var APP_BUILD='20260906-1700';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
