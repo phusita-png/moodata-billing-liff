@@ -717,7 +717,9 @@ textarea:focus,input[type=time]:focus{border-color:var(--red)}
     font-size:13.5px; color:var(--slate); transition:background .12s}
   .nav-btn svg{width:20px;height:20px}
   .nav-btn .nav-emo{width:20px;font-size:16px;text-align:center;flex:0 0 auto;line-height:20px}
-  .nav-btn span{font-size:13.5px}
+  /* ชื่อเมนูยาว ๆ ต้องอยู่บรรทัดเดียว ชิดซ้าย (พี่กี้ 6 ก.ย.) — เดิมตัดขึ้นบรรทัดใหม่แล้วดูเหมือนจัดกลาง */
+  .nav-btn span{font-size:13.5px; flex:1; min-width:0; text-align:left;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
   .nav-btn:hover{background:var(--bg)}
   .nav-btn.active{background:var(--red-tint);color:var(--red-deep)}
   .nav-btn.active svg{transform:none}

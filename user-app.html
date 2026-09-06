@@ -426,12 +426,16 @@
   .btn.btn-off{ color:#1069A8; border:1px solid #9CCDF0; background:#E8F3FD; }
   .btn.btn-on{ color:#8A94A6; border:1px solid #DDE1E7; background:#F1F2F5; }
   /* 🍩 โดนัทเอกสาร + แถบช่วงเวลา — แบบเดียวกับแดชบอร์ดเอกสารของดิเอลฟ์ (พี่กี้ขอ 6 ก.ย.) */
-  .dd-wrap{ display:flex; align-items:center; gap:16px; margin-top:10px; flex-wrap:wrap; }
-  .dd-donut{ width:150px; height:150px; flex:none; }
+  /* จัดให้สมดุล: วงอยู่กึ่งกลางการ์ด · รายการอยู่ใต้วงเต็มความกว้าง (พี่กี้ 6 ก.ย.)
+     เดิมวางข้างกันแล้วชื่อหมวดไทยยาวจนดันตกบรรทัด ภาพเลยเอียงไปข้างเดียว */
+  .dd-wrap{ display:flex; flex-direction:column; align-items:center; gap:14px; margin-top:12px; }
+  .dd-donut{ width:168px; height:168px; flex:none; }
   .dd-n{ font-size:27px; font-weight:800; fill:#1F2937; }
   .dd-l{ font-size:12px; fill:#8A94A6; }
-  .dd-lg{ flex:1; min-width:220px; }
-  .dd-row{ display:flex; align-items:center; gap:8px; font-size:13px; padding:3px 0; }
+  .dd-lg{ width:100%; }
+  .dd-row{ display:flex; align-items:center; gap:9px; font-size:13px; padding:6px 2px;
+    border-top:1px solid var(--line); }
+  .dd-row:first-child{ border-top:none; }
   .dd-dot{ width:10px; height:10px; border-radius:50%; flex:none; }
   .dd-name{ flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .dd-num{ color:#8A94A6; white-space:nowrap; flex:none; }
@@ -1209,7 +1213,7 @@
     hubreq:['🏛️','คำขอสมัคร'], hubrooms:['🏢','ห้องลูกค้า'], roomset:['⚙️','ตั้งค่าห้อง'], home:['🏠','ภาพรวมประจำวัน'], clock:['🕐','ลงเวลา'],
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
     expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติเบิกจ่าย'],
-    expdash:['📊','รายจ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ทะเบียนการจ่าย'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','ภาษีซื้อ/ภ.พ.30'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ทะเบียนใบสำคัญจ่าย'], sales:['💰','รายรับ'], ar:['📊','ลูกหนี้ค้างรับ'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51'], docdash:['📊','ภาพรวม'], docreg:['🗂️','จัดการเอกสาร'], docbycat:['📑','รายงานตามประเภท'], docreport:['📦','รายงานประจำเดือน (ปิดรอบ)'], doccat:['🏷️','จัดการหมวด'], hubmods:['🧩','โมดูลของแต่ละห้อง'], teamperm:['🔐','สิทธิ์ทีม'], kpiemp:['👥','ทะเบียนพนักงาน'], kpiperson:['📈','ประวัติรายคน'], kpidash:['📊','ภาพรวมเดือน'], kpientry:['✍️','กรอกผลงาน'], kpiscore:['⭐','คะแนนคุณลักษณะ'], kpidoc:['📄','ใบประเมิน']
+    expdash:['📊','รายจ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ทะเบียนการจ่าย'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','ภาษีซื้อ/ภ.พ.30'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ทะเบียนใบสำคัญจ่าย'], sales:['💰','รายรับ'], ar:['📊','ลูกหนี้ค้างรับ'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51'], docdash:['📊','ภาพรวม'], docreg:['🗂️','จัดการเอกสาร'], docbycat:['📑','รายงานตามประเภท'], docreport:['📦','รายงานประจำเดือน'], doccat:['🏷️','จัดการหมวด'], hubmods:['🧩','โมดูลของแต่ละห้อง'], teamperm:['🔐','สิทธิ์ทีม'], kpiemp:['👥','ทะเบียนพนักงาน'], kpiperson:['📈','ประวัติรายคน'], kpidash:['📊','ภาพรวมเดือน'], kpientry:['✍️','กรอกผลงาน'], kpiscore:['⭐','คะแนนคุณลักษณะ'], kpidoc:['📄','ใบประเมิน']
   };
   var PROJECTS=[], COMPANIES=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ) · COMPANIES=บริษัท auto (หน้าจัดการ)
   var ALL_TASKS=[], PJ_SEL='', MB_STATUSES=[];   // มุมมอง Project (dropdown เลือก · แยก 6 สถานะ + %) · MB_STATUSES=รายการสถานะ (ฟอร์มแก้งานมือถือ)
@@ -10656,7 +10660,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260906-2238';
+  var APP_BUILD='20260906-2259';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
