@@ -4770,7 +4770,9 @@
       (function(){
         // ใบที่ยังไม่มี วันที่/ยอด/คู่ค้า = ยังไม่ได้อ่าน (เงื่อนไขเดียวกับ docScanPending_ ฝั่ง backend)
         var un=(docs||[]).filter(function(x){ return !x.isSystem && (!x.docDate || !x.amount || !x.party); }).length;
-        return un ? ('<button class="btn btn-primary" onclick="drScanAll()">🔍 อ่านเอกสารที่ยังไม่ได้อ่าน ('+un+')</button>') : '';
+        var any=(docs||[]).filter(function(x){ return !x.isSystem; }).length;
+        return (un ? ('<button class="btn btn-primary" onclick="drScanAll()">🔍 อ่านเอกสารที่ยังไม่ได้อ่าน ('+un+')</button>') : '')+
+          (any ? '<button class="btn btn-ghost" onclick="drScanAll(1)">🔁 อ่านใหม่ทั้งเดือน</button>' : '');
       })()+
       '<button class="btn btn-ghost" onclick="drSync()">🔄 ดึงเอกสารที่ระบบออกเอง</button>'+
       (own?'<button class="btn btn-ghost" onclick="drForm(\'cat\')">🗂️ จัดการหมวด</button>':'')+
@@ -4814,20 +4816,25 @@
     if(!list.length){ h+='<div class="emptybox">ยังไม่มีเอกสารในเดือนนี้<br><span class="m-hint">กด ⬆️ อัปโหลดเอกสาร หรือ 🔄 ดึงเอกสารที่ระบบออกเอง</span></div>'; }
     else {
       h+='<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl">'+
-        '<colgroup><col style="width:34px"><col style="width:13%"><col style="width:40%"><col style="width:20%"><col style="width:15%"><col style="width:34px"></colgroup>'+
+        '<colgroup><col style="width:34px"><col style="width:11%"><col style="width:34%"><col style="width:16%">'+
+        '<col style="width:14%"><col style="width:10%"><col style="width:46px"><col style="width:34px"></colgroup>'+
         '<thead><tr><th><input type="checkbox" onchange="drSelAll(this.checked)" title="เลือกทั้งหมด"></th>'+
-        '<th>วันที่</th><th>เอกสาร</th><th>หมวด</th><th class="dt-amt">ยอดเงิน</th><th></th></tr></thead><tbody>'+
+        '<th>วันที่เอกสาร</th><th>คู่ค้า / รายละเอียด</th><th>หมวด</th><th class="dt-amt">ยอดเงิน</th>'+
+        '<th>วันที่อัป</th><th>ไฟล์</th><th></th></tr></thead><tbody>'+
         list.map(function(x){
-          var q="'"+String(x.no).replace(/'/g,"\\'")+"'";
+          var q="'"+String(x.no).replace(/'/g,"\'")+"'";
+          /* ชื่อหลักของแถว = คู่ค้าบนเอกสาร (พี่กี้ 6 ก.ย.: ไม่ต้องมี "เอกสาร 1 2 3")
+             ยังไม่ได้อ่าน/ไม่มีคู่ค้า → ใช้ชื่อไฟล์แทน */
+          var head = x.party || x.name || '(ยังไม่ได้อ่านข้อมูล)';
           var sub=[];
-          if(x.party) sub.push(esc(x.party));
           if(x.docNo) sub.push('เลขที่ '+esc(x.docNo));
+          if(x.party && x.name && x.name!==x.party) sub.push(esc(x.name));
           if(x.isSystem) sub.push('จากระบบ');
           if(x.linkNo) sub.push('→ '+esc(x.linkLabel)+' '+esc(x.linkNo));
           return '<tr'+(x.cat==='PENDING'?' class="dr-pending"':'')+'>'+
             '<td><input type="checkbox" '+(DR_SEL[x.no]?'checked':'')+' onchange="drSel('+q+',this.checked)"></td>'+
-            '<td class="dt-nw">'+esc(x.docDate||'—')+'</td>'+
-            '<td>'+(x.url?'<a class="ex-lk" href="'+esc(x.url)+'" target="_blank">'+esc(x.name)+'</a>':esc(x.name))+
+            '<td class="dt-nw">'+(x.docDate?esc(x.docDate):'<span style="color:#B4242A">—</span>')+'</td>'+
+            '<td>'+esc(head)+
               (sub.length?'<br><span style="font-size:12px;color:#8A94A6">'+sub.join(' · ')+'</span>':'')+'</td>'+
             '<td>'+(x.cat==='PENDING'
               ? '<span class="dr-tag dr-tag-wait">รอแยกหมวด</span>'
@@ -4835,6 +4842,8 @@
             '<td class="dt-amt">'+(x.amount?money(x.amount):'—')+
               (x.vat?('<br><span style="font-size:11px;color:#8A94A6;font-weight:400">ฐาน '+money(x.base||(x.amount-x.vat))+
                 ' · VAT '+money(x.vat)+'</span>'):'')+'</td>'+
+            '<td class="dt-nw" style="font-size:12px;color:#8A94A6">'+esc(x.addedAt||'')+'</td>'+
+            '<td style="text-align:center">'+(x.url?'<a class="ex-lk" href="'+esc(x.url)+'" target="_blank" title="เปิดไฟล์">เปิด</a>':'')+'</td>'+
             dtActCell('dr_'+x.no, docRowActions(x, own))+
             '</tr>';
         }).join('')+'</tbody></table></div>';
@@ -5168,10 +5177,12 @@
   }
 
   /** ไล่อ่านทีละชุดจนหมด — Apps Script ตายที่ 6 นาที จึงยิงเป็นรอบ ๆ แทนรวดเดียว */
-  function drScanAll(){
+  function drScanAll(force){
+    if(force && !window.confirm('อ่านใหม่ทั้งเดือน แล้วทับข้อมูลเดิมที่ระบบเคยเดาไว้?' + String.fromCharCode(10) +
+      '(ใช้ตอนใบถูกอ่านผิด เช่น วันที่กลายเป็นวันที่อัปโหลด)')) return;
     var total=0;
     function round(){
-      return jsonp(withRoom_({ action:'waDocScanAll', uid:UID, month:DR_MONTH, entity:DR_ENT }))
+      return jsonp(withRoom_({ action:'waDocScanAll', uid:UID, month:DR_MONTH, entity:DR_ENT, force:(force?'1':'') }))
         .then(function(r){
           if(!r||!r.ok) throw new Error((r&&r.error)||'อ่านไม่สำเร็จ');
           total+=r.filled||0;
@@ -10075,7 +10086,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260906-1448';
+  var APP_BUILD='20260906-1520';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
