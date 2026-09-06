@@ -389,6 +389,7 @@
   .dt-tbl td.dt-act{ text-align:center; width:44px; }
   .dt-tbl tbody tr:hover{ background:#FAFBFD; }
   /* ── 📄 ระบบเอกสาร (D1) — แถบหมวด + ป้ายหมวด + แถบเลือกหลายใบ ── */
+  .hm-th{ font-size:12px; text-align:center; white-space:normal; line-height:1.25; }
   /* ตั้งค่าห้อง → ติ๊กโมดูล */
   .rs-mods{ display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:8px; margin-top:12px; }
   .rs-mod{ display:flex; align-items:center; gap:8px; border:1px solid var(--line); border-radius:10px;
@@ -1158,7 +1159,7 @@
     hubreq:['🏛️','คำขอสมัคร'], hubrooms:['🏢','ห้องลูกค้า'], roomset:['⚙️','ตั้งค่าห้อง'], home:['🏠','ภาพรวมประจำวัน'], clock:['🕐','ลงเวลา'],
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
     expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติเบิกจ่าย'],
-    expdash:['📊','รายจ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ทะเบียนการจ่าย'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','ภาษีซื้อ/ภ.พ.30'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ทะเบียนใบสำคัญจ่าย'], sales:['💰','รายรับ'], ar:['📊','ลูกหนี้ค้างรับ'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51'], docreg:['📄','ทะเบียนเอกสาร'], kpiemp:['👥','ทะเบียนพนักงาน'], kpiperson:['📈','ประวัติรายคน'], kpidash:['📊','ภาพรวมเดือน'], kpientry:['✍️','กรอกผลงาน'], kpiscore:['⭐','คะแนนคุณลักษณะ'], kpidoc:['📄','ใบประเมิน']
+    expdash:['📊','รายจ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ทะเบียนการจ่าย'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','ภาษีซื้อ/ภ.พ.30'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ทะเบียนใบสำคัญจ่าย'], sales:['💰','รายรับ'], ar:['📊','ลูกหนี้ค้างรับ'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51'], docreg:['📄','ทะเบียนเอกสาร'], hubmods:['🧩','โมดูลของแต่ละห้อง'], teamperm:['🔐','สิทธิ์ทีม'], kpiemp:['👥','ทะเบียนพนักงาน'], kpiperson:['📈','ประวัติรายคน'], kpidash:['📊','ภาพรวมเดือน'], kpientry:['✍️','กรอกผลงาน'], kpiscore:['⭐','คะแนนคุณลักษณะ'], kpidoc:['📄','ใบประเมิน']
   };
   var PROJECTS=[], COMPANIES=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ) · COMPANIES=บริษัท auto (หน้าจัดการ)
   var ALL_TASKS=[], PJ_SEL='', MB_STATUSES=[];   // มุมมอง Project (dropdown เลือก · แยก 6 สถานะ + %) · MB_STATUSES=รายการสถานะ (ฟอร์มแก้งานมือถือ)
@@ -1310,7 +1311,9 @@
     roomset:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 14a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V20a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H4a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H10a1.6 1.6 0 0 0 1-1.5V4a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V10a1.6 1.6 0 0 0 1.5 1H20a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>',
     home:'<svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10V20h13V10"/><path d="M10 20v-5h4v5"/></svg>',
     payroll:'<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9.5h18"/><path d="M7 14h4M15.5 14h1.5"/></svg>',
-    docreg:'<svg viewBox="0 0 24 24"><path d="M3.5 7.5a2 2 0 0 1 2-2h3.2l1.8 2.2h8a2 2 0 0 1 2 2v8.8a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/><path d="M8 13h8M8 16h5"/></svg>'
+    docreg:'<svg viewBox="0 0 24 24"><path d="M3.5 7.5a2 2 0 0 1 2-2h3.2l1.8 2.2h8a2 2 0 0 1 2 2v8.8a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/><path d="M8 13h8M8 16h5"/></svg>',
+    hubmods:'<svg viewBox="0 0 24 24"><rect x="3" y="3.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3.5" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><path d="M15 17.2h5M17.5 14.7v5"/></svg>',
+    teamperm:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19.5c0-3.2 2.6-5 5.5-5 1 0 2 .2 2.8.6"/><rect x="14" y="14" width="7" height="6" rx="1.2"/><path d="M15.8 14v-1.8a1.7 1.7 0 0 1 3.4 0V14"/></svg>'
   };
   var MOD_ICON={
     kpi:'<svg viewBox="0 0 24 24"><path d="M4 19.5V13M9.3 19.5V8.5M14.7 19.5v-7M20 19.5V5"/><path d="M3 21h18"/></svg>',
@@ -1352,7 +1355,7 @@
     { key:'work',    th:'ระบบงาน',      en:'WORK',        color:'#3f4658', g:['#64748b','#1e293b'], own:false,
       views:['home','projects','mytasks','review','senddoc','appt','announce','trash'], extra:['alltasks'] },
     { key:'hr',      th:'ระบบบุคคล',    en:'HR',          color:'#168a52', g:['#34d399','#047857'], own:true,
-      views:['approve','otapprove','hrreport'] },
+      views:['approve','otapprove','hrreport','teamperm'] },
     /* 💵 เงินเดือน — แยกจากบุคคล (พี่กี้เคาะ 5 ก.ย. เย็น)
        ลูกค้าแพ็กการเงินก็ต้องทำเงินเดือน (ภ.ง.ด.1 ต้องมี 40(1)) แต่ไม่ต้องพา
        พนักงานทั้งบริษัทมาลงเวลา/ลา — คนละภาระกันคนละเรื่อง */
@@ -1377,7 +1380,7 @@
       soon:'รับคอมเมนต์ · แจ้งบั๊ก · คำขอปรับปรุงจากผู้ใช้และลูกค้า → เก็บเป็นรายการไว้พัฒนาต่อ' },
     /* 🏛️ ผู้ดูแลระบบ — เห็นเฉพาะพี่กี้ (super) · จัดการลูกค้าที่สมัครเข้ามา */
     { key:'admin',   th:'ผู้ดูแลระบบ',   en:'ADMIN',       color:'#0f172a', g:['#475569','#0f172a'],
-      own:true, sup:true, views:['hubreq','hubrooms'] },
+      own:true, sup:true, views:['hubreq','hubrooms','hubmods'] },
     /* ⚙️ ตั้งค่าห้อง — ผู้ดูแลระบบ + ผู้ดูแลของห้องนั้น (ลูกค้าผูก Drive ตัวเองที่นี่ · T5) */
     { key:'roomcfg', th:'ตั้งค่าห้อง',     en:'ROOM SETUP',   color:'#475569', g:['#94a3b8','#334155'],
       adm:true, views:['roomset'] },
@@ -1500,6 +1503,139 @@
   // ═══════════ ⚙️ ตั้งค่าห้อง — โฟลเดอร์เอกสาร (T5) ═══════════
   /* ลูกค้าเก็บเอกสารไว้ใน Drive ตัวเอง เราแค่มีสิทธิ์เขียน
      → ต้อง "ทดสอบเขียนไฟล์จริง" ตอนกดบันทึก ไม่ใช่รอไปพังตอนออกเอกสารใบแรก */
+  /* ═══════════ 🧩 จัดการโมดูล 2 ชั้น (6 ก.ย. 2569) ═══════════
+     ชั้น 1 hubmods  — ตาราง "ห้อง × โมดูล" (ผู้ดูแลระบบ · เห็นทุกห้องในหน้าเดียว)
+     ชั้น 2 teamperm — สิทธิ์รายคนในห้อง (เจ้าของห้อง · ติ๊กได้เฉพาะโมดูลที่ห้องซื้อไว้) */
+  var HM_DATA=null, TP_DATA=null;
+
+  function renderHubMods(){
+    skel();
+    jsonp(withRoom_({ action:'waHubMods', uid:UID })).then(function(r){
+      if(VIEW!=='hubmods') return;
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      HM_DATA=r; hmPaint();
+    }).catch(function(e){ if(VIEW==='hubmods') $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
+  }
+
+  function hmPaint(){
+    var r=HM_DATA; if(!r) return;
+    var mods=(r.modList||[]).filter(function(m){ return !m.free; });   // ฟรี = ทุกห้องได้อยู่แล้ว ไม่ต้องมีคอลัมน์
+    var rooms=r.rooms||[];
+    var h='<div class="section-h">🧩 โมดูลของแต่ละห้อง</div>'+
+      '<div class="card"><div class="m-hint">ติ๊ก = ห้องนั้นเปิดใช้โมดูลนั้น · '+
+      '<b>ไม่ติ๊กเลยทั้งแถว = เปิดครบทุกโมดูล</b> (ห้องที่ยังไม่ได้จำกัดแพ็ก)<br>'+
+      'โมดูลฟรีทุกห้อง ('+esc((r.modList||[]).filter(function(m){return m.free;}).map(function(m){return m.label;}).join(' · '))+
+      ') ไม่ต้องติ๊ก</div>';
+    if(!rooms.length){ h+='<div class="emptybox">ยังไม่มีห้องลูกค้าค่ะ</div></div>'; $('main').innerHTML=h; return; }
+
+    h+='<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl"><thead><tr>'+
+      '<th style="min-width:150px">ห้อง</th>'+
+      mods.map(function(m){ return '<th class="hm-th">'+esc(m.label)+'</th>'; }).join('')+
+      '</tr></thead><tbody>'+
+      rooms.map(function(t){
+        return '<tr><td><b>'+esc(t.name||t.code)+'</b><br><span style="font-size:12px;color:#8A94A6">'+esc(t.code)+
+          (t.all?' · เปิดครบ':'')+'</span></td>'+
+          mods.map(function(m){
+            var on=t.all || t.mods.indexOf(m.key)>=0;
+            return '<td style="text-align:center"><input type="checkbox" data-room="'+esc(t.code)+
+              '" data-mod="'+esc(m.key)+'"'+(on?' checked':'')+'></td>';
+          }).join('')+'</tr>';
+      }).join('')+
+      '</tbody></table></div>'+
+      '<div class="tax-acts"><button class="btn btn-primary" onclick="hmSave()">บันทึกทุกห้อง</button></div>'+
+      '<div class="rs-note">ห้องที่ติ๊กครบทุกช่องจะถูกบันทึกเป็น "เปิดครบ" — วันหลังเพิ่มโมดูลใหม่ในระบบ ห้องนั้นได้ด้วยอัตโนมัติ</div>'+
+      '</div>';
+    $('main').innerHTML=h;
+  }
+
+  function hmSave(){
+    var r=HM_DATA; if(!r) return;
+    var mods=(r.modList||[]).filter(function(m){ return !m.free; });
+    var byRoom={};
+    (r.rooms||[]).forEach(function(t){ byRoom[t.code]=[]; });
+    Array.prototype.forEach.call(document.querySelectorAll('.dt-tbl input[type=checkbox][data-room]'), function(c){
+      if(c.checked) byRoom[c.getAttribute('data-room')].push(c.getAttribute('data-mod'));
+    });
+    var jobs=Object.keys(byRoom).map(function(code){
+      // ติ๊กครบทุกช่อง = เปิดครบ (ส่ง [] ให้ backend เก็บเป็นค่าว่าง ตรงกับกติกาเดิม)
+      var picked=byRoom[code];
+      if(picked.length===mods.length) picked=[];
+      return { code:code, mods:picked };
+    });
+    var i=0;
+    function next(){
+      if(i>=jobs.length) return Promise.resolve();
+      var j=jobs[i++];
+      return jsonpPost(withRoom_({ action:'waHubSetModules', uid:UID, room:j.code, mods:JSON.stringify(j.mods) }))
+        .then(next);
+    }
+    callBusy('กำลังบันทึก '+jobs.length+' ห้อง…', next(), 'บันทึกแล้ว')
+      .then(function(){ renderHubMods(); })
+      .catch(function(e){ toast(e.message); renderHubMods(); });
+  }
+
+  /* ── ชั้น 2: สิทธิ์รายคนในห้อง (เจ้าของห้องเป็นคนกำหนด) ── */
+  function renderTeamPerm(){
+    skel();
+    jsonp(withRoom_({ action:'waTeamPerm', uid:UID })).then(function(r){
+      if(VIEW!=='teamperm') return;
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      TP_DATA=r; tpPaint();
+    }).catch(function(e){ if(VIEW==='teamperm') $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
+  }
+
+  function tpPaint(){
+    var r=TP_DATA; if(!r) return;
+    var mods=r.modList||[], team=(r.team||[]).filter(function(m){ return m.status!=='ลาออก'; });
+    var h='<div class="section-h">🔐 สิทธิ์การเข้าถึงของทีม</div>';
+    if(!mods.length){
+      h+='<div class="card"><div class="emptybox">ห้องนี้ยังไม่ได้เปิดโมดูลที่ต้องกำหนดสิทธิ์ค่ะ</div></div>';
+      $('main').innerHTML=h; return;
+    }
+    h+='<div class="card"><div class="m-hint">ติ๊กว่าแต่ละคนเห็นโมดูลไหนได้บ้าง · '+
+      '<b>ไม่ติ๊กเลย = เห็นทุกโมดูลที่บริษัทเปิดไว้</b><br>'+
+      'เลือกได้เฉพาะโมดูลที่บริษัทเปิดใช้อยู่ — เมนูส่วนตัวกับช่องแจ้งปัญหาทุกคนเห็นเสมอ</div>';
+    if(!team.length){ h+='<div class="emptybox">ยังไม่มีคนในทีมค่ะ</div></div>'; $('main').innerHTML=h; return; }
+
+    h+='<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl"><thead><tr>'+
+      '<th style="min-width:150px">ชื่อ</th>'+
+      mods.map(function(m){ return '<th class="hm-th">'+esc(m.label)+'</th>'; }).join('')+
+      '<th style="width:90px"></th></tr></thead><tbody>'+
+      team.map(function(p){
+        var q="'"+String(p.uid).replace(/'/g,"\\'")+"'";
+        return '<tr><td><b>'+esc(p.nick||p.name)+'</b>'+
+          (p.all?'<br><span style="font-size:12px;color:#8A94A6">เห็นทุกโมดูลของบริษัท</span>':'')+'</td>'+
+          mods.map(function(m){
+            var on=p.all || p.mods.indexOf(m.key)>=0;
+            return '<td style="text-align:center"><input type="checkbox" data-uid="'+esc(p.uid)+
+              '" data-mod="'+esc(m.key)+'"'+(on?' checked':'')+'></td>';
+          }).join('')+
+          '<td style="text-align:center"><button class="btn btn-ghost btn-sm" onclick="tpSave('+q+')">บันทึก</button></td></tr>';
+      }).join('')+
+      '</tbody></table></div></div>';
+    $('main').innerHTML=h;
+  }
+
+  function tpSave(uid){
+    var r=TP_DATA; if(!r) return;
+    var mods=r.modList||[], picked=[];
+    Array.prototype.forEach.call(document.querySelectorAll('.dt-tbl input[data-uid="'+uid+'"]'), function(c){
+      if(c.checked) picked.push(c.getAttribute('data-mod'));
+    });
+    // ติ๊กครบ = ไม่จำกัด (เห็นทุกอย่างที่ห้องเปิด · รวมโมดูลที่ห้องซื้อเพิ่มทีหลังด้วย)
+    if(picked.length===mods.length) picked=[];
+    callBusy('กำลังบันทึกสิทธิ์…',
+      jsonpPost(withRoom_({ action:'waTeamPermSave', uid:UID, member:uid, mods:JSON.stringify(picked) })), 'บันทึกแล้ว')
+      .then(function(res){
+        if(!res||!res.ok){ toast((res&&res.error)||'บันทึกไม่สำเร็จ'); return; }
+        toast(res.all ? 'ให้เห็นทุกโมดูลของบริษัท' : ('เปิด '+res.modules.length+' โมดูลให้คนนี้'));
+        renderTeamPerm();
+      }).catch(function(e){ toast(e.message); });
+  }
+
+  window.renderHubMods=renderHubMods; window.hmSave=hmSave;
+  window.renderTeamPerm=renderTeamPerm; window.tpSave=tpSave;
+
   var RS_DATA=null;   // ผลจาก waRoomFolder — ใช้ต่อในส่วนติ๊กโมดูล
   function renderRoomSet(){
     skel();
@@ -1859,7 +1995,7 @@
     bizdash:'ภาพรวม', sales:'รายรับ', ar:'ลูกหนี้', salesreport:'รายงานรายรับ', poreport:'ทะเบียนใบสำคัญจ่าย', pnd51:'ภ.ง.ด.51', docreg:'ทะเบียนเอกสาร', kpiemp:'ทะเบียนพนักงาน', kpiperson:'ประวัติรายคน', kpidash:'ภาพรวมเดือน', kpientry:'กรอกผลงาน', kpiscore:'คุณลักษณะ', kpidoc:'ใบประเมิน' };
   // แท็บที่เห็นเฉพาะพี่/ผู้ดูแล · reimb = ตั้งเบิกลูกค้า (ชีตไม่มีเจ้าของรายคน + เป็นข้อมูลรายได้)
   // ⚠️ ซ่อนแท็บ ≠ กันข้อมูล — backend กรองสิทธิ์เองอีกชั้นเสมอ
-  var OWNER_VIEWS={ review:1, approve:1, expapprove:1, otapprove:1, reimb:1, taxdoc:1, petty:1, payout:1, vatbuy:1, expreport:1, taxhub:1, whtin:1, hrreport:1, finreport:1, ar:1, pnd51:1, salesreport:1 };
+  var OWNER_VIEWS={ review:1, approve:1, expapprove:1, otapprove:1, reimb:1, taxdoc:1, petty:1, payout:1, vatbuy:1, expreport:1, taxhub:1, whtin:1, hrreport:1, finreport:1, ar:1, pnd51:1, salesreport:1, hubmods:1, teamperm:1 };
   var MGROUP='', MG_LAST={};
   function mVisibleViews(g){ return g.views.filter(function(v){ return IS_OWNER || !OWNER_VIEWS[v]; }); }
   function mGroupOf(v){ for(var i=0;i<NAV_GROUPS.length;i++){ if(NAV_GROUPS[i].views.indexOf(v)>=0) return NAV_GROUPS[i]; } return null; }
@@ -9939,7 +10075,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260906-1342';
+  var APP_BUILD='20260906-1448';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
