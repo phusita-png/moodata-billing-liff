@@ -4478,7 +4478,10 @@
     // ── ตัวกรองเดือน + บริษัท ──
     h+='<div class="ds-sel"><select id="drMonth" onchange="drSetMonth(this.value)">'+
       (r.months||[]).map(function(m){
-        return '<option value="'+esc(m)+'"'+(m===DR_MONTH?' selected':'')+'>'+esc(drMonthLabel(m))+'</option>';
+        // backend ส่ง {ym,n} มา (เดือนย้อนหลัง 12 เดือนเสมอ แม้ยังไม่มีเอกสาร)
+        var ym=(m&&m.ym)||m, n=(m&&m.n)||0;
+        return '<option value="'+esc(ym)+'"'+(ym===DR_MONTH?' selected':'')+'>'+
+          esc(drMonthLabel(ym))+(n?(' · '+n+' ไฟล์'):' · ว่าง')+'</option>';
       }).join('')+'</select>';
     if((r.entities||[]).length>1){
       h+=' <select id="drEnt" onchange="drSetEnt(this.value)"><option value="">ทุกบริษัท</option>'+
@@ -9281,7 +9284,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260906-1041';
+  var APP_BUILD='20260906-1054';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
