@@ -1066,6 +1066,9 @@
   var CURMOD='';   // โมดูลที่กำลังเปิด ('' = อยู่หน้าเลือกโมดูล → แถบซ้ายซ่อน)
   var MODS_OPEN=null;   // โมดูลที่บริษัทเปิดใช้ (M6) · null/[] = เปิดครบ · backend ส่งมากับ waBootstrap
   var IS_SUPER=false;   // ผู้ดูแลระบบ (พี่กี้) — เห็นโมดูล 🏛️ ผู้ดูแลระบบ
+  /* 👩‍💼 นักบัญชี (D1.5) — คนนอกที่ลูกค้า/พี่เชิญมาดูเอกสาร เห็นการ์ดเดียว + สลับห้องที่ตัวเองดูแลได้
+     ⚠️ ซ่อนการ์ด ≠ กันข้อมูล — ด่านจริงคือ acctGateAction_ ฝั่ง backend */
+  var IS_ACCT=false;
   var IS_ROOMADM=false; // ตั้งค่าห้องนี้ได้ (ผู้ดูแลระบบ หรือผู้ดูแลของห้องนี้เอง · T5)
   var ROOM={code:'MOODATA',name:'Moodata',isHome:true};   // ห้องที่กำลังอยู่
   var TYPES=[], QUOTA=null, LEAVES=[], HOLIDAYS=[], SCHEDULE=null, LV_TEAM=[];
@@ -1319,6 +1322,7 @@
   }
   function modVisible(m){
     if(m.act) return true;                       // คู่มือ/ออกจากระบบ = ทุกคน
+    if(IS_ACCT) return m.key==='docsys';         // นักบัญชี = เข้ามาทำเรื่องเอกสารอย่างเดียว
     if(m.sup) return IS_SUPER;                   // โมดูลผู้ดูแลระบบ — พี่กี้เท่านั้น
     if(m.adm) return IS_SUPER || IS_ROOMADM;     // ตั้งค่าห้อง — พี่กี้ หรือผู้ดูแลของห้องนั้น
     if(!modOpen(m.key)) return false;
@@ -1490,7 +1494,7 @@
     var inRoom=!!(ROOM && ROOM.code && ROOM.code!=='MOODATA');
     app.classList.toggle('inroom', inRoom);
     Array.prototype.forEach.call(document.querySelectorAll('.rm-btn'), function(b){
-      b.style.display = IS_SUPER ? 'flex' : 'none';
+      b.style.display = (IS_SUPER||IS_ACCT) ? 'flex' : 'none';
       var lb=b.querySelector('.rm-lb'); if(lb) lb.textContent=(ROOM&&ROOM.name)||'Moodata';
       if(!b.dataset.bound){ b.dataset.bound='1'; b.addEventListener('click', openRoomPicker); }
     });
@@ -1508,7 +1512,7 @@
 
   /* เลือกห้อง */
   function openRoomPicker(){
-    if(!IS_SUPER) return;
+    if(!IS_SUPER && !IS_ACCT) return;
     busy('กำลังโหลดรายชื่อห้อง…');
     jsonp({action:'waHubRooms',uid:UID}).then(function(r){
       unbusy();
@@ -9082,6 +9086,7 @@
       // โมดูลที่เปิดใช้ (M6) — ว่าง/ไม่ส่งมา = เปิดครบ (ระบบเดิมไม่กระทบ)
       MODS_OPEN=(r.modules && r.modules.length) ? r.modules : null;
       IS_SUPER=!!r.isSuper;
+      IS_ACCT=!!r.isAcct;       // 👩‍💼 นักบัญชี (D1.5)
       IS_ROOMADM=!!r.canRoom;   // ⚙️ ตั้งค่าห้อง (T5)
       if(r.room) ROOM=r.room;
       paintRoom();   // 🏢 ทาสี/แถบเตือนตามห้องที่อยู่จริง (backend เป็นคนตอบ)
@@ -9141,7 +9146,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260906-0917';
+  var APP_BUILD='20260906-0925';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
