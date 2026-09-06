@@ -120,8 +120,10 @@
     color:var(--muted); cursor:pointer; }
   .nav-back:hover{ color:var(--red); border-color:var(--red-soft); }
   /* แถวสลับโมดูลเร็วท้ายแถบ — ไม่ต้องกลับหน้าแรกทุกครั้ง */
+  /* แถวไอคอนสลับโมดูล — ชิดซ้ายให้ตรงแนวกับปุ่มเมนูข้างบน (พี่กี้ทัก 6 ก.ย.)
+     เดิม justify-content:center ทำให้แถวสุดท้ายที่เหลือไอคอนเดียวไปลอยอยู่กลาง */
   .nav-mods{ padding:12px 10px 14px; border-top:1px solid var(--line);
-    display:flex; flex-wrap:wrap; gap:8px 6px; justify-content:center; }
+    display:flex; flex-wrap:wrap; gap:8px 6px; justify-content:flex-start; }
   .nav-mods .nm{ width:27px; height:27px; border-radius:8px; border:none; cursor:pointer; display:flex;
     align-items:center; justify-content:center; opacity:.42; transition:opacity .12s; }
   .nav-mods .nm:hover, .nav-mods .nm.on{ opacity:1; }
@@ -9270,7 +9272,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260906-0954';
+  var APP_BUILD='20260906-1014';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
