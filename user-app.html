@@ -10803,6 +10803,19 @@
   /* เช็คซ้ำตอนกลับมาที่แท็บ — แท็บที่เปิดค้างทั้งวันไม่มีจังหวะโหลดใหม่เลย
      พี่กี้เจอจริง 5 ก.ย.: แท็บค้างที่ build เก่าข้ามรอบ deploy ไป 4 รอบ
      ⚠️ ไม่ reload เอง — แสดงแถบให้กด กันข้อมูลที่กรอกค้างอยู่หาย */
+  /* 🔴 URL ที่จะโหลดใหม่ ต้องเก็บ query เดิมไว้ทั้งหมด (7 ก.ย. 69)
+     เดิมสร้างเป็น location.pathname+'?v='+build → **ทิ้ง query เดิมทิ้งหมด**
+     ผลคือลิงก์ที่พา "งานเฉพาะ" มาด้วยพังเงียบ ๆ ทุกครั้งที่เจอ build ใหม่:
+     · ?p=apply (ปุ่มสมัครของคนนอก) → เด้งไปด่านทีม แล้วขึ้น "ยังไม่ได้ลงทะเบียนเข้าทีม"
+     · ?invite=TOKEN (ลิงก์เชิญเจ้าของห้อง) → ผูกห้องไม่สำเร็จ
+     · ?room= / ?uid= ของตัวสลับห้อง
+     ฟังก์ชันนี้แยกเป็นตัวบริสุทธิ์เพื่อให้เทสเรียกตัวเดียวกับของจริง */
+  function verUrl_(search, path, hash, build){
+    var sp;
+    try{ sp=new URLSearchParams(search||''); }catch(e){ sp=new URLSearchParams(); }
+    sp.set('v', build);
+    return (path||'') + '?' + sp.toString() + (hash||'');
+  }
   function watchBuild_(){
     var shown=false, last=0;
     function look(){
@@ -10819,7 +10832,7 @@
           b.innerHTML='<span>✨ มีเวอร์ชันใหม่ของยินดีแล้วค่ะ</span>'+
             '<button type="button">อัปเดตเลย</button>';
           b.querySelector('button').addEventListener('click', function(){
-            location.replace(location.pathname+'?v='+encodeURIComponent(j.build)+location.hash);
+            location.replace(verUrl_(location.search, location.pathname, location.hash, j.build));
           });
           document.body.appendChild(b);
         })
@@ -10830,7 +10843,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260907-1039';
+  var APP_BUILD='20260907-1110';
   (function checkBuild(){
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
@@ -10839,8 +10852,7 @@
         .then(function(j){
           if(!j || !j.build || j.build===APP_BUILD) return;   // ใหม่สุดอยู่แล้ว
           if(cur===j.build) return;                            // ลองแล้วยังไม่ตรง = อย่าวนซ้ำ
-          var u=location.pathname+'?v='+encodeURIComponent(j.build)+location.hash;
-          location.replace(u);
+          location.replace(verUrl_(location.search, location.pathname, location.hash, j.build));
         })
         .catch(function(){});
     }catch(e){}
