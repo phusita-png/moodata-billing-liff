@@ -31,6 +31,27 @@
     background:rgba(255,255,255,.16); color:#fff; font:inherit; font-size:12.5px; font-weight:700;
     cursor:pointer; max-width:190px; }
   .rm-btn:hover{ background:rgba(255,255,255,.30); }
+  /* 🔔 กระดิ่ง + เมนูหล่น */
+  .bell-btn{ position:relative; flex:0 0 auto; align-self:center; margin-right:8px; width:36px; height:36px;
+    border:1px solid rgba(255,255,255,.45); border-radius:999px; background:rgba(255,255,255,.16);
+    color:#fff; font-size:16px; line-height:1; cursor:pointer; }
+  .bell-btn:hover{ background:rgba(255,255,255,.30); }
+  .bell-dot{ position:absolute; top:-5px; right:-5px; min-width:18px; height:18px; padding:0 5px;
+    border-radius:999px; background:#DC2626; color:#fff; font-size:11px; font-weight:700;
+    line-height:18px; text-align:center; box-shadow:0 0 0 2px rgba(27,114,232,.9); }
+  /* ⚠️ ต้อง position:fixed — ถ้าใช้ absolute จะโดนแถบบนที่ overflow ตัดหาย (บทเรียนเมนู ⋮ §7.13) */
+  .bell-pop{ position:fixed; z-index:120; width:min(340px,92vw); max-height:70vh; overflow:auto;
+    background:#fff; color:var(--ink,#12202E); border-radius:14px; box-shadow:0 12px 34px rgba(0,0,0,.22);
+    border:1px solid rgba(0,0,0,.08); padding:6px; }
+  .bell-h{ font-size:12px; font-weight:700; color:#6B7F92; padding:8px 10px 4px; }
+  .bell-g{ display:block; width:100%; text-align:left; border:0; background:none; font:inherit;
+    padding:9px 10px; border-radius:10px; cursor:pointer; }
+  .bell-g:hover{ background:#F1F6FB; }
+  .bell-g-t{ display:flex; align-items:center; gap:8px; font-size:14px; font-weight:600 }
+  .bell-g-n{ margin-left:auto; background:#E8F3FC; color:#0B5C9E; border-radius:999px;
+    padding:1px 9px; font-size:12px; font-weight:700 }
+  .bell-g-r{ font-size:12.5px; color:#6B7F92; margin:3px 0 0 26px; line-height:1.5 }
+  .bell-empty{ padding:22px 12px; text-align:center; color:#6B7F92; font-size:13.5px }
   .rm-btn .rm-lb{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .rm-btn .rm-ca{ opacity:.8; font-size:10px; }
   /* อยู่ห้องลูกค้า = เปลี่ยนสีทั้งแถบ + มีแถบเตือน */
@@ -1096,6 +1117,9 @@
   <div id="topbar" class="topbar">
     <span class="tb-icon" id="tbIcon">📝</span>
     <div class="tb-mid"><div class="tb-title" id="tbTitle">การลา</div><div class="tb-sub">Moodata</div></div>
+    <!-- 🔔 กระดิ่ง "ของที่รอเราอยู่" (7 ก.ย. 69) — พี่กี้ชี้ตำแหน่ง: ข้าง ๆ ปุ่มห้อง
+         กดแล้วรายการหล่นลงมา ไม่ต้องเอาไปกองบนหน้าจอ -->
+    <button class="bell-btn" id="bellBtn" type="button" aria-label="แจ้งเตือน" style="display:none">🔔<span class="bell-dot" id="bellDot" hidden>0</span></button>
     <button class="rm-btn" id="rmBtn" type="button" style="display:none"><span class="rm-ic">🏢</span><span class="rm-lb">Moodata</span><span class="rm-ca">▾</span></button>
     <div class="tb-avatar" id="tbAvatar">🙂</div>
   </div>
@@ -1974,6 +1998,98 @@
     switchView(MG_LAST[key] && vs.indexOf(MG_LAST[key])>=0 ? MG_LAST[key] : vs[0]);
   }
   window.openModule=openModule;
+
+  /* ═══════════ 🔔 กระดิ่ง "ของที่รอเราอยู่" (7 ก.ย. 2569) ═══════════
+     พี่กี้: "เวลามีรายการเข้า ทำแจ้งเตือนดีไหม พอกดปุ่มแล้วก็ให้มีรายการแสดงลงมาโชว์ จะได้ไม่รก"
+     🔴 ตัวเลขมาจาก backend (`waBell`) ซึ่งอ่านชีตเดียวกับหน้าที่ลิงก์ไป — หน้าเว็บ **ห้ามนับเอง**
+        กระดิ่งบอก 3 แล้วกดเข้าไปเจอ 5 = ผู้ใช้เลิกเชื่อกระดิ่งทันที
+     โหลดตอนเปิดเว็บ + ตอนกลับมาที่แท็บ (พี่กี้เคาะ) · ไม่ยิงซ้ำถี่กว่า 60 วิ */
+  var BELL=null, _bellAt=0, _bellPop=null;
+
+  function bellLoad_(force){
+    if(!force && Date.now()-_bellAt < 60000) return Promise.resolve(BELL);
+    _bellAt=Date.now();
+    return jsonp(withRoom_({action:'waBell', uid:UID})).then(function(r){
+      if(r&&r.ok){ BELL=r; bellPaintBadge_(); }
+      return BELL;
+    }).catch(function(){ return BELL; });   // กระดิ่งพังต้องไม่ทำให้หน้าอื่นพัง
+  }
+
+  function bellPaintBadge_(){
+    var b=$('bellBtn'), d=$('bellDot'); if(!b||!d) return;
+    b.style.display='';
+    var n=(BELL&&BELL.total)||0;
+    if(n>0){ d.textContent=(n>99?'99+':String(n)); d.hidden=false; }
+    else d.hidden=true;
+  }
+
+  function bellClose_(){ if(_bellPop){ _bellPop.remove(); _bellPop=null; } }
+
+  function bellOpen_(){
+    if(_bellPop){ bellClose_(); return; }
+    var btn=$('bellBtn'); if(!btn) return;
+    var pop=document.createElement('div');
+    pop.className='bell-pop';
+    pop.innerHTML=bellHtml_(BELL);
+    document.body.appendChild(pop);
+    var r=btn.getBoundingClientRect();
+    pop.style.top=(r.bottom+8)+'px';
+    /* ชิดขวาของปุ่ม แต่ไม่ให้ล้นจอ (มือถือปุ่มอยู่เกือบขอบขวา) */
+    var w=pop.offsetWidth;
+    pop.style.left=Math.max(8, Math.min(r.right-w, window.innerWidth-w-8))+'px';
+    _bellPop=pop;
+    Array.prototype.forEach.call(pop.querySelectorAll('[data-go]'), function(el){
+      el.addEventListener('click', function(){
+        var v=el.getAttribute('data-go');
+        bellClose_();
+        switchView(v);
+      });
+    });
+    // โหลดของสดทุกครั้งที่เปิด แล้ววาดทับ (ตัวเลขต้องตรงกับตอนกดเข้าไปดู)
+    bellLoad_(true).then(function(){ if(_bellPop===pop) pop.innerHTML=bellHtml_(BELL); bellBindGo_(pop); });
+  }
+  function bellBindGo_(pop){
+    Array.prototype.forEach.call(pop.querySelectorAll('[data-go]'), function(el){
+      el.addEventListener('click', function(){ var v=el.getAttribute('data-go'); bellClose_(); switchView(v); });
+    });
+  }
+
+  /** วาดรายการ — ฟังก์ชันบริสุทธิ์ (ของจริงกับเทสเรียกตัวเดียวกัน · §7.13) */
+  function bellHtml_(d){
+    var gs=(d&&d.groups)||[];
+    if(!gs.length){
+      return '<div class="bell-empty">🎉 ไม่มีรายการค้างค่ะ<br><span style="font-size:12px">ทุกอย่างเคลียร์หมดแล้ว</span></div>';
+    }
+    var h='<div class="bell-h">มี '+(d.total||0)+' รายการรออยู่</div>';
+    gs.forEach(function(g){
+      h+='<button type="button" class="bell-g" data-go="'+esc(g.view)+'">'+
+        '<div class="bell-g-t"><span>'+esc(g.icon||'•')+'</span><span>'+esc(g.title)+'</span>'+
+        '<span class="bell-g-n">'+(g.n||0)+'</span></div>';
+      (g.rows||[]).forEach(function(x){
+        h+='<div class="bell-g-r">· '+esc(x.text||'')+(x.sub?(' <span style="opacity:.75">'+esc(x.sub)+'</span>'):'')+'</div>';
+      });
+      if((g.n||0) > (g.rows||[]).length) h+='<div class="bell-g-r">· และอีก '+(g.n-(g.rows||[]).length)+' รายการ</div>';
+      h+='</button>';
+    });
+    if(d&&d.warn) h+='<div class="bell-g-r" style="color:#9A6412;margin:6px 10px 8px">⚠️ '+esc(d.warn)+'</div>';
+    return h;
+  }
+
+  function bellInit_(){
+    var b=$('bellBtn'); if(!b || b.dataset.bound) return;
+    b.dataset.bound='1';
+    b.addEventListener('click', function(ev){ ev.stopPropagation(); bellOpen_(); });
+    document.addEventListener('click', function(ev){
+      if(_bellPop && !_bellPop.contains(ev.target) && ev.target!==b) bellClose_();
+    });
+    document.addEventListener('keydown', function(ev){ if(ev.key==='Escape') bellClose_(); });
+    window.addEventListener('scroll', bellClose_, true);
+    // กลับมาที่แท็บ = เช็คใหม่ (พี่กี้เคาะ — ไม่ยิงซ้ำเองตลอดเวลา ประหยัดโควต้า Apps Script)
+    document.addEventListener('visibilitychange', function(){ if(!document.hidden) bellLoad_(false); });
+    window.addEventListener('focus', function(){ bellLoad_(false); });
+    bellLoad_(true);
+  }
+  window.bellOpen_=bellOpen_;
 /* หน้าสมัครใช้งาน (T2) — คนนอกยังไม่มีสิทธิ์อะไร จึงไม่เรียก waBootstrap */
   function showApply(){
     var lo=$('loader'); if(lo) lo.classList.add('hidden');
@@ -10810,6 +10926,7 @@
         var n51=$('navPnd51'); if(n51) n51.style.display=''; }              // 📐 ภ.ง.ด.51 = พี่คนเดียว (backend pnd51Gate_ กันซ้ำอีกชั้น)           // 📊 ทะเบียนใบสำคัญจ่าย = พี่คนเดียว (backend poGate_ กันซ้ำอีกชั้น)
       // รายงานการเงินรวม = พี่ + HR ที่ตั้งใน Script Property (backend ตัดสิน ไม่ผูกกับ IS_OWNER)
       CAN_FIN=!!r.canFinance;
+      bellInit_();   // 🔔 กระดิ่ง — เริ่มหลังรู้ตัวตนแล้ว (ก่อนหน้านี้ยังไม่รู้ว่ามีสิทธิ์ดูอะไร)
       // โมดูลที่เปิดใช้ (M6) — ว่าง/ไม่ส่งมา = เปิดครบ (ระบบเดิมไม่กระทบ)
       MODS_OPEN=(r.modules && r.modules.length) ? r.modules : null;
       // โมดูลฟรีตามที่ backend บอก — เพิ่มโมดูลฟรีใหม่แล้วหน้าเว็บตามทันทีโดยไม่ต้องแก้ 2 ที่
@@ -10892,7 +11009,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260907-1132';
+  var APP_BUILD='20260907-1144';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
