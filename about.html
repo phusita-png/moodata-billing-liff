@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ยินดีทำอะไรได้บ้าง — Moodata Yindee</title>
+<meta name="description" content="ระบบผู้ช่วยงานบริษัทบน LINE — งาน · เอกสาร · การเงิน · ภาษี · บุคคล · เงินเดือน · ประเมินผลงาน">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap">
+<style>
+/* ── หน้านี้เปิดจาก Rich Menu ของคนที่ยังไม่เป็นลูกค้า (ปุ่มกลาง "ยินดีทำอะไรได้")
+     เปิดในเบราว์เซอร์ในแอป LINE บนมือถือเป็นหลัก → ออกแบบมือถือก่อน แล้วค่อยขยายเป็น 2-3 คอลัมน์
+     🔴 ภาษาลูกค้าเท่านั้น — ห้ามพูดถึงชีต/ทะเบียนกลาง/รหัสโมดูล (นั่นเป็นเอกสารภายใน) ── */
+:root{
+  --brand:#1E8FE1; --brand-deep:#0B5C9E; --brand-wash:#E8F3FC;
+  --ground:#F4F8FC; --surface:#fff; --ink:#12202E; --ink-2:#3D5164; --muted:#6B7F92;
+  --line:#DCE6F0; --shadow:0 1px 2px rgba(18,32,46,.05), 0 8px 22px rgba(18,32,46,.06);
+  --soon:#9A6412; --soon-wash:#FBF0DC;
+}
+*{box-sizing:border-box}
+/* ⚠️ ตรวจหน้าตาด้วย chrome --headless แล้วจะเห็นข้อความล้นขอบขวา — เป็นข้อจำกัดของเครื่องมือ
+   (headless ไม่มีกฎตัดคำไทย เลยมองทั้งประโยคเป็นคำเดียว) ไม่ใช่บั๊กของหน้านี้
+   หน้าคู่มือที่ใช้จริงอยู่แล้วก็ล้นเหมือนกัน · มือถือจริงใน LINE ตัดคำไทยถูกต้อง
+   overflow-wrap + overflow-x กันไว้อีกชั้นเผื่อเครื่องที่ตัดคำไม่เป็น */
+html,body{margin:0;padding:0;overflow-x:hidden}
+body{background:var(--ground);color:var(--ink);line-height:1.65;font-size:16px;
+  font-family:"IBM Plex Sans Thai",system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;
+  overflow-wrap:break-word;word-break:break-word}
+img{max-width:100%}
+.wrap{max-width:920px;margin:0 auto;padding:0 18px 46px}
+
+/* หัวหน้า */
+.hero{background:linear-gradient(160deg,#2AA0EE 0%,#1E8FE1 45%,#0B5C9E 100%);color:#fff;
+  padding:34px 18px 40px;text-align:center;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;inset:auto -20% -60% -20%;height:120px;background:var(--ground);
+  border-radius:50% 50% 0 0}
+.hero-in{max-width:920px;margin:0 auto;position:relative;z-index:1}
+.mascot{width:96px;height:96px;border-radius:26px;object-fit:cover;background:rgba(255,255,255,.18);
+  border:2px solid rgba(255,255,255,.35);margin-bottom:12px}
+.hero h1{font-size:25px;margin:0 0 6px;letter-spacing:-.02em;font-weight:700;text-wrap:balance}
+.hero p{margin:0 auto;max-width:34ch;font-size:15px;color:#DCEDFB}
+.ver{display:inline-block;margin-top:14px;font-size:12.5px;background:rgba(255,255,255,.16);
+  border:1px solid rgba(255,255,255,.3);border-radius:99px;padding:3px 12px}
+
+/* ทำอะไรได้ */
+h2{font-size:19px;margin:34px 0 4px;letter-spacing:-.015em}
+.sub{color:var(--muted);font-size:14.5px;margin:0 0 14px}
+
+.grid{display:grid;grid-template-columns:1fr;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:16px 17px;box-shadow:var(--shadow)}
+.card h3{margin:0 0 3px;font-size:16.5px;display:flex;align-items:center;gap:9px}
+.card h3 .ic{font-size:21px;line-height:1}
+.card p{margin:0;font-size:14.5px;color:var(--ink-2)}
+.card ul{margin:9px 0 0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:6px}
+.card li{font-size:13px;background:var(--brand-wash);color:var(--brand-deep);border-radius:7px;padding:3px 9px}
+.card.soon{opacity:.72}
+.card.soon li{background:var(--soon-wash);color:var(--soon)}
+.pill{font-size:11.5px;font-weight:600;background:var(--soon-wash);color:var(--soon);
+  border-radius:99px;padding:2px 9px;margin-left:auto;white-space:nowrap}
+
+/* ใช้ยังไง */
+ol.steps{counter-reset:s;list-style:none;padding:0;margin:14px 0 0;display:grid;gap:10px}
+ol.steps li{counter-increment:s;background:var(--surface);border:1px solid var(--line);border-radius:13px;
+  padding:14px 16px 14px 52px;position:relative;font-size:15px;box-shadow:var(--shadow)}
+ol.steps li::before{content:counter(s);position:absolute;left:16px;top:14px;width:24px;height:24px;border-radius:99px;
+  background:var(--brand);color:#fff;font-size:13px;font-weight:700;display:grid;place-items:center}
+ol.steps b{font-weight:600}
+ol.steps span{display:block;font-size:13.5px;color:var(--muted);margin-top:2px}
+
+/* ปิดท้าย */
+.cta{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px 20px;
+  box-shadow:var(--shadow);text-align:center;margin-top:30px}
+.cta h2{margin:0 0 4px}
+.cta p{margin:0 0 16px;color:var(--ink-2);font-size:15px}
+.btn{display:block;width:100%;padding:14px 18px;border-radius:12px;font-size:16px;font-weight:600;
+  text-decoration:none;text-align:center;border:1px solid transparent}
+.btn-primary{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(30,143,225,.28)}
+.btn-ghost{background:var(--brand-wash);color:var(--brand-deep);border-color:#C9E3F8;margin-top:10px}
+.tel{font-size:22px;font-weight:700;letter-spacing:.01em;color:var(--brand-deep);margin:2px 0 4px}
+footer{text-align:center;color:var(--muted);font-size:13px;margin-top:26px}
+
+@media (min-width:640px){
+  .grid{grid-template-columns:1fr 1fr}
+  .hero h1{font-size:30px}
+  .cta .btn{display:inline-block;width:auto;min-width:230px}
+  .btn-ghost{margin:10px 0 0 10px}
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-in">
+    <img class="mascot" src="https://phusita-png.github.io/moodata-billing-liff/img/yindee.png" alt=""
+         onerror="this.style.display='none'">
+    <h1>ยินดีทำอะไรให้บริษัทคุณได้บ้าง</h1>
+    <p>ผู้ช่วยงานบริษัทที่ทำงานอยู่บน LINE — พนักงานใช้ผ่านแชท ผู้บริหารดูผ่านเว็บ ไม่ต้องลงโปรแกรม</p>
+    <div class="ver">อัปเดตกันยายน 2569</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <h2>เลือกใช้เฉพาะที่ต้องการ</h2>
+  <p class="sub">เปิดเป็นโมดูล จ่ายเท่าที่ใช้ เพิ่มทีหลังได้ตลอด</p>
+
+  <div class="grid">
+
+    <div class="card">
+      <h3><span class="ic">📒</span>การเงิน</h3>
+      <p>ออกใบเสนอราคา–ใบแจ้งหนี้–ใบเสร็จ ครบชุด ตามด้วยลูกหนี้ เจ้าหนี้ และภาพรวมกำไรของเดือนนั้น</p>
+      <ul><li>ใบเสนอราคา / ใบแจ้งหนี้</li><li>ใบเสร็จ + ใบกำกับภาษี</li><li>ใบลดหนี้</li><li>ลูกหนี้ค้างรับ</li><li>ภาพรวมธุรกิจ</li></ul>
+    </div>
+
+    <div class="card">
+      <h3><span class="ic">🏛️</span>ภาษี</h3>
+      <p>ระบบรวบรวมภาษีที่เกิดจากงานประจำวันให้เอง แล้วสรุปเป็นแบบยื่นพร้อมกำหนดส่ง</p>
+      <ul><li>ภ.ง.ด.1 / 3 / 53</li><li>ภ.พ.30 · ภาษีซื้อ–ขาย</li><li>ภ.ง.ด.51</li><li>50 ทวิ ทั้งที่ออกและที่ถูกหัก</li></ul>
+    </div>
+
+    <div class="card">
+      <h3><span class="ic">💳</span>รายจ่ายและการเบิก</h3>
+      <p>พนักงานแจ้งเบิกจากแชท ผู้บริหารกดอนุมัติ–จ่าย เอกสารทุกใบออกให้อัตโนมัติ</p>
+      <ul><li>ใบเบิกพนักงาน</li><li>ใบสั่งจ่ายของบริษัท</li><li>เงินสดย่อย</li><li>ใบสำคัญจ่าย · ใบรับรองแทนใบเสร็จ</li></ul>
+    </div>
+
+    <div class="card">
+      <h3><span class="ic">📄</span>ระบบเอกสาร</h3>
+      <p>ส่งบิลเข้าแชทได้เลย ระบบเก็บเข้าแฟ้มแยกหมวดตามเดือน สิ้นเดือนกดปิดรอบส่งนักบัญชีได้ทันที</p>
+      <ul><li>ส่งไฟล์ทางแชท LINE</li><li>อ่านข้อมูลจากบิลให้</li><li>แยกหมวดอัตโนมัติ</li><li>สารบัญรายเดือน</li></ul>
+    </div>
+
+    <div class="card">
+      <h3><span class="ic">👥</span>งานบุคคล</h3>
+      <p>ลงเวลาเข้า–ออกจากมือถือพร้อมพิกัด ยื่นลา–ขอ OT ผ่านแชท หัวหน้ากดอนุมัติได้ทันที</p>
+      <ul><li>ลงเวลา + สแกนใบหน้า</li><li>ใบลา · โควต้าวันลา</li><li>ขอ OT · อนุมัติ</li><li>รายงาน HR รายเดือน</li></ul>
+    </div>
+
+    <div class="card">
+      <h3><span class="ic">💵</span>เงินเดือน</h3>
+      <p>ปิดเงินเดือนทั้งรอบบนเว็บ พร้อมประกันสังคม ภาษี และส่งสลิปเข้า LINE รายคน</p>
+      <ul><li>คำนวณทั้งรอบ</li><li>สลิปเข้า LINE</li><li>ประกันสังคม · ภาษีหัก ณ ที่จ่าย</li><li>50 ทวิ ประจำปี</li></ul>
+    </div>
+
+    <div class="card">
+      <h3><span class="ic">📊</span>ประเมินผลงาน</h3>
+      <p>ตั้งตัวชี้วัดตามตำแหน่ง กรอกผลงานรายเดือน ระบบคิดคะแนนและออกใบประเมินให้</p>
+      <ul><li>ตัวชี้วัดรายตำแหน่ง</li><li>คะแนนคุณลักษณะ</li><li>หักตามสถิติมาทำงาน</li><li>ใบประเมินรายคน</li></ul>
+    </div>
+
+    <div class="card">
+      <h3><span class="ic">📋</span>ระบบงาน</h3>
+      <p>มอบหมายงาน ติดตามสถานะ ส่งงานให้ลูกค้า และแจ้งประกาศถึงทุกกลุ่มในที่เดียว</p>
+      <ul><li>บอร์ดงาน</li><li>งานของฉัน</li><li>ส่งงานเข้ากลุ่มลูกค้า</li><li>นัดประชุม</li></ul>
+    </div>
+
+    <div class="card soon">
+      <h3><span class="ic">🧮</span>บัญชี<span class="pill">เร็ว ๆ นี้</span></h3>
+      <p>ผังบัญชี สมุดรายวัน งบทดลอง และงบการเงิน ต่อยอดจากข้อมูลที่บันทึกไว้แล้ว</p>
+      <ul><li>ผังบัญชี</li><li>สมุดรายวัน</li><li>งบการเงิน</li></ul>
+    </div>
+
+  </div>
+
+  <h2>เริ่มใช้ยังไง</h2>
+  <p class="sub">ไม่ต้องติดตั้งอะไร ใช้ LINE ที่มีอยู่แล้ว</p>
+  <ol class="steps">
+    <li><b>กดสมัครใช้ระบบ</b><span>กรอกชื่อบริษัทและเบอร์ติดต่อ ใช้เวลาไม่ถึงนาที</span></li>
+    <li><b>ทีมงานเปิดห้องให้</b><span>ห้องข้อมูลของบริษัทคุณแยกเป็นของตัวเอง ไม่ปนกับบริษัทอื่น</span></li>
+    <li><b>ชวนทีมเข้าใช้งาน</b><span>พนักงานแอด LINE แล้วเริ่มลงเวลา · แจ้งลา · ส่งบิล ได้เลย</span></li>
+  </ol>
+
+  <div class="cta">
+    <h2>สนใจใช้กับบริษัทของคุณ</h2>
+    <p>ปรึกษาก่อนได้ ไม่มีค่าใช้จ่าย — ทีมงานจะช่วยดูว่าควรเริ่มจากโมดูลไหน</p>
+    <div class="tel">080-494-9314</div>
+    <p style="font-size:13.5px;color:var(--muted);margin-bottom:16px">โทรหรือทักในแชท LINE เราติดต่อกลับโดยเร็วค่ะ</p>
+    <a class="btn btn-primary" href="tel:0804949314">📞 โทรหาทีมงาน</a>
+    <a class="btn btn-ghost" href="https://line.me/R/ti/p/@moodata">💬 กลับไปคุยในแชท</a>
+  </div>
+
+  <footer>Moodata Yindee · ผู้ช่วยงานบริษัทบน LINE</footer>
+</div>
+
+</body>
+</html>
