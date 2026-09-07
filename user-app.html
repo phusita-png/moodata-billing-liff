@@ -10819,7 +10819,7 @@
   function watchBuild_(){
     var shown=false, last=0;
     function look(){
-      if(shown || document.hidden) return;
+      if(shown || document.hidden || buildCheckSkip_()) return;
       if(Date.now()-last < 60000) return;   // ไม่ยิงถี่เกิน
       last=Date.now();
       fetch('version.json?t='+Date.now(), {cache:'no-store'})
@@ -10843,8 +10843,23 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260907-1110';
+  var APP_BUILD='20260907-1117';
+  /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
+     · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
+     · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
+     ของใหม่รอไว้ก่อน เดี๋ยวรอบหน้าที่เปิดหน้าปกติค่อยอัปเดต */
+  function buildCheckSkip_(){
+    try{
+      var sp=new URLSearchParams(location.search);
+      if(String(sp.get('p')||'').toLowerCase()==='apply') return true;
+      if(sp.get('invite')) return true;
+      var st=sp.get('liff.state')||'';
+      if(/(^|[?&])p=apply(&|$)/i.test(st) || /(^|[?&])invite=/i.test(st)) return true;
+    }catch(e){}
+    return false;
+  }
   (function checkBuild(){
+    if(buildCheckSkip_()) return;
     try{
       var cur=new URLSearchParams(location.search).get('v')||'';
       fetch('version.json?t='+Date.now(), {cache:'no-store'})
