@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260907-2147">
+<link rel="stylesheet" href="user.css?v=20260907-2155">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -3968,11 +3968,11 @@
     /* ── ตัดเมนูแก้ไขทั้งหมดออก (พี่กี้เคาะ 7 ก.ย. 69) ──
        เดิมมี 13-14 รายการจนหาของไม่เจอ · งานแก้ทุกอย่างย้ายไปอยู่ในหน้า 🔎 เปิดดู/แก้ไข แล้ว
        (แก้ประเภท · ยอด/รายละเอียด · ภาษี · บริษัท · ผู้รับเงิน · ไฟล์แนบ · สลิป · หลักฐาน ·
-        ก๊อปเลขบัญชี · ใบกำกับภาษีซื้อ · สร้างแฟ้ม · ย้อนสถานะ)
+        คัดลอกเลขที่บัญชี · ใบกำกับภาษีซื้อ · สร้างแฟ้ม · ย้อนสถานะ)
        เมนูนี้เหลือเฉพาะ "งานที่ทำบ่อยจนต้องกดตรง" — อนุมัติ/จ่ายคืน/ยกเลิก
        ⚠️ ฟังก์ชันเดิม (exEditType/exEditAmount/…) ยังอยู่ครบ — หน้ารายละเอียดและที่อื่นยังเรียกใช้ */
     a.push({ sep:true });
-    a.push({ key:'trash', label:'🗑️ ยกเลิกใบนี้', call:'exTrash(' + q + ')', danger:true });
+    a.push({ key:'trash', label:'🗑️ ยกเลิก', call:'exTrash(' + q + ')', danger:true });
     return a;
   }
   window.expRowActions = expRowActions;
@@ -4330,7 +4330,7 @@
   function bankLineHtml(x, label){
     if(!x||!x.bankAcct) return '';
     return '<br><span style="color:#1B7F4B">🏦 '+esc(label||'โอนเข้า')+': '+esc(x.bankName||'')+' · <b>'+esc(x.bankAcct)+'</b> · '+esc(x.bankOwner||'')+'</span>'+
-      ' <a class="ex-lk" href="#" onclick="copyTxt(\''+esc(x.bankAcct)+'\');return false">📋 ก๊อปเลขบัญชี</a>';
+      ' <a class="ex-lk" href="#" onclick="copyTxt(\''+esc(x.bankAcct)+'\');return false">📋 คัดลอกเลขที่บัญชี</a>';
   }
   window.openBank=openBank; window.bankSave=bankSave; window.bankOtherToggle=bankOtherToggle; window.copyTxt=copyTxt;
 
@@ -6409,10 +6409,10 @@
     if(x.summaryLink) a.push({ key:'summary', label:'📄 สรุปเอกสารเบิกจ่าย', href:x.summaryLink });
     else if(mode !== 'pending') a.push({ key:'mksummary', label:'📄 ออกสรุปเอกสารเบิกจ่าย', call:'poSummary(' + q + ')' });
     if(x.bank && x.bank.acct)
-      a.push({ key:'copy', label:'📋 ก๊อปเลขบัญชี ' + x.bank.acct, call:"copyTxt('" + String(x.bank.acct).replace(/'/g, "\\'") + "')" });
+      a.push({ key:'copy', label:'📋 คัดลอกเลขที่บัญชี ' + x.bank.acct, call:"copyTxt('" + String(x.bank.acct).replace(/'/g, "\\'") + "')" });
     if(mode !== 'done'){
       a.push({ sep:true });
-      a.push({ key:'cancel', label:'🗑️ ยกเลิกใบนี้', call:'poCancel(' + q + ')', danger:true });
+      a.push({ key:'cancel', label:'🗑️ ยกเลิก', call:'poCancel(' + q + ')', danger:true });
     }
     return a;
   }
@@ -7525,7 +7525,7 @@
       '<div class="exd-acts">'+
         /* หลักฐาน (ใบเสร็จ ⇄ ใบรับรองแทน) — ใบ RV ไม่มี (เป็นคนละสายเอกสาร ตรงกับด่าน handleWaExpSetProof_) */
         (!rv?'<button class="btn btn-ghost btn-sm" onclick="exSetProof(\''+esc(no)+'\')">🧾 หลักฐาน: '+esc(x.docType||'แนบใบเสร็จ')+'</button>':'')+
-        (x.bankAcct?'<button class="btn btn-ghost btn-sm" onclick="copyTxt(\''+esc(String(x.bankAcct).replace(/'/g,"\\'"))+'\')">📋 ก๊อปเลขบัญชี</button>':'')+
+        (x.bankAcct?'<button class="btn btn-ghost btn-sm" onclick="copyTxt(\''+esc(String(x.bankAcct).replace(/'/g,"\\'"))+'\')">📋 คัดลอกเลขที่บัญชี</button>':'')+
         (pending?'<button class="btn btn-ghost btn-sm" onclick="'+(x.payeeName?'exOpenWht':'exApprove')+'(\''+esc(no)+'\')">✅ อนุมัติ</button>':'')+
         (pending?'<button class="btn btn-ghost btn-sm" onclick="exReject(\''+esc(no)+'\')">❌ ไม่อนุมัติ</button>':'')+
         (approved&&!paid?'<button class="btn btn-ghost btn-sm" onclick="exOpenPay(\''+esc(no)+'\',\''+esc(String(x.nick||''))+'\','+(Number(x.amount)||0)+','+((rv&&!x.docNo)?1:0)+')">💰 บันทึกจ่ายคืน</button>':'')+
@@ -7533,7 +7533,7 @@
         '<button class="btn btn-ghost btn-sm" onclick="vatOpen(\'expense\',\''+esc(no)+'\','+(Number(x.amount)||0)+')">🧾 ใบกำกับภาษีซื้อ</button>'+
         ((approved||paid)?'<button class="btn btn-ghost btn-sm" onclick="exRebuild(\''+esc(no)+'\')">🗂️ สร้างแฟ้มใหม่</button>':'')+
         (!paid&&(approved||rejected)&&!hasDoc?'<button class="btn btn-ghost btn-sm" onclick="exUndo(\''+esc(no)+'\')">↩️ ย้อนเป็นรออนุมัติ</button>':'')+
-        '<button class="btn btn-ghost btn-sm" style="color:#B4242A" onclick="exTrash(\''+esc(no)+'\')">🗑️ ยกเลิกใบนี้</button>'+
+        '<button class="btn btn-ghost btn-sm" style="color:#B4242A" onclick="exTrash(\''+esc(no)+'\')">🗑️ ยกเลิก</button>'+
       '</div>'+
 
       '<div class="exd-bar"><button class="btn btn-ghost" onclick="exdBack()">← กลับ</button>'+
@@ -11354,7 +11354,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260907-2147';
+  var APP_BUILD='20260907-2155';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
