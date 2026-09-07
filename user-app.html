@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260907-2058">
+<link rel="stylesheet" href="user.css?v=20260907-2125">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -66,6 +66,18 @@
   .exd-lk{ font-size:13px; background:#E8F3FC; color:#0B5C9E; border-radius:8px; padding:5px 10px; text-decoration:none }
   .exd-sec{ font-size:13px; font-weight:700; color:#6B7F92; margin:16px 0 6px; padding-top:10px; border-top:1px solid #E7EDF4 }
   .exd-acts{ display:flex; flex-wrap:wrap; gap:8px }
+  /* ── ใบเบิกแบบเต็มหน้า (พี่กี้ 7 ก.ย. 69: ไม่เอาป๊อปอัป) ── */
+  .exd-top{ display:flex; align-items:center; gap:10px; margin-bottom:10px }
+  .exd-no{ font-size:16px; font-weight:800; color:#12202E }
+  .exd-view{ border:1px solid #E2EAF3; border-radius:12px; padding:8px; background:#F5F8FC }
+  .exd-tabs{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px }
+  .exd-tab{ font-size:12.5px; border:1px solid #D6E2EE; background:#fff; color:#38536B;
+            border-radius:999px; padding:5px 11px; cursor:pointer }
+  .exd-tab.on{ background:#1B72E8; border-color:#1B72E8; color:#fff; font-weight:700 }
+  /* สูงพอเห็นใบเสร็จทั้งใบบนมือถือ โดยไม่กินทั้งจอจนหาปุ่มไม่เจอ */
+  .exd-view iframe{ width:100%; height:min(62vh,520px); border:0; border-radius:9px; background:#fff; display:block }
+  .exd-nofile{ border:1px dashed #E3B7BA; background:#FDF3F4; color:#B4242A;
+               border-radius:12px; padding:12px 14px; font-size:13.5px }
   .exd-acts .btn{ width:auto; flex:0 0 auto }
   .rm-btn .rm-lb{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .rm-btn .rm-ca{ opacity:.8; font-size:10px; }
@@ -1264,7 +1276,7 @@
     portal:['🧭','เมนูหลัก'], payroll:['💰','ระบบเงินเดือน'], modsoon:['🚧','กำลังพัฒนา'],
     hubreq:['🏛️','คำขอสมัคร'], hubrooms:['🏢','ห้องลูกค้า'], roomset:['⚙️','ตั้งค่าห้อง'], home:['🏠','ภาพรวมประจำวัน'], clock:['🕐','ลงเวลา'],
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
-    expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติเบิกจ่าย'],
+    expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติเบิกจ่าย'], expone:['🔎','ใบเบิก'],
     expdash:['📊','รายจ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ทะเบียนการจ่าย'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','ภาษีซื้อ/ภ.พ.30'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ทะเบียนใบสำคัญจ่าย'], sales:['💰','รายรับ'], ar:['📊','ลูกหนี้ค้างรับ'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51'], docdash:['📊','ภาพรวม'], docreg:['🗂️','จัดการเอกสาร'], doccheck:['✅','ตรวจก่อนส่ง'], docbycat:['📑','รายงานตามประเภท'], docreport:['📦','รายงานประจำเดือน'], doccat:['🏷️','จัดการหมวด'], hubmods:['🧩','โมดูลของแต่ละห้อง'], teamperm:['🔐','สิทธิ์ทีม'], kpiemp:['👥','ทะเบียนพนักงาน'], kpiperson:['📈','ประวัติรายคน'], kpidash:['📊','ภาพรวมเดือน'], kpientry:['✍️','กรอกผลงาน'], kpiscore:['⭐','คะแนนคุณลักษณะ'], kpidoc:['📄','ใบประเมิน']
   };
   var PROJECTS=[], COMPANIES=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ) · COMPANIES=บริษัท auto (หน้าจัดการ)
@@ -1391,7 +1403,7 @@
     if(gi) $('tbIcon').innerHTML=gi.replace('stroke-width="1.9"','stroke-width="2"'); else $('tbIcon').textContent=meta[0];
     $('tbTitle').textContent=meta[1];
     mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
-    ({ portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51, docreg:renderDocReg, doccheck:renderDocCheck, docdash:renderDocDash, docbycat:renderDocByCat, docreport:renderDocReport, doccat:renderDocCat, kpiemp:renderKpiEmp, kpiperson:renderKpiPerson, kpidash:renderKpiDash, kpientry:renderKpiEntry, kpiscore:renderKpiScore, kpidoc:renderKpiDoc }[v] || soon)();
+    ({ portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expone:renderExpOne, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51, docreg:renderDocReg, doccheck:renderDocCheck, docdash:renderDocDash, docbycat:renderDocByCat, docreport:renderDocReport, doccat:renderDocCat, kpiemp:renderKpiEmp, kpiperson:renderKpiPerson, kpidash:renderKpiDash, kpientry:renderKpiEntry, kpiscore:renderKpiScore, kpidoc:renderKpiDoc }[v] || soon)();
   }
 
   // ───── มือถือ: เมนูกลุ่ม (ล่าง) + แท็บย่อย (บน) · คอมใช้ sidebar เดิม ไม่เกี่ยว ─────
@@ -2847,7 +2859,7 @@
   // เปิดงานใหม่ (pid = สร้างในบอร์ด project นั้น · ไม่ส่ง = งานทั่วไป)
   var CREATE_PID='', CREATE_CUST='';
   /** ป้ายชื่อสมาชิก = "ชื่อจริง (ชื่อเล่น)" (ใช้ display จาก backend ถ้ามี) */
-  function memLabel(m){ return m.display || (m.name+(m.nick&&m.nick!==m.name?' ('+m.nick+')':'')); }
+  function memLabel(m){ return m.display || m.name || m.nick || ''; }   // ชื่อ-นามสกุลจริง (พี่กี้ 7 ก.ย. 69)
   /** <option> รายชื่อทีม — value = uid (มอบหมายผูก userId) · selUid = uid ที่เลือกไว้ · excludeUid = ตัดออก (เช่นตัวเอง)
    *  lead = ข้อความบรรทัดแรก (null = ไม่ใส่) · ข้ามคนที่ไม่มี uid (มอบหมายไม่ได้) */
   function memOpts(team, selUid, lead, excludeUid){
@@ -7335,11 +7347,45 @@
         ตรรกะภาษี/ด่านตรวจจึงเดินทางเดียวกับที่อื่นเสมอ
      ③ **ส่งทีละก้อนตามลำดับ แล้วสรุปผลรวม** — ก้อนไหนพังต้องบอกว่าก้อนไหน ไม่ใช่ "บันทึกไม่สำเร็จ" ลอย ๆ
         (ยอดกับภาษีคนละ route กัน ถ้ายิงพร้อมกันแล้วอันหลังคิดจากยอดเก่า) */
-  var EXD_NO='';
+  var EXD_NO='', EXD_BACK='expense', EXD_FILES=[];
 
+  /* พี่กี้ 7 ก.ย. 69: "ไม่ชอบเปิดดูข้อมูล/เอกสารแบบป๊อปอัป ไปเปิดเต็มหน้าดีกว่า"
+     → ใบเบิกเป็น "หน้า" (view expone) ไม่ใช่ modal · มีปุ่มย้อนกลับไปหน้าที่มา */
   function exDetail(no){
     var x=exFind(no); if(!x){ toast('ไม่พบข้อมูลใบ '+no+' ลองรีเฟรชนะคะ'); return; }
     EXD_NO=no;
+    if(VIEW!=='expone') EXD_BACK=VIEW;   // จำหน้าที่มา (รายการเบิก / อนุมัติ / สรุป)
+    switchView('expone');
+  }
+  function exdBack(){ switchView(EXD_BACK||'expense'); }
+
+  /** ลิงก์ Drive → file id (รองรับทั้ง /file/d/<id>/... และ ...?id=<id>) */
+  function driveId_(u){
+    var s=String(u||''), m=s.match(/\/d\/([A-Za-z0-9_-]{16,})/)||s.match(/[?&]id=([A-Za-z0-9_-]{16,})/);
+    return m?m[1]:'';
+  }
+  /* 🔴 พี่กี้: "เปิดเอกสารมาก็ไม่เห็นเอกสารแนบเพื่อพิจารณาอยู่ดี"
+     เดิมหน้านี้มีแค่ <a target="_blank"> ซึ่งใน webview ของ LINE กดแล้วมักเงียบ (ไม่เปิดแท็บใหม่)
+     → ฝังตัวดูไฟล์ไว้ในหน้าเลย (Drive /preview อ่านได้ทั้งรูปและ PDF)
+     ไฟล์ทุกเส้นที่ระบบบันทึกตั้ง setSharing = ANYONE_WITH_LINK ไว้แล้ว จึงเปิดดูได้
+     · ไฟล์ที่ไม่ใช่ Drive (ลิงก์ภายนอก) ฝังไม่ได้ → ตกไปเป็นปุ่มเปิดเต็มจอ */
+  function openUrl(u){
+    try{ if(window.liff && liff.openWindow){ liff.openWindow({url:u, external:true}); return; } }catch(e){}
+    window.open(u,'_blank');
+  }
+  function exdPick(i){
+    var f=EXD_FILES[i]; if(!f) return;
+    var fr=$('exdFrame'), id=driveId_(f.url);
+    Array.prototype.forEach.call(document.querySelectorAll('.exd-tab'), function(b,k){ b.classList.toggle('on', k===i); });
+    if(fr) fr.src = id ? ('https://drive.google.com/file/d/'+id+'/preview') : 'about:blank';
+    var op=$('exdOpen'); if(op) op.onclick=function(){ openUrl(f.url); };
+    var nf=$('exdNoEmbed'); if(nf) nf.style.display = id ? 'none' : 'block';
+  }
+  window.exdBack=exdBack; window.exdPick=exdPick; window.openUrl=openUrl;
+
+  function renderExpOne(){
+    var no=EXD_NO, x=exFind(no);
+    if(!x){ $('main').innerHTML='<div class="card"><div class="empty">ไม่พบข้อมูลใบนี้ค่ะ</div></div>'; return; }
     var st=String(x.status||''), paid=st.indexOf('จ่ายแล้ว')>=0, rejected=st.indexOf('ไม่อนุมัติ')>=0;
     var pending=st.indexOf('รออนุมัติ')>=0;
     var approved=!pending && !rejected && st.indexOf('อนุมัติ')>=0;
@@ -7351,12 +7397,28 @@
     function ro(label, val){   // แถวอ่านอย่างเดียว
       return '<div class="exd-r"><span>'+esc(label)+'</span><b>'+(val||'—')+'</b></div>';
     }
-    var links='';
-    [[x.receiptUrl,'📎 ไฟล์แนบ'],[x.docLink,'📄 '+(x.docNo||'เอกสาร')],[x.whtLink,'🧾 50 ทวิ '+(x.whtNo||'')],
-     [x.dossier,'🗂️ แฟ้มครบชุด'],[x.paidSlip,'💸 สลิปโอนคืน']].forEach(function(p){
-      if(p[0]) links+='<a class="exd-lk" href="'+esc(p[0])+'" target="_blank">'+esc(p[1])+'</a>';
+    /* ── เอกสารของใบนี้ = ตัวดูไฟล์ในหน้า (ไม่ใช่ลิงก์ให้กดออกไป) ──
+       เรียงตามที่พี่ต้องดูก่อนตัดสินใจ: หลักฐานที่พนักงานแนบ → เอกสารที่ออก → 50 ทวิ → แฟ้ม → สลิป */
+    EXD_FILES=[];
+    [[x.receiptUrl,'📎 หลักฐานที่แนบมา'],[x.docLink,'📄 '+(x.docNo||'เอกสารที่ออก')],
+     [x.whtLink,'🧾 50 ทวิ '+(x.whtNo||'')],[x.dossier,'🗂️ แฟ้มครบชุด'],
+     [x.paidSlip,'💸 สลิปโอนคืน']].forEach(function(p){
+      if(p[0]) EXD_FILES.push({ url:p[0], label:p[1] });
     });
-    if(!links) links='<span style="color:#B4242A;font-size:13px">ยังไม่มีเอกสาร/ไฟล์แนบในใบนี้</span>';
+    var viewer;
+    if(!EXD_FILES.length){
+      viewer='<div class="exd-nofile">📎 ใบนี้ไม่มีเอกสารแนบเลยค่ะ'+
+        '<div class="m-hint" style="margin-top:4px">ถ้าพนักงานส่งมาแล้ว ให้แนบเพิ่มที่ช่อง "เปลี่ยนไฟล์แนบ" ด้านล่าง</div></div>';
+    }else{
+      viewer='<div class="exd-view">'+
+        '<div class="exd-tabs">'+EXD_FILES.map(function(f,i){
+          return '<button type="button" class="exd-tab'+(i===0?' on':'')+'" onclick="exdPick('+i+')">'+esc(f.label)+'</button>';
+        }).join('')+'</div>'+
+        '<iframe id="exdFrame" title="เอกสารแนบ"></iframe>'+
+        '<div id="exdNoEmbed" class="m-hint" style="display:none">ไฟล์นี้ไม่ได้อยู่บน Drive จึงดูในหน้านี้ไม่ได้ — กดปุ่มด้านล่างค่ะ</div>'+
+        '<button type="button" class="btn btn-ghost btn-sm" id="exdOpen">🔗 เปิดไฟล์เต็มจอ</button>'+
+      '</div>';
+    }
 
     var typeOpts=EXP_TYPES.map(function(t){
       var lb=(typeof t==='string')?t:(t.label||t.key||'');
@@ -7366,7 +7428,10 @@
       return '<option value="'+esc(s.code)+'"'+(s.code===x.incomeSection?' selected':'')+'>'+esc(s.code+' '+s.label)+'</option>';
     }).join('');
 
-    modal('<h3>🔎 ใบเบิก '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+    $('main').innerHTML=('<div class="card exd-page">'+
+      '<div class="exd-top"><button type="button" class="btn btn-ghost btn-sm" onclick="exdBack()">← กลับ</button>'+
+        '<div class="exd-no">🔎 ใบเบิก '+esc(no)+'</div></div>'+
+      '<div id="mErr" class="m-err hidden"></div>'+
       '<div class="exd-head"><span class="lvb '+(paid?'lvb-ok':(pending?'lvb-wait':''))+'">'+esc(st)+'</span>'+
         '<span class="exd-amt">'+money(x.amount)+' บาท</span></div>'+
 
@@ -7380,7 +7445,8 @@
         (x.bankAcct?ro('บัญชีรับโอน', esc((x.bankName||'')+' '+x.bankAcct+' '+(x.bankOwner||''))):'')+
         (x.note?ro('หมายเหตุ', esc(x.note)):'')+
       '</div>'+
-      '<div class="exd-links">'+links+'</div>'+
+      '<div class="exd-sec">📄 เอกสารของใบนี้</div>'+
+      viewer+
 
       '<div class="exd-sec">✏️ แก้ไขข้อมูล</div>'+
       '<div class="fld"><label>ประเภทค่าใช้จ่าย</label><select id="exdType">'+typeOpts+'</select></div>'+
@@ -7408,7 +7474,7 @@
       (paid?imgsFldHtml('exdSlip','💸 เปลี่ยนสลิปโอนคืน (เว้นว่าง = ใช้ของเดิม)'):'')+
       (hasDoc?'<div class="m-hint" style="color:#C8730B">⚠️ ใบนี้ออกเอกสารแล้ว — แก้เสร็จอย่าลืมสร้างเอกสาร/แฟ้มใหม่ให้ตรงกัน</div>':'')+
 
-      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="exdBack()">← กลับ</button>'+
       '<button class="btn btn-primary" onclick="exdSave()">💾 บันทึกทั้งหมด</button></div>'+
 
       '<div class="exd-sec">งานอื่นของใบนี้</div>'+
@@ -7424,9 +7490,11 @@
         ((approved||paid)?'<button class="btn btn-ghost btn-sm" onclick="closeModal();exRebuild(\''+esc(no)+'\')">🗂️ สร้างแฟ้มใหม่</button>':'')+
         (!paid&&(approved||rejected)&&!hasDoc?'<button class="btn btn-ghost btn-sm" onclick="closeModal();exUndo(\''+esc(no)+'\')">↩️ ย้อนเป็นรออนุมัติ</button>':'')+
         '<button class="btn btn-ghost btn-sm" style="color:#B4242A" onclick="closeModal();exTrash(\''+esc(no)+'\')">🗑️ ยกเลิกใบนี้</button>'+
-      '</div>');
+      '</div>'+
+    '</div>');
     imgsFldBind('exdRcp');
     if($('exdSlip')) imgsFldBind('exdSlip');
+    if(EXD_FILES.length) exdPick(0);   // เปิดไฟล์ใบแรกให้เลย พี่ไม่ต้องกดอะไรก่อนเห็นเอกสาร
   }
 
   /** บันทึกทุกช่องที่เปลี่ยน — ทีละก้อนตามลำดับ แล้วสรุปว่าอะไรสำเร็จ/อะไรไม่ */
@@ -7498,6 +7566,9 @@
 
   /** โหลดหน้าที่กำลังดูอยู่ใหม่ (ใช้ร่วมทุกปุ่มแก้ใบเบิก) */
   function exReload(){
+    /* อยู่บนหน้าใบเบิกเต็มหน้า → กลับไปหน้ารายการที่มา ไม่วาดหน้าเดิมซ้ำ
+       เพราะข้อมูลในหน้านี้มาจากรายการที่โหลดไว้ (EXP_BYNO) — วาดซ้ำเฉย ๆ = ยังเห็นสถานะเก่า */
+    if(VIEW==='expone'){ exdBack(); return; }
     if(VIEW==='expdash') renderExpDash(); else if(VIEW==='expapprove') renderExpenseApprove(); else renderExpense();
   }
   window.exUndo=exUndo; window.exUndoDo=exUndoDo;
@@ -11237,7 +11308,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260907-2058';
+  var APP_BUILD='20260907-2125';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
