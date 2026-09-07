@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260907-1202">
+<link rel="stylesheet" href="user.css?v=20260907-1519">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -275,6 +275,11 @@
     -webkit-backdrop-filter:blur(16px) saturate(150%); backdrop-filter:blur(16px) saturate(150%);
     border-radius:var(--radius); box-shadow:0 8px 26px rgba(31,63,120,.10), inset 0 1px 0 rgba(255,255,255,.65);
     padding:20px 18px 0; text-align:center; font:inherit; cursor:pointer; display:flex; flex-direction:column; min-width:0;
+    /* 🔴 ต้องระบุ align-items เอง (7 ก.ย. 69) — WebKit/iOS ตั้ง align-items:flex-start ให้ <button>
+       ในสไตล์ของเบราว์เซอร์เอง ลูกในการ์ดจึงไม่ยืดเต็มความกว้าง: ไอคอน/ข้อความชิดซ้าย
+       และเส้นคั่นเหนือ "เข้าใช้งาน" สั้นแค่ความกว้างข้อความ
+       Chrome บนคอมไม่เป็น — ทดสอบฝั่งเราเลยผ่านตลอด แต่พี่กี้เห็นเพี้ยนบนไลน์ iOS */
+    align-items:stretch;
     transition:box-shadow .16s, transform .08s, background .16s; }
   .pt-c:hover{ background:rgba(255,255,255,.72); transform:translateY(-2px);
     box-shadow:0 14px 34px rgba(31,63,120,.16), inset 0 1px 0 rgba(255,255,255,.8); }
@@ -1386,73 +1391,6 @@
     { key:'home', icon:'🏠', label:'เมนูหลัก', views:['portal'] },   // หน้าแรก = เลือกโมดูล + สรุปประจำวัน (5 ก.ย.)
     { key:'work', icon:'📊', label:'งาน',    views:['projects','mytasks','review','senddoc','appt','announce','trash'] },
     { key:'hr',   icon:'👥', label:'HR',     views:['approve','otapprove','hrreport'] },
-    { key:'fin',  icon:'💰', label:'การเงิน', views:['bizdash','sales','ar','salesreport','reimb','expdash','petty','payout','poreport','expreport','taxhub','vatbuy','pnd51','whtin','finreport','taxdoc'] },
-    /* ลำดับตามผังการเงิน 10 หมวดของพี่กี้: ① ภาพรวมธุรกิจ ② รายรับ ③ ลูกหนี้ ④ รายงานรายรับ
-       ⑤ รายจ่าย (+เงินสดย่อย) ⑥ ทะเบียนการจ่าย ⑦⑧ รายงานรายจ่าย/เจ้าหนี้ ⑨ รายงานภาษี (+ภาษีซื้อ +ภ.ง.ด.51)
-       ⑩ 50 ทวิ ที่ถูกหัก · taxdoc ซ่อนไว้ก่อน */
-    { key:'me',   icon:'🙋', label:'ส่วนตัว', views:['clock','leave','ot','expense','docs'] }
-  ];
-  // ไอคอนหัวกลุ่มบน sidebar คอม = SVG เส้นสีเดียว (พี่กี้ขอ 30 ก.ค.: เรียบ ๆ ไม่สีสัน)
-  // เข้าชุดกับปุ่มย่อยที่เป็น SVG อยู่แล้ว · emoji ใน NAV_GROUPS ยังใช้ที่แถบล่างมือถือ (จอเล็กอ่านง่ายกว่า)
-  var GROUP_ICON={
-    home:'<svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10V20h13V10"/><path d="M10 20v-5h4v5"/></svg>',
-    work:'<svg viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="7" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="6" rx="1.5"/><rect x="14" y="14" width="7" height="6" rx="1.5"/></svg>',
-    me:'<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c0-3.6 3.1-5.6 7-5.6s7 2 7 5.6"/></svg>',
-    hr:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3.2"/><path d="M3 19.5c0-3.2 2.7-5 6-5s6 1.8 6 5"/><path d="M16 6.2a3.2 3.2 0 0 1 0 6"/><path d="M17.5 14.8c2.1.5 3.5 2 3.5 4.7"/></svg>',
-    fin:'<svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="11" rx="2"/><circle cx="12" cy="12" r="2.4"/><path d="M6.5 9.5v5M17.5 9.5v5"/></svg>'
-  };
-  /* ═══════════ โมดูล (หน้าเลือกโมดูล) — spec docs/spec-module-portal.md ═══════════
-     พี่กี้ 5 ก.ย. 2569: อยากให้หน้าเว็บแยกเป็นโมดูลแบบ TRCloud แทนที่จะยัดทุกเมนูรวมกัน
-     (หมวด 💰 การเงินบวมเป็น 17 เมนู จนโดน CSS ตัดเมนูหายมาแล้ว 4 ก.ย.)
-     ⚠️ views ที่นี่ต้องครบทุก view ของ NAV_GROUPS — ไม่งั้นเมนูหายไปจากระบบเงียบ ๆ
-     ⚠️ own:true = เห็นเฉพาะพี่/ผู้ดูแล · การ์ดที่ไม่มีสิทธิ์ "ไม่แสดง" ไม่ใช่แสดงแบบจาง
-     ⚠️ ซ่อนการ์ด ≠ กันข้อมูล — backend กรองสิทธิ์เองอีกชั้นเสมอ */
-  /* ไอคอนปุ่มเมนูที่ระบบสร้างเอง (ไม่มีใน markup) — เส้นสีเดียวเข้าชุดกับปุ่มอื่น */
-  var VIEW_ICON_EXTRA={
-    /* 📊 ประเมินผลงาน — ไม่ใส่ที่นี่ = ปุ่มเมนูขึ้นเป็นรูปบ้านทั้งแถว (พี่กี้เจอจริง 6 ก.ย.) */
-    kpiemp:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8.2" r="3.1"/><path d="M3.2 19.5c0-3.1 2.6-4.9 5.8-4.9s5.8 1.8 5.8 4.9"/><path d="M16.2 6.1a3.1 3.1 0 0 1 0 5.9"/><path d="M17.6 14.9c2 .5 3.4 1.9 3.4 4.6"/></svg>',
-    kpiperson:'<svg viewBox="0 0 24 24"><path d="M4 20V4"/><path d="M4 20h16"/><path d="M7.5 15.5l3.5-4 3 2.4 4.5-6"/><circle cx="18.5" cy="7.9" r="1.3"/></svg>',
-    kpidash:'<svg viewBox="0 0 24 24"><rect x="3.2" y="4.5" width="17.6" height="15" rx="2"/><path d="M3.2 9h17.6"/><path d="M9 9v10.5"/><path d="M12.5 12.5h5M12.5 16h3"/></svg>',
-    kpientry:'<svg viewBox="0 0 24 24"><path d="M4 6.5h9M4 11h9M4 15.5h5"/><path d="M14.8 17.8l4.8-4.8a1.6 1.6 0 0 1 2.3 2.3l-4.8 4.8-3 .7z"/></svg>',
-    kpiscore:'<svg viewBox="0 0 24 24"><path d="M12 4.2l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.5-4.8 2.5.9-5.4L4.2 9.9l5.4-.8z"/></svg>',
-    kpidoc:'<svg viewBox="0 0 24 24"><path d="M6.5 3.5h7.2l4.3 4.3v12.7a1 1 0 0 1-1 1h-10.5a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1z"/><path d="M13.5 3.7V8h4.3"/><path d="M8.8 14.4l2 2 4-4.4"/></svg>',
-    hubreq:'<svg viewBox="0 0 24 24"><path d="M6 3.5h9l4 4V20a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1z"/><path d="M14.5 3.6V8H19"/><path d="M8.5 13h7M8.5 16.5h4.5"/></svg>',
-    hubrooms:'<svg viewBox="0 0 24 24"><path d="M4 20V7.5l6-3.5v16"/><path d="M10 10.5l8 3V20"/><path d="M3 20h18"/><path d="M13.5 15.5h1M13.5 18h1"/></svg>',
-    roomset:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 14a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V20a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H4a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H10a1.6 1.6 0 0 0 1-1.5V4a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V10a1.6 1.6 0 0 0 1.5 1H20a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>',
-    home:'<svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10V20h13V10"/><path d="M10 20v-5h4v5"/></svg>',
-    payroll:'<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9.5h18"/><path d="M7 14h4M15.5 14h1.5"/></svg>',
-    docreg:'<svg viewBox="0 0 24 24"><path d="M3.5 7.5a2 2 0 0 1 2-2h3.2l1.8 2.2h8a2 2 0 0 1 2 2v8.8a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/><path d="M8 13h8M8 16h5"/></svg>',
-    docdash:'<svg viewBox="0 0 24 24"><path d="M4 19.5V13M9.3 19.5V8.5M14.7 19.5v-7M20 19.5V5"/><path d="M3 21h18"/></svg>',
-    doccheck:'<svg viewBox="0 0 24 24"><path d="M6.5 3.5h11a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1v-15a1 1 0 0 1 1-1z"/><path d="m9 12.2 2.2 2.2L15.5 10"/></svg>',
-    docbycat:'<svg viewBox="0 0 24 24"><path d="M4 5.5h16M4 10h16M4 14.5h10M4 19h10"/></svg>',
-    docreport:'<svg viewBox="0 0 24 24"><path d="M6.5 3.5h11a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1v-15a1 1 0 0 1 1-1z"/><path d="M9 8h6M9 12h6M9 16h3.5"/></svg>',
-    doccat:'<svg viewBox="0 0 24 24"><path d="M3.5 8.5 10 4l10.5 4.2v7L10 20 3.5 15.5z"/><path d="M10 20V9.2l10.5-1"/></svg>',
-    hubmods:'<svg viewBox="0 0 24 24"><rect x="3" y="3.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3.5" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><path d="M15 17.2h5M17.5 14.7v5"/></svg>',
-    teamperm:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19.5c0-3.2 2.6-5 5.5-5 1 0 2 .2 2.8.6"/><rect x="14" y="14" width="7" height="6" rx="1.2"/><path d="M15.8 14v-1.8a1.7 1.7 0 0 1 3.4 0V14"/></svg>'
-  };
-  var MOD_ICON={
-    kpi:'<svg viewBox="0 0 24 24"><path d="M4 19.5V13M9.3 19.5V8.5M14.7 19.5v-7M20 19.5V5"/><path d="M3 21h18"/></svg>',
-    fin:'<svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="11" rx="2"/><circle cx="12" cy="12" r="2.4"/><path d="M6.5 9.5v5M17.5 9.5v5"/></svg>',
-    tax:'<svg viewBox="0 0 24 24"><path d="M3 10 12 4l9 6"/><path d="M5 10v9M12 10v9M19 10v9"/><path d="M3 20h18"/></svg>',
-    hr:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3.2"/><path d="M3 19.5c0-3.2 2.7-5 6-5s6 1.8 6 5"/><path d="M16 6.2a3.2 3.2 0 0 1 0 6"/><path d="M17.5 14.8c2.1.5 3.5 2 3.5 4.7"/></svg>',
-    payroll:'<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9.5h18"/><path d="M7 14h4M15.5 14h1.5"/></svg>',
-    work:'<svg viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="7" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="6" rx="1.5"/><rect x="14" y="14" width="7" height="6" rx="1.5"/></svg>',
-    me:'<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c0-3.6 3.1-5.6 7-5.6s7 2 7 5.6"/></svg>',
-    acct:'<svg viewBox="0 0 24 24"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H18a2 2 0 0 1 2 2v14H6a2 2 0 0 1-2-2z"/><path d="M8 8.5h7M8 12h7M8 15.5h4"/></svg>',
-    docsys:'<svg viewBox="0 0 24 24"><path d="M4 6.5A1.5 1.5 0 0 1 5.5 5h4l1.6 2H19a1.5 1.5 0 0 1 1.5 1.5V18a1.5 1.5 0 0 1-1.5 1.5H5.5A1.5 1.5 0 0 1 4 18z"/></svg>',
-    audit:'<svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="5.5"/><path d="M14.6 14.6 20 20"/><path d="M8.2 10.6l1.7 1.7 3-3.2"/></svg>',
-    dev:'<svg viewBox="0 0 24 24"><path d="M8.5 9 5 12.5 8.5 16"/><path d="M15.5 9l3.5 3.5-3.5 3.5"/><path d="M13 6.5l-2 11"/></svg>',
-    admin:'<svg viewBox="0 0 24 24"><path d="M12 3.5 4.5 6.5v5c0 4.2 3.1 7.6 7.5 9 4.4-1.4 7.5-4.8 7.5-9v-5z"/><path d="M9.4 12.2l1.9 1.9 3.4-3.6"/></svg>',
-    guide:'<svg viewBox="0 0 24 24"><path d="M4 5.5A2 2 0 0 1 6 4h5v16H6a2 2 0 0 0-2 1.5z"/><path d="M20 5.5A2 2 0 0 0 18 4h-5v16h5a2 2 0 0 1 2 1.5z"/></svg>',
-    roomcfg:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 14a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V20a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H4a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H10a1.6 1.6 0 0 0 1-1.5V4a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V10a1.6 1.6 0 0 0 1.5 1H20a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>',
-    logout:'<svg viewBox="0 0 24 24"><path d="M12 4v8"/><path d="M7.5 6.5a7.5 7.5 0 1 0 9 0"/></svg>'
-  };
-  /* ลำดับการ์ดตามที่พี่กี้เรียง 5 ก.ย. (4 ใบต่อแถวบนจอคอม):
-     แถว 1 การเงิน · บัญชี · ภาษี · ตรวจสอบ
-     แถว 2 งาน · บุคคล · เอกสาร · พนักงาน
-     แถว 3 พัฒนา · คู่มือ · ออกจากระบบ
-     g = สีไล่ระดับของไอคอน (2 สี) — การ์ดเป็นกระจกฝ้า สีจึงมาจากไอคอนเป็นหลัก */
-  var MODULES=[
     { key:'fin',     th:'ระบบการเงิน',  en:'FINANCE',     color:'#1E8FE1', g:['#38bdf8','#1d4ed8'], own:true,
       views:['bizdash','sales','ar','salesreport','reimb','expdash','petty','payout','poreport','expreport','finreport'],
       extra:['expapprove'],
@@ -1460,15 +1398,8 @@
             ['รายรับ', ['sales','ar','salesreport','reimb']],
             ['รายจ่าย', ['expdash','petty','payout','poreport']],
             ['รายงาน', ['expreport','finreport']] ] },
-    { key:'acct',    th:'ระบบบัญชี',    en:'ACCOUNTING',  color:'#1e3a8a', g:['#818cf8','#1e3a8a'], own:true, views:[],
-      soon:'ผังบัญชี · สมุดรายวัน · งบทดลอง · งบการเงิน' },
     { key:'tax',     th:'ระบบภาษี',     en:'TAX',         color:'#7A5AF8', g:['#c084fc','#6d28d9'], own:true,
       views:['taxhub','vatbuy','pnd51','whtin','taxdoc'] },
-    { key:'audit',   th:'ระบบตรวจสอบ',  en:'AUDIT',       color:'#be123c', g:['#fb7185','#9f1239'], own:true, views:[],
-      soon:'ยังไม่กำหนดขอบเขต — จองที่ไว้ก่อน' },
-
-    { key:'work',    th:'ระบบงาน',      en:'WORK',        color:'#3f4658', g:['#64748b','#1e293b'], own:false,
-      views:['home','projects','mytasks','review','senddoc','appt','announce','trash'], extra:['alltasks'] },
     { key:'hr',      th:'ระบบบุคคล',    en:'HR',          color:'#168a52', g:['#34d399','#047857'], own:true,
       views:['approve','otapprove','hrreport','teamperm'] },
     /* 💵 เงินเดือน — แยกจากบุคคล (พี่กี้เคาะ 5 ก.ย. เย็น)
@@ -1479,6 +1410,12 @@
     /* 📄 ระบบเอกสาร (D1 · 6 ก.ย. 69) — แฟ้มเอกสารแยกหมวดส่งนักบัญชี · spec docs/spec-doc-module.md
        own:false = ทีมงาน/ลูกค้าเข้าได้ด้วย (ลูกค้าต้องอัปไฟล์เองได้ ไม่งั้นพี่ต้องอัปแทนทุกเดือน)
        เปิดฟรีทุกห้อง (MODULE_CORE ฝั่ง backend) */
+    { key:'work',    th:'ระบบงาน',      en:'WORK',        color:'#3f4658', g:['#64748b','#1e293b'], own:false,
+      views:['home','projects','mytasks','review','senddoc','appt','announce','trash'], extra:['alltasks'] },
+    { key:'kpi',     th:'ประเมินผลงาน',  en:'PERFORMANCE', color:'#c2410c', g:['#fb923c','#c2410c'], own:false,
+      views:['kpiemp','kpiperson','kpidash','kpientry','kpiscore'], extra:['kpidoc'],
+      sec:[ ['พนักงาน', ['kpiemp','kpiperson']],
+            ['รอบประเมิน', ['kpidash','kpientry','kpiscore']] ] },
     { key:'docsys',  th:'ระบบเอกสาร',   en:'DOCUMENTS',   color:'#a16207', g:['#fbbf24','#a16207'], own:false,
       views:['docdash','docreg','doccheck','docbycat','docreport','doccat'],
       sec:[ ['ทะเบียนเอกสาร', ['docdash','docreg','doccheck']],
@@ -1487,13 +1424,12 @@
     /* 📊 ประเมินผลงาน (KPI · 6 ก.ย. 69) — บริการ HR-Service002 ของริชมอนด์ · spec docs/spec-kpi-eval.md
        own:false = HR/หัวหน้าของลูกค้าเข้ามากรอกเองได้ (ด่านจริงอยู่ backend: ปิดรอบ/ตั้งค่า = ทีมภายในเท่านั้น)
        ลำดับเมนู: ทะเบียน → ประวัติ → ภาพรวมเดือน → กรอก → คุณลักษณะ → ใบประเมิน (พี่กี้เคาะ) */
-    { key:'kpi',     th:'ประเมินผลงาน',  en:'PERFORMANCE', color:'#c2410c', g:['#fb923c','#c2410c'], own:false,
-      views:['kpiemp','kpiperson','kpidash','kpientry','kpiscore'], extra:['kpidoc'],
-      sec:[ ['พนักงาน', ['kpiemp','kpiperson']],
-            ['รอบประเมิน', ['kpidash','kpientry','kpiscore']] ] },
+    { key:'acct',    th:'ระบบบัญชี',    en:'ACCOUNTING',  color:'#1e3a8a', g:['#818cf8','#1e3a8a'], own:true, views:[],
+      soon:'ผังบัญชี · สมุดรายวัน · งบทดลอง · งบการเงิน' },
+    { key:'audit',   th:'ระบบตรวจสอบ',  en:'AUDIT',       color:'#be123c', g:['#fb7185','#9f1239'], own:true, views:[],
+      soon:'ยังไม่กำหนดขอบเขต — จองที่ไว้ก่อน' },
     { key:'me',      th:'พนักงาน',      en:'MY PROFILE',  color:'#0EA5A5', g:['#2dd4bf','#0f766e'], own:false,
       views:['clock','leave','ot','expense','docs'] },
-
     { key:'dev',     th:'ระบบพัฒนา',    en:'FEEDBACK',    color:'#4f46e5', g:['#818cf8','#4338ca'], own:false, views:[],
       soon:'รับคอมเมนต์ · แจ้งบั๊ก · คำขอปรับปรุงจากผู้ใช้และลูกค้า → เก็บเป็นรายการไว้พัฒนาต่อ' },
     /* 🏛️ ผู้ดูแลระบบ — เห็นเฉพาะพี่กี้ (super) · จัดการลูกค้าที่สมัครเข้ามา */
@@ -11024,7 +10960,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260907-1202';
+  var APP_BUILD='20260907-1519';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
