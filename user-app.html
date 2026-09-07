@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260907-1751">
+<link rel="stylesheet" href="user.css?v=20260907-2058">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -3932,30 +3932,13 @@
     }
     if(rv && !x.docNo) a.push({ key:'relink', label:'🔗 ส่งลิงก์เซ็นใหม่', call:'exRelink(' + q + ')' });
 
-    // ── งานแก้ไข ──
+    /* ── ตัดเมนูแก้ไขทั้งหมดออก (พี่กี้เคาะ 7 ก.ย. 69) ──
+       เดิมมี 13-14 รายการจนหาของไม่เจอ · งานแก้ทุกอย่างย้ายไปอยู่ในหน้า 🔎 เปิดดู/แก้ไข แล้ว
+       (แก้ประเภท · ยอด/รายละเอียด · ภาษี · บริษัท · ผู้รับเงิน · ไฟล์แนบ · สลิป · หลักฐาน ·
+        ก๊อปเลขบัญชี · ใบกำกับภาษีซื้อ · สร้างแฟ้ม · ย้อนสถานะ)
+       เมนูนี้เหลือเฉพาะ "งานที่ทำบ่อยจนต้องกดตรง" — อนุมัติ/จ่ายคืน/ยกเลิก
+       ⚠️ ฟังก์ชันเดิม (exEditType/exEditAmount/…) ยังอยู่ครบ — หน้ารายละเอียดและที่อื่นยังเรียกใช้ */
     a.push({ sep:true });
-    a.push({ key:'type', label:'✏️ แก้ประเภทค่าใช้จ่าย', call:'exEditType(' + q + ')' });
-    if(!paid) a.push({ key:'amount', label:'✏️ แก้ยอด/รายละเอียด', call:'exEditAmount(' + q + ')' });
-    if(x.payeeName && !x.whtNo) a.push({ key:'whtedit', label:'🧾 แก้ภาษีหัก ณ ที่จ่าย', call:'exEditWht(' + q + ')' });
-    if(!rv) a.push({ key:'proofType', label:'🧾 แก้หลักฐาน (ใบเสร็จ/SR)', call:'exSetProof(' + q + ')' });
-    // บริษัทผู้ออกเอกสาร — เปลี่ยนได้จนกว่าจะออกกระดาษ (เงื่อนไขเดียวกับด่าน setExpenseEntity_)
-    if(hasManyEnt && !hasDoc) a.push({ key:'entity', label:'🏢 บริษัทผู้ออกเอกสาร', call:'exSetEntity(' + q + ')' });
-    if(rv)  a.push({ key:'payee', label:'✏️ แก้ข้อมูลผู้รับเงิน', call:'exEditPayee(' + q + ')' });
-    a.push({ key:'rcp', label:'📎 แก้ไฟล์แนบ', call:'exEditRcp(' + q + ')' });
-    // ใบกำกับภาษีซื้อ (E4) — กรอกได้ทุกสถานะ เพราะใบกำกับมาถึงทีหลังบ่อย · ไม่แตะยอด/เอกสารของใบ
-    a.push({ key:'vat', label:'🧾 ใบกำกับภาษีซื้อ',
-      call:"vatOpen('expense'," + q + ',' + (Number(x.amount) || 0) + ')' });
-    if(paid) a.push({ key:'editslip', label:'📎 แก้สลิปโอนคืน', call:'exEditSlip(' + q + ')' });
-    if(approved || paid) a.push({ key:'rebuild', label:(x.dossier ? '🔄 สร้างแฟ้มใหม่' : '🗂️ สร้างแฟ้มครบชุด'), call:'exRebuild(' + q + ')' });
-
-    // ── ย้อน/ลบ ──
-    if(x.bankAcct)
-      a.push({ key:'copybank', label:'📋 ก๊อปเลขบัญชี ' + x.bankAcct,
-        call:"copyTxt('" + String(x.bankAcct).replace(/'/g, "\\'") + "')" });
-
-    a.push({ sep:true });
-    if(!paid && (approved || rejected) && !hasDoc)
-      a.push({ key:'undo', label:'↩️ ย้อนเป็นรออนุมัติ', call:'exUndo(' + q + ')' });
     a.push({ key:'trash', label:'🗑️ ยกเลิกใบนี้', call:'exTrash(' + q + ')', danger:true });
     return a;
   }
@@ -7421,6 +7404,8 @@
            '<div class="fld"><label>ที่อยู่</label><textarea id="exdPayeeAddr">'+esc(x.payeeAddr||'')+'</textarea></div>')
         : '')+
       imgsFldHtml('exdRcp','📎 เปลี่ยนไฟล์แนบ (เว้นว่าง = ใช้ไฟล์เดิม)')+
+      /* สลิปโอนคืน — เฉพาะใบที่จ่ายแล้ว (สลิปมักตามมาทีหลัง) · แนบใหม่แล้วระบบรวมแฟ้มให้เอง */
+      (paid?imgsFldHtml('exdSlip','💸 เปลี่ยนสลิปโอนคืน (เว้นว่าง = ใช้ของเดิม)'):'')+
       (hasDoc?'<div class="m-hint" style="color:#C8730B">⚠️ ใบนี้ออกเอกสารแล้ว — แก้เสร็จอย่าลืมสร้างเอกสาร/แฟ้มใหม่ให้ตรงกัน</div>':'')+
 
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button>'+
@@ -7428,6 +7413,9 @@
 
       '<div class="exd-sec">งานอื่นของใบนี้</div>'+
       '<div class="exd-acts">'+
+        /* หลักฐาน (ใบเสร็จ ⇄ ใบรับรองแทน) — ใบ RV ไม่มี (เป็นคนละสายเอกสาร ตรงกับด่าน handleWaExpSetProof_) */
+        (!rv?'<button class="btn btn-ghost btn-sm" onclick="closeModal();exSetProof(\''+esc(no)+'\')">🧾 หลักฐาน: '+esc(x.docType||'แนบใบเสร็จ')+'</button>':'')+
+        (x.bankAcct?'<button class="btn btn-ghost btn-sm" onclick="copyTxt(\''+esc(String(x.bankAcct).replace(/'/g,"\\'"))+'\')">📋 ก๊อปเลขบัญชี</button>':'')+
         (pending?'<button class="btn btn-ghost btn-sm" onclick="closeModal();'+(x.payeeName?'exOpenWht':'exApprove')+'(\''+esc(no)+'\')">✅ อนุมัติ</button>':'')+
         (pending?'<button class="btn btn-ghost btn-sm" onclick="closeModal();exReject(\''+esc(no)+'\')">❌ ไม่อนุมัติ</button>':'')+
         (approved&&!paid?'<button class="btn btn-ghost btn-sm" onclick="closeModal();exOpenPay(\''+esc(no)+'\',\''+esc(String(x.nick||''))+'\','+(Number(x.amount)||0)+','+((rv&&!x.docNo)?1:0)+')">💰 บันทึกจ่ายคืน</button>':'')+
@@ -7438,6 +7426,7 @@
         '<button class="btn btn-ghost btn-sm" style="color:#B4242A" onclick="closeModal();exTrash(\''+esc(no)+'\')">🗑️ ยกเลิกใบนี้</button>'+
       '</div>');
     imgsFldBind('exdRcp');
+    if($('exdSlip')) imgsFldBind('exdSlip');
   }
 
   /** บันทึกทุกช่องที่เปลี่ยน — ทีละก้อนตามลำดับ แล้วสรุปว่าอะไรสำเร็จ/อะไรไม่ */
@@ -7480,6 +7469,9 @@
     var rcp=IMGS['exdRcp']||[];
     if(rcp.length) jobs.push({ name:'ไฟล์แนบ', req:{action:'waExpEditReceipt',uid:UID,no:no,imgs:JSON.stringify(rcp)} });
 
+    var slip=IMGS['exdSlip']||[];
+    if(slip.length) jobs.push({ name:'สลิปโอนคืน', req:{action:'waExpEditSlip',uid:UID,no:no,imgs:JSON.stringify(slip)} });
+
     if(!jobs.length){ toast('ยังไม่มีอะไรเปลี่ยนค่ะ'); return; }
 
     busy('กำลังบันทึก '+jobs.length+' รายการ…');
@@ -7488,7 +7480,7 @@
        ถ้ายิงขนาน ตัวคิดภาษีอาจอ่านยอดเก่าไปคิด */
     function next(i){
       if(i>=jobs.length){
-        unbusy(); closeModal(); IMGS['exdRcp']=[];
+        unbusy(); closeModal(); IMGS['exdRcp']=[]; IMGS['exdSlip']=[];
         if(failed.length) toast('บันทึก '+done.length+' รายการ · ไม่สำเร็จ: '+failed.join(' · '));
         else toast('✅ บันทึกแล้ว: '+done.join(' · '));
         exReload();
@@ -11245,7 +11237,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260907-1751';
+  var APP_BUILD='20260907-2058';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
