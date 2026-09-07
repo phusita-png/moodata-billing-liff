@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260907-1156">
+<link rel="stylesheet" href="user.css?v=20260907-1202">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -63,7 +63,10 @@
   .rm-bar{ display:none; flex-wrap:wrap; align-items:center; gap:8px 10px; padding:10px 16px;
     background:#FEF3C7; border-bottom:1px solid #FCD34D;
     font-size:13px; font-weight:600; color:#78350F; line-height:1.5; }
-  .app.inroom .rm-bar{ display:flex; }
+  /* 🔴 แถบเหลืองเอาออกแล้ว (พี่กี้ 7 ก.ย. 69) — ล้าง innerHTML อย่างเดียวไม่พอ
+     กล่องเปล่าสีเหลืองยังแสดงอยู่ · แถบบนสีส้ม + ปุ่มห้องบอกพอแล้ว
+     คง element ไว้เฉย ๆ เผื่อโค้ดเก่าอ้างถึง แต่ไม่แสดงในทุกกรณี */
+  .rm-bar, .app.inroom .rm-bar{ display:none !important; }
   .rm-bar b{ font-weight:800; }
   .rm-bar button{ margin-left:auto; flex:0 0 auto; padding:6px 13px; border:1px solid #D97706;
     border-radius:999px; background:#fff; color:#92400E; font:inherit; font-size:12.5px;
@@ -260,6 +263,7 @@
       radial-gradient(520px 380px at 12% 96%, rgba(251,191,36,.22), transparent 60%),
       linear-gradient(160deg,#f7fbff 0%,#f4f6fb 100%);
   }
+  .pt-ver{ text-align:center; font-size:11px; color:var(--muted); opacity:.65; margin:2px 0 18px; }
   .pt-hero{ margin:2px 0 18px; }
   .pt-hero h2{ font-size:21px; font-weight:800; color:#1F2733; margin:0 0 4px; }
   .pt-hero p{ font-size:13.5px; color:var(--muted); margin:0; }
@@ -1984,7 +1988,10 @@
     // พี่กี้ 5 ก.ย.: ไม่เอาชื่อผู้ใช้ในคำทักทาย — ใช้ "สวัสดีค่ะ ยินดีค่ะ" เหมือนกันทุกคน
     $('main').innerHTML='<div class="pt-hero"><h2>สวัสดีค่ะ ยินดีค่ะ</h2>'+
       '<p>เลือกระบบที่ต้องการเข้าใช้งาน · Choose an application</p></div>'+
-      '<div class="pt-grid">'+cards+'</div>';
+      '<div class="pt-grid">'+cards+'</div>'+
+      /* เลขเวอร์ชันของไฟล์ที่เครื่องนี้ใช้อยู่จริง — เวลาเจอ "แก้แล้วแต่จอยังเหมือนเดิม"
+         จะได้รู้ทันทีว่าเป็นแคชค้าง ไม่ต้องเดา (พี่กี้เจอ 3 รอบใน 2 วัน) */
+      '<div class="pt-ver">เวอร์ชัน '+esc(APP_BUILD)+'</div>';
     Array.prototype.forEach.call(document.querySelectorAll('.pt-c'), function(b){
       b.addEventListener('click', function(){ openModule(b.getAttribute('data-mod')); }); });
   }
@@ -11017,7 +11024,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260907-1156';
+  var APP_BUILD='20260907-1202';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
