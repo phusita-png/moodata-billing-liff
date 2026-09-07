@@ -1226,6 +1226,27 @@
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
   function fatal(m){ $('loader').classList.add('hidden'); $('app').classList.add('hidden');
     document.body.insertAdjacentHTML('beforeend','<div class="loader"><div style="font-size:38px">⚠️</div><div class="loader-text" style="max-width:80vw;text-align:center">'+esc(m)+'</div></div>'); }
+  /* คนนอกที่ด่านทีมปฏิเสธ — ให้ทางไปต่อ ไม่ใช่จอ ⚠️ ตัน (7 ก.ย. 69)
+     ⚠️ ห้ามพาเข้าหน้าสมัครเองอัตโนมัติ — พนักงานที่รอผู้ดูแลเพิ่มชื่อจะงงว่าให้กรอกชื่อบริษัททำไม */
+  function fatalGuest(m){
+    $('loader').classList.add('hidden'); $('app').classList.add('hidden');
+    var box=document.createElement('div');
+    box.className='loader';
+    box.innerHTML='<div style="font-size:38px">👋</div>'+
+      '<div class="loader-text" style="max-width:82vw;text-align:center;line-height:1.6">'+
+        'ยังไม่พบชื่อคุณในระบบค่ะ<br><span style="opacity:.85;font-size:13px">'+esc(m)+'</span></div>'+
+      '<div style="display:flex;flex-direction:column;gap:10px;margin-top:20px;width:min(320px,82vw)">'+
+        /* ⚠️ กำหนดสีตรงนี้เอง — จอนี้อยู่นอก .app จึงไม่มีตัวแปรสีของธีม
+           ใช้ .btn-primary เฉย ๆ แล้วปุ่มจะกลืนไปกับพื้นน้ำเงิน (เห็นตอนตรวจด้วยภาพ) */
+        '<button type="button" id="fgApply" class="btn" '+
+          'style="background:#fff;color:#1B72E8;font-weight:700">📝 สมัครใช้ระบบ</button>'+
+        '<a class="btn" style="background:rgba(255,255,255,.16);color:#fff;text-decoration:none;'+
+          'border:1px solid rgba(255,255,255,.45)" href="tel:0804949314">📞 ติดต่อทีมงาน 080-494-9314</a>'+
+      '</div>';
+    document.body.appendChild(box);
+    var b=box.querySelector('#fgApply');
+    if(b) b.addEventListener('click', function(){ box.remove(); showApply(); });
+  }
   var _tt; function toast(m){ var t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(_tt); _tt=setTimeout(function(){t.classList.remove('show');},2400); }
   // overlay "กำลังทำรายการ" — บังจอ + กันกดซ้ำ (เงียบนาน ผู้ใช้กดซ้ำ = ทำรายการซ้ำ · พี่แจ้ง 16 ก.ค.)
   var _busyDone;
@@ -10720,7 +10741,25 @@
     }catch(e){}
     return out;
   }
-  function startParam(){ return String(allParams().p||'').toLowerCase(); }
+  /* จำ "เจตนา" ของลิงก์ไว้ตั้งแต่วินาทีแรกที่หน้าโหลด (7 ก.ย. 69)
+     ลิงก์พา ?p=apply มา แต่ query หายระหว่างทางได้หลายทาง (ไฟล์เก่าในแคช redirect ทิ้ง ·
+     LIFF แปลง liff.state · ผู้ใช้กด reload) — พอหายแล้วคนนอกไปโผล่ด่านทีมทันที
+     ⚠️ ใช้ครั้งเดียวแล้วลบ (one-shot) ไม่งั้นคนที่เปิดเว็บรอบถัดไปโดนพาเข้าหน้าสมัครค้าง */
+  (function keepIntent_(){
+    try{
+      var p0=allParams();
+      if(String(p0.p||'').toLowerCase()==='apply') sessionStorage.setItem('yd_intent','apply');
+    }catch(e){}
+  })();
+  function startParam(){
+    var p=String(allParams().p||'').toLowerCase();
+    if(p) return p;
+    try{
+      var keep=sessionStorage.getItem('yd_intent')||'';
+      if(keep){ sessionStorage.removeItem('yd_intent'); return keep; }
+    }catch(e){}
+    return '';
+  }
   function uidOverride(){ try{ return new URLSearchParams(location.search).get('uid')||''; }catch(e){ return ''; } }
   /* ลิงก์เชิญเข้าห้อง (6 ก.ย. 69) — เราเปิดห้อง+คีย์ข้อมูลให้ก่อน แล้วส่งลิงก์เดียวให้ลูกค้ากด
      คนแรกที่กด = เจ้าของห้องนั้น · ต้องผูกให้เสร็จ "ก่อน" waBootstrap ไม่งั้นยังถูกมองเป็นคนนอก */
@@ -10737,7 +10776,13 @@
   }
   function startBoot(){
     jsonp({action:'waBootstrap', uid:UID}).then(function(r){
-      if(!r||!r.ok){ fatal((r&&r.error)||'โหลดข้อมูลไม่สำเร็จ'); return; }
+      if(!r||!r.ok){
+        var _msg=(r&&r.error)||'โหลดข้อมูลไม่สำเร็จ';
+        /* คนนอกมาถึงหน้านี้ = ทางเข้าหน้าสมัครหลุดไประหว่างทาง (query หาย/แคชค้าง)
+           เดิมขึ้น ⚠️ อย่างเดียว เขาไปต่อไม่ได้เลย — ต้องมีทางออกให้เสมอ (7 ก.ย. 69) */
+        if(/ยังไม่ได้ลงทะเบียน|เฉพาะทีมงาน/.test(_msg)) fatalGuest(_msg); else fatal(_msg);
+        return;
+      }
       NICK=r.nick||''; if(NICK){ $('hdSub').textContent=NICK; }
       MEUID=r.uid||UID||MEUID;   // userId ผู้ใช้ (ใช้กรอง "งานของฉัน" + ตัดตัวเองจาก dropdown)
       IS_OWNER=!!r.isOwner;
@@ -10843,7 +10888,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260907-1117';
+  var APP_BUILD='20260907-1124';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
