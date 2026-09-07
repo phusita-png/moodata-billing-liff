@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260907-1553">
+<link rel="stylesheet" href="user.css?v=20260907-1751">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -55,6 +55,18 @@
     padding:1px 9px; font-size:12px; font-weight:700 }
   .bell-g-r{ font-size:12.5px; color:#6B7F92; margin:3px 0 0 26px; line-height:1.5 }
   .bell-empty{ padding:22px 12px; text-align:center; color:#6B7F92; font-size:13.5px }
+  /* 🔎 หน้ารายละเอียดใบเบิก (ดูทั้งหมด + แก้ทุกช่องในหน้าเดียว · 7 ก.ย. 69) */
+  .exd-head{ display:flex; align-items:center; gap:10px; margin:2px 0 12px; flex-wrap:wrap }
+  .exd-amt{ margin-left:auto; font-size:19px; font-weight:800; color:#12202E }
+  .exd-box{ background:#F5F8FC; border:1px solid #E2EAF3; border-radius:12px; padding:10px 13px; margin-bottom:10px }
+  .exd-r{ display:flex; gap:10px; font-size:13.5px; padding:3px 0; align-items:baseline }
+  .exd-r span{ color:#6B7F92; flex:0 0 42% }
+  .exd-r b{ color:#12202E; font-weight:600; word-break:break-word }
+  .exd-links{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:6px }
+  .exd-lk{ font-size:13px; background:#E8F3FC; color:#0B5C9E; border-radius:8px; padding:5px 10px; text-decoration:none }
+  .exd-sec{ font-size:13px; font-weight:700; color:#6B7F92; margin:16px 0 6px; padding-top:10px; border-top:1px solid #E7EDF4 }
+  .exd-acts{ display:flex; flex-wrap:wrap; gap:8px }
+  .exd-acts .btn{ width:auto; flex:0 0 auto }
   .rm-btn .rm-lb{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .rm-btn .rm-ca{ opacity:.8; font-size:10px; }
   /* อยู่ห้องลูกค้า = เปลี่ยนสีทั้งแถบ + มีแถบเตือน */
@@ -3903,6 +3915,11 @@
     if(!isOwner) return a;   // พนักงานเห็นแค่ลิงก์เอกสารของใบตัวเอง
 
     if(a.length) a.push({ sep:true });
+    /* 🔎 เปิดดู = ทางเข้าหลักของทุกใบ (พี่กี้ 7 ก.ย.) — เห็นทุกช่อง + แก้ได้ทีเดียวจบ
+       ⚠️ ต้องอยู่หลังด่าน isOwner — หน้านี้มีฟอร์มแก้ + ปุ่มอนุมัติ พนักงานเห็นแล้วสับสน
+          (เขาเห็นเฉพาะลิงก์เอกสารของใบตัวเองเหมือนเดิม)
+       เมนูที่เหลือคงไว้เป็นทางลัด ไม่ต้องเปิดหน้ารายละเอียดก่อนก็ทำงานเดิมได้ */
+    a.push({ key:'detail', label:'🔎 เปิดดู / แก้ไข', call:'exDetail(' + q + ')' });
     // ── งานหลักตามสถานะ (อยู่บนสุดของกลุ่มคำสั่ง) ──
     if(pending){
       // ใบธรรมดาผ่าน exApprove — มีหลายนิติบุคคลถึงจะถามบริษัทก่อน (บริษัทเดียว = อนุมัติทันทีเหมือนเดิม)
@@ -7323,6 +7340,170 @@
       exReload();
     }).catch(function(e){ mErr(e.message); });
   }
+  /* ═══════════ 🔎 หน้ารายละเอียดใบเบิก — ดูทั้งหมด + แก้ได้ทุกช่องในหน้าเดียว (7 ก.ย. 2569) ═══════════
+     พี่กี้: "แสดงข้อมูลทั้งหมดของรายการเลยทุกครั้งที่กด แก้ได้ทีเดียว ไม่ต้องมีเมนูแก้ ๆ หลายอย่าง
+              เมนูเปิดดู เพิ่มให้เห็นก่อนอนุมัติ แก้ไขที่ก็ได้ทุกอย่าง"
+
+     🔴 กติกาที่ยึด
+     ① **เงื่อนไขโชว์/ปิดช่อง ต้องตรงกับด่าน backend เป๊ะ** (บทเรียน §7.13) —
+        โชว์ช่องที่ backend จะปฏิเสธ = พี่กรอกเสร็จแล้วเจอ error เปล่า ๆ
+     ② **ไม่สร้าง route ใหม่** — ใช้ของเดิมทั้งหมด (waExpSetType · waExpEditAmount · waExpEditWht ·
+        waExpSetEntity · waExpEditPayee · waExpEditReceipt) ส่งเฉพาะช่องที่เปลี่ยนจริง
+        ตรรกะภาษี/ด่านตรวจจึงเดินทางเดียวกับที่อื่นเสมอ
+     ③ **ส่งทีละก้อนตามลำดับ แล้วสรุปผลรวม** — ก้อนไหนพังต้องบอกว่าก้อนไหน ไม่ใช่ "บันทึกไม่สำเร็จ" ลอย ๆ
+        (ยอดกับภาษีคนละ route กัน ถ้ายิงพร้อมกันแล้วอันหลังคิดจากยอดเก่า) */
+  var EXD_NO='';
+
+  function exDetail(no){
+    var x=exFind(no); if(!x){ toast('ไม่พบข้อมูลใบ '+no+' ลองรีเฟรชนะคะ'); return; }
+    EXD_NO=no;
+    var st=String(x.status||''), paid=st.indexOf('จ่ายแล้ว')>=0, rejected=st.indexOf('ไม่อนุมัติ')>=0;
+    var pending=st.indexOf('รออนุมัติ')>=0;
+    var approved=!pending && !rejected && st.indexOf('อนุมัติ')>=0;
+    var rv=!!(x.docType && x.docType.indexOf('ใบสำคัญ')>=0);
+    var hasDoc=!!(x.docNo||x.whtNo);
+    // ด่านเดียวกับ backend: จ่ายแล้วแก้ยอดไม่ได้ · ออก 50 ทวิ แล้วแก้ภาษีไม่ได้ · ออกกระดาษแล้วเปลี่ยนบริษัทไม่ได้
+    var canAmt=!paid, canWht=!!(x.payeeName && !x.whtNo), canEnt=(multiEnt() && !hasDoc);
+
+    function ro(label, val){   // แถวอ่านอย่างเดียว
+      return '<div class="exd-r"><span>'+esc(label)+'</span><b>'+(val||'—')+'</b></div>';
+    }
+    var links='';
+    [[x.receiptUrl,'📎 ไฟล์แนบ'],[x.docLink,'📄 '+(x.docNo||'เอกสาร')],[x.whtLink,'🧾 50 ทวิ '+(x.whtNo||'')],
+     [x.dossier,'🗂️ แฟ้มครบชุด'],[x.paidSlip,'💸 สลิปโอนคืน']].forEach(function(p){
+      if(p[0]) links+='<a class="exd-lk" href="'+esc(p[0])+'" target="_blank">'+esc(p[1])+'</a>';
+    });
+    if(!links) links='<span style="color:#B4242A;font-size:13px">ยังไม่มีเอกสาร/ไฟล์แนบในใบนี้</span>';
+
+    var typeOpts=EXP_TYPES.map(function(t){
+      var lb=(typeof t==='string')?t:(t.label||t.key||'');
+      return '<option value="'+esc(lb)+'"'+(lb===x.type?' selected':'')+'>'+esc(lb)+'</option>';
+    }).join('');
+    var sectOpts='<option value="">— ไม่ระบุ —</option>'+SECTIONS.map(function(s){
+      return '<option value="'+esc(s.code)+'"'+(s.code===x.incomeSection?' selected':'')+'>'+esc(s.code+' '+s.label)+'</option>';
+    }).join('');
+
+    modal('<h3>🔎 ใบเบิก '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="exd-head"><span class="lvb '+(paid?'lvb-ok':(pending?'lvb-wait':''))+'">'+esc(st)+'</span>'+
+        '<span class="exd-amt">'+money(x.amount)+' บาท</span></div>'+
+
+      '<div class="exd-box">'+
+        ro('ผู้เบิก', esc(x.nick||'—'))+
+        ro('วันที่แจ้ง', esc(String(x.createdAt||'').split(' ')[0]||'—'))+
+        (x.approver?ro('ผู้อนุมัติ', esc(x.approver)):'')+
+        (x.payDate?ro('วันที่จ่าย', esc(x.payDate)):'')+
+        (x.whtRate?ro('หัก ณ ที่จ่าย', x.whtRate+'% = '+money(x.whtAmt||0)+' บาท → โอนสุทธิ '+money(x.netAmt||x.amount)):'')+
+        (x.formType?ro('แบบยื่น', esc(x.formType)):'')+
+        (x.bankAcct?ro('บัญชีรับโอน', esc((x.bankName||'')+' '+x.bankAcct+' '+(x.bankOwner||''))):'')+
+        (x.note?ro('หมายเหตุ', esc(x.note)):'')+
+      '</div>'+
+      '<div class="exd-links">'+links+'</div>'+
+
+      '<div class="exd-sec">✏️ แก้ไขข้อมูล</div>'+
+      '<div class="fld"><label>ประเภทค่าใช้จ่าย</label><select id="exdType">'+typeOpts+'</select></div>'+
+      '<div class="fld"><label>ยอดเงิน (บาท)'+(canAmt?'':' — จ่ายแล้ว แก้ไม่ได้')+'</label>'+
+        '<input id="exdAmt" inputmode="decimal" value="'+esc(String(x.amount||''))+'"'+(canAmt?'':' disabled')+'></div>'+
+      '<div class="fld"><label>รายละเอียด</label>'+
+        '<textarea id="exdDetail"'+(canAmt?'':' disabled')+'>'+esc(x.detail||'')+'</textarea></div>'+
+      (canWht
+        ? ('<div class="fld"><label>ประเภทเงินได้ (มาตรา)</label><select id="exdSect">'+sectOpts+'</select></div>'+
+           '<div class="fld"><label>อัตราหัก ณ ที่จ่าย (%)</label>'+
+             '<input id="exdRate" type="number" step="0.01" min="0" max="100" value="'+esc(String(x.whtRate||0))+'">'+
+             '<div class="m-hint" style="margin-top:4px">ใส่อัตราเท่าไรก็ได้ 0-100 · หรือระบุยอดบาทด้านล่าง (ยอดชนะอัตรา)</div></div>'+
+           '<div class="fld"><label>หรือระบุยอดภาษีเป็นบาท</label>'+
+             '<input id="exdWhtAmt" type="number" step="0.01" min="0" placeholder="เว้นว่าง = ใช้อัตราด้านบน"></div>')
+        : (x.whtNo?'<div class="m-hint">🧾 ออก 50 ทวิ '+esc(x.whtNo)+' แล้ว — แก้ภาษีไม่ได้ค่ะ</div>':''))+
+      (canEnt?entField('exdEnt', x.entity, 'บริษัทผู้ออกเอกสาร'):'')+
+      (rv
+        ? ('<div class="exd-sec">ผู้รับเงิน (ใบสำคัญรับเงิน)</div>'+
+           '<div class="fld"><label>ชื่อผู้รับเงิน</label><input id="exdPayee" value="'+esc(x.payeeName||'')+'"></div>'+
+           '<div class="fld"><label>เลขบัตรประชาชน</label><input id="exdPayeeId" inputmode="numeric" value="'+esc(x.payeeId||'')+'"></div>'+
+           '<div class="fld"><label>ที่อยู่</label><textarea id="exdPayeeAddr">'+esc(x.payeeAddr||'')+'</textarea></div>')
+        : '')+
+      imgsFldHtml('exdRcp','📎 เปลี่ยนไฟล์แนบ (เว้นว่าง = ใช้ไฟล์เดิม)')+
+      (hasDoc?'<div class="m-hint" style="color:#C8730B">⚠️ ใบนี้ออกเอกสารแล้ว — แก้เสร็จอย่าลืมสร้างเอกสาร/แฟ้มใหม่ให้ตรงกัน</div>':'')+
+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button>'+
+      '<button class="btn btn-primary" onclick="exdSave()">💾 บันทึกทั้งหมด</button></div>'+
+
+      '<div class="exd-sec">งานอื่นของใบนี้</div>'+
+      '<div class="exd-acts">'+
+        (pending?'<button class="btn btn-ghost btn-sm" onclick="closeModal();'+(x.payeeName?'exOpenWht':'exApprove')+'(\''+esc(no)+'\')">✅ อนุมัติ</button>':'')+
+        (pending?'<button class="btn btn-ghost btn-sm" onclick="closeModal();exReject(\''+esc(no)+'\')">❌ ไม่อนุมัติ</button>':'')+
+        (approved&&!paid?'<button class="btn btn-ghost btn-sm" onclick="closeModal();exOpenPay(\''+esc(no)+'\',\''+esc(String(x.nick||''))+'\','+(Number(x.amount)||0)+','+((rv&&!x.docNo)?1:0)+')">💰 บันทึกจ่ายคืน</button>':'')+
+        (rv&&!x.docNo?'<button class="btn btn-ghost btn-sm" onclick="closeModal();exRelink(\''+esc(no)+'\')">🔗 ส่งลิงก์เซ็นใหม่</button>':'')+
+        '<button class="btn btn-ghost btn-sm" onclick="closeModal();vatOpen(\'expense\',\''+esc(no)+'\','+(Number(x.amount)||0)+')">🧾 ใบกำกับภาษีซื้อ</button>'+
+        ((approved||paid)?'<button class="btn btn-ghost btn-sm" onclick="closeModal();exRebuild(\''+esc(no)+'\')">🗂️ สร้างแฟ้มใหม่</button>':'')+
+        (!paid&&(approved||rejected)&&!hasDoc?'<button class="btn btn-ghost btn-sm" onclick="closeModal();exUndo(\''+esc(no)+'\')">↩️ ย้อนเป็นรออนุมัติ</button>':'')+
+        '<button class="btn btn-ghost btn-sm" style="color:#B4242A" onclick="closeModal();exTrash(\''+esc(no)+'\')">🗑️ ยกเลิกใบนี้</button>'+
+      '</div>');
+    imgsFldBind('exdRcp');
+  }
+
+  /** บันทึกทุกช่องที่เปลี่ยน — ทีละก้อนตามลำดับ แล้วสรุปว่าอะไรสำเร็จ/อะไรไม่ */
+  function exdSave(){
+    var no=EXD_NO, x=exFind(no)||{};
+    var jobs=[];   // { name, req } — ส่งเฉพาะที่ต่างจากของเดิมจริง
+    function val(id){ var el=$(id); return el?String(el.value||'').trim():''; }
+
+    var ty=val('exdType');
+    if(ty && ty!==x.type) jobs.push({ name:'ประเภท', req:{action:'waExpSetType',uid:UID,no:no,type:ty} });
+
+    var amt=val('exdAmt'), dt=val('exdDetail');
+    var amtEl=$('exdAmt');
+    if(amtEl && !amtEl.disabled && (Number(amt)!==Number(x.amount) || dt!==String(x.detail||''))){
+      if(!amt){ mErr('กรอกยอดเงินก่อนค่ะ'); return; }
+      if(!dt){ mErr('กรอกรายละเอียดก่อนค่ะ'); return; }
+      jobs.push({ name:'ยอด/รายละเอียด', req:{action:'waExpEditAmount',uid:UID,no:no,amount:amt,detail:dt} });
+    }
+
+    if($('exdSect')){
+      var sc=val('exdSect'), rt=val('exdRate'), wa=val('exdWhtAmt');
+      var changed = wa!=='' || sc!==String(x.incomeSection||'') || Number(rt)!==Number(x.whtRate||0);
+      if(sc && changed) jobs.push({ name:'ภาษีหัก ณ ที่จ่าย',
+        req:{action:'waExpEditWht',uid:UID,no:no,section:sc,rate:rt,whtAmt:wa} });
+    }
+
+    if($('exdEnt')){
+      var en=entVal('exdEnt');
+      if(en!==String(x.entity||'')) jobs.push({ name:'บริษัทผู้ออกเอกสาร', req:{action:'waExpSetEntity',uid:UID,no:no,entity:en} });
+    }
+
+    if($('exdPayee')){
+      var pn=val('exdPayee'), pi=val('exdPayeeId'), pa=val('exdPayeeAddr');
+      if(pn!==String(x.payeeName||'') || pi!==String(x.payeeId||'') || pa!==String(x.payeeAddr||'')){
+        jobs.push({ name:'ข้อมูลผู้รับเงิน',
+          req:{action:'waExpEditPayee',uid:UID,no:no,payeeName:pn,payeeId:pi,payeeAddr:pa} });
+      }
+    }
+
+    var rcp=IMGS['exdRcp']||[];
+    if(rcp.length) jobs.push({ name:'ไฟล์แนบ', req:{action:'waExpEditReceipt',uid:UID,no:no,imgs:JSON.stringify(rcp)} });
+
+    if(!jobs.length){ toast('ยังไม่มีอะไรเปลี่ยนค่ะ'); return; }
+
+    busy('กำลังบันทึก '+jobs.length+' รายการ…');
+    var done=[], failed=[];
+    /* ⚠️ ทำทีละก้อนตามลำดับ ไม่ยิงพร้อมกัน — ยอดกับภาษีเป็นคนละ route
+       ถ้ายิงขนาน ตัวคิดภาษีอาจอ่านยอดเก่าไปคิด */
+    function next(i){
+      if(i>=jobs.length){
+        unbusy(); closeModal(); IMGS['exdRcp']=[];
+        if(failed.length) toast('บันทึก '+done.length+' รายการ · ไม่สำเร็จ: '+failed.join(' · '));
+        else toast('✅ บันทึกแล้ว: '+done.join(' · '));
+        exReload();
+        return;
+      }
+      var j=jobs[i];
+      jsonpPost(j.req).then(function(r){
+        if(r&&r.ok) done.push(j.name); else failed.push(j.name+' ('+((r&&r.error)||'ไม่สำเร็จ')+')');
+        next(i+1);
+      }).catch(function(e){ failed.push(j.name+' ('+e.message+')'); next(i+1); });
+    }
+    next(0);
+  }
+  window.exDetail=exDetail; window.exdSave=exdSave;
+
   /** โหลดหน้าที่กำลังดูอยู่ใหม่ (ใช้ร่วมทุกปุ่มแก้ใบเบิก) */
   function exReload(){
     if(VIEW==='expdash') renderExpDash(); else if(VIEW==='expapprove') renderExpenseApprove(); else renderExpense();
@@ -11064,7 +11245,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260907-1553';
+  var APP_BUILD='20260907-1751';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
