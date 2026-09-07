@@ -13,7 +13,10 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<link rel="stylesheet" href="user.css?v=13">
+<!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
+     เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
+     sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
+<link rel="stylesheet" href="user.css?v=20260907-1156">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1916,14 +1919,12 @@
     });
     var sub=document.querySelector('.tb-sub');
     if(sub) sub.textContent=(ROOM&&ROOM.name)||'Moodata';
-    var bar=$('rmBar'); if(!bar) return;
-    bar.innerHTML = inRoom
-      ? ('<span>⚠️ กำลังดูแลห้องของลูกค้า <b>'+esc(ROOM.name||ROOM.code)+
-         '</b> — ทุกอย่างที่ทำจะบันทึกลงห้องนี้</span>'+
-         '<button type="button" id="rmBack">กลับห้อง Moodata</button>')
-      : '';
-    var back=$('rmBack');
-    if(back) back.addEventListener('click', function(){ roomEnter('', 'Moodata'); });
+    /* 🔴 แถบ "กำลังดูแลห้องของลูกค้า" — เอาออก (พี่กี้เคาะ 7 ก.ย. 69)
+       ① มันเช็คแค่ "ห้องปัจจุบัน ≠ Moodata" ไม่ได้เช็คว่าเป็นผู้ดูแลระบบ
+          → **ลูกค้าที่อยู่ในห้องตัวเองก็เห็นแถบนี้ + ปุ่ม "กลับห้อง Moodata"** ซึ่งไม่ใช่เรื่องของเขาเลย
+       ② สำหรับพี่กี้เองก็ซ้ำซ้อน — แถบบนเปลี่ยนเป็นสีส้ม + ปุ่มห้องบอกชื่อห้องอยู่แล้ว
+       ทางกลับห้อง Moodata ยังอยู่ที่ปุ่ม 🏢 บนแถบบน (เห็นเฉพาะ super/นักบัญชี) */
+    var bar=$('rmBar'); if(bar) bar.innerHTML='';
   }
 
   /* เลือกห้อง */
@@ -2187,7 +2188,14 @@
     try{ localStorage.clear(); }catch(e){}
     try{ sessionStorage.setItem('yd_bye','1'); }catch(e){}   // reload แล้วรู้ว่าเพิ่งกดออก
     try{ if(window.liff && liff.logout) liff.logout(); }catch(e){}
-    location.reload();
+    /* กลับหน้าล็อกอินทันที ไม่พึ่ง reload (พี่กี้ 7 ก.ย.: กดออกแล้วไม่กลับหน้าล็อกอิน)
+       ในแอป LINE ตัว liff.logout() ไม่ได้ล้าง session ของ LINE เอง — พอ reload แล้ว
+       isLoggedIn ยัง true จึงไหลกลับเข้าระบบเหมือนไม่ได้กดออก
+       ธง yd_bye ยังตั้งไว้เผื่อผู้ใช้กด reload เองทีหลัง */
+    ROOM={code:'MOODATA',name:'Moodata',isHome:true}; BELL=null;   // กลับค่าเริ่มต้น ไม่ใช่ null (paintRoom อ่านต่อ)
+    var bd=$('bellDot'); if(bd) bd.hidden=true;
+    var bb=$('bellBtn'); if(bb) bb.style.display='none';
+    showWelcome(true);
   }
   /* โมดูลที่จองที่ไว้ (ยังไม่มีเมนู) — บอกให้ชัดว่าจะมีอะไร ไม่ใช่กดแล้วเจอหน้าว่าง */
   function renderModSoon(){
@@ -11009,7 +11017,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260907-1144';
+  var APP_BUILD='20260907-1156';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
