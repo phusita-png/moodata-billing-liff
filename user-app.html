@@ -1061,9 +1061,13 @@
       <label class="ap-f"><span>เบอร์ / อีเมล</span><input id="apPhone" type="text" placeholder="08x-xxx-xxxx หรือ name@company.com"></label>
       <div class="ap-f"><span>สนใจระบบไหน</span>
         <div class="ap-picks">
-          <label class="hq-pk"><input type="checkbox" data-want="การเงิน"> การเงิน + ภาษี</label>
-          <label class="hq-pk"><input type="checkbox" data-want="บุคคล"> บุคคล + เงินเดือน</label>
-          <label class="hq-pk"><input type="checkbox" data-want="งาน"> งาน</label>
+          <!-- ตัวเลือกต้องสะท้อนแพ็กที่ขายจริง (TENANT_PACKS ใน HubTenant.gs)
+               เดิมมี 3 ตัวเลือก ตกไป 2 แพ็ก (ประเมินผลงาน · เอกสาร) ลูกค้าที่สนใจของพวกนี้จึงบอกเราไม่ได้
+               "งาน + ประเมินผลงาน" จับคู่ตามที่พี่กี้เคาะ 7 ก.ย. 69 -->
+          <label class="hq-pk"><input type="checkbox" data-want="การเงิน + ภาษี"> การเงิน + ภาษี</label>
+          <label class="hq-pk"><input type="checkbox" data-want="บุคคล + เงินเดือน"> บุคคล + เงินเดือน</label>
+          <label class="hq-pk"><input type="checkbox" data-want="งาน + ประเมินผลงาน"> งาน + ประเมินผลงาน</label>
+          <label class="hq-pk"><input type="checkbox" data-want="เอกสารส่งนักบัญชี"> เอกสารส่งนักบัญชี</label>
         </div>
       </div>
     </div>
@@ -10888,7 +10892,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260907-1124';
+  var APP_BUILD='20260907-1132';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
