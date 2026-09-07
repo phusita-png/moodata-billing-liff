@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260907-2125">
+<link rel="stylesheet" href="user.css?v=20260907-2147">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -66,18 +66,39 @@
   .exd-lk{ font-size:13px; background:#E8F3FC; color:#0B5C9E; border-radius:8px; padding:5px 10px; text-decoration:none }
   .exd-sec{ font-size:13px; font-weight:700; color:#6B7F92; margin:16px 0 6px; padding-top:10px; border-top:1px solid #E7EDF4 }
   .exd-acts{ display:flex; flex-wrap:wrap; gap:8px }
-  /* ── ใบเบิกแบบเต็มหน้า (พี่กี้ 7 ก.ย. 69: ไม่เอาป๊อปอัป) ── */
-  .exd-top{ display:flex; align-items:center; gap:10px; margin-bottom:10px }
-  .exd-no{ font-size:16px; font-weight:800; color:#12202E }
-  .exd-view{ border:1px solid #E2EAF3; border-radius:12px; padding:8px; background:#F5F8FC }
-  .exd-tabs{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px }
-  .exd-tab{ font-size:12.5px; border:1px solid #D6E2EE; background:#fff; color:#38536B;
-            border-radius:999px; padding:5px 11px; cursor:pointer }
-  .exd-tab.on{ background:#1B72E8; border-color:#1B72E8; color:#fff; font-weight:700 }
-  /* สูงพอเห็นใบเสร็จทั้งใบบนมือถือ โดยไม่กินทั้งจอจนหาปุ่มไม่เจอ */
-  .exd-view iframe{ width:100%; height:min(62vh,520px); border:0; border-radius:9px; background:#fff; display:block }
-  .exd-nofile{ border:1px dashed #E3B7BA; background:#FDF3F4; color:#B4242A;
-               border-radius:12px; padding:12px 14px; font-size:13.5px }
+  /* ── ใบเบิกแบบเต็มหน้า (พี่กี้ 7 ก.ย. 69: ไม่เอาป๊อปอัป · จัดใหม่ตามหน้า PEAK) ──
+     auto-fit + minmax = จอกว้างเรียงหลายคอลัมน์เอง จอมือถือยุบเหลือคอลัมน์เดียวเอง
+     (ไม่ต้องเขียน media query · ที่ว่างด้านขวาบนจอคอมหายไป ตามที่พี่ขอ) */
+  .exd-top{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:4px }
+  .exd-no{ font-size:17px; font-weight:800; color:#12202E }
+  .exd-hint{ font-weight:400; color:#8FA2B4; font-size:12px; margin-left:8px }
+  .exd-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(185px,1fr)); gap:2px 18px;
+             background:#F5F8FC; border:1px solid #E2EAF3; border-radius:12px; padding:12px 14px }
+  .exd-c{ padding:5px 0; min-width:0 }
+  .exd-c span{ display:block; color:#6B7F92; font-size:12px }
+  .exd-c b{ color:#12202E; font-weight:600; font-size:13.5px; word-break:break-word }
+  .exd-wide{ grid-column:1/-1 }
+  .exd-files{ display:grid; grid-template-columns:repeat(auto-fill,minmax(148px,1fr)); gap:10px }
+  .exd-f{ display:block; text-align:left; border:1px solid #E2EAF3; border-radius:12px; background:#fff;
+          padding:8px; cursor:pointer; font:inherit; overflow:hidden }
+  .exd-f:hover{ border-color:#1B72E8; box-shadow:0 2px 10px rgba(27,114,232,.13) }
+  /* กล่องรูปตัวอย่าง — เล็กพอให้เห็นหลายไฟล์พร้อมกัน แต่พอรู้ว่าเป็นเอกสารอะไร */
+  /* ไอคอนอยู่ใต้รูปเสมอ — รูปตัวอย่างโหลดไม่ขึ้น (ไฟล์ไม่ได้แชร์/ไม่ใช่ Drive) จะได้ไม่เหลือกล่องเทาเปล่า */
+  .exd-f-th{ display:flex; align-items:center; justify-content:center; position:relative;
+             height:104px; border-radius:8px; background:#F1F5F9; font-size:30px;
+             overflow:hidden; margin-bottom:7px }
+  .exd-f-th img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:top }
+  .exd-f-n{ display:block; font-size:12.5px; font-weight:700; color:#12202E; white-space:nowrap;
+            overflow:hidden; text-overflow:ellipsis }
+  .exd-f-s{ display:block; font-size:11.5px; color:#7C8FA3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+  .exd-nofile{ grid-column:1/-1; border:1px dashed #E3B7BA; background:#FDF3F4; color:#B4242A;
+               border-radius:12px; padding:12px 14px; font-size:13.5px; font-weight:600 }
+  .exd-form{ display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:0 16px }
+  .exd-bar{ display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;
+            margin-top:16px; padding-top:14px; border-top:1px solid #E7EDF4 }
+  .exd-bar .btn{ flex:1 1 150px; max-width:260px }
+  /* .lvb ตั้ง margin-left:auto ไว้ (ใช้ในการ์ดใบลา) — ในแถบหัวเราต้องให้ป้ายติดกับเลขที่ใบ */
+  .exd-top .lvb{ margin-left:0 }
   .exd-acts .btn{ width:auto; flex:0 0 auto }
   .rm-btn .rm-lb{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .rm-btn .rm-ca{ opacity:.8; font-size:10px; }
@@ -7373,16 +7394,23 @@
     try{ if(window.liff && liff.openWindow){ liff.openWindow({url:u, external:true}); return; } }catch(e){}
     window.open(u,'_blank');
   }
-  function exdPick(i){
+  /* กดการ์ดไฟล์ = เปิดไฟล์เต็มหน้า (พี่กี้: "พรีวิวไม่ต้องใหญ่ขนาดนี้ กดไปแสดงอีกหน้าดีกว่า")
+     ไฟล์ Drive เปิดหน้า /view ของ Drive เอง — ซูม/หมุน/โหลดได้ครบกว่าที่เราทำเอง */
+  function exdOpenFile(i){
     var f=EXD_FILES[i]; if(!f) return;
-    var fr=$('exdFrame'), id=driveId_(f.url);
-    Array.prototype.forEach.call(document.querySelectorAll('.exd-tab'), function(b,k){ b.classList.toggle('on', k===i); });
-    if(fr) fr.src = id ? ('https://drive.google.com/file/d/'+id+'/preview') : 'about:blank';
-    var op=$('exdOpen'); if(op) op.onclick=function(){ openUrl(f.url); };
-    var nf=$('exdNoEmbed'); if(nf) nf.style.display = id ? 'none' : 'block';
+    var id=driveId_(f.url);
+    openUrl(id ? ('https://drive.google.com/file/d/'+id+'/view') : f.url);
   }
-  window.exdBack=exdBack; window.exdPick=exdPick; window.openUrl=openUrl;
+  window.exdBack=exdBack; window.exdOpenFile=exdOpenFile; window.openUrl=openUrl;
 
+  /* หน้าใบเบิก (จัดใหม่ 7 ก.ย. 69 รอบ 2 — พี่กี้ส่งตัวอย่างหน้า PEAK มาให้ดู)
+     สิ่งที่พี่ขอ:
+       ① "ใช้พื้นที่ให้พอดี ไม่ต้องเหลือพื้นว่างเยอะ" → ข้อมูลเรียงเป็นกริดหลายคอลัมน์บนจอกว้าง
+          (auto-fit ทำให้จอมือถือยุบเหลือคอลัมน์เดียวเอง ไม่ต้องเขียน media query)
+       ② "พรีวิวเอกสารไม่ต้องใหญ่ขนาดนี้ กดไปแสดงอีกหน้าดีกว่า" → การ์ดไฟล์เล็ก ๆ กดแล้วเปิดอีกหน้า
+       ③ "เอกสารแนบที่แนบมาจากพนักงาน แสดงให้ดูด้วย" → นับไฟล์ให้ครบทุกช่อง
+          รวม **สำเนาบัตร** และ **50 ทวิ ฉบับผู้รับเงิน** ที่รอบแรกตกหล่นไป
+     ⚠️ id ของช่องกรอกต้องคงเดิมทุกตัว — exdSave() อ่านจาก id พวกนี้ */
   function renderExpOne(){
     var no=EXD_NO, x=exFind(no);
     if(!x){ $('main').innerHTML='<div class="card"><div class="empty">ไม่พบข้อมูลใบนี้ค่ะ</div></div>'; return; }
@@ -7394,31 +7422,37 @@
     // ด่านเดียวกับ backend: จ่ายแล้วแก้ยอดไม่ได้ · ออก 50 ทวิ แล้วแก้ภาษีไม่ได้ · ออกกระดาษแล้วเปลี่ยนบริษัทไม่ได้
     var canAmt=!paid, canWht=!!(x.payeeName && !x.whtNo), canEnt=(multiEnt() && !hasDoc);
 
-    function ro(label, val){   // แถวอ่านอย่างเดียว
-      return '<div class="exd-r"><span>'+esc(label)+'</span><b>'+(val||'—')+'</b></div>';
+    function cell(label, val, wide){   // ช่องข้อมูลอ่านอย่างเดียว 1 ช่องในกริด
+      return '<div class="exd-c'+(wide?' exd-wide':'')+'"><span>'+esc(label)+'</span><b>'+(val||'—')+'</b></div>';
     }
-    /* ── เอกสารของใบนี้ = ตัวดูไฟล์ในหน้า (ไม่ใช่ลิงก์ให้กดออกไป) ──
-       เรียงตามที่พี่ต้องดูก่อนตัดสินใจ: หลักฐานที่พนักงานแนบ → เอกสารที่ออก → 50 ทวิ → แฟ้ม → สลิป */
+
+    /* ── ไฟล์ทั้งหมดของใบนี้ ── เรียงตามที่พี่ต้องดูก่อนตัดสินใจ
+       ① หลักฐานที่พนักงานแนบมา (สำคัญสุด — ใช้ตัดสินว่าอนุมัติไหม) ② สำเนาบัตร
+       ③ เอกสารที่ระบบออก ④ 50 ทวิ 2 ฉบับ ⑤ แฟ้ม ⑥ สลิปโอนคืน */
     EXD_FILES=[];
-    [[x.receiptUrl,'📎 หลักฐานที่แนบมา'],[x.docLink,'📄 '+(x.docNo||'เอกสารที่ออก')],
-     [x.whtLink,'🧾 50 ทวิ '+(x.whtNo||'')],[x.dossier,'🗂️ แฟ้มครบชุด'],
-     [x.paidSlip,'💸 สลิปโอนคืน']].forEach(function(p){
-      if(p[0]) EXD_FILES.push({ url:p[0], label:p[1] });
+    [[x.receiptUrl, '📎 หลักฐานจากพนักงาน', (x.docType||'ที่แนบมากับใบเบิก')],
+     [x.idCardUrl,  '🪪 สำเนาบัตรประชาชน',  'ผู้รับเงิน'],
+     [x.docLink,    '📄 '+(x.docNo||'เอกสารที่ออก'), rv?'ใบสำคัญรับเงิน':'ใบรับรองแทนใบเสร็จ'],
+     [x.whtLink,    '🧾 50 ทวิ '+(x.whtNo||''), 'ฉบับบริษัท'],
+     [x.whtPayeeLink,'🧾 50 ทวิ '+(x.whtNo||''), 'ฉบับผู้รับเงิน'],
+     [x.dossier,    '🗂️ แฟ้มครบชุด', 'รวมทุกใบเป็นเล่มเดียว'],
+     [x.paidSlip,   '💸 สลิปโอนคืน', 'หลักฐานการโอน']].forEach(function(p){
+      if(p[0]) EXD_FILES.push({ url:p[0], label:p[1], sub:p[2] });
     });
-    var viewer;
-    if(!EXD_FILES.length){
-      viewer='<div class="exd-nofile">📎 ใบนี้ไม่มีเอกสารแนบเลยค่ะ'+
-        '<div class="m-hint" style="margin-top:4px">ถ้าพนักงานส่งมาแล้ว ให้แนบเพิ่มที่ช่อง "เปลี่ยนไฟล์แนบ" ด้านล่าง</div></div>';
-    }else{
-      viewer='<div class="exd-view">'+
-        '<div class="exd-tabs">'+EXD_FILES.map(function(f,i){
-          return '<button type="button" class="exd-tab'+(i===0?' on':'')+'" onclick="exdPick('+i+')">'+esc(f.label)+'</button>';
-        }).join('')+'</div>'+
-        '<iframe id="exdFrame" title="เอกสารแนบ"></iframe>'+
-        '<div id="exdNoEmbed" class="m-hint" style="display:none">ไฟล์นี้ไม่ได้อยู่บน Drive จึงดูในหน้านี้ไม่ได้ — กดปุ่มด้านล่างค่ะ</div>'+
-        '<button type="button" class="btn btn-ghost btn-sm" id="exdOpen">🔗 เปิดไฟล์เต็มจอ</button>'+
-      '</div>';
-    }
+    var files=EXD_FILES.map(function(f,i){
+      var th=drvThumb(f.url,300);
+      // ไอคอนหน้า label = ตัวแทนไฟล์ตอนรูปตัวอย่างไม่ขึ้น · ตัดออกจากชื่อจะได้ไม่ซ้ำสองที่
+      var pp=String(f.label).split(' '), ic=pp.shift(), nm=pp.join(' ');
+      return '<button type="button" class="exd-f" onclick="exdOpenFile('+i+')">'+
+        '<span class="exd-f-th">'+esc(ic)+(th
+          ? '<img src="'+esc(th)+'" alt="" loading="lazy" onerror="this.style.display=\'none\'">'
+          : '')+'</span>'+
+        '<span class="exd-f-n">'+esc(nm)+'</span>'+
+        '<span class="exd-f-s">'+esc(f.sub||'')+'</span></button>';
+    }).join('');
+    // ไม่มีหลักฐานจากพนักงาน = จุดเสี่ยงทางภาษี ต้องเด้งตาแม้ใบจะมีเอกสารอื่นครบ
+    if(!x.receiptUrl) files='<div class="exd-nofile">📎 ไม่มีหลักฐานแนบจากพนักงาน'+
+      (x.note?'<br><span style="font-weight:400">'+esc(x.note)+'</span>':'')+'</div>'+files;
 
     var typeOpts=EXP_TYPES.map(function(t){
       var lb=(typeof t==='string')?t:(t.label||t.key||'');
@@ -7429,72 +7463,84 @@
     }).join('');
 
     $('main').innerHTML=('<div class="card exd-page">'+
-      '<div class="exd-top"><button type="button" class="btn btn-ghost btn-sm" onclick="exdBack()">← กลับ</button>'+
-        '<div class="exd-no">🔎 ใบเบิก '+esc(no)+'</div></div>'+
-      '<div id="mErr" class="m-err hidden"></div>'+
-      '<div class="exd-head"><span class="lvb '+(paid?'lvb-ok':(pending?'lvb-wait':''))+'">'+esc(st)+'</span>'+
-        '<span class="exd-amt">'+money(x.amount)+' บาท</span></div>'+
-
-      '<div class="exd-box">'+
-        ro('ผู้เบิก', esc(x.nick||'—'))+
-        ro('วันที่แจ้ง', esc(String(x.createdAt||'').split(' ')[0]||'—'))+
-        (x.approver?ro('ผู้อนุมัติ', esc(x.approver)):'')+
-        (x.payDate?ro('วันที่จ่าย', esc(x.payDate)):'')+
-        (x.whtRate?ro('หัก ณ ที่จ่าย', x.whtRate+'% = '+money(x.whtAmt||0)+' บาท → โอนสุทธิ '+money(x.netAmt||x.amount)):'')+
-        (x.formType?ro('แบบยื่น', esc(x.formType)):'')+
-        (x.bankAcct?ro('บัญชีรับโอน', esc((x.bankName||'')+' '+x.bankAcct+' '+(x.bankOwner||''))):'')+
-        (x.note?ro('หมายเหตุ', esc(x.note)):'')+
+      '<div class="exd-top">'+
+        '<button type="button" class="btn btn-ghost btn-sm" onclick="exdBack()">← กลับ</button>'+
+        '<div class="exd-no">ใบเบิก '+esc(no)+'</div>'+
+        '<span class="lvb '+(paid?'lvb-ok':(pending?'lvb-wait':''))+'">'+esc(st)+'</span>'+
+        '<span class="exd-amt">'+money(x.amount)+' บาท</span>'+
       '</div>'+
-      '<div class="exd-sec">📄 เอกสารของใบนี้</div>'+
-      viewer+
 
-      '<div class="exd-sec">✏️ แก้ไขข้อมูล</div>'+
-      '<div class="fld"><label>ประเภทค่าใช้จ่าย</label><select id="exdType">'+typeOpts+'</select></div>'+
-      '<div class="fld"><label>ยอดเงิน (บาท)'+(canAmt?'':' — จ่ายแล้ว แก้ไม่ได้')+'</label>'+
-        '<input id="exdAmt" inputmode="decimal" value="'+esc(String(x.amount||''))+'"'+(canAmt?'':' disabled')+'></div>'+
-      '<div class="fld"><label>รายละเอียด</label>'+
-        '<textarea id="exdDetail"'+(canAmt?'':' disabled')+'>'+esc(x.detail||'')+'</textarea></div>'+
-      (canWht
-        ? ('<div class="fld"><label>ประเภทเงินได้ (มาตรา)</label><select id="exdSect">'+sectOpts+'</select></div>'+
-           '<div class="fld"><label>อัตราหัก ณ ที่จ่าย (%)</label>'+
-             '<input id="exdRate" type="number" step="0.01" min="0" max="100" value="'+esc(String(x.whtRate||0))+'">'+
-             '<div class="m-hint" style="margin-top:4px">ใส่อัตราเท่าไรก็ได้ 0-100 · หรือระบุยอดบาทด้านล่าง (ยอดชนะอัตรา)</div></div>'+
-           '<div class="fld"><label>หรือระบุยอดภาษีเป็นบาท</label>'+
-             '<input id="exdWhtAmt" type="number" step="0.01" min="0" placeholder="เว้นว่าง = ใช้อัตราด้านบน"></div>')
-        : (x.whtNo?'<div class="m-hint">🧾 ออก 50 ทวิ '+esc(x.whtNo)+' แล้ว — แก้ภาษีไม่ได้ค่ะ</div>':''))+
-      (canEnt?entField('exdEnt', x.entity, 'บริษัทผู้ออกเอกสาร'):'')+
-      (rv
-        ? ('<div class="exd-sec">ผู้รับเงิน (ใบสำคัญรับเงิน)</div>'+
-           '<div class="fld"><label>ชื่อผู้รับเงิน</label><input id="exdPayee" value="'+esc(x.payeeName||'')+'"></div>'+
-           '<div class="fld"><label>เลขบัตรประชาชน</label><input id="exdPayeeId" inputmode="numeric" value="'+esc(x.payeeId||'')+'"></div>'+
-           '<div class="fld"><label>ที่อยู่</label><textarea id="exdPayeeAddr">'+esc(x.payeeAddr||'')+'</textarea></div>')
-        : '')+
-      imgsFldHtml('exdRcp','📎 เปลี่ยนไฟล์แนบ (เว้นว่าง = ใช้ไฟล์เดิม)')+
-      /* สลิปโอนคืน — เฉพาะใบที่จ่ายแล้ว (สลิปมักตามมาทีหลัง) · แนบใหม่แล้วระบบรวมแฟ้มให้เอง */
-      (paid?imgsFldHtml('exdSlip','💸 เปลี่ยนสลิปโอนคืน (เว้นว่าง = ใช้ของเดิม)'):'')+
+      '<div class="exd-sec">● ข้อมูลใบเบิก</div>'+
+      '<div class="exd-grid">'+
+        cell('ผู้เบิก', esc(x.nick||'—'))+
+        cell('วันที่แจ้ง', esc(String(x.createdAt||'').split(' ')[0]||'—'))+
+        cell('ประเภท', esc(x.type||'—'))+
+        cell('หลักฐาน', esc(x.docType||'แนบใบเสร็จ'))+
+        (x.approver?cell('ผู้อนุมัติ', esc(x.approver)):'')+
+        (x.payDate?cell('วันที่จ่าย', esc(x.payDate)):'')+
+        (x.entity?cell('บริษัทผู้ออกเอกสาร', esc(x.entity)):'')+
+        (x.payeeName?cell('ผู้รับเงิน', esc(x.payeeName)):'')+
+        (x.whtRate?cell('หัก ณ ที่จ่าย', x.whtRate+'% = '+money(x.whtAmt||0)+' บาท'):'')+
+        (x.whtRate?cell('โอนสุทธิ', money(x.netAmt||x.amount)+' บาท'):'')+
+        (x.formType?cell('แบบยื่น', esc(x.formType)):'')+
+        (x.signStatus?cell('ลายเซ็นผู้รับเงิน', esc(x.signStatus)):'')+
+        cell('รายละเอียด', esc(x.detail||'—'), true)+
+        (x.bankAcct?cell('บัญชีรับโอน', esc((x.bankName||'')+' '+x.bankAcct+' '+(x.bankOwner||'')), true):'')+
+        (x.note?cell('หมายเหตุ', esc(x.note), true):'')+
+      '</div>'+
+
+      '<div class="exd-sec">● เอกสารของใบนี้'+(EXD_FILES.length?' ('+EXD_FILES.length+')':'')+
+        '<span class="exd-hint">กดการ์ดเพื่อเปิดดูไฟล์เต็มหน้า</span></div>'+
+      '<div class="exd-files">'+files+'</div>'+
+
+      '<div class="exd-sec">● แก้ไขข้อมูล</div>'+
+      '<div id="mErr" class="m-err hidden"></div>'+
+      '<div class="exd-form">'+
+        '<div class="fld"><label>ประเภทค่าใช้จ่าย</label><select id="exdType">'+typeOpts+'</select></div>'+
+        '<div class="fld"><label>ยอดเงิน (บาท)'+(canAmt?'':' — จ่ายแล้ว แก้ไม่ได้')+'</label>'+
+          '<input id="exdAmt" inputmode="decimal" value="'+esc(String(x.amount||''))+'"'+(canAmt?'':' disabled')+'></div>'+
+        '<div class="fld exd-wide"><label>รายละเอียด</label>'+
+          '<textarea id="exdDetail"'+(canAmt?'':' disabled')+'>'+esc(x.detail||'')+'</textarea></div>'+
+        (canWht
+          ? ('<div class="fld"><label>ประเภทเงินได้ (มาตรา)</label><select id="exdSect">'+sectOpts+'</select></div>'+
+             '<div class="fld"><label>อัตราหัก ณ ที่จ่าย (%)</label>'+
+               '<input id="exdRate" type="number" step="0.01" min="0" max="100" value="'+esc(String(x.whtRate||0))+'">'+
+               '<div class="m-hint" style="margin-top:4px">ใส่อัตราเท่าไรก็ได้ 0-100 · หรือระบุยอดบาท (ยอดชนะอัตรา)</div></div>'+
+             '<div class="fld"><label>หรือระบุยอดภาษีเป็นบาท</label>'+
+               '<input id="exdWhtAmt" type="number" step="0.01" min="0" placeholder="เว้นว่าง = ใช้อัตราด้านบน"></div>')
+          : (x.whtNo?'<div class="m-hint exd-wide">🧾 ออก 50 ทวิ '+esc(x.whtNo)+' แล้ว — แก้ภาษีไม่ได้ค่ะ</div>':''))+
+        (canEnt?entField('exdEnt', x.entity, 'บริษัทผู้ออกเอกสาร'):'')+
+        (rv
+          ? ('<div class="fld"><label>ชื่อผู้รับเงิน</label><input id="exdPayee" value="'+esc(x.payeeName||'')+'"></div>'+
+             '<div class="fld"><label>เลขบัตรประชาชน</label><input id="exdPayeeId" inputmode="numeric" value="'+esc(x.payeeId||'')+'"></div>'+
+             '<div class="fld exd-wide"><label>ที่อยู่ผู้รับเงิน</label><textarea id="exdPayeeAddr">'+esc(x.payeeAddr||'')+'</textarea></div>')
+          : '')+
+        '<div class="exd-wide">'+imgsFldHtml('exdRcp','📎 เปลี่ยนไฟล์แนบ (เว้นว่าง = ใช้ไฟล์เดิม)')+'</div>'+
+        /* สลิปโอนคืน — เฉพาะใบที่จ่ายแล้ว (สลิปมักตามมาทีหลัง) · แนบใหม่แล้วระบบรวมแฟ้มให้เอง */
+        (paid?'<div class="exd-wide">'+imgsFldHtml('exdSlip','💸 เปลี่ยนสลิปโอนคืน (เว้นว่าง = ใช้ของเดิม)')+'</div>':'')+
+      '</div>'+
       (hasDoc?'<div class="m-hint" style="color:#C8730B">⚠️ ใบนี้ออกเอกสารแล้ว — แก้เสร็จอย่าลืมสร้างเอกสาร/แฟ้มใหม่ให้ตรงกัน</div>':'')+
 
-      '<div class="m-act"><button class="btn btn-ghost" onclick="exdBack()">← กลับ</button>'+
-      '<button class="btn btn-primary" onclick="exdSave()">💾 บันทึกทั้งหมด</button></div>'+
-
-      '<div class="exd-sec">งานอื่นของใบนี้</div>'+
+      '<div class="exd-sec">● งานอื่นของใบนี้</div>'+
       '<div class="exd-acts">'+
         /* หลักฐาน (ใบเสร็จ ⇄ ใบรับรองแทน) — ใบ RV ไม่มี (เป็นคนละสายเอกสาร ตรงกับด่าน handleWaExpSetProof_) */
-        (!rv?'<button class="btn btn-ghost btn-sm" onclick="closeModal();exSetProof(\''+esc(no)+'\')">🧾 หลักฐาน: '+esc(x.docType||'แนบใบเสร็จ')+'</button>':'')+
+        (!rv?'<button class="btn btn-ghost btn-sm" onclick="exSetProof(\''+esc(no)+'\')">🧾 หลักฐาน: '+esc(x.docType||'แนบใบเสร็จ')+'</button>':'')+
         (x.bankAcct?'<button class="btn btn-ghost btn-sm" onclick="copyTxt(\''+esc(String(x.bankAcct).replace(/'/g,"\\'"))+'\')">📋 ก๊อปเลขบัญชี</button>':'')+
-        (pending?'<button class="btn btn-ghost btn-sm" onclick="closeModal();'+(x.payeeName?'exOpenWht':'exApprove')+'(\''+esc(no)+'\')">✅ อนุมัติ</button>':'')+
-        (pending?'<button class="btn btn-ghost btn-sm" onclick="closeModal();exReject(\''+esc(no)+'\')">❌ ไม่อนุมัติ</button>':'')+
-        (approved&&!paid?'<button class="btn btn-ghost btn-sm" onclick="closeModal();exOpenPay(\''+esc(no)+'\',\''+esc(String(x.nick||''))+'\','+(Number(x.amount)||0)+','+((rv&&!x.docNo)?1:0)+')">💰 บันทึกจ่ายคืน</button>':'')+
-        (rv&&!x.docNo?'<button class="btn btn-ghost btn-sm" onclick="closeModal();exRelink(\''+esc(no)+'\')">🔗 ส่งลิงก์เซ็นใหม่</button>':'')+
-        '<button class="btn btn-ghost btn-sm" onclick="closeModal();vatOpen(\'expense\',\''+esc(no)+'\','+(Number(x.amount)||0)+')">🧾 ใบกำกับภาษีซื้อ</button>'+
-        ((approved||paid)?'<button class="btn btn-ghost btn-sm" onclick="closeModal();exRebuild(\''+esc(no)+'\')">🗂️ สร้างแฟ้มใหม่</button>':'')+
-        (!paid&&(approved||rejected)&&!hasDoc?'<button class="btn btn-ghost btn-sm" onclick="closeModal();exUndo(\''+esc(no)+'\')">↩️ ย้อนเป็นรออนุมัติ</button>':'')+
-        '<button class="btn btn-ghost btn-sm" style="color:#B4242A" onclick="closeModal();exTrash(\''+esc(no)+'\')">🗑️ ยกเลิกใบนี้</button>'+
+        (pending?'<button class="btn btn-ghost btn-sm" onclick="'+(x.payeeName?'exOpenWht':'exApprove')+'(\''+esc(no)+'\')">✅ อนุมัติ</button>':'')+
+        (pending?'<button class="btn btn-ghost btn-sm" onclick="exReject(\''+esc(no)+'\')">❌ ไม่อนุมัติ</button>':'')+
+        (approved&&!paid?'<button class="btn btn-ghost btn-sm" onclick="exOpenPay(\''+esc(no)+'\',\''+esc(String(x.nick||''))+'\','+(Number(x.amount)||0)+','+((rv&&!x.docNo)?1:0)+')">💰 บันทึกจ่ายคืน</button>':'')+
+        (rv&&!x.docNo?'<button class="btn btn-ghost btn-sm" onclick="exRelink(\''+esc(no)+'\')">🔗 ส่งลิงก์เซ็นใหม่</button>':'')+
+        '<button class="btn btn-ghost btn-sm" onclick="vatOpen(\'expense\',\''+esc(no)+'\','+(Number(x.amount)||0)+')">🧾 ใบกำกับภาษีซื้อ</button>'+
+        ((approved||paid)?'<button class="btn btn-ghost btn-sm" onclick="exRebuild(\''+esc(no)+'\')">🗂️ สร้างแฟ้มใหม่</button>':'')+
+        (!paid&&(approved||rejected)&&!hasDoc?'<button class="btn btn-ghost btn-sm" onclick="exUndo(\''+esc(no)+'\')">↩️ ย้อนเป็นรออนุมัติ</button>':'')+
+        '<button class="btn btn-ghost btn-sm" style="color:#B4242A" onclick="exTrash(\''+esc(no)+'\')">🗑️ ยกเลิกใบนี้</button>'+
       '</div>'+
+
+      '<div class="exd-bar"><button class="btn btn-ghost" onclick="exdBack()">← กลับ</button>'+
+      '<button class="btn btn-primary" onclick="exdSave()">💾 บันทึกทั้งหมด</button></div>'+
     '</div>');
     imgsFldBind('exdRcp');
     if($('exdSlip')) imgsFldBind('exdSlip');
-    if(EXD_FILES.length) exdPick(0);   // เปิดไฟล์ใบแรกให้เลย พี่ไม่ต้องกดอะไรก่อนเห็นเอกสาร
   }
 
   /** บันทึกทุกช่องที่เปลี่ยน — ทีละก้อนตามลำดับ แล้วสรุปว่าอะไรสำเร็จ/อะไรไม่ */
@@ -11308,7 +11354,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260907-2125';
+  var APP_BUILD='20260907-2147';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
