@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260908-1753">
+<link rel="stylesheet" href="user.css?v=20260908-1810">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -595,6 +595,22 @@
   .p51-note{ font-size:11.5px; color:var(--muted); line-height:1.55; margin-top:8px; }
   .p51-src{ font-size:11.5px; color:var(--muted); margin-top:3px; line-height:1.45; }
   .p51-grid{ overflow-x:auto; }
+  /* ตารางงบเทียบหลายปี — ตรึงคอลัมน์ชื่อรายการไว้ซ้าย เลื่อนแนวนอนดูปีอื่นเหมือน Excel
+     (พี่กี้เคาะ 8 ก.ย. 69 · ทรงเดียวกับ Sheet "รายละเอียดประกอบงบ" ที่ใช้ทำงานจริง) */
+  .pnl-wrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; border:1px solid var(--line); border-radius:10px; }
+  .pnl{ border-collapse:separate; border-spacing:0; font-size:12.5px; white-space:nowrap; }
+  .pnl th,.pnl td{ padding:6px 9px; border-bottom:1px solid var(--line); }
+  .pnl thead th{ background:#EDEDF2; color:#4A5262; font-weight:700; position:sticky; top:0; z-index:2; }
+  .pnl thead th.y{ text-align:center; border-left:1px solid var(--line); }
+  .pnl .lb{ position:sticky; left:0; z-index:3; background:#fff; text-align:left; min-width:210px;
+    border-right:1px solid var(--line); }
+  .pnl thead .lb{ z-index:4; background:#EDEDF2; }
+  .pnl tr.em .lb, .pnl tr.em td{ font-weight:700; background:#F6F8FB; }
+  .pnl tr.em .lb{ background:#F0F3F8; }
+  .pnl td.n{ text-align:right; font-variant-numeric:tabular-nums; }
+  .pnl td.p{ text-align:right; color:#8A94A6; font-size:11.5px; border-right:1px solid var(--line); }
+  .pnl td.neg{ color:#DC2626; }
+  .pnl .est{ background:#F4F1FF; } .pnl thead th.est{ background:#E9E3FF; }
   .p51-grid table{ border-collapse:collapse; width:100%; min-width:430px; font-size:12.5px; }
   .p51-grid th,.p51-grid td{ border-bottom:1px solid var(--line); padding:5px 6px; text-align:left; }
   .p51-grid th{ background:#EDEDF2; font-weight:700; color:#4A5262; white-space:nowrap; }
@@ -8704,6 +8720,9 @@
         '<div class="p51-note">ที่มาของตัวเลขแต่ละปีดูได้ในชีต "ผลประกอบการรายปี" คอลัมน์ ที่มาของข้อมูล</div></div>';
     }
 
+    // ── ①.5 ตารางงบเทียบหลายปี (ทรงเดียวกับ Sheet ที่พี่กี้ใช้) ──
+    h += fhPnlHtml(r.pnl);
+
     // ── ② ประมาณการ vs ของจริง (ก้อนที่พี่กี้ขอ) ──
     h+='<div class="card"><div class="ds-h">ประมาณการ ภ.ง.ด.51 เทียบกับผลจริง</div>';
     if(sm.yearsCompared){
@@ -8738,6 +8757,35 @@
       'ปีที่ยื่นถึงเกราะ ป.50/2537 ถือว่ามีเหตุอันสมควรอยู่แล้ว</div></div>';
     return h;
   }
+
+
+  /** ตารางงบกำไรขาดทุนเทียบหลายปี × (ประมาณการ/จริง) + %อัตราส่วน — ข้อมูลมาจาก backend ล้วน */
+  function fhPnlHtml(pnl){
+    if(!pnl || !(pnl.cols||[]).length) return '';
+    var cols=pnl.cols, rows=pnl.rows||[];
+    var h='<div class="card"><div class="ds-h">งบกำไรขาดทุนเทียบรายปี (ประมาณการ / จริง)</div>'+
+      '<div class="pnl-wrap"><table class="pnl"><thead><tr><th class="lb">รายการ</th>'+
+      cols.map(function(c){
+        var est = c.kind!=='จริง';
+        return '<th class="y'+(est?' est':'')+'" colspan="2">'+esc(c.label)+'</th>';
+      }).join('')+'</tr><tr><th class="lb"></th>'+
+      cols.map(function(c){
+        var est = c.kind!=='จริง';
+        return '<th class="y'+(est?' est':'')+'">จำนวน</th><th class="y'+(est?' est':'')+'">อัตราส่วน</th>';
+      }).join('')+'</tr></thead><tbody>'+
+      rows.map(function(rw){
+        return '<tr'+(rw.em?' class="em"':'')+'><td class="lb">'+esc(rw.label)+'</td>'+
+          rw.vals.map(function(v,i){
+            var est = cols[i].kind!=='จริง';
+            return '<td class="n'+(v.v<0?' neg':'')+(est?' est':'')+'">'+(v.v?money(v.v):'–')+'</td>'+
+              '<td class="p'+(est?' est':'')+'">'+(v.pct===null?'':v.pct.toFixed(2)+'%')+'</td>';
+          }).join('')+'</tr>';
+      }).join('')+'</tbody></table></div>'+
+      '<div class="p51-note">อัตราส่วน = % ของรายได้รวมในคอลัมน์นั้น · เลื่อนตารางไปทางขวาเพื่อดูปีก่อน ๆ · '+
+      'คอลัมน์พื้นม่วง = ประมาณการที่เคยทำไว้ · พื้นขาว = ตัวเลขจริง</div></div>';
+    return h;
+  }
+  window.fhPnlHtml=fhPnlHtml;
 
   /** กราฟแท่ง SVG: รายได้ (เทา) กับ กำไรสุทธิ (เขียว/แดง) — ไม่พึ่งไลบรารีนอก */
   function fhChart(rows){
@@ -11739,7 +11787,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260908-1753';
+  var APP_BUILD='20260908-1810';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
