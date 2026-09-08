@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260908-0934">
+<link rel="stylesheet" href="user.css?v=20260908-1055">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1171,9 +1171,13 @@
 
   <div id="mtabs" class="mtabs"></div>
 
+  <!-- ไอคอน+ชื่อหน้าบนแถบบน = ทางออกฉุกเฉิน กดกลับเมนูหลักได้ทุกหน้า ทุกขนาดจอ
+       (8 ก.ย. 69 — พี่กี้ติดอยู่ในหน้าภาพรวมธุรกิจของห้องลูกค้าเพราะแถบเมนูหายทั้งคู่) -->
   <div id="topbar" class="topbar">
-    <span class="tb-icon" id="tbIcon">📝</span>
-    <div class="tb-mid"><div class="tb-title" id="tbTitle">การลา</div><div class="tb-sub">Moodata</div></div>
+    <span class="tb-icon" id="tbIcon" role="button" tabindex="0" title="กลับสู่เมนูหลัก"
+      style="cursor:pointer" onclick="switchView('portal')">📝</span>
+    <div class="tb-mid" role="button" tabindex="0" title="กลับสู่เมนูหลัก"
+      style="cursor:pointer" onclick="switchView('portal')"><div class="tb-title" id="tbTitle">การลา</div><div class="tb-sub">Moodata</div></div>
     <!-- 🔔 กระดิ่ง "ของที่รอเราอยู่" (7 ก.ย. 69) — พี่กี้ชี้ตำแหน่ง: ข้าง ๆ ปุ่มห้อง
          กดแล้วรายการหล่นลงมา ไม่ต้องเอาไปกองบนหน้าจอ -->
     <button class="bell-btn" id="bellBtn" type="button" aria-label="แจ้งเตือน" style="display:none">🔔<span class="bell-dot" id="bellDot" hidden>0</span></button>
@@ -1410,6 +1414,11 @@
     // ⚠️ หน้าที่หาโมดูลไม่เจอ (view ใหม่ที่ลืมใส่ใน MODULES) ต้องไม่ตกไปโหมดเต็มจอ
     //    ไม่งั้นแถบซ้ายหาย = ผู้ใช้ติดอยู่ในหน้านั้น ออกไปไหนไม่ได้เลย (พี่กี้เจอจริง ?p=expapprove)
     setModule(v==='portal' ? '' : ((modOfView(v)||{}).key || CURMOD || 'work'));
+    /* 🔴 8 ก.ย. 69 — โหมดเต็มจอต้องตามหน้าที่ "แสดงอยู่จริง" เสมอ ไม่ใช่ตาม CURMOD
+       setModule() มี early-return (CURMOD เท่าเดิม) → มีทางที่ pmode ค้างขณะเปิดหน้าอื่น
+       แล้ว CSS ซ่อนทั้งแถบซ้าย (.app.pmode .nav) และแถบล่างมือถือ (.app.pmode .mnav)
+       = ผู้ใช้ตันอยู่ในหน้านั้น ออกไปไหนไม่ได้เลย (พี่กี้เจอในห้องลูกค้า หน้าภาพรวมธุรกิจ) */
+    var _app=$('app'); if(_app) _app.classList.toggle('pmode', v==='portal');
     if(CURMOD) MG_LAST[CURMOD]=v;
     Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(b){ b.classList.toggle('active', b.dataset.view===v); });
     var meta=VIEW_META[v]||['•',v];
@@ -2349,7 +2358,19 @@
     Array.prototype.slice.call(nav.children).forEach(function(el){
       if(!el.classList.contains('nav-brand')) nav.removeChild(el);      // เหลือแบรนด์ไว้ตัวเดียว
     });
-    var m=modOf(CURMOD); if(!m || m.act) return;                        // อยู่หน้าเลือกโมดูล = ไม่ต้องมีเมนู
+    var m=modOf(CURMOD);
+    if(!m || m.act){
+      // อยู่หน้าเลือกโมดูล = ไม่ต้องมีเมนู · แต่ถ้า "หลุด" มาโดยที่ยังไม่ได้อยู่หน้า portal
+      // (โมดูลเพี้ยน/หาไม่เจอ) ต้องเหลือปุ่มกลับไว้เสมอ ไม่งั้นแถบซ้ายว่างเปล่า = ออกไม่ได้
+      if(VIEW && VIEW!=='portal'){
+        var esc0=document.createElement('button');
+        esc0.type='button'; esc0.className='nav-back';
+        esc0.textContent='← กลับสู่เมนูหลัก';
+        esc0.addEventListener('click', function(){ switchView('portal'); });
+        nav.appendChild(esc0);
+      }
+      return;
+    }
 
     var mh=document.createElement('div'); mh.className='nav-mh';
     mh.innerHTML='<span class="mh-ic" style="background:'+m.color+'">'+MOD_ICON[m.key]+'</span>'+
@@ -11501,7 +11522,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260908-0934';
+  var APP_BUILD='20260908-1055';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
