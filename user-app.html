@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260908-2101">
+<link rel="stylesheet" href="user.css?v=20260908-2201">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -658,6 +658,18 @@
   .p51-opt input{ margin:2px 0 0; accent-color:#0f6e56; flex:0 0 auto; }
   .p51-opt .o-sub{ display:block; font-size:11.5px; color:var(--muted); margin-top:2px; }
   /* ── กระดาษทำการบนจอ (ดูก่อนออก PDF) ── */
+  /* ตารางกระดาษทำการบนจอ — โครงเดียวกับแท็บชีต (4 คอลัมน์ · หัวข้อแถบเขียว) */
+  .ddoc{ width:100%; border-collapse:collapse; font-size:12.5px; }
+  .ddoc td{ border:1px solid var(--line); padding:5px 8px; vertical-align:top; }
+  .ddoc tr.dsec td{ background:#0f6e56; color:#fff; font-weight:700; font-size:13px; }
+  .ddoc tr.dhd td{ background:#EDEDF2; color:#4A5262; font-weight:700; }
+  .ddoc tr.dtot td{ background:#EAF6F1; font-weight:700; }
+  .ddoc tr.dsp td{ border:0; height:8px; }
+  .ddoc tr.dnote td{ border:0; color:var(--muted); font-size:11.5px; }
+  .ddoc td.dno{ width:52px; text-align:center; color:var(--muted); }
+  .ddoc td.dv{ width:130px; text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .ddoc td.dsrc{ width:34%; color:#5A6577; font-size:11.5px; }
+  @media(max-width:700px){ .ddoc td.dsrc{ display:none; } .ddoc{ font-size:12px; } }
   .p51-doc{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:22px 20px; }
   .p51-doc h3{ font-size:16px; margin:0 0 2px; text-align:center; }
   .p51-doc .d-sub{ text-align:center; font-size:12.5px; color:var(--muted); margin-bottom:14px; }
@@ -9535,55 +9547,30 @@
 
   // ───────────── กระดาษทำการบนจอ (ดูก่อนออก PDF · พิมพ์ · ก๊อปลิงก์ · พี่กี้ขอ 2 ก.ย. 69) ─────────────
   /** วาดเอกสารจากผลคำนวณชุดเดียวกับที่ backend ใช้ออก PDF — ตัวเลขต้องตรงกันเป๊ะ */
-  function p51DocHtml(){
-    var c = p51Calc(P51), e = P51.entity || {}, per = P51.period || {};
-    var isAct = p51IsActual();
-    var rows = [
-      [1, isAct ? 'กำไรสุทธิจริงของครึ่งรอบระยะเวลาบัญชีแรก' : 'ประมาณการกำไรสุทธิทั้งปี', isAct ? p51n(P51.h1Profit) : c.profit],
-      [2, isAct ? 'ฐานที่ใช้คำนวณภาษี (ไม่หารครึ่ง ตาม ม.67 ทวิ (2))' : 'กึ่งหนึ่งของประมาณการกำไรสุทธิ', c.half],
-      [3, 'อัตราภาษีที่ใช้', c.isSME ? 'SME ขั้นบันได (ยกเว้น ≤300,000 · 15% · 20%)' : 'อัตราปกติ 20%'],
-      [4, 'ภาษีที่คำนวณได้', c.halfTax],
-      [5, 'หัก ภาษีหัก ณ ที่จ่าย (ลูกค้าหักเรา)', -p51n(P51.wht)],
-      [6, 'หัก เครดิตภาษีอื่น', -p51n(P51.other)]
-    ];
-    var h = '<div class="p51-doc" id="p51DocPaper">' +
-      '<h3>' + esc(e.name || e.code || '') + '</h3>' +
-      '<div class="d-sub">แบบ ภ.ง.ด.51 — กระดาษทำการประมาณการภาษีครึ่งปี<br>' +
-      'เลขประจำตัวผู้เสียภาษี ' + esc(e.taxId || '-') + ' · รอบบัญชี ' + esc(p51DateText(per.start)) + ' – ' + esc(p51DateText(per.end)) + '<br>' +
-      esc(P51.method || P51_M_EST) + ' · ' + esc(P51.filing || P51_F_NORMAL) +
-      ((P51.filing === P51_F_EXTRA && P51.filingSeq) ? ' ครั้งที่ ' + esc(P51.filingSeq) : '') +
-      ' · ครบกำหนดยื่น ' + esc(p51DateText(per.dueDate)) + '</div>' +
-      '<table><tbody>' +
-      rows.map(function(r){
-        var v = (typeof r[2] === 'string') ? esc(r[2]) : (r[2] < 0 ? '(' + money(-r[2]) + ')' : money(r[2]));
-        return '<tr><td class="n">' + r[0] + '</td><td>' + esc(r[1]) + '</td><td class="v">' + v + '</td></tr>';
-      }).join('') +
-      '<tr class="total"><td class="n">7</td><td>' + (c.refundable > 0 ? 'ภาษีที่ขอคืน' : 'รวมภาษีที่ต้องชำระเพิ่มเติม') +
-      '</td><td class="v">' + money(c.refundable > 0 ? c.refundable : c.taxDue) + '</td></tr>' +
-      '</tbody></table>';
-
-    if(!isAct){
-      h += '<div class="d-sec">การประเมินความเสี่ยง (ม.67 ตรี)</div><table><tbody>' +
-        '<tr><td>กำไรจริงที่คาดการณ์ปลายปี</td><td class="v">' + money(c.expected) + (c.expectedIsDefault ? ' *' : '') + '</td></tr>' +
-        '<tr><td>เพดานที่ยังปลอดภัย (ประมาณการ × 1.25)</td><td class="v">' + money(c.risk.ceiling) + '</td></tr>' +
-        '<tr><td>สถานะ</td><td class="v">' + esc(c.risk.level) + '</td></tr>' +
-        '<tr><td>ประมาณการเงินเพิ่ม 20% (ถ้ากำไรจริงเป็นไปตามคาด)</td><td class="v">' + money(c.penalty) + '</td></tr>' +
-        '</tbody></table>' +
-        '<div class="d-foot" style="text-align:left;margin-top:6px">' +
-        (c.expectedIsDefault ? '* ใช้ค่าจากฉากทัศน์กลางแทน (ยังไม่ได้กรอกเอง)<br>' : '') +
-        'เกณฑ์ × 1.25 เป็นเกณฑ์เฝ้าระวังของทีม ไม่ใช่คำวินิจฉัยของสรรพากร (ตัวบทกฎหมายใช้กำไรจริงเป็นฐาน)</div>';
-    } else {
-      h += '<div class="d-foot" style="text-align:left;margin-top:10px">' +
-        'วิธี ม.67 ทวิ (2) ใช้ได้เฉพาะบริษัทจดทะเบียน/ธนาคาร/บริษัทที่มีผู้สอบบัญชีสอบทานงบครึ่งปี ' +
-        '— วิธีนี้ไม่มีเรื่องประมาณการกำไรขาดเกิน 25% จึงไม่มีเงินเพิ่มตาม ม.67 ตรี</div>';
-    }
-    h += '<div class="d-sign"><div>ผู้จัดทำ</div><div>ผู้ตรวจสอบ</div><div>ผู้อนุมัติ</div></div>' +
-      '<div class="d-foot">เอกสารภายใน — ลงนามด้วยลายมือ · เกณฑ์ภาษี ' + esc((P51.init && P51.init.ruleVersion) || '') +
-      ' · ออกเมื่อ ' + esc(p51DateText(new Date())) + '</div></div>';
-    return h;
+  /** วาดกระดาษทำการจากแถวที่ backend ส่งมา (ชุดเดียวกับที่ออกเป็นแท็บชีต/PDF)
+      🔴 8 ก.ย. 69: เดิมหน้านี้วาดเอกสารเองอีกชุด → อัปเกรดกระดาษทำการแล้วแต่หน้าจอยังเป็นของเก่า
+         (พี่กี้เจอเอง: "กระดาษทำการทำแล้วเหรอ มันอยู่ส่วนไหนไม่เห็นค่ะ") · ตอนนี้มีทางเดียว */
+  function p51DocTable(d){
+    var rows = d.rows || [], mk = d.marks || {};
+    function has(list, n){ return (list || []).indexOf(n) >= 0; }
+    var body = rows.map(function(row, i){
+      var n = i + 1;
+      if(has(mk.sec, n)) return '<tr class="dsec"><td colspan="4">' + esc(row[0]) + '</td></tr>';
+      if(has(mk.head, n)) return '<tr class="dhd">' + row.map(function(c){ return '<td>' + esc(c) + '</td>'; }).join('') + '</tr>';
+      if(row.every(function(c){ return c === '' || c === null || c === undefined; }))
+        return '<tr class="dsp"><td colspan="4"></td></tr>';
+      if(has(mk.note, n)) return '<tr class="dnote"><td colspan="4">' + esc(row[0]) + '</td></tr>';
+      var v = row[2];
+      var vt = (typeof v === 'number') ? money(v) : esc(v);
+      return '<tr' + (has(mk.total, n) ? ' class="dtot"' : '') + '>' +
+        '<td class="dno">' + esc(row[0]) + '</td><td>' + esc(row[1]) + '</td>' +
+        '<td class="dv">' + vt + '</td><td class="dsrc">' + esc(row[3]) + '</td></tr>';
+    }).join('');
+    return '<div class="p51-doc" id="p51DocPaper"><table class="ddoc"><tbody>' + body + '</tbody></table></div>';
   }
+  window.p51DocTable = p51DocTable;
 
-  /** หน้าดูกระดาษทำการ (ยังไม่ออกไฟล์) */
+  /** หน้าดูกระดาษทำการ (ยังไม่ออกไฟล์) — ดึงแถวจาก backend */
   function p51Preview(){
     p51Read();
     var h = '<div class="section-h p51-noprint">📄 กระดาษทำการ · ' + esc((P51.entity && P51.entity.name) || '') + ' ปี ' + P51.year + '</div>' +
@@ -9593,11 +9580,22 @@
       '<button class="btn btn-ok" onclick="p51Doc(P51.ent,P51.year)">📄 ออกไฟล์ PDF เก็บใน Drive</button>' +
       ((P51.job && P51.job.pdfLink) ? '<button class="btn btn-ghost" onclick="p51CopyLink()">🔗 ก๊อปลิงก์ไฟล์</button>' : '') +
       '</div>' +
-      '<div id="p51DocView">' + p51DocHtml() + '</div>' +
+      '<div id="p51DocView"><div class="skel" style="height:200px"></div></div>' +
       '<div class="p51-note p51-noprint">ตัวเลขชุดนี้คือชุดเดียวกับที่ไฟล์ PDF ใช้ · กด "ออกไฟล์ PDF" เมื่อตรวจแล้วว่าถูกต้อง</div>';
     $('main').innerHTML = h;
     P51.mode = 'doc';
+    jsonp(withRoom_({ action:'waPnd51Preview', uid:UID, entity:P51.ent, year:P51.year })).then(function(r){
+      var box = $('p51DocView'); if(!box) return;
+      if(!r || !r.ok){
+        box.innerHTML = '<div class="p51-warn">' + esc((r && r.error) || 'โหลดกระดาษทำการไม่สำเร็จ') + '</div>';
+        return;
+      }
+      box.innerHTML = p51DocTable(r);
+    }).catch(function(e){
+      var box = $('p51DocView'); if(box) box.innerHTML = '<div class="p51-warn">' + esc(e.message) + '</div>';
+    });
   }
+
   function p51BackCalc(){ P51.mode = 'calc'; p51Calcview(); }
   function p51CopyLink(){
     var link = (P51.job && P51.job.pdfLink) || '';
@@ -11889,7 +11887,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260908-2101';
+  var APP_BUILD='20260908-2201';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
