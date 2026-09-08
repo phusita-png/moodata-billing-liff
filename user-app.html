@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260908-2201">
+<link rel="stylesheet" href="user.css?v=20260908-2313">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -103,7 +103,12 @@
   .rm-btn .rm-lb{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .rm-btn .rm-ca{ opacity:.8; font-size:10px; }
   /* อยู่ห้องลูกค้า = เปลี่ยนสีทั้งแถบ + มีแถบเตือน */
-  .app.inroom .hd, .app.inroom .topbar, .app.inroom .nav-brand{ background:#B45309 !important; }
+  .app.inroom .hd, .app.inroom .topbar{ background:#B45309 !important; color:#fff !important; }
+  .app.inroom .topbar .tb-title{ color:#fff !important; }
+  .app.inroom .topbar .tb-sub{ color:rgba(255,255,255,.85) !important; }
+  .app.inroom .topbar .tb-icon svg{ stroke:#fff !important; }
+  .app.inroom .nav{ background:linear-gradient(168deg,#7C3A06 0%,#C2650C 100%) !important; }
+  .app.inroom .nav-brand{ background:transparent !important; }
   .app.inroom .hd{ box-shadow:0 2px 12px rgba(120,53,15,.30) !important; }
   .rm-bar{ display:none; flex-wrap:wrap; align-items:center; gap:8px 10px; padding:10px 16px;
     background:#FEF3C7; border-bottom:1px solid #FCD34D;
@@ -181,25 +186,19 @@
       grid-template-areas:"top" "room" "main" !important; }
   }
   /* หัวแถบซ้าย = โมดูลที่กำลังเปิด + ปุ่มกลับหน้าเลือกโมดูล */
-  .nav-mh{ display:flex; align-items:center; gap:9px; padding:12px 14px 10px; }
+  .nav-mh{ display:flex; align-items:center; gap:9px; padding:10px 11px; margin:0 2px 4px;
+    background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.2); border-radius:13px; }
   .nav-mh .mh-ic{ width:30px; height:30px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex:0 0 auto; }
   .nav-mh .mh-ic svg{ width:17px; height:17px; fill:none; stroke:#fff; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
-  .nav-mh .mh-tx{ font-size:14.5px; font-weight:700; color:var(--ink); min-width:0; }
+  .nav-mh .mh-tx{ font-size:14.5px; font-weight:700; color:#fff; min-width:0; }
   /* ปุ่ม "กลับสู่เมนูหลัก" — บนสุดของแถบซ้าย เหนือรายการเมนู (พี่กี้เคาะ 5 ก.ย.) */
   .nav-back{ display:flex; align-items:center; gap:7px; margin:16px 10px 10px; padding:9px 10px; width:calc(100% - 20px);
     margin-top:auto;   /* ดันไปท้ายแถบเสมอ แม้โมดูลนั้นมีเมนูน้อย */
-    border:1px solid var(--line); border-radius:11px; background:#fff; font:inherit; font-size:12.5px; font-weight:600;
-    color:var(--muted); cursor:pointer; }
-  .nav-back:hover{ color:var(--red); border-color:var(--red-soft); }
-  /* แถวสลับโมดูลเร็วท้ายแถบ — ไม่ต้องกลับหน้าแรกทุกครั้ง */
-  /* แถวไอคอนสลับโมดูล — ชิดซ้ายให้ตรงแนวกับปุ่มเมนูข้างบน (พี่กี้ทัก 6 ก.ย.)
-     เดิม justify-content:center ทำให้แถวสุดท้ายที่เหลือไอคอนเดียวไปลอยอยู่กลาง */
-  .nav-mods{ padding:12px 10px 14px; border-top:1px solid var(--line);
-    display:flex; flex-wrap:wrap; gap:8px 6px; justify-content:flex-start; }
-  .nav-mods .nm{ width:27px; height:27px; border-radius:8px; border:none; cursor:pointer; display:flex;
-    align-items:center; justify-content:center; opacity:.42; transition:opacity .12s; }
-  .nav-mods .nm:hover, .nav-mods .nm.on{ opacity:1; }
-  .nav-mods .nm svg{ width:15px; height:15px; fill:none; stroke:#fff; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+    border:1px solid rgba(255,255,255,.35); border-radius:12px; background:rgba(255,255,255,.12);
+    font:inherit; font-size:13px; font-weight:600; color:#fff; cursor:pointer; }
+  .nav-back:hover{ background:rgba(255,255,255,.24); border-color:rgba(255,255,255,.55); }
+  /* แถวไอคอนสลับโมดูลถูกถอดออก 8 ก.ย. 69 (พี่กี้: ใช้ปุ่ม "กลับสู่เมนูหลัก" อย่างเดียวชัดกว่า)
+     ปุ่มเล็ก 10 ไอคอนติดกันกดพลาดง่าย และซ้ำกับหน้าเลือกโมดูลที่มีการ์ดครบอยู่แล้ว */
   #navPool{ display:none; }
   /* 🏛️ คำขอสมัคร (T2) */
   .hq-info{ font-size:13.5px; color:#4A5262; display:flex; flex-direction:column; gap:3px; margin-bottom:12px; }
@@ -2473,24 +2472,14 @@
     // ปุ่มกลับอยู่บนแถบบนที่เดียว (พี่กี้เคาะ 5 ก.ย.: ในแถบซ้ายซ้ำ)
     // — แถบบนเห็นตลอดโดยไม่ต้องเลื่อนแถบซ้ายลงไปสุด · มือถือใช้ปุ่ม "เมนูหลัก" ที่แถบล่าง
 
-    // ปุ่มกลับ อยู่ท้ายรายการเมนู เหนือแถวสลับโมดูล (พี่กี้ชี้ตำแหน่ง 5 ก.ย.)
+    // ปุ่มกลับ อยู่ท้ายรายการเมนู (พี่กี้ชี้ตำแหน่ง 5 ก.ย. · 8 ก.ย. ถอดแถวสลับโมดูลออก เหลือปุ่มนี้ตัวเดียว)
     var back=document.createElement('button');
     back.type='button'; back.className='nav-back';
     back.innerHTML='<svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M15 5l-7 7 7 7"/></svg>กลับสู่เมนูหลัก';
     back.addEventListener('click', function(){ switchView('portal'); });
     nav.appendChild(back);
 
-    var mods=document.createElement('div'); mods.className='nav-mods';
-    // รวมคู่มือไว้ในแถวนี้ด้วย (พี่กี้ 5 ก.ย.) — เปิดอ่านได้จากทุกโมดูลโดยไม่ต้องกลับเมนูหลัก
-    // ไม่ใส่ "ออกจากระบบ" เพราะปุ่มเล็กติดกัน กดพลาดแล้วหลุดออกจากระบบเลย
-    MODULES.filter(function(x){ return (!x.act || x.key==='guide') && modVisible(x); }).forEach(function(x){
-      var b=document.createElement('button');
-      b.type='button'; b.className='nm'+(x.key===CURMOD?' on':''); b.title=x.th;
-      b.style.background=x.color; b.innerHTML=MOD_ICON[x.key];
-      b.addEventListener('click', function(){ openModule(x.key); });
-      mods.appendChild(b);
-    });
-    nav.appendChild(mods);
+    // แถวไอคอนสลับโมดูลถูกถอดออก 8 ก.ย. 69 — สลับโมดูลผ่านปุ่ม "กลับสู่เมนูหลัก" ข้างบนนี้
   }
   function buildNavGroups(){ buildNavForModule(); }   // ชื่อเดิมที่ start() เรียกอยู่
 
@@ -11887,7 +11876,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260908-2201';
+  var APP_BUILD='20260908-2313';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
