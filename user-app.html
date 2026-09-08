@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260908-2037">
+<link rel="stylesheet" href="user.css?v=20260908-2101">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -597,6 +597,35 @@
   .p51-grid{ overflow-x:auto; }
   /* ตารางงบเทียบหลายปี — ตรึงคอลัมน์ชื่อรายการไว้ซ้าย เลื่อนแนวนอนดูปีอื่นเหมือน Excel
      (พี่กี้เคาะ 8 ก.ย. 69 · ทรงเดียวกับ Sheet "รายละเอียดประกอบงบ" ที่ใช้ทำงานจริง) */
+  /* ── หัวแดชบอร์ดหน้าเทียบย้อนหลัง (แบบที่พี่กี้ส่งมา 8 ก.ย. 69) ── */
+  .fh-kpi{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:12px; }
+  @media(min-width:760px){ .fh-kpi{ grid-template-columns:repeat(5,1fr); } }
+  .fh-k{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px 13px; box-shadow:var(--shadow); }
+  .fh-k .fh-ic{ font-size:17px; margin-bottom:5px; }
+  .fh-k .fh-lb{ font-size:12px; color:var(--muted); }
+  .fh-k .fh-v{ font-size:19px; font-weight:800; color:#1F2733; letter-spacing:-.3px;
+    font-variant-numeric:tabular-nums; margin-top:2px; }
+  .fh-k.neg .fh-v{ color:#DC2626; }
+  .fh-k.tax{ background:#FFF7E8; border-color:#F5DFAE; }
+  .fh-k .fh-d{ font-size:11.5px; font-weight:600; margin-top:3px; }
+  .fh-est{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .fh-est .fh-e1{ background:#F6F8FB; border-radius:12px; padding:11px 13px; }
+  .fh-est .fh-lb{ font-size:12px; color:var(--muted); }
+  .fh-est .fh-v{ font-size:17px; font-weight:800; color:#1F2733; font-variant-numeric:tabular-nums; }
+  .fh-diff{ margin-top:9px; font-size:13.5px; font-weight:700; color:#1E7A48; }
+  .fh-diff.bad{ color:#DC2626; }
+  .fh-verdict{ margin-top:7px; font-size:12.5px; padding:9px 11px; border-radius:11px; line-height:1.55; }
+  .fh-verdict.good{ background:#EAF6F1; color:#0B4E3D; }
+  .fh-verdict.bad{ background:#FDECEC; color:#8A1C1C; }
+  .fh-sig{ display:flex; align-items:flex-start; gap:9px; padding:9px 0; border-bottom:1px solid var(--line); }
+  .fh-sig:last-child{ border-bottom:0; }
+  .fh-sig .fh-si{ font-size:14px; line-height:1.4; flex:0 0 auto; }
+  .fh-sig .fh-st{ flex:1; min-width:0; font-size:13px; }
+  .fh-sig .fh-st b{ display:block; color:#1F2733; }
+  .fh-sig .fh-st span{ display:block; font-size:11.5px; color:var(--muted); margin-top:1px; }
+  .fh-sg{ flex:0 0 auto; font-size:11px; font-weight:700; padding:3px 9px; border-radius:999px; }
+  .fh-sg.ok{ background:#EAF6F1; color:#0B4E3D; } .fh-sg.warn{ background:#FFF3E0; color:#8A5B0B; }
+  .fh-sg.info{ background:#EEF4FF; color:#1B4E9B; }
   .pnl-wrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; border:1px solid var(--line); border-radius:10px; }
   .pnl{ border-collapse:separate; border-spacing:0; font-size:12.5px; white-space:nowrap; }
   .pnl th,.pnl td{ padding:6px 9px; border-bottom:1px solid var(--line); }
@@ -8698,6 +8727,8 @@
         }).join('')+'</select></div>';
     }
 
+    h += fhKpiHtml(r.kpi, cmp);
+
     if(!rows.length && !cmp.length){
       return h+'<div class="card"><div class="emptybox">ยังไม่มีข้อมูลย้อนหลังของบริษัทนี้<br>'+
         '<span style="font-size:13px">ใส่ได้จากหน้า 📐 ภ.ง.ด.51 → ปุ่ม 📥 วางผลจาก AI</span></div></div>';
@@ -8726,8 +8757,10 @@
     // ── ①.5 ตารางงบเทียบหลายปี (ทรงเดียวกับ Sheet ที่พี่กี้ใช้) ──
     h += fhPnlHtml(r.pnl);
 
-    // ── ② ประมาณการ vs ของจริง (ก้อนที่พี่กี้ขอ) ──
-    h+='<div class="card"><div class="ds-h">ประมาณการ ภ.ง.ด.51 เทียบกับผลจริง</div>';
+    // ── ② ประมาณการ vs ของจริง — การ์ดสรุปปีล่าสุด + สัญญาณ แล้วค่อยตารางเต็ม ──
+    h += fhEstCard(cmp, r.safeRatio);
+    h += fhSignalHtml((r.kpi || {}).signals);
+    h+='<div class="card"><div class="ds-h">ประมาณการ ภ.ง.ด.51 เทียบกับผลจริง (ทุกปี)</div>';
     if(sm.yearsCompared){
       h+='<div class="p51-kv" style="margin-bottom:9px">เทียบได้ '+sm.yearsCompared+' ปี · '+
         (sm.timesOverEstimate
@@ -8769,6 +8802,65 @@
      → ปีที่ปิดรอบแล้วแก้ได้จากหลายที่ = ไม่รู้ว่าเลขไหนคือตัวที่ยื่นไปจริง
      · แก้ตัวเลขปีเก่า → นำเข้าทับด้วยปุ่ม 📥 วางผลจาก AI (หน้า ภ.ง.ด.51)
      · ปีที่กำลังทำ → แก้ที่หน้าคำนวณ ภ.ง.ด.51 */
+
+
+  /* ───────── หัวแดชบอร์ด: การ์ด KPI + สัญญาณที่ควรรู้ (พี่กี้ส่งแบบมา 8 ก.ย. 69) ─────────
+     🔴 ตัวเลขทุกตัวมาจาก waFinHist (finKpi_) — หน้าจอไม่คิดเอง ไม่งั้นหัวหน้ากับตารางให้คนละเลข */
+  function fhKpiHtml(k, cmp){
+    if(!k) return '';
+    function delta(v, unit, lossNote){
+      if((v === null || v === undefined) && lossNote && k.prevLoss)
+        return '<div class="fh-d" style="color:#8A94A6">ปี '+k.prevYear+' ขาดทุน — เทียบ % ไม่ได้</div>';
+      if(v === null || v === undefined) return '';
+      var up = v >= 0, col = up ? '#1E7A48' : '#DC2626';
+      return '<div class="fh-d" style="color:'+col+'">'+(up?'▲':'▼')+' '+
+        (up?'':'')+Math.abs(v)+(unit||'%')+' <span style="color:#8A94A6">จากปีก่อน</span></div>';
+    }
+    function card(ic, label, val, sub, cls){
+      return '<div class="fh-k'+(cls||'')+'"><div class="fh-ic">'+ic+'</div>'+
+        '<div class="fh-lb">'+esc(label)+'</div><div class="fh-v">'+val+'</div>'+(sub||'')+'</div>';
+    }
+    var d = k.d || {};
+    var h = '<div class="fh-kpi">'+
+      card('📊', 'รายได้รวม', money(k.revenue), delta(d.revenue)) +
+      card('💰', 'ต้นทุน + ค่าใช้จ่าย', money(k.expense), delta(d.expense)) +
+      card('📈', 'กำไรสุทธิ', money(k.netProfit), delta(d.netProfit, '%', true), k.netProfit < 0 ? ' neg' : '') +
+      card('％', 'อัตรากำไรสุทธิ', (k.margin === null ? '—' : k.margin + '%'), delta(d.margin, ' จุด')) +
+      card('🧾', 'ภาษีที่ชำระ', money(k.tax), '<div class="fh-d" style="color:#8A94A6">ปีภาษี '+k.year+'</div>', ' tax') +
+      '</div>';
+    return h;
+  }
+
+  /** ประมาณการ ภ.ง.ด.51 เทียบผลจริง (การ์ดสรุปปีล่าสุดที่เทียบได้) */
+  function fhEstCard(cmp, safeRatio){
+    var c = (cmp || []).filter(function(x){ return x.diff !== null; })[0];
+    if(!c) return '';
+    var over = c.overEstimate;
+    return '<div class="card"><div class="ds-h">ประมาณการ ภ.ง.ด.51 เทียบผลจริง · ปี '+c.year+'</div>'+
+      '<div class="fh-est">'+
+        '<div class="fh-e1"><div class="fh-lb">ประมาณการที่ยื่น</div><div class="fh-v">'+money(c.estProfit)+'</div></div>'+
+        '<div class="fh-e1"><div class="fh-lb">กำไรจริง</div><div class="fh-v">'+money(c.actProfit)+'</div></div>'+
+      '</div>'+
+      '<div class="fh-diff'+(over?' bad':'')+'">'+(c.diff>0?'▲':'▼')+' ส่วนต่าง '+money(Math.abs(c.diff))+
+        (c.diffPct===null?'':' ('+(c.diffPct>0?'+':'')+c.diffPct+'%)')+'</div>'+
+      '<div class="fh-verdict '+(over?'bad':'good')+'">'+(over
+        ? '⚠️ กำไรจริงเกินประมาณการ × '+safeRatio+' — ปีนั้นเข้าข่ายเงินเพิ่ม 20% ถ้าไม่มีเหตุอันสมควร'
+        : '✅ อยู่ในเกณฑ์ — ประมาณการสูงกว่าหรือใกล้เคียงกำไรจริง')+'</div></div>';
+  }
+
+  /** สัญญาณที่ควรรู้ — เรียงจาก backend มาแล้ว (เรื่องภาษีก่อน แนวโน้มธุรกิจตาม) */
+  function fhSignalHtml(sig){
+    if(!sig || !sig.length) return '';
+    var col = { ok:'#1E7A48', warn:'#C8730B', info:'#1B72E8' };
+    var ico = { ok:'▲', warn:'▼', info:'ℹ️' };
+    return '<div class="card"><div class="ds-h">สัญญาณที่ควรรู้</div>'+
+      sig.map(function(s){
+        return '<div class="fh-sig"><div class="fh-si" style="color:'+col[s.level]+'">'+ico[s.level]+'</div>'+
+          '<div class="fh-st"><b>'+esc(s.title)+'</b><span>'+esc(s.detail)+'</span></div>'+
+          '<div class="fh-sg '+s.level+'">'+esc(s.tag)+'</div></div>';
+      }).join('')+'</div>';
+  }
+  window.fhKpiHtml=fhKpiHtml; window.fhEstCard=fhEstCard; window.fhSignalHtml=fhSignalHtml;
 
   /** คลาสสีของคอลัมน์: ประมาณการ=ม่วง · งบครึ่งปี=เหลือง · จริง=ขาว */
   function fhCls(c){ return c.kind==='ประมาณการ' ? ' est' : (c.kind==='จริงครึ่งปี' ? ' h1c' : ''); }
@@ -11797,7 +11889,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260908-2037';
+  var APP_BUILD='20260908-2101';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
