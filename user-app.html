@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260908-2313">
+<link rel="stylesheet" href="user.css?v=20260908-2341">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -10365,7 +10365,16 @@
     }
     return out.join('');
   }
-  function kpErr(m){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(m||'โหลดไม่สำเร็จ')+'</div></div>'; }
+  /* 🔴 8 ก.ย. 69 — ผลที่มาช้าจากเซิร์ฟเวอร์ ห้ามเขียนทับหน้าที่ผู้ใช้เปิดอยู่ "ตอนนี้"
+     พี่กี้เจอจริง: กดการ์ด "ประเมินผลงาน" (คำขอแรกเย็น ~6 วิ) แล้วกดกลับเมนูหลักระหว่างรอ
+     → ตาราง KPI มาทับหน้าเลือกโมดูล การ์ดโมดูลหายหมด และหน้านั้นซ่อนแถบซ้ายอยู่แล้ว (โหมดเต็มจอ)
+     = ผู้ใช้ตันอยู่หน้านั้น ออกไปไหนไม่ได้เลย
+     ทุกหน้าในโมดูลนี้ต้องวาดผ่าน kpPaint เท่านั้น (มีเทสกันลืมใน tests/test-kpi-ui.js) */
+  function kpPaint(view,h){ if(VIEW!==view) return false; $('main').innerHTML=h; return true; }
+  function kpErr(m){
+    if(String(VIEW||'').indexOf('kpi')!==0) return;   // ออกจากโมดูลไปแล้ว = ไม่ต้องขึ้นข้อความค้างทับหน้าใหม่
+    $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(m||'โหลดไม่สำเร็จ')+'</div></div>';
+  }
   function kpGradePill(g){
     if(g===null||g===undefined||g==='') return '<span class="m-hint">—</span>';
     return '<b class="kp-g kp-g'+g+'">'+g+'</b>';
@@ -10397,7 +10406,7 @@
       });
       h+='</tbody></table></div><div class="m-hint">คนที่ลาออกจะถูกถอดออกจากรอบใหม่และไม่ถูกคิดค่าบริการ '+
         'แต่ประวัติกับใบประเมินเดิมยังเปิดดูได้ตลอดค่ะ</div></div>';
-      $('main').innerHTML=h;
+      kpPaint('kpiemp',h);
     }).catch(function(e){ kpErr(e.message); });
   }
   function kpOpenPerson(code){ KP_CODE=code; switchView('kpiperson'); }
@@ -10436,7 +10445,7 @@
           '<td>'+(closed?'<button class="btn btn-ghost btn-sm" onclick="kpOpenDoc(\''+esc(x.ym)+'\')">เปิดใบ</button>':'')+'</td></tr>';
       });
       h+='</tbody></table></div></div>';
-      $('main').innerHTML=h;
+      kpPaint('kpiperson',h);
     }).catch(function(e){ kpErr(e.message); });
   }
   function kpOpenDoc(ym){ KP_YM=ym; switchView('kpidoc'); }
@@ -10477,7 +10486,7 @@
           '<td>'+(x.total!==null?'<button class="btn btn-ghost btn-sm" onclick="kpDocOf(\''+esc(x.code)+'\')">ใบประเมิน</button>':'')+'</td></tr>';
       });
       h+='</tbody></table></div></div>';
-      $('main').innerHTML=h;
+      kpPaint('kpidash',h);
     }).catch(function(e){ kpErr(e.message); });
   }
   function kpSetYm(v){ KP_YM=v; renderKpiDash(); }
@@ -10590,7 +10599,7 @@
     if(!r.locked) h+='<div class="tax-acts"><button class="btn btn-primary" onclick="kpEntryReview()">ตรวจแล้วบันทึก</button></div>';
     h+='<div class="m-hint">ทั้งตำแหน่งอยู่ในตารางเดียว ไม่ต้องเลือกทีละคน — ระบบเตือนให้เองถ้าตัวเลขต่างจากเดือนก่อนมากผิดปกติ</div></div>';
     h+='<div id="kpReview"></div>';
-    $('main').innerHTML=h;
+    kpPaint('kpientry',h);
     kpEntryRepaintScores();
   }
   function kpFields(code,m){
@@ -10723,7 +10732,7 @@
     h+='</div><div class="card kp-sumbar"><div><b id="kpsDone">0/'+r.items.length+'</b><span class="m-hint"> ให้คะแนนแล้ว</span></div>'+
       '<div><b id="kpsPct">—</b><span class="m-hint"> คิดเป็น <span id="kpsW">0.00</span> / '+r.weight+' คะแนน</span></div>'+
       (r.locked?'':'<button class="btn btn-primary" onclick="kpsSave()">บันทึกคะแนน</button>')+'</div>';
-    $('main').innerHTML=h; kpsTotal();
+    kpPaint('kpiscore',h); kpsTotal();
   }
   function kpsSet(id,v){ KPS_VAL[id]=v; kpsPaint(); }
   function kpsSetCode(v){ KP_CODE=v; renderKpiScore(); }
@@ -10790,7 +10799,7 @@
         '<div><span class="kp-pill '+(res.result==='ผ่าน'?'kp-pill-ok':'kp-pill-no')+'">ผลการประเมิน : '+esc(res.result)+'</span></div></div></div>';
       h+='<div class="kp-doc-signs"><div><div class="kp-doc-line"></div>ลงชื่อ ผู้ถูกประเมิน</div>'+
         '<div><div class="kp-doc-line"></div>ลงชื่อ ผู้ประเมิน</div></div></div>';
-      $('main').innerHTML=h;
+      kpPaint('kpidoc',h);
     }).catch(function(e){ kpErr(e.message); });
   }
   function kpDocYm(v){ KP_YM=v; renderKpiDoc(); }
@@ -11876,7 +11885,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260908-2313';
+  var APP_BUILD='20260908-2341';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
