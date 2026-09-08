@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260908-1055">
+<link rel="stylesheet" href="user.css?v=20260908-1142">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -8638,9 +8638,11 @@
     var target = p51r2(Math.max(p51n(lastYearAnnualTax), 0) / 2);
     var pay = p51r2(p51n(taxDue)), calc = p51r2(p51n(computedHalfTax));
     if(!(target > 0)) return { available:false, target:0, met:false, shortfall:0, taxDue:pay, computedTax:calc };
-    var met = pay >= target;
+    // 🔴 8 ก.ย. 69: ตัดสินด้วยภาษีที่คำนวณได้ (ก่อนหักเครดิต) ตามกระดาษทำการจริงที่พี่กี้ใช้ยื่น
+    //    WHT คือภาษีที่ถูกนำส่งไปแล้ว — นับว่ายังไม่ชำระทำให้ด่านเข้มเกินจริง
+    var met = calc >= target;
     return { available:true, target:target, met:met,
-      shortfall: met ? 0 : p51r2(target - pay), taxDue:pay, computedTax:calc };
+      shortfall: met ? 0 : p51r2(target - calc), taxDue:pay, computedTax:calc };
   }
   /** จุดเริ่มมีภาษี — ฝาแฝดของ pnd51Breakeven_ (กำไรทางภาษีทั้งปี ไม่ใช่รายได้) */
   function p51Breakeven(isSME, lossAvailable){
@@ -11522,7 +11524,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260908-1055';
+  var APP_BUILD='20260908-1142';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
