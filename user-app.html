@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260907-2155">
+<link rel="stylesheet" href="user.css?v=20260908-0934">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -8612,7 +8612,22 @@
         return r.isRisky ? p51r2(Math.max(p51HalfTax(expected, isSME) - halfTax, 0) * 0.20) : 0;
       })() };
   }
+  /** เกราะ ป.50/2537 — ฝาแฝดของ pnd51SafeHarbour_ (ตัดสินด้วยยอดที่ต้องชำระจริง) */
+  function p51SafeHarbour(computedHalfTax, taxDue, lastYearAnnualTax){
+    var target = p51r2(Math.max(p51n(lastYearAnnualTax), 0) / 2);
+    var pay = p51r2(p51n(taxDue)), calc = p51r2(p51n(computedHalfTax));
+    if(!(target > 0)) return { available:false, target:0, met:false, shortfall:0, taxDue:pay, computedTax:calc };
+    var met = pay >= target;
+    return { available:true, target:target, met:met,
+      shortfall: met ? 0 : p51r2(target - pay), taxDue:pay, computedTax:calc };
+  }
+  /** จุดเริ่มมีภาษี — ฝาแฝดของ pnd51Breakeven_ (กำไรทางภาษีทั้งปี ไม่ใช่รายได้) */
+  function p51Breakeven(isSME, lossAvailable){
+    var loss = Math.max(p51n(lossAvailable), 0), free = isSME ? 300000 : 0;
+    return { exemption:p51r2(free), pnd50:p51r2(free + loss), pnd51:p51r2(free * 2 + loss) };
+  }
   window.p51Profit = p51Profit; window.p51HalfTax = p51HalfTax; window.p51TaxOnBase = p51TaxOnBase; window.p51Risk = p51Risk; window.p51Calc = p51Calc;
+  window.p51SafeHarbour = p51SafeHarbour; window.p51Breakeven = p51Breakeven;
 
   /** เกจครึ่งวงกลม — เขียว <1.0 · เหลือง 1.0–1.25 · แดง >1.25 (สเกล 0–1.5 เท่า) */
   function p51Gauge(ratio, level){
@@ -8718,6 +8733,11 @@
       if(!r || !r.ok){ toast((r && r.error) || 'โหลดไม่สำเร็จ'); return p51List(); }
       P51.entity = r.entity; P51.period = r.period; P51.history = r.history || []; P51.growth = r.growth;
       P51.job = r.job || null;
+      // เฟส P5 — มาจาก backend เสมอ (ไม่ต้องรอบันทึกงานก่อน)
+      P51.obligation = r.obligation || null;
+      P51.lots = r.lossLots || { available:[], expired:[], totalAvailable:0, totalExpired:0 };
+      P51.lastTax = p51n(r.lastYearAnnualTax);
+      P51.dueEfiling = r.dueDateEfiling || null;
       if(r.job && r.job.scenarios && r.job.scenarios[r.job.scenarioKey]){
         P51.sc = r.job.scenarios; P51.key = r.job.scenarioKey;
         P51.wht = r.job.whtCredit || ''; P51.whtSrc = r.job.whtSource || 'manual';
@@ -8784,6 +8804,8 @@
       (dl === null ? '' : (dl < 0 ? ' <span style="color:#DC2626">(เลยกำหนด ' + Math.abs(dl) + ' วัน)</span>'
         : ' <span style="color:' + (dl <= 30 ? '#C8730B' : '#8A94A6') + '">(เหลือ ' + dl + ' วัน)</span>')) + '</div>' +
       '<div>ทุนจดทะเบียนชำระแล้ว: <b>' + (e.paidCapital ? money(e.paidCapital) : '— ยังไม่กรอกในชีตนิติบุคคล') + '</b></div>' +
+      (P51.dueEfiling ? '<div>ยื่นผ่านอินเทอร์เน็ตถึง: <b>' + esc(p51DateText(P51.dueEfiling)) + '</b>' +
+        ' <span style="color:#8A94A6;font-size:11.5px">(มาตรการขยาย 8 วัน — ตรวจประกาศของปีนั้นก่อนยื่น)</span></div>' : '') +
       '</div>' +
       '<div style="margin-top:10px"><label class="fl" style="font-size:12px;color:#8A94A6">อัตราภาษีที่ใช้</label>' +
       '<select id="p51Sme" class="tax-inp" onchange="p51Touch()">' +
@@ -8855,7 +8877,11 @@
       '<tr><td class="rl"><b>กำไรทางภาษี</b></td>' +
       P51_KEYS.map(function(k){ return '<td class="rl" style="text-align:right" id="p51sum_' + k + '">-</td>'; }).join('') + '</tr>' +
       '</tbody></table></div>' +
-      '<div class="p51-note">ระบบไม่ตัดอายุขาดทุนสะสม 5 ปีให้ — กรอกเฉพาะยอดที่ใช้สิทธิ์ได้จริงในปีนี้</div></div>';
+      '<div class="p51-note">ช่อง "ขาดทุนสะสมยกมา" ในตารางนี้คือยอดที่จะใช้จริงในการคำนวณ — ' +
+      'ทะเบียนขาดทุนด้านล่างช่วยตรวจอายุ 5 รอบให้ แล้วกดใส่ยอดลงตารางได้</div></div>';
+
+    // ④ ทะเบียนผลขาดทุนยกมาราย lot (เฟส P5) — ตัวช่วยกรอก + ตรวจอายุ ไม่แตะการคำนวณเอง
+    h += p51LotsCard();
 
     // ④ กำไรจริงที่คาด + ⑤ เครดิตภาษี
     h += '<div class="card"><div class="ds-h">⑤ คาดการณ์กำไรจริงปลายปี (ใช้เช็คความเสี่ยงเงินเพิ่ม)</div>' +
@@ -8926,6 +8952,83 @@
     toast('ใส่รายได้จากปี ' + year + ' ให้แล้ว — ปรับต้นทุน/ค่าใช้จ่ายต่อได้เลย');
   }
 
+  // ───────────── ทะเบียนผลขาดทุนยกมาราย lot (เฟส P5 · spec §14.3) ─────────────
+  /** การ์ดทะเบียนขาดทุน — 1 ปีที่เกิดขาดทุน = 1 แถว · หมดอายุแล้วขึ้นสีแดง ใช้หักไม่ได้ */
+  function p51LotsCard(){
+    var L = P51.lots || { available:[], expired:[], totalAvailable:0, totalExpired:0 };
+    var h = '<div class="card"><div class="ds-h">④ ผลขาดทุนยกมา (ทะเบียนรายปี)</div>';
+    if(!L.available.length && !L.expired.length){
+      h += '<div class="p51-note">ยังไม่มีข้อมูลในทะเบียน — เพิ่มทีละปีจาก ภ.ง.ด.50 ที่ยื่นไปแล้ว ' +
+        '⚠️ ต้องใช้ <b>ขาดทุนทางภาษี</b> ของแต่ละปี ไม่ใช่ยอด "ขาดทุนสะสมทางบัญชี"</div>';
+    } else {
+      h += '<div class="p51-grid"><table><thead><tr><th>ปีที่เกิด</th><th style="text-align:right">จำนวน</th>' +
+        '<th style="text-align:right">ใช้ไปแล้ว</th><th style="text-align:right">คงเหลือ</th><th>สถานะ</th><th></th></tr></thead><tbody>' +
+        L.available.map(function(l){
+          return '<tr><td class="rl">' + l.year + '</td><td class="rl" style="text-align:right">' + money(l.amount) + '</td>' +
+            '<td class="rl" style="text-align:right">' + money(l.used) + '</td>' +
+            '<td class="rl" style="text-align:right"><b>' + money(l.remain) + '</b></td>' +
+            '<td class="rl" style="color:#1E7A48;white-space:normal">ใช้ได้ถึงรอบ ' + l.expiresAfter + '</td>' +
+            '<td class="rl"><button class="btn btn-ghost" style="padding:3px 8px;font-size:11px" ' +
+            'onclick="p51LotEdit(' + l.year + ')">แก้</button></td></tr>';
+        }).join('') +
+        L.expired.map(function(l){
+          return '<tr style="opacity:.62"><td class="rl">' + l.year + '</td><td class="rl" style="text-align:right">' + money(l.amount) + '</td>' +
+            '<td class="rl" style="text-align:right">' + money(l.used) + '</td>' +
+            '<td class="rl" style="text-align:right">' + money(l.remain) + '</td>' +
+            '<td class="rl" style="color:#DC2626;white-space:normal">หมดอายุ (ได้ถึงรอบ ' + l.expiresAfter + ')</td>' +
+            '<td class="rl"><button class="btn btn-ghost" style="padding:3px 8px;font-size:11px" ' +
+            'onclick="p51LotEdit(' + l.year + ')">แก้</button></td></tr>';
+        }).join('') +
+        '</tbody></table></div>' +
+        '<div class="p51-kv" style="margin-top:8px"><div>ยอดที่ใช้ได้ในรอบ ' + P51.year + ': <b>' + money(L.totalAvailable) + '</b>' +
+        (L.totalExpired ? ' · <span style="color:#DC2626">หมดอายุแล้ว ' + money(L.totalExpired) + '</span>' : '') + '</div></div>' +
+        '<div class="tax-acts p51-acts"><button class="btn btn-ghost" onclick="p51LotApply()">↧ ใส่ยอด ' +
+        money(L.totalAvailable) + ' ลงทุกฉากทัศน์</button></div>';
+    }
+    h += '<div class="p51-fr" style="margin-top:10px">' +
+      '<div><label class="fl">ปีที่เกิดขาดทุน (พ.ศ.)</label><input id="p51LotY" class="tax-inp" inputmode="numeric" placeholder="2568"></div>' +
+      '<div><label class="fl">ขาดทุนทางภาษีปีนั้น</label><input id="p51LotA" class="tax-inp" inputmode="decimal" placeholder="0 = ลบปีนั้นทิ้ง"></div>' +
+      '<div><label class="fl">ใช้ไปแล้ว (จาก ภ.ง.ด.50)</label><input id="p51LotU" class="tax-inp" inputmode="decimal" placeholder="0"></div>' +
+      '<div><label class="fl">ที่มา</label><input id="p51LotS" class="tax-inp" placeholder="ภ.ง.ด.50 ปี 2568"></div>' +
+      '</div><div class="tax-acts p51-acts"><button class="btn btn-ok" onclick="p51LotSave()">＋ บันทึกปีนี้ลงทะเบียน</button></div>' +
+      '<div class="p51-note">ใช้ได้ไม่เกิน 5 รอบบัญชีถัดจากปีที่เกิด (ม.65 ตรี (12)) · ' +
+      '"ใช้ไปแล้ว" กรอกเองจาก ภ.ง.ด.50 ที่ยื่นแล้ว — ระบบไม่หักให้อัตโนมัติ</div></div>';
+    return h;
+  }
+  function p51LotEdit(year){
+    var L = P51.lots || {}, all = (L.available || []).concat(L.expired || []), hit = null;
+    all.forEach(function(l){ if(l.year === year) hit = l; });
+    if(!hit) return;
+    if($('p51LotY')) $('p51LotY').value = hit.year;
+    if($('p51LotA')) $('p51LotA').value = hit.amount;
+    if($('p51LotU')) $('p51LotU').value = hit.used;
+    if($('p51LotS')) $('p51LotS').value = hit.source || '';
+    toast('แก้ปี ' + year + ' แล้วกดบันทึกอีกครั้ง (ใส่ยอด 0 = ลบปีนั้นทิ้ง)');
+  }
+  function p51LotSave(){
+    var y = ($('p51LotY') || {}).value, a = ($('p51LotA') || {}).value;
+    if(!p51n(y)) return toast('ใส่ปีที่เกิดขาดทุน (พ.ศ.) ก่อนค่ะ');
+    p51Read();                                     // อย่าให้ตัวเลขที่พิมพ์ค้างในฟอร์มหาย
+    busy('กำลังบันทึกทะเบียนขาดทุน…');
+    jsonp({ action:'waLossLotSave', uid:UID, entity:P51.ent, year:y, amount:a,
+      used:($('p51LotU') || {}).value, source:($('p51LotS') || {}).value }).then(function(r){
+      unbusy();
+      if(!r || !r.ok) return toast((r && r.error) || 'บันทึกไม่สำเร็จ');
+      P51.lots = r.lossLots || P51.lots;
+      toast(r.deleted ? 'ลบปี ' + y + ' ออกจากทะเบียนแล้ว' : 'บันทึกปี ' + y + ' แล้ว');
+      p51Calcview();
+    }).catch(function(e){ unbusy(); toast(e.message); });
+  }
+  /** ใส่ยอดที่ใช้ได้ลงช่อง "ขาดทุนสะสมยกมา" ของทุกฉากทัศน์ (พี่แก้ทับได้) */
+  function p51LotApply(){
+    var total = ((P51.lots || {}).totalAvailable) || 0;
+    p51Read();
+    P51_KEYS.forEach(function(k){ P51.sc[k] = P51.sc[k] || {}; P51.sc[k].lossCarryforward = total; });
+    p51Calcview();
+    toast('ใส่ยอดขาดทุนยกมา ' + money(total) + ' ให้ทุกฉากทัศน์แล้ว');
+  }
+  window.p51LotEdit = p51LotEdit; window.p51LotSave = p51LotSave; window.p51LotApply = p51LotApply;
+
   /** วาดฝั่งขวา (เกจ + ยอด + ที่มาของตัวเลข) — เรียกทุกครั้งที่พิมพ์ */
   function p51Recalc(){
     var side = $('p51Side'); if(!side) return;
@@ -8941,6 +9044,19 @@
     if(P51.auto && P51.auto.warnings) P51.auto.warnings.forEach(function(w){ if(warn.indexOf(w) < 0) warn.push(w); });
 
     var h = '';
+    // ── ด่านต้องยื่น/ไม่ต้องยื่น + "ภาษี 0 ก็ต้องยื่น" (เฟส P5) — ขึ้นบนสุด เห็นก่อนตัวเลข ──
+    var ob = P51.obligation;
+    if(ob && !ob.mustFile){
+      h += '<div class="p51-warn" style="background:#EEF4FF;border-color:#C7D8F5;color:#1B4E9B">' +
+        'ℹ️ รอบนี้<b>ไม่ต้องยื่น ภ.ง.ด.51</b><div style="margin-top:3px">' + esc(ob.reason) + '</div></div>';
+    } else if(c.taxDue === 0 && c.refundable === 0){
+      h += '<div class="p51-warn">⚠️ ภาษีเป็น 0 แต่ <b>ยังต้องยื่นแบบ</b> — ไม่ยื่นมีค่าปรับอาญา 1,000–2,000 บาท ' +
+        'และเงินเพิ่ม 1.5%/เดือนถ้ายื่นช้า</div>';
+    }
+    if(ob && ob.unknownIncorp){
+      h += '<div class="p51-note" style="margin:0 0 8px">ยังไม่กรอกวันจดทะเบียนจัดตั้งในชีตนิติบุคคล — ' +
+        'ระบบถือว่าเป็นรอบปกติที่ต้องยื่น (บริษัทเปิดใหม่รอบแรกไม่ครบ 12 เดือน ไม่ต้องยื่น)</div>';
+    }
     if(P51.autoLoading){
       h += '<div class="p51-warn" style="background:#EEF4FF;border-color:#C7D8F5;color:#1B4E9B">' +
         '⏳ กำลังดึงยอดครึ่งปีแรกจากระบบ… (อ่านชีตขาย/ใบสั่งจ่าย/ใบเบิก/เงินเดือน) ' +
@@ -8966,6 +9082,37 @@
       p51Row(6, 'หัก เครดิตภาษีอื่น', -p51n(P51.other)) +
       '<div class="r total"><div>' + (c.refundable > 0 ? 'ภาษีที่ขอคืน' : 'รวมต้องชำระเพิ่มเติม') + '</div>' +
       '<div class="v">' + money(c.refundable > 0 ? c.refundable : c.taxDue) + '</div></div></div>';
+
+    // ── เกราะ ป.50/2537 + จุดเริ่มมีภาษี (เฟส P5) ──
+    var sh = p51SafeHarbour(c.halfTax, c.taxDue, P51.lastTax);
+    var lossAvail = ((P51.lots || {}).totalAvailable) || p51n((P51.sc[P51.key] || {}).lossCarryforward);
+    var be = p51Breakeven(c.isSME, lossAvail);
+    var mustFile = !(ob && !ob.mustFile);
+    h += '<div class="card" style="margin-top:12px"><div class="ds-h">' +
+      (mustFile ? '🛡️ เกราะกันเงินเพิ่ม + จุดเริ่มมีภาษี' : '📍 จุดเริ่มมีภาษี') + '</div>';
+    // รอบที่ไม่ต้องยื่น = ไม่มีเรื่องเงินเพิ่ม → ไม่ต้องโชว์ "ขาดอีกเท่าไร" ให้สับสน
+    if(!mustFile){
+      h += '';
+    } else if(!sh.available){
+      h += '<div class="p51-warn" style="margin:0">ปีก่อนไม่มีภาษีต้องเสีย → ใช้ด่านปลอดภัย ป.50/2537 ไม่ได้' +
+        '<div style="margin-top:4px">เกราะที่เหลือคือ ขาดทุนยกมา + ขั้นยกเว้น SME 300,000 บาท</div></div>';
+    } else if(sh.met){
+      h += '<div class="p51-warn" style="margin:0;background:#EAF6F1;border-color:#BFE3D5;color:#0B4E3D">' +
+        '✅ ยื่นยอดนี้ปลอดภัยจากเงินเพิ่ม 20% ตาม ป.50/2537<div style="margin-top:4px">' +
+        'ยอดเกราะ (ครึ่งหนึ่งของภาษี ภ.ง.ด.50 ปีก่อน) ' + money(sh.target) +
+        ' · ยอดที่จะยื่น ' + money(sh.taxDue) + '</div></div>';
+    } else {
+      h += '<div class="p51-warn" style="margin:0">ยังไม่เข้าด่านปลอดภัย ป.50/2537' +
+        '<div style="margin-top:4px">ยอดเกราะ <b>' + money(sh.target) + '</b> · ยอดที่จะยื่น ' + money(sh.taxDue) +
+        ' · ขาดอีก <b>' + money(sh.shortfall) + '</b></div>' +
+        '<div style="margin-top:4px;font-size:11.5px">ยื่นถึงยอดเกราะ = ถือว่ามีเหตุอันสมควร ไม่ถูกเรียกเงินเพิ่ม ' +
+        'แม้กำไรจริงปลายปีจะสูงกว่าประมาณการ (ตัดสินใจเองว่าจะยื่นเท่าไร)</div></div>';
+    }
+    h += '<div class="p51-bd" style="margin-top:10px">' +
+      '<div class="r"><div>จุดเริ่มมีภาษี ภ.ง.ด.51 (ครึ่งปี)</div><div class="v">' + money(be.pnd51) + '</div></div>' +
+      '<div class="r"><div>จุดเริ่มมีภาษี ภ.ง.ด.50 (ทั้งปี)</div><div class="v">' + money(be.pnd50) + '</div></div></div>' +
+      '<div class="p51-note">ตัวเลขนี้คือ <b>กำไรสุทธิทางภาษีทั้งปี</b> ไม่ใช่ยอดรายได้' +
+      (lossAvail ? ' · รวมขาดทุนยกมาที่ใช้ได้ ' + money(lossAvail) + ' แล้ว' : '') + '</div></div>';
 
     h += '<div class="ds-h" style="margin:14px 0 7px">เปรียบเทียบฉากทัศน์</div><div class="p51-sc">' +
       P51_KEYS.map(function(k){
@@ -11354,7 +11501,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260907-2155';
+  var APP_BUILD='20260908-0934';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
