@@ -12,6 +12,11 @@
   --ink:#1b2130; --muted:#7b8294; --line:#ebedf2; --bg:#EEF5FC; --card:#fff;
   /* ── ธีมแถบเมนูฟ้า (พี่กี้เคาะ 8 ก.ย. 69) — แถบซ้ายไล่เฉด · เมนูที่เลือก = การ์ดขาว ── */
   --nav1:#1B4FA0; --nav2:#2E86D9; --nav-ink:#EAF4FE; --nav-dim:#A9CBEC;
+  /* การ์ดตัวเลข 4 โทนพาสเทล — วนสีตามลำดับการ์ดในแถว */
+  --t-blue:#E6F1FD;   --t-blue-i:#1E8FE1;
+  --t-green:#E6F5EC;  --t-green-i:#159A5B;
+  --t-purple:#EFEAFC; --t-purple-i:#7A55D6;
+  --t-orange:#FDF0E5; --t-orange-i:#D97A16;
   --green:#168a52; --green-tint:#e7f5ee;
   --slate:#3f4658; --slate-tint:#eef0f4;
   --radius:18px; --shadow:0 4px 18px rgba(20,26,40,.06);
@@ -673,8 +678,9 @@ textarea:focus,input[type=time]:focus{border-color:var(--red)}
   /* ── Topbar (โชว์ชื่อเมนูที่กด · พื้นแดง ตัวหนังสือขาว · สูง = brand) ── */
   .topbar{
     display:flex; grid-area:top; align-items:center; gap:14px;
-    background:var(--card); color:var(--ink); border-bottom:1px solid var(--line);
-    box-shadow:0 1px 10px rgba(24,74,124,.06);
+    background:rgba(255,255,255,.72); color:var(--ink); border-bottom:1px solid rgba(255,255,255,.75);
+    -webkit-backdrop-filter:blur(16px) saturate(160%); backdrop-filter:blur(16px) saturate(160%);
+    box-shadow:0 2px 14px rgba(24,74,124,.07);
     height:63px; padding:0 30px; position:sticky; top:0; z-index:12}
   .tb-icon{font-size:21px; line-height:1; flex:0 0 auto; display:flex; align-items:center}
   /* ไอคอนแถบบน = เส้นขาวเรียบ (เข้าชุดกับเมนูข้าง · พี่กี้ขอ 30 ก.ค.) */
@@ -689,16 +695,16 @@ textarea:focus,input[type=time]:focus{border-color:var(--red)}
   .tb-avatar img{width:100%;height:100%;object-fit:cover}
 
   /* ── Brand (โลโก้+ชื่อระบบ · หัว sidebar · พื้นแดง ตัวขาว เข้าชุด topbar) ── */
-  .nav-brand{display:flex; align-items:center; gap:10px;
-    height:63px; padding:0 14px; margin:-10px -12px 8px;
-    background:transparent; box-shadow:none}
+  .nav-brand{display:flex; flex-direction:column; align-items:center; gap:4px;
+    height:auto; padding:12px 14px 10px; margin:-10px -12px 6px;
+    background:transparent; box-shadow:none; text-align:center}
   /* ⚠️ เคยมี rule ซ่อน .nav-btn[data-view="home"] บน PC (ยุค "หน้าหลัก" เดิมที่ซ้ำกับเมนู HR)
      → ตอนนี้ data-view="home" = หน้า "ภาพรวม" (dashboard) ต้องเห็นบนคอม ห้ามซ่อน */
-  .nb-logo{width:auto;height:50px;background:none;flex:0 0 auto;
+  .nb-logo{width:auto;height:96px;background:none;flex:0 0 auto;
     display:flex;align-items:center;justify-content:center}
-  .nb-logo img{height:100%;width:auto;object-fit:contain;filter:drop-shadow(0 2px 5px rgba(10,30,70,.30))}
+  .nb-logo img{height:100%;width:auto;object-fit:contain;filter:drop-shadow(0 6px 14px rgba(6,32,72,.32))}
   .nb-logo.noimg::before{content:'Moodata';font-weight:800;color:#fff;font-size:16px}
-  .nb-txt{font-weight:700;font-size:15px;line-height:1.1;color:#fff}
+  .nb-txt{font-weight:700;font-size:15.5px;line-height:1.25;color:#fff;text-align:center}
   .nb-txt small{display:block;font-weight:400;font-size:10.5px;color:rgba(255,255,255,.82);margin-top:2px}
 
   /* bottom nav → sidebar ซ้าย (เต็มความสูง · scroll ได้) */

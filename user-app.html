@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260908-2341">
+<link rel="stylesheet" href="user.css?v=20260908-2353">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -41,7 +41,12 @@
   .bell-btn:hover{ background:rgba(255,255,255,.30); }
   .bell-dot{ position:absolute; top:-5px; right:-5px; min-width:18px; height:18px; padding:0 5px;
     border-radius:999px; background:#DC2626; color:#fff; font-size:11px; font-weight:700;
-    line-height:18px; text-align:center; box-shadow:0 0 0 2px rgba(27,114,232,.9); }
+    line-height:18px; text-align:center; box-shadow:0 0 0 2px #fff; }
+  /* ── ปุ่มบนแถบบน (คอม) — แถบเป็นกระจกใสแล้ว ปุ่มขาวโปร่งจะกลืนหาย ──
+     ⚠️ .rm-btn ใช้ทั้งแถบบนคอมและแถบมือถือสีเข้ม ห้ามแก้ตัวฐาน แก้เฉพาะที่อยู่ใน .topbar */
+  .topbar .rm-btn, .topbar .bell-btn{ border-color:var(--red-soft); background:var(--red-tint);
+    color:var(--red-deep); }
+  .topbar .rm-btn:hover, .topbar .bell-btn:hover{ background:#DBEAFE; border-color:var(--red); }
   /* ⚠️ ต้อง position:fixed — ถ้าใช้ absolute จะโดนแถบบนที่ overflow ตัดหาย (บทเรียนเมนู ⋮ §7.13) */
   .bell-pop{ position:fixed; z-index:120; width:min(340px,92vw); max-height:70vh; overflow:auto;
     background:#fff; color:var(--ink,#12202E); border-radius:14px; box-shadow:0 12px 34px rgba(0,0,0,.22);
@@ -103,13 +108,19 @@
   .rm-btn .rm-lb{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .rm-btn .rm-ca{ opacity:.8; font-size:10px; }
   /* อยู่ห้องลูกค้า = เปลี่ยนสีทั้งแถบ + มีแถบเตือน */
-  .app.inroom .hd, .app.inroom .topbar{ background:#B45309 !important; color:#fff !important; }
-  .app.inroom .topbar .tb-title{ color:#fff !important; }
-  .app.inroom .topbar .tb-sub{ color:rgba(255,255,255,.85) !important; }
-  .app.inroom .topbar .tb-icon svg{ stroke:#fff !important; }
-  .app.inroom .nav{ background:linear-gradient(168deg,#7C3A06 0%,#C2650C 100%) !important; }
+  /* แถบบนคอมยังเป็นกระจก แค่อมม่วง — ตัวบอกว่า "อยู่ห้องลูกค้า" คือแถบซ้ายม่วงทั้งแถบ + ปุ่มห้องสีม่วง */
+  .app.inroom .topbar{ background:rgba(237,233,254,.78) !important;
+    border-bottom-color:rgba(196,181,253,.85) !important; }
+  .app.inroom .topbar .tb-icon svg{ stroke:#6D28D9 !important; }
+  .app.inroom .topbar .rm-btn, .app.inroom .topbar .bell-btn{ border-color:#C4B5FD !important;
+    background:#EDE9FE !important; color:#5B21B6 !important; }
+  .app.inroom .topbar .tb-avatar{ background:#EDE9FE !important; border-color:#C4B5FD !important;
+    color:#5B21B6 !important; }
+  .app.inroom .nav{ background:linear-gradient(168deg,#4C1D95 0%,#7C3AED 100%) !important; }
   .app.inroom .nav-brand{ background:transparent !important; }
-  .app.inroom .hd{ box-shadow:0 2px 12px rgba(120,53,15,.30) !important; }
+  /* มือถือยังใช้แถบทึบ (พื้นที่แคบ ต้องเห็นชัดว่าอยู่ห้องไหน) */
+  .app.inroom .hd{ background:#6D28D9 !important; color:#fff !important;
+    box-shadow:0 2px 12px rgba(76,29,149,.32) !important; }
   .rm-bar{ display:none; flex-wrap:wrap; align-items:center; gap:8px 10px; padding:10px 16px;
     background:#FEF3C7; border-bottom:1px solid #FCD34D;
     font-size:13px; font-weight:600; color:#78350F; line-height:1.5; }
@@ -438,10 +449,24 @@
   .m-hint{ font-size:12.5px; color:var(--muted); background:#F4F7FB; border-radius:10px; padding:9px 11px; margin:4px 0 12px; line-height:1.5; }
   /* ── dashboard (สรุปค่าใช้จ่าย / ตั้งเบิก) — กราฟทำด้วย CSS ล้วน ไม่พึ่งไลบรารีนอก (LIFF โหลด CDN ช้า/บล็อกได้) ── */
   .ds-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin-bottom:12px; }
-  .ds-stat{ background:#fff; border-radius:14px; padding:12px 14px; box-shadow:0 1px 3px rgba(16,24,40,.06); }
+  .ds-stat{ background:#fff; border-radius:16px; padding:13px 15px; box-shadow:0 1px 3px rgba(16,24,40,.06); }
   .ds-stat .ds-lb{ font-size:12px; color:var(--muted); }
-  .ds-stat .ds-vl{ font-size:20px; font-weight:700; color:#1F2733; margin-top:3px; letter-spacing:-.3px; }
+  .ds-stat .ds-vl{ font-size:21px; font-weight:700; color:#1F2733; margin-top:3px; letter-spacing:-.3px; }
   .ds-stat .ds-sub{ font-size:11.5px; color:var(--muted); margin-top:2px; }
+  /* ── การ์ดตัวเลข 4 โทนพาสเทล (พี่กี้เลือกจากหน้าตัวอย่าง 8 ก.ย. 69) ──
+     วนสีตามลำดับการ์ด → ทุกหน้าที่ใช้ statCard ได้ชุดสีเดียวกันทันที ไม่ต้องไล่แก้ทีละหน้า
+     ป้ายกำกับยังเป็นสีเทาเหมือนเดิม — สีทำหน้าที่แยกการ์ด ไม่ได้แปลว่า "ดี/แย่" */
+  .ds-grid > .ds-stat{ box-shadow:none; border:1px solid transparent; }
+  .ds-grid > .ds-stat:nth-child(4n+1){ background:var(--t-blue); }
+  .ds-grid > .ds-stat:nth-child(4n+2){ background:var(--t-green); }
+  .ds-grid > .ds-stat:nth-child(4n+3){ background:var(--t-purple); }
+  .ds-grid > .ds-stat:nth-child(4n+4){ background:var(--t-orange); }
+  .ds-grid > .ds-stat:nth-child(4n+1) .ds-vl{ color:var(--t-blue-i); }
+  .ds-grid > .ds-stat:nth-child(4n+2) .ds-vl{ color:var(--t-green-i); }
+  .ds-grid > .ds-stat:nth-child(4n+3) .ds-vl{ color:var(--t-purple-i); }
+  .ds-grid > .ds-stat:nth-child(4n+4) .ds-vl{ color:var(--t-orange-i); }
+  /* การ์ดที่ "ต้องรีบดู" ยังชนะสีประจำตำแหน่งเสมอ */
+  .ds-grid > .ds-warn .ds-vl{ color:#E5484D; } .ds-grid > .ds-wait .ds-vl{ color:#C8730B; }
   .ds-warn .ds-vl{ color:#E5484D; } .ds-wait .ds-vl{ color:#C8730B; }
   .ds-h{ font-size:13px; font-weight:700; color:#4A5262; margin:2px 0 10px; }
   .tax-tbl-wrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; margin:0 -4px; }
@@ -11885,7 +11910,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260908-2341';
+  var APP_BUILD='20260908-2353';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
