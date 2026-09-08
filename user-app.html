@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260908-1810">
+<link rel="stylesheet" href="user.css?v=20260908-1935">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -611,6 +611,9 @@
   .pnl td.p{ text-align:right; color:#8A94A6; font-size:11.5px; border-right:1px solid var(--line); }
   .pnl td.neg{ color:#DC2626; }
   .pnl .est{ background:#F4F1FF; } .pnl thead th.est{ background:#E9E3FF; }
+  /* งบจริงครึ่งปี = พื้นเหลือง (พี่กี้ขอ 8 ก.ย. 69) — ตัวอ้างอิงตอนตั้งประมาณการ */
+  .pnl .h1c{ background:#FFF9E6; } .pnl thead th.h1c{ background:#FDF0C8; }
+  .pnl .cedit{ margin-left:6px; border:none; background:none; cursor:pointer; font-size:11px; color:#4A5262; }
   .p51-grid table{ border-collapse:collapse; width:100%; min-width:430px; font-size:12.5px; }
   .p51-grid th,.p51-grid td{ border-bottom:1px solid var(--line); padding:5px 6px; text-align:left; }
   .p51-grid th{ background:#EDEDF2; font-weight:700; color:#4A5262; white-space:nowrap; }
@@ -8759,30 +8762,96 @@
   }
 
 
+
+  /* ───────── ✏️ แก้ตัวเลขของคอลัมน์ในตารางงบ (พี่กี้ถาม 8 ก.ย. 69: "แก้ไขตัวเลขเองได้ไหม") ─────────
+     วางไว้ที่ "หัวคอลัมน์" เพราะ 1 คอลัมน์ = 1 แถวในชีตพอดี — แก้ทีเดียวเห็นครบทั้งปี
+     🔴 คอลัมน์ประมาณการที่ผูกกับงาน ภ.ง.ด.51 แก้ที่นี่ไม่ได้ (ต้องแก้ที่หน้าคำนวณ ไม่งั้นตัวเลข 2 ที่ขัดกัน)
+        คอลัมน์ "(จากระบบ)" ก็แก้ไม่ได้ — เป็นยอดที่ดึงสดจากชีตขาย/จ่าย/เงินเดือน */
+  var FH_FIELDS = [
+    ['revenue', 'รายได้'], ['cost', 'ต้นทุน'], ['otherIncome', 'รายได้อื่น'],
+    ['adminExpense', 'ค่าใช้จ่ายในการบริหาร'],
+    ['addBack', 'บวก รายจ่ายที่ไม่ให้ถือเป็นรายจ่าย'],
+    ['lossCarryforward', 'ขาดทุนสะสมยกมา (ที่ใช้ได้)'],
+    ['h1Tax', 'ภาษีเงินได้ครึ่งปี'], ['h1Wht', 'หัก ภาษีถูกหัก ณ ที่จ่าย'],
+    ['annualTax', 'ภาษีตาม ภ.ง.ด.50 ที่ชำระ']
+  ];
+  function fhEdit(year, kind){
+    var d = (FH.data && FH.data.raw && FH.data.raw[year + '|' + kind]) || {};
+    modal('<h3>✏️ แก้ตัวเลข ' + esc(kind) + ' ปี ' + year + '</h3>' +
+      '<div class="p51-note" style="margin:0 0 10px">แก้แล้วบันทึกทับแถวเดิมในชีต "ผลประกอบการรายปี" · ' +
+      'ตารางเทียบกับ %อัตราส่วนจะอัปเดตตามทันที</div>' +
+      FH_FIELDS.map(function(f){
+        return '<div class="fld"><label>' + esc(f[1]) + '</label>' +
+          '<input id="fh_' + f[0] + '" inputmode="decimal" value="' + esc(d[f[0]] || '') + '"></div>';
+      }).join('') +
+      '<div class="fld"><label>ที่มา / หมายเหตุ</label>' +
+      '<input id="fh_note" value="' + esc(d.note || '') + '" placeholder="เช่น งบการเงินปี ' + year + '"></div>' +
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>' +
+      '<button class="btn btn-primary" onclick="fhEditSave(' + year + ',\'' + esc(kind) + '\')">บันทึก</button></div>');
+  }
+  function fhEditSave(year, kind){
+    var p = { action:'waFinYearSave', uid:UID, entity:FH.ent, year:year, kind:kind,
+      note:($('fh_note')||{}).value || '' };
+    FH_FIELDS.forEach(function(f){
+      var el = $('fh_' + f[0]);
+      p[f[0] === 'lossCarryforward' ? 'loss' : (f[0] === 'adminExpense' ? 'admin' : f[0])] = (el && el.value) || '';
+    });
+    busy('กำลังบันทึก…');
+    jsonp(withRoom_(p)).then(function(r){
+      unbusy();
+      if(!r || !r.ok) return toast((r && r.error) || 'บันทึกไม่สำเร็จ');
+      closeModal(); toast('บันทึกปี ' + year + ' (' + kind + ') แล้ว'); renderFinHist();
+    }).catch(function(e){ unbusy(); toast(e.message); });
+  }
+  /** เพิ่มคอลัมน์ใหม่ (ปี/ชนิดที่ยังไม่มีข้อมูล) */
+  function fhAddCol(){
+    var y = (FH.data && FH.data.rows && FH.data.rows.length) ? FH.data.rows[0].year + 1 : (new Date().getFullYear() + 543);
+    modal('<h3>➕ เพิ่มปี/ชนิดข้อมูล</h3>' +
+      '<div class="fld"><label>ปี (พ.ศ.)</label><input id="fhNewY" inputmode="numeric" value="' + y + '"></div>' +
+      '<div class="fld"><label>ชนิดข้อมูล</label><select id="fhNewK">' +
+      '<option value="จริง">จริง (ทั้งปี)</option>' +
+      '<option value="จริงครึ่งปี">งบจริงครึ่งปี</option>' +
+      '<option value="ประมาณการ">ประมาณการ</option></select></div>' +
+      '<div class="p51-note">กดต่อไปแล้วจะเปิดฟอร์มให้กรอกตัวเลขของปีนั้น</div>' +
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>' +
+      '<button class="btn btn-primary" onclick="fhAddNext()">ต่อไป</button></div>');
+  }
+  function fhAddNext(){
+    var y = parseInt(($('fhNewY')||{}).value, 10) || 0, k = ($('fhNewK')||{}).value || 'จริง';
+    if(!y) return toast('ใส่ปี พ.ศ. ก่อนค่ะ');
+    closeModal(); fhEdit(y, k);
+  }
+  window.fhEdit=fhEdit; window.fhEditSave=fhEditSave; window.fhAddCol=fhAddCol; window.fhAddNext=fhAddNext;
+
   /** ตารางงบกำไรขาดทุนเทียบหลายปี × (ประมาณการ/จริง) + %อัตราส่วน — ข้อมูลมาจาก backend ล้วน */
+  /** คลาสสีของคอลัมน์: ประมาณการ=ม่วง · งบครึ่งปี=เหลือง · จริง=ขาว */
+  function fhCls(c){ return c.kind==='ประมาณการ' ? ' est' : (c.kind==='จริงครึ่งปี' ? ' h1c' : ''); }
+  window.fhCls=fhCls;
   function fhPnlHtml(pnl){
     if(!pnl || !(pnl.cols||[]).length) return '';
     var cols=pnl.cols, rows=pnl.rows||[];
-    var h='<div class="card"><div class="ds-h">งบกำไรขาดทุนเทียบรายปี (ประมาณการ / จริง)</div>'+
+    var h='<div class="card"><div class="ds-h">งบกำไรขาดทุนเทียบรายปี'+
+      '<button class="btn btn-ghost" style="float:right;padding:4px 10px;font-size:12px" onclick="fhAddCol()">➕ เพิ่มปี</button></div>'+
       '<div class="pnl-wrap"><table class="pnl"><thead><tr><th class="lb">รายการ</th>'+
       cols.map(function(c){
-        var est = c.kind!=='จริง';
-        return '<th class="y'+(est?' est':'')+'" colspan="2">'+esc(c.label)+'</th>';
+        return '<th class="y'+fhCls(c)+'" colspan="2">'+esc(c.label)+
+          (c.editable ? '<button class="cedit" title="แก้ตัวเลขปีนี้" onclick="fhEdit('+c.year+',&#39;'+esc(c.kind)+'&#39;)">✏️</button>' : '')+
+          '</th>';
       }).join('')+'</tr><tr><th class="lb"></th>'+
       cols.map(function(c){
-        var est = c.kind!=='จริง';
-        return '<th class="y'+(est?' est':'')+'">จำนวน</th><th class="y'+(est?' est':'')+'">อัตราส่วน</th>';
+        return '<th class="y'+fhCls(c)+'">จำนวน</th><th class="y'+fhCls(c)+'">อัตราส่วน</th>';
       }).join('')+'</tr></thead><tbody>'+
       rows.map(function(rw){
         return '<tr'+(rw.em?' class="em"':'')+'><td class="lb">'+esc(rw.label)+'</td>'+
           rw.vals.map(function(v,i){
-            var est = cols[i].kind!=='จริง';
-            return '<td class="n'+(v.v<0?' neg':'')+(est?' est':'')+'">'+(v.v?money(v.v):'–')+'</td>'+
-              '<td class="p'+(est?' est':'')+'">'+(v.pct===null?'':v.pct.toFixed(2)+'%')+'</td>';
+            var cl = fhCls(cols[i]);
+            return '<td class="n'+(v.v<0?' neg':'')+cl+'">'+(v.v?money(v.v):'–')+'</td>'+
+              '<td class="p'+cl+'">'+(v.pct===null?'':v.pct.toFixed(2)+'%')+'</td>';
           }).join('')+'</tr>';
       }).join('')+'</tbody></table></div>'+
       '<div class="p51-note">อัตราส่วน = % ของรายได้รวมในคอลัมน์นั้น · เลื่อนตารางไปทางขวาเพื่อดูปีก่อน ๆ · '+
-      'คอลัมน์พื้นม่วง = ประมาณการที่เคยทำไว้ · พื้นขาว = ตัวเลขจริง</div></div>';
+      'พื้นม่วง = ประมาณการ · <span style="background:#FFF9E6">พื้นเหลือง = งบจริงครึ่งปี</span> · พื้นขาว = จริงทั้งปี · '+
+      'กด ✏️ บนหัวคอลัมน์เพื่อแก้ตัวเลขปีนั้น (คอลัมน์ประมาณการที่ผูกกับงาน ภ.ง.ด.51 แก้ที่หน้าคำนวณ)</div></div>';
     return h;
   }
   window.fhPnlHtml=fhPnlHtml;
@@ -11787,7 +11856,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260908-1810';
+  var APP_BUILD='20260908-1935';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
