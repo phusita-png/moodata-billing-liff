@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260909-0011">
+<link rel="stylesheet" href="user.css?v=20260909-0021">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -212,16 +212,9 @@
     border:1px solid rgba(255,255,255,.35); border-radius:12px; background:rgba(255,255,255,.12);
     font:inherit; font-size:13px; font-weight:600; color:#fff; cursor:pointer; }
   .nav-back:hover{ background:rgba(255,255,255,.24); border-color:rgba(255,255,255,.55); }
-  /* แถวไอคอนสลับโมดูล — ถอดออก 8 ก.ย. แล้วพี่กี้ขอกลับมา 9 ก.ย. (สลับโมดูลได้โดยไม่ต้องกลับหน้าแรก)
-     ชิดซ้ายให้ตรงแนวกับปุ่มเมนูข้างบน · อยู่บนพื้นไล่เฉดแล้ว จึงคั่นด้วยเส้นขาวจาง ไม่ใช่ --line */
-  .nav-modt{ color:var(--nav-dim); font-size:10px; font-weight:700; letter-spacing:.9px;
-    text-transform:uppercase; padding:12px 4px 4px; border-top:1px solid rgba(255,255,255,.18); margin-top:6px; }
-  .nav-mods{ padding:0 4px 6px; display:flex; flex-wrap:wrap; gap:7px; justify-content:flex-start; }
-  .nav-mods .nm{ width:30px; height:30px; border-radius:9px; border:none; cursor:pointer; display:flex;
-    align-items:center; justify-content:center; opacity:.55; transition:opacity .14s, transform .14s; }
-  .nav-mods .nm:hover{ opacity:.9; }
-  .nav-mods .nm.on{ opacity:1; box-shadow:0 0 0 2.5px rgba(255,255,255,.85); transform:translateY(-1px); }
-  .nav-mods .nm svg{ width:16px; height:16px; fill:none; stroke:#fff; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  /* แถวไอคอนสลับโมดูล: ถอดออก 8 ก.ย. → พี่กี้ขอกลับ 9 ก.ย. → **ถอดออกถาวร 9 ก.ย.**
+     เหตุผลที่พี่กี้ให้: ไอคอนเล็กเกินจนดูไม่ออกว่าอันไหนคืออะไร และทำให้ท้ายแถบแน่น
+     สลับโมดูลใช้ปุ่ม "กลับเมนูหลัก" → การ์ดโมดูลใหญ่ ๆ ในหน้าแรกแทน */
   #navPool{ display:none; }
   /* 🏛️ คำขอสมัคร (T2) */
   .hq-info{ font-size:13.5px; color:#4A5262; display:flex; flex-direction:column; gap:3px; margin-bottom:12px; }
@@ -2514,19 +2507,7 @@
     back.addEventListener('click', function(){ switchView('portal'); });
     nav.appendChild(back);
 
-    var modt=document.createElement('div'); modt.className='nav-modt'; modt.textContent='สลับโมดูล';
-    nav.appendChild(modt);
-    var mods=document.createElement('div'); mods.className='nav-mods';
-    // รวมคู่มือไว้ในแถวนี้ด้วย (พี่กี้ 5 ก.ย.) — เปิดอ่านได้จากทุกโมดูลโดยไม่ต้องกลับเมนูหลัก
-    // ไม่ใส่ "ออกจากระบบ" เพราะปุ่มเล็กติดกัน กดพลาดแล้วหลุดออกจากระบบเลย
-    MODULES.filter(function(x){ return (!x.act || x.key==='guide') && modVisible(x); }).forEach(function(x){
-      var b=document.createElement('button');
-      b.type='button'; b.className='nm'+(x.key===CURMOD?' on':''); b.title=x.th;
-      b.style.background=x.color; b.innerHTML=MOD_ICON[x.key];
-      b.addEventListener('click', function(){ openModule(x.key); });
-      mods.appendChild(b);
-    });
-    nav.appendChild(mods);
+    // ไม่มีแถวไอคอนสลับโมดูลแล้ว (9 ก.ย. 69) — ออกทางปุ่ม "กลับเมนูหลัก" ข้างบนนี้ทางเดียว
   }
   function buildNavGroups(){ buildNavForModule(); }   // ชื่อเดิมที่ start() เรียกอยู่
 
@@ -11932,7 +11913,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260909-0011';
+  var APP_BUILD='20260909-0021';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
