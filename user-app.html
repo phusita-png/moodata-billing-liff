@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260909-2132">
+<link rel="stylesheet" href="user.css?v=20260909-2214">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -12146,10 +12146,26 @@
     /* หัวชุดแบบเดียวกับหน้า "จัดการเกณฑ์และน้ำหนักสถิติ" (พี่กี้ 9 ก.ย. 69)
        ตัวชี้วัด 1 ชุด = 1 ตำแหน่ง (ข้อมูลผูกกับตำแหน่งอยู่แล้ว) → เลือกตำแหน่งคือเลือกชุดที่จะแก้
        คะแนนเต็มตามสัดส่วนย้ายไปมุมขวาของแถบ */
+    /* หัวแถบชุดเดียวกับหน้าเกณฑ์สถิติ (พี่กี้ 9 ก.ย. 69)
+       เกณฑ์ [ช่องตั้งชื่อ/รหัส] · ตำแหน่ง [เลือก] ··· มุมขวา คะแนนเต็มตามสัดส่วน [ช่องตัวเลข]
+       🔴 สัดส่วน 3 ส่วนต้องรวม 100% เสมอ จึงโชว์คุณลักษณะ/สถิติคู่กันและรวมยอดให้เห็นสด ๆ
+          (ถ้าให้กรอกผลงานช่องเดียว อีก 2 ช่องจะเพี้ยนเงียบ แล้วคะแนนรวมทั้งตำแหน่งผิดยกแผง) */
+    var w = cur ? cur.pos.weights : { perf:'', trait:'', stat:'' };
+    var wSum = kpiRound2js(kpNum0(w.perf)+kpNum0(w.trait)+kpNum0(w.stat));
     h+='<div class="kp-setbox">'+
-      '<div class="kp-bar kp-sethead"><span class="kp-lb">ตัวชี้วัดของตำแหน่ง</span>'+kpPosPicker()+
-      '<span class="kp-grow"></span>'+
-      '<span class="kp-lb">คะแนนเต็มตามสัดส่วน <b>'+(cur?cur.pos.weights.perf:'—')+'</b></span></div>';
+      '<div class="kp-bar kp-sethead">'+
+        '<span class="kp-lb">เกณฑ์</span>'+
+        '<input class="inp kp-w160" id="kpMetName" placeholder="ชุดตัวชี้วัด 1" value="'+esc((cur&&cur.setName)||'')+'">'+
+        '<span class="kp-lb">ตำแหน่ง</span>'+kpPosPicker()+
+        '<span class="kp-grow"></span>'+
+        '<span class="kp-lb">คะแนนเต็มตามสัดส่วน</span>'+
+        '<input class="inp kp-nm kp-mid kp-w70" id="kpMetPerf" type="number" step="any" value="'+esc(String(w.perf))+'">'+
+        '<span class="kp-lb">คุณลักษณะ</span>'+
+        '<input class="inp kp-nm kp-mid kp-w70" id="kpMetTrait" type="number" step="any" value="'+esc(String(w.trait))+'">'+
+        '<span class="kp-lb">สถิติ</span>'+
+        '<input class="inp kp-nm kp-mid kp-w70" id="kpMetStat" type="number" step="any" value="'+esc(String(w.stat))+'">'+
+        '<span class="kp-lb">รวม <b'+(Math.abs(wSum-100)<0.001?'':' class="kp-warn"')+'>'+wSum+'%</b></span>'+
+      '</div>';
     h+='<div class="kp-wrap"><table class="kp-tbl kp-in" id="kpMetricTbl"><thead><tr><th class="kp-c">ลำดับ</th><th>ตัวชี้วัดผลงาน KPI</th>'+
       '<th>วิธีวัด</th><th class="kp-c">เป้า</th><th class="kp-c">หน่วย</th><th class="kp-c">น้ำหนัก</th><th class="kp-c">รหัส</th></tr></thead><tbody>';
     ((cur&&cur.metrics)||[]).forEach(function(m,i){
@@ -12272,10 +12288,12 @@
     });
     return out;
   }
-  function kpCfgSave(what,rows,pos){
+  function kpCfgSave(what,rows,pos,extra){
     kpCacheBust();   // บันทึกแล้วต้องอ่านของใหม่เสมอ
     busy('กำลังบันทึก…');
-    jsonpPost({ action:'waKpiCfgSave', uid:UID, what:what, pos:pos||'', effFrom:kpEffVal(), rows:JSON.stringify(rows) })
+    var p={ action:'waKpiCfgSave', uid:UID, what:what, pos:pos||'', effFrom:kpEffVal(), rows:JSON.stringify(rows) };
+    for(var k in (extra||{})) p[k]=extra[k];
+    jsonpPost(p)
       .then(function(r){
         if(!r||!r.ok) return toast(r&&r.error||'บันทึกไม่สำเร็จ');
         busyOk('บันทึกแล้ว'); toast('บันทึก '+(r.saved||1)+' แถวแล้วค่ะ'); kpSetupLoad(VIEW);
@@ -12298,7 +12316,18 @@
         KPS_SET=null; kpSetupLoad(VIEW);
       }).catch(function(e){ toast(e.message); });
   }
-  function kpSaveMetric(){ kpCfgSave('metric', kpGrab('kpMetricTbl'), KPS_POS); }
+  /** บันทึกชุดตัวชี้วัด — ส่งชื่อชุด + สัดส่วน 3 ส่วนของตำแหน่งไปด้วย (หลังบ้านบังคับรวม 100%) */
+  function kpSaveMetric(){
+    if(!KPS_POS) return toast('เลือกตำแหน่งของชุดตัวชี้วัดนี้ก่อนค่ะ');
+    kpCfgSave('metric', kpGrab('kpMetricTbl'), KPS_POS, {
+      name:  kpVal('kpMetName'),
+      perf:  kpVal('kpMetPerf'),
+      trait: kpVal('kpMetTrait'),
+      stat:  kpVal('kpMetStat')
+    });
+  }
+  function kpVal(id){ var el=$(id); return el?el.value:''; }
+  function kpNum0(v){ var n=Number(v); return isFinite(n)?n:0; }
   function kpSaveTrait(){ kpCfgSave('trait', kpGrab('kpTraitTbl'), KPS_POS); }
 
   /* ── นำเข้าข้อมูลเดิม (พี่กี้: ต้องยกข้อมูลเดิมใส่ลงไป) ──
@@ -13778,7 +13807,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260909-2132';
+  var APP_BUILD='20260909-2214';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
