@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260909-2236">
+<link rel="stylesheet" href="user.css?v=20260909-2352">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -113,24 +113,21 @@
   .exd-acts .btn{ width:auto; flex:0 0 auto }
   .rm-btn .rm-lb{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .rm-btn .rm-ca{ opacity:.8; font-size:10px; }
-  /* อยู่ห้องลูกค้า = เปลี่ยนสีทั้งแถบ + มีแถบเตือน */
-  /* แถบบนคอมยังเป็นกระจก แค่อมม่วง — ตัวบอกว่า "อยู่ห้องลูกค้า" คือแถบซ้ายม่วงทั้งแถบ + ปุ่มห้องสีม่วง */
-  .app.inroom .topbar{ background:rgba(237,233,254,.78) !important;
-    border-bottom-color:rgba(196,181,253,.85) !important; }
-  .app.inroom .topbar .tb-icon svg{ stroke:#6D28D9 !important; }
-  /* พื้นแถบโหมดนี้เป็นม่วงอ่อน — ตัวหนังสือขาวของธีมฟ้าจะอ่านไม่ออก ต้องกลับเป็นสีเข้ม */
-  .app.inroom .topbar .tb-title{ color:#4C1D95 !important; }
-  .app.inroom .topbar .tb-sub{ color:#6D28D9 !important; }
-  .app.inroom .topbar .rm-btn svg, .app.inroom .topbar .bell-btn svg{ stroke:#6D28D9 !important; }
-  .app.inroom .topbar .rm-btn, .app.inroom .topbar .bell-btn{ border-color:#C4B5FD !important;
-    background:#EDE9FE !important; color:#5B21B6 !important; }
-  .app.inroom .topbar .tb-avatar{ background:#EDE9FE !important; border-color:#C4B5FD !important;
-    color:#5B21B6 !important; }
-  .app.inroom .nav{ background:linear-gradient(168deg,#4C1D95 0%,#7C3AED 100%) !important; }
-  .app.inroom .nav-brand{ background:transparent !important; }
-  /* มือถือยังใช้แถบทึบ (พื้นที่แคบ ต้องเห็นชัดว่าอยู่ห้องไหน) */
+  /* ═══ อยู่ห้องลูกค้า = ทั้งระบบเป็นโทนม่วง (พี่กี้ 9 ก.ย. 69: "ระบบลูกค้าเป็นโทนม่วง") ═══
+     🔑 แถบซ้ายกับแถบบนอ่านสีจาก --nav1/--nav2 ตัวเดียวกัน
+        → เปลี่ยนแค่ 2 ตัวแปรนี้ ทั้งโครงเปลี่ยนเป็นม่วงพร้อมกัน ตัวหนังสือขาวเหมือนเดิม
+     เดิมแถบบนถูกบังคับเป็นม่วง "อ่อน" ตัวหนังสือเข้ม (ธีมกระจก) → คนละโทนกับแถบซ้ายที่ม่วงเข้ม
+     เห็นเป็นรอยต่อ 2 สี · ตอนนี้เอาการบังคับนั้นออก ให้ไหลตามตัวแปรเหมือนธีมฟ้าทุกประการ */
+  .app.inroom{ --nav1:#5B21B6; --nav2:#8B5CF6; --nav-dim:#DDD6FE; }
+  /* มือถือใช้แถบทึบ (พื้นที่แคบ ต้องเห็นชัดว่าอยู่ห้องไหน) */
   .app.inroom .hd{ background:#6D28D9 !important; color:#fff !important;
     box-shadow:0 2px 12px rgba(76,29,149,.32) !important; }
+  /* เงาใต้แถบบนให้เป็นเงาม่วง ไม่ใช่เงาฟ้าค้างมาจากธีมเดิม */
+  .app.inroom .topbar{ box-shadow:0 3px 16px rgba(76,29,149,.20); }
+  .app.inroom .nav{ box-shadow:0 10px 26px rgba(76,29,149,.18); }
+  /* ปุ่มสลับห้องบนแถบบน — เน้นให้เด่นกว่าปุ่มอื่น เพราะเป็นตัวบอกว่ากำลังอยู่ห้องไหน */
+  .app.inroom .topbar .rm-btn{ background:rgba(255,255,255,.24) !important;
+    border-color:rgba(255,255,255,.62) !important; }
   .rm-bar{ display:none; flex-wrap:wrap; align-items:center; gap:8px 10px; padding:10px 16px;
     background:#FEF3C7; border-bottom:1px solid #FCD34D;
     font-size:13px; font-weight:600; color:#78350F; line-height:1.5; }
@@ -13810,7 +13807,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260909-2236';
+  var APP_BUILD='20260909-2352';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
