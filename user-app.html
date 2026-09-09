@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260909-1306">
+<link rel="stylesheet" href="user.css?v=20260909-1544">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1137,8 +1137,19 @@
   .kp-pill-wait{ background:#fbf0dc; color:#9a6412; }
   .kp-pill-no{ background:#fbe9e6; color:#b23a2e; }
   .kp-pill-info{ background:#e8f3fc; color:#0b5c9e; }
-  .kp-g{ font-weight:800; font-variant-numeric:tabular-nums; }
-  .kp-g5{ color:#0f7a52; } .kp-g4{ color:#0b5c9e; } .kp-g3{ color:#3d5164; } .kp-g2,.kp-g1{ color:#b23a2e; }
+  /* ชิปเกรด — โทนพาสเทลตามรูปแบบที่พี่กี้ส่งมา 9 ก.ย. 69 (ต่ำกว่า/ตาม/สูงกว่าเป้าหมาย) */
+  .kp-g{ font-weight:800; font-variant-numeric:tabular-nums; display:inline-block;
+    min-width:24px; text-align:center; padding:1px 8px; border-radius:999px; }
+  .kp-g5{ background:#A8D8AC; color:#14532d; }
+  .kp-g4{ background:#DCEEDC; color:#166534; }
+  .kp-g3{ background:#F5E3A8; color:#78530a; }
+  .kp-g2{ background:#F1D4D0; color:#8a3f38; }
+  .kp-g1{ background:#DC9C98; color:#5f1d19; }
+  .kp-range{ display:inline-block; padding:2px 10px; border-radius:999px; font-size:12px;
+    font-weight:600; color:#3d3a34; font-variant-numeric:tabular-nums; }
+  .kp-grade input.kp-wide{ width:100%; }
+  .kp-w60{ width:60px; } .kp-w70{ width:70px; }
+  .kp-color{ width:46px; height:28px; padding:0; border:1px solid #e3e8ef; border-radius:7px; background:none; }
   .kp-check{ border:1px solid #f0d9a8; background:#fdf7ea; }
   .kp-lock{ border:1px solid #bcdcf6; background:#eef7fd; color:#0b5c9e; }
   .kp-ul{ margin:6px 0 0; padding-left:20px; font-size:13px; color:#3d5164; }
@@ -11245,14 +11256,22 @@
     var h='<div class="section-h">ตั้งค่าเกณฑ์การประเมินทั้งองค์กร</div>';
     h+='<div class="card">'+kpTabBar('kpirule',[['grade','จัดการเกณฑ์ทั่วองค์กร'],['stat','จัดการเกณฑ์และน้ำหนักสถิติการมาทำงาน']]);
     if(tab==='grade'){
-      h+='<div class="kp-wrap"><table class="kp-tbl kp-in" id="kpGradeTbl"><thead><tr><th>เกรด</th><th class="kp-r">คะแนน (ตั้งแต่)</th>'+
-        '<th>คำอธิบาย</th><th class="kp-c">ผ่าน</th><th class="kp-c">สี</th></tr></thead><tbody>';
-      (r.grades||[]).forEach(function(g){
-        h+='<tr><td><input class="inp kp-nm" data-f="grade" type="number" value="'+g.grade+'"></td>'+
-          '<td class="kp-r"><input class="inp kp-nm" data-f="min" type="number" step="any" value="'+g.min+'"></td>'+
-          '<td><input class="inp" data-f="label" value="'+esc(g.label||'')+'"></td>'+
+      var gl=(r.grades||[]);
+      h+='<div class="kp-wrap"><table class="kp-tbl kp-in kp-grade" id="kpGradeTbl">'+
+        '<colgroup><col style="width:78px"><col style="width:96px"><col style="width:120px"><col>'+
+        '<col style="width:120px"><col style="width:66px"><col style="width:64px"></colgroup>'+
+        '<thead><tr><th>เกรด</th><th class="kp-r">คะแนน (ตั้งแต่)</th><th class="kp-c">ช่วงคะแนน</th>'+
+        '<th>คำอธิบาย</th><th>กลุ่ม</th><th class="kp-c">ผ่าน</th><th class="kp-c">สี</th></tr></thead><tbody>';
+      gl.forEach(function(g,i){
+        // ช่วงคะแนน = ตั้งแต่ค่านี้ ถึงก่อนขั้นที่สูงกว่า (โชว์ให้อ่านง่ายเหมือนตารางกระดาษ)
+        var upper = i>0 ? (Number(gl[i-1].min)-1) : 100;
+        h+='<tr><td><input class="inp kp-nm kp-w60" data-f="grade" type="number" value="'+g.grade+'"></td>'+
+          '<td class="kp-r"><input class="inp kp-nm kp-w70" data-f="min" type="number" step="any" value="'+g.min+'"></td>'+
+          '<td class="kp-c"><span class="kp-range" style="background:'+esc(g.color||'#EEF1F5')+'">'+g.min+'–'+upper+'</span></td>'+
+          '<td><input class="inp kp-wide" data-f="label" value="'+esc(g.label||'')+'"></td>'+
+          '<td>'+esc(g.group||'')+'</td>'+
           '<td class="kp-c"><input type="checkbox" data-f="pass"'+(g.pass?' checked':'')+'></td>'+
-          '<td class="kp-c"><input type="color" data-f="color" value="'+esc(g.color||'#94A3B8')+'"></td></tr>';
+          '<td class="kp-c"><input class="kp-color" type="color" data-f="color" value="'+esc(g.color||'#94A3B8')+'"></td></tr>';
       });
       h+='</tbody></table></div>'+kpEffNote(r);
       if(r.canEdit) h+='<div class="kp-bar"><button class="btn btn-ghost btn-sm" onclick="kpAddRow(\'kpGradeTbl\')">+ เพิ่มแถว</button>'+
@@ -12634,7 +12653,7 @@
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260909-1306';
+  var APP_BUILD='20260909-1544';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
