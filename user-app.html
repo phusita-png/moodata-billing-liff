@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260909-2058">
+<link rel="stylesheet" href="user.css?v=20260909-2132">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1138,6 +1138,13 @@
   /* หัวคอลัมน์ต้องอ่านชัด — เดิม 11.5px สีเทาอ่อน พี่กี้ทักว่าจางและเล็กเกินไป (9 ก.ย. 69) */
   .kp-tbl thead th{ font-size:12.5px; color:#5A6B80; font-weight:700; background:#fafbfd; white-space:nowrap; }
   .kp-tbl tbody tr:last-child td{ border-bottom:0; }
+  /* 🐞 .kp-c (จัดกึ่งกลาง) ถูกใส่ไว้ 70+ จุดแต่ไม่เคยทำงานในตาราง — เพราะ ".kp-tbl th,.kp-tbl td"
+     มีน้ำหนัก (0,1,1) สูงกว่า ".kp-c" (0,1,0) เลยโดน text-align:left ทับตลอด (พี่กี้ทัก 9 ก.ย. 69)
+     ⚠️ ต้องเขียนคู่กับ .kp-tbl เสมอ — ถ้าเขียน .kp-c เดี่ยว ๆ จะแพ้เหมือนเดิม */
+  .kp-tbl th.kp-c,.kp-tbl td.kp-c{ text-align:center; }
+  /* ช่องกรอกตัวเลขในตาราง: .kp-nm ตั้ง text-align:right ไว้ ทับ .kp-mid ที่น้ำหนักเท่ากันแต่มาก่อน
+     → บังคับกึ่งกลางด้วยตัวเลือกที่แรงกว่า (คอลัมน์เกรด/คะแนน พี่กี้ขอให้ตัวเลขอยู่กลาง) */
+  .kp-tbl input.kp-mid{ text-align:center; }
   .kp-tbl .kp-r{ text-align:right; font-variant-numeric:tabular-nums; }
   .kp-pill{ display:inline-block; font-size:11.5px; font-weight:600; padding:2px 9px; border-radius:99px; white-space:nowrap; }
   .kp-pill-ok{ background:#e4f4ed; color:#0f7a52; }
@@ -1175,9 +1182,17 @@
   }
   .kp-setbox{ border:1px solid #e6ebf2; border-radius:14px; padding:10px 12px 4px; margin-bottom:14px; background:#fbfcfe; }
   .kp-setcard{ border:1px solid #eef1f5; border-radius:14px; padding:8px 12px 4px; margin-bottom:12px; }
+  /* ชุดที่กำลังแก้อยู่ — ทำเครื่องหมายไว้ ไม่งั้นแก้ชุดหนึ่งแต่มองการ์ดอีกชุดแล้วงงว่าทำไมไม่เปลี่ยน */
+  .kp-setcur{ border-color:#B9D6F5; box-shadow:0 0 0 3px rgba(27,114,232,.08); }
+  .kp-warn{ color:#B4451F; }
   .kp-sethead{ margin:2px 0 8px; }
   .kp-lb{ font-size:13px; color:#5b6b7d; font-weight:600; }
   .kp-grow{ flex:1; }
+  /* 🐞 .btn ตัวฐานเป็น width:100% (ออกแบบมาให้ปุ่มเต็มความกว้างบนมือถือ)
+     พออยู่ในแถบ .kp-bar ที่ flex-wrap ปุ่มแต่ละตัวจึงกินเต็มบรรทัด กลายเป็นเรียงลงล่างทีละอัน
+     (พี่กี้ 9 ก.ย. 69: "เมนูเดิมเรียงลงข้างล่าง เปลี่ยนมาเรียงแนวนอน")
+     → ในแถบเครื่องมือของโมดูลนี้ ปุ่มกว้างตามข้อความ เรียงแนวนอนเสมอ */
+  .kp-bar .btn{ width:auto; flex:0 0 auto; }
   .kp-w160{ width:160px; }
   /* ── หน้าภาพรวม (9 ก.ย. 69) ── */
   .kp-period{ gap:10px; }
@@ -12128,23 +12143,59 @@
       });
       h+='</div>'; return h;
     }
-    h+='<div class="kp-bar">'+kpPosPicker()+'<span class="m-hint">คะแนนเต็มตามสัดส่วน '+
-      (cur?cur.pos.weights.perf:'—')+'</span></div>';
-    h+='<div class="kp-wrap"><table class="kp-tbl kp-in" id="kpMetricTbl"><thead><tr><th>ลำดับ</th><th>ตัวชี้วัดผลงาน KPI</th>'+
-      '<th>วิธีวัด</th><th class="kp-r">เป้า</th><th>หน่วย</th><th class="kp-r">น้ำหนัก</th><th>รหัส</th></tr></thead><tbody>';
+    /* หัวชุดแบบเดียวกับหน้า "จัดการเกณฑ์และน้ำหนักสถิติ" (พี่กี้ 9 ก.ย. 69)
+       ตัวชี้วัด 1 ชุด = 1 ตำแหน่ง (ข้อมูลผูกกับตำแหน่งอยู่แล้ว) → เลือกตำแหน่งคือเลือกชุดที่จะแก้
+       คะแนนเต็มตามสัดส่วนย้ายไปมุมขวาของแถบ */
+    h+='<div class="kp-setbox">'+
+      '<div class="kp-bar kp-sethead"><span class="kp-lb">ตัวชี้วัดของตำแหน่ง</span>'+kpPosPicker()+
+      '<span class="kp-grow"></span>'+
+      '<span class="kp-lb">คะแนนเต็มตามสัดส่วน <b>'+(cur?cur.pos.weights.perf:'—')+'</b></span></div>';
+    h+='<div class="kp-wrap"><table class="kp-tbl kp-in" id="kpMetricTbl"><thead><tr><th class="kp-c">ลำดับ</th><th>ตัวชี้วัดผลงาน KPI</th>'+
+      '<th>วิธีวัด</th><th class="kp-c">เป้า</th><th class="kp-c">หน่วย</th><th class="kp-c">น้ำหนัก</th><th class="kp-c">รหัส</th></tr></thead><tbody>';
     ((cur&&cur.metrics)||[]).forEach(function(m,i){
-      h+='<tr><td>'+(i+1)+'</td><td><input class="inp" data-f="name" value="'+esc(m.name)+'"></td>'+
+      h+='<tr><td class="kp-c">'+(i+1)+'</td><td><input class="inp kp-wide" data-f="name" value="'+esc(m.name)+'"></td>'+
         '<td>'+kpTypeSel(m.type,r.metricTypes)+'</td>'+
-        '<td class="kp-r"><input class="inp kp-nm" data-f="target" type="number" step="any" value="'+m.target+'"></td>'+
-        '<td><input class="inp kp-nm" data-f="unit" value="'+esc(m.unit||'')+'"></td>'+
-        '<td class="kp-r"><input class="inp kp-nm" data-f="weight" type="number" step="any" value="'+m.weight+'"></td>'+
-        '<td><input class="inp kp-nm" data-f="id" value="'+esc(m.id)+'"></td></tr>';
+        '<td class="kp-c"><input class="inp kp-nm kp-mid" data-f="target" type="number" step="any" value="'+m.target+'"></td>'+
+        '<td class="kp-c"><input class="inp kp-nm kp-mid" data-f="unit" value="'+esc(m.unit||'')+'"></td>'+
+        '<td class="kp-c"><input class="inp kp-nm kp-mid" data-f="weight" type="number" step="any" value="'+m.weight+'"></td>'+
+        '<td class="kp-c"><input class="inp kp-nm kp-mid" data-f="id" value="'+esc(m.id)+'"></td></tr>';
     });
     h+='</tbody></table></div>'+kpEffNote(r);
     if(r.canEdit) h+='<div class="kp-bar"><button class="btn btn-ghost btn-sm" onclick="kpAddRow(\'kpMetricTbl\')">+ เพิ่มตัวชี้วัด</button>'+
       '<button class="btn btn-primary btn-sm" onclick="kpSaveMetric()">บันทึก</button>'+
+      '<span class="kp-grow"></span>'+
       '<span class="m-hint">น้ำหนักรวมต้องเป็น 100%</span></div>';
+    h+='</div>';                       // ปิด .kp-setbox
+    h+=kpMetricSetsHtml(r);
     h+='</div>';
+    return h;
+  }
+
+  /** ชุดตัวชี้วัดที่บันทึกแล้ว — 1 การ์ดต่อ 1 ตำแหน่ง ปุ่มแก้ไขมุมขวา
+      (หน้าเดียวกับเกณฑ์สถิติ · พี่กี้: "ต้องมีหลายเกณฑ์ เป็นกลุ่มตำแหน่ง") */
+  function kpMetricSetsHtml(r){
+    var has=(r.positions||[]).filter(function(p){ return (p.metrics||[]).length; });
+    if(!has.length) return '<div class="m-hint">ยังไม่มีชุดตัวชี้วัดที่บันทึกไว้ — เลือกตำแหน่งด้านบน กรอกแล้วกดบันทึกได้เลยค่ะ</div>';
+    var h='<div class="kp-sub">ชุดตัวชี้วัดที่บันทึกแล้ว</div>';
+    has.forEach(function(p){
+      var sum=0; p.metrics.forEach(function(m){ sum+=Number(m.weight)||0; });
+      h+='<div class="kp-setcard'+(p.pos.code===KPS_POS?' kp-setcur':'')+'"><div class="kp-bar kp-sethead">'+
+        '<b>'+esc(p.pos.name||p.pos.code)+'</b>'+
+        '<span class="kp-lb">ตัวชี้วัด '+p.metrics.length+' ข้อ</span>'+
+        '<span class="kp-lb">น้ำหนักรวม <b'+(sum===100?'':' class="kp-warn"')+'>'+sum+'%</b></span>'+
+        '<span class="kp-grow"></span>'+
+        (r.canEdit?'<button class="btn btn-ghost btn-sm" onclick="kpSetPos(\''+esc(p.pos.code)+'\')">แก้ไข</button>':'')+
+        '</div><div class="kp-wrap"><table class="kp-tbl">'+
+        '<thead><tr><th class="kp-c">ลำดับ</th><th>ตัวชี้วัดผลงาน KPI</th>'+
+        '<th class="kp-c">เป้า</th><th class="kp-c">หน่วย</th><th class="kp-c">น้ำหนัก</th></tr></thead><tbody>';
+      p.metrics.forEach(function(m,i){
+        h+='<tr><td class="kp-c">'+(i+1)+'</td><td>'+esc(m.name)+
+          '<div class="m-hint">'+esc(r.metricTypes[m.type]||m.type)+'</div></td>'+
+          '<td class="kp-c">'+m.target+'</td><td class="kp-c">'+esc(m.unit||'')+'</td>'+
+          '<td class="kp-c"><b>'+m.weight+'</b></td></tr>';
+      });
+      h+='</tbody></table></div></div>';
+    });
     return h;
   }
   function kpTypeSel(cur,types){
@@ -13727,7 +13778,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260909-2058';
+  var APP_BUILD='20260909-2132';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ

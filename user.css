@@ -774,7 +774,11 @@ textarea:focus,input[type=time]:focus{border-color:var(--red)}
   .nav-gb .nav-btn svg{width:18px; height:18px}
 
   /* content กว้าง */
-  .main{grid-area:main; padding:26px 32px; max-width:none}
+  /* 🐞 min-width:0 สำคัญมาก — ช่องของ grid มีค่าเริ่มต้น min-width:auto คือ "กว้างพอใส่เนื้อหา"
+     ตารางกว้าง ๆ (เช่นหน้านำเข้าข้อมูล) จึงดันทั้งหน้าให้กว้างเกินจอ → เกิดสกรอลล์แนวนอนที่ก้นหน้าจอ
+     ทั้งหน้าเลื่อนตามไปหมด (พี่กี้ 9 ก.ย. 69: "หน้าจอจะได้ไม่ขยับ")
+     ใส่ min-width:0 แล้วตารางจะเลื่อนอยู่ในกล่องตัวเอง (.kp-wrap) แทน */
+  .main{grid-area:main; padding:26px 32px; max-width:none; min-width:0}
   /* พื้นเป็นฟ้าอ่อนแล้ว การ์ดต้องมีเงาหนาขึ้นถึงจะลอยออกมา (เงาเดิมทำมาเพื่อพื้นขาว) */
   .card{box-shadow:0 6px 20px rgba(24,74,124,.08); border-color:#E2ECF7}
   .stat-grid{grid-template-columns:repeat(4,1fr)}
