@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260909-1832">
+<link rel="stylesheet" href="user.css?v=20260909-1858">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1220,6 +1220,13 @@
   .kp-secs{ display:flex; gap:5px; flex-wrap:wrap; }
   .kp-link{ border:0; background:none; padding:0; font:inherit; color:#1B72E8; cursor:pointer; text-align:left; }
   .kp-link:hover{ text-decoration:underline; }
+  .kp-loadbox{ display:flex; flex-direction:column; align-items:center; gap:10px; padding:34px 20px; }
+  .kp-spin{ width:30px; height:30px; border-radius:50%; border:3px solid #e3ecf6; border-top-color:#1B72E8;
+    animation:kpspin .8s linear infinite; }
+  @keyframes kpspin{ to{ transform:rotate(360deg); } }
+  .kp-loadtx{ font-size:14.5px; font-weight:600; color:#3d5164; }
+  .kp-loadsub{ font-size:12.5px; color:#8A94A6; text-align:center; }
+  @media (prefers-reduced-motion:reduce){ .kp-spin{ animation-duration:2.4s; } }
   /* หน้าประวัติรายคน */
   .kp-phead{ display:flex; gap:14px; align-items:center; margin:10px 0 14px; }
   .kp-pav{ width:52px; height:52px; border-radius:50%; background:#E8F2FB; color:#12558f;
@@ -10600,6 +10607,34 @@
      → ตาราง KPI มาทับหน้าเลือกโมดูล การ์ดโมดูลหายหมด และหน้านั้นซ่อนแถบซ้ายอยู่แล้ว (โหมดเต็มจอ)
      = ผู้ใช้ตันอยู่หน้านั้น ออกไปไหนไม่ได้เลย
      ทุกหน้าในโมดูลนี้ต้องวาดผ่าน kpPaint เท่านั้น (มีเทสกันลืมใน tests/test-kpi-ui.js) */
+  /* ⏱️ ระบบหลังบ้านเป็น Apps Script — ทุกคำขอมีค่าเริ่มต้น ~5 วินาทีจากการคอมไพล์โปรเจกต์
+     (วัดแล้ว: action ที่ไม่มีจริงก็ยังกิน 5.1 วิ) จึงลด "จำนวนครั้งที่ต้องรอ" แทน
+     แคชผลไว้ 60 วินาที: สลับหน้าไปกลับใช้ของเดิมทันที แล้วดึงใหม่เงียบ ๆ ข้างหลัง
+     🔴 ล้างทั้งชุดทุกครั้งที่บันทึกอะไรก็ตาม — เห็นข้อมูลเก่าหลังกดบันทึก แย่กว่ารอนาน */
+  var KP_CACHE={}, KP_CACHE_MS=60000;
+  function kpCacheKey(p){
+    var k=[]; for(var n in p){ if(n==='callback') continue; k.push(n+'='+p[n]); }
+    return k.sort().join('&');
+  }
+  function kpCacheBust(){ KP_CACHE={}; }
+  /** ยิงคำขอแบบใช้แคชได้ · onData ถูกเรียกได้ 2 ครั้ง (ของเก่าทันที → ของใหม่เมื่อมาถึง) */
+  function kpFetch(p,onData,onErr){
+    var key=kpCacheKey(p), hit=KP_CACHE[key], fresh=hit && (Date.now()-hit.at)<KP_CACHE_MS;
+    if(fresh){ try{ onData(hit.data,true); }catch(e){} }
+    else kpLoading();
+    jsonp(p).then(function(r){
+      if(r&&r.ok) KP_CACHE[key]={ at:Date.now(), data:r };
+      onData(r,false);
+    }).catch(function(e){ if(onErr) onErr(e); else kpErr(e.message); });
+  }
+  /** ตัวโหลดที่บอกสถานะจริง — กล่องเทาเปล่า ๆ ทำให้ดูเหมือนค้าง */
+  function kpLoading(msg){
+    $('main').innerHTML='<div class="card kp-loadbox">'+
+      '<div class="kp-spin"></div>'+
+      '<div class="kp-loadtx">'+esc(msg||'กำลังโหลดข้อมูล…')+'</div>'+
+      '<div class="kp-loadsub">ระบบหลังบ้านใช้เวลาราว 5-10 วินาทีต่อครั้ง หน้าถัดไปจะเร็วขึ้นค่ะ</div></div>';
+  }
+
   function kpPaint(view,h){ if(VIEW!==view) return false; $('main').innerHTML=h; return true; }
   function kpErr(m){
     if(String(VIEW||'').indexOf('kpi')!==0) return;   // ออกจากโมดูลไปแล้ว = ไม่ต้องขึ้นข้อความค้างทับหน้าใหม่
@@ -10618,11 +10653,11 @@
 
   function renderKpiEmp(){
     skel();
-    jsonp({ action:'waKpiEmps', uid:UID }).then(function(r){
+    kpFetch({ action:'waKpiEmps', uid:UID },function(r){
       if(!r||!r.ok) return kpErr(r&&r.error);
       KPE=r;
       kpPaint('kpiemp', kpEmpHtml(r));
-    }).catch(function(e){ kpErr(e.message); });
+    });
   }
   function kpEmpEdit(code){ KPE_EDIT=code||''; kpPaint('kpiemp', kpEmpHtml(KPE)); }
 
@@ -10716,6 +10751,7 @@
     return d.getFullYear()+'-'+(mo<10?'0'+mo:mo)+'-'+(dy<10?'0'+dy:dy);
   }
   function kpEmpSave(){
+    kpCacheBust();   // บันทึกแล้วต้องอ่านของใหม่เสมอ
     var v=function(id){ var el=$(id); return el?String(el.value||'').trim():''; };
     var code=v('kpeCode');
     if(!code) return toast('กรอกรหัสพนักงานก่อนค่ะ');
@@ -10739,10 +10775,10 @@
      กราฟเส้น 12 เดือนแยก 3 ส่วน · เรดาร์คุณลักษณะเทียบเพื่อนร่วมตำแหน่ง · ตัวชี้วัดย้อนหลัง · คลังใบประเมิน */
   function renderKpiPerson(){
     skel();
-    jsonp({ action:'waKpiPersonDetail', uid:UID, code:KP_CODE, ym:KPR_YM||'' }).then(function(r){
+    kpFetch({ action:'waKpiPersonDetail', uid:UID, code:KP_CODE, ym:KPR_YM||'' },function(r){
       if(!r||!r.ok) return kpErr((r&&r.error)||'ยังไม่ได้เลือกพนักงาน — กดจากหน้าทะเบียนได้เลยค่ะ');
       kpPaint('kpiperson', kpPersonHtml(r));
-    }).catch(function(e){ kpErr(e.message); });
+    });
   }
   function kpPersonPick(v){ KP_CODE=v; renderKpiPerson(); }
 
@@ -10914,12 +10950,12 @@
     if(KPD_P.mode==='month') p.ym=KPD_P.ym||'';
     else if(KPD_P.mode==='year') p.year=KPD_P.year||'';
     else { p.from=KPD_P.from||''; p.to=KPD_P.to||''; }
-    jsonp(p).then(function(r){
+    kpFetch(p,function(r){
       if(!r||!r.ok) return kpErr(r&&r.error);
       KPD=r; KPD_P.mode=r.period.mode; KPD_P.ym=r.period.ym||r.period.from;
       KPD_P.year=r.period.year; KPD_P.from=r.period.from; KPD_P.to=r.period.to;
       kpPaint('kpidash', kpDashHtml(r));
-    }).catch(function(e){ kpErr(e.message); });
+    });
   }
   function kpPeriodMode(v){ KPD_P.mode=v; renderKpiDash(); }
   function kpPeriodSet(k,v){ KPD_P[k]=v; renderKpiDash(); }
@@ -11116,17 +11152,19 @@
   function kpReopen(){ KPR_YM=KP_YM||KPR_YM; kpReopenRound(); }
   function renderKpiEntry(){
     KP_YM=KPR_YM||KP_YM||kpThisYm(); KPR_YM=KP_YM; skel();
-    jsonp({ action:'waKpiEmps', uid:UID }).then(function(reg){
+    /* ⏱️ หน้านี้ยิง 2 คำขอต่อกัน = รอ 2 รอบ (~10 วิ) — ใช้แคชช่วยให้รอบถัดไปไม่ต้องรอซ้ำ
+       (หน้าใหม่ "ประเมินผลงาน" ยิงครั้งเดียวจบ ใช้ตัวนั้นแทนได้) */
+    kpFetch({ action:'waKpiEmps', uid:UID },function(reg){
       if(!reg||!reg.ok) return kpErr(reg&&reg.error);
       var poss={}, order=[];
       (reg.rows||[]).forEach(function(e){ if(e.left) return; if(!poss[e.pos]){ poss[e.pos]=e.posName||e.pos; order.push(e.pos); } });
       if(!order.length) return kpErr('ยังไม่มีพนักงานที่ทำงานอยู่ในทะเบียน');
       if(order.indexOf(KP_POS)<0) KP_POS=order[0];
-      return jsonp({ action:'waKpiEntryInit', uid:UID, ym:KP_YM, pos:KP_POS }).then(function(r){
+      kpFetch({ action:'waKpiEntryInit', uid:UID, ym:KP_YM, pos:KP_POS },function(r){
         if(!r||!r.ok) return kpErr(r&&r.error);
         KP=r; KP.posList=order.map(function(k){ return { code:k, name:poss[k] }; }); KP_EDIT={}; kpEntryPaint();
       });
-    }).catch(function(e){ kpErr(e.message); });
+    });
   }
   /* ค่าที่พิมพ์อยู่ (ยังไม่บันทึก) ทับค่าที่โหลดมา */
   function kpVal(code,mid,f){
@@ -11304,18 +11342,18 @@
   var KPS=null, KPS_VAL={};
   function renderKpiScore(){
     KP_YM=KPR_YM||KP_YM||kpThisYm(); KPR_YM=KP_YM; skel();
-    jsonp({ action:'waKpiEmps', uid:UID }).then(function(reg){
+    kpFetch({ action:'waKpiEmps', uid:UID },function(reg){
       if(!reg||!reg.ok) return kpErr(reg&&reg.error);
       var list=(reg.rows||[]).filter(function(e){ return !e.left; });
       if(!list.length) return kpErr('ยังไม่มีพนักงานให้ประเมิน');
       if(!KP_CODE||!list.some(function(e){ return e.code===KP_CODE; })) KP_CODE=list[0].code;
-      return jsonp({ action:'waKpiTraitInit', uid:UID, ym:KP_YM, code:KP_CODE }).then(function(r){
+      kpFetch({ action:'waKpiTraitInit', uid:UID, ym:KP_YM, code:KP_CODE },function(r){
         if(!r||!r.ok) return kpErr(r&&r.error);
         KPS=r; KPS.list=list; KPS_VAL={};
         Object.keys(r.myScores||{}).forEach(function(k){ KPS_VAL[k]=Number(r.myScores[k]); });
         kpsPaint();
       });
-    }).catch(function(e){ kpErr(e.message); });
+    });
   }
   function kpsPaint(){
     var r=KPS;
@@ -11366,7 +11404,7 @@
   function renderKpiDoc(){
     KP_YM=KP_YM||kpThisYm(); skel();
     if(!KP_CODE) return kpErr('เลือกพนักงานจากหน้าทะเบียนหรือภาพรวมเดือนก่อนค่ะ');
-    jsonp({ action:'waKpiDoc', uid:UID, ym:KP_YM, code:KP_CODE }).then(function(r){
+    kpFetch({ action:'waKpiDoc', uid:UID, ym:KP_YM, code:KP_CODE },function(r){
       if(!r||!r.ok) return kpErr(r&&r.error);
       var res=r.result, w=r.weights;
       var h='<div class="ds-sel"><select onchange="kpDocYm(this.value)">'+kpMonthOpts(r.ym)+'</select>'+
@@ -11448,11 +11486,11 @@
   function kpLoadRound(view){
     skel();
     var act = view==='kpimanage' ? 'waKpiManage' : 'waKpiRound';
-    jsonp({ action:act, uid:UID, ym:KPR_YM||'' }).then(function(r){
+    kpFetch({ action:act, uid:UID, ym:KPR_YM||'' },function(r){
       if(!r||!r.ok) return kpErr(r&&r.error);
       KPR=r; KPR_YM=r.ym;
       kpPaint(view, view==='kpimanage' ? kpManageHtml(r) : kpRoundHtml(r));
-    }).catch(function(e){ kpErr(e.message); });
+    });
   }
   function kpRoundYm(v){ KPR_YM=v; KPR_STEP=0; KPR_PICK=null; kpLoadRound(VIEW); }
 
@@ -11657,6 +11695,7 @@
   }
 
   function kpOpenRound(){
+    kpCacheBust();   // บันทึกแล้วต้องอ่านของใหม่เสมอ
     var picked=[];
     for(var k in (KPR_PICK||{})) if(KPR_PICK[k]) picked.push(k);
     if(!picked.length) return toast('เลือกพนักงานอย่างน้อย 1 คนก่อนค่ะ');
@@ -11670,6 +11709,7 @@
     }).catch(function(e){ toast(e.message); });
   }
   function kpSubmitRound(){
+    kpCacheBust();   // บันทึกแล้วต้องอ่านของใหม่เสมอ
     busy('กำลังส่งอนุมัติ…');
     jsonp({ action:'waKpiRoundSubmit', uid:UID, ym:KPR_YM }).then(function(r){
       if(!r||!r.ok) return toast(r&&r.error||'ส่งไม่สำเร็จ');
@@ -11679,6 +11719,7 @@
     }).catch(function(e){ toast(e.message); });
   }
   function kpApproveRound(force){
+    kpCacheBust();   // บันทึกแล้วต้องอ่านของใหม่เสมอ
     busy('กำลังอนุมัติ…');
     jsonp({ action:'waKpiRoundApprove', uid:UID, ym:KPR_YM, force:force?'1':'' }).then(function(r){
       if(r&&r.needForce){
@@ -11692,6 +11733,7 @@
     }).catch(function(e){ toast(e.message); });
   }
   function kpReopenRound(){
+    kpCacheBust();   // บันทึกแล้วต้องอ่านของใหม่เสมอ
     if(!confirm('เปิดแก้ไขรอบนี้? คะแนนจะถูกคิดใหม่เมื่ออนุมัติอีกครั้งค่ะ')) return;
     busy('กำลังเปิดแก้ไข…');
     jsonp({ action:'waKpiRoundReopen', uid:UID, ym:KPR_YM }).then(function(r){
@@ -11707,12 +11749,12 @@
     skel();
     var p={ action:'waKpiFormInit', uid:UID, ym:KPR_YM||'', by:KPF_BY, kind:KPF_KIND };
     if(KPF_BY==='emp') p.code=KPF_CODE; else if(KPF_BY==='pos') p.pos=KPS_POS;
-    jsonp(p).then(function(r){
+    kpFetch(p,function(r){
       if(!r||!r.ok) return kpErr(r&&r.error);
       KPF=r; KPR_YM=r.ym;
       if(KPF_BY==='pos'&&!KPS_POS&&r.positions.length) KPS_POS=r.positions[0].code;
       kpPaint('kpifill', kpFillHtml(r));
-    }).catch(function(e){ kpErr(e.message); });
+    });
   }
   function kpFillBy(v){ KPF_BY=v; if(v==='pos'&&!KPS_POS&&KPF&&KPF.positions.length) KPS_POS=KPF.positions[0].code; renderKpiFill(); }
   function kpFillPos(v){ KPS_POS=v; renderKpiFill(); }
@@ -11818,6 +11860,7 @@
 
   /** เก็บค่าจากทุกฟอร์มในหน้า → ส่งครั้งเดียว (POST เพราะ payload ยาวเกิน URL) */
   function kpFillSave(){
+    kpCacheBust();   // บันทึกแล้วต้องอ่านของใหม่เสมอ
     var payload={ perf:[], stat:[], trait:[] };
     document.querySelectorAll('.kp-form').forEach(function(card){
       var code=card.getAttribute('data-code'), owner=card.getAttribute('data-owner')||code;
@@ -11856,12 +11899,12 @@
   /* ── ตั้งค่า: โหลดครั้งเดียวใช้ทั้ง 3 หน้า ── */
   function kpSetupLoad(view){
     skel();
-    jsonp({ action:'waKpiSetup', uid:UID, ym:KPR_YM||'' }).then(function(r){
+    kpFetch({ action:'waKpiSetup', uid:UID, ym:KPR_YM||'' },function(r){
       if(!r||!r.ok) return kpErr(r&&r.error);
       KPS=r; KPR_YM=r.ym;
       if(!KPS_POS&&r.positions.length) KPS_POS=r.positions[0].pos.code;
       kpPaint(view, view==='kpirule'?kpRuleHtml(r):(view==='kpimetric'?kpMetricHtml(r):kpTraitHtml(r)));
-    }).catch(function(e){ kpErr(e.message); });
+    });
   }
   function renderKpiRule(){ kpSetupLoad('kpirule'); }
   function renderKpiMetric(){ kpSetupLoad('kpimetric'); }
@@ -12147,6 +12190,7 @@
     return out;
   }
   function kpCfgSave(what,rows,pos){
+    kpCacheBust();   // บันทึกแล้วต้องอ่านของใหม่เสมอ
     busy('กำลังบันทึก…');
     jsonpPost({ action:'waKpiCfgSave', uid:UID, what:what, pos:pos||'', effFrom:kpEffVal(), rows:JSON.stringify(rows) })
       .then(function(r){
@@ -12156,6 +12200,7 @@
   }
   function kpSaveGrade(){ kpCfgSave('grade', kpGrab('kpGradeTbl')); }
   function kpSaveStat(){
+    kpCacheBust();   // บันทึกแล้วต้องอ่านของใหม่เสมอ
     var name=($('kpStatName')||{}).value||'', pos=($('kpStatPos')||{}).value||'';
     if(!pos) return toast('เลือกตำแหน่งของชุดเกณฑ์นี้ก่อนค่ะ (หรือเลือก "ทุกตำแหน่ง")');
     var rows=kpGrab('kpStatTbl');
@@ -12299,6 +12344,7 @@ function kpImpDraw(){
     return n ? lines.join('\n') : '';
   }
   function kpImpRun(commit){
+    kpCacheBust();   // บันทึกแล้วต้องอ่านของใหม่เสมอ
     var k=($('kpImpKind')||{}).value, txt=kpImpText(), lock=($('kpImpLock')||{}).checked;
     if(!String(txt).trim()) return toast('ยังไม่ได้กรอกข้อมูลค่ะ');
     if(commit&&!confirm('ยืนยันนำเข้าข้อมูลลงระบบจริงไหมคะ?')) return;
@@ -12340,14 +12386,14 @@ function kpImpDraw(){
       p={ action:'waKpiReport', uid:UID, what:KPRP_TAB==='trend'?'trend':'month', ym:KPR_YM||'' };
       if(KPRP_TAB==='trend'&&KPRP_CODE) p.code=KPRP_CODE;
     }
-    jsonp(p).then(function(r){
+    kpFetch(p,function(r){
       if(!r||!r.ok) return kpErr(r&&r.error);
       if(r.ym) KPR_YM=r.ym;
       var h = KPRP_TAB==='book' ? kpBookHtml(r)
             : (KPRP_TAB==='insight' ? kpInsightHtml(r)
             : (KPRP_TAB==='trend' ? kpTrendHtml(r) : kpMonthRepHtml(r)));
       kpPaint('kpireport', h);
-    }).catch(function(e){ kpErr(e.message); });
+    });
   }
 
   /* ── เล่มส่งลูกค้า — หน้าเดียวจบ กดพิมพ์เป็น PDF ได้จากเบราว์เซอร์ ── */
@@ -13649,7 +13695,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260909-1832';
+  var APP_BUILD='20260909-1858';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
