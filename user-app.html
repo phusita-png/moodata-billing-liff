@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260910-0028">
+<link rel="stylesheet" href="user.css?v=20260910-0106">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1160,6 +1160,9 @@
     font-weight:600; color:#3d3a34; font-variant-numeric:tabular-nums; text-align:center; }
   .kp-mid{ text-align:center; }
   /* เมนู "..." ท้ายแถวทะเบียนพนักงาน — <details> ล้วน ไม่ต้องใช้ JS */
+  /* รหัสพนักงาน — ป้ายเทาเล็ก อ่านง่ายเวลาเทียบกับไฟล์นำเข้า */
+  .kp-code{ font-variant-numeric:tabular-nums; font-size:13px; color:#5b6b7d;
+    background:#F2F5F9; border-radius:7px; padding:2px 8px; white-space:nowrap; }
   .kp-menu{ position:relative; display:inline-block; }
   .kp-menu summary{ list-style:none; cursor:pointer; padding:2px 10px; border-radius:9px;
     border:1px solid var(--line); background:#fff; font-weight:700; letter-spacing:1px; color:#5b6b7d; }
@@ -10713,14 +10716,17 @@
     h+='<div class="card"><div class="kp-bar"><span class="kp-grow"></span>'+
       (r.canEdit?'<button class="btn btn-primary btn-sm" onclick="kpEmpEdit(\'NEW\')">+ เพิ่มพนักงาน</button>':'')+'</div>';
     h+='<div class="kp-wrap"><table class="kp-tbl"><thead><tr>'+
-      '<th class="kp-c">ลำดับ</th><th>ชื่อ-นามสกุล</th><th>ชื่อเล่น</th><th>ตำแหน่ง</th><th>แผนก</th>'+
+      '<th class="kp-c">ลำดับ</th><th class="kp-c">รหัสพนักงาน</th>'+
+      '<th>ชื่อ-นามสกุล</th><th>ชื่อเล่น</th><th>ตำแหน่ง</th><th>แผนก</th>'+
       '<th class="kp-c">สถานะ</th><th class="kp-c">รอบประเมินล่าสุด</th><th class="kp-c">เกรดล่าสุด</th>'+
       '<th class="kp-c">คะแนนเฉลี่ย</th><th class="kp-c"></th></tr></thead><tbody>';
-    if(!r.rows.length) h+='<tr><td colspan="10"><div class="emptybox">ยังไม่มีพนักงานในทะเบียน — กด “+ เพิ่มพนักงาน” ได้เลยค่ะ</div></td></tr>';
+    if(!r.rows.length) h+='<tr><td colspan="11"><div class="emptybox">ยังไม่มีพนักงานในทะเบียน — กด “+ เพิ่มพนักงาน” ได้เลยค่ะ</div></td></tr>';
     r.rows.forEach(function(e,i){
       h+='<tr><td class="kp-c">'+(i+1)+'</td>'+
-        '<td><button class="kp-link" onclick="kpOpenPerson(\''+esc(e.code)+'\')"><b>'+esc(e.name)+'</b></button>'+
-          '<div class="m-hint">'+esc(e.code)+'</div></td>'+
+        /* รหัสพนักงานเป็นคอลัมน์ของตัวเอง (พี่กี้ 10 ก.ย. 69) — เดิมซ่อนเป็นข้อความเล็กใต้ชื่อ
+           เป็นข้อมูลที่ใช้อ้างอิงตอนนำเข้า/ตรวจสอบ ต้องกวาดตาเจอง่าย */
+        '<td class="kp-c"><span class="kp-code">'+esc(e.code)+'</span></td>'+
+        '<td><button class="kp-link" onclick="kpOpenPerson(\''+esc(e.code)+'\')"><b>'+esc(e.name)+'</b></button></td>'+
         '<td>'+esc(e.nick||'—')+'</td>'+
         '<td>'+esc(e.posName||e.pos||'—')+'</td><td>'+esc(e.dept||'—')+'</td>'+
         '<td class="kp-c">'+(e.left?'<span class="kp-pill kp-pill-no">'+esc(e.status)+'</span>':'<span class="kp-pill kp-pill-ok">ทำงานอยู่</span>')+'</td>'+
@@ -13859,7 +13865,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260910-0028';
+  var APP_BUILD='20260910-0106';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
