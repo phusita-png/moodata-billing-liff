@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260909-1858">
+<link rel="stylesheet" href="user.css?v=20260909-2038">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -10967,8 +10967,10 @@
       '<div class="kp-seg">'+
         '<button class="kp-segb'+(mode==='month'?' on':'')+'" onclick="kpPeriodMode(\'month\')">รายเดือน</button>'+
         '<button class="kp-segb'+(mode==='year'?' on':'')+'" onclick="kpPeriodMode(\'year\')">รายปี</button>'+
-        '<button class="kp-segb'+(mode==='range'?' on':'')+'" onclick="kpPeriodMode(\'range\')">ช่วงเดือน</button>'+
       '</div>';
+    /* 🔴 เหลือ 2 โหมด: รายเดือน + รายปี (พี่กี้ 9 ก.ย. 69 — ตัด "ช่วงเดือน" ออก)
+       โค้ดโหมด range ข้างล่างเก็บไว้เป็นทางลง เผื่อฝั่งเซิร์ฟเวอร์ส่ง mode='range' มา
+       (ข้อมูลเก่า/ลิงก์เก่า) จะได้ไม่จอขาว — แค่ไม่มีปุ่มให้กดเข้าไปเอง */
     if(mode==='month'){
       h+=kpYmSelect(per.ym,months,'kpPeriodSet(\'ym\',this.value)');
     } else if(mode==='year'){
@@ -11014,17 +11016,9 @@
       statCard('รออนุมัติ', st.wait+' ใบ','')+
       statCard('อนุมัติแล้ว', (st.approved+st.legacy)+' ใบ', st.legacy?(st.legacy+' ใบเป็นข้อมูลเดิม'):'')+'</div>';
 
-    /* คะแนนเฉลี่ย + เทียบช่วงก่อน */
-    var diffTxt='—', diffCls='';
-    if(r.diff!==null&&r.diff!==undefined){
-      diffCls = r.diff>0?'kp-up':(r.diff<0?'kp-down':'');
-      diffTxt = (r.diff>0?'▲ +':(r.diff<0?'▼ ':'')) + kpNum(Math.abs(r.diff)) + ' จุด';
-    }
-    h+='<div class="ds-grid">'+
-      statCard('คะแนนเฉลี่ย', r.avg===null?'—':r.avg.toFixed(2), 'เทียบช่วงก่อน '+(r.prevAvg===null?'—':r.prevAvg.toFixed(2)))+
-      statCard('เทียบช่วงก่อน', diffTxt, '', diffCls)+
-      statCard('พร้อมอนุมัติ', r.ready?(r.ready.ready+' คน'):'—', r.ready?(r.ready.notReady+' คนยังกรอกไม่ครบ'):'ดูรายเดือนเพื่อเช็คความครบ')+
-      statCard('ต้องดูแล', r.watch.length+' คน', r.watch.length?'เกรดต่ำ/คะแนนตก':'ไม่มีสัญญาณเตือน')+'</div>';
+    /* 🔴 เอาการ์ดแถวที่ 2 ออกแล้ว (คะแนนเฉลี่ย · เทียบช่วงก่อน · พร้อมอนุมัติ · ต้องดูแล)
+       พี่กี้ 9 ก.ย. 69: "ไม่เอา เอาออก" — ซ้ำกับกราฟคะแนนรายคน + ตารางคนที่ต้องดูแลข้างล่าง
+       ⚠️ ฝั่งเซิร์ฟเวอร์ยังส่ง avg/diff/ready/watch มาเหมือนเดิม (ตารางคนที่ต้องดูแลใช้ r.watch อยู่) */
 
     /* กราฟคะแนนรายคน — แกนนอน = คะแนน · แกนตั้ง = ชื่อพนักงาน */
     h+='<div class="card"><div class="section-h">คะแนนรายคน</div>'+kpScoreBars(r)+'</div>';
@@ -13695,7 +13689,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260909-1858';
+  var APP_BUILD='20260909-2038';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
