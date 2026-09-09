@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260909-2038">
+<link rel="stylesheet" href="user.css?v=20260909-2058">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1135,7 +1135,8 @@
   .kp-wrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
   .kp-tbl{ width:100%; border-collapse:collapse; font-size:13.5px; }
   .kp-tbl th,.kp-tbl td{ padding:9px 11px; text-align:left; border-bottom:1px solid #eef1f5; vertical-align:top; }
-  .kp-tbl thead th{ font-size:11.5px; color:#8A94A6; font-weight:700; background:#fafbfd; white-space:nowrap; }
+  /* หัวคอลัมน์ต้องอ่านชัด — เดิม 11.5px สีเทาอ่อน พี่กี้ทักว่าจางและเล็กเกินไป (9 ก.ย. 69) */
+  .kp-tbl thead th{ font-size:12.5px; color:#5A6B80; font-weight:700; background:#fafbfd; white-space:nowrap; }
   .kp-tbl tbody tr:last-child td{ border-bottom:0; }
   .kp-tbl .kp-r{ text-align:right; font-variant-numeric:tabular-nums; }
   .kp-pill{ display:inline-block; font-size:11.5px; font-weight:600; padding:2px 9px; border-radius:99px; white-space:nowrap; }
@@ -1154,11 +1155,16 @@
   .kp-range{ display:inline-block; width:88px; padding:3px 0; border-radius:999px; font-size:12px;
     font-weight:600; color:#3d3a34; font-variant-numeric:tabular-nums; text-align:center; }
   .kp-mid{ text-align:center; }
+  /* กล่องตารางเกณฑ์เกรดแบบดูอย่างเดียว — จัดกึ่งกลางหน้า ไม่ยืดเต็มความกว้าง
+     (พี่กี้ 9 ก.ย. 69: "กรอบแดง ให้จัดกึ่งกลาง") · แคบกว่าจอเมื่อไหร่ก็ยังเลื่อนดูได้ */
+  .kp-gradebox{ max-width:920px; margin:0 auto; overflow-x:auto; }
+  .kp-gradebox .kp-tbl{ margin:0 auto; }
+  .kp-r2{ font-variant-numeric:tabular-nums; font-weight:600; }
   .kp-grp{ font-weight:600; color:#3d3a34; vertical-align:middle; border-radius:10px; }
   /* ตัวหนังสือของหน้าจอโมดูลประเมินผลงาน (พี่กี้: ใหญ่สม่ำเสมอทั้งงาน)
      ตั้งธงที่ body ตอนเข้าโมดูล → คุมได้ทั้งหน้าโดยไม่กระทบโมดูลอื่น */
   @media (min-width:1200px){
-    body[data-mod="kpi"] .section-h{ font-size:15px; }
+    body[data-mod="kpi"] .section-h{ font-size:17px; color:#33465C; letter-spacing:.2px; }
     body[data-mod="kpi"] .m-hint{ font-size:13.5px; }
     body[data-mod="kpi"] .ds-stat .ds-lb{ font-size:13.5px; }
     body[data-mod="kpi"] .ds-stat .ds-vl{ font-size:24px; }
@@ -1295,9 +1301,9 @@
   /* จอคอมกว้าง ๆ ตัวหนังสือเล็กเกินไปเมื่อเทียบกับที่ว่าง (พี่กี้ทัก 9 ก.ย. 69)
      → ขยายเฉพาะหน้าจอโมดูลนี้บนจอ ≥1200px · มือถือคงขนาดเดิม (ที่จำกัด) */
   @media (min-width:1200px){
-    .kp-tbl{ font-size:15px; }
-    .kp-tbl th,.kp-tbl td{ padding:11px 14px; }
-    .kp-tbl thead th{ font-size:13px; }
+    .kp-tbl{ font-size:16px; }
+    .kp-tbl th,.kp-tbl td{ padding:12px 14px; }
+    .kp-tbl thead th{ font-size:14.5px; color:#46586E; letter-spacing:.2px; }
     .kp-tbl .m-hint{ font-size:12.5px; }
     .kp-in input,.kp-in select{ font-size:14.5px; padding:7px 10px; }
     .kp-range{ font-size:13.5px; width:98px; padding:4px 0; }
@@ -11660,12 +11666,11 @@
         (x.hasDoc?' <button class="btn btn-ghost btn-sm" onclick="kpDocOf(\''+esc(x.code)+'\')">ใบประเมิน</button>':'')+'</td></tr>';
     });
     h+='</tbody></table></div></div>';
+    /* เกณฑ์เกรดของเดือนนี้ — ใช้ตารางหน้าตาเดียวกับหน้า "เกณฑ์ทั้งองค์กร" จัดกึ่งกลาง
+       (พี่กี้ 9 ก.ย. 69: แถวยาว ๆ อ่านยาก เอาตารางมาใส่แทน) */
     if(r.grades&&r.grades.length){
-      h+='<div class="card"><div class="section-h">เกณฑ์เกรดที่ใช้เดือนนี้</div><div class="kp-legend">'+
-        r.grades.map(function(g){
-          return '<span class="kp-leg"><b class="kp-g kp-g'+g.grade+'">'+g.grade+'</b> '+esc(g.label||'')+
-            ' <span class="m-hint">'+g.min+' ขึ้นไป</span></span>';
-        }).join('')+'</div></div>';
+      h+='<div class="card"><div class="section-h kp-c">เกณฑ์เกรดที่ใช้เดือนนี้</div>'+
+        kpGradeView(r.grades)+'</div>';
     }
     return h;
   }
@@ -11931,6 +11936,46 @@
   function kpEffVal(){ var el=document.querySelector('.kp-eff'); return el?el.value:''; }
 
   /* ① เกณฑ์การประเมินทั้งองค์กร */
+  /* ── ตารางเกณฑ์เกรด: หน้าตั้งค่า (แก้ได้) กับหน้าจัดการผล (ดูอย่างเดียว) ใช้ตัวเดียวกัน ──
+     🔴 การควบกลุ่ม (สูงกว่า/ตาม/ต่ำกว่าเป้าหมาย) คิดที่ kpGradeSpan ที่เดียว
+        ถ้าแยกไปเขียนสองที่ วันหนึ่งตารางสองหน้าจะควบไม่เหมือนกันแล้วไม่มีใครรู้ว่าอันไหนถูก */
+  function kpGradeSpan(gl){
+    var span={}, i=0;
+    while(i<gl.length){
+      var j=i;
+      while(j+1<gl.length && String(gl[j+1].group||'')===String(gl[i].group||'')) j++;
+      span[i]=j-i+1;
+      for(var k=i+1;k<=j;k++) span[k]=0;
+      i=j+1;
+    }
+    return span;
+  }
+  /** ช่วงคะแนนของเกรดแถวที่ i — ตั้งแต่ค่านี้ ถึงก่อนขั้นที่สูงกว่า (อ่านง่ายเหมือนตารางกระดาษ) */
+  function kpGradeUpper(gl,i){ return i>0 ? (Number(gl[i-1].min)-1) : 100; }
+
+  /** ตารางเกณฑ์เกรดแบบดูอย่างเดียว — หน้าตาเดียวกับหน้า "เกณฑ์ทั้งองค์กร" (พี่กี้ขอ 9 ก.ย. 69) */
+  function kpGradeView(gl){
+    gl=gl||[];
+    if(!gl.length) return '';
+    var span=kpGradeSpan(gl);
+    var h='<div class="kp-gradebox"><table class="kp-tbl kp-grade">'+
+      '<colgroup><col style="width:78px"><col style="width:92px"><col style="width:124px"><col>'+
+      '<col style="width:150px"></colgroup>'+
+      '<thead><tr><th class="kp-c">เกรด</th><th class="kp-c">คะแนน</th><th class="kp-c">ช่วงคะแนน</th>'+
+      '<th class="kp-c">คำอธิบาย</th><th class="kp-c">กลุ่ม</th></tr></thead><tbody>';
+    gl.forEach(function(g,i){
+      h+='<tr><td class="kp-c"><b class="kp-g kp-g'+g.grade+'">'+g.grade+'</b></td>'+
+        '<td class="kp-c kp-r2">'+esc(String(g.min))+'</td>'+
+        '<td class="kp-c"><span class="kp-range" style="background:'+esc(g.color||'#EEF1F5')+'">'+
+          g.min+'–'+kpGradeUpper(gl,i)+'</span></td>'+
+        '<td>'+esc(g.label||'')+'</td>'+
+        (span[i]?('<td class="kp-c kp-grp" rowspan="'+span[i]+'" style="background:'+esc(g.color||'#EEF1F5')+'">'+
+          esc(g.group||'')+'</td>'):'')+
+        '</tr>';
+    });
+    return h+'</tbody></table></div>';
+  }
+
   function kpRuleHtml(r){
     var tab=KPS_TAB.kpirule||'grade';
     var h='<div class="section-h">ตั้งค่าเกณฑ์การประเมินทั้งองค์กร</div>';
@@ -11940,14 +11985,7 @@
       /* กลุ่มความหมาย (ต่ำกว่า/ตาม/สูงกว่าเป้าหมาย) ควบเป็นกล่องเดียวเมื่อเกรดติดกันอยู่กลุ่มเดียวกัน
          — ตามตัวอย่างที่พี่กี้ส่งมา: สูงกว่าเป้าหมายควบ 5-4 · ตามเป้าหมายอยู่คนเดียว · ต่ำกว่าเป้าหมายควบ 2-1
          ⚠️ ผ่าน/สี ยังเก็บค่าไว้ใน hidden — เอาออกจากตารางเฉย ๆ ถ้าไม่ส่งกลับ ค่าที่ตั้งไว้จะหายตอนบันทึก */
-      var span={}, gi=0;
-      while(gi<gl.length){
-        var gj=gi;
-        while(gj+1<gl.length && String(gl[gj+1].group||'')===String(gl[gi].group||'')) gj++;
-        span[gi]=gj-gi+1;
-        for(var gk=gi+1;gk<=gj;gk++) span[gk]=0;
-        gi=gj+1;
-      }
+      var span=kpGradeSpan(gl);
       h+='<div class="kp-wrap"><table class="kp-tbl kp-in kp-grade" id="kpGradeTbl">'+
         '<colgroup><col style="width:88px"><col style="width:100px"><col style="width:132px"><col>'+
         '<col style="width:150px"></colgroup>'+
@@ -11955,7 +11993,7 @@
         '<th class="kp-c">คำอธิบาย</th><th class="kp-c">กลุ่ม</th></tr></thead><tbody>';
       gl.forEach(function(g,i){
         // ช่วงคะแนน = ตั้งแต่ค่านี้ ถึงก่อนขั้นที่สูงกว่า (โชว์ให้อ่านง่ายเหมือนตารางกระดาษ)
-        var upper = i>0 ? (Number(gl[i-1].min)-1) : 100;
+        var upper = kpGradeUpper(gl,i);
         h+='<tr><td class="kp-c"><input class="inp kp-nm kp-mid kp-w60" data-f="grade" type="number" value="'+g.grade+'">'+
           '<input type="hidden" data-f="pass" value="'+(g.pass?'1':'')+'">'+
           '<input type="hidden" data-f="color" value="'+esc(g.color||'')+'"></td>'+
@@ -13689,7 +13727,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260909-2038';
+  var APP_BUILD='20260909-2058';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
