@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260910-1257">
+<link rel="stylesheet" href="user.css?v=20260910-1302">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1207,7 +1207,7 @@
     body[data-mod="kpi"] .ds-stat .ds-vl{ font-size:24px; }
     body[data-mod="kpi"] .ds-stat .ds-sub{ font-size:12.5px; }
     body[data-mod="kpi"] .emptybox{ font-size:14px; }
-    body[data-mod="kpi"] .btn-sm{ font-size:13.5px; padding:7px 13px; }
+    body[data-mod="kpi"] .btn-sm{ font-size:14.5px; padding:8px 14px; }
     body[data-mod="kpi"] .inp,body[data-mod="kpi"] select.inp{ font-size:14.5px; }
   }
   .kp-setbox{ border:1px solid #e6ebf2; border-radius:14px; padding:10px 12px 4px; margin-bottom:14px; background:#fbfcfe; }
@@ -1363,7 +1363,13 @@
   @media (min-width:1200px){
     .kp-tbl{ font-size:16px; }
     .kp-tbl th,.kp-tbl td{ padding:12px 14px; }
-    .kp-tbl thead th{ font-size:14.5px; color:#46586E; letter-spacing:.2px; }
+    /* หัวตารางต้องไม่เล็กกว่าเนื้อในตาราง (บทเรียนเดียวกับแท็บ 10 ก.ย. 69 — ของที่เล็กกว่า
+       เนื้อหาจะอ่านเป็นข้อความประกอบ ไม่ใช่หัวคอลัมน์) · เนื้อ 16px → หัว 15.5px */
+    .kp-tbl thead th{ font-size:15.5px; color:#46586E; letter-spacing:.2px; }
+    /* ป้ายเล็กในตารางเคยตั้งไว้สำหรับมือถือ — บนจอกว้างเล็กจนอ่านยากเมื่อวางข้างตัว 16px */
+    .kp-pill{ font-size:13px; padding:3px 11px; }
+    .kp-code{ font-size:14px; padding:3px 10px; }
+    .kp-g{ font-size:15px; }
     .kp-tbl .m-hint{ font-size:12.5px; }
     .kp-in input,.kp-in select{ font-size:14.5px; padding:7px 10px; }
     .kp-range{ font-size:13.5px; width:98px; padding:4px 0; }
@@ -13977,7 +13983,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260910-1257';
+  var APP_BUILD='20260910-1302';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
