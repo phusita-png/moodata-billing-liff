@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260910-1717">
+<link rel="stylesheet" href="user.css?v=20260910-2019">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -2449,13 +2449,30 @@
 
   /* เข้าห้อง → backend บันทึก log → โหลดหน้าใหม่ทั้งหมด
      ต้อง reload จริง — แคชทุกตัว (LVCACHE/DOCCACHE/…) เป็นของห้องเก่า ค้างไว้ไม่ได้ */
+  /* เข้าห้อง = เดิมยิง 2 คำขอ (waHubEnter → reload → waBootstrap) คำขอละ 5-15 วิ
+     และถ้าคำขอไหนหลุดต้องกดใหม่ทั้งชุด (พี่กี้ 10 ก.ย. 69: "ครั้งที่ 3 ถึงจะเข้าได้")
+     ตอนนี้ waHubEnter ส่งข้อมูลตั้งต้นของห้องใหม่กลับมาด้วย เก็บพักไว้ให้หน้าหลัง reload ใช้เลย */
   function roomEnter(code, name){
     busy('กำลังเข้าห้อง '+(name||'Moodata')+'…');
     jsonp({action:'waHubEnter',uid:UID,room:code||'MOODATA'}).then(function(r){
       if(!r||!r.ok){ unbusy(); toast((r&&r.error)||'เข้าห้องไม่สำเร็จ'); return; }
       roomSet(code||'');
+      if(r.boot && r.boot.ok){
+        try{ sessionStorage.setItem('yd_boot', JSON.stringify({at:Date.now(), room:(code||''), data:r.boot})); }catch(e){}
+      }
       location.reload();
     }).catch(function(e){ unbusy(); toast(e.message); });
+  }
+  /** ข้อมูลตั้งต้นที่เพิ่งได้มาตอนสลับห้อง — ใช้ได้ครั้งเดียวและต้องสดพอ (ไม่เกิน 2 นาที) */
+  function bootFromSwitch_(){
+    try{
+      var raw=sessionStorage.getItem('yd_boot'); if(!raw) return null;
+      sessionStorage.removeItem('yd_boot');
+      var o=JSON.parse(raw);
+      if(!o || !o.data || Date.now()-o.at > 120000) return null;
+      if(String(o.room||'') !== String(roomSel()||'')) return null;   // สลับห้องซ้อนกัน = ทิ้ง ไปอ่านของจริง
+      return o.data;
+    }catch(e){ return null; }
   }
 
   // ═══════════ VIEW: 🧭 เลือกโมดูล (หน้าแรกใหม่) ═══════════
@@ -13935,7 +13952,8 @@ function kpImpDraw(){
     }).catch(function(){ startBoot(); });
   }
   function startBoot(){
-    jsonp({action:'waBootstrap', uid:UID}).then(function(r){
+    var _sw=bootFromSwitch_();
+    (_sw ? Promise.resolve(_sw) : jsonp({action:'waBootstrap', uid:UID})).then(function(r){
       if(!r||!r.ok){
         var _msg=(r&&r.error)||'โหลดข้อมูลไม่สำเร็จ';
         /* คนนอกมาถึงหน้านี้ = ทางเข้าหน้าสมัครหลุดไประหว่างทาง (query หาย/แคชค้าง)
@@ -14050,7 +14068,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260910-1717';
+  var APP_BUILD='20260910-2019';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
