@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260910-1640">
+<link rel="stylesheet" href="user.css?v=20260910-1717">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1744,32 +1744,82 @@
       String.fromCharCode(10)+'ยืนยันทำต่อไหมคะ?');
   }
 
+  /* 🔴 10 ก.ย. 69 — วัดจริงแล้วพบว่า Apps Script ตอบช้าและ "หลุด" เป็นระยะ
+     (เรียก doGet เปล่า ๆ 5 ครั้งได้ 4.1 / 9.8=404 / 74.3 / 11.4 / 29.7 วินาที)
+     ของเดิมลองใหม่เฉพาะตอน script โหลดไม่ขึ้น (onerror) — แต่เคสที่เจอบ่อยกว่าคือ
+     เซิร์ฟเวอร์ตอบ 404 เป็นหน้า HTML: script tag ไม่ยิง onerror และ callback ไม่ถูกเรียก
+     → หน้าค้างที่ "กำลังโหลดข้อมูล…" จนครบ 60 วิ แล้วค่อยขึ้นแดง (อาการที่พี่กี้เจอ)
+     ตอนนี้: รอ 25 วิแล้วลองใหม่เอง 3 รอบ (25+30+35 วิ) และบอกผู้ใช้ว่ากำลังลองใหม่รอบไหน */
+  var JSONP_WAIT=[25000, 30000, 35000];
+  function jsonpRetryNote_(n){
+    var b=document.getElementById('busy');
+    if(b && b.classList.contains('show')){
+      var t=b.querySelector('.busy-text');
+      if(t) t.textContent='ระบบตอบช้า กำลังลองใหม่ (ครั้งที่ '+n+')…';
+    }
+    var lt=document.querySelector('.kp-loadtx, .loader-text');
+    if(lt) lt.textContent='ระบบตอบช้า กำลังลองใหม่ (ครั้งที่ '+n+')…';
+  }
   function jsonp(params, _try, timeoutMs){
     _try=_try||0; params=withRoom_(params);
     if(!_try && !roomGuard_(params)) return Promise.reject(new Error('ยกเลิกแล้ว — ยังอยู่ในห้องลูกค้า'));
     return new Promise(function(resolve,reject){
       var cb='cb_'+Date.now()+'_'+Math.floor(Math.random()*1e6);
-      // ปกติ 60 วิ · action ที่อ่านชีตหลายใบ (เช่น waPnd51Auto) ส่งเวลารอมาเองได้
-      var timer=setTimeout(function(){cleanup();reject(new Error('หมดเวลาเชื่อมต่อ'));}, timeoutMs||60000);
-      window[cb]=function(d){cleanup();resolve(d);};
+      var done=false;
+      /* action ที่อ่านชีตหลายใบส่งเวลารอมาเองได้ (เช่น waPnd51Auto) — ของแบบนั้นห้ามลองใหม่ซ้ำ
+         เพราะงานหนักจริง ไม่ใช่เซิร์ฟเวอร์หลุด · ที่เหลือใช้เวลารอสั้นลงแล้วลองใหม่แทน */
+      var custom=!!timeoutMs;
+      var wait=custom?timeoutMs:(JSONP_WAIT[_try]||35000);
+      function retry(){
+        if(custom || _try>=JSONP_WAIT.length-1) return false;
+        jsonpRetryNote_(_try+2);
+        setTimeout(function(){ jsonp(params,_try+1,timeoutMs).then(resolve,reject); }, 600);
+        return true;
+      }
+      var timer=setTimeout(function(){
+        if(done) return; done=true; cleanup();
+        if(!retry()) reject(new Error('ระบบตอบช้าผิดปกติ ลองอีกครั้งในอีกสักครู่ค่ะ'));
+      }, wait);
+      window[cb]=function(d){ if(done) return; done=true; cleanup(); resolve(d); };
       function cleanup(){clearTimeout(timer);delete window[cb];if(s.parentNode)s.parentNode.removeChild(s);}
       var qs=Object.keys(params).map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(params[k]);}).join('&');
       var s=document.createElement('script'); s.src=EXEC_URL+'?'+qs+'&callback='+cb;
-      s.onerror=function(){ cleanup();
-        if(_try<2){ setTimeout(function(){ jsonp(params,_try+1,timeoutMs).then(resolve,reject); }, 700); }
-        else reject(new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้')); };
+      s.onerror=function(){ if(done) return; done=true; cleanup();
+        if(!retry()) reject(new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้')); };
+      /* โหลดเสร็จแต่ callback ไม่ถูกเรียก = เซิร์ฟเวอร์ตอบหน้า HTML (404/หน้า error ของ Google)
+         อย่ารอจนหมดเวลา ลองใหม่ทันที */
+      s.onload=function(){ setTimeout(function(){
+        if(done) return; done=true; cleanup();
+        if(!retry()) reject(new Error('เซิร์ฟเวอร์ตอบกลับไม่ครบ ลองอีกครั้งค่ะ'));
+      }, 300); };
       document.body.appendChild(s);
     });
   }
 
   // POST (fetch · form-urlencoded) — ใช้กับ action ที่ส่ง text ยาว เลี่ยง URL limit ของ JSONP GET
   // backend (doPost) route wa* → handler เดิม · ไม่ส่ง callback → ตอบ JSON ตรง
-  function jsonpPost(params){
-    params=withRoom_(params);
-    if(!roomGuard_(params)) return Promise.reject(new Error('ยกเลิกแล้ว — ยังอยู่ในห้องลูกค้า'));
+  /* POST = คำขอที่ "เขียนข้อมูล" — ลองใหม่ได้เฉพาะเคสที่มั่นใจว่าคำขอไปไม่ถึงโค้ดฝั่งเซิร์ฟเวอร์
+     (Google ตอบสถานะผิดพลาดกลับมาเอง: 404/429/5xx) · ถ้าเป็น network error เงียบ ๆ จะไม่ลองใหม่
+     เพราะอาจบันทึกไปแล้วแต่คำตอบหาย — ลองใหม่จะได้ใบซ้ำ ซึ่งแย่กว่าให้ผู้ใช้กดเอง */
+  var POST_RETRY_STATUS=[404,429,500,502,503,504];
+  function jsonpPost(params, _try){
+    _try=_try||0;
+    if(!_try){
+      params=withRoom_(params);
+      if(!roomGuard_(params)) return Promise.reject(new Error('ยกเลิกแล้ว — ยังอยู่ในห้องลูกค้า'));
+    }
     var body=Object.keys(params).map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(params[k]);}).join('&');
     return fetch(EXEC_URL,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:body})
-      .then(function(r){ if(!r.ok) throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้'); return r.json(); });
+      .then(function(r){
+        if(!r.ok){
+          if(_try<2 && POST_RETRY_STATUS.indexOf(r.status)>=0){
+            jsonpRetryNote_(_try+2);
+            return new Promise(function(res){ setTimeout(res, 800); }).then(function(){ return jsonpPost(params,_try+1); });
+          }
+          throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ (รหัส '+r.status+')');
+        }
+        return r.json();
+      });
   }
 
   // ───── nav / router ─────
@@ -2450,8 +2500,12 @@
      โหลดตอนเปิดเว็บ + ตอนกลับมาที่แท็บ (พี่กี้เคาะ) · ไม่ยิงซ้ำถี่กว่า 60 วิ */
   var BELL=null, _bellAt=0, _bellPop=null;
 
+  /* ตัวเลขกระดิ่งมากับ waBootstrap แล้ว — ไม่ต้องยิงซ้ำตอนเปิดแอป (ประหยัด 1 คำขอ = 3-10 วิ) */
+  function bellSeed_(d){ if(d&&d.ok){ BELL=d; _bellAt=Date.now(); bellPaintBadge_(); } }
   function bellLoad_(force){
-    if(!force && Date.now()-_bellAt < 60000) return Promise.resolve(BELL);
+    /* สลับแท็บ/กลับมาโฟกัสจะเรียกตัวนี้ทุกครั้ง — เดิมกันไว้ 60 วิ ยังยิงบ่อยเกินไปเมื่อ
+       คำขอหนึ่งกินเวลา 3-10 วิ · ตัวเลขกระดิ่งไม่ใช่ของที่ต้องสด ๆ ทุกนาที (10 ก.ย. 69) */
+    if(!force && Date.now()-_bellAt < 300000) return Promise.resolve(BELL);
     _bellAt=Date.now();
     return jsonp(withRoom_({action:'waBell', uid:UID})).then(function(r){
       if(r&&r.ok){ BELL=r; bellPaintBadge_(); }
@@ -2531,7 +2585,8 @@
     // กลับมาที่แท็บ = เช็คใหม่ (พี่กี้เคาะ — ไม่ยิงซ้ำเองตลอดเวลา ประหยัดโควต้า Apps Script)
     document.addEventListener('visibilitychange', function(){ if(!document.hidden) bellLoad_(false); });
     window.addEventListener('focus', function(){ bellLoad_(false); });
-    bellLoad_(true);
+    /* มีตัวเลขจาก bootstrap แล้วก็ไม่ต้องยิงซ้ำ — ยิงเฉพาะตอนที่ยังไม่มี (เช่นเวอร์ชันเก่า) */
+    if(BELL && BELL.ok) bellPaintBadge_(); else bellLoad_(true);
   }
   window.bellOpen_=bellOpen_;
 /* หน้าสมัครใช้งาน (T2) — คนนอกยังไม่มีสิทธิ์อะไร จึงไม่เรียก waBootstrap */
@@ -13911,6 +13966,7 @@ function kpImpDraw(){
         var n51=$('navPnd51'); if(n51) n51.style.display=''; }              // 📐 ภ.ง.ด.51 = พี่คนเดียว (backend pnd51Gate_ กันซ้ำอีกชั้น)           // 📊 ทะเบียนใบสำคัญจ่าย = พี่คนเดียว (backend poGate_ กันซ้ำอีกชั้น)
       // รายงานการเงินรวม = พี่ + HR ที่ตั้งใน Script Property (backend ตัดสิน ไม่ผูกกับ IS_OWNER)
       CAN_FIN=!!r.canFinance;
+      bellSeed_(r.bell);   // ตัวเลขกระดิ่งมากับ bootstrap แล้ว (ประหยัดคำขอ 1 ครั้ง)
       bellInit_();   // 🔔 กระดิ่ง — เริ่มหลังรู้ตัวตนแล้ว (ก่อนหน้านี้ยังไม่รู้ว่ามีสิทธิ์ดูอะไร)
       // โมดูลที่เปิดใช้ (M6) — ว่าง/ไม่ส่งมา = เปิดครบ (ระบบเดิมไม่กระทบ)
       MODS_OPEN=(r.modules && r.modules.length) ? r.modules : null;
@@ -13994,7 +14050,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260910-1640';
+  var APP_BUILD='20260910-1717';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
