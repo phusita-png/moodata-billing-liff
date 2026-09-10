@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260910-1305">
+<link rel="stylesheet" href="user.css?v=20260910-1632">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -11647,14 +11647,20 @@
       '<button class="btn btn-ghost btn-sm" onclick="kpPickAll(0)">ไม่เลือกเลย</button></div>';
     if(!staff.length) h+='<div class="emptybox">ยังไม่มีพนักงานในทะเบียน — ไปเพิ่มที่หน้าทะเบียนพนักงานก่อนค่ะ</div>';
     else {
-      h+='<div class="kp-wrap"><table class="kp-tbl"><thead><tr><th class="kp-c">เลือก</th><th>พนักงาน</th>'+
-        '<th>ตำแหน่ง</th><th>แผนก</th><th class="kp-c">สถานะในรอบนี้</th></tr></thead><tbody>';
-      staff.forEach(function(p){
+      /* ลำดับคอลัมน์ล้อกับหน้าทะเบียนพนักงาน (พี่กี้ 10 ก.ย. 69) — คนอ่านสองหน้านี้ต่อกัน
+         ถ้าคอลัมน์สลับที่ต้องไล่หาใหม่ทุกครั้ง · แผนกไม่มีในหน้านี้ตามที่พี่กี้กำหนด */
+      h+='<div class="kp-wrap"><table class="kp-tbl"><thead><tr><th class="kp-c">เลือก</th>'+
+        '<th class="kp-c">ลำดับ</th><th class="kp-c">รหัสพนักงาน</th><th>ชื่อ-นามสกุล</th><th>ชื่อเล่น</th>'+
+        '<th>ตำแหน่ง</th><th class="kp-c">สถานะในรอบนี้</th></tr></thead><tbody>';
+      staff.forEach(function(p,i){
         var cur=(r.rows||[]).filter(function(x){ return x.code===p.code; })[0];
         h+='<tr><td class="kp-c"><input type="checkbox" class="kp-pick" data-code="'+esc(p.code)+'"'+
             (KPR_PICK[p.code]?' checked':'')+' onchange="kpPickOne(this)"></td>'+
-          '<td><b>'+esc(p.nick||p.name)+'</b><div class="m-hint">'+esc(p.name)+'</div></td>'+
-          '<td>'+esc((cur&&cur.posName)||p.pos||'')+'</td><td>'+esc(p.dept||'—')+'</td>'+
+          '<td class="kp-c">'+(i+1)+'</td>'+
+          '<td class="kp-c"><span class="kp-code">'+esc(p.code)+'</span></td>'+
+          '<td><b>'+esc(p.name||p.nick)+'</b></td>'+
+          '<td>'+esc(p.nick||'—')+'</td>'+
+          '<td>'+esc((cur&&cur.posName)||p.posName||p.pos||'')+'</td>'+
           '<td class="kp-c">'+(cur&&cur.hasDoc?kpStatusPill(cur.status):'<span class="kp-dot kp-dot-no">ยังไม่อยู่ในรอบ</span>')+'</td></tr>';
       });
       h+='</tbody></table></div>';
@@ -13982,7 +13988,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260910-1305';
+  var APP_BUILD='20260910-1632';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
