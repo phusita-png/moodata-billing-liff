@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260910-2138">
+<link rel="stylesheet" href="user.css?v=20260910-2148">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1652,7 +1652,10 @@
      ⚠️ ส่งเฉพาะคำสั่งที่ชุดนั้นมีจริง — ที่เหลือไปโปรเจกต์หลักเหมือนเดิม (ดู build-hr/_actions.json)
         เพิ่ม action ใหม่ของ KPI/ลา/OT/สลิป ต้อง build-split + push ชุดนี้ด้วย ไม่งั้นจะเรียกไม่เจอ */
   var EXEC_URL_HR = 'https://script.google.com/macros/s/AKfycbwn4jpjdmFUFHUaYFpXI7MSXuuv6tT-9uwAYwU2_JUudrYa5-pKRtzvAsxN34gPbcyE/exec';
-  var HR_SPLIT_RE = /^wa(Kpi|Leave|Ot|Payslip)/;
+  /* รวมทางเข้าเว็บ (bootstrap/เข้าห้อง/กระดิ่ง) มาที่ชุดแยกด้วย — เป็นโค้ดชุดเดียวกันเป๊ะ
+     แต่โปรเจกต์เบากว่า 4 เท่า · ตอนทดสอบ 10 ก.ย. 69 เข้าห้องผ่านโปรเจกต์หลักหมดเวลา 90 วิ
+     ขณะที่ชุดแยกตอบใน 2-7 วิ */
+  var HR_SPLIT_RE = /^wa(Kpi|Leave|Ot|Payslip|Bootstrap|HubEnter|HubRooms|Bell|Perf|RoomFolder)/;
   function execUrlFor_(action){
     return (EXEC_URL_HR && HR_SPLIT_RE.test(String(action || ''))) ? EXEC_URL_HR : EXEC_URL;
   }
@@ -14079,7 +14082,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260910-2138';
+  var APP_BUILD='20260910-2148';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
