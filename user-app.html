@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260910-1135">
+<link rel="stylesheet" href="user.css?v=20260910-1202">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1390,10 +1390,10 @@
   .kp-tab.on{ color:var(--red); border-bottom-color:var(--red); font-weight:700; }
   .kp-tabs{ border-bottom-width:2px; }
   .kp-sub{ font-size:13px; font-weight:600; color:#3d5164; margin:12px 0 6px; }
-  /* แถบ "ใช้กับใครบ้าง" ใต้ตารางชุดเกณฑ์ — ตอบว่าเกณฑ์ชุดนี้มีผลกับใคร */
-  .kp-uses{ padding:10px 14px; border-top:1px solid #eef1f5; font-size:13.5px;
-    color:#3d5164; line-height:1.7; background:var(--red-tint); }
-  .kp-uses-none{ background:#FFF7ED; color:#9A3412; font-weight:600; }
+  /* ปุ่มลบชุดเกณฑ์ — อยู่ข้างปุ่ม "แก้ไข" จึงใช้ปุ่มโปร่งตัวหนังสือแดง ไม่ใช่ปุ่มแดงเต็มใบ
+     (ปุ่มแดงเต็มใบจะเด่นกว่าปุ่มหลักของการ์ด ทั้งที่เป็นงานที่ทำนาน ๆ ครั้ง) */
+  .kp-danger{ color:#DC2626; }
+  .kp-danger:hover{ background:#FEF2F2; }
   .kp-note-warn{ background:#fff8e8; border:1px solid #f6e0b5; color:#8a5d0c; border-radius:9px;
     padding:9px 11px; font-size:12.5px; margin:8px 0; }
   .kp-note-ok{ background:#e9f7ef; border:1px solid #bfe6cd; color:#116c3a; border-radius:9px;
@@ -12165,7 +12165,10 @@
           (kpIsLvKey(cur)?' disabled title="ชุดนี้ผูกกับระดับ ระบบตั้งชื่อให้ตามระดับ"':'')+'>'+
         '<span class="kp-lb">ใช้กับ</span>'+kpStatPosSel(r,cur)+
         '<span class="kp-grow"></span>'+
-        (r.canEdit?'<button class="btn btn-ghost btn-sm" onclick="kpStatNew()">+ เพิ่มเกณฑ์</button>':'')+
+        /* บอกให้ชัดว่ากล่องนี้กำลังทำอะไรอยู่ — เดิมมีปุ่ม "+ เพิ่มเกณฑ์" ที่กดตอนฟอร์มว่างแล้ว
+           ไม่เกิดอะไรขึ้น (พี่กี้ 10 ก.ย. 69: "ปุ่มไหนไม่ใช้เอาออก") · ออกจากโหมดแก้ไข
+           ใช้ปุ่ม "ยกเลิกการแก้ไข" ด้านล่างปุ่มเดียวพอ */
+        '<span class="m-hint">'+(set.oldKey?'กำลังแก้ไขชุดเดิม':'ชุดใหม่')+'</span>'+
       '</div>'+
       '<div class="kp-wrap"><table class="kp-tbl kp-in" id="kpStatTbl">'+
         '<colgroup><col style="width:90px"><col><col style="width:290px"></colgroup>'+
@@ -12178,7 +12181,9 @@
     });
     h+='</tbody></table></div>'+kpEffNote(r);
     if(r.canEdit) h+='<div class="kp-bar"><button class="btn btn-ghost btn-sm" onclick="kpAddRow(\'kpStatTbl\')">+ เพิ่มหัวข้อ</button>'+
-      '<button class="btn btn-ghost btn-sm" onclick="kpStatFill()">ใส่เกณฑ์มาตรฐาน</button>'+
+      /* "ใส่เกณฑ์มาตรฐาน" = เขียนทับทั้งตาราง — ตอนแก้ชุดเดิมกดพลาดแล้วค่าที่ตั้งไว้หายหมด
+         จึงให้มีเฉพาะตอนสร้างชุดใหม่ (ตารางยังว่าง) */
+      (set.oldKey?'':'<button class="btn btn-ghost btn-sm" onclick="kpStatFill()">ใส่เกณฑ์มาตรฐาน</button>')+
       '<button class="btn btn-primary btn-sm" onclick="kpSaveStat()">บันทึก</button>'+
       (set.oldKey?'<button class="btn btn-ghost btn-sm" onclick="kpStatNew()">ยกเลิกการแก้ไข</button>':'')+'</div>';
     else h+='<div class="m-hint">ดูได้อย่างเดียว — การตั้งเกณฑ์เป็นสิทธิ์ของผู้ดูแลระบบค่ะ</div>';
@@ -12197,19 +12202,14 @@
       }).join(' · ');
       /* ชุดเดิมผูกกับระดับ ไม่มีรายชื่อตำแหน่ง — บอกให้ชัดว่าใช้กับใคร ไม่ใช่ขึ้นขีด */
       if(!posName && st.level) posName='ทุกคนระดับ '+st.level;
-      /* 🔑 พี่กี้ 10 ก.ย. 69: "เราจะรู้ได้ยังไงว่าใครใช้เกณฑ์ไหน"
-         รายชื่อมาจาก backend (เดินตรรกะเดียวกับตอนคิดคะแนน) — หน้าเว็บห้ามเดาเอง */
-      var who=st.users||[];
-      var whoLine = who.length
-        ? '<div class="kp-uses"><b>ใช้กับ '+who.length+' คน:</b> '+
-            who.map(function(u){ return esc(u.name)+' <span class="m-hint">('+esc(u.pos)+')</span>'; }).join(' · ')+
-          '</div>'
-        : '<div class="kp-uses kp-uses-none">ยังไม่มีใครใช้ชุดนี้ — ไม่มีพนักงานที่เข้าเงื่อนไข</div>';
+      /* พี่กี้ 10 ก.ย. 69: รายชื่อคนที่ใช้ชุดนี้ "ดูรก" — เอาออกจากหน้าจอ
+         แต่ backend ยังส่ง users มา (ใช้เตือนตอนกดลบว่ามีคนใช้อยู่กี่คน) */
       h+='<div class="kp-setcard"><div class="kp-bar kp-sethead">'+
         '<b>'+esc(st.name||'เกณฑ์')+'</b><span class="kp-lb">ใช้กับ</span><span>'+esc(posName||'—')+'</span>'+
         (st.from?'<span class="kp-lb">เริ่ม '+esc(kpLabel(st.from))+'</span>':'')+
         '<span class="kp-grow"></span>'+
-        (r.canEdit?'<button class="btn btn-ghost btn-sm" onclick="kpStatEdit(\''+esc(st.key)+'\')">แก้ไข</button>':'')+
+        (r.canEdit?'<button class="btn btn-ghost btn-sm" onclick="kpStatEdit(\''+esc(st.key)+'\')">แก้ไข</button>'+
+          '<button class="btn btn-ghost btn-sm kp-danger" onclick="kpStatDel(\''+esc(st.key)+'\')">ลบ</button>':'')+
         '</div><div class="kp-wrap"><table class="kp-tbl">'+
         '<colgroup><col style="width:90px"><col><col style="width:290px"></colgroup>'+
         '<thead><tr><th class="kp-c">ลำดับ</th><th>หัวข้อการประเมิน</th>'+
@@ -12218,7 +12218,7 @@
         h+='<tr><td class="kp-c">'+(i+1)+'</td><td>'+esc(x.label||x.key)+'</td>'+
           '<td class="kp-c"><b>'+x.deduct+'</b></td></tr>';
       });
-      h+='</tbody></table></div>'+whoLine+'</div>';
+      h+='</tbody></table></div></div>';
     });
     return h;
   }
@@ -12231,6 +12231,30 @@
     KPS_SET={ name:st.name, positions:(st.positions&&st.positions.length)?st.positions.slice():[st.key],
               rows:st.rows.slice(), oldKey:st.key };
     kpSetupLoad(VIEW);
+  }
+  /** ลบชุดเกณฑ์ทั้งชุด (พี่กี้ 10 ก.ย. 69: "เกณฑ์ที่ยังไม่ใช้เอาออก มีค่อยมาเพิ่ม")
+      🔴 ถามก่อนเสมอ · ชุดที่มีคนใช้อยู่ต้องยืนยันซ้ำ แล้วหลังบ้านจะ "ปิดชุด" แทนลบ
+         ถ้ามีเดือนที่อนุมัติไปแล้ว (คะแนนเดือนเก่าต้องคิดได้เท่าเดิม) */
+  function kpStatDel(key){
+    var st=((KPS&&KPS.statSets)||[]).filter(function(x){ return x.key===key; })[0];
+    if(!st) return toast('ไม่พบชุดเกณฑ์นี้');
+    var who=(st.users||[]).length, nm=st.name||'เกณฑ์';
+    var msg='ลบชุดเกณฑ์ "'+nm+'" ?';
+    if(who) msg+='\n\nชุดนี้มีพนักงาน '+who+' คนใช้อยู่ — ลบแล้วคนกลุ่มนี้จะไปใช้ชุดอื่นหรือค่ามาตรฐานแทน';
+    else    msg+='\n\n(ยังไม่มีพนักงานคนไหนใช้ชุดนี้)';
+    if(!confirm(msg)) return;
+    kpCacheBust();
+    busy('กำลังลบ…');
+    jsonpPost({ action:'waKpiCfgSave', uid:UID, what:'statDel', key:key,
+                force:who?'1':'', effFrom:kpEffVal() })
+      .then(function(r){
+        if(!r||!r.ok) return toast(r&&r.error||'ลบไม่สำเร็จ');
+        busyOk(r.mode==='closed'?'ปิดชุดแล้ว':'ลบแล้ว');
+        toast(r.mode==='closed'
+          ? 'ปิดชุด "'+nm+'" ถึงเดือน '+kpLabel(r.until)+' แล้ว (เดือนเก่ายังคิดคะแนนเท่าเดิม)'
+          : 'ลบชุด "'+nm+'" แล้วค่ะ');
+        KPS_SET=null; kpSetupLoad(VIEW);
+      }).catch(function(e){ toast(e.message); });
   }
   /** ใส่เกณฑ์มาตรฐานที่พี่กี้ให้มา (สาย 2.5 · ขาด 20 · ลากิจ 5 · ลาป่วย 3 · ใบเตือน 20) */
   function kpStatFill(){
@@ -13936,7 +13960,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260910-1135';
+  var APP_BUILD='20260910-1202';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
