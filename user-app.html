@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260910-1202">
+<link rel="stylesheet" href="user.css?v=20260910-1245">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1223,7 +1223,20 @@
      (พี่กี้ 9 ก.ย. 69: "เมนูเดิมเรียงลงข้างล่าง เปลี่ยนมาเรียงแนวนอน")
      → ในแถบเครื่องมือของโมดูลนี้ ปุ่มกว้างตามข้อความ เรียงแนวนอนเสมอ */
   .kp-bar .btn{ width:auto; flex:0 0 auto; }
-  .kp-w160{ width:160px; }
+  /* ── ช่องกรอกในโมดูลประเมินผลงาน (พี่กี้ทัก 10 ก.ย. 69) ──
+     `.inp` ไม่เคยมีสไตล์ตัวฐานในไฟล์นี้เลย — มีแต่ `.kp-in input,.kp-in select` ที่คุมเฉพาะ
+     ช่องในตารางกรอก ช่องนอกตาราง (ชื่อชุด · dropdown ตำแหน่ง) จึงตกไปใช้ฟอนต์+ขอบของ
+     เบราว์เซอร์ = "ฟอนต์ใน dropdown ไม่เหมือนในเว็บ" · ทุกที่ที่ใช้ .inp อยู่ในโมดูลนี้ทั้งหมด */
+  .inp{ font-family:inherit; font-size:14px; line-height:1.5; color:var(--ink); background:#fff;
+    border:1px solid #e3e8ef; border-radius:9px; padding:8px 11px; box-sizing:border-box; }
+  .inp:focus{ outline:none; border-color:var(--red); }
+  /* select บีบตัวหนังสือจนชนลูกศรถ้าไม่เผื่อที่ให้ (พี่กี้: "พอดีตัวหนังสือเกินไปไม่สวย") */
+  select.inp{ padding-right:34px; min-width:180px; }
+  #kpStatPos{ min-width:270px; }
+  .kp-w160{ width:200px; }
+  /* ช่องกรอกในตารางกินเต็มความกว้างของคอลัมน์ — เดิมเป็นกล่องเล็กลอยอยู่กลางที่ว่าง */
+  .kp-tbl input.kp-wide{ width:100%; }
+  #kpStatTbl input[data-f="label"],#kpStatTbl input[data-f="deduct"]{ width:100%; }
   /* ── หน้าภาพรวม (9 ก.ย. 69) ── */
   .kp-period{ gap:10px; }
   .kp-seg{ display:inline-flex; border:1px solid #dde5ef; border-radius:10px; overflow:hidden; }
@@ -13960,7 +13973,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260910-1202';
+  var APP_BUILD='20260910-1245';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
