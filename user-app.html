@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260910-1632">
+<link rel="stylesheet" href="user.css?v=20260910-1640">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1358,44 +1358,12 @@
   /* 🐞 .m-hint มี background+padding — ในเซลล์ตารางกลายเป็นกล่องเทาทับข้อความ
      (บทเรียนเดิมจากหน้าเงินสดย่อย) → ในตาราง KPI ให้เป็นข้อความรองธรรมดา */
   .kp-tbl .m-hint{ background:none; padding:0; margin:2px 0 0; font-size:11.5px; line-height:1.35; }
-  /* จอคอมกว้าง ๆ ตัวหนังสือเล็กเกินไปเมื่อเทียบกับที่ว่าง (พี่กี้ทัก 9 ก.ย. 69)
-     → ขยายเฉพาะหน้าจอโมดูลนี้บนจอ ≥1200px · มือถือคงขนาดเดิม (ที่จำกัด) */
-  @media (min-width:1200px){
-    .kp-tbl{ font-size:16px; }
-    .kp-tbl th,.kp-tbl td{ padding:12px 14px; }
-    /* หัวตารางต้องไม่เล็กกว่าเนื้อในตาราง (บทเรียนเดียวกับแท็บ 10 ก.ย. 69 — ของที่เล็กกว่า
-       เนื้อหาจะอ่านเป็นข้อความประกอบ ไม่ใช่หัวคอลัมน์) · เนื้อ 16px → หัว 15.5px */
-    .kp-tbl thead th{ font-size:15.5px; color:#46586E; letter-spacing:.2px; }
-    /* ป้ายเล็กในตารางเคยตั้งไว้สำหรับมือถือ — บนจอกว้างเล็กจนอ่านยากเมื่อวางข้างตัว 16px */
-    .kp-pill{ font-size:13px; padding:3px 11px; }
-    .kp-code{ font-size:14px; padding:3px 10px; }
-    .kp-tbl .m-hint{ font-size:12.5px; }
-    .kp-in input,.kp-in select{ font-size:14.5px; padding:7px 10px; }
-    .kp-range{ font-size:13.5px; width:98px; padding:4px 0; }
-    .kp-dot{ font-size:12.5px; padding:3px 11px; }
-    .kp-sub{ font-size:14.5px; }
-    .kp-tab{ font-size:17px; padding:12px 18px; }
-    .kp-g{ font-size:15px; padding:3px 11px; }
-    .kp-grp{ font-size:14px; }
-    .kp-w60{ width:70px; } .kp-w70{ width:82px; } .kp-nm{ width:110px; }
-    /* ขนาดตัวหนังสือของทั้งโมดูลให้สม่ำเสมอกันบนจอกว้าง (พี่กี้ย้ำ 9 ก.ย. 69)
-       — คุมด้วย .app:has(...) ไม่ได้ในเบราว์เซอร์เก่า จึงคุมทีละคลาสที่โมดูลนี้ใช้จริง */
-    .kp-lb{ font-size:14px; }
-    .kp-step{ font-size:14px; padding:8px 15px; }
-    .kp-stepn{ width:24px; height:24px; font-size:13.5px; }
-    .kp-hname{ font-size:14px; }
-    .kp-hval{ font-size:14px; }
-    .kp-lgrow{ font-size:14px; }
-    .kp-lgav,.kp-lgpc{ font-size:12.5px; }
-    .kp-mcell{ font-size:13.5px; padding:3px 9px; min-width:28px; }
-    .kp-tval{ font-size:13.5px; }
-    .kp-tlb{ font-size:13px; }
-    .kp-note-warn,.kp-note-ok{ font-size:13.5px; }
-    .kp-col{ font-size:12.5px; }
-  }
   .kp-ym{ min-width:150px; }
   .kp-c{ text-align:center; }
   .kp-dot{ display:inline-block; padding:2px 9px; border-radius:999px; font-size:11.5px; font-weight:600; white-space:nowrap; }
+  /* ช่องติ๊กเลือกคนเข้ารอบ — ขนาดปริยายของเบราว์เซอร์ 13px เล็กเกินกว่าจะกดแม่นบนจอคอม
+     และเทียบกับตัวหนังสือ 16px ในแถวเดียวกันแล้วดูจิ๋ว (พี่กี้ 10 ก.ย. 69) */
+  .kp-pick{ width:18px; height:18px; accent-color:var(--red); cursor:pointer; vertical-align:middle; }
   .kp-dot-ok{ background:#e6f6ec; color:#116c3a; }
   .kp-dot-no{ background:#fdeaea; color:#b3261e; }
   .kp-cell-no{ background:#fff7f7; }
@@ -1463,6 +1431,44 @@
   .kp-doc-line{ border-bottom:1px dotted #b9c6d3; height:30px; margin-bottom:5px; }
   @media (max-width:640px){ .kp-doc-emp,.kp-doc-signs{ grid-template-columns:1fr; } }
   @media print{ .kp-paper{ box-shadow:none; border:0; } }
+  /* 🔴 บล็อกจอกว้างต้องอยู่ท้ายสุดของสไตล์เสมอ — 10 ก.ย. 69 เจอว่ากฎฐานที่เขียนไว้
+     ข้างล่างบล็อกนี้ (.kp-dot .kp-sub .kp-note-*) ทับ override ของจอกว้างเงียบ ๆ
+     เพราะความจำเพาะเท่ากันแต่มาทีหลัง → ตั้งขนาดไว้แล้วไม่มีผล หาสาเหตุยากมาก */
+  /* จอคอมกว้าง ๆ ตัวหนังสือเล็กเกินไปเมื่อเทียบกับที่ว่าง (พี่กี้ทัก 9 ก.ย. 69)
+     → ขยายเฉพาะหน้าจอโมดูลนี้บนจอ ≥1200px · มือถือคงขนาดเดิม (ที่จำกัด) */
+  @media (min-width:1200px){
+    .kp-tbl{ font-size:16px; }
+    .kp-tbl th,.kp-tbl td{ padding:12px 14px; }
+    /* หัวตารางต้องไม่เล็กกว่าเนื้อในตาราง (บทเรียนเดียวกับแท็บ 10 ก.ย. 69 — ของที่เล็กกว่า
+       เนื้อหาจะอ่านเป็นข้อความประกอบ ไม่ใช่หัวคอลัมน์) · เนื้อ 16px → หัว 15.5px */
+    .kp-tbl thead th{ font-size:15.5px; color:#46586E; letter-spacing:.2px; }
+    /* ป้ายเล็กในตารางเคยตั้งไว้สำหรับมือถือ — บนจอกว้างเล็กจนอ่านยากเมื่อวางข้างตัว 16px */
+    .kp-pill{ font-size:13px; padding:3px 11px; }
+    .kp-code{ font-size:14px; padding:3px 10px; }
+    .kp-tbl .m-hint{ font-size:12.5px; }
+    .kp-in input,.kp-in select{ font-size:14.5px; padding:7px 10px; }
+    .kp-range{ font-size:13.5px; width:98px; padding:4px 0; }
+    .kp-dot{ font-size:13px; padding:3px 11px; }
+    .kp-sub{ font-size:14.5px; }
+    .kp-tab{ font-size:17px; padding:12px 18px; }
+    .kp-g{ font-size:15px; padding:3px 11px; }
+    .kp-grp{ font-size:14px; }
+    .kp-w60{ width:70px; } .kp-w70{ width:82px; } .kp-nm{ width:110px; }
+    /* ขนาดตัวหนังสือของทั้งโมดูลให้สม่ำเสมอกันบนจอกว้าง (พี่กี้ย้ำ 9 ก.ย. 69)
+       — คุมด้วย .app:has(...) ไม่ได้ในเบราว์เซอร์เก่า จึงคุมทีละคลาสที่โมดูลนี้ใช้จริง */
+    .kp-lb{ font-size:14px; }
+    .kp-step{ font-size:14px; padding:8px 15px; }
+    .kp-stepn{ width:24px; height:24px; font-size:13.5px; }
+    .kp-hname{ font-size:14px; }
+    .kp-hval{ font-size:14px; }
+    .kp-lgrow{ font-size:14px; }
+    .kp-lgav,.kp-lgpc{ font-size:12.5px; }
+    .kp-mcell{ font-size:13.5px; padding:3px 9px; min-width:28px; }
+    .kp-tval{ font-size:13.5px; }
+    .kp-tlb{ font-size:13px; }
+    .kp-note-warn,.kp-note-ok{ font-size:13.5px; }
+    .kp-col{ font-size:12.5px; }
+  }
 </style>
 </head>
 <body>
@@ -13988,7 +13994,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260910-1632';
+  var APP_BUILD='20260910-1640';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
