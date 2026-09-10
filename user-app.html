@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260910-1023">
+<link rel="stylesheet" href="user.css?v=20260910-1108">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -12110,12 +12110,27 @@
     if(!KPS_SET) KPS_SET={ name:'', positions:[], rows:[], oldKey:'' };
     return KPS_SET;
   }
+  /** ชุดเกณฑ์หักที่ผูก "ระดับ" (ของเดิม) — คีย์ขึ้นต้น LV: · ต้องเลือกได้เหมือนตำแหน่ง
+      พี่กี้ 10 ก.ย. 69: ลูกค้าที่ตั้งเกณฑ์แบบระดับไว้ ต้องแก้จากหน้านี้ได้ ไม่ใช่มองไม่เห็นเลย */
+  var KP_LVP='LV:';
   function kpStatPosSel(r,cur){
     var opts='<option value="">— เลือกตำแหน่ง —</option>'+
       '<option value="*"'+(cur==='*'?' selected':'')+'>ทุกตำแหน่ง</option>';
     (r.positions||[]).forEach(function(p){
       opts+='<option value="'+esc(p.pos.code)+'"'+(p.pos.code===cur?' selected':'')+'>'+esc(p.pos.name||p.pos.code)+'</option>';
     });
+    /* ระดับที่มีชุดเกณฑ์อยู่จริง — ดึงจากชุดที่บันทึกไว้ ไม่ตั้งรายการตายตัว
+       (ลูกค้าแต่ละรายตั้งชื่อระดับเองได้ เช่น เจ้าหน้าที่ / หัวหน้า / ผู้จัดการ) */
+    var lv=[];
+    (r.statSets||[]).forEach(function(s){ if(s.level && lv.indexOf(s.level)<0) lv.push(s.level); });
+    if(lv.length){
+      opts+='<optgroup label="ชุดเดิม — ผูกกับระดับ">';
+      lv.forEach(function(x){
+        var v=KP_LVP+x;
+        opts+='<option value="'+esc(v)+'"'+(v===cur?' selected':'')+'>ระดับ '+esc(x)+'</option>';
+      });
+      opts+='</optgroup>';
+    }
     return '<select class="inp" id="kpStatPos">'+opts+'</select>';
   }
   function kpStatFormHtml(r){
@@ -12157,8 +12172,10 @@
         var hit=(r.positions||[]).filter(function(p){ return p.pos.code===c; })[0];
         return hit?(hit.pos.name||c):c;
       }).join(' · ');
+      /* ชุดเดิมผูกกับระดับ ไม่มีรายชื่อตำแหน่ง — บอกให้ชัดว่าใช้กับใคร ไม่ใช่ขึ้นขีด */
+      if(!posName && st.level) posName='ทุกคนระดับ '+st.level;
       h+='<div class="kp-setcard"><div class="kp-bar kp-sethead">'+
-        '<b>'+esc(st.name||'เกณฑ์')+'</b><span class="kp-lb">ตำแหน่ง</span><span>'+esc(posName||'—')+'</span>'+
+        '<b>'+esc(st.name||'เกณฑ์')+'</b><span class="kp-lb">ใช้กับ</span><span>'+esc(posName||'—')+'</span>'+
         (st.from?'<span class="kp-lb">เริ่ม '+esc(kpLabel(st.from))+'</span>':'')+
         '<span class="kp-grow"></span>'+
         (r.canEdit?'<button class="btn btn-ghost btn-sm" onclick="kpStatEdit(\''+esc(st.key)+'\')">แก้ไข</button>':'')+
@@ -12178,7 +12195,10 @@
   function kpStatEdit(key){
     var st=((KPS&&KPS.statSets)||[]).filter(function(x){ return x.key===key; })[0];
     if(!st) return toast('ไม่พบชุดเกณฑ์นี้');
-    KPS_SET={ name:st.name, positions:st.positions.slice(), rows:st.rows.slice(), oldKey:st.key };
+    /* ชุดที่ผูกระดับไม่มี positions — ใช้คีย์ LV:<ระดับ> เป็นค่าที่เลือกใน dropdown
+       ไม่งั้นกดแก้ไขแล้วช่องตำแหน่งว่าง กดบันทึกจะเด้ง "เลือกตำแหน่งก่อน" */
+    KPS_SET={ name:st.name, positions:(st.positions&&st.positions.length)?st.positions.slice():[st.key],
+              rows:st.rows.slice(), oldKey:st.key };
     kpSetupLoad(VIEW);
   }
   /** ใส่เกณฑ์มาตรฐานที่พี่กี้ให้มา (สาย 2.5 · ขาด 20 · ลากิจ 5 · ลาป่วย 3 · ใบเตือน 20) */
@@ -13879,7 +13899,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260910-1023';
+  var APP_BUILD='20260910-1108';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
