@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260910-1249">
+<link rel="stylesheet" href="user.css?v=20260910-1257">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -10714,7 +10714,9 @@
     $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(m||'โหลดไม่สำเร็จ')+'</div></div>';
   }
   function kpGradePill(g){
-    if(g===null||g===undefined||g==='') return '<span class="m-hint">—</span>';
+    /* เกรดในระบบคือ 1-5 — 0 แปลว่า "รอบนั้นยังไม่ได้เกรด" (ยังไม่อนุมัติ/ยังคิดไม่ครบ)
+       เดิมวาดเป็นวงกลมเลข 0 ทำให้อ่านผิดว่าคนนั้นได้เกรดต่ำสุด (พี่กี้เห็น 10 ก.ย. 69) */
+    if(g===null||g===undefined||g===''||Number(g)===0) return '<span class="m-hint">—</span>';
     return '<b class="kp-g kp-g'+g+'">'+g+'</b>';
   }
   function kpNum(v){ return (v===null||v===undefined||v==='')?'—':Number(v).toFixed(2); }
@@ -10762,11 +10764,9 @@
         '<td class="kp-c"><span class="kp-code">'+esc(e.code)+'</span></td>'+
         '<td><button class="kp-link" onclick="kpOpenPerson(\''+esc(e.code)+'\')"><b>'+esc(e.name)+'</b></button></td>'+
         '<td>'+esc(e.nick||'—')+'</td>'+
-        /* โชว์ระดับใต้ตำแหน่ง — ระดับเป็นตัวตัดสินว่าโดนหักสถิติด้วยเกณฑ์ชุดไหน
-           (พี่กี้ 10 ก.ย. 69: "เราจะรู้ได้ยังไงว่าใครใช้เกณฑ์ไหน") */
-        '<td>'+esc(e.posName||e.pos||'—')+
-          (e.level?'<div class="m-hint">ระดับ '+esc(e.level)+'</div>':'')+
-        '</td><td>'+esc(e.dept||'—')+'</td>'+
+        /* ระดับไม่โชว์ในตารางแล้ว (พี่กี้ 10 ก.ย. 69: ตารางแน่นไป) — ดูได้ในเมนู "..."
+           และในหน้าประวัติรายคน · ระดับยังเป็นตัวตัดสินเกณฑ์หักสถิติเหมือนเดิม */
+        '<td>'+esc(e.posName||e.pos||'—')+'</td><td>'+esc(e.dept||'—')+'</td>'+
         '<td class="kp-c">'+(e.left?'<span class="kp-pill kp-pill-no">'+esc(e.status)+'</span>':'<span class="kp-pill kp-pill-ok">ทำงานอยู่</span>')+'</td>'+
         '<td class="kp-c">'+(e.lastYm?esc(kpLabel(e.lastYm)):'<span class="m-hint">—</span>')+
           '<div class="m-hint">ประเมินมา '+e.rounds+' รอบ</div></td>'+
@@ -10787,6 +10787,7 @@
         '<button class="kp-menu-i" onclick="kpOpenPerson(\''+esc(e.code)+'\')">ดูประวัติ</button>'+
         (r.canEdit?'<button class="kp-menu-i" onclick="kpEmpEdit(\''+esc(e.code)+'\')">แก้ไขข้อมูล</button>':'')+
         '<div class="kp-menu-sep"></div>'+
+        '<div class="kp-menu-kv"><span>ระดับ</span><b>'+(e.level?esc(e.level):'<span class="m-hint">—</span>')+'</b></div>'+
         '<div class="kp-menu-kv"><span>ผู้ประเมิน 1</span><b>'+kpRaterName(r,e.rater1)+'</b></div>'+
         '<div class="kp-menu-kv"><span>ผู้ประเมิน 2</span><b>'+kpRaterName(r,e.rater2)+'</b></div>'+
         '<div class="kp-menu-kv"><span>อายุงาน</span><b>'+
@@ -10896,7 +10897,8 @@
       '<button class="btn btn-ghost btn-sm" onclick="kpGo(\'kpiemp\')">← กลับทะเบียน</button></div>';
     h+='<div class="kp-phead"><div class="kp-pav">'+esc((e.nick||e.name||'?').substr(0,1))+'</div>'+
       '<div class="kp-pinfo"><div class="kp-pname">'+esc(e.nick||e.name)+' <span class="m-hint">'+esc(e.name)+'</span></div>'+
-      '<div class="kp-pmeta">'+esc(e.posName||e.pos)+(e.dept?(' · '+esc(e.dept)):'')+
+      '<div class="kp-pmeta">'+esc(e.posName||e.pos)+(e.level?(' · ระดับ '+esc(e.level)):'')+
+        (e.dept?(' · '+esc(e.dept)):'')+
         (e.years?(' · อายุงาน '+e.years+' ปี'):'')+
         (e.status&&e.status!=='ใช้งาน'?(' · <b>'+esc(e.status)+'</b>'):'')+'</div>'+
       (r.weights?('<div class="kp-pmeta">สัดส่วนคะแนน: ผลงาน '+r.weights.perf+' · คุณลักษณะ '+r.weights.trait+' · สถิติ '+r.weights.stat+'</div>'):'')+
@@ -13975,7 +13977,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260910-1249';
+  var APP_BUILD='20260910-1257';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
