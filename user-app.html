@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260910-1108">
+<link rel="stylesheet" href="user.css?v=20260910-1135">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1356,7 +1356,7 @@
     .kp-range{ font-size:13.5px; width:98px; padding:4px 0; }
     .kp-dot{ font-size:12.5px; padding:3px 11px; }
     .kp-sub{ font-size:14.5px; }
-    .kp-tab{ font-size:14.5px; padding:9px 15px; }
+    .kp-tab{ font-size:17px; padding:12px 18px; }
     .kp-g{ font-size:14px; padding:2px 10px; }
     .kp-grp{ font-size:14px; }
     .kp-w60{ width:70px; } .kp-w70{ width:82px; } .kp-nm{ width:110px; }
@@ -1383,10 +1383,17 @@
   .kp-cell-no{ background:#fff7f7; }
   .kp-pill-lock{ background:#eef1f5; color:#5b6b7d; }
   .kp-tabs{ display:flex; gap:6px; flex-wrap:wrap; border-bottom:1px solid #eef1f5; margin-bottom:10px; }
-  .kp-tab{ border:0; background:none; padding:8px 12px; font:inherit; font-size:13px; color:#5b6b7d;
+  /* แท็บต้องใหญ่กว่าเนื้อหาข้างใน — พี่กี้ 10 ก.ย. 69: "น่าจะต้องใหญ่เท่าด้านใน หรือใหญ่กว่า
+     เพื่อให้เห็นชัดเจนกว่า" (เดิม 13px เล็กกว่าตารางที่ 14px จนดูเหมือนข้อความประกอบ ไม่ใช่ปุ่ม) */
+  .kp-tab{ border:0; background:none; padding:11px 16px; font:inherit; font-size:16px; color:#5b6b7d;
     cursor:pointer; border-bottom:2px solid transparent; }
-  .kp-tab.on{ color:var(--red); border-bottom-color:var(--red); font-weight:600; }
+  .kp-tab.on{ color:var(--red); border-bottom-color:var(--red); font-weight:700; }
+  .kp-tabs{ border-bottom-width:2px; }
   .kp-sub{ font-size:13px; font-weight:600; color:#3d5164; margin:12px 0 6px; }
+  /* แถบ "ใช้กับใครบ้าง" ใต้ตารางชุดเกณฑ์ — ตอบว่าเกณฑ์ชุดนี้มีผลกับใคร */
+  .kp-uses{ padding:10px 14px; border-top:1px solid #eef1f5; font-size:13.5px;
+    color:#3d5164; line-height:1.7; background:var(--red-tint); }
+  .kp-uses-none{ background:#FFF7ED; color:#9A3412; font-weight:600; }
   .kp-note-warn{ background:#fff8e8; border:1px solid #f6e0b5; color:#8a5d0c; border-radius:9px;
     padding:9px 11px; font-size:12.5px; margin:8px 0; }
   .kp-note-ok{ background:#e9f7ef; border:1px solid #bfe6cd; color:#116c3a; border-radius:9px;
@@ -10742,7 +10749,11 @@
         '<td class="kp-c"><span class="kp-code">'+esc(e.code)+'</span></td>'+
         '<td><button class="kp-link" onclick="kpOpenPerson(\''+esc(e.code)+'\')"><b>'+esc(e.name)+'</b></button></td>'+
         '<td>'+esc(e.nick||'—')+'</td>'+
-        '<td>'+esc(e.posName||e.pos||'—')+'</td><td>'+esc(e.dept||'—')+'</td>'+
+        /* โชว์ระดับใต้ตำแหน่ง — ระดับเป็นตัวตัดสินว่าโดนหักสถิติด้วยเกณฑ์ชุดไหน
+           (พี่กี้ 10 ก.ย. 69: "เราจะรู้ได้ยังไงว่าใครใช้เกณฑ์ไหน") */
+        '<td>'+esc(e.posName||e.pos||'—')+
+          (e.level?'<div class="m-hint">ระดับ '+esc(e.level)+'</div>':'')+
+        '</td><td>'+esc(e.dept||'—')+'</td>'+
         '<td class="kp-c">'+(e.left?'<span class="kp-pill kp-pill-no">'+esc(e.status)+'</span>':'<span class="kp-pill kp-pill-ok">ทำงานอยู่</span>')+'</td>'+
         '<td class="kp-c">'+(e.lastYm?esc(kpLabel(e.lastYm)):'<span class="m-hint">—</span>')+
           '<div class="m-hint">ประเมินมา '+e.rounds+' รอบ</div></td>'+
@@ -12133,14 +12144,26 @@
     }
     return '<select class="inp" id="kpStatPos">'+opts+'</select>';
   }
+  function kpIsLvKey(k){ return String(k||'').indexOf(KP_LVP)===0; }
+  /** ระดับที่ใช้อยู่จริงในระบบ — ทั้งจากตำแหน่งและจากชุดเกณฑ์ (ไม่ตั้งรายการตายตัว) */
+  function kpLevelList(r){
+    var lv=[];
+    (r.positions||[]).forEach(function(p){ if(p.pos.level && lv.indexOf(p.pos.level)<0) lv.push(p.pos.level); });
+    (r.statSets||[]).forEach(function(s){ if(s.level && lv.indexOf(s.level)<0) lv.push(s.level); });
+    return '<datalist id="kpLvList">'+lv.map(function(x){ return '<option value="'+esc(x)+'">'; }).join('')+'</datalist>';
+  }
   function kpStatFormHtml(r){
     var set=kpStatSet();
+    var cur=(set.positions||[])[0]||'';
     var rows=set.rows.length?set.rows:[{key:'',label:'',deduct:''}];
     var h='<div class="kp-setbox">'+
       '<div class="kp-bar kp-sethead">'+
-        '<span class="kp-lb">เกณฑ์</span>'+
-        '<input class="inp kp-w160" id="kpStatName" placeholder="เกณฑ์ 1" value="'+esc(set.name||'')+'">'+
-        '<span class="kp-lb">ตำแหน่ง</span>'+kpStatPosSel(r,(set.positions||[])[0]||'')+
+        /* ชุดที่ผูก "ระดับ" ใช้คอลัมน์ชื่อชุดเก็บระดับจริง — พิมพ์ชื่อทับไม่มีผล จึงล็อกช่องไว้
+           (พี่กี้ 10 ก.ย. 69 ถามว่าช่องนี้ควรมีไหม · มีได้ แต่ต้องไม่หลอกให้พิมพ์สิ่งที่ไม่ถูกใช้) */
+        '<span class="kp-lb">ชื่อชุดเกณฑ์</span>'+
+        '<input class="inp kp-w160" id="kpStatName" placeholder="เกณฑ์ 1" value="'+esc(set.name||'')+'"'+
+          (kpIsLvKey(cur)?' disabled title="ชุดนี้ผูกกับระดับ ระบบตั้งชื่อให้ตามระดับ"':'')+'>'+
+        '<span class="kp-lb">ใช้กับ</span>'+kpStatPosSel(r,cur)+
         '<span class="kp-grow"></span>'+
         (r.canEdit?'<button class="btn btn-ghost btn-sm" onclick="kpStatNew()">+ เพิ่มเกณฑ์</button>':'')+
       '</div>'+
@@ -12174,6 +12197,14 @@
       }).join(' · ');
       /* ชุดเดิมผูกกับระดับ ไม่มีรายชื่อตำแหน่ง — บอกให้ชัดว่าใช้กับใคร ไม่ใช่ขึ้นขีด */
       if(!posName && st.level) posName='ทุกคนระดับ '+st.level;
+      /* 🔑 พี่กี้ 10 ก.ย. 69: "เราจะรู้ได้ยังไงว่าใครใช้เกณฑ์ไหน"
+         รายชื่อมาจาก backend (เดินตรรกะเดียวกับตอนคิดคะแนน) — หน้าเว็บห้ามเดาเอง */
+      var who=st.users||[];
+      var whoLine = who.length
+        ? '<div class="kp-uses"><b>ใช้กับ '+who.length+' คน:</b> '+
+            who.map(function(u){ return esc(u.name)+' <span class="m-hint">('+esc(u.pos)+')</span>'; }).join(' · ')+
+          '</div>'
+        : '<div class="kp-uses kp-uses-none">ยังไม่มีใครใช้ชุดนี้ — ไม่มีพนักงานที่เข้าเงื่อนไข</div>';
       h+='<div class="kp-setcard"><div class="kp-bar kp-sethead">'+
         '<b>'+esc(st.name||'เกณฑ์')+'</b><span class="kp-lb">ใช้กับ</span><span>'+esc(posName||'—')+'</span>'+
         (st.from?'<span class="kp-lb">เริ่ม '+esc(kpLabel(st.from))+'</span>':'')+
@@ -12187,7 +12218,7 @@
         h+='<tr><td class="kp-c">'+(i+1)+'</td><td>'+esc(x.label||x.key)+'</td>'+
           '<td class="kp-c"><b>'+x.deduct+'</b></td></tr>';
       });
-      h+='</tbody></table></div></div>';
+      h+='</tbody></table></div>'+whoLine+'</div>';
     });
     return h;
   }
@@ -12246,6 +12277,11 @@
         '<span class="kp-lb">เกณฑ์</span>'+
         '<input class="inp kp-w160" id="kpMetName" placeholder="ชุดตัวชี้วัด 1" value="'+esc((cur&&cur.setName)||'')+'">'+
         '<span class="kp-lb">ตำแหน่ง</span>'+kpPosPicker()+
+        /* ระดับของตำแหน่ง = ตัวตัดสินว่าคนในตำแหน่งนี้โดนหักสถิติด้วยเกณฑ์ชุดไหน
+           เดิมแก้ได้แต่ในชีต (พี่กี้ 10 ก.ย. 69) */
+        '<span class="kp-lb">ระดับ</span>'+
+        '<input class="inp kp-w160" id="kpMetLevel" list="kpLvList" placeholder="เจ้าหน้าที่" value="'+
+          esc((cur&&cur.pos.level)||'')+'">'+kpLevelList(r)+
         '<span class="kp-grow"></span>'+
         '<span class="kp-lb">คะแนนเต็มตามสัดส่วน</span>'+
         '<input class="inp kp-nm kp-mid kp-w70" id="kpMetPerf" type="number" step="any" value="'+esc(String(w.perf))+'">'+
@@ -12415,7 +12451,8 @@
       name:  kpVal('kpMetName'),
       perf:  kpVal('kpMetPerf'),
       trait: kpVal('kpMetTrait'),
-      stat:  kpVal('kpMetStat')
+      stat:  kpVal('kpMetStat'),
+      level: kpVal('kpMetLevel')
     });
   }
   function kpVal(id){ var el=$(id); return el?el.value:''; }
@@ -13899,7 +13936,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260910-1108';
+  var APP_BUILD='20260910-1135';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
