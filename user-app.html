@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260911-1036">
+<link rel="stylesheet" href="user.css?v=20260911-1046">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1281,10 +1281,18 @@
   .kp-dist{ display:flex; flex-direction:column; gap:8px; }
   .kp-drow{ display:grid; grid-template-columns:34px 1fr 62px; align-items:center; gap:9px; }
   .kp-matrix td,.kp-matrix th{ white-space:nowrap; }
-  .kp-mpos{ color:#8A94A6; font-size:12px; }
+  /* ชื่อเล่นใต้ชื่อจริง — ห้ามใช้ .m-hint ที่นี่
+     .m-hint เป็น "กล่องคำอธิบาย" (พื้นหลังเทา + ขอบมน + padding 9px + margin 12px)
+     เอามาใส่ในช่องตารางแล้วชื่อเล่นกลายเป็นป้ายก้อนเทา ไม่ใช่ตัวหนังสือบรรทัดล่าง */
+  .kp-nick{ font-size:12.5px; color:#7A8699; font-weight:400; margin-top:2px; line-height:1.35; }
+  .kp-mpos{ color:#5b6b7d; font-size:13px; }
   .kp-mcell{ display:inline-block; min-width:26px; padding:2px 7px; border-radius:7px;
     font-weight:700; font-size:12.5px; color:#243447; }
   .kp-mnone{ background:none; color:#c3ccd8; }
+  /* เดือนที่มีใบแล้วแต่ยังไม่อนุมัติ — กล่องเทาขนาดเท่าเกรด (เดิมเป็นจุดเล็กจนแทบมองไม่เห็น)
+     🔴 ต้องเขียน "ทีหลัง" .kp-mcell — จำเพาะเท่ากัน ตัวหลังชนะ
+        เขียนไว้ก่อนเมื่อไหร่ color ของ .kp-mcell จะทับ แล้วจุดจะโผล่ในกล่อง (เจอมาแล้ว) */
+  .kp-mwait{ background:#E7ECF3; border:1px dashed #cbd5e2; color:transparent; }
   .kp-tbars{ display:flex; gap:14px; align-items:flex-end; padding:6px 2px 0; }
   .kp-tcol{ flex:1; display:flex; flex-direction:column; align-items:center; gap:5px; }
   .kp-tval{ font-size:12.5px; font-weight:700; color:#3d5164; font-variant-numeric:tabular-nums; }
@@ -1498,6 +1506,9 @@
     .kp-lgrow{ font-size:14px; }
     .kp-lgav,.kp-lgpc{ font-size:12.5px; }
     .kp-mcell{ font-size:13.5px; padding:3px 9px; min-width:28px; }
+    /* ตำแหน่งกับชื่อเล่นในตารางเกรดรายเดือน — เดิม 12px อ่านยากเทียบกับชื่อจริง 16px */
+    .kp-mpos{ font-size:14px; }
+    .kp-nick{ font-size:13.5px; }
     .kp-tval{ font-size:13.5px; }
     .kp-tlb{ font-size:13px; }
     .kp-note-warn,.kp-note-ok{ font-size:13.5px; }
@@ -10985,7 +10996,7 @@
   }
   function kpWhoCell(p){
     var n=(p&&p.nick)||'', full=kpWhoRaw(p);
-    return '<b>'+kpWho(p)+'</b>'+((n&&n!==full)?('<div class="m-hint">'+esc(n)+'</div>'):'');
+    return '<b>'+kpWho(p)+'</b>'+((n&&n!==full)?('<div class="kp-nick">'+esc(n)+'</div>'):'');
   }
 
   /* บทบาทผู้ประเมิน (พี่กี้เคาะ 11 ก.ย. 69) — ระบบนี้ HR เป็นคนกรอกให้ทั้งหมด
@@ -11174,7 +11185,7 @@
       '<span class="kp-grow"></span>'+
       '<button class="btn btn-ghost btn-sm" onclick="kpGo(\'kpiemp\')">← กลับทะเบียน</button></div>';
     h+='<div class="kp-phead"><div class="kp-pav">'+esc(kpWhoRaw(e).substr(0,1)||'?')+'</div>'+
-      '<div class="kp-pinfo"><div class="kp-pname">'+kpWho(e)+' <span class="m-hint">'+esc(e.nick||"")+'</span></div>'+
+      '<div class="kp-pinfo"><div class="kp-pname">'+kpWho(e)+' <span class="kp-nick">'+esc(e.nick||"")+'</span></div>'+
       '<div class="kp-pmeta">'+esc(e.posName||e.pos)+(e.level?(' · ระดับ '+esc(e.level)):'')+
         (e.dept?(' · '+esc(e.dept)):'')+
         (e.years?(' · อายุงาน '+e.years+' ปี'):'')+
@@ -11526,11 +11537,11 @@
       h+='<tr><td>'+kpWhoCell(row)+'</td><td class="kp-mpos">'+esc(row.dept||row.pos||'')+'</td>';
       row.cells.forEach(function(c){
         if(c.grade) h+='<td class="kp-c"><span class="kp-mcell" style="background:'+esc(c.color||'#EEF1F5')+'">'+c.grade+'</span></td>';
-        else h+='<td class="kp-c"><span class="kp-mcell kp-mnone">'+(c.has?'·':'')+'</span></td>';
+        else h+='<td class="kp-c">'+(c.has?'<span class="kp-mcell kp-mwait" title="มีใบประเมินแล้ว รออนุมัติ">·</span>':'<span class="kp-mcell kp-mnone"></span>')+'</td>';
       });
       h+='</tr>';
     });
-    return h+'</tbody></table></div><div class="m-hint">ช่องว่าง = ยังไม่มีใบประเมินเดือนนั้น · จุด = มีใบแล้วแต่ยังไม่อนุมัติ</div>';
+    return h+'</tbody></table></div><div class="m-hint">ช่องว่าง = ยังไม่มีใบประเมินเดือนนั้น · กล่องเทา = มีใบแล้วแต่ยังไม่อนุมัติ</div>';
   }
 
   function kpDocOf(code){ KP_CODE=code; if(KPR_YM) KP_YM=KPR_YM; switchView('kpidoc'); }
@@ -11614,7 +11625,7 @@
         return '<th>'+esc(m.name)+'<div class="m-hint">'+esc(kpTargetText(m))+' · น้ำหนัก '+m.weight+'</div></th>'; }).join(''):'')+
       '<th>สถิติมาทำงาน<div class="m-hint">HR กรอกเองทั้ง 5 ช่อง</div></th><th class="kp-r">คะแนนรวม</th></tr></thead><tbody>';
     r.people.forEach(function(p){
-      h+='<tr><td class="kp-sticky"><b>'+kpWho(p)+'</b><div class="m-hint">'+esc(p.nick||"")+'</div></td>';
+      h+='<tr><td class="kp-sticky"><b>'+kpWho(p)+'</b><div class="kp-nick">'+esc(p.nick||"")+'</div></td>';
       p.metrics.forEach(function(m){
         var skip=kpSkip(p.code,m.id);
         h+='<td><div class="kp-cell">';
@@ -13018,7 +13029,7 @@ function kpImpDraw(){
       '<th class="kp-r">KPI</th><th class="kp-r">คุณลักษณะ</th><th class="kp-r">สถิติ</th>'+
       '<th class="kp-r">รวม</th><th class="kp-c">เกรด</th><th>ผล</th></tr></thead><tbody>';
     r.rows.forEach(function(x){
-      h+='<tr><td>'+x.seq+'</td><td><b>'+kpWho(x)+'</b><div class="m-hint">'+esc(x.nick||"")+'</div></td>'+
+      h+='<tr><td>'+x.seq+'</td><td><b>'+kpWho(x)+'</b><div class="kp-nick">'+esc(x.nick||"")+'</div></td>'+
         '<td>'+esc(x.dept||'—')+'</td><td>'+esc(x.posName||x.pos)+'</td>'+
         '<td class="kp-r">'+kpNum(x.perf)+'</td><td class="kp-r">'+kpNum(x.trait)+'</td>'+
         '<td class="kp-r">'+kpNum(x.stat)+'</td><td class="kp-r"><b>'+kpNum(x.total)+'</b></td>'+
@@ -13042,7 +13053,7 @@ function kpImpDraw(){
       h+='<div class="kp-wrap"><table class="kp-tbl"><thead><tr><th>อันดับ</th><th>พนักงาน</th><th>ตำแหน่ง</th>'+
         '<th class="kp-r">เฉลี่ยทั้งปี</th><th class="kp-r">จำนวนรอบ</th><th class="kp-c">เกรดต่ำสุด</th><th class="kp-c">คงเส้นคงวา</th></tr></thead><tbody>';
       r.top.forEach(function(x,i){
-        h+='<tr><td>'+(i+1)+'</td><td><b>'+kpWho(x)+'</b><div class="m-hint">'+esc([x.nick,x.dept].filter(Boolean).join(' · '))+'</div></td>'+
+        h+='<tr><td>'+(i+1)+'</td><td><b>'+kpWho(x)+'</b><div class="kp-nick">'+esc([x.nick,x.dept].filter(Boolean).join(' · '))+'</div></td>'+
           '<td>'+esc(x.pos)+'</td><td class="kp-r"><b>'+x.avg.toFixed(2)+'</b></td>'+
           '<td class="kp-r">'+x.months+'</td><td class="kp-c">'+kpGradePill(x.minGrade)+'</td>'+
           '<td class="kp-c">'+(x.steady?'<span class="kp-dot kp-dot-ok">ใช่</span>':'<span class="kp-dot">มีเดือนที่ตก</span>')+'</td></tr>';
@@ -14263,7 +14274,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260911-1036';
+  var APP_BUILD='20260911-1046';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
