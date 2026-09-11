@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260911-1542">
+<link rel="stylesheet" href="user.css?v=20260911-1543">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -157,7 +157,7 @@
   .rm-i{ display:flex; align-items:center; gap:11px; padding:12px 14px; border:1px solid var(--line);
     border-radius:13px; background:#fff; font:inherit; text-align:left; cursor:pointer; width:100%; }
   .rm-i:hover{ border-color:var(--red); }
-  .rm-i.on{ border-color:var(--red); background:var(--red-soft,#eef4ff); }
+  .rm-i.on{ border-color:var(--red); background:var(--red-soft); }
   .rm-i .ri-l{ flex:1; min-width:0; }
   .rm-i .ri-l b{ display:block; font-size:14.5px; color:#1F2733; }
   .rm-i .ri-l small{ display:block; font-size:12px; color:var(--muted); margin-top:2px; }
@@ -1310,11 +1310,11 @@
   .kp-secbox-off{ background:#EEF1F5; color:#A7B0BE; }                      /* ไม่ต้องประเมินส่วนนี้ */
   /* จำนวนช่องที่กรอกแล้ว (เช่น 3/4) ต่อท้าย % ตัวเล็กกว่า — บอกที่มาของ % โดยไม่แย่งสายตา */
   .kp-secsub{ font-weight:600; font-size:11px; opacity:.75; margin-left:5px; }
-  .kp-secbox-doing{ background:var(--red-tint,#EDE9FE); color:var(--red-deep,#5B21B6); }   /* กำลังกรอก */
-  .kp-secbox-done{ background:var(--red,#7C3AED); color:#fff; }             /* ครบแล้ว */
+  .kp-secbox-doing{ background:var(--red-tint); color:var(--red-deep); }   /* กำลังกรอก */
+  .kp-secbox-done{ background:var(--red); color:#fff; }             /* ครบแล้ว */
   /* บาร์ % ความสำเร็จ — ใช้ทั้งในการ์ดสรุปรอบและใต้สถานะรายคน */
   .kp-prog{ height:6px; border-radius:999px; background:#E8EDF3; overflow:hidden; margin:6px 0 0; }
-  .kp-prog-in{ height:100%; background:var(--red,#7C3AED); border-radius:999px; transition:width .25s; }
+  .kp-prog-in{ height:100%; background:var(--red); border-radius:999px; transition:width .25s; }
   .kp-prog-full .kp-prog-in{ background:#3FA96B; }
   .kp-prog-lb{ font-size:11.5px; color:#7A8699; margin-top:3px; white-space:nowrap; }
   /* บาร์คะแนนในตารางรอบ — ยืมหน้าตาจากกราฟคะแนนรายคนหน้าภาพรวม (.kp-htrack/.kp-hfill/.kp-hval)
@@ -1451,18 +1451,18 @@
   .kp-sub{ font-size:13px; font-weight:600; color:#3d5164; margin:12px 0 6px; }
   /* หัวข้อส่วนในหน้ากรอกข้อมูล — แถบสีธีมของห้อง + เลขกำกับ ให้เห็นขอบเขตของแต่ละส่วนชัด */
   .kp-sech{ display:flex; align-items:center; gap:10px; flex-wrap:wrap;
-    background:var(--red-tint,#EDE9FE); border-left:5px solid var(--red,#7C3AED);
+    background:var(--red-tint); border-left:5px solid var(--red);
     border-radius:10px; padding:10px 14px; margin:18px 0 8px; }
   .kp-sech-no{ display:inline-flex; align-items:center; justify-content:center;
-    width:24px; height:24px; border-radius:999px; background:var(--red,#7C3AED);
+    width:24px; height:24px; border-radius:999px; background:var(--red);
     color:#fff; font-weight:800; font-size:13px; flex:0 0 auto; }
-  .kp-sech-t{ font-size:16px; font-weight:800; color:var(--red-deep,#5B21B6); letter-spacing:.2px; }
+  .kp-sech-t{ font-size:16px; font-weight:800; color:var(--red-deep); letter-spacing:.2px; }
   .kp-sech-w{ font-size:12.5px; font-weight:600; color:#5b6b7d; }
   /* หัวฟอร์มรายคนในหน้ากรอก — แถบสีเต็มความกว้าง (พี่กี้ 11 ก.ย. 69: ต้องรู้ทันทีว่าประเมินใครอยู่)
      ใช้ไล่เฉดสีแบรนด์ของห้อง (--red*) ห้ามฮาร์ดโค้ดม่วง · ตัวหนังสือขาวบนพื้นเข้ม */
   .kp-fhead{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin:0 0 14px;
     padding:14px 18px; border-radius:14px; color:#fff;
-    background:linear-gradient(135deg,var(--red2,#4A90F0) 0%,var(--red,#1B72E8) 55%,var(--red-deep,#155EC2) 100%); }
+    background:linear-gradient(135deg,var(--red2) 0%,var(--red) 55%,var(--red-deep) 100%); }
   .kp-fav{ width:48px; height:48px; border-radius:14px; flex:0 0 auto;
     display:inline-flex; align-items:center; justify-content:center;
     background:rgba(255,255,255,.22); font-size:21px; font-weight:800; }
@@ -14499,7 +14499,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260911-1542';
+  var APP_BUILD='20260911-1543';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
