@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260911-2023">
+<link rel="stylesheet" href="user.css?v=20260911-2031">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -11976,12 +11976,16 @@
       kpPaint(view, view==='kpimanage' ? kpManageHtml(r) : kpRoundHtml(r));
     });
   }
-  function kpRoundYm(v){ KPR_YM=v; KPR_STEP=0; KPR_PICK=null; kpLoadRound(VIEW); }
+  function kpRoundYm(v){ KPR_YM=v; KPR_STEP=0; KPR_PICK=null; KPR_SEL={}; kpLoadRound(VIEW); }
 
   /* ═══ หน้ารอบการประเมิน = workflow 3 ขั้น (พี่กี้เคาะ 9 ก.ย. 69 · ทรงเดียวกับ payroll ดิเอลฟ์) ═══
      ขั้น 1 เลือกพนักงาน+รอบ · ขั้น 2 สร้างฟอร์มรายคน (ตาราง+สถานะสี) · ขั้น 3 กดชื่อเพื่อกรอก
      หน้าแรกของขั้น 2 มีการ์ดสรุปแบบแดชบอร์ดอยู่บนสุดตามที่พี่กี้ขอ */
   var KPR_STEP=0, KPR_PICK=null;
+  /* 🔴 ช่องติ๊กของ "ตารางขั้น 2" ต้องมีที่เก็บของตัวเอง ห้ามใช้ร่วมกับ KPR_PICK ของขั้น 1
+     ขั้น 1 (เลือกคนเข้ารอบ) ติ๊กไว้ครบทุกคนอยู่แล้ว — ถ้าใช้ร่วมกัน พี่กี้ติ๊กคนเดียว
+     แต่ของเก่ายังค้าง true ทั้งหมด กดส่งแล้วเลยไปทั้งรอบ (เจอจริง 11 ก.ย. 69) */
+  var KPR_SEL={};
 
   function kpStepBar(cur){
     var steps=[['1','เลือกพนักงาน + รอบ'],['2','สร้างฟอร์มประเมิน'],['3','กรอกผล → ส่งอนุมัติ']];
@@ -12074,7 +12078,7 @@
          และคอลัมน์ "น้ำหนักรวม" ในตารางข้างล่างก็ขึ้นแดงบอกเป็นรายตำแหน่งอยู่แล้ว */
       '<div class="m-hint">กดชื่อพนักงานเพื่อเปิดฟอร์มกรอกข้อมูล · ช่องเทา = ตำแหน่งนี้ไม่ต้องประเมินส่วนนั้น</div>';
     h+='<div class="kp-wrap"><table class="kp-tbl"><thead><tr>'+
-      '<th class="kp-c"><input type="checkbox" onclick="kpPickAll(this.checked)" title="เลือกทั้งหมด"></th>'+
+      '<th class="kp-c"><input type="checkbox" onclick="kpSelAll(this.checked)" title="เลือกทั้งหมด"></th>'+
       '<th>ลำดับ</th><th class="kp-c">รหัสพนักงาน</th>'+
       '<th>ชื่อ-นามสกุล</th><th>ชื่อเล่น</th><th>ตำแหน่ง</th>'+
       '<th class="kp-c">การปฏิบัติงาน (KPI)</th><th class="kp-c">คุณลักษณะส่วนบุคคล</th>'+
@@ -12084,7 +12088,7 @@
     r.rows.filter(function(x){ return x.hasDoc; }).forEach(function(x,i){
       h+='<tr><td class="kp-c">'+
           (String(x.status||'').indexOf('อนุมัติ')===0&&x.status!=='รออนุมัติ'?''
-            :'<input type="checkbox" class="kp-pick" data-code="'+esc(x.code)+'" onclick="kpPickOne(this)"'+(KPR_PICK&&KPR_PICK[x.code]?' checked':'')+'>')+
+            :'<input type="checkbox" class="kp-sel" data-code="'+esc(x.code)+'" onclick="kpSelOne(this)"'+(KPR_SEL[x.code]?' checked':'')+'>')+
         '</td><td>'+(i+1)+'</td>'+
         '<td class="kp-c"><span class="kp-code">'+esc(x.code)+'</span></td>'+
         '<td><button class="kp-link" onclick="kpFillOne(\''+esc(x.code)+'\')"><b>'+kpWho(x)+'</b></button></td>'+
@@ -12322,13 +12326,19 @@
       busyOk('ส่งอนุมัติแล้ว');
       toast((r.missing&&r.missing.length?('ส่งแล้ว '+r.sent+' ใบ · ยังกรอกไม่ครบ: '+r.missing.join(', '))
         :('ส่งอนุมัติแล้ว '+r.sent+' ใบ'))+(r.left?(' · ยังเหลืออีก '+r.left+' คนที่ยังไม่ได้ส่ง'):''));
-      KPR_PICK={};
+      KPR_SEL={};
       kpLoadRound(VIEW);
     }).catch(function(e){ toast(e.message); });
   }
-  /** คนที่ติ๊กไว้ตอนนี้ */
+  function kpSelOne(el){ KPR_SEL[el.getAttribute('data-code')]=el.checked; }
+  function kpSelAll(on){
+    document.querySelectorAll('.kp-sel').forEach(function(el){
+      el.checked=!!on; KPR_SEL[el.getAttribute('data-code')]=!!on;
+    });
+  }
+  /** คนที่ติ๊กไว้ในตารางขั้น 2 ตอนนี้ */
   function kpPickedCodes(){
-    var out=[]; for(var k in (KPR_PICK||{})) if(KPR_PICK[k]) out.push(k); return out;
+    var out=[]; for(var k in KPR_SEL) if(KPR_SEL[k]) out.push(k); return out;
   }
   function kpSubmitPicked(){
     var c=kpPickedCodes();
@@ -12366,7 +12376,7 @@
     busy(undo?'กำลังยกเลิกส่ง…':'กำลังเปิดแก้ไข…');
     jsonp({ action:'waKpiRoundReopen', uid:UID, ym:KPR_YM, codes:only }).then(function(r){
       if(!r||!r.ok) return toast(r&&r.error||'ทำไม่สำเร็จ');
-      busyOk(undo?'ยกเลิกส่งแล้ว':'เปิดแก้ไขแล้ว'); KPR_PICK={}; kpLoadRound(VIEW);
+      busyOk(undo?'ยกเลิกส่งแล้ว':'เปิดแก้ไขแล้ว'); KPR_SEL={}; kpLoadRound(VIEW);
     }).catch(function(e){ toast(e.message); });
   }
 
@@ -14637,7 +14647,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260911-2023';
+  var APP_BUILD='20260911-2031';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
