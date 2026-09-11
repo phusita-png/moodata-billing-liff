@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260911-2057">
+<link rel="stylesheet" href="user.css?v=20260911-2107">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -11974,6 +11974,7 @@
       if(!r||!r.ok) return kpErr(r&&r.error);
       KPR=r; KPR_YM=r.ym;
       kpPaint(view, view==='kpimanage' ? kpManageHtml(r) : kpRoundHtml(r));
+      try { kpSelSync(); } catch(e){}   // วาดเสร็จแล้วให้ป้ายปุ่มตรงกับที่ติ๊กค้างไว้
     });
   }
   function kpRoundYm(v){ KPR_YM=v; KPR_STEP=0; KPR_PICK=null; KPR_SEL={}; kpLoadRound(VIEW); }
@@ -12103,10 +12104,7 @@
     /* คำสั่งกับ "คนที่ติ๊กไว้" — พี่กี้ 11 ก.ย. 69: เดิมกดทีเดียวไปหมดทั้งรอบ เลือกบางคนไม่ได้
        ไม่ติ๊กเลย = ปุ่มบนหัวการ์ดทำทั้งรอบเหมือนเดิม */
     h+='<div class="kp-bar">'+
-      '<button class="btn btn-sm" onclick="kpSubmitPicked()">ส่งอนุมัติเฉพาะที่เลือก</button>'+
-      '<button class="btn btn-ghost btn-sm" onclick="kpUndoPicked()">ยกเลิกส่งเฉพาะที่เลือก</button>'+
-      (r.isAdmin?'<button class="btn btn-primary btn-sm" onclick="kpApprovePicked()">อนุมัติเฉพาะที่เลือก</button>':'')+
-      '<span class="m-hint" style="margin:0">ติ๊กหน้าชื่อคนที่ต้องการก่อน · ไม่ติ๊ก = ใช้ปุ่มด้านบนซึ่งทำทั้งรอบ</span>'+
+      '<span class="m-hint" style="margin:0">ติ๊กหน้าชื่อ = สั่งเฉพาะคนที่ติ๊ก · ไม่ติ๊ก = ทั้งรอบ · ปุ่มด้านบนบอกอยู่ว่ากำลังจะทำกับกี่คน</span>'+
       '<span class="kp-grow"></span>'+
       '<button class="btn btn-ghost btn-sm" onclick="kpStep(1)">+ เพิ่มคนเข้ารอบ</button></div></div>';
     return h;
@@ -12287,15 +12285,18 @@
     if(v===null||v===undefined||v==='') return '<td class="kp-r"><span class="kp-dot '+(ready?'kp-dot-ok':'kp-dot-no')+'">'+(ready?'ครบ':'ยังไม่ครบ')+'</span></td>';
     return '<td class="kp-r'+(ready?'':' kp-cell-no')+'">'+kpNum(v)+'</td>';
   }
+  /* ปุ่มสั่งงานของรอบ — ชุดเดียวจบ (พี่กี้ 11 ก.ย. 69: "มีปุ่มเฉพาะคนอีกชุด ลูกค้าจะงง")
+     กติกาเดียวที่ต้องจำ: ติ๊กหน้าชื่อไว้ = ทำเฉพาะคนที่ติ๊ก · ไม่ติ๊กเลย = ทำทั้งรอบ
+     ป้ายบนปุ่มบอกทุกครั้งว่ากำลังจะทำกับกี่คน (kpSelSync อัปเดตทันทีที่ติ๊ก) */
   function kpRoundActions(r){
     if(!r.opened) return '';
     var h='';
     if(r.status!=='อนุมัติ'&&String(r.status||'').indexOf('ข้อมูลเดิม')<0){
       h+='<button class="btn btn-ghost btn-sm" onclick="kpOpenRound()">อัปเดตรายชื่อในรอบ</button>'+
-         '<button class="btn btn-sm" onclick="kpSubmitRound()">ส่งอนุมัติ</button>';
+         '<button class="btn btn-sm" id="kpb-send" data-lb="ส่งอนุมัติ" onclick="kpSubmitPicked()">ส่งอนุมัติทั้งรอบ</button>';
       /* ส่งไปแล้วต้องดึงกลับมาแก้ได้เอง ไม่ต้องรอผู้ดูแล (พี่กี้ 11 ก.ย. 69) */
-      if(r.status==='รออนุมัติ') h+='<button class="btn btn-ghost btn-sm" onclick="kpReopenRound([],1)">ยกเลิกส่งอนุมัติ</button>';
-      if(r.isAdmin) h+='<button class="btn btn-primary btn-sm" onclick="kpApproveRound(0)">อนุมัติ</button>';
+      if(r.status==='รออนุมัติ') h+='<button class="btn btn-ghost btn-sm" id="kpb-undo" data-lb="ยกเลิกส่ง" onclick="kpUndoPicked()">ยกเลิกส่งทั้งรอบ</button>';
+      if(r.isAdmin) h+='<button class="btn btn-primary btn-sm" id="kpb-appr" data-lb="อนุมัติ" onclick="kpApprovePicked()">อนุมัติทั้งรอบ</button>';
     } else if(r.isAdmin){
       h+='<button class="btn btn-ghost btn-sm" onclick="kpReopenRound()">เปิดแก้ไข</button>';
     }
@@ -12331,30 +12332,44 @@
       kpLoadRound(VIEW);
     }).catch(function(e){ toast(e.message); });
   }
-  function kpSelOne(el){ KPR_SEL[el.getAttribute('data-code')]=el.checked; }
+  function kpSelOne(el){ KPR_SEL[el.getAttribute('data-code')]=el.checked; kpSelSync(); }
   function kpSelAll(on){
     document.querySelectorAll('.kp-sel').forEach(function(el){
       el.checked=!!on; KPR_SEL[el.getAttribute('data-code')]=!!on;
+    });
+    kpSelSync();
+  }
+  /* ป้ายปุ่มต้องบอกเสมอว่าจะทำกับกี่คน — ไม่งั้นคนกดไม่รู้ว่าติ๊กแล้วมีผลหรือเปล่า
+     (พี่กี้เจอมาแล้ว: ติ๊กคนเดียวแล้วกดปุ่มบน กลายเป็นส่งทั้งรอบ) */
+  function kpSelSync(){
+    var n=kpPickedCodes().length;
+    ['kpb-send','kpb-undo','kpb-appr'].forEach(function(id){
+      var b=document.getElementById(id); if(!b) return;
+      var lb=b.getAttribute('data-lb')||'';
+      b.textContent = n ? (lb+' '+n+' คนที่เลือก') : (lb+'ทั้งรอบ');
     });
   }
   /** คนที่ติ๊กไว้ในตารางขั้น 2 ตอนนี้ */
   function kpPickedCodes(){
     var out=[]; for(var k in KPR_SEL) if(KPR_SEL[k]) out.push(k); return out;
   }
+  /** ถามให้ชัดก่อนลงมือ — ข้อความต่างกันระหว่าง "ทั้งรอบ" กับ "เฉพาะที่เลือก" */
+  function kpAskScope(verb,c,tail){
+    return confirm(c.length ? (verb+'เฉพาะ '+c.length+' คนที่ติ๊กไว้ไหมคะ?'+(tail||''))
+                            : (verb+'ทั้งรอบ (ทุกคนในตาราง) ไหมคะ?'));
+  }
   function kpSubmitPicked(){
     var c=kpPickedCodes();
-    if(!c.length) return toast('ติ๊กเลือกคนที่จะส่งก่อนค่ะ');
+    if(!kpAskScope('ส่งอนุมัติ',c)) return;
     kpSubmitRound(c);
   }
   function kpUndoPicked(){
     var c=kpPickedCodes();
-    if(!c.length) return toast('ติ๊กเลือกคนที่จะยกเลิกส่งก่อนค่ะ');
-    kpReopenRound(c,1);
+    kpReopenRound(c,1);                       // ตัวนี้ถามยืนยันเองอยู่แล้ว
   }
   function kpApprovePicked(){
     var c=kpPickedCodes();
-    if(!c.length) return toast('ติ๊กเลือกคนที่จะอนุมัติก่อนค่ะ');
-    if(!confirm('อนุมัติเฉพาะ '+c.length+' คนที่เลือกไหมคะ? คนที่เหลือยังกรอก/แก้ไขได้ต่อค่ะ')) return;
+    if(!kpAskScope('อนุมัติ',c,' คนที่เหลือยังกรอก/แก้ไขได้ต่อค่ะ')) return;
     kpApproveRound(0,c);
   }
   /* codes = อนุมัติเฉพาะคนที่ติ๊ก (พี่กี้ 11 ก.ย. 69 — เดิมกดทีเดียวไปทั้งรอบ)
@@ -14659,7 +14674,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260911-2057';
+  var APP_BUILD='20260911-2107';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
