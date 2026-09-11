@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260911-1125">
+<link rel="stylesheet" href="user.css?v=20260911-1134">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -11386,7 +11386,10 @@
       h+='<span class="kp-lb">ตั้งแต่</span>'+kpYmSelect(per.from,months,'kpPeriodSet(\'from\',this.value)')+
          '<span class="kp-lb">ถึง</span>'+kpYmSelect(per.to,months,'kpPeriodSet(\'to\',this.value)');
     }
-    return h+'<span class="kp-lb">'+esc(per.label||'')+'</span></div>';
+    /* โหมดเดือน/ปี ไม่ต้องมีข้อความสรุปต่อท้าย — dropdown ที่อยู่ติดกันบอกอยู่แล้วว่าเลือกอะไร
+       (พี่กี้ให้ตัดออก 11 ก.ย. 69 · ของเดิมมีไว้สมัยที่ยังมีโหมด "ช่วงเดือน")
+       โหมด range เก็บไว้ เพราะมี 2 dropdown ต้องอ่านรวมกันถึงจะรู้ว่าเป็นช่วงไหน */
+    return h+((mode==='month'||mode==='year')?'':('<span class="kp-lb">'+esc(per.label||'')+'</span>'))+'</div>';
   }
   /** dropdown เดือน — รวมเดือนที่มีข้อมูลจริง + 12 เดือนล่าสุด (ไม่ให้เลือกเดือนที่ระบบไม่รู้จักไม่ได้) */
   function kpYmSelect(cur,months,onchange){
@@ -14333,7 +14336,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260911-1125';
+  var APP_BUILD='20260911-1134';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
