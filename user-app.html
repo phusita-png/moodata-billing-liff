@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260911-1134">
+<link rel="stylesheet" href="user.css?v=20260911-1207">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1305,7 +1305,14 @@
   .kp-prog{ height:6px; border-radius:999px; background:#E8EDF3; overflow:hidden; margin:6px 0 0; }
   .kp-prog-in{ height:100%; background:var(--red,#7C3AED); border-radius:999px; transition:width .25s; }
   .kp-prog-full .kp-prog-in{ background:#3FA96B; }
-  .kp-prog-lb{ font-size:11.5px; color:#7A8699; margin-top:3px; }
+  .kp-prog-lb{ font-size:11.5px; color:#7A8699; margin-top:3px; white-space:nowrap; }
+  /* บาร์คะแนนในตารางรอบ — ยืมหน้าตาจากกราฟคะแนนรายคนหน้าภาพรวม (.kp-htrack/.kp-hfill/.kp-hval)
+     ที่นั่นสีมาจากตารางเกรดที่ backend ส่งมาให้ · หน้านี้ไม่มีตารางเกรดในผลลัพธ์
+     จึงแมปสีจากเกรด 1-5 ด้วยคลาส ใช้จานสีชุดเดียวกับป้ายเกรด (.kp-g1..g5) */
+  .kp-sbar{ display:grid; grid-template-columns:minmax(90px,1fr) 52px; align-items:center; gap:8px; min-width:150px; }
+  .kp-fill-g5{ background:#A8D8AC; } .kp-fill-g4{ background:#DCEEDC; }
+  .kp-fill-g3{ background:#F5E3A8; } .kp-fill-g2{ background:#F1D4D0; }
+  .kp-fill-g1{ background:#DC9C98; }
   .kp-tbars{ display:flex; gap:14px; align-items:flex-end; padding:6px 2px 0; }
   .kp-tcol{ flex:1; display:flex; flex-direction:column; align-items:center; gap:5px; }
   .kp-tval{ font-size:12.5px; font-weight:700; color:#3d5164; font-variant-numeric:tabular-nums; }
@@ -11984,14 +11991,13 @@
     var h='<div class="card">'+kpStepBar(r.status==='กำลังดำเนินการ'?2:3);
     h+='<div class="kp-bar">'+kpYmPicker(r.ym,r.months,'kpRoundYm')+kpStatusPill(r.status)+
       '<span class="kp-grow"></span>'+kpRoundActions(r)+'</div>';
-    /* % ความสำเร็จของทั้งรอบ = คนที่ประเมินครบ ÷ คนในรอบ (พี่กี้ขอบาร์ 11 ก.ย. 69) */
-    var pctRound = r.people ? Math.round(r.ready/r.people*100) : 0;
+    var pctRound = kpRoundPct(r);
     h+='<div class="ds-grid">'+
       statCard('พนักงานในรอบนี้', r.people+' คน', r.openedBy?('เปิดรอบโดย '+r.openedBy):'')+
       statCard('ประเมินครบ', r.ready+' คน','พร้อมส่งอนุมัติ')+
       statCard('ประเมินไม่ครบ', r.notReady+' คน', r.notReady?'ยังกรอกไม่ครบทุกส่วน':'ครบทุกคนแล้ว')+
       statCard('สถานะรอบ', r.status||'—', r.approvedBy?('อนุมัติโดย '+r.approvedBy):'', '',
-        kpProgBar(pctRound, r.ready+'/'+r.people+' คน · '+pctRound+'%'))+'</div></div>';
+        kpProgBar(pctRound, 'กรอกครบ '+r.ready+'/'+r.people+' คน · '+kpPctNote(r.status,pctRound)))+'</div></div>';
 
     h+='<div class="card"><div class="kp-bar"><div class="section-h" style="margin:0">ฟอร์มประเมินรายคน</div>'+
       '<span class="kp-grow"></span>'+
@@ -12001,8 +12007,8 @@
       '<th>ชื่อ-นามสกุล</th><th>ชื่อเล่น</th><th>ตำแหน่ง</th>'+
       '<th class="kp-c">การปฏิบัติงาน (KPI)</th><th class="kp-c">คุณลักษณะส่วนบุคคล</th>'+
       '<th class="kp-c">สถิติการมาทำงาน</th>'+
-      '<th class="kp-c">น้ำหนักรวม</th><th class="kp-c">สถานะ</th><th></th></tr></thead><tbody>';
-    if(!r.rows.length) h+='<tr><td colspan="11"><div class="emptybox">ยังไม่มีใครในรอบนี้</div></td></tr>';
+      '<th class="kp-c">น้ำหนักรวม</th><th>คะแนน</th><th class="kp-c">สถานะ</th><th></th></tr></thead><tbody>';
+    if(!r.rows.length) h+='<tr><td colspan="12"><div class="emptybox">ยังไม่มีใครในรอบนี้</div></td></tr>';
     r.rows.filter(function(x){ return x.hasDoc; }).forEach(function(x,i){
       h+='<tr><td>'+(i+1)+'</td>'+
         '<td class="kp-c"><span class="kp-code">'+esc(x.code)+'</span></td>'+
@@ -12011,7 +12017,8 @@
         '<td>'+esc(x.posName||x.pos)+'</td>'+
         kpSecCell(x,'perf')+kpSecCell(x,'trait')+kpSecCell(x,'stat')+
         '<td class="kp-c">'+kpWeightCell(x.weight)+'</td>'+
-        '<td class="kp-c">'+kpStatusPill(x.status)+kpProgBar(kpRowPct(x))+'</td>'+
+        kpScoreBarCell(x)+
+        '<td class="kp-c">'+kpStatusPill(x.status)+kpProgBar(kpRowPct(x), kpPctNote(x.status,kpRowPct(x)))+'</td>'+
         '<td><button class="btn btn-ghost btn-sm" onclick="kpFillOne(\''+esc(x.code)+'\')">กรอกข้อมูล</button></td></tr>';
     });
     h+='</tbody></table></div>';
@@ -12063,14 +12070,55 @@
     var txt=(s.total>1)?(s.done+'/'+s.total):(s.ok?'ครบ':'ยังไม่กรอก');
     return '<td class="kp-c"><span class="kp-secbox '+(s.ok?'kp-secbox-done':'kp-secbox-doing')+'">'+esc(txt)+'</span></td>';
   }
-  /** % ความสำเร็จของคนหนึ่งคน — นับเฉพาะส่วนที่ตำแหน่งนั้นต้องประเมินจริง */
-  function kpRowPct(x){
+  /* ── % ความสำเร็จ = ความคืบหน้า "ทั้งกระบวนการ" ไม่ใช่แค่กรอกครบ (พี่กี้ 11 ก.ย. 69) ──
+     เดิมบาร์ขึ้น 100% ตั้งแต่กรอกครบ ทั้งที่รอบยังเป็น "กำลังดำเนินการ" — อ่านแล้วขัดกัน
+     งานจริงมี 3 ขั้น: กรอกข้อมูล → ส่งอนุมัติ → อนุมัติ
+       กำลังกรอก   0-70%  (เดินตามช่องที่กรอกแล้ว · ขั้นนี้คือเนื้องานส่วนใหญ่)
+       กรอกครบ     70%    (ยังไม่ได้กดส่ง)
+       รออนุมัติ    85%
+       อนุมัติแล้ว  100%   (บาร์เปลี่ยนเป็นเขียว) */
+  var KP_PCT_FILLED = 70;
+  var KP_PCT_SENT = 85;
+  /** สัดส่วนการกรอกของคนหนึ่งคน (0-100) — นับเฉพาะส่วนที่ตำแหน่งนั้นต้องประเมินจริง */
+  function kpFillPct(x){
     var secs=(x&&x.sections)||[], need=0, got=0;
     secs.forEach(function(s){
       var t=(s.total>1)?s.total:1;
       need+=t; got+=(s.total>1)?Math.min(s.done||0,t):(s.ok?1:0);
     });
     return need?Math.round(got/need*100):0;
+  }
+  /** % ความสำเร็จรวมของคนหนึ่งคน (กรอก + สถานะใบ) */
+  function kpRowPct(x){
+    var st=String((x&&x.status)||'');
+    if(st==='อนุมัติ') return 100;
+    if(st==='รออนุมัติ') return KP_PCT_SENT;
+    var filled=kpFillPct(x);
+    return Math.round(filled*KP_PCT_FILLED/100);
+  }
+  /** % ความสำเร็จของทั้งรอบ — ขั้นกรอกคิดจากสัดส่วนคนที่ประเมินครบ */
+  function kpRoundPct(r){
+    var st=String((r&&r.status)||'');
+    if(st==='อนุมัติ') return 100;
+    if(st==='รออนุมัติ') return KP_PCT_SENT;
+    var ppl=(r&&r.people)||0;
+    return ppl?Math.round((r.ready/ppl)*KP_PCT_FILLED):0;
+  }
+  /** คำอธิบายใต้บาร์ — บอกว่าค้างอยู่ขั้นไหน ไม่ใช่แค่ตัวเลขลอย ๆ */
+  function kpPctNote(st,pct){
+    if(st==='อนุมัติ') return 'อนุมัติแล้ว · 100%';
+    if(st==='รออนุมัติ') return 'รออนุมัติ · '+pct+'%';
+    return 'ยังไม่ส่งอนุมัติ · '+pct+'%';
+  }
+  /** บาร์คะแนนในตาราง — หน้าตาชุดเดียวกับกราฟคะแนนรายคนหน้าภาพรวม (ยืมคลาสเดิม ไม่แก้ของเดิม)
+      คะแนนเป็น null = ยังไม่ถึงเวลาที่คนดูจะเห็นตัวเลข (ลูกค้าเห็นเมื่ออนุมัติแล้ว) */
+  function kpScoreBarCell(x){
+    if(x.total===null||x.total===undefined||x.total==='')
+      return '<td class="kp-c"><span class="m-hint">—</span></td>';
+    var v=Number(x.total), w=Math.max(2,Math.min(100,Math.round(v)));
+    var g=Number(x.grade)||0;
+    return '<td><div class="kp-sbar"><div class="kp-htrack"><div class="kp-hfill'+(g?(' kp-fill-g'+g):'')+
+      '" style="width:'+w+'%"></div></div><div class="kp-hval">'+v.toFixed(2)+'</div></div></td>';
   }
   /** บาร์ % เล็ก ๆ — ใช้ทั้งในการ์ดสรุปและในช่องสถานะของแต่ละแถว */
   function kpProgBar(pct,label){
@@ -14336,7 +14384,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260911-1134';
+  var APP_BUILD='20260911-1207';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
