@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260911-1502">
+<link rel="stylesheet" href="user.css?v=20260911-1509">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1299,6 +1299,8 @@
   .kp-secbox{ display:inline-block; min-width:64px; padding:4px 10px; border-radius:9px;
     font-size:12.5px; font-weight:600; line-height:1.3; }
   .kp-secbox-off{ background:#EEF1F5; color:#A7B0BE; }                      /* ไม่ต้องประเมินส่วนนี้ */
+  /* จำนวนช่องที่กรอกแล้ว (เช่น 3/4) ต่อท้าย % ตัวเล็กกว่า — บอกที่มาของ % โดยไม่แย่งสายตา */
+  .kp-secsub{ font-weight:600; font-size:11px; opacity:.75; margin-left:5px; }
   .kp-secbox-doing{ background:var(--red-tint,#EDE9FE); color:var(--red-deep,#5B21B6); }   /* กำลังกรอก */
   .kp-secbox-done{ background:var(--red,#7C3AED); color:#fff; }             /* ครบแล้ว */
   /* บาร์ % ความสำเร็จ — ใช้ทั้งในการ์ดสรุปรอบและใต้สถานะรายคน */
@@ -1309,11 +1311,10 @@
   /* บาร์คะแนนในตารางรอบ — ยืมหน้าตาจากกราฟคะแนนรายคนหน้าภาพรวม (.kp-htrack/.kp-hfill/.kp-hval)
      ที่นั่นสีมาจากตารางเกรดที่ backend ส่งมาให้ · หน้านี้ไม่มีตารางเกรดในผลลัพธ์
      จึงแมปสีจากเกรด 1-5 ด้วยคลาส ใช้จานสีชุดเดียวกับป้ายเกรด (.kp-g1..g5) */
-  /* สรุปความคืบหน้าของรอบแยกตามส่วน — 3 ช่องเท่ากัน ตกบรรทัดเองบนจอแคบ */
-  .kp-secgrid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px; margin:10px 0 4px; }
-  .kp-secsum{ border:1px solid #e6ebf2; border-radius:14px; padding:12px 14px; background:#fbfcfe; }
-  .kp-secsum-lb{ font-size:13px; color:#5b6b7d; font-weight:600; margin-bottom:8px; }
-  .kp-secsum-v{ font-size:16px; padding:6px 14px; min-width:78px; }
+  .kp-sbar{ display:grid; grid-template-columns:minmax(90px,1fr) 52px; align-items:center; gap:8px; min-width:150px; }
+  .kp-fill-g5{ background:#A8D8AC; } .kp-fill-g4{ background:#DCEEDC; }
+  .kp-fill-g3{ background:#F5E3A8; } .kp-fill-g2{ background:#F1D4D0; }
+  .kp-fill-g1{ background:#DC9C98; }
   .kp-tbars{ display:flex; gap:14px; align-items:flex-end; padding:6px 2px 0; }
   .kp-tcol{ flex:1; display:flex; flex-direction:column; align-items:center; gap:5px; }
   .kp-tval{ font-size:12.5px; font-weight:700; color:#3d5164; font-variant-numeric:tabular-nums; }
@@ -12000,17 +12001,32 @@
       statCard('สถานะรอบ', r.status||'—', r.approvedBy?('อนุมัติโดย '+r.approvedBy):'', '',
         kpProgBar(pctRound, 'กรอกครบ '+r.ready+'/'+r.people+' คน · '+kpPctNote(r.status,pctRound)))+'</div></div>';
 
-    /* ── ความคืบหน้าตามส่วน (ระดับทั้งรอบ) ──
-       พี่กี้ 11 ก.ย. 69: เอาตารางรายคนออกจากหน้านี้ (ซ้ำกับหน้า "จัดการผลการประเมิน")
-       แล้วให้ช่องส่วนประเมินบอกเป็น % จะได้อ่านคู่กับน้ำหนัก 100% เป็นภาษาเดียวกัน
-       นับจาก "คนที่กรอกส่วนนั้นครบ ÷ คนที่ต้องกรอกส่วนนั้น" (คนที่ตำแหน่งไม่มีส่วนนั้น ไม่นับ) */
-    h+='<div class="card"><div class="kp-bar"><div class="section-h" style="margin:0">ความคืบหน้าของรอบ</div>'+
+    h+='<div class="card"><div class="kp-bar"><div class="section-h" style="margin:0">ฟอร์มประเมินรายคน</div>'+
       '<span class="kp-grow"></span>'+
-      '<button class="btn btn-ghost btn-sm" onclick="kpGo(\'kpifill\')">ไปกรอกข้อมูล</button>'+
-      '<button class="btn btn-ghost btn-sm" onclick="kpGo(\'kpimanage\')">ดูผลรายคน</button>'+
-      '<button class="btn btn-ghost btn-sm" onclick="kpOpenBook()">เปิดดูใบประเมินเดือนนี้</button></div>'+kpWeightWarn(r);
-    h+='<div class="kp-secgrid">'+kpSecSummary(r)+'</div>';
-    h+='<div class="m-hint">ตัวเลขคือสัดส่วนคนที่กรอกส่วนนั้นครบแล้ว · กรอกข้อมูลรายคนที่เมนู “ประเมินผลงาน” · ดูคะแนนรายคนที่เมนู “จัดการผลการประเมิน”</div>';
+      '<button class="btn btn-ghost btn-sm" onclick="kpOpenBook()">เปิดดูใบประเมินเดือนนี้</button></div>'+
+      /* กล่องเตือน "น้ำหนักยังไม่ครบ 100%" เอาออกจากหน้านี้ (พี่กี้ 11 ก.ย. 69 — กินที่ อ่านรก)
+         ยังอยู่ที่หน้า "จัดการผลการประเมิน" ซึ่งเป็นจุดที่ต้องรู้ก่อนอนุมัติจริง ๆ
+         และคอลัมน์ "น้ำหนักรวม" ในตารางข้างล่างก็ขึ้นแดงบอกเป็นรายตำแหน่งอยู่แล้ว */
+      '<div class="m-hint">กดชื่อพนักงานเพื่อเปิดฟอร์มกรอกข้อมูล · ช่องเทา = ตำแหน่งนี้ไม่ต้องประเมินส่วนนั้น</div>';
+    h+='<div class="kp-wrap"><table class="kp-tbl"><thead><tr><th>ลำดับ</th><th class="kp-c">รหัสพนักงาน</th>'+
+      '<th>ชื่อ-นามสกุล</th><th>ชื่อเล่น</th><th>ตำแหน่ง</th>'+
+      '<th class="kp-c">การปฏิบัติงาน (KPI)</th><th class="kp-c">คุณลักษณะส่วนบุคคล</th>'+
+      '<th class="kp-c">สถิติการมาทำงาน</th>'+
+      '<th class="kp-c">น้ำหนักรวม</th><th>คะแนน</th><th class="kp-c">สถานะ</th><th></th></tr></thead><tbody>';
+    if(!r.rows.length) h+='<tr><td colspan="12"><div class="emptybox">ยังไม่มีใครในรอบนี้</div></td></tr>';
+    r.rows.filter(function(x){ return x.hasDoc; }).forEach(function(x,i){
+      h+='<tr><td>'+(i+1)+'</td>'+
+        '<td class="kp-c"><span class="kp-code">'+esc(x.code)+'</span></td>'+
+        '<td><button class="kp-link" onclick="kpFillOne(\''+esc(x.code)+'\')"><b>'+kpWho(x)+'</b></button></td>'+
+        '<td>'+esc(x.nick||'—')+'</td>'+
+        '<td>'+esc(x.posName||x.pos)+'</td>'+
+        kpSecCell(x,'perf')+kpSecCell(x,'trait')+kpSecCell(x,'stat')+
+        '<td class="kp-c">'+kpWeightCell(x.weight)+'</td>'+
+        kpScoreBarCell(x)+
+        '<td class="kp-c">'+kpStatusPill(x.status)+kpProgBar(kpRowPct(x), kpPctNote(x.status,kpRowPct(x)))+'</td>'+
+        '<td><button class="btn btn-ghost btn-sm" onclick="kpFillOne(\''+esc(x.code)+'\')">กรอกข้อมูล</button></td></tr>';
+    });
+    h+='</tbody></table></div>';
     h+='<div class="kp-bar"><button class="btn btn-ghost btn-sm" onclick="kpStep(1)">+ เพิ่มคนเข้ารอบ</button></div></div>';
     return h;
   }
@@ -12053,26 +12069,19 @@
     for(var i=0;i<secs.length;i++) if(secs[i].key===key) return secs[i];
     return null;
   }
-  /** สรุปความคืบหน้าของทั้งรอบแยกตามส่วน — คนที่กรอกส่วนนั้นครบ ÷ คนที่ต้องกรอกส่วนนั้น
-      คนที่ตำแหน่งไม่มีส่วนนั้นไม่นับเป็นตัวหาร (ไม่งั้น % ต่ำทั้งที่ไม่มีใครต้องกรอก) */
-  function kpSecSummary(r){
-    var rows=(r.rows||[]).filter(function(x){ return x.hasDoc; });
-    return ['perf','trait','stat'].map(function(k){
-      var need=0, done=0;
-      rows.forEach(function(x){
-        var s=kpSecOf(x,k); if(!s) return;
-        need++; if(s.ok) done++;
-      });
-      var pct=need?Math.round(done/need*100):0;
-      var cls=!need?'kp-secbox-off':(pct>=100?'kp-secbox-done':'kp-secbox-doing');
-      return '<div class="kp-secsum">'+
-        '<div class="kp-secsum-lb">'+esc(KP_SEC_LB[k])+'</div>'+
-        '<div class="kp-secbox '+cls+' kp-secsum-v">'+(need?(pct+'%'):'ไม่มีใครต้องประเมิน')+'</div>'+
-        '<div class="kp-prog'+(pct>=100&&need?' kp-prog-full':'')+'"><div class="kp-prog-in" style="width:'+(need?pct:0)+'%"></div></div>'+
-        '<div class="kp-prog-lb">'+(need?('กรอกครบ '+done+'/'+need+' คน'):'—')+'</div></div>';
-    }).join('');
+  function kpSecCell(x,key){
+    var s=kpSecOf(x,key);
+    if(!s) return '<td class="kp-c"><span class="kp-secbox kp-secbox-off" title="ตำแหน่งนี้ไม่ต้องประเมิน'+esc(KP_SEC_LB[key]||'')+'">—</span></td>';
+    /* บอกเป็น % (พี่กี้ 11 ก.ย. 69 — อ่านคู่กับคอลัมน์น้ำหนักรวม 100% ให้เป็นภาษาเดียวกัน)
+       ส่วนที่ไม่มีจำนวนช่อง (สถิติ = กรอกหรือไม่กรอก) นับเป็น 0% หรือ 100% */
+    var tot=(s.total>1)?s.total:1;
+    var done=(s.total>1)?Math.min(s.done||0,tot):(s.ok?1:0);
+    var pct=Math.round(done/tot*100);
+    var sub=(s.total>1)?(s.done+'/'+s.total):'';
+    return '<td class="kp-c"><span class="kp-secbox '+(s.ok?'kp-secbox-done':'kp-secbox-doing')+
+      '" title="'+esc(KP_SEC_LB[key]||'')+(sub?(' · '+sub):'')+'">'+pct+'%'+
+      (sub?('<span class="kp-secsub">'+esc(sub)+'</span>'):'')+'</span></td>';
   }
-
   /* ── % ความสำเร็จ = ความคืบหน้า "ทั้งกระบวนการ" ไม่ใช่แค่กรอกครบ (พี่กี้ 11 ก.ย. 69) ──
      เดิมบาร์ขึ้น 100% ตั้งแต่กรอกครบ ทั้งที่รอบยังเป็น "กำลังดำเนินการ" — อ่านแล้วขัดกัน
      งานจริงมี 3 ขั้น: กรอกข้อมูล → ส่งอนุมัติ → อนุมัติ
@@ -12082,6 +12091,23 @@
        อนุมัติแล้ว  100%   (บาร์เปลี่ยนเป็นเขียว) */
   var KP_PCT_FILLED = 70;
   var KP_PCT_SENT = 85;
+  /** สัดส่วนการกรอกของคนหนึ่งคน (0-100) — นับเฉพาะส่วนที่ตำแหน่งนั้นต้องประเมินจริง */
+  function kpFillPct(x){
+    var secs=(x&&x.sections)||[], need=0, got=0;
+    secs.forEach(function(s){
+      var t=(s.total>1)?s.total:1;
+      need+=t; got+=(s.total>1)?Math.min(s.done||0,t):(s.ok?1:0);
+    });
+    return need?Math.round(got/need*100):0;
+  }
+  /** % ความสำเร็จรวมของคนหนึ่งคน (กรอก + สถานะใบ) */
+  function kpRowPct(x){
+    var st=String((x&&x.status)||'');
+    if(st==='อนุมัติ') return 100;
+    if(st==='รออนุมัติ') return KP_PCT_SENT;
+    var filled=kpFillPct(x);
+    return Math.round(filled*KP_PCT_FILLED/100);
+  }
   /** % ความสำเร็จของทั้งรอบ — ขั้นกรอกคิดจากสัดส่วนคนที่ประเมินครบ */
   function kpRoundPct(r){
     var st=String((r&&r.status)||'');
@@ -12095,6 +12121,16 @@
     if(st==='อนุมัติ') return 'อนุมัติแล้ว · 100%';
     if(st==='รออนุมัติ') return 'รออนุมัติ · '+pct+'%';
     return 'ยังไม่ส่งอนุมัติ · '+pct+'%';
+  }
+  /** บาร์คะแนนในตาราง — หน้าตาชุดเดียวกับกราฟคะแนนรายคนหน้าภาพรวม (ยืมคลาสเดิม ไม่แก้ของเดิม)
+      คะแนนเป็น null = ยังไม่ถึงเวลาที่คนดูจะเห็นตัวเลข (ลูกค้าเห็นเมื่ออนุมัติแล้ว) */
+  function kpScoreBarCell(x){
+    if(x.total===null||x.total===undefined||x.total==='')
+      return '<td class="kp-c"><span class="m-hint">—</span></td>';
+    var v=Number(x.total), w=Math.max(2,Math.min(100,Math.round(v)));
+    var g=Number(x.grade)||0;
+    return '<td><div class="kp-sbar"><div class="kp-htrack"><div class="kp-hfill'+(g?(' kp-fill-g'+g):'')+
+      '" style="width:'+w+'%"></div></div><div class="kp-hval">'+v.toFixed(2)+'</div></div></td>';
   }
   /** บาร์ % เล็ก ๆ — ใช้ทั้งในการ์ดสรุปและในช่องสถานะของแต่ละแถว */
   function kpProgBar(pct,label){
@@ -14360,7 +14396,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260911-1502';
+  var APP_BUILD='20260911-1509';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
