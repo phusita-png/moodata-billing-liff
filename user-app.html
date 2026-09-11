@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260911-1005">
+<link rel="stylesheet" href="user.css?v=20260911-1017">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1188,6 +1188,9 @@
   .kp-menu-i{ display:block; width:100%; text-align:left; border:0; background:none; font:inherit;
     font-size:14px; padding:9px 11px; border-radius:9px; cursor:pointer; color:var(--ink); }
   .kp-menu-i:hover{ background:#EEF4FC; }
+  /* คำสั่งที่ย้อนกลับไม่ได้ — ให้ต่างจากคำสั่งธรรมดาด้วยตา ไม่ใช่ต้องอ่านถึงจะรู้ */
+  .kp-menu-del{ color:#B91C1C; }
+  .kp-menu-del:hover{ background:#FDECEC; }
   .kp-menu-sep{ height:1px; background:var(--line); margin:6px 4px; }
   .kp-menu-kv{ display:flex; justify-content:space-between; gap:10px; padding:5px 11px;
     font-size:13px; color:#5b6b7d; }
@@ -10874,7 +10877,38 @@
       kpPaint('kpiemp', kpEmpHtml(r));
     });
   }
-  function kpEmpEdit(code){ KPE_EDIT=code||''; kpPaint('kpiemp', kpEmpHtml(KPE)); }
+  /* กดแก้ไขจากแถวในตาราง — ฟอร์มไปโผล่ "ด้านบนสุด" ของหน้า ซึ่งอยู่นอกจอตอนเลื่อนดูตารางอยู่
+     ถ้าไม่เลื่อนไปให้ ผู้ใช้จะรู้สึกว่ากดแล้วไม่มีอะไรเกิดขึ้น (พี่กี้ 11 ก.ย. 69) */
+  function kpEmpEdit(code){
+    KPE_EDIT=code||'';
+    kpPaint('kpiemp', kpEmpHtml(KPE));
+    if(!KPE_EDIT) return;
+    setTimeout(function(){
+      var box=document.querySelector('#main .kp-setbox');
+      if(!box) return;
+      try{ box.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){ box.scrollIntoView(); }
+      var first=box.querySelector('.inp:not([readonly]):not(:disabled)');
+      if(first) try{ first.focus({preventScroll:true}); }catch(e2){}
+    },30);
+  }
+
+  /** ลบพนักงานออกจากทะเบียน — ถามยืนยันก่อนเสมอ (เซิร์ฟเวอร์กันอีกชั้นถ้ามีประวัติแล้ว) */
+  function kpEmpDel(code,name){
+    modal('<h3>ลบพนักงานออกจากทะเบียน</h3>'+
+      '<div class="m-hint">จะลบ <b>'+esc(name||code)+'</b> (<b>'+esc(code)+'</b>) ออกจากทะเบียนประเมินผลงานนะคะ<br>'+
+      'ถ้าคนนี้เคยมีผลประเมินแล้ว ระบบจะไม่ให้ลบ — ให้เปลี่ยนสถานะเป็น “ลาออก” แทน ประวัติจะได้ไม่หาย</div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-danger" onclick="kpEmpDelDo(\''+esc(code)+'\')">ลบออกจากทะเบียน</button></div>');
+  }
+  function kpEmpDelDo(code){
+    kpCacheBust();
+    busy('กำลังลบ…');
+    jsonp({ action:'waKpiEmpDel', uid:UID, code:code }).then(function(r){
+      if(!r||!r.ok){ unbusy(); closeModal(); return toast((r&&r.error)||'ลบไม่สำเร็จ'); }
+      busyOk('ลบแล้ว'); closeModal(); toast('ลบออกจากทะเบียนแล้ว');
+      KPE_EDIT=''; renderKpiEmp();
+    }).catch(function(e){ unbusy(); closeModal(); toast(e.message); });
+  }
 
   function kpEmpHtml(r){
     var h='<div class="section-h">ทะเบียนพนักงานในระบบประเมิน</div>';
@@ -10921,24 +10955,17 @@
   }
   /** เมนู "..." ท้ายแถว — ประวัติ · แก้ไข · และรายละเอียดที่ดูนาน ๆ ครั้ง (ผู้ประเมิน/อายุงาน)
       ใช้ <details> ล้วน ไม่ต้องมี JS เปิด-ปิด และกดที่อื่นในหน้าแล้วไม่ค้างเปิด */
+  /* เมนูท้ายแถว — เหลือ 2 คำสั่งเท่านั้น (พี่กี้ 11 ก.ย. 69)
+     เดิมแถมรายละเอียด (ระดับ · ผู้ประเมิน · อายุงาน) มาด้วย แต่ข้อมูลพวกนั้นอยู่ในฟอร์มแก้ไขอยู่แล้ว
+     เมนูที่มีทั้งของให้กดและของให้อ่านปนกัน ทำให้หาคำสั่งที่ต้องการช้าลง
+     ดูประวัติ = กดที่ "ชื่อ-นามสกุล" ในตารางได้เลย ไม่ต้องมีในเมนูซ้ำ */
   function kpEmpMenu(r,e){
+    if(!r.canEdit) return '';
     return '<details class="kp-menu"><summary aria-label="เมนู">···</summary>'+
       '<div class="kp-menu-pop">'+
-        '<button class="kp-menu-i" onclick="kpOpenPerson(\''+esc(e.code)+'\')">ดูประวัติ</button>'+
-        (r.canEdit?'<button class="kp-menu-i" onclick="kpEmpEdit(\''+esc(e.code)+'\')">แก้ไขข้อมูล</button>':'')+
-        '<div class="kp-menu-sep"></div>'+
-        '<div class="kp-menu-kv"><span>ระดับ</span><b>'+(e.level?esc(e.level):'<span class="m-hint">—</span>')+'</b></div>'+
-        '<div class="kp-menu-kv"><span>ผู้ประเมิน 1</span><b>'+kpRaterName(r,e.rater1)+'</b></div>'+
-        '<div class="kp-menu-kv"><span>ผู้ประเมิน 2</span><b>'+kpRaterName(r,e.rater2)+'</b></div>'+
-        '<div class="kp-menu-kv"><span>อายุงาน</span><b>'+
-          (e.years===null||e.years===undefined?'—':esc(e.years+' ปี'))+'</b></div>'+
+        '<button class="kp-menu-i" onclick="kpEmpEdit(\''+esc(e.code)+'\')">แก้ไขข้อมูล</button>'+
+        '<button class="kp-menu-i kp-menu-del" onclick="kpEmpDel(\''+esc(e.code)+'\',\''+jss(e.name||e.nick||'')+'\')">ลบพนักงาน</button>'+
       '</div></details>';
-  }
-  /** แปลง userId ผู้ประเมินเป็นชื่อถ้ารู้จัก (ไม่รู้จักก็โชว์ id ไปก่อน) */
-  function kpRaterName(r,uid){
-    if(!uid) return '<span class="m-hint">—</span>';
-    var hit=(r.people||[]).filter(function(p){ return p.code===uid; })[0];
-    return esc(hit?(hit.nick||hit.name):uid);
   }
 
   /* บทบาทผู้ประเมิน (พี่กี้เคาะ 11 ก.ย. 69) — ระบบนี้ HR เป็นคนกรอกให้ทั้งหมด
@@ -14216,7 +14243,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260911-1005';
+  var APP_BUILD='20260911-1017';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
