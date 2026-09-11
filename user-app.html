@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260911-1543">
+<link rel="stylesheet" href="user.css?v=20260911-1552">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -12351,6 +12351,14 @@
     if(n<0||n>=list.length) return;
     KPF_CODE=list[n].code; renderKpiFill();
   }
+  /** ลำดับของคนนั้นในรอบ — แหล่งเดียวที่ทุกที่ในหน้านี้ต้องใช้
+      🔴 ห้ามนับจาก index ของ r.forms — โหมดดูทีละคน forms มีคนเดียว จะได้ "คนที่ 1" เสมอ
+         (บั๊กที่พี่กี้เจอ 11 ก.ย. 69: กดคนที่ 2 แต่หัวฟอร์มยังขึ้นคนที่ 1) */
+  function kpSeqOf(r,code){
+    var list=(r&&r.people)||[];
+    for(var k=0;k<list.length;k++) if(list[k].code===code) return (list[k].seq||k+1);
+    return 0;
+  }
   /** แถบเดินคน — โผล่เฉพาะตอนดูทีละคน (โหมดตำแหน่ง/ทุกคน เห็นหลายคนในหน้าเดียวอยู่แล้ว) */
   function kpFillNav(r){
     if(KPF_BY!=='emp') return '';
@@ -12360,7 +12368,7 @@
     var prev=(i>0)?kpWhoRaw(list[i-1]):'', next=(i<list.length-1)?kpWhoRaw(list[i+1]):'';
     return '<button class="btn btn-ghost btn-sm"'+(i<=0?' disabled':'')+
         ' title="'+(prev?('เปิดฟอร์มของ '+esc(prev)):'คนแรกแล้ว')+'" onclick="kpFillStep(-1)">‹ คนก่อนหน้า</button>'+
-      '<span class="kp-lb">คนที่ '+(i+1)+' จาก '+list.length+'</span>'+
+      '<span class="kp-lb">คนที่ '+(list[i].seq||i+1)+' จาก '+list.length+'</span>'+
       '<button class="btn btn-ghost btn-sm"'+(i>=list.length-1?' disabled':'')+
         ' title="'+(next?('เปิดฟอร์มของ '+esc(next)):'คนสุดท้ายแล้ว')+'" onclick="kpFillStep(1)">คนถัดไป ›</button>';
   }
@@ -12409,7 +12417,7 @@
         '<div class="kp-fhead">'+
           '<span class="kp-fav">'+esc(kpWhoRaw(f.emp).replace(/^(นางสาว|นาง|นาย)/,'').substr(0,1)||'?')+'</span>'+
           '<span class="kp-fhead-who">'+
-            '<span class="kp-fhead-top">คนที่ '+(i+1)+'<span class="kp-fcode">'+esc(f.emp.code)+'</span></span>'+
+            '<span class="kp-fhead-top">คนที่ '+(kpSeqOf(r,f.emp.code)||(i+1))+'<span class="kp-fcode">'+esc(f.emp.code)+'</span></span>'+
             '<span class="kp-fhead-nm">'+kpWhoOpt(f.emp)+'</span>'+
             '<span class="kp-fhead-sub">'+esc(f.pos.name||f.pos.code)+
               (f.emp.dept?(' · '+esc(f.emp.dept)):'')+'</span>'+
@@ -14499,7 +14507,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260911-1543';
+  var APP_BUILD='20260911-1552';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
