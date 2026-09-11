@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260911-0905">
+<link rel="stylesheet" href="user.css?v=20260911-0924">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1658,8 +1658,8 @@
   /* 📄 เอกสาร/งาน · 💰 การเงิน/ภาษี — แยกด้วยหลักเดียวกับ HR/KPI (11 ก.ย. 69)
      เหลือ 0.46 MB และ 0.68 MB จากตัวเต็ม 1.55 MB
      ⚠️ ค่าว่าง = ยังไม่ได้ deploy ชุดนั้น → คำสั่งวิ่งไปโปรเจกต์หลักเหมือนเดิม (ปลอดภัยเสมอ) */
-  var EXEC_URL_DOC = '';
-  var EXEC_URL_FIN = '';
+  var EXEC_URL_DOC = 'https://script.google.com/macros/s/AKfycbwV1yv5_IDYxwF6wDPdyAdvBoIWH0fQqNoBN7n3XboYUcDTSZb-0O1jUBrqQSJx9Fa-/exec';
+  var EXEC_URL_FIN = 'https://script.google.com/macros/s/AKfycbxGc6CpDyZdmix2Pc1MqX2q7j9dFZdSNctH9CfNS6vriiN0MQPcJOOG4WvwZA5ksVvy6A/exec';
   /* 🔴 สามบรรทัดนี้ต้องตรงกับ re ของแต่ละชุดใน build-split.js เป๊ะ
      ส่งคำสั่งที่ชุดนั้นไม่มี = ผู้ใช้เจอ "โปรเจกต์นี้ไม่รับคำสั่งนี้" ตอนกดปุ่ม (ไม่พังตอน build)
      เทส tests/test-split-routes.js ล็อกไว้ว่าสองที่ต้องตรงกัน */
@@ -14096,7 +14096,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260911-0905';
+  var APP_BUILD='20260911-0924';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
