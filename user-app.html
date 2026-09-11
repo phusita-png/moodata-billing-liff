@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260911-0935">
+<link rel="stylesheet" href="user.css?v=20260911-0949">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1330,6 +1330,17 @@
   .kp-fld label{ font-size:12.5px; color:#5b6b7d; font-weight:600; }
   .kp-fld .inp{ width:100%; }
   .kp-fld .inp + .inp{ margin-top:5px; }
+  /* ตัวขึ้นบรรทัดใหม่ในฟอร์ม — บังคับให้กลุ่มช่องแยกบรรทัดตามผังที่พี่กี้วางไว้
+     (ไม่งั้น auto-fit ไหลต่อกันไปเรื่อย ๆ ตามความกว้างจอ อ่านเป็นกลุ่มไม่ออก) */
+  .kp-formbr{ grid-column:1/-1; height:0; }
+  /* ฟอร์มพนักงานบนจอกว้าง — ตรึง 7 ช่องในบรรทัดแรกตามผัง (auto-fit จะได้ 6 บ้าง 7 บ้างตามความกว้าง)
+     select.inp มี min-width:180px เป็นค่าฐาน ต้องปลดก่อน ไม่งั้นดันคอลัมน์จนล้นขอบ */
+  @media (min-width:1600px){
+    .kp-form2.kp-emp7{ grid-template-columns:repeat(7,minmax(0,1fr)); }
+    .kp-form2.kp-emp7 select.inp{ min-width:0; }
+  }
+  /* ช่องที่ระบบเติมให้เอง (ระดับ) — บอกด้วยสายตาว่าไม่ต้องกรอก */
+  .kp-fld .inp[readonly]{ background:#f6f8fb; color:#5b6b7d; }
   /* เล่มส่งลูกค้า — ปุ่ม/แท็บไม่ต้องติดไปกับกระดาษ */
   .kp-bookhead{ text-align:center; padding:18px 0 8px; }
   .kp-bookco{ font-size:15px; color:#5b6b7d; }
@@ -10924,41 +10935,82 @@
     return esc(hit?(hit.nick||hit.name):uid);
   }
 
-  /** ฟอร์มแก้ไข/เพิ่มพนักงาน — ครบทุกช่องที่ระบบใช้จริง */
+  /* บทบาทผู้ประเมิน (พี่กี้เคาะ 11 ก.ย. 69) — ระบบนี้ HR เป็นคนกรอกให้ทั้งหมด
+     ไม่ได้ให้พนักงานล็อกอินเข้ามาประเมินกันเอง ช่องผู้ประเมินจึงไม่ต้องเป็น LINE userId
+     หลังบ้านเก็บ "ผู้ประเมิน" เป็นข้อความอิสระอยู่แล้ว (คีย์ของคะแนนคุณลักษณะ)
+     เปลี่ยนเป็นบทบาทได้ทันทีโดยไม่ต้องแตะสูตรคิดคะแนน */
+  var KPE_RATERS = ['หัวหน้างาน','ผู้จัดการ','ผู้บริหาร'];
+  var KPE_LV = {};                           // รหัสตำแหน่ง → ระดับ (เติมช่อง "ระดับ" ให้อัตโนมัติ)
+  var KPE_KEEP = { team:'', lineUid:'' };    // ช่องที่ซ่อนไว้ — ต้องส่งค่าเดิมกลับ ไม่งั้นบันทึกทับเป็นค่าว่าง
+
+  /** dropdown จากรายการข้อความ — ค่าเดิมที่ไม่อยู่ในรายการต้องยังอยู่เสมอ (ข้อมูลเก่าห้ามหาย) */
+  function kpOptList(list,cur,extraLabel){
+    var seen={}, all=list.slice(), h='<option value="">—</option>';
+    if(cur && all.indexOf(cur)<0) all.push(cur);
+    all.forEach(function(v){
+      if(!v || seen[v]) return; seen[v]=1;
+      h+='<option value="'+esc(v)+'"'+(v===cur?' selected':'')+'>'+esc(v)+'</option>';
+    });
+    return h+(extraLabel?('<option value="__new">'+esc(extraLabel)+'</option>'):'');
+  }
+
+  /** ฟอร์มแก้ไข/เพิ่มพนักงาน — เรียงตามผังที่พี่กี้วางไว้ 11 ก.ย. 69
+      บรรทัด 1 = ตัวคน (รหัส · ชื่อ · ชื่อเล่น · ตำแหน่ง · แผนก · ผู้ประเมิน 1-2)
+      บรรทัด 2 = ช่วงเวลา/สถานะ (ระดับ · เริ่มงาน · สิ้นสุด · สถานะ)
+      ซ่อนไว้ไม่ได้ลบ: รหัสทีม · LINE userId (ยังเก็บค่าเดิมในชีตครบ) */
   function kpEmpForm(r){
     var isNew = KPE_EDIT==='NEW';
     var e = isNew ? { code:'', name:'', nick:'', pos:'', dept:'', rater1:'', rater2:'', team:'', lineUid:'', start:'', end:'', status:'ใช้งาน' }
                   : (r.rows||[]).filter(function(x){ return x.code===KPE_EDIT; })[0];
     if(!e) return '';
+    KPE_KEEP = { team:e.team||'', lineUid:e.lineUid||'' };
+    KPE_LV = {}; (r.positions||[]).forEach(function(p){ KPE_LV[p.code]=p.level||''; });
     function opt(list,cur,valFn,txtFn){
       return '<option value="">—</option>'+list.map(function(x){
         var v=valFn(x); return '<option value="'+esc(v)+'"'+(v===cur?' selected':'')+'>'+esc(txtFn(x))+'</option>';
       }).join('');
     }
-    var raterOpts = opt(r.people||[], '', function(x){ return x.code; }, function(x){ return (x.nick||x.name); });
+    /* รายชื่อแผนกเอาจากของที่มีอยู่จริง (ทะเบียนพนักงาน + ตำแหน่ง) — ไม่มีชีตทะเบียนแผนกแยก */
+    var depts=[];
+    (r.rows||[]).forEach(function(x){ if(x.dept) depts.push(x.dept); });
+    (r.positions||[]).forEach(function(p){ if(p.dept) depts.push(p.dept); });
+    depts.sort();
     var h='<div class="card kp-setbox"><div class="section-h">'+(isNew?'เพิ่มพนักงานใหม่':'แก้ไข '+esc(e.nick||e.name))+'</div>';
-    h+='<div class="kp-form2">'+
+    h+='<div class="kp-form2 kp-emp7">'+
       kpFld('รหัสพนักงาน','<input class="inp" id="kpeCode" value="'+esc(e.code)+'"'+(isNew?'':' readonly')+'>')+
       kpFld('ชื่อ-สกุล','<input class="inp" id="kpeName" value="'+esc(e.name)+'">')+
       kpFld('ชื่อเล่น','<input class="inp" id="kpeNick" value="'+esc(e.nick)+'">')+
-      kpFld('ตำแหน่ง','<select class="inp" id="kpePos">'+opt(r.positions||[], e.pos, function(x){ return x.code; }, function(x){ return x.name||x.code; })+'</select>')+
-      kpFld('แผนก','<input class="inp" id="kpeDept" value="'+esc(e.dept||'')+'" placeholder="เช่น คลังสินค้า">')+
-      kpFld('ผู้ประเมินคนที่ 1','<select class="inp" id="kpeR1">'+raterOpts.replace('value="'+esc(e.rater1)+'"','value="'+esc(e.rater1)+'" selected')+'</select>'+
-        '<input class="inp" id="kpeR1x" value="'+esc(e.rater1||'')+'" placeholder="หรือพิมพ์ LINE userId">')+
-      kpFld('ผู้ประเมินคนที่ 2','<select class="inp" id="kpeR2">'+raterOpts.replace('value="'+esc(e.rater2)+'"','value="'+esc(e.rater2)+'" selected')+'</select>'+
-        '<input class="inp" id="kpeR2x" value="'+esc(e.rater2||'')+'" placeholder="หรือพิมพ์ LINE userId">')+
-      kpFld('รหัสทีม (ประเมินแบบทีม)','<input class="inp" id="kpeTeam" value="'+esc(e.team||'')+'">')+
-      kpFld('LINE userId','<input class="inp" id="kpeUid" value="'+esc(e.lineUid||'')+'">')+
+      kpFld('ตำแหน่ง','<select class="inp" id="kpePos" onchange="kpeLevelSync()">'+opt(r.positions||[], e.pos, function(x){ return x.code; }, function(x){ return x.name||x.code; })+'</select>')+
+      kpFld('แผนก','<select class="inp" id="kpeDept" onchange="kpeDeptPick()">'+kpOptList(depts,e.dept||'','➕ เพิ่มแผนกใหม่…')+'</select>'+
+        '<input class="inp" id="kpeDeptNew" style="display:none" placeholder="พิมพ์ชื่อแผนกใหม่">')+
+      kpFld('ผู้ประเมินคนที่ 1','<select class="inp" id="kpeR1">'+kpOptList(KPE_RATERS,e.rater1||'')+'</select>')+
+      kpFld('ผู้ประเมินคนที่ 2','<select class="inp" id="kpeR2">'+kpOptList(KPE_RATERS,e.rater2||'')+'</select>')+
+      '<div class="kp-formbr"></div>'+
+      kpFld('ระดับ','<input class="inp" id="kpeLevel" value="'+esc(KPE_LV[e.pos]||'')+'" readonly title="ระดับเป็นของตำแหน่ง — เปลี่ยนได้ที่หน้าตัวชี้วัด (KPI)">')+
       kpFld('วันเริ่มงาน','<input class="inp" id="kpeStart" type="date" value="'+esc(kpDateVal(e.start))+'">')+
-      kpFld('วันสิ้นสุด (ถ้าลาออก)','<input class="inp" id="kpeEnd" type="date" value="'+esc(kpDateVal(e.end))+'">')+
+      kpFld('วันสิ้นสุด (ลาออก)','<input class="inp" id="kpeEnd" type="date" value="'+esc(kpDateVal(e.end))+'">')+
       kpFld('สถานะ','<select class="inp" id="kpeStatus"><option value="ใช้งาน"'+(e.status==='ใช้งาน'?' selected':'')+'>ใช้งาน</option>'+
         '<option value="ลาออก"'+(e.status==='ลาออก'?' selected':'')+'>ลาออก</option>'+
         '<option value="พักงาน"'+(e.status==='พักงาน'?' selected':'')+'>พักงาน</option></select>')+
       '</div>';
     h+='<div class="kp-bar"><button class="btn btn-primary btn-sm" onclick="kpEmpSave()">บันทึก</button>'+
       '<button class="btn btn-ghost btn-sm" onclick="kpEmpEdit(\'\')">ยกเลิก</button>'+
-      '<span class="m-hint" style="margin:0">ผู้ประเมินเลือกจากรายชื่อได้ หรือพิมพ์ LINE userId เองถ้าเป็นหัวหน้าที่ไม่ได้อยู่ในทะเบียน</span></div></div>';
+      '<span class="m-hint" style="margin:0">ระดับมาจากตำแหน่งที่เลือก · ผู้ประเมินใส่เป็นบทบาท ไม่ต้องใส่ชื่อคน</span></div></div>';
     return h;
+  }
+  /** เลือกตำแหน่ง → ระดับขึ้นเองทันที (ระดับเป็นของตำแหน่ง แหล่งเดียว ไม่ให้แก้ที่ตัวคน) */
+  function kpeLevelSync(){ var s=$('kpePos'), t=$('kpeLevel'); if(s&&t) t.value=KPE_LV[s.value]||''; }
+  /** เลือก "เพิ่มแผนกใหม่…" → เปิดช่องพิมพ์ให้ (ปกติเลือกจากที่มีอยู่ ชื่อจะได้ไม่เพี้ยน) */
+  function kpeDeptPick(){
+    var s=$('kpeDept'), i=$('kpeDeptNew'); if(!s||!i) return;
+    var isNew = s.value==='__new';
+    i.style.display = isNew?'':'none';
+    if(isNew) i.focus();
+  }
+  function kpeDeptVal(){
+    var s=$('kpeDept'), i=$('kpeDeptNew');
+    if(s && s.value==='__new') return String((i&&i.value)||'').trim();
+    return String((s&&s.value)||'').trim();
   }
   function kpFld(label,inner){ return '<div class="kp-fld"><label>'+esc(label)+'</label>'+inner+'</div>'; }
   /** ค่าวันที่จากชีตอาจมาเป็น ISO — ตัดให้เหลือ YYYY-MM-DD ให้ input type=date รับได้ */
@@ -10980,9 +11032,11 @@
     if(!v('kpePos')) return toast('เลือกตำแหน่งก่อนค่ะ — ตำแหน่งเป็นตัวกำหนดว่าต้องประเมินอะไรบ้าง');
     busy('กำลังบันทึก…');
     jsonpPost({ action:'waKpiEmpSave', uid:UID, code:code, name:v('kpeName'), nick:v('kpeNick'),
-      pos:v('kpePos'), dept:v('kpeDept'),
-      rater1:(v('kpeR1x')||v('kpeR1')), rater2:(v('kpeR2x')||v('kpeR2')),
-      team:v('kpeTeam'), lineUid:v('kpeUid'), start:v('kpeStart'), end:v('kpeEnd'), status:v('kpeStatus') })
+      pos:v('kpePos'), dept:kpeDeptVal(),
+      rater1:v('kpeR1'), rater2:v('kpeR2'),
+      /* 2 ช่องนี้ไม่มีบนฟอร์มแล้ว — ต้องส่งค่าเดิมกลับไป ไม่งั้น kpiUpsert_ เขียนทับเป็นค่าว่าง */
+      team:KPE_KEEP.team, lineUid:KPE_KEEP.lineUid,
+      start:v('kpeStart'), end:v('kpeEnd'), status:v('kpeStatus') })
       .then(function(r){
         if(!r||!r.ok) return toast((r&&r.error)||'บันทึกไม่สำเร็จ');
         busyOk('บันทึกแล้ว'); toast('บันทึกทะเบียนพนักงานแล้ว');
@@ -14108,7 +14162,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260911-0935';
+  var APP_BUILD='20260911-0949';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
