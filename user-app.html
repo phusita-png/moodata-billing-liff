@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260911-1017">
+<link rel="stylesheet" href="user.css?v=20260911-1036">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1261,7 +1261,9 @@
   .kp-period .kp-lb{ display:inline-flex; align-items:center; height:38px; }
   .kp-2col{ display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:12px; }
   .kp-hbars{ display:flex; flex-direction:column; gap:7px; }
-  .kp-hrow{ display:grid; grid-template-columns:120px 1fr 64px 44px; align-items:center; gap:9px; }
+  /* ช่องชื่อกว้าง 120px พอกับชื่อเล่น แต่ชื่อจริงเต็ม ("นางสาวธนวรรณ วรรณะ") โดนตัดเกือบครึ่ง
+     ขยายเป็น 200px หลังเปลี่ยนมาอ้างชื่อจริง (11 ก.ย. 69) · ยาวกว่านั้นยังมี ellipsis + title รับไว้ */
+  .kp-hrow{ display:grid; grid-template-columns:200px 1fr 64px 44px; align-items:center; gap:9px; }
   .kp-hname{ font-size:13px; font-weight:600; color:#3d5164; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .kp-htrack{ height:16px; background:#f1f4f8; border-radius:999px; overflow:hidden; }
   .kp-hfill{ height:100%; border-radius:999px; }
@@ -10968,6 +10970,24 @@
       '</div></details>';
   }
 
+  /* ═══ ชื่อที่ใช้อ้างพนักงานทั้งโมดูล (พี่กี้ 11 ก.ย. 69) ═══
+     ก่อนหน้านี้ทุกจอโชว์ "ชื่อเล่น" เป็นตัวหลัก — พอมีชื่อเล่นซ้ำกันคือแยกไม่ออกเลย
+     🔴 ชื่อจริงเป็นตัวหลักเสมอ · ชื่อเล่นเป็นตัวประกอบ · ห้ามเขียน nick||name ตรง ๆ อีก
+        (เทส test-kpi-web ล็อกไว้ว่าในบล็อกโมดูลนี้ต้องไม่มีรูปแบบนั้นเหลือ)
+       kpWhoRaw = ข้อความดิบ · kpWho = ชื่อจริงอย่างเดียว
+       kpWhoOpt = "ชื่อจริง (ชื่อเล่น)" สำหรับที่ใส่ HTML ไม่ได้ เช่น <option> · title
+       kpWhoCell = ในตาราง: ชื่อจริงตัวหนา ชื่อเล่นตัวเล็กบรรทัดล่าง */
+  function kpWhoRaw(p){ return String((p&&(p.name||p.nick||p.code))||''); }
+  function kpWho(p){ return esc(kpWhoRaw(p)); }
+  function kpWhoOpt(p){
+    var n=(p&&p.nick)||'', full=kpWhoRaw(p);
+    return esc(full+((n&&n!==full)?(' ('+n+')'):''));
+  }
+  function kpWhoCell(p){
+    var n=(p&&p.nick)||'', full=kpWhoRaw(p);
+    return '<b>'+kpWho(p)+'</b>'+((n&&n!==full)?('<div class="m-hint">'+esc(n)+'</div>'):'');
+  }
+
   /* บทบาทผู้ประเมิน (พี่กี้เคาะ 11 ก.ย. 69) — ระบบนี้ HR เป็นคนกรอกให้ทั้งหมด
      ไม่ได้ให้พนักงานล็อกอินเข้ามาประเมินกันเอง ช่องผู้ประเมินจึงไม่ต้องเป็น LINE userId
      หลังบ้านเก็บ "ผู้ประเมิน" เป็นข้อความอิสระอยู่แล้ว (คีย์ของคะแนนคุณลักษณะ)
@@ -11011,7 +11031,7 @@
     (r.rows||[]).forEach(function(x){ if(x.dept) depts.push(x.dept); });
     (r.positions||[]).forEach(function(p){ if(p.dept) depts.push(p.dept); });
     depts.sort();
-    var h='<div class="card kp-setbox"><div class="section-h">'+(isNew?'เพิ่มพนักงานใหม่':'แก้ไข '+esc(e.nick||e.name))+'</div>';
+    var h='<div class="card kp-setbox"><div class="section-h">'+(isNew?'เพิ่มพนักงานใหม่':'แก้ไข '+kpWhoOpt(e))+'</div>';
     h+='<div class="kp-form2 kp-emp7">'+
       kpFld('รหัสพนักงาน','<input class="inp" id="kpeCode" value="'+esc(e.code)+'"'+(isNew?'':' readonly')+'>')+
       kpFld('ชื่อ-สกุล','<input class="inp" id="kpeName" value="'+esc(e.name)+'">')+
@@ -11148,13 +11168,13 @@
     var h='<div class="section-h">ประวัติผลงานรายคน</div>';
     h+='<div class="card"><div class="kp-bar">'+
       '<select class="inp" onchange="kpPersonPick(this.value)">'+(r.people||[]).map(function(p){
-        return '<option value="'+esc(p.code)+'"'+(p.code===e.code?' selected':'')+'>'+esc(p.nick||p.name)+
+        return '<option value="'+esc(p.code)+'"'+(p.code===e.code?' selected':'')+'>'+kpWhoOpt(p)+
           (p.status&&p.status!=='ใช้งาน'?(' ('+esc(p.status)+')'):'')+'</option>';
       }).join('')+'</select>'+
       '<span class="kp-grow"></span>'+
       '<button class="btn btn-ghost btn-sm" onclick="kpGo(\'kpiemp\')">← กลับทะเบียน</button></div>';
-    h+='<div class="kp-phead"><div class="kp-pav">'+esc((e.nick||e.name||'?').substr(0,1))+'</div>'+
-      '<div class="kp-pinfo"><div class="kp-pname">'+esc(e.nick||e.name)+' <span class="m-hint">'+esc(e.name)+'</span></div>'+
+    h+='<div class="kp-phead"><div class="kp-pav">'+esc(kpWhoRaw(e).substr(0,1)||'?')+'</div>'+
+      '<div class="kp-pinfo"><div class="kp-pname">'+kpWho(e)+' <span class="m-hint">'+esc(e.nick||"")+'</span></div>'+
       '<div class="kp-pmeta">'+esc(e.posName||e.pos)+(e.level?(' · ระดับ '+esc(e.level)):'')+
         (e.dept?(' · '+esc(e.dept)):'')+
         (e.years?(' · อายุงาน '+e.years+' ปี'):'')+
@@ -11433,7 +11453,7 @@
     var max=100;
     return '<div class="kp-hbars">'+list.map(function(p){
       var w=Math.max(2,Math.round(p.score/max*100));
-      return '<div class="kp-hrow"><div class="kp-hname" title="'+esc(p.name)+'">'+esc(p.nick||p.name)+'</div>'+
+      return '<div class="kp-hrow"><div class="kp-hname" title="'+kpWhoOpt(p)+'">'+kpWho(p)+'</div>'+
         '<div class="kp-htrack"><div class="kp-hfill" style="width:'+w+'%;background:'+esc(p.color||'#93C5FD')+'"></div></div>'+
         '<div class="kp-hval">'+p.score.toFixed(2)+'</div>'+
         '<div class="kp-hgr">'+kpGradePill(p.grade)+'</div></div>';
@@ -11503,7 +11523,7 @@
     MON.forEach(function(m){ h+='<th class="kp-c">'+m+'</th>'; });
     h+='</tr></thead><tbody>';
     (r.matrix.rows||[]).forEach(function(row){
-      h+='<tr><td><b>'+esc(row.nick||row.name)+'</b></td><td class="kp-mpos">'+esc(row.dept||row.pos||'')+'</td>';
+      h+='<tr><td>'+kpWhoCell(row)+'</td><td class="kp-mpos">'+esc(row.dept||row.pos||'')+'</td>';
       row.cells.forEach(function(c){
         if(c.grade) h+='<td class="kp-c"><span class="kp-mcell" style="background:'+esc(c.color||'#EEF1F5')+'">'+c.grade+'</span></td>';
         else h+='<td class="kp-c"><span class="kp-mcell kp-mnone">'+(c.has?'·':'')+'</span></td>';
@@ -11594,7 +11614,7 @@
         return '<th>'+esc(m.name)+'<div class="m-hint">'+esc(kpTargetText(m))+' · น้ำหนัก '+m.weight+'</div></th>'; }).join(''):'')+
       '<th>สถิติมาทำงาน<div class="m-hint">HR กรอกเองทั้ง 5 ช่อง</div></th><th class="kp-r">คะแนนรวม</th></tr></thead><tbody>';
     r.people.forEach(function(p){
-      h+='<tr><td class="kp-sticky"><b>'+esc(p.nick||p.name)+'</b><div class="m-hint">'+esc(p.name)+'</div></td>';
+      h+='<tr><td class="kp-sticky"><b>'+kpWho(p)+'</b><div class="m-hint">'+esc(p.nick||"")+'</div></td>';
       p.metrics.forEach(function(m){
         var skip=kpSkip(p.code,m.id);
         h+='<td><div class="kp-cell">';
@@ -11669,9 +11689,9 @@
   function kpEntryReview(){
     var lines=KP.people.map(function(p){
       var sc=kpRowScore(p);
-      if(!sc.filled) return '<li><b>'+esc(p.nick||p.name)+'</b> — ยังไม่มีข้อมูล จะยังไม่บันทึก</li>';
+      if(!sc.filled) return '<li><b>'+kpWhoOpt(p)+'</b> — ยังไม่มีข้อมูล จะยังไม่บันทึก</li>';
       var flags=p.metrics.filter(function(m){ return kpFlag(p,m); }).map(function(m){ return esc(m.name); });
-      return '<li><b>'+esc(p.nick||p.name)+'</b> — คะแนนรวม <b>'+sc.total.toFixed(2)+'</b>'+
+      return '<li><b>'+kpWhoOpt(p)+'</b> — คะแนนรวม <b>'+sc.total.toFixed(2)+'</b>'+
         (flags.length?' · <span class="kp-warn">ตัวเลขผิดปกติ: '+flags.join(' · ')+'</span>':'')+'</li>';
     }).join('');
     $('kpReview').innerHTML='<div class="card"><div class="ds-h">ตรวจก่อนบันทึก — '+esc(KP.pos.name)+' · '+esc(kpLabel(KP.ym))+
@@ -11729,7 +11749,7 @@
     var h='<div class="section-h">ให้คะแนนคุณลักษณะ — '+esc(r.emp.nick||r.emp.name)+'</div>';
     h+='<div class="ds-sel"><select onchange="kpsSetCode(this.value)">'+
       r.list.map(function(e){ return '<option value="'+esc(e.code)+'"'+(e.code===KP_CODE?' selected':'')+'>'+
-        esc(e.nick||e.name)+' · '+esc(e.posName||e.pos)+'</option>'; }).join('')+
+        kpWhoOpt(e)+' · '+esc(e.posName||e.pos)+'</option>'; }).join('')+
       '</select> <select onchange="kpsSetYm(this.value)">'+kpMonthOpts(r.ym)+'</select>'+
       '<span class="kp-pill kp-pill-info">ผู้ประเมินที่กรอกแล้ว '+r.raterCount+' คน</span></div>';
     if(r.locked) h+='<div class="card kp-lock"><b>รอบนี้ปิดแล้ว</b> — แก้ไขไม่ได้ค่ะ</div>';
@@ -11952,7 +11972,7 @@
     r.rows.filter(function(x){ return x.hasDoc; }).forEach(function(x,i){
       var secs=x.sections||[], done=secs.filter(function(sx){ return sx.ok; }).length;
       h+='<tr><td>'+(i+1)+'</td>'+
-        '<td><button class="kp-link" onclick="kpFillOne(\''+esc(x.code)+'\')"><b>'+esc(x.nick||x.name)+'</b></button>'+
+        '<td><button class="kp-link" onclick="kpFillOne(\''+esc(x.code)+'\')"><b>'+kpWhoOpt(x)+'</b></button>'+
           '<div class="m-hint">'+esc(x.dept||'')+'</div></td>'+
         '<td>'+esc(x.posName||x.pos)+'</td>'+
         '<td class="kp-c"><b>'+done+'/'+secs.length+'</b> ส่วน</td>'+
@@ -12026,7 +12046,7 @@
     rows.forEach(function(x,i){
       var has={}; (x.sections||[]).forEach(function(sx){ has[sx.key]=sx; });
       h+='<tr><td>'+(i+1)+'</td>'+
-        '<td><button class="kp-link" onclick="kpFillOne(\''+esc(x.code)+'\')"><b>'+esc(x.nick||x.name)+'</b></button>'+
+        '<td><button class="kp-link" onclick="kpFillOne(\''+esc(x.code)+'\')"><b>'+kpWhoOpt(x)+'</b></button>'+
           '<div class="m-hint">'+esc(x.dept||'')+'</div></td>'+
         '<td>'+esc(x.posName||x.pos)+'</td>';
       keys.forEach(function(k){
@@ -12148,7 +12168,7 @@
       }).join('')+'</select>';
     } else if(KPF_BY==='emp'){
       h+='<select class="inp" onchange="kpFillWho(this.value)">'+r.people.map(function(p){
-        return '<option value="'+esc(p.code)+'"'+(p.code===KPF_CODE?' selected':'')+'>'+esc(p.nick||p.name)+'</option>';
+        return '<option value="'+esc(p.code)+'"'+(p.code===KPF_CODE?' selected':'')+'>'+kpWhoOpt(p)+'</option>';
       }).join('')+'</select>';
     }
     h+='<select class="inp" onchange="kpFillKind(this.value)">'+
@@ -12998,7 +13018,7 @@ function kpImpDraw(){
       '<th class="kp-r">KPI</th><th class="kp-r">คุณลักษณะ</th><th class="kp-r">สถิติ</th>'+
       '<th class="kp-r">รวม</th><th class="kp-c">เกรด</th><th>ผล</th></tr></thead><tbody>';
     r.rows.forEach(function(x){
-      h+='<tr><td>'+x.seq+'</td><td><b>'+esc(x.nick||x.name)+'</b><div class="m-hint">'+esc(x.name)+'</div></td>'+
+      h+='<tr><td>'+x.seq+'</td><td><b>'+kpWho(x)+'</b><div class="m-hint">'+esc(x.nick||"")+'</div></td>'+
         '<td>'+esc(x.dept||'—')+'</td><td>'+esc(x.posName||x.pos)+'</td>'+
         '<td class="kp-r">'+kpNum(x.perf)+'</td><td class="kp-r">'+kpNum(x.trait)+'</td>'+
         '<td class="kp-r">'+kpNum(x.stat)+'</td><td class="kp-r"><b>'+kpNum(x.total)+'</b></td>'+
@@ -13022,7 +13042,7 @@ function kpImpDraw(){
       h+='<div class="kp-wrap"><table class="kp-tbl"><thead><tr><th>อันดับ</th><th>พนักงาน</th><th>ตำแหน่ง</th>'+
         '<th class="kp-r">เฉลี่ยทั้งปี</th><th class="kp-r">จำนวนรอบ</th><th class="kp-c">เกรดต่ำสุด</th><th class="kp-c">คงเส้นคงวา</th></tr></thead><tbody>';
       r.top.forEach(function(x,i){
-        h+='<tr><td>'+(i+1)+'</td><td><b>'+esc(x.nick||x.name)+'</b><div class="m-hint">'+esc(x.dept||'')+'</div></td>'+
+        h+='<tr><td>'+(i+1)+'</td><td><b>'+kpWho(x)+'</b><div class="m-hint">'+esc([x.nick,x.dept].filter(Boolean).join(' · '))+'</div></td>'+
           '<td>'+esc(x.pos)+'</td><td class="kp-r"><b>'+x.avg.toFixed(2)+'</b></td>'+
           '<td class="kp-r">'+x.months+'</td><td class="kp-c">'+kpGradePill(x.minGrade)+'</td>'+
           '<td class="kp-c">'+(x.steady?'<span class="kp-dot kp-dot-ok">ใช่</span>':'<span class="kp-dot">มีเดือนที่ตก</span>')+'</td></tr>';
@@ -13037,7 +13057,7 @@ function kpImpDraw(){
       h+='<div class="kp-wrap"><table class="kp-tbl"><thead><tr><th>พนักงาน</th><th>ตำแหน่ง</th>'+
         '<th class="kp-c">ติดต่อกัน</th><th>ประวัติเกรด</th></tr></thead><tbody>';
       r.pip.forEach(function(x){
-        h+='<tr><td><b>'+esc(x.nick||x.name)+'</b></td><td>'+esc(x.pos)+'</td>'+
+        h+='<tr><td>'+kpWhoCell(x)+'</td><td>'+esc(x.pos)+'</td>'+
           '<td class="kp-c"><b>'+x.streak+'</b> รอบ</td><td>'+
           x.history.map(function(hh){ return '<span class="kp-hist">'+esc(kpLabel(hh.ym).split(' ')[0].substr(0,3))+' '+kpGradePill(hh.grade)+'</span>'; }).join('')+
           '</td></tr>';
@@ -13101,7 +13121,7 @@ function kpImpDraw(){
       '<th>ลำดับ</th><th>ชื่อ</th><th>แผนก</th><th>ตำแหน่ง</th><th class="kp-r">KPI</th><th class="kp-r">คุณลักษณะ</th>'+
       '<th class="kp-r">สถิติ</th><th class="kp-r">รวม</th><th class="kp-c">เกรด</th><th>ผล</th><th></th></tr></thead><tbody>';
     r.rows.forEach(function(x){
-      h+='<tr><td>'+x.seq+'</td><td><b>'+esc(x.nick||x.name)+'</b></td><td>'+esc(x.dept||'—')+'</td>'+
+      h+='<tr><td>'+x.seq+'</td><td>'+kpWhoCell(x)+'</td><td>'+esc(x.dept||'—')+'</td>'+
         '<td>'+esc(x.posName||x.pos)+'</td><td class="kp-r">'+kpNum(x.perf)+'</td><td class="kp-r">'+kpNum(x.trait)+'</td>'+
         '<td class="kp-r">'+kpNum(x.stat)+'</td><td class="kp-r"><b>'+kpNum(x.total)+'</b></td>'+
         '<td class="kp-c">'+kpGradePill(x.grade)+'</td><td>'+esc(x.result||'—')+'</td>'+
@@ -13144,7 +13164,7 @@ function kpImpDraw(){
     h+='<div class="card"><div class="section-h">รายคน</div><div class="kp-bar">'+
       '<select class="inp" onchange="kpRepWho(this.value)"><option value="">— เลือกพนักงาน —</option>'+
       (r.people||[]).map(function(p){
-        return '<option value="'+esc(p.code)+'"'+(p.code===KPRP_CODE?' selected':'')+'>'+esc(p.nick||p.name)+'</option>';
+        return '<option value="'+esc(p.code)+'"'+(p.code===KPRP_CODE?' selected':'')+'>'+kpWhoOpt(p)+'</option>';
       }).join('')+'</select></div>';
     if(r.person&&r.person.history&&r.person.history.length){
       h+='<div class="kp-wrap"><table class="kp-tbl"><thead><tr><th>เดือน</th><th class="kp-r">KPI</th>'+
@@ -14243,7 +14263,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260911-1017';
+  var APP_BUILD='20260911-1036';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
