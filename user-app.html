@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260911-2141">
+<link rel="stylesheet" href="user.css?v=20260911-2257">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1327,6 +1327,12 @@
   .kp-mix-ok{ background:#3FA96B; }
   .kp-mixlb{ font-size:11.5px; color:#7A8699; margin-top:4px; display:flex; flex-wrap:wrap; gap:4px 10px; }
   .kp-mixlb b{ font-weight:600; color:#42506A; }
+  /* ใบที่อนุมัติแล้ว — โชว์ข้อมูลครบแต่เห็นชัดว่าแตะไม่ได้ (พี่กี้ 11 ก.ย. 69) */
+  .kp-robar{ display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 10px; margin:10px 0 2px;
+    padding:9px 12px; border-radius:10px; background:#EEF1F5; color:#42506A; font-weight:600; font-size:13.5px; }
+  .kp-rosub{ font-weight:400; color:#7A8699; font-size:12.5px; }
+  .kp-ro .kp-in input, .kp-ro .kp-in select{ background:#F4F6FA; color:#42506A; border-style:dashed; cursor:default; }
+  .kp-ro .kp-in input:disabled, .kp-ro .kp-in select:disabled{ opacity:1; -webkit-text-fill-color:#42506A; }
   .kp-mixlb i{ width:8px; height:8px; border-radius:3px; display:inline-block; margin-right:4px; }
   /* บาร์คะแนนในตารางรอบ — ยืมหน้าตาจากกราฟคะแนนรายคนหน้าภาพรวม (.kp-htrack/.kp-hfill/.kp-hval)
      ที่นั่นสีมาจากตารางเกรดที่ backend ส่งมาให้ · หน้านี้ไม่มีตารางเกรดในผลลัพธ์
@@ -12345,15 +12351,19 @@
      ป้ายบนปุ่มบอกทุกครั้งว่ากำลังจะทำกับกี่คน (kpSelSync อัปเดตทันทีที่ติ๊ก) */
   function kpRoundActions(r){
     if(!r.opened) return '';
-    var h='';
+    var h='', mix=kpStageMix(r);
     if(r.status!=='อนุมัติ'&&String(r.status||'').indexOf('ข้อมูลเดิม')<0){
       h+='<button class="btn btn-ghost btn-sm" onclick="kpOpenRound()">อัปเดตรายชื่อในรอบ</button>'+
          '<button class="btn btn-sm" id="kpb-send" data-lb="ส่งอนุมัติ" onclick="kpSubmitPicked()">ส่งอนุมัติทั้งรอบ</button>';
-      /* ส่งไปแล้วต้องดึงกลับมาแก้ได้เอง ไม่ต้องรอผู้ดูแล (พี่กี้ 11 ก.ย. 69) */
-      if(r.status==='รออนุมัติ') h+='<button class="btn btn-ghost btn-sm" id="kpb-undo" data-lb="ยกเลิกส่ง" onclick="kpUndoPicked()">ยกเลิกส่งทั้งรอบ</button>';
+      /* ส่งไปแล้วต้องดึงกลับมาแก้ได้เอง ไม่ต้องรอผู้ดูแล (พี่กี้ 11 ก.ย. 69)
+         🔴 ดูจาก "มีคนอยู่ขั้นนั้นไหม" ไม่ใช่สถานะหัวรอบ — ตั้งแต่ส่ง/อนุมัติรายคนได้
+         หัวรอบอาจยังเป็น "กำลังดำเนินการ" ทั้งที่มีคนรออนุมัติหรืออนุมัติไปแล้ว */
+      if(mix.wait) h+='<button class="btn btn-ghost btn-sm" id="kpb-undo" data-lb="ยกเลิกส่ง" onclick="kpUndoPicked()">ยกเลิกส่งทั้งรอบ</button>';
       if(r.isAdmin) h+='<button class="btn btn-primary btn-sm" id="kpb-appr" data-lb="อนุมัติ" onclick="kpApprovePicked()">อนุมัติทั้งรอบ</button>';
+      /* อนุมัติไปแล้วบางคน ยังต้องเปิดแก้ไขคนนั้นได้ โดยไม่ต้องรอให้ทั้งรอบอนุมัติครบก่อน */
+      if(r.isAdmin&&mix.ok) h+='<button class="btn btn-ghost btn-sm" id="kpb-open" data-lb="เปิดแก้ไข" onclick="kpReopenPicked()">เปิดแก้ไขทั้งรอบ</button>';
     } else if(r.isAdmin){
-      h+='<button class="btn btn-ghost btn-sm" onclick="kpReopenRound()">เปิดแก้ไข</button>';
+      h+='<button class="btn btn-ghost btn-sm" id="kpb-open" data-lb="เปิดแก้ไข" onclick="kpReopenPicked()">เปิดแก้ไขทั้งรอบ</button>';
     }
     if(!r.isAdmin&&r.status==='รออนุมัติ') h+='<span class="m-hint">ส่งให้ผู้ดูแลระบบตรวจแล้ว รออนุมัติค่ะ</span>';
     return h;
@@ -12398,7 +12408,7 @@
      (พี่กี้เจอมาแล้ว: ติ๊กคนเดียวแล้วกดปุ่มบน กลายเป็นส่งทั้งรอบ) */
   function kpSelSync(){
     var n=kpPickedCodes().length;
-    ['kpb-send','kpb-undo','kpb-appr'].forEach(function(id){
+    ['kpb-send','kpb-undo','kpb-appr','kpb-open'].forEach(function(id){
       var b=document.getElementById(id); if(!b) return;
       var lb=b.getAttribute('data-lb')||'';
       b.textContent = n ? (lb+' '+n+' คนที่เลือก') : (lb+'ทั้งรอบ');
@@ -12421,6 +12431,11 @@
   function kpUndoPicked(){
     var c=kpPickedCodes();
     kpReopenRound(c,1);                       // ตัวนี้ถามยืนยันเองอยู่แล้ว
+  }
+  /** เปิดแก้ไข = ปลดล็อกใบที่อนุมัติแล้วให้กลับไปแก้ได้ (สิทธิ์ผู้ดูแล)
+      ติ๊กไว้ = เฉพาะคนนั้น · ไม่ติ๊ก = ทั้งรอบ — กติกาเดียวกับปุ่มอื่น */
+  function kpReopenPicked(){
+    kpReopenRound(kpPickedCodes(), 0);        // ตัวนั้นถามยืนยันเองอยู่แล้ว
   }
   function kpApprovePicked(){
     var c=kpPickedCodes();
@@ -12453,7 +12468,9 @@
     var only=(codes||[]).join(',');
     var msg = undo ? (only?'ยกเลิกส่งอนุมัติเฉพาะคนที่เลือก แล้วกลับไปแก้ไขได้เลยไหมคะ'
                           :'ยกเลิกส่งอนุมัติทั้งรอบ แล้วกลับไปแก้ไขได้เลยไหมคะ')
-                   : 'เปิดแก้ไขรอบนี้? คะแนนจะถูกคิดใหม่เมื่ออนุมัติอีกครั้งค่ะ';
+                   : (only?('เปิดแก้ไขเฉพาะ '+codes.length+' คนที่ติ๊กไว้ไหมคะ? ใบจะกลับไปแก้ได้ '+
+                            'และคะแนนจะถูกคิดใหม่ตอนอนุมัติอีกครั้ง')
+                          : 'เปิดแก้ไขทั้งรอบ (ทุกคนในตาราง) ไหมคะ? คะแนนจะถูกคิดใหม่เมื่ออนุมัติอีกครั้งค่ะ');
     if(!confirm(msg)) return;
     busy(undo?'กำลังยกเลิกส่ง…':'กำลังเปิดแก้ไข…');
     jsonp({ action:'waKpiRoundReopen', uid:UID, ym:KPR_YM, codes:only }).then(function(r){
@@ -12475,6 +12492,7 @@
       KPF=r; KPR_YM=r.ym;
       if(KPF_BY==='pos'&&!KPS_POS&&r.positions.length) KPS_POS=r.positions[0].code;
       kpPaint('kpifill', kpFillHtml(r));
+      kpRoLock();
       /* เติมค่าเฉลี่ยของคะแนนเดิมให้เห็นตั้งแต่เปิดหน้า (ไม่ต้องรอผู้ใช้พิมพ์ก่อน) */
       setTimeout(function(){
         document.querySelectorAll('.kp-tavg[data-avg]').forEach(function(el){
@@ -12536,6 +12554,8 @@
     var h='<div class="section-h">ประเมินผลงาน · '+esc(kpLabel(r.ym))+'</div>';
     h+='<div class="card"><div class="kp-bar">'+
       '<button class="btn btn-ghost btn-sm" title="กลับไปตารางรายชื่อในรอบ" onclick="kpGo(\'kpiround\')">← กลับรอบการประเมิน</button>'+
+      /* ดูใบคนอื่น/คะแนนรวมทั้งรอบ (พี่กี้ 11 ก.ย. 69: อนุมัติแล้วอยากเด้งไปดูคนอื่นต่อ) */
+      '<button class="btn btn-ghost btn-sm" title="ดูคะแนนและสถานะของทุกคนในรอบ" onclick="kpGo(\'kpimanage\')">จัดการผลการประเมิน →</button>'+
       kpYmPicker(r.ym,[],'kpFillYm')+
       '<select class="inp" onchange="kpFillBy(this.value)">'+
         '<option value="pos"'+(KPF_BY==='pos'?' selected':'')+'>เลือกตามตำแหน่ง</option>'+
@@ -12561,7 +12581,7 @@
     if(!r.forms.length){ h+='<div class="card"><div class="emptybox">ยังไม่มีคนในเงื่อนไขที่เลือก</div></div>'; return h; }
 
     r.forms.forEach(function(f,i){
-      h+='<div class="card kp-form" data-code="'+esc(f.emp.code)+'" data-owner="'+esc(f.owner)+'">'+
+      h+='<div class="card kp-form'+(f.locked?' kp-ro':'')+'" data-code="'+esc(f.emp.code)+'" data-owner="'+esc(f.owner)+'">'+
         /* หัวฟอร์มรายคน — ลำดับ + รหัสพนักงาน + ชื่อจริง + ตำแหน่ง แล้วปิดท้ายด้วยกล่องสถานะ
            (พี่กี้ 11 ก.ย. 69: สถานะต้องเด่น เพราะเป็นสิ่งที่ต้องมองก่อนว่าใบนี้แก้ได้ไหม) */
         '<div class="kp-fhead">'+
@@ -12575,9 +12595,12 @@
           '</span>'+
           '<span class="kp-grow"></span>'+kpStatusBox(f.status)+
         '</div>';
+      /* ใบที่ล็อกแล้ว: เดิมขึ้นแต่ข้อความ ไม่เห็นข้อมูลอะไรเลย (พี่กี้ 11 ก.ย. 69: "น่าจะโชว์ว่ากรอก
+         อะไรไว้ แต่กดแก้ไม่ได้ ดีกว่าไม่เห็น") → แสดงตารางเต็มเหมือนเดิม แล้วปิดการแก้ไขทุกช่อง
+         (kpRoLock ตั้ง disabled ให้จริง ๆ หลังวาดเสร็จ ไม่ใช่แค่ CSS ที่หลบด้วยปุ่ม Tab ได้) */
       if(f.locked){
-        h+='<div class="emptybox">ใบนี้'+esc(f.status)+'แล้ว แก้ไขไม่ได้ — ถ้าต้องแก้ ให้ผู้ดูแลกด “เปิดแก้ไข” ที่หน้ารอบการประเมินค่ะ</div></div>';
-        return;
+        h+='<div class="kp-robar">🔒 ใบนี้'+esc(f.status)+'แล้ว — ดูได้อย่างเดียว แก้ไม่ได้'+
+          '<span class="kp-rosub">ถ้าต้องแก้ ให้ผู้ดูแลกด “เปิดแก้ไข” ที่หน้ารอบการประเมินค่ะ</span></div>';
       }
       if(f.metrics){
         h+=kpSecHead(1,'แบบประเมิน KPI',f.pos.weights.perf)+
@@ -12652,11 +12675,14 @@
     /* ปุ่มนี้ "บันทึกสิ่งที่กรอก" เท่านั้น ไม่ได้เปลี่ยนสถานะใบ (พี่กี้กดแล้วงง 11 ก.ย. 69
        ว่าทำไมสถานะยังเป็นกำลังดำเนินการ) — ชื่อเดิม "ส่งข้อมูล" ฟังเหมือนส่งไปอนุมัติ
        สถานะเปลี่ยนแค่ตอนกด "ส่งอนุมัติ" ทั้งรอบ แล้วผู้ดูแล "อนุมัติ" เท่านั้น */
+    var roAll = r.forms.every(function(x){ return x.locked; });
     h+='<div class="card">'+
-      (KPF_SAVED?('<div class="kp-note-ok">✅ บันทึกแล้วเมื่อ '+esc(KPF_SAVED)+
+      (KPF_SAVED&&!roAll?('<div class="kp-note-ok">✅ บันทึกแล้วเมื่อ '+esc(KPF_SAVED)+
         ' · ยังแก้ไขและกดบันทึกซ้ำได้ · สถานะจะเปลี่ยนเป็น “รออนุมัติ” เมื่อกดส่งอนุมัติที่หน้ารอบการประเมิน</div>'):'')+
-      '<div class="kp-bar"><button class="btn btn-primary" onclick="kpFillSave()">บันทึกข้อมูล</button>'+
-      '<span class="m-hint" style="margin:0">บันทึกทุกคนที่แสดงอยู่ในหน้านี้พร้อมกัน · ยังไม่ใช่การส่งอนุมัติ</span>'+
+      '<div class="kp-bar">'+
+      (roAll?'<span class="m-hint" style="margin:0">🔒 ทุกใบในหน้านี้อนุมัติแล้ว — ดูได้อย่างเดียว</span>'
+            :('<button class="btn btn-primary" onclick="kpFillSave()">บันทึกข้อมูล</button>'+
+              '<span class="m-hint" style="margin:0">บันทึกทุกคนที่แสดงอยู่ในหน้านี้พร้อมกัน · ยังไม่ใช่การส่งอนุมัติ</span>'))+
       '<span class="kp-grow"></span>'+
       '<button class="btn btn-ghost btn-sm" title="ไปหน้ารอบเพื่อส่งอนุมัติทั้งรอบ" onclick="kpGo(\'kpiround\')">ไปส่งอนุมัติ →</button>'+
       '</div></div>';
@@ -12695,6 +12721,16 @@
     var el=row.querySelector('.kp-tavg');
     if(el) el.textContent = n ? (Math.round(sum/n*100)/100).toFixed(2) : '—';
   }
+  /** ใบที่อนุมัติแล้ว = ดูได้ แก้ไม่ได้ (พี่กี้ 11 ก.ย. 69)
+      ต้อง disabled ของจริง ไม่ใช่แค่ CSS — ไม่งั้นกด Tab เข้าไปพิมพ์ได้อยู่ดี
+      ช่องที่ปิดไว้จะไม่ถูกส่งกลับหลังบ้านอยู่แล้ว (kpFillSave ข้ามการ์ด .kp-ro) */
+  function kpRoLock(){
+    document.querySelectorAll('.kp-form.kp-ro').forEach(function(card){
+      card.querySelectorAll('input,select,textarea').forEach(function(el){
+        el.disabled=true; el.setAttribute('tabindex','-1');
+      });
+    });
+  }
   function kpIn(field,val,on){
     if(!on) return '<span class="m-hint">—</span>';
     return '<input class="inp kp-nm" type="text" inputmode="decimal" data-f="'+field+'" value="'+
@@ -12706,6 +12742,7 @@
     kpCacheBust();   // บันทึกแล้วต้องอ่านของใหม่เสมอ
     var payload={ perf:[], stat:[], trait:[] };
     document.querySelectorAll('.kp-form').forEach(function(card){
+      if(card.classList.contains('kp-ro')) return;      // ใบที่อนุมัติแล้ว ไม่ส่งไปบันทึก
       var code=card.getAttribute('data-code'), owner=card.getAttribute('data-owner')||code;
       card.querySelectorAll('tr[data-metric]').forEach(function(tr){
         var row={ code:code, owner:owner, metricId:tr.getAttribute('data-metric') }, any=false;
@@ -14729,7 +14766,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260911-2141';
+  var APP_BUILD='20260911-2257';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
