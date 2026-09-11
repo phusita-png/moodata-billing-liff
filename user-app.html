@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260911-1515">
+<link rel="stylesheet" href="user.css?v=20260911-1524">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1440,6 +1440,15 @@
   .kp-tab.on{ color:var(--red); border-bottom-color:var(--red); font-weight:700; }
   .kp-tabs{ border-bottom-width:2px; }
   .kp-sub{ font-size:13px; font-weight:600; color:#3d5164; margin:12px 0 6px; }
+  /* หัวข้อส่วนในหน้ากรอกข้อมูล — แถบสีธีมของห้อง + เลขกำกับ ให้เห็นขอบเขตของแต่ละส่วนชัด */
+  .kp-sech{ display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    background:var(--red-tint,#EDE9FE); border-left:5px solid var(--red,#7C3AED);
+    border-radius:10px; padding:10px 14px; margin:18px 0 8px; }
+  .kp-sech-no{ display:inline-flex; align-items:center; justify-content:center;
+    width:24px; height:24px; border-radius:999px; background:var(--red,#7C3AED);
+    color:#fff; font-weight:800; font-size:13px; flex:0 0 auto; }
+  .kp-sech-t{ font-size:16px; font-weight:800; color:var(--red-deep,#5B21B6); letter-spacing:.2px; }
+  .kp-sech-w{ font-size:12.5px; font-weight:600; color:#5b6b7d; }
   /* ปุ่มลบชุดเกณฑ์ — อยู่ข้างปุ่ม "แก้ไข" จึงใช้ปุ่มโปร่งตัวหนังสือแดง ไม่ใช่ปุ่มแดงเต็มใบ
      (ปุ่มแดงเต็มใบจะเด่นกว่าปุ่มหลักของการ์ด ทั้งที่เป็นงานที่ทำนาน ๆ ครั้ง) */
   .kp-danger{ color:#DC2626; }
@@ -12306,6 +12315,15 @@
       '<button class="btn btn-ghost btn-sm"'+(i>=list.length-1?' disabled':'')+' onclick="kpFillStep(1)">คนถัดไป ›</button>';
   }
 
+  /** หัวข้อส่วนในหน้ากรอก (พี่กี้ 11 ก.ย. 69: อยากให้เห็นว่าแยกเป็นส่วน ๆ ชัด ๆ)
+      เดิมเป็นตัวหนังสือเทาบรรทัดเดียว กลืนไปกับตารางจนไม่รู้ว่าส่วนไหนจบส่วนไหนเริ่ม
+      ใช้สีธีมของห้อง (--red*) ไม่ฮาร์ดโค้ดม่วง · เลขกำกับบอกว่ามีทั้งหมดกี่ส่วน */
+  function kpSecHead(no,title,weight,extra){
+    return '<div class="kp-sech"><span class="kp-sech-no">'+no+'</span>'+
+      '<span class="kp-sech-t">'+esc(title)+'</span>'+
+      '<span class="kp-sech-w">น้ำหนักรวม '+weight+' คะแนน</span>'+(extra||'')+'</div>';
+  }
+
   function kpFillHtml(r){
     var h='<div class="section-h">ประเมินผลงาน · '+esc(kpLabel(r.ym))+'</div>';
     h+='<div class="card"><div class="kp-bar">'+
@@ -12343,14 +12361,14 @@
         return;
       }
       if(f.metrics){
-        h+='<div class="kp-sub">แบบประเมิน KPI · น้ำหนักรวม '+f.pos.weights.perf+' คะแนน</div>'+
-          '<div class="kp-wrap"><table class="kp-tbl kp-in"><thead><tr><th>ตัวชี้วัด</th><th class="kp-r">เป้า</th>'+
+        h+=kpSecHead(1,'แบบประเมิน KPI',f.pos.weights.perf)+
+          '<div class="kp-wrap"><table class="kp-tbl kp-in"><thead><tr><th class="kp-c">ลำดับ</th><th>ตัวชี้วัด</th><th class="kp-r">เป้า</th>'+
           '<th class="kp-r">ผลที่ทำได้</th><th class="kp-r">วันทำงาน</th><th class="kp-r">ฐาน</th><th class="kp-r">จำนวนที่ผิด</th>'+
           '<th class="kp-r">ระดับ 1-5</th><th class="kp-c">ไม่ประเมิน</th><th class="kp-r">%</th></tr></thead><tbody>';
-        f.metrics.forEach(function(m){
+        f.metrics.forEach(function(m,mi){
           var v=m.value||{};
           var need=function(t){ return m.type===t; };
-          h+='<tr data-metric="'+esc(m.id)+'"><td>'+esc(m.name)+'<div class="m-hint">น้ำหนัก '+m.weight+'</div></td>'+
+          h+='<tr data-metric="'+esc(m.id)+'"><td class="kp-c">'+(mi+1)+'</td><td>'+esc(m.name)+'<div class="m-hint">น้ำหนัก '+m.weight+'</div></td>'+
             '<td class="kp-r">'+(m.target||'—')+' '+esc(m.unit||'')+'</td>'+
             '<td class="kp-r">'+kpIn('total',v.total,(need('daily')||need('monthly')))+'</td>'+
             '<td class="kp-r">'+kpIn('workDays',v.workDays,need('daily'))+'</td>'+
@@ -12367,15 +12385,15 @@
           return '<option value="'+esc(x.id||('R'+(idx+1)))+'">ผู้ประเมินคนที่ '+(idx+1)+(x.id?(' ('+esc(x.id)+')'):'')+
             (x.weight?(' · น้ำหนัก '+x.weight+'%'):'')+'</option>';
         }).join('');
-        h+='<div class="kp-sub">คุณลักษณะส่วนบุคคล · น้ำหนักรวม '+f.pos.weights.trait+' คะแนน</div>'+
+        h+=kpSecHead(2,'คุณลักษณะส่วนบุคคล',f.pos.weights.trait)+
           '<div class="kp-bar"><span class="m-hint">บันทึกในนาม</span><select class="inp kp-rater">'+raterOpts+
           '<option value="'+esc(UID)+'">ตัวฉันเอง</option></select></div>'+
-          '<div class="kp-wrap"><table class="kp-tbl kp-in"><thead><tr><th>หัวข้อ</th><th class="kp-r">คะแนนเต็ม</th>'+
+          '<div class="kp-wrap"><table class="kp-tbl kp-in"><thead><tr><th class="kp-c">ลำดับ</th><th>หัวข้อ</th><th class="kp-r">คะแนนเต็ม</th>'+
           '<th class="kp-r">น้ำหนัก</th><th class="kp-r">ให้คะแนน</th></tr></thead><tbody>';
-        f.traitItems.forEach(function(t){
+        f.traitItems.forEach(function(t,ti){
           var cur='';
           for(var rid in (f.traitScores||{})){ if(f.traitScores[rid][t.id]) cur=f.traitScores[rid][t.id]; }
-          h+='<tr data-trait="'+esc(t.id)+'"><td>'+esc(t.name)+'<div class="m-hint">'+esc(t.group||'')+'</div></td>'+
+          h+='<tr data-trait="'+esc(t.id)+'"><td class="kp-c">'+(ti+1)+'</td><td>'+esc(t.name)+'<div class="m-hint">'+esc(t.group||'')+'</div></td>'+
             '<td class="kp-r">'+t.full+'</td><td class="kp-r">'+(t.weight||'—')+'</td>'+
             '<td class="kp-r"><input class="inp kp-nm" type="number" min="1" max="5" step="1" data-f="score" value="'+(cur||'')+'"></td></tr>';
         });
@@ -12383,13 +12401,13 @@
       }
       if(f.statRules){
         var sc=f.statCounts;
-        h+='<div class="kp-sub">สถิติการมาทำงาน · น้ำหนักรวม '+f.pos.weights.stat+' คะแนน'+
-          (sc===null?' <span class="kp-dot kp-dot-no">ยังไม่เคยกรอกเดือนนี้</span>':'')+'</div>'+
-          '<div class="kp-wrap"><table class="kp-tbl kp-in"><thead><tr><th>หัวข้อ</th><th class="kp-r">หักครั้งละ</th>'+
+        h+=kpSecHead(3,'สถิติการมาทำงาน',f.pos.weights.stat,
+            (sc===null?'<span class="kp-dot kp-dot-no">ยังไม่เคยกรอกเดือนนี้</span>':''))+
+          '<div class="kp-wrap"><table class="kp-tbl kp-in"><thead><tr><th class="kp-c">ลำดับ</th><th>หัวข้อ</th><th class="kp-r">หักครั้งละ</th>'+
           '<th class="kp-r">จำนวน</th></tr></thead><tbody>';
-        f.statRules.forEach(function(s){
+        f.statRules.forEach(function(s,si){
           var val = sc ? sc[s.key] : '';
-          h+='<tr data-stat="'+esc(s.key)+'"><td>'+esc(s.label||s.key)+'</td><td class="kp-r">'+s.deduct+'</td>'+
+          h+='<tr data-stat="'+esc(s.key)+'"><td class="kp-c">'+(si+1)+'</td><td>'+esc(s.label||s.key)+'</td><td class="kp-r">'+s.deduct+'</td>'+
             '<td class="kp-r"><input class="inp kp-nm" type="number" min="0" step="1" data-f="cnt" value="'+(val===''||val===undefined?'':val)+'"></td></tr>';
         });
         h+='</tbody></table></div><div class="m-hint">ยังไม่กรอก ≠ 0 — ถ้าเดือนนี้ไม่มีสาย/ขาด ให้ใส่ 0 ทุกช่องแล้วกดบันทึกค่ะ</div>';
@@ -14421,7 +14439,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260911-1515';
+  var APP_BUILD='20260911-1524';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
