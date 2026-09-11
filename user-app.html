@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260911-1552">
+<link rel="stylesheet" href="user.css?v=20260911-1936">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -12415,9 +12415,10 @@
         /* หัวฟอร์มรายคน — ลำดับ + รหัสพนักงาน + ชื่อจริง + ตำแหน่ง แล้วปิดท้ายด้วยกล่องสถานะ
            (พี่กี้ 11 ก.ย. 69: สถานะต้องเด่น เพราะเป็นสิ่งที่ต้องมองก่อนว่าใบนี้แก้ได้ไหม) */
         '<div class="kp-fhead">'+
-          '<span class="kp-fav">'+esc(kpWhoRaw(f.emp).replace(/^(นางสาว|นาง|นาย)/,'').substr(0,1)||'?')+'</span>'+
+          /* วงกลมเป็น "ลำดับในรอบ" ไม่ใช่อักษรย่อ (พี่กี้ 11 ก.ย. 69: อักษรย่อดูเหมือนที่ว่างรอใส่รูป) */
+          '<span class="kp-fav">'+(kpSeqOf(r,f.emp.code)||(i+1))+'</span>'+
           '<span class="kp-fhead-who">'+
-            '<span class="kp-fhead-top">คนที่ '+(kpSeqOf(r,f.emp.code)||(i+1))+'<span class="kp-fcode">'+esc(f.emp.code)+'</span></span>'+
+            '<span class="kp-fhead-top">แบบประเมินรอบ '+esc(kpLabel(r.ym))+'<span class="kp-fcode">'+esc(f.emp.code)+'</span></span>'+
             '<span class="kp-fhead-nm">'+kpWhoOpt(f.emp)+'</span>'+
             '<span class="kp-fhead-sub">'+esc(f.pos.name||f.pos.code)+
               (f.emp.dept?(' · '+esc(f.emp.dept)):'')+'</span>'+
@@ -12437,7 +12438,7 @@
           var v=m.value||{};
           var need=function(t){ return m.type===t; };
           h+='<tr data-metric="'+esc(m.id)+'"><td class="kp-c">'+(mi+1)+'</td><td>'+esc(m.name)+'<div class="m-hint">น้ำหนัก '+m.weight+'</div></td>'+
-            '<td class="kp-r">'+(m.target||'—')+' '+esc(m.unit||'')+'</td>'+
+            '<td class="kp-r">'+(m.target?esc(kpFmtNum(m.target)):'—')+' '+esc(m.unit||'')+'</td>'+
             '<td class="kp-r">'+kpIn('total',v.total,(need('daily')||need('monthly')))+'</td>'+
             '<td class="kp-r">'+kpIn('workDays',v.workDays,need('daily'))+'</td>'+
             '<td class="kp-r">'+kpIn('base',v.base,(need('ratio')||need('cap')))+'</td>'+
@@ -12476,7 +12477,7 @@
         f.statRules.forEach(function(s,si){
           var val = sc ? sc[s.key] : '';
           h+='<tr data-stat="'+esc(s.key)+'"><td class="kp-c">'+(si+1)+'</td><td>'+esc(s.label||s.key)+'</td><td class="kp-r">'+s.deduct+'</td>'+
-            '<td class="kp-r"><input class="inp kp-nm" type="number" min="0" step="1" data-f="cnt" value="'+(val===''||val===undefined?'':val)+'"></td></tr>';
+            '<td class="kp-r"><input class="inp kp-nm" type="text" inputmode="decimal" data-f="cnt" value="'+esc(kpFmtNum(val))+'" oninput="kpNumInput(this)"></td></tr>';
         });
         h+='</tbody></table></div><div class="m-hint">ยังไม่กรอก ≠ 0 — ถ้าเดือนนี้ไม่มีสาย/ขาด ให้ใส่ 0 ทุกช่องแล้วกดบันทึกค่ะ</div>';
       }
@@ -12486,9 +12487,30 @@
       '<span class="m-hint">บันทึกทุกคนที่แสดงอยู่ในหน้านี้พร้อมกัน</span></div>';
     return h;
   }
+  /* ── ตัวเลขในช่องกรอกใส่จุลภาคคั่นหลักพัน (พี่กี้ 11 ก.ย. 69: จะได้รู้ว่าเลขหลักอะไร) ──
+     🔴 ต้องเป็น type="text" — input type="number" ไม่ยอมรับจุลภาค (ค่าจะกลายเป็นว่าง)
+        ใช้ inputmode="decimal" เพื่อให้มือถือยังเด้งแป้นตัวเลขเหมือนเดิม
+        🔴 ทุกจุดที่อ่านค่าไปคำนวณ/บันทึก ต้องผ่าน kpRawNum ถอดจุลภาคออกก่อนเสมอ */
+  function kpFmtNum(v){
+    var s=String(v===null||v===undefined?'':v).replace(/,/g,'').trim();
+    if(s==='') return '';
+    var neg=s.charAt(0)==='-'; if(neg) s=s.slice(1);
+    var p=s.split('.');
+    p[0]=p[0].replace(/\B(?=(\d{3})+(?!\d))/g,',');
+    return (neg?'-':'')+p.join('.');
+  }
+  function kpRawNum(v){ return String(v===null||v===undefined?'':v).replace(/,/g,'').trim(); }
+  /** จัดรูปแบบระหว่างพิมพ์ + รักษาตำแหน่งเคอร์เซอร์ (ไม่งั้นพิมพ์แล้วเคอร์เซอร์กระโดดไปท้ายช่อง) */
+  function kpNumInput(el){
+    var pos=el.selectionStart||0, before=el.value.length;
+    el.value=kpFmtNum(el.value.replace(/[^0-9.,-]/g,''));
+    var d=el.value.length-before;
+    try{ el.setSelectionRange(Math.max(0,pos+d), Math.max(0,pos+d)); }catch(e){}
+  }
   function kpIn(field,val,on){
     if(!on) return '<span class="m-hint">—</span>';
-    return '<input class="inp kp-nm" type="number" step="any" data-f="'+field+'" value="'+(val===''||val===null||val===undefined?'':val)+'">';
+    return '<input class="inp kp-nm" type="text" inputmode="decimal" data-f="'+field+'" value="'+
+      esc(kpFmtNum(val))+'" oninput="kpNumInput(this)">';
   }
 
   /** เก็บค่าจากทุกฟอร์มในหน้า → ส่งครั้งเดียว (POST เพราะ payload ยาวเกิน URL) */
@@ -12502,14 +12524,17 @@
         tr.querySelectorAll('input[data-f]').forEach(function(inp){
           var f=inp.getAttribute('data-f');
           if(f==='skip'){ if(inp.checked){ row.skip=true; any=true; } return; }
-          if(String(inp.value).trim()!==''){ row[f]=inp.value; any=true; }
+          /* 🔴 ถอดจุลภาคก่อนส่งเสมอ — ช่องกรอกเป็น text แล้ว "189,052" ฝั่งชีตจะอ่านเป็นตัวเลขไม่ได้ */
+          var raw=kpRawNum(inp.value);
+          if(raw!==''){ row[f]=raw; any=true; }
         });
         if(any) payload.perf.push(row);
       });
       var st={ code:code }, stAny=false;
       card.querySelectorAll('tr[data-stat]').forEach(function(tr){
         var inp=tr.querySelector('input[data-f="cnt"]');
-        if(inp&&String(inp.value).trim()!==''){ st[tr.getAttribute('data-stat')]=inp.value; stAny=true; }
+        var cnt=inp?kpRawNum(inp.value):'';
+        if(cnt!==''){ st[tr.getAttribute('data-stat')]=cnt; stAny=true; }
       });
       if(stAny) payload.stat.push(st);
       var sel=card.querySelector('.kp-rater'), scores={}, scAny=false;
@@ -14507,7 +14532,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260911-1552';
+  var APP_BUILD='20260911-1936';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
