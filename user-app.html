@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260911-1046">
+<link rel="stylesheet" href="user.css?v=20260911-1125">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1293,6 +1293,19 @@
      🔴 ต้องเขียน "ทีหลัง" .kp-mcell — จำเพาะเท่ากัน ตัวหลังชนะ
         เขียนไว้ก่อนเมื่อไหร่ color ของ .kp-mcell จะทับ แล้วจุดจะโผล่ในกล่อง (เจอมาแล้ว) */
   .kp-mwait{ background:#E7ECF3; border:1px dashed #cbd5e2; color:transparent; }
+  /* ── ช่องส่วนการประเมินในตารางรอบ (พี่กี้ 11 ก.ย. 69) ──
+     ใช้สีธีมของห้อง (--red = สีแบรนด์ของห้องนั้น · ห้องลูกค้าได้ม่วงอัตโนมัติ)
+     ห้ามฮาร์ดโค้ดสีม่วง ไม่งั้นห้องอื่นที่ธีมคนละสีจะเพี้ยน (เทส test-theme.js ล็อกไว้) */
+  .kp-secbox{ display:inline-block; min-width:64px; padding:4px 10px; border-radius:9px;
+    font-size:12.5px; font-weight:600; line-height:1.3; }
+  .kp-secbox-off{ background:#EEF1F5; color:#A7B0BE; }                      /* ไม่ต้องประเมินส่วนนี้ */
+  .kp-secbox-doing{ background:var(--red-tint,#EDE9FE); color:var(--red-deep,#5B21B6); }   /* กำลังกรอก */
+  .kp-secbox-done{ background:var(--red,#7C3AED); color:#fff; }             /* ครบแล้ว */
+  /* บาร์ % ความสำเร็จ — ใช้ทั้งในการ์ดสรุปรอบและใต้สถานะรายคน */
+  .kp-prog{ height:6px; border-radius:999px; background:#E8EDF3; overflow:hidden; margin:6px 0 0; }
+  .kp-prog-in{ height:100%; background:var(--red,#7C3AED); border-radius:999px; transition:width .25s; }
+  .kp-prog-full .kp-prog-in{ background:#3FA96B; }
+  .kp-prog-lb{ font-size:11.5px; color:#7A8699; margin-top:3px; }
   .kp-tbars{ display:flex; gap:14px; align-items:flex-end; padding:6px 2px 0; }
   .kp-tcol{ flex:1; display:flex; flex-direction:column; align-items:center; gap:5px; }
   .kp-tval{ font-size:12.5px; font-weight:700; color:#3d5164; font-variant-numeric:tabular-nums; }
@@ -11968,29 +11981,35 @@
     var h='<div class="card">'+kpStepBar(r.status==='กำลังดำเนินการ'?2:3);
     h+='<div class="kp-bar">'+kpYmPicker(r.ym,r.months,'kpRoundYm')+kpStatusPill(r.status)+
       '<span class="kp-grow"></span>'+kpRoundActions(r)+'</div>';
+    /* % ความสำเร็จของทั้งรอบ = คนที่ประเมินครบ ÷ คนในรอบ (พี่กี้ขอบาร์ 11 ก.ย. 69) */
+    var pctRound = r.people ? Math.round(r.ready/r.people*100) : 0;
     h+='<div class="ds-grid">'+
       statCard('พนักงานในรอบนี้', r.people+' คน', r.openedBy?('เปิดรอบโดย '+r.openedBy):'')+
-      statCard('ประเมินครบแล้ว', r.ready+' คน','พร้อมส่งอนุมัติ')+
-      statCard('ยังไม่ครบ', r.notReady+' คน', r.notReady?'ดูช่องสีแดงในตาราง':'ครบทุกคนแล้ว')+
-      statCard('สถานะรอบ', r.status||'—', r.approvedBy?('อนุมัติโดย '+r.approvedBy):'')+'</div></div>';
+      statCard('ประเมินครบ', r.ready+' คน','พร้อมส่งอนุมัติ')+
+      statCard('ประเมินไม่ครบ', r.notReady+' คน', r.notReady?'ยังกรอกไม่ครบทุกส่วน':'ครบทุกคนแล้ว')+
+      statCard('สถานะรอบ', r.status||'—', r.approvedBy?('อนุมัติโดย '+r.approvedBy):'', '',
+        kpProgBar(pctRound, r.ready+'/'+r.people+' คน · '+pctRound+'%'))+'</div></div>';
 
-    h+='<div class="card"><div class="section-h">ฟอร์มประเมินรายคน</div>'+kpWeightWarn(r)+
-      '<div class="m-hint">กดชื่อพนักงานเพื่อเปิดฟอร์มกรอกข้อมูล · แต่ละคนมีส่วนที่ต้องประเมินต่างกันตามตำแหน่ง</div>';
-    h+='<div class="kp-wrap"><table class="kp-tbl"><thead><tr><th>ลำดับ</th><th>พนักงาน</th><th>ตำแหน่ง</th>'+
-      '<th class="kp-c">ส่วนที่ต้องประเมิน</th><th class="kp-c">น้ำหนักรวม</th><th>ความคืบหน้า</th>'+
-      '<th class="kp-c">สถานะ</th><th></th></tr></thead><tbody>';
-    if(!r.rows.length) h+='<tr><td colspan="8"><div class="emptybox">ยังไม่มีใครในรอบนี้</div></td></tr>';
+    h+='<div class="card"><div class="kp-bar"><div class="section-h" style="margin:0">ฟอร์มประเมินรายคน</div>'+
+      '<span class="kp-grow"></span>'+
+      '<button class="btn btn-ghost btn-sm" onclick="kpOpenBook()">เปิดดูใบประเมินเดือนนี้</button></div>'+kpWeightWarn(r)+
+      '<div class="m-hint">กดชื่อพนักงานเพื่อเปิดฟอร์มกรอกข้อมูล · ช่องเทา = ตำแหน่งนี้ไม่ต้องประเมินส่วนนั้น</div>';
+    h+='<div class="kp-wrap"><table class="kp-tbl"><thead><tr><th>ลำดับ</th><th class="kp-c">รหัสพนักงาน</th>'+
+      '<th>ชื่อ-นามสกุล</th><th>ชื่อเล่น</th><th>ตำแหน่ง</th>'+
+      '<th class="kp-c">การปฏิบัติงาน (KPI)</th><th class="kp-c">คุณลักษณะส่วนบุคคล</th>'+
+      '<th class="kp-c">สถิติการมาทำงาน</th>'+
+      '<th class="kp-c">น้ำหนักรวม</th><th class="kp-c">สถานะ</th><th></th></tr></thead><tbody>';
+    if(!r.rows.length) h+='<tr><td colspan="11"><div class="emptybox">ยังไม่มีใครในรอบนี้</div></td></tr>';
     r.rows.filter(function(x){ return x.hasDoc; }).forEach(function(x,i){
-      var secs=x.sections||[], done=secs.filter(function(sx){ return sx.ok; }).length;
       h+='<tr><td>'+(i+1)+'</td>'+
-        '<td><button class="kp-link" onclick="kpFillOne(\''+esc(x.code)+'\')"><b>'+kpWhoOpt(x)+'</b></button>'+
-          '<div class="m-hint">'+esc(x.dept||'')+'</div></td>'+
+        '<td class="kp-c"><span class="kp-code">'+esc(x.code)+'</span></td>'+
+        '<td><button class="kp-link" onclick="kpFillOne(\''+esc(x.code)+'\')"><b>'+kpWho(x)+'</b></button></td>'+
+        '<td>'+esc(x.nick||'—')+'</td>'+
         '<td>'+esc(x.posName||x.pos)+'</td>'+
-        '<td class="kp-c"><b>'+done+'/'+secs.length+'</b> ส่วน</td>'+
+        kpSecCell(x,'perf')+kpSecCell(x,'trait')+kpSecCell(x,'stat')+
         '<td class="kp-c">'+kpWeightCell(x.weight)+'</td>'+
-        '<td>'+kpSecChips(secs)+'</td>'+
-        '<td class="kp-c">'+kpStatusPill(x.status)+'</td>'+
-        '<td><button class="btn btn-ghost btn-sm" onclick="kpFillOne(\''+esc(x.code)+'\')">กรอกผล</button></td></tr>';
+        '<td class="kp-c">'+kpStatusPill(x.status)+kpProgBar(kpRowPct(x))+'</td>'+
+        '<td><button class="btn btn-ghost btn-sm" onclick="kpFillOne(\''+esc(x.code)+'\')">กรอกข้อมูล</button></td></tr>';
     });
     h+='</tbody></table></div>';
     h+='<div class="kp-bar"><button class="btn btn-ghost btn-sm" onclick="kpStep(1)">+ เพิ่มคนเข้ารอบ</button></div></div>';
@@ -12023,6 +12042,42 @@
   }
 
   /** ชิปบอกส่วนที่ต้องประเมิน + ความครบ (เขียว=ครบ · แดง=ยังขาด) */
+  /* ── 3 ช่องส่วนการประเมิน (พี่กี้เคาะ 11 ก.ย. 69) ──
+     แสดงครบทั้ง 3 ช่องทุกแถวเสมอ ไม่ว่าตำแหน่งนั้นจะต้องประเมินส่วนนั้นหรือไม่
+     (เดิมโชว์เฉพาะส่วนที่มี → แต่ละแถวมีป้ายไม่เท่ากัน อ่านเทียบกันไม่ได้)
+       เทา  = ตำแหน่งนี้ไม่ต้องประเมินส่วนนั้น
+       ม่วงอ่อน = ต้องประเมิน แต่ยังกรอกไม่ครบ (บอกจำนวนที่กรอกแล้ว)
+       ม่วง = กรอกครบแล้ว */
+  var KP_SEC_LB = { perf:'การปฏิบัติงาน (KPI)', trait:'คุณลักษณะส่วนบุคคล', stat:'สถิติการมาทำงาน' };
+  function kpSecOf(x,key){
+    var secs=(x&&x.sections)||[];
+    for(var i=0;i<secs.length;i++) if(secs[i].key===key) return secs[i];
+    return null;
+  }
+  function kpSecCell(x,key){
+    var s=kpSecOf(x,key);
+    if(!s) return '<td class="kp-c"><span class="kp-secbox kp-secbox-off" title="ตำแหน่งนี้ไม่ต้องประเมิน'+esc(KP_SEC_LB[key]||'')+'">—</span></td>';
+    var txt=(s.total>1)?(s.done+'/'+s.total):(s.ok?'ครบ':'ยังไม่กรอก');
+    return '<td class="kp-c"><span class="kp-secbox '+(s.ok?'kp-secbox-done':'kp-secbox-doing')+'">'+esc(txt)+'</span></td>';
+  }
+  /** % ความสำเร็จของคนหนึ่งคน — นับเฉพาะส่วนที่ตำแหน่งนั้นต้องประเมินจริง */
+  function kpRowPct(x){
+    var secs=(x&&x.sections)||[], need=0, got=0;
+    secs.forEach(function(s){
+      var t=(s.total>1)?s.total:1;
+      need+=t; got+=(s.total>1)?Math.min(s.done||0,t):(s.ok?1:0);
+    });
+    return need?Math.round(got/need*100):0;
+  }
+  /** บาร์ % เล็ก ๆ — ใช้ทั้งในการ์ดสรุปและในช่องสถานะของแต่ละแถว */
+  function kpProgBar(pct,label){
+    var p=Math.max(0,Math.min(100,Math.round(pct||0)));
+    return '<div class="kp-prog'+(p>=100?' kp-prog-full':'')+'"><div class="kp-prog-in" style="width:'+p+'%"></div></div>'+
+      (label?('<div class="kp-prog-lb">'+esc(label)+'</div>'):'<div class="kp-prog-lb">'+p+'%</div>');
+  }
+  /** ปุ่มมุมขวาบน — เปิดใบประเมินของเดือนที่กำลังดูอยู่ (เล่มรวมทั้งรอบ) */
+  function kpOpenBook(){ KPRP_TAB='book'; kpGo('kpireport'); }
+
   function kpSecChips(secs){
     if(!secs||!secs.length) return '<span class="m-hint">ไม่มีส่วนที่ต้องประเมิน</span>';
     return '<div class="kp-secs">'+secs.map(function(x){
@@ -13191,9 +13246,13 @@ function kpImpDraw(){
     return h;
   }
 
-  function statCard(label,value,sub,cls){
+  /* 🔴 extra ต้องอยู่ "ท้ายสุด" — พารามิเตอร์ที่ 4 คือ cls ซึ่งมีที่เรียกอยู่แล้ว 21 จุดทั่วระบบ
+     (สลับลำดับเมื่อไหร่ = ชื่อคลาสไหลไปเป็น HTML แล้วการ์ดทั้งระบบเสียสีเงียบ ๆ)
+     extra = HTML ต่อท้ายในการ์ด เช่นบาร์ % — ต้องประกอบมาแล้ว ไม่ esc ให้ */
+  function statCard(label,value,sub,cls,extra){
     return '<div class="ds-stat '+(cls||'')+'"><div class="ds-lb">'+esc(label)+'</div>'+
-      '<div class="ds-vl">'+esc(value)+'</div>'+(sub?'<div class="ds-sub">'+esc(sub)+'</div>':'')+'</div>';
+      '<div class="ds-vl">'+esc(value)+'</div>'+(sub?'<div class="ds-sub">'+esc(sub)+'</div>':'')+
+      (extra||'')+'</div>';
   }
   /** กราฟแท่งแนวโน้ม — สเกลจากค่าสูงสุด (ทุกเดือน 0 = แท่งเทาทั้งแถว ไม่ใช่หารศูนย์) */
   function barChart(items,labelFn,valFn){
@@ -14274,7 +14333,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260911-1046';
+  var APP_BUILD='20260911-1125';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
