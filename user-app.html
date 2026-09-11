@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260911-2010">
+<link rel="stylesheet" href="user.css?v=20260911-2023">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -12040,10 +12040,15 @@
     }
     return h+'</div>';
   }
-  function kpPickOne(el){ KPR_PICK[el.getAttribute('data-code')]=el.checked; }
+  /* 🔴 KPR_PICK เริ่มเป็น null และถูกตั้งเป็น {} เฉพาะตอนเข้าหน้า "เลือกคนเข้ารอบ" (ขั้น 1)
+     ตารางขั้น 2 ก็มีช่องติ๊กด้วย ถ้าไม่เคยผ่านขั้น 1 มาก่อน การเขียนลง null จะพังทันที
+     อาการที่พี่กี้เจอ 11 ก.ย. 69: กด "เลือกทั้งหมด" แล้วติ๊กแค่แถวแรก (พังตั้งแต่แถวแรก)
+     → ทุกที่ที่แตะ KPR_PICK ต้องมั่นใจว่ามีของก่อน */
+  function kpPickBag(){ if(!KPR_PICK) KPR_PICK={}; return KPR_PICK; }
+  function kpPickOne(el){ kpPickBag()[el.getAttribute('data-code')]=el.checked; }
   function kpPickAll(on){
     document.querySelectorAll('.kp-pick').forEach(function(el){
-      el.checked=!!on; KPR_PICK[el.getAttribute('data-code')]=!!on;
+      el.checked=!!on; kpPickBag()[el.getAttribute('data-code')]=!!on;
     });
   }
   function kpStep(n){ KPR_STEP=n; kpLoadRound(VIEW); }
@@ -12074,8 +12079,8 @@
       '<th>ชื่อ-นามสกุล</th><th>ชื่อเล่น</th><th>ตำแหน่ง</th>'+
       '<th class="kp-c">การปฏิบัติงาน (KPI)</th><th class="kp-c">คุณลักษณะส่วนบุคคล</th>'+
       '<th class="kp-c">สถิติการมาทำงาน</th>'+
-      '<th class="kp-c">น้ำหนักรวม</th><th>คะแนน</th><th class="kp-c">สถานะ</th><th></th></tr></thead><tbody>';
-    if(!r.rows.length) h+='<tr><td colspan="13"><div class="emptybox">ยังไม่มีใครในรอบนี้</div></td></tr>';
+      '<th class="kp-c">น้ำหนักรวม</th><th class="kp-c">สถานะ</th><th></th></tr></thead><tbody>';
+    if(!r.rows.length) h+='<tr><td colspan="12"><div class="emptybox">ยังไม่มีใครในรอบนี้</div></td></tr>';
     r.rows.filter(function(x){ return x.hasDoc; }).forEach(function(x,i){
       h+='<tr><td class="kp-c">'+
           (String(x.status||'').indexOf('อนุมัติ')===0&&x.status!=='รออนุมัติ'?''
@@ -12087,7 +12092,6 @@
         '<td>'+esc(x.posName||x.pos)+'</td>'+
         kpSecCell(x,'perf')+kpSecCell(x,'trait')+kpSecCell(x,'stat')+
         '<td class="kp-c">'+kpWeightCell(x.weight)+'</td>'+
-        kpScoreBarCell(x)+
         '<td class="kp-c">'+kpStatusPill(x.status)+kpProgBar(kpRowPct(x), kpPctNote(x.status,kpRowPct(x)))+'</td>'+
         '<td><button class="btn btn-ghost btn-sm" onclick="kpFillOne(\''+esc(x.code)+'\')">กรอกข้อมูล</button></td></tr>';
     });
@@ -12256,7 +12260,9 @@
         if(!has[k]){ h+='<td class="kp-r"><span class="m-hint">—</span></td>'; return; }   // คนนี้ไม่มีส่วนนี้
         h+=kpScoreCell(x[k], has[k].ok);
       });
-      h+='<td class="kp-r"><b>'+kpNum(x.total)+'</b></td>'+
+      /* คะแนนรวมย้ายมาแสดงเป็นบาร์ที่หน้านี้ (พี่กี้ 11 ก.ย. 69: หน้ารอบแน่นเกิน
+         คะแนนควรอยู่หน้าอนุมัติซึ่งเป็นจุดที่ต้องอ่านคะแนนจริง ๆ) */
+      h+=kpScoreBarCell(x)+
         '<td class="kp-c">'+kpGradePill(x.grade)+'</td>'+
         '<td class="kp-c">'+kpStatusPill(x.status)+'</td>'+
         '<td><button class="btn btn-ghost btn-sm" onclick="kpFillOne(\''+esc(x.code)+'\')">เปิดฟอร์ม</button>'+
@@ -14631,7 +14637,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260911-2010';
+  var APP_BUILD='20260911-2023';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
