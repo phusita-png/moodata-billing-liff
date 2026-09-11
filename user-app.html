@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260911-1953">
+<link rel="stylesheet" href="user.css?v=20260911-2010">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -2033,9 +2033,11 @@
     kpientry:'<svg viewBox="0 0 24 24"><path d="M4 6.5h9M4 11h9M4 15.5h5"/><path d="M14.8 17.8l4.8-4.8a1.6 1.6 0 0 1 2.3 2.3l-4.8 4.8-3 .7z"/></svg>',
     kpiscore:'<svg viewBox="0 0 24 24"><path d="M12 4.2l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.5-4.8 2.5.9-5.4L4.2 9.9l5.4-.8z"/></svg>',
     kpidoc:'<svg viewBox="0 0 24 24"><path d="M6.5 3.5h7.2l4.3 4.3v12.7a1 1 0 0 1-1 1h-10.5a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1z"/><path d="M13.5 3.7V8h4.3"/><path d="M8.8 14.4l2 2 4-4.4"/></svg>',
-    kpiround:'<svg viewBox="0 0 24 24"><rect x="3.8" y="4.6" width="16.4" height="15.4" rx="2"/><path d="M8.2 3v3.2M15.8 3v3.2M3.8 9.4h16.4"/><path d="M8 13.2h4M8 16.4h6"/></svg>',
-    kpifill:'<svg viewBox="0 0 24 24"><path d="M4 6.5h8M4 11h8M4 15.5h4.5"/><path d="M14.6 17.6l4.9-4.9a1.6 1.6 0 0 1 2.3 2.3l-4.9 4.9-3.1.8z"/></svg>',
-    kpimanage:'<svg viewBox="0 0 24 24"><rect x="3.2" y="4.5" width="17.6" height="15" rx="2"/><path d="M3.2 9h17.6M9.4 9v10.5"/><path d="M12.4 12.4h5.2M12.4 15.8h3.4"/></svg>',
+    /* 3 เมนูนี้เป็นลำดับขั้นของงานเดียวกัน (เปิดรอบ → กรอก → จัดการผล)
+       ไอคอนภาพไม่ได้บอกลำดับ พี่กี้เลยขอเป็นเลข 1-2-3 (11 ก.ย. 69) */
+    kpiround:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><text x="12" y="16.1" text-anchor="middle" font-size="11.5" font-weight="800" fill="currentColor" stroke="none" font-family="inherit">1</text></svg>',
+    kpifill:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><text x="12" y="16.1" text-anchor="middle" font-size="11.5" font-weight="800" fill="currentColor" stroke="none" font-family="inherit">2</text></svg>',
+    kpimanage:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><text x="12" y="16.1" text-anchor="middle" font-size="11.5" font-weight="800" fill="currentColor" stroke="none" font-family="inherit">3</text></svg>',
     kpirule:'<svg viewBox="0 0 24 24"><path d="M12 4v16"/><path d="M6 8h12"/><path d="M6 8l-2.6 5.2a3 3 0 0 0 5.2 0z"/><path d="M18 8l-2.6 5.2a3 3 0 0 0 5.2 0z"/></svg>',
     kpimetric:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4.2"/><circle cx="12" cy="12" r="1.1"/></svg>',
     kpitrait:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.2"/><path d="M14.9 9.1l-1.6 4.2-4.2 1.6 1.6-4.2z"/></svg>',
@@ -12066,14 +12068,19 @@
          ยังอยู่ที่หน้า "จัดการผลการประเมิน" ซึ่งเป็นจุดที่ต้องรู้ก่อนอนุมัติจริง ๆ
          และคอลัมน์ "น้ำหนักรวม" ในตารางข้างล่างก็ขึ้นแดงบอกเป็นรายตำแหน่งอยู่แล้ว */
       '<div class="m-hint">กดชื่อพนักงานเพื่อเปิดฟอร์มกรอกข้อมูล · ช่องเทา = ตำแหน่งนี้ไม่ต้องประเมินส่วนนั้น</div>';
-    h+='<div class="kp-wrap"><table class="kp-tbl"><thead><tr><th>ลำดับ</th><th class="kp-c">รหัสพนักงาน</th>'+
+    h+='<div class="kp-wrap"><table class="kp-tbl"><thead><tr>'+
+      '<th class="kp-c"><input type="checkbox" onclick="kpPickAll(this.checked)" title="เลือกทั้งหมด"></th>'+
+      '<th>ลำดับ</th><th class="kp-c">รหัสพนักงาน</th>'+
       '<th>ชื่อ-นามสกุล</th><th>ชื่อเล่น</th><th>ตำแหน่ง</th>'+
       '<th class="kp-c">การปฏิบัติงาน (KPI)</th><th class="kp-c">คุณลักษณะส่วนบุคคล</th>'+
       '<th class="kp-c">สถิติการมาทำงาน</th>'+
       '<th class="kp-c">น้ำหนักรวม</th><th>คะแนน</th><th class="kp-c">สถานะ</th><th></th></tr></thead><tbody>';
-    if(!r.rows.length) h+='<tr><td colspan="12"><div class="emptybox">ยังไม่มีใครในรอบนี้</div></td></tr>';
+    if(!r.rows.length) h+='<tr><td colspan="13"><div class="emptybox">ยังไม่มีใครในรอบนี้</div></td></tr>';
     r.rows.filter(function(x){ return x.hasDoc; }).forEach(function(x,i){
-      h+='<tr><td>'+(i+1)+'</td>'+
+      h+='<tr><td class="kp-c">'+
+          (String(x.status||'').indexOf('อนุมัติ')===0&&x.status!=='รออนุมัติ'?''
+            :'<input type="checkbox" class="kp-pick" data-code="'+esc(x.code)+'" onclick="kpPickOne(this)"'+(KPR_PICK&&KPR_PICK[x.code]?' checked':'')+'>')+
+        '</td><td>'+(i+1)+'</td>'+
         '<td class="kp-c"><span class="kp-code">'+esc(x.code)+'</span></td>'+
         '<td><button class="kp-link" onclick="kpFillOne(\''+esc(x.code)+'\')"><b>'+kpWho(x)+'</b></button></td>'+
         '<td>'+esc(x.nick||'—')+'</td>'+
@@ -12085,7 +12092,14 @@
         '<td><button class="btn btn-ghost btn-sm" onclick="kpFillOne(\''+esc(x.code)+'\')">กรอกข้อมูล</button></td></tr>';
     });
     h+='</tbody></table></div>';
-    h+='<div class="kp-bar"><button class="btn btn-ghost btn-sm" onclick="kpStep(1)">+ เพิ่มคนเข้ารอบ</button></div></div>';
+    /* คำสั่งกับ "คนที่ติ๊กไว้" — พี่กี้ 11 ก.ย. 69: เดิมกดทีเดียวไปหมดทั้งรอบ เลือกบางคนไม่ได้
+       ไม่ติ๊กเลย = ปุ่มบนหัวการ์ดทำทั้งรอบเหมือนเดิม */
+    h+='<div class="kp-bar">'+
+      '<button class="btn btn-sm" onclick="kpSubmitPicked()">ส่งอนุมัติเฉพาะที่เลือก</button>'+
+      '<button class="btn btn-ghost btn-sm" onclick="kpUndoPicked()">ยกเลิกส่งเฉพาะที่เลือก</button>'+
+      '<span class="m-hint" style="margin:0">ติ๊กหน้าชื่อคนที่ต้องการก่อน · ไม่ติ๊ก = ใช้ปุ่มด้านบนซึ่งทำทั้งรอบ</span>'+
+      '<span class="kp-grow"></span>'+
+      '<button class="btn btn-ghost btn-sm" onclick="kpStep(1)">+ เพิ่มคนเข้ารอบ</button></div></div>';
     return h;
   }
   /** เตือนตำแหน่งที่ตั้งค่าน้ำหนักยังไม่ครบ 100 (พี่กี้: ตอนตั้งค่ายังไม่เห็นว่าครบไหม)
@@ -12268,6 +12282,8 @@
     if(r.status!=='อนุมัติ'&&String(r.status||'').indexOf('ข้อมูลเดิม')<0){
       h+='<button class="btn btn-ghost btn-sm" onclick="kpOpenRound()">อัปเดตรายชื่อในรอบ</button>'+
          '<button class="btn btn-sm" onclick="kpSubmitRound()">ส่งอนุมัติ</button>';
+      /* ส่งไปแล้วต้องดึงกลับมาแก้ได้เอง ไม่ต้องรอผู้ดูแล (พี่กี้ 11 ก.ย. 69) */
+      if(r.status==='รออนุมัติ') h+='<button class="btn btn-ghost btn-sm" onclick="kpReopenRound([],1)">ยกเลิกส่งอนุมัติ</button>';
       if(r.isAdmin) h+='<button class="btn btn-primary btn-sm" onclick="kpApproveRound(0)">อนุมัติ</button>';
     } else if(r.isAdmin){
       h+='<button class="btn btn-ghost btn-sm" onclick="kpReopenRound()">เปิดแก้ไข</button>';
@@ -12290,15 +12306,33 @@
       toast(msg); KPR_STEP=2; KPR_PICK=null; kpLoadRound(VIEW);
     }).catch(function(e){ toast(e.message); });
   }
-  function kpSubmitRound(){
+  /* ส่งอนุมัติ — ไม่ระบุรายชื่อ = ทั้งรอบ · ระบุ = เฉพาะคนที่ติ๊กไว้ (พี่กี้ 11 ก.ย. 69) */
+  function kpSubmitRound(codes){
     kpCacheBust();   // บันทึกแล้วต้องอ่านของใหม่เสมอ
-    busy('กำลังส่งอนุมัติ…');
-    jsonp({ action:'waKpiRoundSubmit', uid:UID, ym:KPR_YM }).then(function(r){
+    var only=(codes||[]).join(',');
+    busy(only?'กำลังส่งอนุมัติที่เลือก…':'กำลังส่งอนุมัติ…');
+    jsonp({ action:'waKpiRoundSubmit', uid:UID, ym:KPR_YM, codes:only }).then(function(r){
       if(!r||!r.ok) return toast(r&&r.error||'ส่งไม่สำเร็จ');
       busyOk('ส่งอนุมัติแล้ว');
-      toast(r.missing&&r.missing.length?('ส่งแล้ว แต่ยังกรอกไม่ครบ: '+r.missing.join(', ')):'ส่งอนุมัติเรียบร้อย');
+      toast((r.missing&&r.missing.length?('ส่งแล้ว '+r.sent+' ใบ · ยังกรอกไม่ครบ: '+r.missing.join(', '))
+        :('ส่งอนุมัติแล้ว '+r.sent+' ใบ'))+(r.left?(' · ยังเหลืออีก '+r.left+' คนที่ยังไม่ได้ส่ง'):''));
+      KPR_PICK={};
       kpLoadRound(VIEW);
     }).catch(function(e){ toast(e.message); });
+  }
+  /** คนที่ติ๊กไว้ตอนนี้ */
+  function kpPickedCodes(){
+    var out=[]; for(var k in (KPR_PICK||{})) if(KPR_PICK[k]) out.push(k); return out;
+  }
+  function kpSubmitPicked(){
+    var c=kpPickedCodes();
+    if(!c.length) return toast('ติ๊กเลือกคนที่จะส่งก่อนค่ะ');
+    kpSubmitRound(c);
+  }
+  function kpUndoPicked(){
+    var c=kpPickedCodes();
+    if(!c.length) return toast('ติ๊กเลือกคนที่จะยกเลิกส่งก่อนค่ะ');
+    kpReopenRound(c,1);
   }
   function kpApproveRound(force){
     kpCacheBust();   // บันทึกแล้วต้องอ่านของใหม่เสมอ
@@ -12314,13 +12348,19 @@
       toast('อนุมัติ '+r.approved+' ใบ · ลูกค้าเห็นคะแนนได้แล้ว'); kpLoadRound(VIEW);
     }).catch(function(e){ toast(e.message); });
   }
-  function kpReopenRound(){
+  /** ดึงกลับมาแก้ — ใช้ทั้ง "ยกเลิกส่งอนุมัติ" (ยังไม่อนุมัติ) และ "เปิดแก้ไข" (อนุมัติแล้ว)
+      เบื้องหลังเป็นเส้นเดียวกัน ต่างแค่ข้อความกับสิทธิ์ที่หลังบ้านตรวจให้ */
+  function kpReopenRound(codes,undo){
     kpCacheBust();   // บันทึกแล้วต้องอ่านของใหม่เสมอ
-    if(!confirm('เปิดแก้ไขรอบนี้? คะแนนจะถูกคิดใหม่เมื่ออนุมัติอีกครั้งค่ะ')) return;
-    busy('กำลังเปิดแก้ไข…');
-    jsonp({ action:'waKpiRoundReopen', uid:UID, ym:KPR_YM }).then(function(r){
+    var only=(codes||[]).join(',');
+    var msg = undo ? (only?'ยกเลิกส่งอนุมัติเฉพาะคนที่เลือก แล้วกลับไปแก้ไขได้เลยไหมคะ'
+                          :'ยกเลิกส่งอนุมัติทั้งรอบ แล้วกลับไปแก้ไขได้เลยไหมคะ')
+                   : 'เปิดแก้ไขรอบนี้? คะแนนจะถูกคิดใหม่เมื่ออนุมัติอีกครั้งค่ะ';
+    if(!confirm(msg)) return;
+    busy(undo?'กำลังยกเลิกส่ง…':'กำลังเปิดแก้ไข…');
+    jsonp({ action:'waKpiRoundReopen', uid:UID, ym:KPR_YM, codes:only }).then(function(r){
       if(!r||!r.ok) return toast(r&&r.error||'ทำไม่สำเร็จ');
-      busyOk('เปิดแก้ไขแล้ว'); kpLoadRound(VIEW);
+      busyOk(undo?'ยกเลิกส่งแล้ว':'เปิดแก้ไขแล้ว'); KPR_PICK={}; kpLoadRound(VIEW);
     }).catch(function(e){ toast(e.message); });
   }
 
@@ -14591,7 +14631,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260911-1953';
+  var APP_BUILD='20260911-2010';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
