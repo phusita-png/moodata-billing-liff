@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260911-1535">
+<link rel="stylesheet" href="user.css?v=20260911-1542">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1458,13 +1458,20 @@
     color:#fff; font-weight:800; font-size:13px; flex:0 0 auto; }
   .kp-sech-t{ font-size:16px; font-weight:800; color:var(--red-deep,#5B21B6); letter-spacing:.2px; }
   .kp-sech-w{ font-size:12.5px; font-weight:600; color:#5b6b7d; }
-  /* หัวฟอร์มรายคนในหน้ากรอก — ลำดับ · รหัส · ชื่อ · ตำแหน่ง · กล่องสถานะชิดขวา */
-  .kp-fhead{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:2px 0 10px; }
-  .kp-fhead-no{ display:inline-flex; align-items:center; justify-content:center;
-    width:26px; height:26px; border-radius:8px; background:#EEF1F5; color:#5b6b7d;
-    font-weight:800; font-size:13px; flex:0 0 auto; }
-  .kp-fhead-nm{ font-size:17px; font-weight:800; color:var(--ink); }
-  .kp-fhead-sub{ font-size:13px; color:#5b6b7d; }
+  /* หัวฟอร์มรายคนในหน้ากรอก — แถบสีเต็มความกว้าง (พี่กี้ 11 ก.ย. 69: ต้องรู้ทันทีว่าประเมินใครอยู่)
+     ใช้ไล่เฉดสีแบรนด์ของห้อง (--red*) ห้ามฮาร์ดโค้ดม่วง · ตัวหนังสือขาวบนพื้นเข้ม */
+  .kp-fhead{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin:0 0 14px;
+    padding:14px 18px; border-radius:14px; color:#fff;
+    background:linear-gradient(135deg,var(--red2,#4A90F0) 0%,var(--red,#1B72E8) 55%,var(--red-deep,#155EC2) 100%); }
+  .kp-fav{ width:48px; height:48px; border-radius:14px; flex:0 0 auto;
+    display:inline-flex; align-items:center; justify-content:center;
+    background:rgba(255,255,255,.22); font-size:21px; font-weight:800; }
+  .kp-fhead-who{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .kp-fhead-top{ display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:700; opacity:.92; }
+  .kp-fcode{ background:rgba(255,255,255,.22); border-radius:7px; padding:1px 8px;
+    font-size:12px; font-weight:700; letter-spacing:.3px; }
+  .kp-fhead-nm{ font-size:22px; font-weight:800; line-height:1.25; }
+  .kp-fhead-sub{ font-size:13.5px; opacity:.92; }
   /* กล่องสถานะ — ใหญ่กว่าป้ายเล็กเพื่อให้เห็นก่อนเริ่มกรอกว่าใบนี้ยังแก้ได้ไหม */
   .kp-stbox{ display:inline-flex; align-items:center; gap:8px; padding:7px 14px;
     border-radius:11px; font-size:14px; border:1px solid transparent; }
@@ -12400,11 +12407,13 @@
         /* หัวฟอร์มรายคน — ลำดับ + รหัสพนักงาน + ชื่อจริง + ตำแหน่ง แล้วปิดท้ายด้วยกล่องสถานะ
            (พี่กี้ 11 ก.ย. 69: สถานะต้องเด่น เพราะเป็นสิ่งที่ต้องมองก่อนว่าใบนี้แก้ได้ไหม) */
         '<div class="kp-fhead">'+
-          '<span class="kp-fhead-no">'+(i+1)+'</span>'+
-          '<span class="kp-code">'+esc(f.emp.code)+'</span>'+
-          '<span class="kp-fhead-nm">'+kpWhoOpt(f.emp)+'</span>'+
-          '<span class="kp-fhead-sub">'+esc(f.pos.name||f.pos.code)+
-            (f.emp.dept?(' · '+esc(f.emp.dept)):'')+'</span>'+
+          '<span class="kp-fav">'+esc(kpWhoRaw(f.emp).replace(/^(นางสาว|นาง|นาย)/,'').substr(0,1)||'?')+'</span>'+
+          '<span class="kp-fhead-who">'+
+            '<span class="kp-fhead-top">คนที่ '+(i+1)+'<span class="kp-fcode">'+esc(f.emp.code)+'</span></span>'+
+            '<span class="kp-fhead-nm">'+kpWhoOpt(f.emp)+'</span>'+
+            '<span class="kp-fhead-sub">'+esc(f.pos.name||f.pos.code)+
+              (f.emp.dept?(' · '+esc(f.emp.dept)):'')+'</span>'+
+          '</span>'+
           '<span class="kp-grow"></span>'+kpStatusBox(f.status)+
         '</div>';
       if(f.locked){
@@ -14490,7 +14499,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260911-1535';
+  var APP_BUILD='20260911-1542';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
