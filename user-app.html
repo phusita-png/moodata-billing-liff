@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260911-1936">
+<link rel="stylesheet" href="user.css?v=20260911-1946">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1460,9 +1460,10 @@
   .kp-sech-w{ font-size:12.5px; font-weight:600; color:#5b6b7d; }
   /* หัวฟอร์มรายคนในหน้ากรอก — แถบสีเต็มความกว้าง (พี่กี้ 11 ก.ย. 69: ต้องรู้ทันทีว่าประเมินใครอยู่)
      ใช้ไล่เฉดสีแบรนด์ของห้อง (--red*) ห้ามฮาร์ดโค้ดม่วง · ตัวหนังสือขาวบนพื้นเข้ม */
+  /* สีเดียวทั้งก้อน ไม่ไล่เฉด (พี่กี้ 11 ก.ย. 69: ฝั่งซ้ายจางจนอ่านไม่ชัด)
+     ใช้เฉดเข้มสุดของธีม = ปลายด้านขวาของไล่เฉดเดิม */
   .kp-fhead{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin:0 0 14px;
-    padding:14px 18px; border-radius:14px; color:#fff;
-    background:linear-gradient(135deg,var(--red2) 0%,var(--red) 55%,var(--red-deep) 100%); }
+    padding:14px 18px; border-radius:14px; color:#fff; background:var(--red-deep); }
   .kp-fav{ width:48px; height:48px; border-radius:14px; flex:0 0 auto;
     display:inline-flex; align-items:center; justify-content:center;
     background:rgba(255,255,255,.22); font-size:21px; font-weight:800; }
@@ -1472,6 +1473,9 @@
     font-size:12px; font-weight:700; letter-spacing:.3px; }
   .kp-fhead-nm{ font-size:22px; font-weight:800; line-height:1.25; }
   .kp-fhead-sub{ font-size:13.5px; opacity:.92; }
+  /* หัวคอลัมน์ผู้ประเมินในตารางคุณลักษณะ — บอกบทบาทกับน้ำหนักใต้หัวข้อ */
+  .kp-rlb{ font-size:11.5px; font-weight:600; color:#7A8699; margin-top:2px; }
+  .kp-tavg{ font-variant-numeric:tabular-nums; color:var(--red-deep); }
   /* กล่องสถานะ — ใหญ่กว่าป้ายเล็กเพื่อให้เห็นก่อนเริ่มกรอกว่าใบนี้ยังแก้ได้ไหม */
   .kp-stbox{ display:inline-flex; align-items:center; gap:8px; padding:7px 14px;
     border-radius:11px; font-size:14px; border:1px solid transparent; }
@@ -12332,6 +12336,13 @@
       KPF=r; KPR_YM=r.ym;
       if(KPF_BY==='pos'&&!KPS_POS&&r.positions.length) KPS_POS=r.positions[0].code;
       kpPaint('kpifill', kpFillHtml(r));
+      /* เติมค่าเฉลี่ยของคะแนนเดิมให้เห็นตั้งแต่เปิดหน้า (ไม่ต้องรอผู้ใช้พิมพ์ก่อน) */
+      setTimeout(function(){
+        document.querySelectorAll('.kp-tavg[data-avg]').forEach(function(el){
+          var k=String(el.getAttribute('data-avg')||'').split('|');
+          if(k.length===2) kpTraitAvg(k[0],k[1]);
+        });
+      },20);
     });
   }
   function kpFillBy(v){ KPF_BY=v; if(v==='pos'&&!KPS_POS&&KPF&&KPF.positions.length) KPS_POS=KPF.positions[0].code; renderKpiFill(); }
@@ -12450,23 +12461,39 @@
         h+='</tbody></table></div>';
       }
       if(f.traitItems){
-        var raterOpts=f.raters.map(function(x,idx){
-          return '<option value="'+esc(x.id||('R'+(idx+1)))+'">ผู้ประเมินคนที่ '+(idx+1)+(x.id?(' ('+esc(x.id)+')'):'')+
-            (x.weight?(' · น้ำหนัก '+x.weight+'%'):'')+'</option>';
-        }).join('');
-        h+=kpSecHead(2,'คุณลักษณะส่วนบุคคล',f.pos.weights.trait)+
-          '<div class="kp-bar"><span class="m-hint">บันทึกในนาม</span><select class="inp kp-rater">'+raterOpts+
-          '<option value="'+esc(UID)+'">ตัวฉันเอง</option></select></div>'+
-          '<div class="kp-wrap"><table class="kp-tbl kp-in"><thead><tr><th class="kp-c">ลำดับ</th><th>หัวข้อ</th><th class="kp-r">คะแนนเต็ม</th>'+
-          '<th class="kp-r">น้ำหนัก</th><th class="kp-r">ให้คะแนน</th></tr></thead><tbody>';
+        /* ── กรอกได้ทุกผู้ประเมินในตารางเดียว (พี่กี้ 11 ก.ย. 69) ──
+           เดิมมี dropdown "บันทึกในนาม" แล้วกรอกทีละคน — ตำแหน่งที่มีผู้ประเมิน 2 คน
+           ต้องกรอกรอบหนึ่ง สลับ dropdown แล้วกรอกใหม่ทั้งตาราง ทำให้ลืมง่ายและเทียบกันไม่ได้
+           ตอนนี้แยกเป็นคอลัมน์ละผู้ประเมิน + คอลัมน์เฉลี่ยคิดสดให้เห็นทันที
+           ตำแหน่งที่ยังไม่ได้ระบุผู้ประเมินในทะเบียน = เหลือคอลัมน์เดียวเหมือนเดิม (บันทึกในนามตัวเอง) */
+        var raters=(f.raters||[]).filter(function(x){ return String(x.id||'').trim(); });
+        var multi=raters.length>0;
+        var cols=multi?raters:[{ slot:1, id:UID, weight:null, self:true }];
+        h+=kpSecHead(2,'คุณลักษณะส่วนบุคคล',f.pos.weights.trait);
+        if(!multi) h+='<div class="kp-bar"><span class="m-hint">ตำแหน่งนี้ยังไม่ได้ระบุผู้ประเมินในทะเบียนพนักงาน — บันทึกในนามตัวเอง</span></div>';
+        h+='<div class="kp-wrap"><table class="kp-tbl kp-in"><thead><tr><th class="kp-c">ลำดับ</th><th>หัวข้อ</th>'+
+          '<th class="kp-r">คะแนนเต็ม</th><th class="kp-r">น้ำหนัก</th>'+
+          cols.map(function(x,ci){
+            return '<th class="kp-r">'+(x.self?'ให้คะแนน':('ผู้ประเมินคนที่ '+(ci+1)+'<div class="kp-rlb">'+esc(x.id)+
+              (x.weight?(' · '+x.weight+'%'):'')+'</div>'))+'</th>';
+          }).join('')+
+          (multi&&cols.length>1?'<th class="kp-r">เฉลี่ย</th>':'')+
+          '</tr></thead><tbody>';
         f.traitItems.forEach(function(t,ti){
-          var cur='';
-          for(var rid in (f.traitScores||{})){ if(f.traitScores[rid][t.id]) cur=f.traitScores[rid][t.id]; }
-          h+='<tr data-trait="'+esc(t.id)+'"><td class="kp-c">'+(ti+1)+'</td><td>'+esc(t.name)+'<div class="m-hint">'+esc(t.group||'')+'</div></td>'+
-            '<td class="kp-r">'+t.full+'</td><td class="kp-r">'+(t.weight||'—')+'</td>'+
-            '<td class="kp-r"><input class="inp kp-nm" type="number" min="1" max="5" step="1" data-f="score" value="'+(cur||'')+'"></td></tr>';
+          h+='<tr data-trait="'+esc(t.id)+'"><td class="kp-c">'+(ti+1)+'</td><td>'+esc(t.name)+'<div class="kp-nick">'+esc(t.group||'')+'</div></td>'+
+            '<td class="kp-r">'+t.full+'</td><td class="kp-r">'+(t.weight||'—')+'</td>';
+          cols.forEach(function(x){
+            var sc=(f.traitScores||{})[x.id]||{}, cur=sc[t.id]||'';
+            h+='<td class="kp-r"><input class="inp kp-nm" type="number" min="1" max="5" step="1" data-f="score" '+
+              'data-rater="'+esc(x.id)+'" value="'+(cur||'')+'" oninput="kpTraitAvg(\''+esc(f.emp.code)+'\',\''+esc(t.id)+'\')"></td>';
+          });
+          if(multi&&cols.length>1)
+            h+='<td class="kp-r"><b class="kp-tavg" data-avg="'+esc(f.emp.code)+'|'+esc(t.id)+'">—</b></td>';
+          h+='</tr>';
         });
         h+='</tbody></table></div>';
+        if(multi&&cols.length>1)
+          h+='<div class="m-hint">เฉลี่ยคิดจากผู้ประเมินที่กรอกจริงเท่านั้น — คนที่ยังไม่กรอกไม่ถูกนับเป็น 0</div>';
       }
       if(f.statRules){
         var sc=f.statCounts;
@@ -12507,6 +12534,19 @@
     var d=el.value.length-before;
     try{ el.setSelectionRange(Math.max(0,pos+d), Math.max(0,pos+d)); }catch(e){}
   }
+  /** เฉลี่ยคะแนนคุณลักษณะของข้อนั้น — คิดสดตอนพิมพ์ จากผู้ประเมินที่กรอกจริงเท่านั้น
+      (คนที่ยังไม่กรอกไม่นับเป็น 0 — ตรงกับกติกาเกลี่ยน้ำหนักไปหาคนที่กรอกของหลังบ้าน) */
+  function kpTraitAvg(code,item){
+    var row=document.querySelector('.kp-form[data-code="'+code+'"] tr[data-trait="'+item+'"]');
+    if(!row) return;
+    var sum=0,n=0;
+    row.querySelectorAll('input[data-rater]').forEach(function(inp){
+      var v=parseFloat(inp.value);
+      if(!isNaN(v)){ sum+=v; n++; }
+    });
+    var el=row.querySelector('.kp-tavg');
+    if(el) el.textContent = n ? (Math.round(sum/n*100)/100).toFixed(2) : '—';
+  }
   function kpIn(field,val,on){
     if(!on) return '<span class="m-hint">—</span>';
     return '<input class="inp kp-nm" type="text" inputmode="decimal" data-f="'+field+'" value="'+
@@ -12537,12 +12577,17 @@
         if(cnt!==''){ st[tr.getAttribute('data-stat')]=cnt; stAny=true; }
       });
       if(stAny) payload.stat.push(st);
-      var sel=card.querySelector('.kp-rater'), scores={}, scAny=false;
-      card.querySelectorAll('tr[data-trait]').forEach(function(tr){
-        var inp=tr.querySelector('input[data-f="score"]');
-        if(inp&&String(inp.value).trim()!==''){ scores[tr.getAttribute('data-trait')]=Number(inp.value); scAny=true; }
+      /* คุณลักษณะ — คอลัมน์ละผู้ประเมิน จึงต้องแยกเป็นคนละชุดตอนส่ง
+         (หลังบ้านวน trait[] อยู่แล้ว บันทึกทีเดียวได้หลายผู้ประเมิน) */
+      var byRater={};
+      card.querySelectorAll('tr[data-trait] input[data-f="score"]').forEach(function(inp){
+        var v=String(inp.value).trim(); if(v==='') return;
+        var rid=inp.getAttribute('data-rater')||UID;
+        (byRater[rid]=byRater[rid]||{})[inp.closest('tr').getAttribute('data-trait')]=Number(v);
       });
-      if(scAny) payload.trait.push({ code:code, rater:(sel?sel.value:UID), raterName:NICK, scores:scores });
+      Object.keys(byRater).forEach(function(rid){
+        payload.trait.push({ code:code, rater:rid, raterName:(rid===UID?NICK:rid), scores:byRater[rid] });
+      });
     });
     if(!payload.perf.length&&!payload.stat.length&&!payload.trait.length) return toast('ยังไม่ได้กรอกอะไรเลยค่ะ');
     busy('กำลังบันทึก…');
@@ -14532,7 +14577,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260911-1936';
+  var APP_BUILD='20260911-1946';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
