@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260911-2107">
+<link rel="stylesheet" href="user.css?v=20260911-2141">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1317,6 +1317,17 @@
   .kp-prog-in{ height:100%; background:var(--red); border-radius:999px; transition:width .25s; }
   .kp-prog-full .kp-prog-in{ background:#3FA96B; }
   .kp-prog-lb{ font-size:11.5px; color:#7A8699; margin-top:3px; white-space:nowrap; }
+  /* แถบแบ่งขั้นของรอบ — คนในรอบไม่ได้อยู่ขั้นเดียวกันเสมอ (พี่กี้ถาม 11 ก.ย. 69:
+     "ถ้ามีคนรออนุมัติบางคน สถานะต้องแสดงยังไง") · กว้างตามจำนวนคนในแต่ละขั้น
+     ทุกคนขั้นเดียวกัน = แถบสีเดียวเต็ม อ่านเหมือนบาร์เดิม */
+  .kp-mix{ display:flex; height:8px; border-radius:999px; overflow:hidden; background:#E8EDF3; margin:6px 0 0; }
+  .kp-mix i{ display:block; height:100%; }
+  .kp-mix-doing{ background:var(--red); }
+  .kp-mix-wait{ background:#E0A32E; }
+  .kp-mix-ok{ background:#3FA96B; }
+  .kp-mixlb{ font-size:11.5px; color:#7A8699; margin-top:4px; display:flex; flex-wrap:wrap; gap:4px 10px; }
+  .kp-mixlb b{ font-weight:600; color:#42506A; }
+  .kp-mixlb i{ width:8px; height:8px; border-radius:3px; display:inline-block; margin-right:4px; }
   /* บาร์คะแนนในตารางรอบ — ยืมหน้าตาจากกราฟคะแนนรายคนหน้าภาพรวม (.kp-htrack/.kp-hfill/.kp-hval)
      ที่นั่นสีมาจากตารางเกรดที่ backend ส่งมาให้ · หน้านี้ไม่มีตารางเกรดในผลลัพธ์
      จึงแมปสีจากเกรด 1-5 ด้วยคลาส ใช้จานสีชุดเดียวกับป้ายเกรด (.kp-g1..g5) */
@@ -12068,8 +12079,9 @@
       statCard('พนักงานในรอบนี้', r.people+' คน', r.openedBy?('เปิดรอบโดย '+r.openedBy):'')+
       statCard('ประเมินครบ', r.ready+' คน','พร้อมส่งอนุมัติ')+
       statCard('ประเมินไม่ครบ', r.notReady+' คน', r.notReady?'ยังกรอกไม่ครบทุกส่วน':'ครบทุกคนแล้ว')+
-      statCard('สถานะรอบ', r.status||'—', r.approvedBy?('อนุมัติโดย '+r.approvedBy):'', '',
-        kpProgBar(pctRound, 'กรอกครบ '+r.ready+'/'+r.people+' คน · '+kpPctNote(r.status,pctRound)))+'</div></div>';
+      statCard('สถานะรอบ', kpRoundStatusText(r),
+        (r.approvedBy?('อนุมัติโดย '+r.approvedBy+' · '):'')+'กรอกครบ '+r.ready+'/'+r.people+' คน', '',
+        kpMixBar(r))+'</div></div>';
 
     h+='<div class="card"><div class="kp-bar"><div class="section-h" style="margin:0">ฟอร์มประเมินรายคน</div>'+
       '<span class="kp-grow"></span>'+
@@ -12191,11 +12203,54 @@
   }
   /** % ความสำเร็จของทั้งรอบ — ขั้นกรอกคิดจากสัดส่วนคนที่ประเมินครบ */
   function kpRoundPct(r){
+    /* คนในรอบไปคนละขั้นได้แล้ว (ส่ง/อนุมัติทีละคน) — % ของรอบจึงเฉลี่ยจาก % รายคน
+       ไม่งั้นคนที่อนุมัติจบไปแล้วไม่ถูกนับ บาร์ค้างอยู่ที่เดิมทั้งที่งานเดินไปแล้ว */
+    var rows=((r&&r.rows)||[]).filter(function(x){ return x.hasDoc; });
+    if(rows.length){
+      var sum=0;
+      rows.forEach(function(x){ sum+=kpRowPct(x); });
+      return Math.round(sum/rows.length);
+    }
     var st=String((r&&r.status)||'');
     if(st==='อนุมัติ') return 100;
     if(st==='รออนุมัติ') return KP_PCT_SENT;
     var ppl=(r&&r.people)||0;
     return ppl?Math.round((r.ready/ppl)*KP_PCT_FILLED):0;
+  }
+  /** นับว่าตอนนี้ใครอยู่ขั้นไหนบ้าง — นับเฉพาะคนที่มีใบในรอบ (hasDoc) */
+  function kpStageMix(r){
+    var m={doing:0,wait:0,ok:0,total:0};
+    ((r&&r.rows)||[]).forEach(function(x){
+      if(!x.hasDoc) return;
+      var st=String(x.status||'');
+      m.total++;
+      if(st==='รออนุมัติ') m.wait++;
+      else if(st.indexOf('อนุมัติ')===0||st.indexOf('ข้อมูลเดิม')>=0) m.ok++;
+      else m.doing++;
+    });
+    return m;
+  }
+  /** แถบสถานะของรอบ = แบ่งตามจำนวนคนในแต่ละขั้น + ป้ายบอกจำนวนใต้แถบ
+      พี่กี้ 11 ก.ย. 69: ส่งอนุมัติทีละคนได้แล้ว หัวรอบคำเดียวจึงบอกความจริงไม่หมด */
+  function kpMixBar(r){
+    var m=kpStageMix(r), t=m.total||1;
+    var seg=function(n,cls){ return n?('<i class="'+cls+'" style="width:'+(n/t*100)+'%"></i>'):''; };
+    var lb=[];
+    if(m.doing) lb.push('<span><i class="kp-mix-doing"></i>กำลังกรอก <b>'+m.doing+'</b></span>');
+    if(m.wait)  lb.push('<span><i class="kp-mix-wait"></i>รออนุมัติ <b>'+m.wait+'</b></span>');
+    if(m.ok)    lb.push('<span><i class="kp-mix-ok"></i>อนุมัติแล้ว <b>'+m.ok+'</b></span>');
+    if(!lb.length) lb.push('<span>ยังไม่มีใครในรอบ</span>');
+    /* % ความคืบหน้าทั้งกระบวนการยังต้องมี (พี่กี้สั่งไว้ 11 ก.ย. 69 — กรอก→ส่ง→อนุมัติ) */
+    return '<div class="kp-mix">'+seg(m.ok,'kp-mix-ok')+seg(m.wait,'kp-mix-wait')+seg(m.doing,'kp-mix-doing')+'</div>'+
+      '<div class="kp-mixlb">'+lb.join('')+'<span>จาก '+m.total+' คน · ความคืบหน้า '+kpRoundPct(r)+'%</span></div>';
+  }
+  /** สถานะรอบเป็นคำ — ถ้าคนในรอบคละขั้นกัน ต้องบอกว่าคละ ไม่ใช่โชว์คำเดียวแล้วจบ */
+  function kpRoundStatusText(r){
+    var m=kpStageMix(r), st=String((r&&r.status)||'—');
+    var kinds=(m.doing?1:0)+(m.wait?1:0)+(m.ok?1:0);
+    if(kinds<2) return st;
+    /* คละกัน = บอกด้วยขั้นที่ไปถึงไกลสุด ("คละขั้น" ลูกค้าอ่านแล้วไม่รู้ว่าต้องทำอะไรต่อ) */
+    return m.ok ? 'อนุมัติบางส่วน' : 'ส่งอนุมัติบางส่วน';
   }
   /** คำอธิบายใต้บาร์ — บอกว่าค้างอยู่ขั้นไหน ไม่ใช่แค่ตัวเลขลอย ๆ */
   function kpPctNote(st,pct){
@@ -14674,7 +14729,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260911-2107';
+  var APP_BUILD='20260911-2141';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
