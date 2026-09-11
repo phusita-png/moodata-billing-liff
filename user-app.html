@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260911-0949">
+<link rel="stylesheet" href="user.css?v=20260911-1005">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1340,7 +1340,13 @@
     .kp-form2.kp-emp7 select.inp{ min-width:0; }
   }
   /* ช่องที่ระบบเติมให้เอง (ระดับ) — บอกด้วยสายตาว่าไม่ต้องกรอก */
-  .kp-fld .inp[readonly]{ background:#f6f8fb; color:#5b6b7d; }
+  .kp-fld .inp[readonly],.kp-fld .inp:disabled{ background:#f6f8fb; color:#5b6b7d; }
+  /* แถบสัดส่วนคะแนนของตำแหน่งใหม่ — โผล่เฉพาะตอนเลือก "เพิ่มตำแหน่งใหม่" */
+  .kp-posw{ display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap;
+    border:1px dashed #d7e0ec; border-radius:12px; padding:10px 12px; margin:0 0 12px; background:#fbfcfe; }
+  .kp-posw .kp-lb{ padding-bottom:9px; }
+  .kp-wnum{ display:flex; flex-direction:column; gap:4px; font-size:12.5px; color:#5b6b7d; font-weight:600; }
+  .kp-wnum .inp{ width:92px; }
   /* เล่มส่งลูกค้า — ปุ่ม/แท็บไม่ต้องติดไปกับกระดาษ */
   .kp-bookhead{ text-align:center; padding:18px 0 8px; }
   .kp-bookco{ font-size:15px; color:#5b6b7d; }
@@ -10940,6 +10946,9 @@
      หลังบ้านเก็บ "ผู้ประเมิน" เป็นข้อความอิสระอยู่แล้ว (คีย์ของคะแนนคุณลักษณะ)
      เปลี่ยนเป็นบทบาทได้ทันทีโดยไม่ต้องแตะสูตรคิดคะแนน */
   var KPE_RATERS = ['หัวหน้างาน','ผู้จัดการ','ผู้บริหาร'];
+  /* ระดับของ "ตำแหน่ง" — 3 ระดับที่ระบบใช้จริง (เกณฑ์หักสถิติมาตรฐานทำมาตามนี้)
+     เลือกได้เฉพาะตอนเพิ่มตำแหน่งใหม่ · ตำแหน่งที่มีอยู่แล้วให้ดูอย่างเดียว (ระดับมีแหล่งเดียว) */
+  var KPE_LEVELS = ['เจ้าหน้าที่','หัวหน้า','ผู้จัดการ'];
   var KPE_LV = {};                           // รหัสตำแหน่ง → ระดับ (เติมช่อง "ระดับ" ให้อัตโนมัติ)
   var KPE_KEEP = { team:'', lineUid:'' };    // ช่องที่ซ่อนไว้ — ต้องส่งค่าเดิมกลับ ไม่งั้นบันทึกทับเป็นค่าว่าง
 
@@ -10980,26 +10989,57 @@
       kpFld('รหัสพนักงาน','<input class="inp" id="kpeCode" value="'+esc(e.code)+'"'+(isNew?'':' readonly')+'>')+
       kpFld('ชื่อ-สกุล','<input class="inp" id="kpeName" value="'+esc(e.name)+'">')+
       kpFld('ชื่อเล่น','<input class="inp" id="kpeNick" value="'+esc(e.nick)+'">')+
-      kpFld('ตำแหน่ง','<select class="inp" id="kpePos" onchange="kpeLevelSync()">'+opt(r.positions||[], e.pos, function(x){ return x.code; }, function(x){ return x.name||x.code; })+'</select>')+
+      kpFld('ตำแหน่ง','<select class="inp" id="kpePos" onchange="kpePosPick()">'+opt(r.positions||[], e.pos, function(x){ return x.code; }, function(x){ return x.name||x.code; })+
+        '<option value="__new">➕ เพิ่มตำแหน่งใหม่…</option></select>'+
+        '<input class="inp" id="kpePosNew" style="display:none" placeholder="ชื่อตำแหน่งใหม่">')+
       kpFld('แผนก','<select class="inp" id="kpeDept" onchange="kpeDeptPick()">'+kpOptList(depts,e.dept||'','➕ เพิ่มแผนกใหม่…')+'</select>'+
         '<input class="inp" id="kpeDeptNew" style="display:none" placeholder="พิมพ์ชื่อแผนกใหม่">')+
       kpFld('ผู้ประเมินคนที่ 1','<select class="inp" id="kpeR1">'+kpOptList(KPE_RATERS,e.rater1||'')+'</select>')+
       kpFld('ผู้ประเมินคนที่ 2','<select class="inp" id="kpeR2">'+kpOptList(KPE_RATERS,e.rater2||'')+'</select>')+
       '<div class="kp-formbr"></div>'+
-      kpFld('ระดับ','<input class="inp" id="kpeLevel" value="'+esc(KPE_LV[e.pos]||'')+'" readonly title="ระดับเป็นของตำแหน่ง — เปลี่ยนได้ที่หน้าตัวชี้วัด (KPI)">')+
+      kpFld('ระดับ','<select class="inp" id="kpeLevel" disabled title="ระดับเป็นของตำแหน่ง — เลือกได้ตอนเพิ่มตำแหน่งใหม่เท่านั้น">'+
+        kpOptList(KPE_LEVELS, KPE_LV[e.pos]||'')+'</select>')+
       kpFld('วันเริ่มงาน','<input class="inp" id="kpeStart" type="date" value="'+esc(kpDateVal(e.start))+'">')+
       kpFld('วันสิ้นสุด (ลาออก)','<input class="inp" id="kpeEnd" type="date" value="'+esc(kpDateVal(e.end))+'">')+
       kpFld('สถานะ','<select class="inp" id="kpeStatus"><option value="ใช้งาน"'+(e.status==='ใช้งาน'?' selected':'')+'>ใช้งาน</option>'+
         '<option value="ลาออก"'+(e.status==='ลาออก'?' selected':'')+'>ลาออก</option>'+
         '<option value="พักงาน"'+(e.status==='พักงาน'?' selected':'')+'>พักงาน</option></select>')+
       '</div>';
+    /* สัดส่วนคะแนนของตำแหน่งใหม่ — โผล่เฉพาะตอนเลือก "เพิ่มตำแหน่งใหม่"
+       ไม่ตั้งค่าเริ่มต้นให้มั่ว ๆ เพราะตัวเลขชุดนี้เป็นตัวคูณคะแนนของทุกคนในตำแหน่งนั้น */
+    h+='<div class="kp-posw" id="kpePosW" style="display:none">'+
+      '<span class="kp-lb">สัดส่วนคะแนนของตำแหน่งใหม่ — รวมต้องได้ 100</span>'+
+      '<label class="kp-wnum">ผลงาน<input class="inp" id="kpeWPerf" type="number" min="0" max="100" step="1" value="60" oninput="kpePosWSum()"></label>'+
+      '<label class="kp-wnum">คุณลักษณะ<input class="inp" id="kpeWTrait" type="number" min="0" max="100" step="1" value="30" oninput="kpePosWSum()"></label>'+
+      '<label class="kp-wnum">สถิติ<input class="inp" id="kpeWStat" type="number" min="0" max="100" step="1" value="10" oninput="kpePosWSum()"></label>'+
+      '<span class="kp-lb" id="kpeWSum">รวม 100</span></div>';
     h+='<div class="kp-bar"><button class="btn btn-primary btn-sm" onclick="kpEmpSave()">บันทึก</button>'+
       '<button class="btn btn-ghost btn-sm" onclick="kpEmpEdit(\'\')">ยกเลิก</button>'+
       '<span class="m-hint" style="margin:0">ระดับมาจากตำแหน่งที่เลือก · ผู้ประเมินใส่เป็นบทบาท ไม่ต้องใส่ชื่อคน</span></div></div>';
     return h;
   }
-  /** เลือกตำแหน่ง → ระดับขึ้นเองทันที (ระดับเป็นของตำแหน่ง แหล่งเดียว ไม่ให้แก้ที่ตัวคน) */
-  function kpeLevelSync(){ var s=$('kpePos'), t=$('kpeLevel'); if(s&&t) t.value=KPE_LV[s.value]||''; }
+  /** เลือกตำแหน่ง → ระดับขึ้นเองทันที · เลือก "เพิ่มตำแหน่งใหม่" → เปิดช่องชื่อ + ระดับ + สัดส่วน
+      (ระดับกับสัดส่วนเป็นของตำแหน่ง จึงแก้ได้เฉพาะตอนสร้างตำแหน่ง ไม่ใช่ที่ตัวคน) */
+  function kpePosPick(){
+    var s=$('kpePos'), i=$('kpePosNew'), lv=$('kpeLevel'), w=$('kpePosW');
+    if(!s) return;
+    var mkNew = s.value==='__new';
+    if(i){ i.style.display=mkNew?'':'none'; if(mkNew) i.focus(); }
+    if(w) w.style.display=mkNew?'':'none';
+    if(lv){
+      lv.disabled=!mkNew;
+      if(!mkNew) lv.value=KPE_LV[s.value]||'';
+      else if(!lv.value) lv.value=KPE_LEVELS[0];
+    }
+  }
+  /** ผลรวมสัดส่วนโชว์สด ๆ — ไม่ครบ 100 เซิร์ฟเวอร์ก็ปฏิเสธอยู่แล้ว แต่ให้เห็นก่อนกดบันทึก */
+  function kpePosWSum(){
+    var el=$('kpeWSum'); if(!el) return;
+    var s=kpeWVal('kpeWPerf')+kpeWVal('kpeWTrait')+kpeWVal('kpeWStat');
+    el.textContent='รวม '+s;
+    el.className='kp-lb'+(s===100?'':' kp-warn');
+  }
+  function kpeWVal(id){ var el=$(id); return el?(parseFloat(el.value)||0):0; }
   /** เลือก "เพิ่มแผนกใหม่…" → เปิดช่องพิมพ์ให้ (ปกติเลือกจากที่มีอยู่ ชื่อจะได้ไม่เพี้ยน) */
   function kpeDeptPick(){
     var s=$('kpeDept'), i=$('kpeDeptNew'); if(!s||!i) return;
@@ -11030,16 +11070,30 @@
     if(!code) return toast('กรอกรหัสพนักงานก่อนค่ะ');
     if(!v('kpeName')) return toast('กรอกชื่อ-สกุลก่อนค่ะ');
     if(!v('kpePos')) return toast('เลือกตำแหน่งก่อนค่ะ — ตำแหน่งเป็นตัวกำหนดว่าต้องประเมินอะไรบ้าง');
+    /* เพิ่มตำแหน่งใหม่จากฟอร์มนี้ได้ — ตรวจให้ครบก่อนส่ง ไม่งั้นได้ตำแหน่งที่ประเมินไม่ได้ */
+    var mkPos = (v('kpePos')==='__new'), pw={};
+    if(mkPos){
+      if(!v('kpePosNew')) return toast('พิมพ์ชื่อตำแหน่งใหม่ก่อนค่ะ');
+      pw = { posNew:v('kpePosNew'), posLevel:v('kpeLevel'),
+             wPerf:kpeWVal('kpeWPerf'), wTrait:kpeWVal('kpeWTrait'), wStat:kpeWVal('kpeWStat') };
+      var wSum = pw.wPerf + pw.wTrait + pw.wStat;
+      if(Math.abs(wSum-100) > 0.001) return toast('สัดส่วนคะแนนรวมได้ '+wSum+' ต้องเป็น 100 ค่ะ');
+    }
     busy('กำลังบันทึก…');
     jsonpPost({ action:'waKpiEmpSave', uid:UID, code:code, name:v('kpeName'), nick:v('kpeNick'),
-      pos:v('kpePos'), dept:kpeDeptVal(),
+      pos:(mkPos?'':v('kpePos')), dept:kpeDeptVal(),
+      posNew:pw.posNew||'', posLevel:pw.posLevel||'',
+      wPerf:(mkPos?pw.wPerf:''), wTrait:(mkPos?pw.wTrait:''), wStat:(mkPos?pw.wStat:''),
       rater1:v('kpeR1'), rater2:v('kpeR2'),
       /* 2 ช่องนี้ไม่มีบนฟอร์มแล้ว — ต้องส่งค่าเดิมกลับไป ไม่งั้น kpiUpsert_ เขียนทับเป็นค่าว่าง */
       team:KPE_KEEP.team, lineUid:KPE_KEEP.lineUid,
       start:v('kpeStart'), end:v('kpeEnd'), status:v('kpeStatus') })
       .then(function(r){
         if(!r||!r.ok) return toast((r&&r.error)||'บันทึกไม่สำเร็จ');
-        busyOk('บันทึกแล้ว'); toast('บันทึกทะเบียนพนักงานแล้ว');
+        busyOk('บันทึกแล้ว');
+        /* ตำแหน่งที่เพิ่งสร้างยังไม่มีตัวชี้วัด — บอกให้ชัด ไม่งั้นเปิดรอบแล้วใบว่าง */
+        if(r.newPos) toast('สร้างตำแหน่ง '+r.newPos+' แล้ว — ไปเพิ่มตัวชี้วัดที่เมนู ตัวชี้วัด (KPI) ก่อนเปิดรอบนะคะ');
+        else toast('บันทึกทะเบียนพนักงานแล้ว');
         KPE_EDIT=''; renderKpiEmp();
       }).catch(function(e){ toast(e.message); });
   }
@@ -14162,7 +14216,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260911-0949';
+  var APP_BUILD='20260911-1005';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
