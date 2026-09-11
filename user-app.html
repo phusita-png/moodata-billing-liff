@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260910-2148">
+<link rel="stylesheet" href="user.css?v=20260911-0905">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1655,9 +1655,23 @@
   /* รวมทางเข้าเว็บ (bootstrap/เข้าห้อง/กระดิ่ง) มาที่ชุดแยกด้วย — เป็นโค้ดชุดเดียวกันเป๊ะ
      แต่โปรเจกต์เบากว่า 4 เท่า · ตอนทดสอบ 10 ก.ย. 69 เข้าห้องผ่านโปรเจกต์หลักหมดเวลา 90 วิ
      ขณะที่ชุดแยกตอบใน 2-7 วิ */
-  var HR_SPLIT_RE = /^wa(Kpi|Leave|Ot|Payslip|Bootstrap|HubEnter|HubRooms|Bell|Perf|RoomFolder)/;
+  /* 📄 เอกสาร/งาน · 💰 การเงิน/ภาษี — แยกด้วยหลักเดียวกับ HR/KPI (11 ก.ย. 69)
+     เหลือ 0.46 MB และ 0.68 MB จากตัวเต็ม 1.55 MB
+     ⚠️ ค่าว่าง = ยังไม่ได้ deploy ชุดนั้น → คำสั่งวิ่งไปโปรเจกต์หลักเหมือนเดิม (ปลอดภัยเสมอ) */
+  var EXEC_URL_DOC = '';
+  var EXEC_URL_FIN = '';
+  /* 🔴 สามบรรทัดนี้ต้องตรงกับ re ของแต่ละชุดใน build-split.js เป๊ะ
+     ส่งคำสั่งที่ชุดนั้นไม่มี = ผู้ใช้เจอ "โปรเจกต์นี้ไม่รับคำสั่งนี้" ตอนกดปุ่ม (ไม่พังตอน build)
+     เทส tests/test-split-routes.js ล็อกไว้ว่าสองที่ต้องตรงกัน */
+  var HR_SPLIT_RE  = /^wa(Kpi|Leave|Ot|Payslip|Face|Clock|Bootstrap|HubEnter|HubRooms|Bell|Perf|RoomFolder)/;
+  var DOC_SPLIT_RE = /^wa(Doc|Task|Assign|Board|PmBoard|Project|Send|MyTasks|AllTasks|CreateTask|Claim|Transfer|Cancel|Announce|GenRecurring|MyProjects|Bulk|RenameCustomer|Set(Due|Status|Title|Customer|WorkLink|Reviewer|Type|Category))/;
+  var FIN_SPLIT_RE = /^wa(Sales|Exp|Po|Petty|Recv|Receivables|Cn|Wht|Vat|Pnd|Fin|Reimb|Tax|Payout|Biz|Customer|Service|Loss|Masterlist)/;
   function execUrlFor_(action){
-    return (EXEC_URL_HR && HR_SPLIT_RE.test(String(action || ''))) ? EXEC_URL_HR : EXEC_URL;
+    var a = String(action || '');
+    if (EXEC_URL_HR  && HR_SPLIT_RE.test(a))  return EXEC_URL_HR;
+    if (EXEC_URL_DOC && DOC_SPLIT_RE.test(a)) return EXEC_URL_DOC;
+    if (EXEC_URL_FIN && FIN_SPLIT_RE.test(a)) return EXEC_URL_FIN;
+    return EXEC_URL;
   }
   // ═══════════════════════════════
 
@@ -14082,7 +14096,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260910-2148';
+  var APP_BUILD='20260911-0905';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
