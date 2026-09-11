@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260911-2031">
+<link rel="stylesheet" href="user.css?v=20260911-2057">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -12105,6 +12105,7 @@
     h+='<div class="kp-bar">'+
       '<button class="btn btn-sm" onclick="kpSubmitPicked()">ส่งอนุมัติเฉพาะที่เลือก</button>'+
       '<button class="btn btn-ghost btn-sm" onclick="kpUndoPicked()">ยกเลิกส่งเฉพาะที่เลือก</button>'+
+      (r.isAdmin?'<button class="btn btn-primary btn-sm" onclick="kpApprovePicked()">อนุมัติเฉพาะที่เลือก</button>':'')+
       '<span class="m-hint" style="margin:0">ติ๊กหน้าชื่อคนที่ต้องการก่อน · ไม่ติ๊ก = ใช้ปุ่มด้านบนซึ่งทำทั้งรอบ</span>'+
       '<span class="kp-grow"></span>'+
       '<button class="btn btn-ghost btn-sm" onclick="kpStep(1)">+ เพิ่มคนเข้ารอบ</button></div></div>';
@@ -12350,18 +12351,29 @@
     if(!c.length) return toast('ติ๊กเลือกคนที่จะยกเลิกส่งก่อนค่ะ');
     kpReopenRound(c,1);
   }
-  function kpApproveRound(force){
+  function kpApprovePicked(){
+    var c=kpPickedCodes();
+    if(!c.length) return toast('ติ๊กเลือกคนที่จะอนุมัติก่อนค่ะ');
+    if(!confirm('อนุมัติเฉพาะ '+c.length+' คนที่เลือกไหมคะ? คนที่เหลือยังกรอก/แก้ไขได้ต่อค่ะ')) return;
+    kpApproveRound(0,c);
+  }
+  /* codes = อนุมัติเฉพาะคนที่ติ๊ก (พี่กี้ 11 ก.ย. 69 — เดิมกดทีเดียวไปทั้งรอบ)
+     ⚠️ ตอนกดยืนยัน force ต้องส่ง codes ต่อไปด้วย ไม่งั้นคนที่ไม่ได้เลือกจะโดนอนุมัติไปด้วย */
+  function kpApproveRound(force,codes){
     kpCacheBust();   // บันทึกแล้วต้องอ่านของใหม่เสมอ
+    var only=(codes||[]).join(',');
     busy('กำลังอนุมัติ…');
-    jsonp({ action:'waKpiRoundApprove', uid:UID, ym:KPR_YM, force:force?'1':'' }).then(function(r){
+    jsonp({ action:'waKpiRoundApprove', uid:UID, ym:KPR_YM, force:force?'1':'', codes:only }).then(function(r){
       if(r&&r.needForce){
         busyOk('');
-        if(confirm(r.error+'\n\nยืนยันอนุมัติทั้งที่ยังกรอกไม่ครบไหมคะ?')) kpApproveRound(1);
+        if(confirm(r.error+'\n\nยืนยันอนุมัติทั้งที่ยังกรอกไม่ครบไหมคะ?')) kpApproveRound(1,codes);
         return;
       }
       if(!r||!r.ok) return toast(r&&r.error||'อนุมัติไม่สำเร็จ');
       busyOk('อนุมัติแล้ว');
-      toast('อนุมัติ '+r.approved+' ใบ · ลูกค้าเห็นคะแนนได้แล้ว'); kpLoadRound(VIEW);
+      KPR_SEL={};
+      toast('อนุมัติ '+r.approved+' ใบ'+(r.left?(' · เหลืออีก '+r.left+' ใบในรอบนี้'):' · ลูกค้าเห็นคะแนนได้แล้ว'));
+      kpLoadRound(VIEW);
     }).catch(function(e){ toast(e.message); });
   }
   /** ดึงกลับมาแก้ — ใช้ทั้ง "ยกเลิกส่งอนุมัติ" (ยังไม่อนุมัติ) และ "เปิดแก้ไข" (อนุมัติแล้ว)
@@ -14647,7 +14659,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260911-2031';
+  var APP_BUILD='20260911-2057';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
