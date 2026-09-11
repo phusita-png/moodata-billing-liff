@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260911-1524">
+<link rel="stylesheet" href="user.css?v=20260911-1528">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -12081,15 +12081,15 @@
   function kpSecCell(x,key){
     var s=kpSecOf(x,key);
     if(!s) return '<td class="kp-c"><span class="kp-secbox kp-secbox-off" title="ตำแหน่งนี้ไม่ต้องประเมิน'+esc(KP_SEC_LB[key]||'')+'">—</span></td>';
-    /* บอกเป็น % (พี่กี้ 11 ก.ย. 69 — อ่านคู่กับคอลัมน์น้ำหนักรวม 100% ให้เป็นภาษาเดียวกัน)
-       ส่วนที่ไม่มีจำนวนช่อง (สถิติ = กรอกหรือไม่กรอก) นับเป็น 0% หรือ 100% */
-    var tot=(s.total>1)?s.total:1;
-    var done=(s.total>1)?Math.min(s.done||0,tot):(s.ok?1:0);
-    var pct=Math.round(done/tot*100);
-    var sub=(s.total>1)?(s.done+'/'+s.total):'';
+    /* ตัวเลขในช่อง = "น้ำหนักของส่วนนั้น" (พี่กี้ 11 ก.ย. 69 · ชี้จากหน้าจอจริง)
+       เช่น เทเลเซลล์ CRM = ผลงาน 90% · สถิติ 10% → 3 ช่องบวกกันได้ 100%
+       ตรงกับคอลัมน์ "น้ำหนักรวม" ด้านหลังพอดี · เดิมใส่ % ความครบของการกรอก
+       ซึ่ง 100% + 100% แล้วไม่สัมพันธ์กับเลขไหนเลย อ่านแล้วงง
+       ความครบยังบอกอยู่ 2 ทาง: ตัวเล็กต่อท้าย (4/4) และสีของช่อง */
+    var sub=(s.total>1)?(s.done+'/'+s.total):(s.ok?'ครบ':'ยังไม่กรอก');
     return '<td class="kp-c"><span class="kp-secbox '+(s.ok?'kp-secbox-done':'kp-secbox-doing')+
-      '" title="'+esc(KP_SEC_LB[key]||'')+(sub?(' · '+sub):'')+'">'+pct+'%'+
-      (sub?('<span class="kp-secsub">'+esc(sub)+'</span>'):'')+'</span></td>';
+      '" title="'+esc(KP_SEC_LB[key]||'')+' · น้ำหนัก '+kpNum0(s.weight)+' คะแนน · '+esc(sub)+'">'+
+      kpNum0(s.weight)+'%<span class="kp-secsub">'+esc(sub)+'</span></span></td>';
   }
   /* ── % ความสำเร็จ = ความคืบหน้า "ทั้งกระบวนการ" ไม่ใช่แค่กรอกครบ (พี่กี้ 11 ก.ย. 69) ──
      เดิมบาร์ขึ้น 100% ตั้งแต่กรอกครบ ทั้งที่รอบยังเป็น "กำลังดำเนินการ" — อ่านแล้วขัดกัน
@@ -14439,7 +14439,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260911-1524';
+  var APP_BUILD='20260911-1528';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
