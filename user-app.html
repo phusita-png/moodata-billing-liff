@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260911-1946">
+<link rel="stylesheet" href="user.css?v=20260911-1953">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -12327,6 +12327,7 @@
   /* ── ประเมินผลงาน (หน้ากรอก — เลือกตามคน / ตำแหน่ง / ประเภทแบบประเมิน) ── */
   function kpFillOne(code){ KPF_BY='emp'; KPS_POS=''; KPF_CODE=code; switchView('kpifill'); }
   var KPF_CODE='';
+  var KPF_SAVED='';   // เวลาที่บันทึกล่าสุดในหน้านี้ (โชว์ยืนยันค้างไว้ · ล้างเมื่อเปลี่ยนคน/เดือน)
   function renderKpiFill(){
     skel();
     var p={ action:'waKpiFormInit', uid:UID, ym:KPR_YM||'', by:KPF_BY, kind:KPF_KIND };
@@ -12345,15 +12346,15 @@
       },20);
     });
   }
-  function kpFillBy(v){ KPF_BY=v; if(v==='pos'&&!KPS_POS&&KPF&&KPF.positions.length) KPS_POS=KPF.positions[0].code; renderKpiFill(); }
-  function kpFillPos(v){ KPS_POS=v; renderKpiFill(); }
-  function kpFillWho(v){ KPF_CODE=v; renderKpiFill(); }
-  function kpFillKind(v){ KPF_KIND=v; renderKpiFill(); }
-  function kpFillYm(v){ KPR_YM=v; renderKpiFill(); }
+  function kpFillBy(v){ KPF_SAVED=''; KPF_BY=v; if(v==='pos'&&!KPS_POS&&KPF&&KPF.positions.length) KPS_POS=KPF.positions[0].code; renderKpiFill(); }
+  function kpFillPos(v){ KPF_SAVED=''; KPS_POS=v; renderKpiFill(); }
+  function kpFillWho(v){ KPF_SAVED=''; KPF_CODE=v; renderKpiFill(); }
+  function kpFillKind(v){ KPF_SAVED=''; KPF_KIND=v; renderKpiFill(); }
+  function kpFillYm(v){ KPF_SAVED=''; KPR_YM=v; renderKpiFill(); }
 
   /* ── เดินหน้า-ถอยหลังทีละคน (พี่กี้ถาม 11 ก.ย. 69: กรอกคนนี้เสร็จแล้วไปคนถัดไปยังไง) ──
      เข้ามาจากปุ่ม "กรอกข้อมูล" ในตารางรอบ = ล็อกอยู่ที่คนเดียว เดิมต้องเด้งกลับไปกดในตารางใหม่ทุกคน */
-  function kpFillStep(d){
+  function kpFillStep(d){ KPF_SAVED='';
     var list=(KPF&&KPF.people)||[];
     if(!list.length) return;
     var i=-1;
@@ -12510,8 +12511,17 @@
       }
       h+='</div>';
     });
-    h+='<div class="card"><button class="btn btn-primary" onclick="kpFillSave()">ส่งข้อมูล</button> '+
-      '<span class="m-hint">บันทึกทุกคนที่แสดงอยู่ในหน้านี้พร้อมกัน</span></div>';
+    /* ปุ่มนี้ "บันทึกสิ่งที่กรอก" เท่านั้น ไม่ได้เปลี่ยนสถานะใบ (พี่กี้กดแล้วงง 11 ก.ย. 69
+       ว่าทำไมสถานะยังเป็นกำลังดำเนินการ) — ชื่อเดิม "ส่งข้อมูล" ฟังเหมือนส่งไปอนุมัติ
+       สถานะเปลี่ยนแค่ตอนกด "ส่งอนุมัติ" ทั้งรอบ แล้วผู้ดูแล "อนุมัติ" เท่านั้น */
+    h+='<div class="card">'+
+      (KPF_SAVED?('<div class="kp-note-ok">✅ บันทึกแล้วเมื่อ '+esc(KPF_SAVED)+
+        ' · ยังแก้ไขและกดบันทึกซ้ำได้ · สถานะจะเปลี่ยนเป็น “รออนุมัติ” เมื่อกดส่งอนุมัติที่หน้ารอบการประเมิน</div>'):'')+
+      '<div class="kp-bar"><button class="btn btn-primary" onclick="kpFillSave()">บันทึกข้อมูล</button>'+
+      '<span class="m-hint" style="margin:0">บันทึกทุกคนที่แสดงอยู่ในหน้านี้พร้อมกัน · ยังไม่ใช่การส่งอนุมัติ</span>'+
+      '<span class="kp-grow"></span>'+
+      '<button class="btn btn-ghost btn-sm" title="ไปหน้ารอบเพื่อส่งอนุมัติทั้งรอบ" onclick="kpGo(\'kpiround\')">ไปส่งอนุมัติ →</button>'+
+      '</div></div>';
     return h;
   }
   /* ── ตัวเลขในช่องกรอกใส่จุลภาคคั่นหลักพัน (พี่กี้ 11 ก.ย. 69: จะได้รู้ว่าเลขหลักอะไร) ──
@@ -12595,6 +12605,10 @@
       if(!r||!r.ok) return toast(r&&r.error||'บันทึกไม่สำเร็จ');
       busyOk('บันทึกแล้ว');
       toast('บันทึกแล้ว · ผลงาน '+r.saved.perf+' · สถิติ '+r.saved.stat+' · คุณลักษณะ '+r.saved.trait+(r.warn?(' · '+r.warn):''));
+      /* ค้างข้อความยืนยันไว้ในหน้า — toast หายไปใน 2-3 วิ แล้วหน้าก็วาดใหม่ทันที
+         ผู้ใช้เลยไม่เห็นว่าบันทึกไปจริงไหม (พี่กี้ 11 ก.ย. 69) */
+      var d=new Date(), p2=function(n){ return n<10?('0'+n):n; };
+      KPF_SAVED=p2(d.getHours())+':'+p2(d.getMinutes());
       renderKpiFill();
     }).catch(function(e){ toast(e.message); });
   }
@@ -14577,7 +14591,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260911-1946';
+  var APP_BUILD='20260911-1953';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
