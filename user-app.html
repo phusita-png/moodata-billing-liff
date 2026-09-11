@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260911-0924">
+<link rel="stylesheet" href="user.css?v=20260911-0935">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1209,6 +1209,10 @@
     body[data-mod="kpi"] .emptybox{ font-size:14px; }
     body[data-mod="kpi"] .btn-sm{ font-size:14.5px; padding:8px 14px; }
     body[data-mod="kpi"] .inp,body[data-mod="kpi"] select.inp{ font-size:14.5px; }
+    body[data-mod="kpi"] .kp-period .kp-segb{ font-size:14.5px; }
+    body[data-mod="kpi"] .kp-period .kp-seg,
+    body[data-mod="kpi"] .kp-period .inp,
+    body[data-mod="kpi"] .kp-period .kp-lb{ height:40px; }
   }
   .kp-setbox{ border:1px solid #e6ebf2; border-radius:14px; padding:10px 12px 4px; margin-bottom:14px; background:#fbfcfe; }
   .kp-setcard{ border:1px solid #eef1f5; border-radius:14px; padding:8px 12px 4px; margin-bottom:12px; }
@@ -1244,6 +1248,14 @@
   /* สีปุ่มที่เลือกอยู่ = สีธีมของห้อง (--nav1) → ห้องลูกค้าได้ม่วงอัตโนมัติ
      พี่กี้ 9 ก.ย. 69: "รายเดือน รายปี ขอเป็นโทนม่วง" */
   .kp-segb.on{ background:var(--nav1); color:#fff; font-weight:600; }
+  /* ── แถบเลือกช่วงเวลา: ปุ่มสลับกับ dropdown ต้องสูงเท่ากัน + ฟอนต์ชุดเดียวกัน ──
+     (พี่กี้ทักจากหน้าจอจริง 11 ก.ย. 69) ก่อนแก้: ปุ่ม 13px สูง ~35px · dropdown 14.5px สูง ~40px
+     คุมความสูงที่กล่องแทนการพึ่ง padding — padding คุมไม่ได้เพราะสองตัวใช้ฟอนต์คนละขนาด */
+  .kp-period .kp-seg,
+  .kp-period .inp{ height:38px; }
+  .kp-period .kp-segb{ display:inline-flex; align-items:center; padding:0 16px; font-size:14px; }
+  .kp-period select.inp{ padding-top:0; padding-bottom:0; }
+  .kp-period .kp-lb{ display:inline-flex; align-items:center; height:38px; }
   .kp-2col{ display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:12px; }
   .kp-hbars{ display:flex; flex-direction:column; gap:7px; }
   .kp-hrow{ display:grid; grid-template-columns:120px 1fr 64px 44px; align-items:center; gap:9px; }
@@ -14096,7 +14108,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260911-0924';
+  var APP_BUILD='20260911-0935';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
