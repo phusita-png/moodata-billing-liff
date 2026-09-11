@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260911-1528">
+<link rel="stylesheet" href="user.css?v=20260911-1535">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -772,6 +772,15 @@
   .tk-acts{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
   .tk-acts .btn{ flex:1; min-width:120px; font-size:14px; padding:9px 12px; }
   .btn-ok{ background:var(--green); color:#fff; } .btn-ghost{ background:#EEF1F6; color:#333; }
+  /* เมาส์ผ่านแล้วต้องรู้ว่ากำลังจะกดอะไร (พี่กี้ 11 ก.ย. 69) — เดิมปุ่มนิ่งสนิท ไม่มีอะไรตอบกลับ
+     ทำเฉพาะอุปกรณ์ที่มีเมาส์จริง ไม่งั้นบนมือถือสถานะ hover จะค้างหลังแตะ */
+  @media (hover:hover){
+    .btn{ transition:filter .12s, box-shadow .12s, transform .06s; }
+    .btn:hover:not(:disabled){ filter:brightness(.96); box-shadow:0 3px 10px rgba(24,49,83,.14); }
+    .btn-ghost:hover:not(:disabled){ background:#E2E8F0; }
+    .btn:active:not(:disabled){ transform:translateY(1px); box-shadow:none; }
+  }
+  .btn:disabled{ opacity:.45; cursor:not-allowed; }
   /* ── 🕐 ลงเวลา (selfie + พิกัด · ทำในหน้านี้เลย ไม่ต้องโหลดโมเดลสแกนหน้า) ── */
   .clk-kinds{ display:grid; grid-template-columns:1fr; gap:10px; margin-bottom:14px; }
   .clk-kb{ display:flex; align-items:center; gap:12px; padding:16px 18px; border:1.5px solid var(--line);
@@ -1449,6 +1458,23 @@
     color:#fff; font-weight:800; font-size:13px; flex:0 0 auto; }
   .kp-sech-t{ font-size:16px; font-weight:800; color:var(--red-deep,#5B21B6); letter-spacing:.2px; }
   .kp-sech-w{ font-size:12.5px; font-weight:600; color:#5b6b7d; }
+  /* หัวฟอร์มรายคนในหน้ากรอก — ลำดับ · รหัส · ชื่อ · ตำแหน่ง · กล่องสถานะชิดขวา */
+  .kp-fhead{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:2px 0 10px; }
+  .kp-fhead-no{ display:inline-flex; align-items:center; justify-content:center;
+    width:26px; height:26px; border-radius:8px; background:#EEF1F5; color:#5b6b7d;
+    font-weight:800; font-size:13px; flex:0 0 auto; }
+  .kp-fhead-nm{ font-size:17px; font-weight:800; color:var(--ink); }
+  .kp-fhead-sub{ font-size:13px; color:#5b6b7d; }
+  /* กล่องสถานะ — ใหญ่กว่าป้ายเล็กเพื่อให้เห็นก่อนเริ่มกรอกว่าใบนี้ยังแก้ได้ไหม */
+  .kp-stbox{ display:inline-flex; align-items:center; gap:8px; padding:7px 14px;
+    border-radius:11px; font-size:14px; border:1px solid transparent; }
+  .kp-stbox b{ font-weight:800; }
+  .kp-stbox-note{ font-size:12px; opacity:.85; }
+  .kp-stbox-dot{ width:9px; height:9px; border-radius:999px; background:currentColor; flex:0 0 auto; }
+  .kp-stbox-doing{ background:#fbf0dc; color:#8a5a10; border-color:#f0dcb4; }
+  .kp-stbox-wait{ background:#e8f3fc; color:#0b5c9e; border-color:#c9e2f7; }
+  .kp-stbox-ok{ background:#e4f4ed; color:#0f7a52; border-color:#bfe6d6; }
+  .kp-stbox-lock{ background:#EEF1F5; color:#5b6b7d; border-color:#dde3ea; }
   /* ปุ่มลบชุดเกณฑ์ — อยู่ข้างปุ่ม "แก้ไข" จึงใช้ปุ่มโปร่งตัวหนังสือแดง ไม่ใช่ปุ่มแดงเต็มใบ
      (ปุ่มแดงเต็มใบจะเด่นกว่าปุ่มหลักของการ์ด ทั้งที่เป็นงานที่ทำนาน ๆ ครั้ง) */
   .kp-danger{ color:#DC2626; }
@@ -11898,6 +11924,18 @@
     var c = s==='อนุมัติ' ? 'kp-pill-ok' : (s==='รออนุมัติ' ? 'kp-pill-wait' : (s.indexOf('ข้อมูลเดิม')>=0 ? 'kp-pill-lock' : ''));
     return '<span class="kp-pill '+c+'">'+esc(s)+'</span>';
   }
+  /** กล่องสถานะแบบเด่น — ใช้ที่หัวฟอร์มกรอกข้อมูล (พี่กี้ 11 ก.ย. 69: ป้ายเล็กไปสังเกตยาก)
+      สีเดียวกับป้ายเล็ก แต่กล่องใหญ่ มีจุดนำหน้า และมีคำอธิบายว่าสถานะนี้ทำอะไรได้ */
+  function kpStatusBox(st){
+    var s=String(st||'ยังไม่เปิดรอบ');
+    var c = s==='อนุมัติ' ? 'kp-stbox-ok' : (s==='รออนุมัติ' ? 'kp-stbox-wait' :
+            (s.indexOf('ข้อมูลเดิม')>=0 ? 'kp-stbox-lock' : 'kp-stbox-doing'));
+    var note = s==='อนุมัติ' ? 'ปิดรอบแล้ว · แก้ไม่ได้'
+             : (s==='รออนุมัติ' ? 'ส่งแล้ว · รอผู้ดูแลอนุมัติ'
+             : (s.indexOf('ข้อมูลเดิม')>=0 ? 'ข้อมูลย้อนหลัง · ล็อกไว้' : 'ยังแก้ไขและบันทึกได้'));
+    return '<span class="kp-stbox '+c+'"><span class="kp-stbox-dot"></span>'+
+      '<b>'+esc(s)+'</b><span class="kp-stbox-note">'+esc(note)+'</span></span>';
+  }
   /** ช่องครบ/ไม่ครบ — เขียว = ครบ · แดง = ยังขาด (ข้อความบอกว่าขาดกี่ช่อง) */
   function kpReadyCell(o,label){
     if(!o) return '<td class="kp-c"><span class="kp-dot kp-dot-no">ไม่ครบ</span></td>';
@@ -12086,10 +12124,12 @@
        ตรงกับคอลัมน์ "น้ำหนักรวม" ด้านหลังพอดี · เดิมใส่ % ความครบของการกรอก
        ซึ่ง 100% + 100% แล้วไม่สัมพันธ์กับเลขไหนเลย อ่านแล้วงง
        ความครบยังบอกอยู่ 2 ทาง: ตัวเล็กต่อท้าย (4/4) และสีของช่อง */
+    /* ในช่องเหลือแค่ตัวเลขน้ำหนัก (พี่กี้ 11 ก.ย. 69 — 4/4 กับ "ครบ" ทำให้รกโดยไม่ได้เพิ่มอะไร)
+       ความครบดูจากสีของช่องอยู่แล้ว · รายละเอียดยังอยู่ครบใน title ตอนชี้ค้าง */
     var sub=(s.total>1)?(s.done+'/'+s.total):(s.ok?'ครบ':'ยังไม่กรอก');
     return '<td class="kp-c"><span class="kp-secbox '+(s.ok?'kp-secbox-done':'kp-secbox-doing')+
       '" title="'+esc(KP_SEC_LB[key]||'')+' · น้ำหนัก '+kpNum0(s.weight)+' คะแนน · '+esc(sub)+'">'+
-      kpNum0(s.weight)+'%<span class="kp-secsub">'+esc(sub)+'</span></span></td>';
+      kpNum0(s.weight)+'%</span></td>';
   }
   /* ── % ความสำเร็จ = ความคืบหน้า "ทั้งกระบวนการ" ไม่ใช่แค่กรอกครบ (พี่กี้ 11 ก.ย. 69) ──
      เดิมบาร์ขึ้น 100% ตั้งแต่กรอกครบ ทั้งที่รอบยังเป็น "กำลังดำเนินการ" — อ่านแล้วขัดกัน
@@ -12310,9 +12350,12 @@
     var list=r.people||[], i=-1;
     for(var k=0;k<list.length;k++) if(list[k].code===KPF_CODE) { i=k; break; }
     if(i<0) return '';
-    return '<button class="btn btn-ghost btn-sm"'+(i<=0?' disabled':'')+' onclick="kpFillStep(-1)">‹ คนก่อนหน้า</button>'+
+    var prev=(i>0)?kpWhoRaw(list[i-1]):'', next=(i<list.length-1)?kpWhoRaw(list[i+1]):'';
+    return '<button class="btn btn-ghost btn-sm"'+(i<=0?' disabled':'')+
+        ' title="'+(prev?('เปิดฟอร์มของ '+esc(prev)):'คนแรกแล้ว')+'" onclick="kpFillStep(-1)">‹ คนก่อนหน้า</button>'+
       '<span class="kp-lb">คนที่ '+(i+1)+' จาก '+list.length+'</span>'+
-      '<button class="btn btn-ghost btn-sm"'+(i>=list.length-1?' disabled':'')+' onclick="kpFillStep(1)">คนถัดไป ›</button>';
+      '<button class="btn btn-ghost btn-sm"'+(i>=list.length-1?' disabled':'')+
+        ' title="'+(next?('เปิดฟอร์มของ '+esc(next)):'คนสุดท้ายแล้ว')+'" onclick="kpFillStep(1)">คนถัดไป ›</button>';
   }
 
   /** หัวข้อส่วนในหน้ากรอก (พี่กี้ 11 ก.ย. 69: อยากให้เห็นว่าแยกเป็นส่วน ๆ ชัด ๆ)
@@ -12327,7 +12370,7 @@
   function kpFillHtml(r){
     var h='<div class="section-h">ประเมินผลงาน · '+esc(kpLabel(r.ym))+'</div>';
     h+='<div class="card"><div class="kp-bar">'+
-      '<button class="btn btn-ghost btn-sm" onclick="kpGo(\'kpiround\')">← กลับรอบการประเมิน</button>'+
+      '<button class="btn btn-ghost btn-sm" title="กลับไปตารางรายชื่อในรอบ" onclick="kpGo(\'kpiround\')">← กลับรอบการประเมิน</button>'+
       kpYmPicker(r.ym,[],'kpFillYm')+
       '<select class="inp" onchange="kpFillBy(this.value)">'+
         '<option value="pos"'+(KPF_BY==='pos'?' selected':'')+'>เลือกตามตำแหน่ง</option>'+
@@ -12354,8 +12397,16 @@
 
     r.forms.forEach(function(f,i){
       h+='<div class="card kp-form" data-code="'+esc(f.emp.code)+'" data-owner="'+esc(f.owner)+'">'+
-        '<div class="section-h">'+kpWhoOpt(f.emp)+' <span class="m-hint">'+esc(f.pos.name||f.pos.code)+
-        (f.emp.dept?(' · '+esc(f.emp.dept)):'')+'</span> '+kpStatusPill(f.status)+'</div>';
+        /* หัวฟอร์มรายคน — ลำดับ + รหัสพนักงาน + ชื่อจริง + ตำแหน่ง แล้วปิดท้ายด้วยกล่องสถานะ
+           (พี่กี้ 11 ก.ย. 69: สถานะต้องเด่น เพราะเป็นสิ่งที่ต้องมองก่อนว่าใบนี้แก้ได้ไหม) */
+        '<div class="kp-fhead">'+
+          '<span class="kp-fhead-no">'+(i+1)+'</span>'+
+          '<span class="kp-code">'+esc(f.emp.code)+'</span>'+
+          '<span class="kp-fhead-nm">'+kpWhoOpt(f.emp)+'</span>'+
+          '<span class="kp-fhead-sub">'+esc(f.pos.name||f.pos.code)+
+            (f.emp.dept?(' · '+esc(f.emp.dept)):'')+'</span>'+
+          '<span class="kp-grow"></span>'+kpStatusBox(f.status)+
+        '</div>';
       if(f.locked){
         h+='<div class="emptybox">ใบนี้'+esc(f.status)+'แล้ว แก้ไขไม่ได้ — ถ้าต้องแก้ ให้ผู้ดูแลกด “เปิดแก้ไข” ที่หน้ารอบการประเมินค่ะ</div></div>';
         return;
@@ -14439,7 +14490,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260911-1528';
+  var APP_BUILD='20260911-1535';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
