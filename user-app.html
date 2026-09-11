@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260911-1509">
+<link rel="stylesheet" href="user.css?v=20260911-1515">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -11782,7 +11782,7 @@
   function kpsPaint(){
     var r=KPS;
     if(!r.items.length) return kpErr('ตำแหน่งนี้ไม่ได้ใช้ส่วนคุณลักษณะ (น้ำหนัก 0)');
-    var h='<div class="section-h">ให้คะแนนคุณลักษณะ — '+esc(r.emp.nick||r.emp.name)+'</div>';
+    var h='<div class="section-h">ให้คะแนนคุณลักษณะ — '+kpWhoOpt(r.emp)+'</div>';
     h+='<div class="ds-sel"><select onchange="kpsSetCode(this.value)">'+
       r.list.map(function(e){ return '<option value="'+esc(e.code)+'"'+(e.code===KP_CODE?' selected':'')+'>'+
         kpWhoOpt(e)+' · '+esc(e.posName||e.pos)+'</option>'; }).join('')+
@@ -12284,9 +12284,33 @@
   function kpFillKind(v){ KPF_KIND=v; renderKpiFill(); }
   function kpFillYm(v){ KPR_YM=v; renderKpiFill(); }
 
+  /* ── เดินหน้า-ถอยหลังทีละคน (พี่กี้ถาม 11 ก.ย. 69: กรอกคนนี้เสร็จแล้วไปคนถัดไปยังไง) ──
+     เข้ามาจากปุ่ม "กรอกข้อมูล" ในตารางรอบ = ล็อกอยู่ที่คนเดียว เดิมต้องเด้งกลับไปกดในตารางใหม่ทุกคน */
+  function kpFillStep(d){
+    var list=(KPF&&KPF.people)||[];
+    if(!list.length) return;
+    var i=-1;
+    for(var k=0;k<list.length;k++) if(list[k].code===KPF_CODE) { i=k; break; }
+    var n=(i<0?0:i+d);
+    if(n<0||n>=list.length) return;
+    KPF_CODE=list[n].code; renderKpiFill();
+  }
+  /** แถบเดินคน — โผล่เฉพาะตอนดูทีละคน (โหมดตำแหน่ง/ทุกคน เห็นหลายคนในหน้าเดียวอยู่แล้ว) */
+  function kpFillNav(r){
+    if(KPF_BY!=='emp') return '';
+    var list=r.people||[], i=-1;
+    for(var k=0;k<list.length;k++) if(list[k].code===KPF_CODE) { i=k; break; }
+    if(i<0) return '';
+    return '<button class="btn btn-ghost btn-sm"'+(i<=0?' disabled':'')+' onclick="kpFillStep(-1)">‹ คนก่อนหน้า</button>'+
+      '<span class="kp-lb">คนที่ '+(i+1)+' จาก '+list.length+'</span>'+
+      '<button class="btn btn-ghost btn-sm"'+(i>=list.length-1?' disabled':'')+' onclick="kpFillStep(1)">คนถัดไป ›</button>';
+  }
+
   function kpFillHtml(r){
     var h='<div class="section-h">ประเมินผลงาน · '+esc(kpLabel(r.ym))+'</div>';
-    h+='<div class="card"><div class="kp-bar">'+kpYmPicker(r.ym,[],'kpFillYm')+
+    h+='<div class="card"><div class="kp-bar">'+
+      '<button class="btn btn-ghost btn-sm" onclick="kpGo(\'kpiround\')">← กลับรอบการประเมิน</button>'+
+      kpYmPicker(r.ym,[],'kpFillYm')+
       '<select class="inp" onchange="kpFillBy(this.value)">'+
         '<option value="pos"'+(KPF_BY==='pos'?' selected':'')+'>เลือกตามตำแหน่ง</option>'+
         '<option value="emp"'+(KPF_BY==='emp'?' selected':'')+'>เลือกตามชื่อคน</option>'+
@@ -12305,13 +12329,14 @@
         '<option value="perf"'+(KPF_KIND==='perf'?' selected':'')+'>แบบประเมิน KPI (ผลงาน)</option>'+
         '<option value="trait"'+(KPF_KIND==='trait'?' selected':'')+'>คุณลักษณะส่วนบุคคล</option>'+
         '<option value="stat"'+(KPF_KIND==='stat'?' selected':'')+'>สถิติการมาทำงาน</option></select>';
+    h+='<span class="kp-grow"></span>'+kpFillNav(r);
     h+='</div></div>';
 
     if(!r.forms.length){ h+='<div class="card"><div class="emptybox">ยังไม่มีคนในเงื่อนไขที่เลือก</div></div>'; return h; }
 
     r.forms.forEach(function(f,i){
       h+='<div class="card kp-form" data-code="'+esc(f.emp.code)+'" data-owner="'+esc(f.owner)+'">'+
-        '<div class="section-h">'+esc(f.emp.nick||f.emp.name)+' <span class="m-hint">'+esc(f.pos.name||f.pos.code)+
+        '<div class="section-h">'+kpWhoOpt(f.emp)+' <span class="m-hint">'+esc(f.pos.name||f.pos.code)+
         (f.emp.dept?(' · '+esc(f.emp.dept)):'')+'</span> '+kpStatusPill(f.status)+'</div>';
       if(f.locked){
         h+='<div class="emptybox">ใบนี้'+esc(f.status)+'แล้ว แก้ไขไม่ได้ — ถ้าต้องแก้ ให้ผู้ดูแลกด “เปิดแก้ไข” ที่หน้ารอบการประเมินค่ะ</div></div>';
@@ -14396,7 +14421,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260911-1509';
+  var APP_BUILD='20260911-1515';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
