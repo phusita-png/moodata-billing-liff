@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260912-1609">
+<link rel="stylesheet" href="user.css?v=20260912-1616">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -10976,6 +10976,10 @@
   var KP=null, KP_YM='', KP_POS='', KP_CODE='', KP_EDIT={}, KP_SUM=null;
   var KP_TH=['','มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
   function kpLabel(ym){ var p=String(ym||'').split('-'); return p.length===2?(KP_TH[+p[1]]+' '+p[0]):String(ym||''); }
+  /* ตัวย่อเดือนแบบราชการไทย — ทุกกราฟ/ตารางในระบบต้องใช้ชุดนี้ชุดเดียว
+     (พี่กี้ 12 ก.ย. 69: เดิมตัดคำเอาเอง 3 ตัวแรกได้ "กัน ตุล พฤศ ธัน มกร" อ่านไม่รู้เรื่อง) */
+  var KP_TH_ABBR=['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  function kpMon(ym){ var p=String(ym||'').split('-'); return p.length===2?(KP_TH_ABBR[+p[1]]||''):String(ym||''); }
   function kpThisYm(){ var d=new Date(); var m=d.getMonth()+1; return (d.getFullYear()+543)+'-'+(m<10?'0'+m:m); }
   /* ⚠️ เลิกใช้แล้ว — ตัวเลือกเดือนของทั้งระบบใช้ kpYmPicker/kpPeriodBar ชุดเดียว (9 ก.ย. 69)
      เก็บไว้เพราะหน้าตั้งค่ายังใช้เลือก "เดือนที่เริ่มใช้เกณฑ์" ซึ่งเป็นคนละความหมายกับเดือนที่กำลังดู */
@@ -11357,7 +11361,9 @@
       statCard('ใบประเมินที่ออกแล้ว', (r.docs||[]).length+' ใบ','เปิดดูย้อนหลังได้')+'</div></div>';
 
     /* กราฟเส้น 12 เดือน */
-    h+='<div class="card"><div class="section-h">แนวโน้มคะแนน 12 เดือน</div>'+kpLineChart(ser)+'</div>';
+    /* ข้อมูลเป็น "รอบปี" (ม.ค.–ธ.ค.) แล้ว — หัวข้อต้องบอกปีให้ชัด ไม่ใช่ "12 เดือน" ลอย ๆ */
+    var serYear=(ser[0]&&String(ser[0].ym||'').split('-')[0])||'';
+    h+='<div class="card"><div class="section-h">แนวโน้มคะแนน ปี '+esc(serYear)+'</div>'+kpLineChart(ser)+'</div>';
 
     /* เรดาร์คุณลักษณะ */
     var tr=(r.traits||[]).filter(function(x){ return x.mine!==null||x.peer!==null; });
@@ -11368,9 +11374,9 @@
 
     /* ตัวชี้วัดย้อนหลัง */
     if((r.metrics||[]).length){
-      h+='<div class="card"><div class="section-h">ตัวชี้วัดย้อนหลัง (% ที่ทำได้)</div><div class="kp-wrap">'+
+      h+='<div class="card"><div class="section-h">ตัวชี้วัดรายเดือน ปี '+esc(serYear)+' (% ที่ทำได้)</div><div class="kp-wrap">'+
         '<table class="kp-tbl kp-matrix"><thead><tr><th>ตัวชี้วัด</th>';
-      (r.months||[]).forEach(function(m){ h+='<th class="kp-c">'+esc(kpLabel(m).split(' ')[0].substr(0,3))+'</th>'; });
+      (r.months||[]).forEach(function(m){ h+='<th class="kp-c">'+esc(kpMon(m))+'</th>'; });
       h+='</tr></thead><tbody>';
       r.metrics.forEach(function(mt){
         h+='<tr><td>'+esc(mt.name)+'<div class="m-hint">เป้า '+mt.target+' '+esc(mt.unit||'')+'</div></td>';
@@ -11384,15 +11390,31 @@
       h+='</tbody></table></div><div class="m-hint">เขียว = ถึงเป้า · เหลือง = 80% ขึ้นไป · แดง = ต่ำกว่า 80% · จุด = เดือนที่ไม่ได้ประเมินข้อนี้</div></div>';
     }
 
-    /* คลังใบประเมิน */
-    h+='<div class="card"><div class="section-h">คลังใบประเมิน</div>';
-    if(!(r.docs||[]).length) h+='<div class="emptybox">ยังไม่มีใบประเมินที่ออกไฟล์ไว้</div>';
+    /* ── ใบประเมินย้อนหลัง (พี่กี้ 12 ก.ย. 69) ──
+       เดิมโชว์เฉพาะเดือนที่ "เคยออกไฟล์ไว้" ซึ่งส่วนใหญ่ว่างเปล่า ทั้งที่ระบบเปิดใบของทุกเดือน
+       ที่มีคะแนนให้ดูได้อยู่แล้ว (ใบสร้างจากข้อมูลสด ไม่ต้องมีไฟล์)
+       → ไล่ทุกเดือนที่มีคะแนน กดดูใบได้ทันที · เดือนที่มีไฟล์เก็บไว้มีปุ่มเปิดไฟล์เพิ่ม */
+    var fileOf={}; (r.docs||[]).forEach(function(d){ fileOf[d.ym]=d.link; });
+    var doneMonths=ser.filter(function(x){ return x.total!==null&&x.total!==undefined; });
+    h+='<div class="card"><div class="section-h">ใบประเมินย้อนหลัง</div>';
+    if(!doneMonths.length) h+='<div class="emptybox">ยังไม่มีเดือนที่คิดคะแนนแล้ว</div>';
     else {
-      h+='<div class="kp-bar">'+r.docs.map(function(d){
-        return '<a class="btn btn-ghost btn-sm" href="'+esc(d.link)+'" target="_blank" rel="noopener">'+esc(kpLabel(d.ym))+'</a>';
-      }).join('')+'</div>';
+      h+='<div class="kp-wrap"><table class="kp-tbl"><thead><tr><th>เดือน</th>'+
+        '<th class="kp-r">คะแนนรวม</th><th class="kp-c">เกรด</th><th class="kp-c">สถานะ</th>'+
+        '<th class="kp-c">ใบประเมิน</th></tr></thead><tbody>';
+      doneMonths.slice().reverse().forEach(function(x){
+        h+='<tr><td>'+esc(kpLabel(x.ym))+'</td>'+
+          '<td class="kp-r"><b>'+kpNum(x.total)+'</b></td>'+
+          '<td class="kp-c">'+kpGradePill(x.grade)+'</td>'+
+          '<td class="kp-c">'+kpStatusPill(x.status)+'</td>'+
+          '<td class="kp-c"><div class="kp-rowact">'+
+            '<button class="btn btn-ghost btn-sm" onclick="kpDocMonth(\''+esc(e.code)+'\',\''+esc(x.ym)+'\')">เปิดใบประเมิน</button>'+
+            (fileOf[x.ym]?('<a class="btn btn-ghost btn-sm" href="'+esc(fileOf[x.ym])+'" target="_blank" rel="noopener">เปิดไฟล์ที่เก็บไว้</a>'):'')+
+          '</div></td></tr>';
+      });
+      h+='</tbody></table></div>';
     }
-    h+='<div class="kp-bar"><button class="btn btn-ghost btn-sm" onclick="kpDocOf(\''+esc(e.code)+'\')">เปิดใบประเมินเดือนล่าสุด</button></div></div>';
+    h+='</div>';
     return h;
   }
   function kpiRound2js(n){ return Math.round(n*100)/100; }
@@ -11422,7 +11444,7 @@
     });
     var xlb='';
     for(var i=0;i<n;i++) xlb+='<text x="'+X(i).toFixed(1)+'" y="'+(H-6)+'" text-anchor="middle" class="kp-axis">'+
-      esc(kpLabel(ser[i].ym).split(' ')[0].substr(0,3))+'</text>';
+      esc(kpMon(ser[i].ym))+'</text>';
     return '<div class="kp-linewrap"><svg viewBox="0 0 '+W+' '+H+'" class="kp-line">'+grid+xlb+
       path('perf','#93C5FD')+path('trait','#C4B5FD')+path('stat','#FCD34D')+path('total','var(--red)')+
       '</svg></div>'+
@@ -11684,7 +11706,7 @@
         '<div class="kp-tval">'+(v===null?'—':v.toFixed(1))+'</div>'+
         '<div class="kp-tbarwrap"><div class="kp-tbar" style="height:'+hgt+'px;background:'+
           (v===null?'#e8edf3':esc(colorOf(v)))+'"></div></div>'+
-        '<div class="kp-tlb">'+esc(kpLabel(x.ym).split(' ')[0].substr(0,3))+'</div></div>';
+        '<div class="kp-tlb">'+esc(kpMon(x.ym))+'</div></div>';
     }).join('')+'</div><div class="m-hint">แกนตั้งเทียบจากคะแนนเต็ม 100 · เดือนที่ไม่มีข้อมูลเว้นว่าง</div>';
   }
 
@@ -11706,6 +11728,8 @@
   }
 
   function kpDocOf(code){ KP_CODE=code; if(KPR_YM) KP_YM=KPR_YM; switchView('kpidoc'); }
+  /** เปิดใบประเมินของเดือนที่ระบุ — ใช้จากตารางใบประเมินย้อนหลังในหน้าประวัติรายคน */
+  function kpDocMonth(code,ym){ KP_CODE=code; KP_YM=ym; switchView('kpidoc'); }
   /* ⚠️ ปิดรอบ/เปิดรอบของเดิมถูกยุบไปที่หน้า "รอบการประเมิน" แล้ว (พี่กี้เคาะ 9 ก.ย. 69)
      เหลือไว้เป็นทางผ่านให้โค้ดเก่าที่ยังเรียกอยู่ ไม่ให้มี 2 เส้นทางที่ปิดรอบคนละแบบ */
   function kpClose(){ KPR_YM=KP_YM||KPR_YM; kpApproveRound(0); }
@@ -13833,7 +13857,7 @@ function kpImpDraw(){
       r.pip.forEach(function(x){
         h+='<tr><td>'+kpWhoCell(x)+'</td><td>'+esc(x.pos)+'</td>'+
           '<td class="kp-c"><b>'+x.streak+'</b> รอบ</td><td>'+
-          x.history.map(function(hh){ return '<span class="kp-hist">'+esc(kpLabel(hh.ym).split(' ')[0].substr(0,3))+' '+kpGradePill(hh.grade)+'</span>'; }).join('')+
+          x.history.map(function(hh){ return '<span class="kp-hist">'+esc(kpMon(hh.ym))+' '+kpGradePill(hh.grade)+'</span>'; }).join('')+
           '</td></tr>';
       });
       h+='</tbody></table></div>';
@@ -15044,7 +15068,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260912-1609';
+  var APP_BUILD='20260912-1616';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
