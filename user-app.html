@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260912-1619">
+<link rel="stylesheet" href="user.css?v=20260912-1627">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -11329,6 +11329,8 @@
     skel();
     kpFetch({ action:'waKpiPersonDetail', uid:UID, code:KP_CODE, ym:KPR_YM||'' },function(r){
       if(!r||!r.ok) return kpErr((r&&r.error)||'ยังไม่ได้เลือกพนักงาน — กดจากหน้าทะเบียนได้เลยค่ะ');
+      /* หลังบ้านเลือกคนแรกให้เมื่อเข้าหน้านี้ตรง ๆ — จำรหัสไว้ ไม่งั้นกดเปลี่ยนเดือน/เปิดใบแล้วหลุด */
+      if(r.emp&&r.emp.code) KP_CODE=r.emp.code;
       kpPaint('kpiperson', kpPersonHtml(r));
     });
   }
@@ -11730,9 +11732,21 @@
     return h+'</tbody></table></div><div class="m-hint">ช่องว่าง = ยังไม่มีใบประเมินเดือนนั้น · กล่องเทา = มีใบแล้วแต่ยังไม่อนุมัติ</div>';
   }
 
-  function kpDocOf(code){ KP_CODE=code; if(KPR_YM) KP_YM=KPR_YM; switchView('kpidoc'); }
+  /* ── ปุ่มกลับของหน้าใบประเมิน (พี่กี้ 12 ก.ย. 69) ──
+     ใบประเมินเปิดได้จากหลายหน้า (จัดการผล · รายงาน · ประวัติรายคน · ทะเบียน)
+     เดิมปุ่มกลับเขียนตายว่า "← ประวัติรายคน" เสมอ กดแล้วไปโผล่คนละหน้ากับที่มา
+     → จำหน้าต้นทางตอนกดเปิดใบ แล้วปุ่มกลับพากลับหน้านั้น พร้อมบอกชื่อหน้าให้ตรง */
+  var KP_DOC_BACK='kpiperson', KP_DOC_BACK_LB='ประวัติรายคน';
+  var KP_VIEW_LB={ kpimanage:'จัดการผลการประเมิน', kpireport:'รายงาน', kpiperson:'ประวัติรายคน',
+                   kpiemp:'ทะเบียนพนักงาน', kpidash:'ภาพรวม', kpiround:'รอบการประเมิน' };
+  function kpDocRemember(){
+    var lb=KP_VIEW_LB[VIEW];
+    if(lb){ KP_DOC_BACK=VIEW; KP_DOC_BACK_LB=lb; }
+  }
+  function kpDocBack(){ switchView(KP_DOC_BACK||'kpiperson'); }
+  function kpDocOf(code){ kpDocRemember(); KP_CODE=code; if(KPR_YM) KP_YM=KPR_YM; switchView('kpidoc'); }
   /** เปิดใบประเมินของเดือนที่ระบุ — ใช้จากตารางใบประเมินย้อนหลังในหน้าประวัติรายคน */
-  function kpDocMonth(code,ym){ KP_CODE=code; KP_YM=ym; switchView('kpidoc'); }
+  function kpDocMonth(code,ym){ kpDocRemember(); KP_CODE=code; KP_YM=ym; switchView('kpidoc'); }
   /* ⚠️ ปิดรอบ/เปิดรอบของเดิมถูกยุบไปที่หน้า "รอบการประเมิน" แล้ว (พี่กี้เคาะ 9 ก.ย. 69)
      เหลือไว้เป็นทางผ่านให้โค้ดเก่าที่ยังเรียกอยู่ ไม่ให้มี 2 เส้นทางที่ปิดรอบคนละแบบ */
   function kpClose(){ KPR_YM=KP_YM||KPR_YM; kpApproveRound(0); }
@@ -11995,7 +12009,7 @@
       if(!r||!r.ok) return kpErr(r&&r.error);
       var h='<div class="ds-sel kp-noprint"><select onchange="kpDocYm(this.value)">'+kpMonthOpts(r.ym)+'</select>'+
         '<button class="btn btn-ghost btn-sm" onclick="window.print()">พิมพ์ / บันทึกเป็น PDF</button>'+
-        '<button class="btn btn-ghost btn-sm" onclick="switchView(\'kpiperson\')">← ประวัติรายคน</button></div>';
+        '<button class="btn btn-ghost btn-sm" onclick="kpDocBack()">← กลับ'+esc(KP_DOC_BACK_LB||'')+'</button></div>';
       h+='<div class="card kp-paper">'+kpDocPaper(r)+'</div>';
       kpPaint('kpidoc',h);
     }).catch(function(e){ kpErr(e.message); });
@@ -15077,7 +15091,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260912-1619';
+  var APP_BUILD='20260912-1627';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
