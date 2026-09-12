@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260912-1422">
+<link rel="stylesheet" href="user.css?v=20260912-1449">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1591,6 +1591,9 @@
   .kp-doc-tb td.c{ text-align:center; }
   /* ส่วนที่ 1 ข้อมูลพนักงาน — ป้ายชื่อช่องพื้นม่วงจาง ค่าอยู่ช่องขวา */
   .kp-doc-tb td.lb{ background:var(--red-soft); font-weight:700; width:130px; }
+  /* กรอบสรุปผล — ตารางเกณฑ์อยู่ซ้าย ผลอยู่ขวาในกรอบเดียวกัน (ตามแบบฟอร์มลูกค้า) */
+  .kp-doc-fin .kp-fin-h{ background:var(--red-tint); color:#4C1D95; font-weight:700; }
+  .kp-doc-fin .kp-fin-big{ font-size:15px; font-weight:800; font-variant-numeric:tabular-nums; }
   .kp-doc-grade{ width:100%; border-collapse:collapse; margin-top:8px; }
   .kp-doc-grade th,.kp-doc-grade td{ border:1px solid #DDD6FE; font-size:12px; padding:4px 8px; }
   .kp-doc-grade th{ background:var(--red-tint); color:#4C1D95; }
@@ -12023,50 +12026,69 @@
       sec=4;
     }
 
-    /* ส่วนสถิติ — ฟอร์มต้นฉบับมีคอลัมน์น้ำหนักรายรายการด้วย แต่เกณฑ์ในระบบเก็บแค่ "หักต่อครั้ง"
-       (หักจากฐาน 100 รวม ผลเท่ากันเมื่อน้ำหนักรายการรวมได้ 100) จึงสรุปที่แถวรวมแทน */
-    var si=res.statInfo||{};
+    /* ส่วนสถิติ — 8 คอลัมน์ตามแบบฟอร์มจริง (พี่กี้ส่งภาพ 12 ก.ย. 69)
+       น้ำหนัก (4) · คะแนนสุทธิ (4)-(3)=(5) · คะแนนที่ได้ (5)*น้ำหนักส่วน/100
+       เกณฑ์ที่ยังไม่ได้ตั้งน้ำหนักรายข้อ (byItem=false) = ซ่อน 2 คอลัมน์นั้น แล้วสรุปที่แถวรวมแทน
+       (โชว์ช่องว่างไว้จะอ่านเหมือนน้ำหนัก 0 ซึ่งไม่จริง) */
+    var si=res.statInfo||{}, byItem=!!si.byItem, srows=si.rows||[];
     h+='<div class="kp-doc-sec">ส่วนที่ '+sec+' : สถิติการมาทำงานและความประพฤติ</div>'+
       '<table class="kp-doc-tb"><thead><tr>'+
-        '<th style="width:5%">ลำดับ</th><th style="width:34%">หัวข้อการประเมิน</th>'+
-        '<th style="width:25%">เกณฑ์การหักคะแนน/ครั้ง<small>ต่อรอบการประเมิน (1)</small></th>'+
-        '<th style="width:15%">จำนวนครั้ง<small>(2)</small></th>'+
-        '<th style="width:21%">รวมคะแนนที่หัก<small>(1) x (2) = (3)</small></th></tr></thead><tbody>';
-    (r.statRules||[]).forEach(function(s,i){
+        '<th style="width:5%">ลำดับ</th><th style="width:'+(byItem?21:34)+'%">หัวข้อการประเมิน</th>'+
+        '<th style="width:'+(byItem?18:25)+'%">เกณฑ์การหักคะแนน/ครั้ง<small>ต่อรอบการประเมิน (1)</small></th>'+
+        '<th style="width:'+(byItem?10:15)+'%">จำนวนครั้ง<small>(2)</small></th>'+
+        '<th style="width:'+(byItem?14:21)+'%">รวมคะแนนที่หัก<small>(1)*(2)=(3)</small></th>'+
+        (byItem?('<th style="width:11%">น้ำหนักคะแนน<small>(%) (4)</small></th>'+
+                 '<th style="width:10%">คะแนนสุทธิ<small>(4)-(3)=(5)</small></th>'+
+                 '<th style="width:11%">คะแนนที่ได้<small>('+kpNum0(w.stat)+' คะแนน) (5)*'+kpNum0(w.stat)+'/100</small></th>'):'')+
+        '</tr></thead><tbody>';
+    /* แถวมาจาก statInfo.rows (หลังบ้านคิดมาแล้ว) — ถ้าไม่มีก็ไล่จาก statRules เหมือนเดิม */
+    var list = srows.length ? srows : (r.statRules||[]).map(function(s){
       var n=Number((r.statCounts||{})[s.key]||0);
-      h+='<tr><td class="c">'+(i+1)+'</td><td>'+esc(s.label)+'</td>'+
-        '<td class="n">'+s.deduct+'</td><td class="n">'+n+'</td>'+
-        '<td class="n">'+(n*s.deduct).toFixed(2)+'</td></tr>';
+      return { key:s.key, label:s.label, per:s.deduct, count:n, cut:n*s.deduct, weight:0 };
     });
-    h+='<tr class="kp-doc-sum"><td></td>'+
-      '<td>คะแนนน้ำหนัก '+kpNum0(w.stat)+'% · คะแนนสุทธิ '+
-        (si.netPct===undefined?'—':Number(si.netPct).toFixed(2))+' จาก 100</td>'+
-      '<td></td><td class="n">รวมหัก '+(si.deduct===undefined?'0.00':Number(si.deduct).toFixed(2))+'</td>'+
-      '<td class="n">'+res.stat.toFixed(2)+'</td></tr></tbody></table>';
+    list.forEach(function(s,i){
+      h+='<tr><td class="c">'+(i+1)+'</td><td>'+esc(s.label)+'</td>'+
+        '<td class="n">'+s.per+'</td><td class="n">'+s.count+'</td>'+
+        '<td class="n">'+Number(s.cut).toFixed(2)+'</td>'+
+        (byItem?('<td class="n">'+kpNum0(s.weight)+'</td>'+
+                 '<td class="n">'+Number(s.net).toFixed(2)+'</td>'+
+                 '<td class="n">'+Number(s.score).toFixed(2)+'</td>'):'')+'</tr>';
+    });
+    h+='<tr class="kp-doc-sum"><td></td><td>คะแนนน้ำหนัก</td>'+
+      '<td class="n">'+kpNum0(w.stat)+'%</td><td></td>'+
+      '<td class="n">'+(si.deduct===undefined?'0.00':Number(si.deduct).toFixed(2))+'</td>'+
+      (byItem?('<td class="n">100</td>'+
+               '<td class="n">'+(si.netPct===undefined?'—':Number(si.netPct).toFixed(2))+'</td>'+
+               '<td class="n">'+res.stat.toFixed(2)+'</td>')
+             :('<td class="n">คะแนนสุทธิ '+(si.netPct===undefined?'—':Number(si.netPct).toFixed(2))+' จาก 100</td>'))+
+      (byItem?'':'<td class="n">'+res.stat.toFixed(2)+'</td>')+
+      '</tr></tbody></table>';
 
-    /* สรุปผลการประเมิน */
-    h+='<div class="kp-doc-sec">สรุปผลการประเมิน</div>'+
-      '<table class="kp-doc-tb"><thead><tr>'+
-        '<th style="width:20%">รวมคะแนนการประเมิน</th><th style="width:10%">เกรด</th>'+
-        '<th style="width:52%">คำอธิบาย</th><th style="width:18%">ผลการประเมิน</th></tr></thead><tbody>'+
-      '<tr><td class="n"><b>'+res.total.toFixed(2)+'</b></td>'+
-        '<td class="c">'+kpGradePill(res.grade)+'</td>'+
-        '<td>'+esc(res.gradeLabel||'')+'</td>'+
-        '<td class="c"><span class="kp-pill '+(res.result==='ผ่าน'?'kp-pill-ok':'kp-pill-no')+'">'+
-          esc(res.result||'—')+'</span></td></tr></tbody></table>';
-
+    /* ── สรุปผลการประเมิน — ตารางเกณฑ์อยู่ซ้าย ผลอยู่ขวาในกรอบเดียวกัน (ตามภาพที่พี่กี้ส่ง) ── */
     var gl=r.gradeTable||[];
-    if(gl.length){
-      h+='<table class="kp-doc-grade"><thead><tr><th style="width:60px">เกรด</th>'+
-        '<th style="width:110px">คะแนน</th><th>คำอธิบาย</th></tr></thead><tbody>';
-      gl.forEach(function(g,i){
-        var upper = i>0 ? (Number(gl[i-1].min)-1) : 100;
-        h+='<tr><td class="c"><b class="kp-g kp-g'+g.grade+'">'+g.grade+'</b></td>'+
-          '<td class="c">'+(i===gl.length-1?('ต่ำกว่า '+(upper+1)):(g.min+'-'+upper))+'</td>'+
-          '<td>'+esc(g.label||'')+'</td></tr>';
-      });
-      h+='</tbody></table>';
-    }
+    h+='<div class="kp-doc-sec">สรุปผลการประเมิน</div>'+
+      '<table class="kp-doc-tb kp-doc-fin"><thead><tr>'+
+        '<th style="width:8%">เกรด</th><th style="width:14%">คะแนน</th>'+
+        '<th style="width:44%">คำอธิบาย</th><th colspan="2" style="width:34%">ผลการประเมิน</th>'+
+      '</tr></thead><tbody>';
+    gl.forEach(function(g,i){
+      var upper = i>0 ? (Number(gl[i-1].min)-1) : 100;
+      /* ฝั่งขวาไล่ตามแถวเหมือนฟอร์มต้นฉบับ:
+         แถว 1 หัวข้อ "รวมคะแนนการประเมิน" · แถว 2 ตัวเลข · แถว 3 หัว เกรด/คำอธิบาย
+         แถว 4 ค่าเกรด/กลุ่ม · แถว 5 ผ่าน-ไม่ผ่าน */
+      var right='';
+      if(i===0)      right='<td colspan="2" class="c kp-fin-h">รวมคะแนนการประเมิน (2+3+4)</td>';
+      else if(i===1) right='<td colspan="2" class="c kp-fin-big">'+res.total.toFixed(2)+'</td>';
+      else if(i===2) right='<td class="c kp-fin-h">เกรด</td><td class="c kp-fin-h">คำอธิบาย</td>';
+      else if(i===3) right='<td class="c kp-fin-big">'+(res.grade||'—')+'</td>'+
+                           '<td class="c">'+esc(kpGradeGroupOf(gl,res.grade)||res.gradeLabel||'')+'</td>';
+      else           right='<td colspan="2" class="c"><span class="kp-pill '+
+                           (res.result==='ผ่าน'?'kp-pill-ok':'kp-pill-no')+'">'+esc(res.result||'—')+'</span></td>';
+      h+='<tr><td class="c"><b class="kp-g kp-g'+g.grade+'">'+g.grade+'</b></td>'+
+        '<td class="c">'+(i===gl.length-1?('ต่ำกว่า '+(upper+1)):(g.min+'-'+upper))+'</td>'+
+        '<td>'+esc(g.label||'')+'</td>'+right+'</tr>';
+    });
+    h+='</tbody></table>';
 
     h+='<div class="kp-doc-signs">'+
       '<div><p>ลงชื่อ ...................................... ผู้ถูกประเมิน</p>'+
@@ -12076,6 +12098,12 @@
         '<p>( ...................................... )</p>'+
         '<p>วันที่ประเมิน ......../......../........</p></div></div>';
     return h;
+  }
+
+  /** กลุ่มความหมายของเกรด (สูงกว่า/ตาม/ต่ำกว่าเป้าหมาย) — ใบสรุปใช้คำนี้ ไม่ใช่คำอธิบายยาว */
+  function kpGradeGroupOf(gl,grade){
+    for(var i=0;i<(gl||[]).length;i++) if(String(gl[i].grade)===String(grade)) return gl[i].group||'';
+    return '';
   }
 
   function kpDocYm(v){ KP_YM=v; KPR_YM=v; renderKpiDoc(); }
@@ -13162,15 +13190,27 @@
         '<span class="kp-lb">'+(set.oldKey?'กำลังแก้ไขชุดเดิม':'ชุดใหม่')+'</span>'+
       '</div>'+
       '<div class="kp-wrap"><table class="kp-tbl kp-in" id="kpStatTbl">'+
-        '<colgroup><col style="width:90px"><col><col style="width:290px"></colgroup>'+
+        '<colgroup><col style="width:90px"><col><col style="width:250px"><col style="width:190px"></colgroup>'+
         '<thead><tr><th class="kp-c">ลำดับ</th><th>หัวข้อการประเมิน</th>'+
-        '<th class="kp-c">เกณฑ์การหักคะแนน/ครั้ง ต่อรอบการประเมิน</th></tr></thead><tbody>';
+        '<th class="kp-c">เกณฑ์การหักคะแนน/ครั้ง ต่อรอบการประเมิน</th>'+
+        /* น้ำหนักรายข้อ (พี่กี้ 12 ก.ย. 69) — หักเกินน้ำหนักของข้อไหน ข้อนั้นได้ 0 ไม่ลามไปข้ออื่น
+           ต้องรวมกันได้ 100 ถึงจะใช้วิธีนี้ · ไม่ครบ = ระบบกลับไปหักรวมจากฐาน 100 แบบเดิม */
+        '<th class="kp-c">น้ำหนักคะแนน (%)</th></tr></thead><tbody>';
+    var wsum=0;
     rows.forEach(function(x,i){
+      wsum += Number(x.weight)||0;
       h+='<tr><td class="kp-c">'+(i+1)+'<input type="hidden" data-f="key" value="'+esc(x.key||'')+'"></td>'+
         '<td><input class="inp kp-wide" data-f="label" value="'+esc(x.label||'')+'"></td>'+
-        '<td class="kp-c"><input class="inp kp-nm kp-mid" data-f="deduct" type="number" step="any" value="'+(x.deduct===''||x.deduct===undefined?'':x.deduct)+'"></td></tr>';
+        '<td class="kp-c"><input class="inp kp-nm kp-mid" data-f="deduct" type="number" step="any" value="'+(x.deduct===''||x.deduct===undefined?'':x.deduct)+'"></td>'+
+        '<td class="kp-c"><input class="inp kp-nm kp-mid" data-f="weight" type="number" step="any" value="'+(x.weight===''||x.weight===undefined?'':x.weight)+'"></td></tr>';
     });
-    h+='</tbody></table></div>'+kpEffNote(r);
+    h+='</tbody></table></div>'+
+      '<div class="'+(Math.abs(wsum-100)<0.001?'kp-note-ok':'kp-note-warn')+'">'+
+        (Math.abs(wsum-100)<0.001
+          ? 'น้ำหนักคะแนนรวม 100% — ใบประเมินจะโชว์คอลัมน์ "น้ำหนัก / คะแนนสุทธิ" รายข้อ'
+          : 'น้ำหนักคะแนนรวมได้ '+kpNum0(wsum)+'% (ต้องเป็น 100%) — ระหว่างนี้ระบบหักรวมจากฐาน 100 แบบเดิม '+
+            'และใบประเมินจะไม่โชว์คอลัมน์น้ำหนักรายข้อ')+'</div>'+
+      kpEffNote(r);
     if(r.canEdit) h+='<div class="kp-bar"><button class="btn btn-ghost btn-sm" onclick="kpAddRow(\'kpStatTbl\')">+ เพิ่มหัวข้อ</button>'+
       /* "ใส่เกณฑ์มาตรฐาน" = เขียนทับทั้งตาราง — ตอนแก้ชุดเดิมกดพลาดแล้วค่าที่ตั้งไว้หายหมด
          จึงให้มีเฉพาะตอนสร้างชุดใหม่ (ตารางยังว่าง) */
@@ -13254,7 +13294,7 @@
     var set=kpStatSet();
     if($('kpStatName')) set.name=$('kpStatName').value;
     if($('kpStatPos')) set.positions=[$('kpStatPos').value];
-    set.rows=t.map(function(x){ return { key:x.key, label:x.label, deduct:x.deduct }; });
+    set.rows=t.map(function(x){ return { key:x.key, label:x.label, deduct:x.deduct, weight:x.weight }; });
     kpSetupLoad(VIEW);
   }
 
@@ -14964,7 +15004,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260912-1422';
+  var APP_BUILD='20260912-1449';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
