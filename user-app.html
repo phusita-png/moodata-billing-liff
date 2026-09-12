@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260912-1506">
+<link rel="stylesheet" href="user.css?v=20260912-1537">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1541,6 +1541,12 @@
     font-size:34px; font-weight:800; color:#1F2733; letter-spacing:-.5px;
     line-height:1.15; font-variant-numeric:tabular-nums; }
   .kp-gcard-u{ position:absolute; right:13px; bottom:10px; font-size:14.5px; font-weight:600; color:#4A5262; }
+  /* ปุ่มสั่งงานท้ายแถวตาราง — เรียงลงเป็นคอลัมน์ ข้อความห้ามตัดบรรทัด
+     (พี่กี้ทัก 12 ก.ย. 69: คำว่า "เปิดฟอร์ม/ใบประเมิน" ถูกหั่นเป็น 2 บรรทัด อ่านแล้วรก)
+     คอลัมน์สุดท้ายต้อง nowrap ด้วย ไม่งั้นตารางไปบีบคอลัมน์นี้จนปุ่มหดอีก */
+  .kp-rowact{ display:inline-flex; flex-direction:column; gap:6px; align-items:stretch; }
+  .kp-rowact .btn{ white-space:nowrap; justify-content:center; }
+  .kp-tbl td:last-child{ white-space:nowrap; }
   .kp-legend{ display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; color:#3d5164; }
   .kp-leg{ display:inline-flex; align-items:center; gap:5px; }
   .kp-in input,.kp-in select{ padding:5px 7px; border:1px solid #e3e8ef; border-radius:7px; font-size:13px; }
@@ -1584,8 +1590,11 @@
   .kp-doc-tb{ width:100%; border-collapse:collapse; table-layout:fixed; }
   .kp-doc-tb td{ word-break:break-word; }
   .kp-doc-tb th,.kp-doc-tb td{ border:1px solid #DDD6FE; font-size:12.5px; padding:5px 8px; }
-  .kp-doc-tb th{ background:var(--red-tint); color:#4C1D95; font-weight:700; text-align:center; line-height:1.35; }
-  .kp-doc-tb th small{ display:block; font-weight:600; font-size:10.5px; opacity:.85; }
+  /* หัวตารางเล็กกว่าเนื้อนิดหน่อย — หัวมีสูตรกำกับยาว ถ้าใช้ขนาดเดียวกับเนื้อจะตัด 3 บรรทัด
+     แล้วแถวหัวสูงจนใบดูหลวม (พี่กี้ขอให้คอลัมน์หัวข้อได้ที่มากขึ้น 12 ก.ย. 69) */
+  .kp-doc-tb th{ background:var(--red-tint); color:#4C1D95; font-weight:700; text-align:center;
+    line-height:1.3; font-size:11.5px; padding:5px 6px; }
+  .kp-doc-tb th small{ display:block; font-weight:600; font-size:10px; opacity:.85; }
   .kp-doc-sum td{ background:var(--red-soft); font-weight:700; }
   .kp-doc-tb td.n{ text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
   .kp-doc-tb td.c{ text-align:center; }
@@ -11978,12 +11987,12 @@
     /* ส่วนที่ 2 : ผลการปฏิบัติงาน */
     h+='<div class="kp-doc-sec">ส่วนที่ 2 : ประเมินผลการปฏิบัติงาน</div>'+
       '<table class="kp-doc-tb"><thead><tr>'+
-        '<th style="width:5%">ลำดับ</th><th style="width:34%">ตัวชี้วัดผลงาน (KPI)</th>'+
-        '<th style="width:10%">น้ำหนัก<small>(1)</small></th>'+
-        '<th style="width:11%">คะแนนเต็ม<small>(2)</small></th>'+
-        '<th style="width:11%">ทำได้จริง<small>(3)</small></th>'+
-        '<th style="width:14%">คะแนนเต็ม<small>(1) x (2)/100</small></th>'+
-        '<th style="width:15%">คะแนนที่ได้<small>(1) x (3)/(2)</small></th></tr></thead><tbody>';
+        '<th style="width:6%">ลำดับ</th><th style="width:44%">ตัวชี้วัดผลงาน (KPI)</th>'+
+        '<th style="width:9%">น้ำหนัก<small>(1)</small></th>'+
+        '<th style="width:9%">คะแนนเต็ม<small>(2)</small></th>'+
+        '<th style="width:10%">ทำได้จริง<small>(3)</small></th>'+
+        '<th style="width:11%">คะแนนเต็ม<small>(1) x (2)/100</small></th>'+
+        '<th style="width:11%">คะแนนที่ได้<small>(1) x (3)/(2)</small></th></tr></thead><tbody>';
     (res.detail||[]).forEach(function(d,i){
       h+='<tr><td class="c">'+(i+1)+'</td><td>'+esc(d.name)+'</td>'+
         '<td class="n">'+d.weight.toFixed(2)+'</td><td class="n">100</td>'+
@@ -12001,12 +12010,12 @@
       var ti=res.traitInfo||{}, items=ti.detail||[];
       h+='<div class="kp-doc-sec">ส่วนที่ 3 : ประเมินคุณลักษณะส่วนบุคคล</div>'+
         '<table class="kp-doc-tb"><thead><tr>'+
-          '<th style="width:5%">ลำดับ</th><th style="width:34%">หัวข้อการประเมิน</th>'+
-          '<th style="width:10%">น้ำหนัก<small>(1)</small></th>'+
-          '<th style="width:11%">เป้าหมาย<small>(2)</small></th>'+
-          '<th style="width:11%">ทำได้จริง<small>(3)</small></th>'+
-          '<th style="width:14%">คะแนนเต็ม<small>(1)</small></th>'+
-          '<th style="width:15%">คะแนนที่ได้<small>(1) x (3)/(2)</small></th></tr></thead><tbody>';
+          '<th style="width:6%">ลำดับ</th><th style="width:44%">หัวข้อการประเมิน</th>'+
+          '<th style="width:9%">น้ำหนัก<small>(1)</small></th>'+
+          '<th style="width:9%">เป้าหมาย<small>(2)</small></th>'+
+          '<th style="width:10%">ทำได้จริง<small>(3)</small></th>'+
+          '<th style="width:11%">คะแนนเต็ม<small>(1)</small></th>'+
+          '<th style="width:11%">คะแนนที่ได้<small>(1) x (3)/(2)</small></th></tr></thead><tbody>';
       items.forEach(function(it,i){
         h+='<tr><td class="c">'+(i+1)+'</td><td>'+esc(it.label)+'</td>'+
           '<td class="n">'+it.weight.toFixed(2)+'</td><td class="n">100</td>'+
@@ -12039,15 +12048,15 @@
     });
     h+='<div class="kp-doc-sec">ส่วนที่ '+sec+' : สถิติการมาทำงานและความประพฤติ</div>'+
       '<table class="kp-doc-tb"><thead><tr>'+
-        '<th style="width:6%">ลำดับ</th><th style="width:'+(byItem?32:30)+'%">หัวข้อการประเมิน</th>'+
+        '<th style="width:6%">ลำดับ</th><th style="width:44%">หัวข้อการประเมิน</th>'+
         (byItem
-          ?('<th style="width:16%">น้ำหนักคะแนน<small>100%</small></th>'+
-            '<th style="width:15%">คะแนนที่หัก</th>'+
-            '<th style="width:15%">คะแนนสุทธิ<small>100%</small></th>'+
-            '<th style="width:16%">คะแนนที่ได้<small>('+kpNum0(w.stat)+' คะแนน)</small></th>')
-          :('<th style="width:24%">เกณฑ์การหักคะแนน/ครั้ง<small>ต่อรอบการประเมิน (1)</small></th>'+
-            '<th style="width:18%">จำนวนครั้ง<small>(2)</small></th>'+
-            '<th style="width:22%">รวมคะแนนที่หัก<small>(1)*(2)=(3)</small></th>'))+
+          ?('<th style="width:12%">น้ำหนักคะแนน<small>100%</small></th>'+
+            '<th style="width:12%">คะแนนที่หัก</th>'+
+            '<th style="width:12%">คะแนนสุทธิ<small>100%</small></th>'+
+            '<th style="width:14%">คะแนนที่ได้<small>('+kpNum0(w.stat)+' คะแนน)</small></th>')
+          :('<th style="width:20%">เกณฑ์การหักคะแนน/ครั้ง<small>ต่อรอบการประเมิน (1)</small></th>'+
+            '<th style="width:14%">จำนวนครั้ง<small>(2)</small></th>'+
+            '<th style="width:16%">รวมคะแนนที่หัก<small>(1)*(2)=(3)</small></th>'))+
         '</tr></thead><tbody>';
     list.forEach(function(s,i){
       var how = kpNum0(s.count)+' x '+s.per+' = '+Number(s.cut).toFixed(2);
@@ -12292,7 +12301,7 @@
         kpSecCell(x,'perf')+kpSecCell(x,'trait')+kpSecCell(x,'stat')+
         '<td class="kp-c">'+kpWeightCell(x.weight)+'</td>'+
         '<td class="kp-c">'+kpStatusPill(x.status)+kpProgBar(kpRowPct(x), kpPctNote(x.status,kpRowPct(x)))+'</td>'+
-        '<td><button class="btn btn-ghost btn-sm" onclick="kpFillOne(\''+esc(x.code)+'\')">กรอกข้อมูล</button></td></tr>';
+        '<td><div class="kp-rowact"><button class="btn btn-ghost btn-sm" onclick="kpFillOne(\''+esc(x.code)+'\')">กรอกข้อมูล</button></div></td></tr>';
     });
     h+='</tbody></table></div>';
     /* คำสั่งกับ "คนที่ติ๊กไว้" — พี่กี้ 11 ก.ย. 69: เดิมกดทีเดียวไปหมดทั้งรอบ เลือกบางคนไม่ได้
@@ -12554,8 +12563,10 @@
       h+='<td class="kp-r"><b>'+kpNum(x.total)+'</b></td>'+
         '<td class="kp-c">'+kpGradePill(x.grade)+'</td>'+
         '<td class="kp-c">'+kpStatusPill(x.status)+'</td>'+
-        '<td><button class="btn btn-ghost btn-sm" onclick="kpFillOne(\''+esc(x.code)+'\')">เปิดฟอร์ม</button>'+
-        (x.hasDoc?' <button class="btn btn-ghost btn-sm" onclick="kpDocOf(\''+esc(x.code)+'\')">ใบประเมิน</button>':'')+'</td></tr>';
+        '<td><div class="kp-rowact">'+
+          '<button class="btn btn-ghost btn-sm" onclick="kpFillOne(\''+esc(x.code)+'\')">เปิดฟอร์ม</button>'+
+          (x.hasDoc?'<button class="btn btn-ghost btn-sm" onclick="kpDocOf(\''+esc(x.code)+'\')">ใบประเมิน</button>':'')+
+        '</div></td></tr>';
     });
     h+='</tbody></table></div></div>';
     /* เกณฑ์เกรดของเดือนนี้ — ใช้ตารางหน้าตาเดียวกับหน้า "เกณฑ์ทั้งองค์กร" จัดกึ่งกลาง
@@ -15010,7 +15021,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260912-1506';
+  var APP_BUILD='20260912-1537';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
