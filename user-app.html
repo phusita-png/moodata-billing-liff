@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260911-2257">
+<link rel="stylesheet" href="user.css?v=20260912-1045">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1511,6 +1511,24 @@
     padding:9px 11px; font-size:12.5px; margin:8px 0; }
   .kp-note-ok{ background:#e9f7ef; border:1px solid #bfe6cd; color:#116c3a; border-radius:9px;
     padding:9px 11px; font-size:12.5px; margin:8px 0; }
+  .kp-warn-fold > summary{ cursor:pointer; list-style:none; }
+  .kp-warn-fold > summary::-webkit-details-marker{ display:none; }
+  .kp-warn-fold > summary::before{ content:"⚠️ "; }
+  /* ── การ์ดจำนวนคนตามเกรด (หน้าจัดการผลการประเมิน · พี่กี้ 12 ก.ย. 69) ──
+     สีพื้นมาจากเกณฑ์เกรดของเดือนนั้น (ใส่ inline ตอนวาด) — ที่นี่คุมแค่โครงกับระยะ
+     ห้ามกำหนดสีพื้นทับที่นี่ ไม่งั้นลูกค้าแก้สีเกรดแล้วการ์ดไม่เปลี่ยนตาม */
+  .kp-gcards{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin:2px 0 12px; }
+  .kp-gcard{ border-radius:14px; padding:11px 13px; }
+  .kp-gcard-0{ opacity:.55; }                      /* ไม่มีใครได้เกรดนี้ = จางลง แต่ยังต้องเห็นว่ามีเกรดนี้อยู่ */
+  .kp-gcard-h{ display:flex; align-items:center; gap:12px; }
+  .kp-gcard-n{ font-size:21px; font-weight:800; color:#1F2733; letter-spacing:-.3px;
+    font-variant-numeric:tabular-nums; }
+  .kp-gcard-n span{ font-size:12.5px; font-weight:600; color:#4A5262; }
+  .kp-gcard-sub{ font-size:11.5px; color:#4A5262; margin-top:6px; }
+  /* คำอธิบายเกรดยาวไม่เท่ากัน (บางอันสามบรรทัด) — ตัดที่ 2 บรรทัดให้การ์ดทั้งแถวสูงเท่ากัน
+     ข้อความเต็มยังอ่านได้จาก title ตอนชี้ค้าง และมีตารางเกณฑ์เต็ม ๆ อยู่ท้ายหน้าอยู่แล้ว */
+  .kp-gcard-lb{ font-size:11.5px; font-weight:600; color:#3C4655; line-height:1.35; margin-top:3px;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
   .kp-legend{ display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; color:#3d5164; }
   .kp-leg{ display:inline-flex; align-items:center; gap:5px; }
   .kp-in input,.kp-in select{ padding:5px 7px; border:1px solid #e3e8ef; border-radius:7px; font-size:13px; }
@@ -12128,11 +12146,14 @@
     return h;
   }
   /** เตือนตำแหน่งที่ตั้งค่าน้ำหนักยังไม่ครบ 100 (พี่กี้: ตอนตั้งค่ายังไม่เห็นว่าครบไหม)
-     คะแนนของคนในตำแหน่งนั้นจะไม่มีทางเต็ม 100 จนกว่าจะกลับไปแก้ */
+     คะแนนของคนในตำแหน่งนั้นจะไม่มีทางเต็ม 100 จนกว่าจะกลับไปแก้
+     12 ก.ย. 69: ยุบเหลือบรรทัดเดียวพับไว้ (ที่หัวหน้าเป็นการ์ดเกรดแทนแล้ว)
+     — ยังต้องมีอยู่ เพราะเป็นเรื่องที่ต้องรู้ "ก่อนกดอนุมัติ" แต่ไม่ต้องกางทุกครั้งที่เปิดหน้า */
   function kpWeightWarn(r){
     var bad=r.weightIssues||[];
     if(!bad.length) return '';
-    return '<div class="kp-note-warn"><b>น้ำหนักยังไม่ครบ 100% — คะแนนจะไม่เต็ม</b>'+
+    return '<details class="kp-note-warn kp-warn-fold"><summary><b>น้ำหนักยังไม่ครบ 100% '+bad.length+
+      ' ตำแหน่ง</b> — คะแนนของคนในตำแหน่งนั้นจะไม่เต็ม (กดดูรายละเอียด)</summary>'+
       bad.map(function(b){
         return '<div>• '+esc(b.posName)+' : '+b.issues.map(esc).join(' · ')+'</div>';
       }).join('')+
@@ -12140,7 +12161,7 @@
         '<button class="btn btn-ghost btn-sm" onclick="kpGo(\'kpimetric\')">แก้ตัวชี้วัด</button>'+
         '<button class="btn btn-ghost btn-sm" onclick="kpGo(\'kpitrait\')">แก้คุณลักษณะ</button>'+
         '<button class="btn btn-ghost btn-sm" onclick="kpGo(\'kpiemp\')">แก้น้ำหนักตำแหน่ง</button>'+
-      '</div></div>';
+      '</div></details>';
   }
 
   /** ทางลัดข้ามไปหน้าตั้งค่า (ห่อ switchView ไว้ให้ปุ่มใน string เรียกง่าย ไม่ต้อง escape ซ้อน) */
@@ -12264,16 +12285,8 @@
     if(st==='รออนุมัติ') return 'รออนุมัติ · '+pct+'%';
     return 'ยังไม่ส่งอนุมัติ · '+pct+'%';
   }
-  /** บาร์คะแนนในตาราง — หน้าตาชุดเดียวกับกราฟคะแนนรายคนหน้าภาพรวม (ยืมคลาสเดิม ไม่แก้ของเดิม)
-      คะแนนเป็น null = ยังไม่ถึงเวลาที่คนดูจะเห็นตัวเลข (ลูกค้าเห็นเมื่ออนุมัติแล้ว) */
-  function kpScoreBarCell(x){
-    if(x.total===null||x.total===undefined||x.total==='')
-      return '<td class="kp-c"><span class="m-hint">—</span></td>';
-    var v=Number(x.total), w=Math.max(2,Math.min(100,Math.round(v)));
-    var g=Number(x.grade)||0;
-    return '<td><div class="kp-sbar"><div class="kp-htrack"><div class="kp-hfill'+(g?(' kp-fill-g'+g):'')+
-      '" style="width:'+w+'%"></div></div><div class="kp-hval">'+v.toFixed(2)+'</div></div></td>';
-  }
+  /* บาร์คะแนนในช่อง "รวม" (kpScoreBarCell) เอาออกแล้ว 12 ก.ย. 69 — พี่กี้ให้เหลือตัวเลขล้วน
+     กราฟคะแนนรายคนที่หน้าภาพรวมยังใช้คลาสชุดเดิม (kp-sbar/kp-hfill) อยู่ ห้ามลบ CSS */
   /** บาร์ % เล็ก ๆ — ใช้ทั้งในการ์ดสรุปและในช่องสถานะของแต่ละแถว */
   function kpProgBar(pct,label){
     var p=Math.max(0,Math.min(100,Math.round(pct||0)));
@@ -12291,42 +12304,73 @@
     }).join('')+'</div>';
   }
 
-  /* ── หน้าจัดการผลการประเมิน — คอลัมน์ตามส่วนที่แต่ละคนมี + รวมคะแนน ── */
+  /* ── การ์ดจำนวนคนแยกตามเกรด (พี่กี้ 12 ก.ย. 69) ──
+     ขึ้นแทนกล่องเตือนน้ำหนักสีเหลืองที่เคยกินหัวหน้าไปครึ่งจอ
+     🔴 สีการ์ดต้องมาจาก "เกณฑ์เกรดของเดือนนั้น" (r.grades) ไม่ใช่สีที่เขียนตายในหน้าเว็บ
+        — ลูกค้าแก้สีเกรดเองได้จากหน้า "เกณฑ์ทั้งองค์กร" การ์ดต้องเปลี่ยนตาม
+     เรียง 1 → 5 จากซ้ายไปขวาตามที่พี่กี้สั่ง (ตารางเกณฑ์ข้างล่างเรียง 5 → 1 ตามแบบฟอร์มกระดาษ) */
+  function kpGradeCards(r){
+    var desc=(r.grades||[]).slice();
+    if(!desc.length) return '';
+    var rows=(r.rows||[]).filter(function(x){ return x.hasDoc; });
+    var cnt={}, none=0;
+    rows.forEach(function(x){
+      var g=Number(x.grade)||0;
+      if(!g) none++; else cnt[g]=(cnt[g]||0)+1;
+    });
+    var cards=desc.map(function(g,i){ return { g:g, upper:kpGradeUpper(desc,i) }; }).reverse();
+    var h='<div class="kp-gcards">'+cards.map(function(c){
+      var n=cnt[c.g.grade]||0;
+      return '<div class="kp-gcard'+(n?'':' kp-gcard-0')+'" style="background:'+esc(c.g.color||'#EEF1F5')+'"'+
+        ' title="'+esc(c.g.label||'')+'">'+
+        '<div class="kp-gcard-h"><b class="kp-g kp-g'+c.g.grade+'">'+c.g.grade+'</b>'+
+          '<span class="kp-gcard-n">'+n+' <span>คน</span></span></div>'+
+        '<div class="kp-gcard-sub">'+c.g.min+'–'+c.upper+' คะแนน</div>'+
+        '<div class="kp-gcard-lb">'+esc(c.g.label||'')+'</div></div>';
+    }).join('')+'</div>';
+    /* ยังไม่ได้เกรด = ยังคิดคะแนนไม่ครบ/ยังไม่อนุมัติ — ต้องบอก ไม่งั้นบวกการ์ดแล้วคนไม่ครบ หาไม่เจอว่าหายไปไหน */
+    if(none) h+='<div class="m-hint" style="margin:-6px 0 12px">ยังไม่ได้เกรด '+none+' คน (ยังกรอกไม่ครบ หรือยังไม่ได้คิดคะแนน)</div>';
+    return h;
+  }
+
+  /* ── หน้าจัดการผลการประเมิน ──
+     หัวคอลัมน์ชุดเดียวกับหน้า "รอบการประเมิน" (พี่กี้ 12 ก.ย. 69) เพื่อให้สลับหน้าแล้วอ่านต่อได้เลย
+     ต่างกันที่ "ข้อมูลในช่อง": หน้ารอบใส่ % น้ำหนัก · หน้านี้ใส่คะแนนจริงที่คิดได้ */
   function kpManageHtml(r){
     var rows=(r.rows||[]).filter(function(x){ return x.hasDoc; });
-    // คอลัมน์ = union ของส่วนที่มีในรอบนี้ (คนไหนไม่มีส่วนนั้น = ขีด)
-    var keys=[], label={};
-    rows.forEach(function(x){ (x.sections||[]).forEach(function(sx){
-      if(keys.indexOf(sx.key)<0){ keys.push(sx.key); label[sx.key]=sx.label; }
-    }); });
-    if(!keys.length) keys=['perf','trait','stat'], label={perf:'แบบประเมิน KPI',trait:'คุณลักษณะ',stat:'สถิติการทำงาน'};
+    var SECS=['perf','trait','stat'];
 
     var h='<div class="section-h">จัดการผลการประเมินพนักงาน · '+esc(kpLabel(r.ym))+'</div>';
     h+='<div class="card"><div class="kp-bar">'+kpYmPicker(r.ym,r.months,'kpRoundYm')+kpStatusPill(r.status)+
       '<span class="kp-grow"></span>'+kpRoundActions(r)+'</div>'+
+      kpGradeCards(r)+
       kpWeightWarn(r)+
       '<div class="m-hint">กดชื่อพนักงานเพื่อเปิดฟอร์มสรุปรายคน แก้ไขแล้วกดบันทึกได้เลย · ช่องแดง = ยังกรอกไม่ครบ</div>';
     if(!r.opened) h+='<div class="emptybox">ยังไม่ได้เปิดรอบเดือนนี้ — เปิดที่หน้า “รอบการประเมิน” ก่อนค่ะ</div>';
     h+='</div>';
 
     h+='<div class="card"><div class="kp-wrap"><table class="kp-tbl"><thead><tr>'+
-      '<th>ลำดับ</th><th>พนักงาน</th><th>ตำแหน่ง</th>';
-    keys.forEach(function(k){ h+='<th class="kp-r">'+esc(label[k]||k)+'</th>'; });
-    h+='<th class="kp-r">รวม</th><th class="kp-c">เกรด</th><th class="kp-c">สถานะ</th><th></th></tr></thead><tbody>';
-    if(!rows.length) h+='<tr><td colspan="'+(keys.length+7)+'"><div class="emptybox">ยังไม่มีข้อมูลของเดือนนี้</div></td></tr>';
+      '<th>ลำดับ</th><th class="kp-c">รหัสพนักงาน</th><th>ชื่อ-นามสกุล</th><th>ชื่อเล่น</th><th>ตำแหน่ง</th>'+
+      '<th class="kp-r">การปฏิบัติงาน (KPI)</th><th class="kp-r">คุณลักษณะส่วนบุคคล</th>'+
+      '<th class="kp-r">สถิติการมาทำงาน</th>'+
+      '<th class="kp-r">รวมคะแนน</th><th class="kp-c">เกรด</th><th class="kp-c">สถานะ</th><th></th></tr></thead><tbody>';
+    if(!rows.length) h+='<tr><td colspan="12"><div class="emptybox">ยังไม่มีข้อมูลของเดือนนี้</div></td></tr>';
     rows.forEach(function(x,i){
-      var has={}; (x.sections||[]).forEach(function(sx){ has[sx.key]=sx; });
       h+='<tr><td>'+(i+1)+'</td>'+
-        '<td><button class="kp-link" onclick="kpFillOne(\''+esc(x.code)+'\')"><b>'+kpWhoOpt(x)+'</b></button>'+
-          '<div class="m-hint">'+esc(x.dept||'')+'</div></td>'+
+        '<td class="kp-c"><span class="kp-code">'+esc(x.code)+'</span></td>'+
+        '<td><button class="kp-link" onclick="kpFillOne(\''+esc(x.code)+'\')"><b>'+kpWho(x)+'</b></button>'+
+          (x.dept?('<div class="kp-nick">'+esc(x.dept)+'</div>'):'')+'</td>'+
+        '<td>'+esc(x.nick||'—')+'</td>'+
         '<td>'+esc(x.posName||x.pos)+'</td>';
-      keys.forEach(function(k){
-        if(!has[k]){ h+='<td class="kp-r"><span class="m-hint">—</span></td>'; return; }   // คนนี้ไม่มีส่วนนี้
-        h+=kpScoreCell(x[k], has[k].ok);
+      /* 3 ช่องคงที่เสมอ เรียงเหมือนหน้ารอบ — ตำแหน่งไหนไม่ต้องประเมินส่วนนั้นขึ้นช่องเทา
+         (เดิมคอลัมน์ยืดหดตามรอบ ทำให้เทียบเดือนต่อเดือนไม่ได้) */
+      SECS.forEach(function(k){
+        var s=kpSecOf(x,k);
+        if(!s){ h+='<td class="kp-r"><span class="kp-secbox kp-secbox-off" title="ตำแหน่งนี้ไม่ต้องประเมิน'+esc(KP_SEC_LB[k]||'')+'">—</span></td>'; return; }
+        h+=kpScoreCell(x[k], s.ok);
       });
-      /* คะแนนรวมย้ายมาแสดงเป็นบาร์ที่หน้านี้ (พี่กี้ 11 ก.ย. 69: หน้ารอบแน่นเกิน
-         คะแนนควรอยู่หน้าอนุมัติซึ่งเป็นจุดที่ต้องอ่านคะแนนจริง ๆ) */
-      h+=kpScoreBarCell(x)+
+      /* รวมคะแนน = ตัวเลขล้วน (พี่กี้ 12 ก.ย. 69 — บาร์ในช่องอ่านยาก เอาออก) */
+      h+='<td class="kp-r"><b>'+kpNum(x.total)+'</b></td>'+
         '<td class="kp-c">'+kpGradePill(x.grade)+'</td>'+
         '<td class="kp-c">'+kpStatusPill(x.status)+'</td>'+
         '<td><button class="btn btn-ghost btn-sm" onclick="kpFillOne(\''+esc(x.code)+'\')">เปิดฟอร์ม</button>'+
@@ -14766,7 +14810,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260911-2257';
+  var APP_BUILD='20260912-1045';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
