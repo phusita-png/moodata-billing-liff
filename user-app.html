@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260912-1616">
+<link rel="stylesheet" href="user.css?v=20260912-1619">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1551,6 +1551,9 @@
   .kp-rowact{ display:inline-flex; flex-direction:column; gap:6px; align-items:stretch; }
   .kp-rowact .btn{ white-space:nowrap; justify-content:center; }
   .kp-tbl td:last-child{ white-space:nowrap; }
+  /* ตารางสรุปตามแผนก/ตำแหน่ง — บังคับความกว้างตามที่กำหนดใน <th> ทั้งสองตารางจะได้ตรงกัน */
+  .kp-grp-tbl{ table-layout:fixed; }
+  .kp-grp-tbl td{ word-break:break-word; }
   .kp-legend{ display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; color:#3d5164; }
   .kp-leg{ display:inline-flex; align-items:center; gap:5px; }
   .kp-in input,.kp-in select{ padding:5px 7px; border:1px solid #e3e8ef; border-radius:7px; font-size:13px; }
@@ -13930,8 +13933,14 @@ function kpImpDraw(){
   }
   function kpGroupTable(list){
     if(!list||!list.length) return '<div class="emptybox">ยังไม่มีข้อมูล</div>';
-    var h='<div class="kp-wrap"><table class="kp-tbl"><thead><tr><th>กลุ่ม</th><th class="kp-r">จำนวนคน</th>'+
-      '<th class="kp-r">คะแนนเฉลี่ย</th><th>สูงสุด</th><th>ต่ำสุด</th><th>การกระจายเกรด</th></tr></thead><tbody>';
+    /* ความกว้างคอลัมน์ตายตัว — ตาราง "สรุปตามแผนก" กับ "สรุปตามตำแหน่ง" อยู่ซ้อนกันในหน้าเดียว
+       ถ้าปล่อยให้เบราว์เซอร์คิดเอง สองตารางจะกว้างไม่เท่ากันตามความยาวชื่อกลุ่ม อ่านแล้วไม่สวย
+       (พี่กี้ทัก 12 ก.ย. 69) */
+    var h='<div class="kp-wrap"><table class="kp-tbl kp-grp-tbl"><thead><tr>'+
+      '<th style="width:16%">กลุ่ม</th><th class="kp-r" style="width:9%">จำนวนคน</th>'+
+      '<th class="kp-r" style="width:11%">คะแนนเฉลี่ย</th>'+
+      '<th style="width:25%">สูงสุด</th><th style="width:25%">ต่ำสุด</th>'+
+      '<th style="width:14%">การกระจายเกรด</th></tr></thead><tbody>';
     list.forEach(function(g){
       var pills='';
       for(var k in g.grades) pills+='<b class="kp-g kp-g'+k+'">'+k+'</b>×'+g.grades[k]+' ';
@@ -15068,7 +15077,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260912-1616';
+  var APP_BUILD='20260912-1619';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
