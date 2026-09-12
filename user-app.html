@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260912-1045">
+<link rel="stylesheet" href="user.css?v=20260912-1059">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1511,24 +1511,28 @@
     padding:9px 11px; font-size:12.5px; margin:8px 0; }
   .kp-note-ok{ background:#e9f7ef; border:1px solid #bfe6cd; color:#116c3a; border-radius:9px;
     padding:9px 11px; font-size:12.5px; margin:8px 0; }
+  /* 🔴 ซ่อนลูกศรของ <details> เฉย ๆ ไม่ได้ — พี่กี้เจอเอง 12 ก.ย. 69: "กดรายละเอียดตรงไหน"
+     ต้องมีคำว่ากดได้ติดอยู่ท้ายบรรทัดเสมอ และสลับข้อความเมื่อกางแล้ว */
   .kp-warn-fold > summary{ cursor:pointer; list-style:none; }
   .kp-warn-fold > summary::-webkit-details-marker{ display:none; }
   .kp-warn-fold > summary::before{ content:"⚠️ "; }
+  .kp-warn-fold > summary::after{ content:" ▾ กดดูรายละเอียด"; font-weight:700; text-decoration:underline; white-space:nowrap; }
+  .kp-warn-fold[open] > summary::after{ content:" ▴ ซ่อนรายละเอียด"; }
   /* ── การ์ดจำนวนคนตามเกรด (หน้าจัดการผลการประเมิน · พี่กี้ 12 ก.ย. 69) ──
      สีพื้นมาจากเกณฑ์เกรดของเดือนนั้น (ใส่ inline ตอนวาด) — ที่นี่คุมแค่โครงกับระยะ
      ห้ามกำหนดสีพื้นทับที่นี่ ไม่งั้นลูกค้าแก้สีเกรดแล้วการ์ดไม่เปลี่ยนตาม */
-  .kp-gcards{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin:2px 0 12px; }
-  .kp-gcard{ border-radius:14px; padding:11px 13px; }
+  .kp-gcards{ display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:10px; margin:2px 0 12px; }
+  .kp-gcard{ border-radius:14px; padding:12px 14px 13px; }
   .kp-gcard-0{ opacity:.55; }                      /* ไม่มีใครได้เกรดนี้ = จางลง แต่ยังต้องเห็นว่ามีเกรดนี้อยู่ */
-  .kp-gcard-h{ display:flex; align-items:center; gap:12px; }
-  .kp-gcard-n{ font-size:21px; font-weight:800; color:#1F2733; letter-spacing:-.3px;
-    font-variant-numeric:tabular-nums; }
-  .kp-gcard-n span{ font-size:12.5px; font-weight:600; color:#4A5262; }
-  .kp-gcard-sub{ font-size:11.5px; color:#4A5262; margin-top:6px; }
-  /* คำอธิบายเกรดยาวไม่เท่ากัน (บางอันสามบรรทัด) — ตัดที่ 2 บรรทัดให้การ์ดทั้งแถวสูงเท่ากัน
-     ข้อความเต็มยังอ่านได้จาก title ตอนชี้ค้าง และมีตารางเกณฑ์เต็ม ๆ อยู่ท้ายหน้าอยู่แล้ว */
-  .kp-gcard-lb{ font-size:11.5px; font-weight:600; color:#3C4655; line-height:1.35; margin-top:3px;
-    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  /* เลขเกรดบนซ้าย + จำนวนคนล่างซ้าย ตัวใหญ่ทั้งคู่ — การ์ดนี้มีไว้ "กวาดตาแล้วรู้ทันที" */
+  /* ป้ายเกรดใช้สีพื้นเดียวกับการ์ด จึงต้องรองด้วยขาวโปร่ง ไม่งั้นกลืนหายไปกับพื้น
+     🔴 ต้องเขียนเป็น .kp-gcard .kp-gcard-g (2 คลาส) — ด้านล่างมี @media จอกว้างสั่ง
+        .kp-g{font-size:15px} ทับอยู่ คลาสเดี่ยวจะแพ้แล้วเลขเกรดหดเหลือเท่าป้ายในตาราง */
+  .kp-gcard .kp-gcard-g{ font-size:30px; padding:0 17px; border-radius:14px;
+    background:rgba(255,255,255,.72); min-width:30px; }
+  .kp-gcard-n{ font-size:32px; font-weight:800; color:#1F2733; letter-spacing:-.5px; margin-top:11px;
+    line-height:1.1; font-variant-numeric:tabular-nums; }
+  .kp-gcard-n span{ font-size:14.5px; font-weight:600; color:#4A5262; letter-spacing:0; }
   .kp-legend{ display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; color:#3d5164; }
   .kp-leg{ display:inline-flex; align-items:center; gap:5px; }
   .kp-in input,.kp-in select{ padding:5px 7px; border:1px solid #e3e8ef; border-radius:7px; font-size:13px; }
@@ -12152,8 +12156,8 @@
   function kpWeightWarn(r){
     var bad=r.weightIssues||[];
     if(!bad.length) return '';
-    return '<details class="kp-note-warn kp-warn-fold"><summary><b>น้ำหนักยังไม่ครบ 100% '+bad.length+
-      ' ตำแหน่ง</b> — คะแนนของคนในตำแหน่งนั้นจะไม่เต็ม (กดดูรายละเอียด)</summary>'+
+    return '<details class="kp-note-warn kp-warn-fold"><summary><b>'+bad.length+
+      ' ตำแหน่งตั้งค่าน้ำหนักคะแนนไม่ครบ</b> — คนในตำแหน่งนั้นจะได้คะแนนไม่เต็ม 100</summary>'+
       bad.map(function(b){
         return '<div>• '+esc(b.posName)+' : '+b.issues.map(esc).join(' · ')+'</div>';
       }).join('')+
@@ -12321,12 +12325,13 @@
     var cards=desc.map(function(g,i){ return { g:g, upper:kpGradeUpper(desc,i) }; }).reverse();
     var h='<div class="kp-gcards">'+cards.map(function(c){
       var n=cnt[c.g.grade]||0;
+      /* การ์ดเหลือ 2 อย่างพอ (พี่กี้ 12 ก.ย. 69): เลขเกรดตัวใหญ่บนซ้าย · จำนวนคนตัวใหญ่ล่างซ้าย
+         ช่วงคะแนนกับคำอธิบายไม่ต้องซ้ำ — มีตารางเกณฑ์เต็ม ๆ อยู่ท้ายหน้าแล้ว (ยังอยู่ใน title) */
       return '<div class="kp-gcard'+(n?'':' kp-gcard-0')+'" style="background:'+esc(c.g.color||'#EEF1F5')+'"'+
-        ' title="'+esc(c.g.label||'')+'">'+
-        '<div class="kp-gcard-h"><b class="kp-g kp-g'+c.g.grade+'">'+c.g.grade+'</b>'+
-          '<span class="kp-gcard-n">'+n+' <span>คน</span></span></div>'+
-        '<div class="kp-gcard-sub">'+c.g.min+'–'+c.upper+' คะแนน</div>'+
-        '<div class="kp-gcard-lb">'+esc(c.g.label||'')+'</div></div>';
+        ' title="เกรด '+c.g.grade+' · '+c.g.min+'–'+c.upper+' คะแนน'+
+        (c.g.label?(' · '+esc(c.g.label)):'')+'">'+
+        '<b class="kp-g kp-g'+c.g.grade+' kp-gcard-g">'+c.g.grade+'</b>'+
+        '<div class="kp-gcard-n">'+n+' <span>คน</span></div></div>';
     }).join('')+'</div>';
     /* ยังไม่ได้เกรด = ยังคิดคะแนนไม่ครบ/ยังไม่อนุมัติ — ต้องบอก ไม่งั้นบวกการ์ดแล้วคนไม่ครบ หาไม่เจอว่าหายไปไหน */
     if(none) h+='<div class="m-hint" style="margin:-6px 0 12px">ยังไม่ได้เกรด '+none+' คน (ยังกรอกไม่ครบ หรือยังไม่ได้คิดคะแนน)</div>';
@@ -14810,7 +14815,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260912-1045';
+  var APP_BUILD='20260912-1059';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
