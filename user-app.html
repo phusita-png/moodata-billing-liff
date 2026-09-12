@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260912-2131">
+<link rel="stylesheet" href="user.css?v=20260912-2147">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -11359,6 +11359,7 @@
     var sum=0; scored.forEach(function(x){ sum+=x.total; });
     var avg=scored.length?kpiRound2js(sum/scored.length):null;
     var last=null; for(var i=ser.length-1;i>=0;i--){ if(ser[i].total!==null){ last=ser[i]; break; } }
+    var best=null; scored.forEach(function(x){ if(!best||x.total>best.total) best=x; });
 
     var h='<div class="section-h">ประวัติผลงานรายคน</div>';
     h+='<div class="card"><div class="kp-bar">'+
@@ -11380,7 +11381,9 @@
       statCard('คะแนนเฉลี่ย', avg===null?'—':avg.toFixed(2), scored.length+' รอบที่มีคะแนน')+
       statCard('คะแนนล่าสุด', last?last.total.toFixed(2):'—', last?kpLabel(last.ym):'')+
       statCard('เกรดล่าสุด', last&&last.grade?String(last.grade):'—', last?(last.status||''):'')+
-      statCard('ใบประเมินที่ออกแล้ว', (r.docs||[]).length+' ใบ','เปิดดูย้อนหลังได้')+'</div></div>';
+      /* เดิมการ์ดนี้นับ "ไฟล์รายงานใน Drive" แล้วขึ้น 0 ใบ ทั้งที่ตารางล่างมีใบให้เปิด 4 เดือน
+         อ่านแล้วขัดกันเอง (พี่กี้ทัก 12 ก.ย. 69) → เปลี่ยนเป็นคะแนนสูงสุดของปี ซึ่งใช้ตัดสินใจได้จริง */
+      statCard('คะแนนสูงสุดปีนี้', best?best.total.toFixed(2):'—', best?kpLabel(best.ym):'')+'</div></div>';
 
     /* กราฟเส้น 12 เดือน */
     /* ข้อมูลเป็น "รอบปี" (ม.ค.–ธ.ค.) แล้ว — หัวข้อต้องบอกปีให้ชัด ไม่ใช่ "12 เดือน" ลอย ๆ */
@@ -11403,13 +11406,14 @@
       r.metrics.forEach(function(mt){
         h+='<tr><td>'+esc(mt.name)+'<div class="m-hint">เป้า '+mt.target+' '+esc(mt.unit||'')+'</div></td>';
         mt.cells.forEach(function(c){
-          if(c.pct===null){ h+='<td class="kp-c"><span class="kp-mcell kp-mnone">·</span></td>'; return; }
+          /* แยก 2 กรณีให้ชัด: ขีด = เดือนนั้นอยู่คนละตำแหน่ง ไม่มีตัวชี้วัดข้อนี้ · จุด = อยู่ตำแหน่งนี้แต่ยังไม่มีข้อมูล */
+          if(c.pct===null){ h+='<td class="kp-c"><span class="kp-mcell kp-mnone">'+(c.off?'–':'·')+'</span></td>'; return; }
           var col = c.pct>=100?'#DCEEDC':(c.pct>=80?'#F5E3A8':'#F1D4D0');
           h+='<td class="kp-c"><span class="kp-mcell" style="background:'+col+'">'+Math.round(c.pct)+'</span></td>';
         });
         h+='</tr>';
       });
-      h+='</tbody></table></div><div class="m-hint">เขียว = ถึงเป้า · เหลือง = 80% ขึ้นไป · แดง = ต่ำกว่า 80% · จุด = เดือนที่ไม่ได้ประเมินข้อนี้</div></div>';
+      h+='</tbody></table></div><div class="m-hint">เขียว = ถึงเป้า · เหลือง = 80% ขึ้นไป · แดง = ต่ำกว่า 80% · จุด = ยังไม่มีข้อมูล · ขีด = เดือนนั้นอยู่ตำแหน่งอื่น ไม่มีตัวชี้วัดข้อนี้</div></div>';
     }
 
     /* ── ใบประเมินย้อนหลัง (พี่กี้ 12 ก.ย. 69) ──
@@ -15170,7 +15174,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260912-2131';
+  var APP_BUILD='20260912-2147';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
