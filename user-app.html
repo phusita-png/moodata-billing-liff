@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260912-1449">
+<link rel="stylesheet" href="user.css?v=20260912-1506">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -12026,42 +12026,48 @@
       sec=4;
     }
 
-    /* ส่วนสถิติ — 8 คอลัมน์ตามแบบฟอร์มจริง (พี่กี้ส่งภาพ 12 ก.ย. 69)
-       น้ำหนัก (4) · คะแนนสุทธิ (4)-(3)=(5) · คะแนนที่ได้ (5)*น้ำหนักส่วน/100
-       เกณฑ์ที่ยังไม่ได้ตั้งน้ำหนักรายข้อ (byItem=false) = ซ่อน 2 คอลัมน์นั้น แล้วสรุปที่แถวรวมแทน
-       (โชว์ช่องว่างไว้จะอ่านเหมือนน้ำหนัก 0 ซึ่งไม่จริง) */
+    /* ── ส่วนสถิติ — 6 คอลัมน์ตามที่พี่กี้เรียงเอง (12 ก.ย. 69) ──
+       ลำดับ · หัวข้อ · น้ำหนักคะแนน 100% · คะแนนที่หัก · คะแนนสุทธิ 100% · คะแนนที่ได้
+       "คะแนนที่หัก" คิดมาแล้ว (จำนวนครั้ง x เกณฑ์หักต่อครั้ง) — รายละเอียดอยู่ใน title ตอนชี้
+       🔴 ข้อไหนหักเกินน้ำหนักของตัวเอง ช่องสุทธิของข้อนั้น = 0 ไม่ติดลบ ไม่ลามไปข้ออื่น
+       เกณฑ์ที่ยังไม่ตั้งน้ำหนักรายข้อ (byItem=false) = ไม่มีข้อมูลจะโชว์ 3 คอลัมน์หลัง
+       จึงกลับไปแบบเดิม (เกณฑ์หัก/ครั้ง · จำนวน · รวมหัก) */
     var si=res.statInfo||{}, byItem=!!si.byItem, srows=si.rows||[];
-    h+='<div class="kp-doc-sec">ส่วนที่ '+sec+' : สถิติการมาทำงานและความประพฤติ</div>'+
-      '<table class="kp-doc-tb"><thead><tr>'+
-        '<th style="width:5%">ลำดับ</th><th style="width:'+(byItem?21:34)+'%">หัวข้อการประเมิน</th>'+
-        '<th style="width:'+(byItem?18:25)+'%">เกณฑ์การหักคะแนน/ครั้ง<small>ต่อรอบการประเมิน (1)</small></th>'+
-        '<th style="width:'+(byItem?10:15)+'%">จำนวนครั้ง<small>(2)</small></th>'+
-        '<th style="width:'+(byItem?14:21)+'%">รวมคะแนนที่หัก<small>(1)*(2)=(3)</small></th>'+
-        (byItem?('<th style="width:11%">น้ำหนักคะแนน<small>(%) (4)</small></th>'+
-                 '<th style="width:10%">คะแนนสุทธิ<small>(4)-(3)=(5)</small></th>'+
-                 '<th style="width:11%">คะแนนที่ได้<small>('+kpNum0(w.stat)+' คะแนน) (5)*'+kpNum0(w.stat)+'/100</small></th>'):'')+
-        '</tr></thead><tbody>';
-    /* แถวมาจาก statInfo.rows (หลังบ้านคิดมาแล้ว) — ถ้าไม่มีก็ไล่จาก statRules เหมือนเดิม */
     var list = srows.length ? srows : (r.statRules||[]).map(function(s){
       var n=Number((r.statCounts||{})[s.key]||0);
       return { key:s.key, label:s.label, per:s.deduct, count:n, cut:n*s.deduct, weight:0 };
     });
+    h+='<div class="kp-doc-sec">ส่วนที่ '+sec+' : สถิติการมาทำงานและความประพฤติ</div>'+
+      '<table class="kp-doc-tb"><thead><tr>'+
+        '<th style="width:6%">ลำดับ</th><th style="width:'+(byItem?32:30)+'%">หัวข้อการประเมิน</th>'+
+        (byItem
+          ?('<th style="width:16%">น้ำหนักคะแนน<small>100%</small></th>'+
+            '<th style="width:15%">คะแนนที่หัก</th>'+
+            '<th style="width:15%">คะแนนสุทธิ<small>100%</small></th>'+
+            '<th style="width:16%">คะแนนที่ได้<small>('+kpNum0(w.stat)+' คะแนน)</small></th>')
+          :('<th style="width:24%">เกณฑ์การหักคะแนน/ครั้ง<small>ต่อรอบการประเมิน (1)</small></th>'+
+            '<th style="width:18%">จำนวนครั้ง<small>(2)</small></th>'+
+            '<th style="width:22%">รวมคะแนนที่หัก<small>(1)*(2)=(3)</small></th>'))+
+        '</tr></thead><tbody>';
     list.forEach(function(s,i){
+      var how = kpNum0(s.count)+' x '+s.per+' = '+Number(s.cut).toFixed(2);
       h+='<tr><td class="c">'+(i+1)+'</td><td>'+esc(s.label)+'</td>'+
-        '<td class="n">'+s.per+'</td><td class="n">'+s.count+'</td>'+
-        '<td class="n">'+Number(s.cut).toFixed(2)+'</td>'+
-        (byItem?('<td class="n">'+kpNum0(s.weight)+'</td>'+
-                 '<td class="n">'+Number(s.net).toFixed(2)+'</td>'+
-                 '<td class="n">'+Number(s.score).toFixed(2)+'</td>'):'')+'</tr>';
+        (byItem
+          ?('<td class="n">'+kpNum0(s.weight)+'</td>'+
+            '<td class="n" title="'+esc(how)+'">'+Number(s.cut).toFixed(2)+'</td>'+
+            '<td class="n">'+Number(s.net).toFixed(2)+'</td>'+
+            '<td class="n">'+Number(s.score).toFixed(2)+'</td>')
+          :('<td class="n">'+s.per+'</td><td class="n">'+s.count+'</td>'+
+            '<td class="n">'+Number(s.cut).toFixed(2)+'</td>'))+'</tr>';
     });
-    h+='<tr class="kp-doc-sum"><td></td><td>คะแนนน้ำหนัก</td>'+
-      '<td class="n">'+kpNum0(w.stat)+'%</td><td></td>'+
-      '<td class="n">'+(si.deduct===undefined?'0.00':Number(si.deduct).toFixed(2))+'</td>'+
-      (byItem?('<td class="n">100</td>'+
-               '<td class="n">'+(si.netPct===undefined?'—':Number(si.netPct).toFixed(2))+'</td>'+
-               '<td class="n">'+res.stat.toFixed(2)+'</td>')
-             :('<td class="n">คะแนนสุทธิ '+(si.netPct===undefined?'—':Number(si.netPct).toFixed(2))+' จาก 100</td>'))+
-      (byItem?'':'<td class="n">'+res.stat.toFixed(2)+'</td>')+
+    h+='<tr class="kp-doc-sum"><td></td><td>คะแนนน้ำหนัก '+kpNum0(w.stat)+'%</td>'+
+      (byItem
+        ?('<td class="n">100</td>'+
+          '<td class="n">'+(si.deduct===undefined?'0.00':Number(si.deduct).toFixed(2))+'</td>'+
+          '<td class="n">'+(si.netPct===undefined?'—':Number(si.netPct).toFixed(2))+'</td>'+
+          '<td class="n">'+res.stat.toFixed(2)+'</td>')
+        :('<td class="n"></td><td class="n">รวมหัก '+(si.deduct===undefined?'0.00':Number(si.deduct).toFixed(2))+'</td>'+
+          '<td class="n">'+res.stat.toFixed(2)+'</td>'))+
       '</tr></tbody></table>';
 
     /* ── สรุปผลการประเมิน — ตารางเกณฑ์อยู่ซ้าย ผลอยู่ขวาในกรอบเดียวกัน (ตามภาพที่พี่กี้ส่ง) ── */
@@ -15004,7 +15010,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260912-1449';
+  var APP_BUILD='20260912-1506';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
