@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260912-2147">
+<link rel="stylesheet" href="user.css?v=20260912-2204">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -14006,6 +14006,13 @@ function kpImpDraw(){
   function kpMonthRepHtml(r){
     var h='<div class="section-h">รายงานผลการประเมิน · '+esc(kpLabel(r.ym))+'</div><div class="card">'+kpRepTabs();
     h+='<div class="kp-bar">'+kpYmPicker(r.ym,r.months,'kpRepYm')+kpStatusPill(r.status)+'</div>';
+    /* เดือนที่ยังไม่เปิดรอบ = ไม่มีอะไรให้รายงาน · อย่าโชว์ 0 คะแนน/เกรด 1 ให้เข้าใจผิด */
+    if(!r.opened){
+      h+='<div class="emptybox">ยังไม่ได้เปิดรอบประเมินเดือนนี้ค่ะ<br>'+
+        '<span class="m-hint">เปิดรอบที่เมนู “รอบการประเมิน” ก่อน แล้วรายงานเดือนนี้จะขึ้นให้อัตโนมัติ</span><br>'+
+        '<button class="btn btn-primary btn-sm" style="margin-top:10px" onclick=\"kpGo(\'kpiround\')\">ไปหน้ารอบการประเมิน →</button></div>';
+      return h+'</div>';
+    }
     h+='<div class="ds-grid">'+
       statCard('พนักงานในรอบ', r.people+' คน', r.scoredCount+' คนมีคะแนนแล้ว')+
       statCard('คะแนนเฉลี่ย', r.avg===null?'—':r.avg.toFixed(2),'ทั้งบริษัท')+
@@ -15174,7 +15181,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260912-2147';
+  var APP_BUILD='20260912-2204';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
