@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260912-1701">
+<link rel="stylesheet" href="user.css?v=20260912-2017">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -12543,6 +12543,59 @@
       }).catch(function(e){ toast(e.message); });
   }
 
+  /* ── ส่งเล่มเข้ากลุ่ม LINE ของลูกค้า (พี่กี้สั่ง 12 ก.ย. 69) ──
+     ส่งผิดกลุ่ม = รายงานผลงานลูกค้าหลุดไปอีกเจ้า เรียกคืนไม่ได้
+     → ก่อนส่งต้องเห็นชื่อกลุ่มปลายทางเสมอ แล้วกดยืนยันอีกที */
+  function kpBookSend(){
+    callBusy('กำลังตรวจกลุ่มปลายทาง…',
+      jsonp({ action:'waKpiBookGroup', uid:UID }), '')
+      .then(function(r){
+        if(!r||!r.ok){ toast((r&&r.error)||'อ่านข้อมูลกลุ่มไม่ได้'); return; }
+        if(!r.groupId){ kpBookGroupPick(r); return; }
+        var who=r.groupName||r.groupId;
+        if(!confirm('ส่งเล่มรายงานเดือนนี้เข้ากลุ่ม LINE\n\n"'+who+'"\n\nของ '+(r.roomName||'ลูกค้า')+' ใช่ไหมคะ?')) return;
+        kpBookSendGo();
+      }).catch(function(e){ toast(e.message); });
+  }
+  function kpBookSendGo(){
+    callBusy('กำลังออกเล่มและส่งเข้ากลุ่ม (ใช้เวลาสักครู่)…',
+      jsonp({ action:'waKpiBookSend', uid:UID, ym:KPR_YM||'' }), 'ส่งแล้ว')
+      .then(function(r){
+        if(!r||!r.ok){ toast((r&&r.error)||'ส่งไม่สำเร็จ'); return; }
+        toast('📤 ส่งเข้ากลุ่ม '+(r.groupName||'ลูกค้า')+' แล้วค่ะ · '+r.people+' คน');
+      }).catch(function(e){ toast(e.message); });
+  }
+  /* ห้องนี้ยังไม่ผูกกลุ่ม — ให้เลือกจากกลุ่มที่ระบบรู้จัก แล้วจำไว้ให้ครั้งต่อไป */
+  function kpBookGroupPick(r){
+    var list=(r&&r.choices)||[];
+    if(!list.length){
+      modal('<h3>📤 ส่งเข้ากลุ่ม LINE ลูกค้า</h3>'+
+        '<div class="m-hint">ยังไม่มีกลุ่ม LINE ในระบบให้เลือกค่ะ<br>'+
+        'ชวนบัญชียินดีเข้ากลุ่มของลูกค้าก่อน แล้วพิมพ์อะไรก็ได้ในกลุ่มสักครั้ง ระบบจะเก็บกลุ่มนั้นไว้ให้เอง</div>'+
+        '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button></div>');
+      return;
+    }
+    var opts=list.map(function(g){
+      return '<option value="'+esc(g.groupId)+'">'+esc(g.name)+(g.lineName&&g.lineName!==g.name?(' · '+esc(g.lineName)):'')+'</option>';
+    }).join('');
+    modal('<h3>📤 เลือกกลุ่ม LINE ของลูกค้า</h3>'+
+      '<div class="m-hint">ห้อง '+esc(r.roomName||'')+' ยังไม่ได้ผูกกลุ่มค่ะ — เลือกครั้งเดียว ครั้งต่อไประบบจำให้</div>'+
+      '<div id="mErr" class="m-err hidden"></div>'+
+      '<div class="fld"><label>กลุ่มปลายทาง</label><select id="kpGrp">'+opts+'</select></div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" onclick="kpBookGroupSave()">ผูกกลุ่มนี้</button></div>');
+  }
+  function kpBookGroupSave(){
+    var sel=$('kpGrp'); if(!sel) return;
+    var gid=sel.value, name=sel.options[sel.selectedIndex].text;
+    closeModal();
+    callBusy('กำลังผูกกลุ่ม…', jsonp({ action:'waKpiBookGroup', uid:UID, set:gid }), 'ผูกแล้ว')
+      .then(function(r){
+        if(!r||!r.ok){ toast((r&&r.error)||'ผูกกลุ่มไม่สำเร็จ'); return; }
+        if(confirm('ผูกกลุ่ม "'+name+'" แล้วค่ะ\n\nส่งเล่มรายงานเดือนนี้เข้ากลุ่มเลยไหมคะ?')) kpBookSendGo();
+      }).catch(function(e){ toast(e.message); });
+  }
+
   function kpSecChips(secs){
     if(!secs||!secs.length) return '<span class="m-hint">ไม่มีส่วนที่ต้องประเมิน</span>';
     return '<div class="kp-secs">'+secs.map(function(x){
@@ -13776,7 +13829,8 @@ function kpImpDraw(){
       /* ออกไฟล์จริงเก็บ Drive = ของที่เอาไปส่งลูกค้า · พิมพ์จากจอไว้ดูเร็ว ๆ เฉย ๆ
          เปิดให้เฉพาะผู้ดูแล และเฉพาะรอบที่อนุมัติแล้ว (หลังบ้านกันอีกชั้น) */
       (r.isAdmin?'<button class="btn btn-primary btn-sm" onclick="kpBookPdf()">📕 ออกไฟล์ PDF</button>'+
-        '<button class="btn btn-sm" onclick="kpBookSheet()">📗 ออกไฟล์ Google Sheet</button>':'')+
+        '<button class="btn btn-sm" onclick="kpBookSheet()">📗 ออกไฟล์ Google Sheet</button>'+
+        '<button class="btn btn-sm" onclick="kpBookSend()">📤 ส่งเข้ากลุ่ม LINE ลูกค้า</button>':'')+
       '<button class="btn btn-ghost btn-sm" onclick="window.print()">พิมพ์จากหน้าจอ</button></div>'+
       (r.isAdmin&&String(r.status||'').indexOf('อนุมัติ')!==0
         ?'<div class="m-hint" style="margin:8px 0 0">เดือนนี้ยังไม่ได้อนุมัติรอบ — ออกไฟล์ส่งลูกค้าได้หลังอนุมัติค่ะ</div>':'')+
@@ -15095,7 +15149,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260912-1701';
+  var APP_BUILD='20260912-2017';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
