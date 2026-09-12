@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260912-1059">
+<link rel="stylesheet" href="user.css?v=20260912-1109">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1530,8 +1530,9 @@
         .kp-g{font-size:15px} ทับอยู่ คลาสเดี่ยวจะแพ้แล้วเลขเกรดหดเหลือเท่าป้ายในตาราง */
   .kp-gcard .kp-gcard-g{ font-size:30px; padding:0 17px; border-radius:14px;
     background:rgba(255,255,255,.72); min-width:30px; }
+  /* จำนวนคนอยู่มุมขวาล่าง (พี่กี้ 12 ก.ย. 69) — เลขเกรดซ้ายบน · จำนวนคนขวาล่าง อ่านทแยงจบใน 1 การ์ด */
   .kp-gcard-n{ font-size:32px; font-weight:800; color:#1F2733; letter-spacing:-.5px; margin-top:11px;
-    line-height:1.1; font-variant-numeric:tabular-nums; }
+    line-height:1.1; font-variant-numeric:tabular-nums; text-align:right; }
   .kp-gcard-n span{ font-size:14.5px; font-weight:600; color:#4A5262; letter-spacing:0; }
   .kp-legend{ display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; color:#3d5164; }
   .kp-leg{ display:inline-flex; align-items:center; gap:5px; }
@@ -14815,7 +14816,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260912-1059';
+  var APP_BUILD='20260912-1109';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
