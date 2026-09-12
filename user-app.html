@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260912-2204">
+<link rel="stylesheet" href="user.css?v=20260912-2215">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -13454,23 +13454,11 @@
 
   /* ② ตัวชี้วัดองค์กร (KPI) */
   function kpMetricHtml(r){
-    var tab=KPS_TAB.kpimetric||'edit', cur=kpCurPos();
+    var cur=kpCurPos();
     var h='<div class="section-h">ตั้งค่าตัวชี้วัดองค์กร (KPI)</div>';
-    h+='<div class="card">'+kpTabBar('kpimetric',[['edit','จัดการตัวชี้วัด (KPI)'],['report','รายงานตัวชี้วัดตามตำแหน่ง']]);
-    if(tab==='report'){
-      (r.positions||[]).forEach(function(p){
-        var sum=0; p.metrics.forEach(function(m){ sum+=Number(m.weight)||0; });
-        h+='<div class="kp-sub">'+esc(p.pos.name||p.pos.code)+' · คะแนนเต็มตามสัดส่วน '+p.pos.weights.perf+'</div>'+
-          '<div class="kp-wrap"><table class="kp-tbl"><thead><tr><th>ลำดับ</th><th>ตัวชี้วัดผลงาน KPI</th>'+
-          '<th class="kp-r">เป้า</th><th>หน่วย</th><th class="kp-r">น้ำหนัก</th></tr></thead><tbody>';
-        p.metrics.forEach(function(m,i){
-          h+='<tr><td>'+(i+1)+'</td><td>'+esc(m.name)+'<div class="m-hint">'+esc(r.metricTypes[m.type]||m.type)+'</div></td>'+
-            '<td class="kp-r">'+m.target+'</td><td>'+esc(m.unit||'')+'</td><td class="kp-r">'+m.weight+'</td></tr>';
-        });
-        h+='<tr class="kp-total"><td colspan="4">น้ำหนักรวม</td><td class="kp-r">'+sum+'%</td></tr></tbody></table></div>';
-      });
-      h+='</div>'; return h;
-    }
+    /* แท็บ "รายงานตัวชี้วัดตามตำแหน่ง" เอาออก (พี่กี้ 12 ก.ย. 69) — เนื้อหาซ้ำกับการ์ด
+       "ชุดตัวชี้วัดที่บันทึกแล้ว" ท้ายหน้านี้ทุกอย่าง · เหลือหน้าเดียว ดูและแก้ไขจบในที่เดียว */
+    h+='<div class="card">';
     /* หัวชุดแบบเดียวกับหน้า "จัดการเกณฑ์และน้ำหนักสถิติ" (พี่กี้ 9 ก.ย. 69)
        ตัวชี้วัด 1 ชุด = 1 ตำแหน่ง (ข้อมูลผูกกับตำแหน่งอยู่แล้ว) → เลือกตำแหน่งคือเลือกชุดที่จะแก้
        คะแนนเต็มตามสัดส่วนย้ายไปมุมขวาของแถบ */
@@ -13534,7 +13522,7 @@
       h+='<div class="kp-setcard'+(p.pos.code===KPS_POS?' kp-setcur':'')+'"><div class="kp-bar kp-sethead">'+
         '<b>'+esc(p.pos.name||p.pos.code)+'</b>'+
         '<span class="kp-lb">ตัวชี้วัด '+p.metrics.length+' ข้อ</span>'+
-        '<span class="kp-lb">น้ำหนักรวม <b'+(sum===100?'':' class="kp-warn"')+'>'+sum+'%</b></span>'+
+        /* น้ำหนักรวมย้ายไปเป็นแถวท้ายตาราง ให้อยู่ตรงกับคอลัมน์น้ำหนักที่บวกมา (พี่กี้ 12 ก.ย. 69) */
         '<span class="kp-grow"></span>'+
         (r.canEdit?'<button class="btn btn-ghost btn-sm" onclick="kpSetPos(\''+esc(p.pos.code)+'\')">แก้ไข</button>':'')+
         '</div><div class="kp-wrap"><table class="kp-tbl">'+
@@ -13546,6 +13534,8 @@
           '<td class="kp-c">'+m.target+'</td><td class="kp-c">'+esc(m.unit||'')+'</td>'+
           '<td class="kp-c"><b>'+m.weight+'</b></td></tr>';
       });
+      h+='<tr class="kp-total"><td colspan="4">น้ำหนักรวม</td>'+
+        '<td class="kp-c"><b'+(sum===100?'':' class="kp-warn"')+'>'+sum+'%</b></td></tr>';
       h+='</tbody></table></div></div>';
     });
     return h;
@@ -13556,27 +13546,45 @@
     return h+'</select>';
   }
 
+  /** ชุดคุณลักษณะที่บันทึกแล้ว — 1 การ์ดต่อ 1 ตำแหน่ง (โครงเดียวกับชุดตัวชี้วัด)
+      ยอดรวมอยู่แถวท้ายตาราง ให้ตรงกับคอลัมน์ที่บวกมา (พี่กี้ 12 ก.ย. 69) */
+  function kpTraitSetsHtml(r){
+    var has=(r.positions||[]).filter(function(p){ return (p.traits||[]).length; });
+    if(!has.length) return '<div class="m-hint" style="margin-top:14px">ยังไม่มีชุดคุณลักษณะที่บันทึกไว้ — เลือกตำแหน่งด้านบน กรอกแล้วกดบันทึกได้เลยค่ะ</div>';
+    var h='<div class="kp-sub">ชุดคุณลักษณะที่บันทึกแล้ว</div>';
+    has.forEach(function(p){
+      var sw=0,sf=0; p.traits.forEach(function(t){ sw+=Number(t.weight)||0; sf+=Number(t.full)||0; });
+      h+='<div class="kp-setcard'+(p.pos.code===KPS_POS?' kp-setcur':'')+'"><div class="kp-bar kp-sethead">'+
+        '<b>'+esc(p.pos.name||p.pos.code)+'</b>'+
+        '<span class="kp-lb">หัวข้อ '+p.traits.length+' ข้อ</span>'+
+        '<span class="kp-lb">คะแนนเต็มตามสัดส่วน '+p.pos.weights.trait+'</span>'+
+        '<span class="kp-grow"></span>'+
+        (r.canEdit?'<button class="btn btn-ghost btn-sm" onclick="kpSetPos(&#39;'+esc(p.pos.code)+'&#39;)">แก้ไข</button>':'')+
+        '</div><div class="kp-wrap"><table class="kp-tbl">'+
+        '<thead><tr><th class="kp-c">ลำดับ</th><th>หัวข้อการประเมิน</th>'+
+        '<th class="kp-c">คะแนนเต็ม</th><th class="kp-c">น้ำหนัก</th>'+
+        '<th class="kp-c">ผู้ประเมิน 1</th><th class="kp-c">ผู้ประเมิน 2</th></tr></thead><tbody>';
+      p.traits.forEach(function(t,i){
+        h+='<tr><td class="kp-c">'+(i+1)+'</td><td>'+esc(t.name)+'</td>'+
+          '<td class="kp-c">'+t.full+'</td><td class="kp-c">'+(t.weight||'—')+'</td>'+
+          '<td class="kp-c">'+(t.rw1||'—')+'</td><td class="kp-c">'+(t.rw2||'—')+'</td></tr>';
+      });
+      h+='<tr class="kp-total"><td colspan="2">รวม</td><td class="kp-c">'+sf+'</td>'+
+        '<td class="kp-c"><b>'+(sw?(sw+'%'):'—')+'</b></td>'+
+        '<td class="kp-c">'+((p.raterWeights&&p.raterWeights['1'])||'—')+'</td>'+
+        '<td class="kp-c">'+((p.raterWeights&&p.raterWeights['2'])||'—')+'</td></tr>';
+      h+='</tbody></table></div></div>';
+    });
+    return h;
+  }
+
   /* ③ คุณลักษณะรายบุคคล */
   function kpTraitHtml(r){
-    var tab=KPS_TAB.kpitrait||'edit', cur=kpCurPos();
+    var cur=kpCurPos();
     var h='<div class="section-h">ตั้งค่าคุณลักษณะส่วนบุคคล</div>';
-    h+='<div class="card">'+kpTabBar('kpitrait',[['edit','จัดการคุณลักษณะส่วนบุคคล'],['report','รายงานคุณลักษณะตามตำแหน่ง']]);
-    if(tab==='report'){
-      (r.positions||[]).forEach(function(p){
-        var sw=0,sf=0; p.traits.forEach(function(t){ sw+=Number(t.weight)||0; sf+=Number(t.full)||0; });
-        h+='<div class="kp-sub">'+esc(p.pos.name||p.pos.code)+' · คะแนนเต็มตามสัดส่วน '+p.pos.weights.trait+'</div>'+
-          '<div class="kp-wrap"><table class="kp-tbl"><thead><tr><th>ลำดับ</th><th>หัวข้อประเมิน</th><th class="kp-r">คะแนนเต็ม</th>'+
-          '<th class="kp-r">น้ำหนัก</th><th class="kp-r">ผู้ประเมิน 1</th><th class="kp-r">ผู้ประเมิน 2</th></tr></thead><tbody>';
-        p.traits.forEach(function(t,i){
-          h+='<tr><td>'+(i+1)+'</td><td>'+esc(t.name)+'</td><td class="kp-r">'+t.full+'</td>'+
-            '<td class="kp-r">'+(t.weight||'—')+'</td><td class="kp-r">'+(t.rw1||'—')+'</td><td class="kp-r">'+(t.rw2||'—')+'</td></tr>';
-        });
-        h+='<tr class="kp-total"><td colspan="2">รวม</td><td class="kp-r">'+sf+'</td><td class="kp-r">'+sw+'%</td>'+
-          '<td class="kp-r">'+(p.raterWeights?p.raterWeights['1']:'—')+'</td><td class="kp-r">'+(p.raterWeights?p.raterWeights['2']:'—')+'</td></tr>';
-        h+='</tbody></table></div>';
-      });
-      h+='</div>'; return h;
-    }
+    /* หลักการเดียวกับหน้าตัวชี้วัด (พี่กี้ 12 ก.ย. 69) — เหลือหน้าเดียว ดูและแก้ไขจบในที่เดียว
+       (แท็บ "รายงานคุณลักษณะตามตำแหน่ง" ซ้ำกับชุดที่บันทึกแล้วท้ายหน้า) */
+    h+='<div class="card">';
     h+='<div class="kp-bar">'+kpPosPicker()+'<span class="m-hint">คะแนนเต็มตามสัดส่วน '+
       (cur?cur.pos.weights.trait:'—')+'</span></div>';
     h+='<div class="kp-wrap"><table class="kp-tbl kp-in" id="kpTraitTbl"><thead><tr><th>ลำดับ</th><th>หัวข้อประเมิน</th>'+
@@ -13594,6 +13602,7 @@
     if(r.canEdit) h+='<div class="kp-bar"><button class="btn btn-ghost btn-sm" onclick="kpAddRow(\'kpTraitTbl\')">+ เพิ่มหัวข้อ</button>'+
       '<button class="btn btn-primary btn-sm" onclick="kpSaveTrait()">บันทึก</button>'+
       '<span class="m-hint">น้ำหนักหัวข้อรวม 100% · ผู้ประเมิน 1+2 รวม 100%</span></div>';
+    h+=kpTraitSetsHtml(r);
     h+='</div>';
     return h;
   }
@@ -15181,7 +15190,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260912-2204';
+  var APP_BUILD='20260912-2215';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
