@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260912-2215">
+<link rel="stylesheet" href="user.css?v=20260912-2218">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -12548,8 +12548,10 @@
   /* ออกเล่ม PDF จริง (รายงาน + ใบประเมินรายคนต่อท้าย) เก็บเข้าโฟลเดอร์ Drive ของห้องนั้น
      ใช้เวลาสร้างนานกว่าหน้าอื่นเพราะประกอบ Google Doc ทีละคน → ขึ้นข้อความรอให้ชัด */
   function kpBookPdf(){
-    callBusy('กำลังประกอบเล่มรายงาน (ใช้เวลาสักครู่)…',
-      jsonp({ action:'waKpiBookPdf', uid:UID, ym:KPR_YM||'' }), 'ออกเล่มแล้ว')
+    /* 🔴 งานหนักจริง (ประกอบ Google Doc ทีละคน) — ต้องส่งเวลารอมาเอง
+       ไม่งั้นตัวลองใหม่อัตโนมัติจะยิงซ้ำ = สร้างเล่มซ้ำหลายรอบแล้วขึ้น "ระบบตอบช้า" ทั้งที่กำลังทำอยู่ */
+    callBusy('กำลังประกอบเล่มรายงาน (คนละหน้า · อาจใช้เวลา 1-3 นาที)…',
+      jsonp({ action:'waKpiBookPdf', uid:UID, ym:KPR_YM||'' }, 0, 300000), 'ออกเล่มแล้ว')
       .then(function(r){
         if(!r||!r.ok){ toast((r&&r.error)||'ออกเล่มไม่สำเร็จ'); return; }
         toast('📕 ออกเล่มแล้ว · '+r.people+' คน · ใบประเมินรายคน '+r.docs+' ใบ');
@@ -12559,8 +12561,8 @@
   /* ไฟล์ Google Sheet — เนื้อหาเดียวกับเล่ม PDF แต่ลูกค้าเอาไปกรอง/คำนวณต่อได้
      (แท็บสรุป + แท็บผลรายบุคคล + แท็บใบประเมินรายคน) */
   function kpBookSheet(){
-    callBusy('กำลังสร้างไฟล์ Google Sheet (ใช้เวลาสักครู่)…',
-      jsonp({ action:'waKpiBookSheet', uid:UID, ym:KPR_YM||'' }), 'ออกไฟล์แล้ว')
+    callBusy('กำลังสร้างไฟล์ Google Sheet (อาจใช้เวลา 1-3 นาที)…',
+      jsonp({ action:'waKpiBookSheet', uid:UID, ym:KPR_YM||'' }, 0, 300000), 'ออกไฟล์แล้ว')
       .then(function(r){
         if(!r||!r.ok){ toast((r&&r.error)||'ออกไฟล์ไม่สำเร็จ'); return; }
         toast('📗 ออกไฟล์แล้ว · '+r.people+' คน · แท็บรายคน '+r.docs+' แท็บ');
@@ -12583,8 +12585,8 @@
       }).catch(function(e){ toast(e.message); });
   }
   function kpBookSendGo(){
-    callBusy('กำลังออกเล่มและส่งเข้ากลุ่ม (ใช้เวลาสักครู่)…',
-      jsonp({ action:'waKpiBookSend', uid:UID, ym:KPR_YM||'' }), 'ส่งแล้ว')
+    callBusy('กำลังออกเล่มและส่งเข้ากลุ่ม (อาจใช้เวลา 1-3 นาที)…',
+      jsonp({ action:'waKpiBookSend', uid:UID, ym:KPR_YM||'' }, 0, 300000), 'ส่งแล้ว')
       .then(function(r){
         if(!r||!r.ok){ toast((r&&r.error)||'ส่งไม่สำเร็จ'); return; }
         toast('📤 ส่งเข้ากลุ่ม '+(r.groupName||'ลูกค้า')+' แล้วค่ะ · '+r.people+' คน');
@@ -15190,7 +15192,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260912-2215';
+  var APP_BUILD='20260912-2218';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
