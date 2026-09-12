@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260912-1537">
+<link rel="stylesheet" href="user.css?v=20260912-1557">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1268,7 +1268,11 @@
   .kp-period .kp-segb{ display:inline-flex; align-items:center; padding:0 16px; font-size:14px; }
   .kp-period select.inp{ padding-top:0; padding-bottom:0; }
   .kp-period .kp-lb{ display:inline-flex; align-items:center; height:38px; }
-  .kp-2col{ display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:12px; }
+  /* หน้าเล่มส่งลูกค้า: กราฟการกระจายเกรด 1 ส่วน · ตารางคะแนนตามแผนก 3 ส่วน
+     (พี่กี้ 12 ก.ย. 69 — ตารางแผนกมีชื่อคนยาว เคยโดนบีบจนตัดบรรทัด ส่วนกราฟมีที่ว่างเหลือ) */
+  .kp-2col{ display:grid; grid-template-columns:1fr 3fr; gap:12px; }
+  @media (max-width:900px){ .kp-2col{ grid-template-columns:1fr; } }
+
   .kp-hbars{ display:flex; flex-direction:column; gap:7px; }
   /* ช่องชื่อกว้าง 120px พอกับชื่อเล่น แต่ชื่อจริงเต็ม ("นางสาวธนวรรณ วรรณะ") โดนตัดเกือบครึ่ง
      ขยายเป็น 200px หลังเปลี่ยนมาอ้างชื่อจริง (11 ก.ย. 69) · ยาวกว่านั้นยังมี ellipsis + title รับไว้ */
@@ -1580,8 +1584,9 @@
      🔴 ใบบนเว็บกับใบในเล่ม PDF ต้องเป็นใบเดียวกัน — แก้ที่นี่แล้วต้องแก้ KpiBook.gs ให้ตรงด้วย
      กระดาษ A4 (ความกว้างเนื้อ 186mm) · โทนม่วงตามธีมห้องลูกค้า */
   .kp-paper{ max-width:820px; margin:0 auto; }
-  .kp-doc-h{ text-align:center; font-size:17px; margin:2px 0; color:var(--red); }
-  .kp-doc-sub{ text-align:center; color:#8A94A6; font-size:12.5px; margin-bottom:14px; }
+  /* หัวใบต้องใหญ่กว่าทุกอย่างในใบชัด ๆ (พี่กี้ 12 ก.ย. 69) — เนื้อในตาราง 12.5px */
+  .kp-doc-h{ text-align:center; font-size:22px; margin:4px 0 2px; color:var(--red); letter-spacing:-.2px; }
+  .kp-doc-sub{ text-align:center; color:#8A94A6; font-size:13.5px; margin-bottom:14px; }
   /* แถบหัวส่วน — พื้นม่วงเต็มแถว ตัวหนังสือขาว (เหมือนใบใน PDF) */
   .kp-doc-sec{ background:var(--red); color:#fff; padding:5px 10px; font-size:12.5px;
     font-weight:700; margin-top:14px; border-radius:4px 4px 0 0; }
@@ -1598,9 +1603,15 @@
   .kp-doc-sum td{ background:var(--red-soft); font-weight:700; }
   .kp-doc-tb td.n{ text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
   .kp-doc-tb td.c{ text-align:center; }
-  /* ส่วนที่ 1 ข้อมูลพนักงาน — ป้ายชื่อช่องพื้นม่วงจาง ค่าอยู่ช่องขวา */
-  .kp-doc-tb td.lb{ background:var(--red-soft); font-weight:700; width:130px; }
+  /* ส่วนที่ 1 ข้อมูลพนักงาน — ป้ายชื่อช่องพื้นม่วงจาง ค่าอยู่ช่องขวา
+     ความกว้างกำหนดที่ <td> ของแถวแรกเป็น % (ตาราง table-layout:fixed ใช้ค่าจากแถวแรก)
+     ป้ายซ้าย-ขวาต้องกว้างเท่ากันและพอสำหรับ "วันครบรอบการประเมิน" ที่เคยตัด 2 บรรทัด */
+  .kp-doc-tb td.lb{ background:var(--red-soft); font-weight:700; font-size:12px; }
   /* กรอบสรุปผล — ตารางเกณฑ์อยู่ซ้าย ผลอยู่ขวาในกรอบเดียวกัน (ตามแบบฟอร์มลูกค้า) */
+  /* กรอบสรุป: คำอธิบายเกรดเป็นประโยคยาว — ย่อฟอนต์ลงนิดให้จบบรรทัดเดียว
+     และช่วงคะแนน ("ต่ำกว่า 60") ห้ามตัดคำ (พี่กี้ 12 ก.ย. 69) */
+  .kp-doc-fin td{ font-size:11.5px; }
+  .kp-doc-fin td:nth-child(2){ white-space:nowrap; }
   .kp-doc-fin .kp-fin-h{ background:var(--red-tint); color:#4C1D95; font-weight:700; }
   .kp-doc-fin .kp-fin-big{ font-size:15px; font-weight:800; font-variant-numeric:tabular-nums; }
   .kp-doc-grade{ width:100%; border-collapse:collapse; margin-top:8px; }
@@ -11976,8 +11987,10 @@
     /* ส่วนที่ 1 : ข้อมูลพนักงาน */
     h+='<div class="kp-doc-sec">ส่วนที่ 1 : ข้อมูลพนักงาน</div>'+
       '<table class="kp-doc-tb"><tbody>'+
-      '<tr><td class="lb">ชื่อจริง - นามสกุล</td><td>'+esc(emp.name||emp.nick||emp.code||'')+'</td>'+
-        '<td class="lb">ฝ่าย</td><td>'+esc(emp.dept||'—')+'</td></tr>'+
+      '<tr><td class="lb" style="width:20%">ชื่อจริง - นามสกุล</td>'+
+        '<td style="width:30%">'+esc(emp.name||emp.nick||emp.code||'')+'</td>'+
+        '<td class="lb" style="width:20%">ฝ่าย</td>'+
+        '<td style="width:30%">'+esc(emp.dept||'—')+'</td></tr>'+
       '<tr><td class="lb">ฝ่าย/แผนก</td><td>'+esc(emp.posName||'')+'</td>'+
         '<td class="lb">ผู้บังคับบัญชา</td><td>'+esc(emp.boss||'—')+'</td></tr>'+
       '<tr><td class="lb">วันเริ่มการประเมิน</td><td>'+esc(per.from||'—')+'</td>'+
@@ -12083,8 +12096,8 @@
     var gl=r.gradeTable||[];
     h+='<div class="kp-doc-sec">สรุปผลการประเมิน</div>'+
       '<table class="kp-doc-tb kp-doc-fin"><thead><tr>'+
-        '<th style="width:8%">เกรด</th><th style="width:14%">คะแนน</th>'+
-        '<th style="width:44%">คำอธิบาย</th><th colspan="2" style="width:34%">ผลการประเมิน</th>'+
+        '<th style="width:7%">เกรด</th><th style="width:14%">คะแนน</th>'+
+        '<th style="width:49%">คำอธิบาย</th><th colspan="2" style="width:30%">ผลการประเมิน</th>'+
       '</tr></thead><tbody>';
     gl.forEach(function(g,i){
       var upper = i>0 ? (Number(gl[i-1].min)-1) : 100;
@@ -13794,10 +13807,14 @@ function kpImpDraw(){
     if(!r.top.length) h+='<div class="emptybox">ยังไม่มีเดือนที่อนุมัติในปีนี้</div>';
     else {
       h+='<div class="kp-wrap"><table class="kp-tbl"><thead><tr><th>อันดับ</th><th>พนักงาน</th><th>ตำแหน่ง</th>'+
-        '<th class="kp-r">เฉลี่ยทั้งปี</th><th class="kp-r">จำนวนรอบ</th><th class="kp-c">เกรดต่ำสุด</th><th class="kp-c">คงเส้นคงวา</th></tr></thead><tbody>';
+        '<th class="kp-r">เฉลี่ยทั้งปี</th><th class="kp-r">สูงสุด</th><th class="kp-r">จำนวนรอบ</th>'+
+        '<th class="kp-c">เกรดต่ำสุด</th><th class="kp-c">คงเส้นคงวา</th></tr></thead><tbody>';
       r.top.forEach(function(x,i){
         h+='<tr><td>'+(i+1)+'</td><td><b>'+kpWho(x)+'</b><div class="kp-nick">'+esc([x.nick,x.dept].filter(Boolean).join(' · '))+'</div></td>'+
           '<td>'+esc(x.pos)+'</td><td class="kp-r"><b>'+x.avg.toFixed(2)+'</b></td>'+
+          /* คะแนนสูงสุดของปี + เดือนที่ทำได้ (พี่กี้เสนอ 12 ก.ย. 69 — เฉลี่ยอย่างเดียวไม่บอกศักยภาพ) */
+          '<td class="kp-r">'+(x.best===null||x.best===undefined?'—':
+            ('<b>'+Number(x.best).toFixed(2)+'</b>'+(x.bestYm?('<div class="kp-nick">'+esc(kpLabel(x.bestYm))+'</div>'):'')))+'</td>'+
           '<td class="kp-r">'+x.months+'</td><td class="kp-c">'+kpGradePill(x.minGrade)+'</td>'+
           '<td class="kp-c">'+(x.steady?'<span class="kp-dot kp-dot-ok">ใช่</span>':'<span class="kp-dot">มีเดือนที่ตก</span>')+'</td></tr>';
       });
@@ -13911,7 +13928,9 @@ function kpImpDraw(){
           '<td class="kp-r"><b>'+(m.avg===null?'—':m.avg.toFixed(2))+'</b></td><td class="kp-r">'+m.pass+'</td></tr>';
       });
       h+='</tbody></table></div>';
-      h+=barChart(r.company,function(x){return kpLabel(x.ym).split(' ')[0].substr(0,3);},function(x){return x.avg||0;});
+      /* 🔴 ห้ามใช้ barChart — นั่นเป็นกราฟของโมดูลการเงิน แท่งเป็นสีแดงเลือดหมูซึ่งไม่ใช่สีธีม
+         และสีไม่สื่ออะไรเลย (พี่กี้ทัก 12 ก.ย. 69) · kpTrendBars ใช้สีตามเกณฑ์เกรดของบริษัท */
+      h+=kpTrendBars(r.company, r.grades);
     }
     h+='</div>';
 
@@ -13928,7 +13947,8 @@ function kpImpDraw(){
           '<td class="kp-r">'+kpNum(x.stat)+'</td><td class="kp-r"><b>'+kpNum(x.total)+'</b></td>'+
           '<td class="kp-c">'+kpGradePill(x.grade)+'</td></tr>';
       });
-      h+='</tbody></table></div>'+barChart(r.person.history,function(x){return kpLabel(x.ym).split(' ')[0].substr(0,3);},function(x){return x.total||0;});
+      h+='</tbody></table></div>'+
+        kpTrendBars(r.person.history.map(function(x){ return { ym:x.ym, avg:(x.total===null||x.total===undefined?null:Number(x.total)) }; }), r.grades);
     } else if(KPRP_CODE) h+='<div class="emptybox">ยังไม่มีเดือนที่อนุมัติของคนนี้</div>';
     h+='</div>';
     return h;
@@ -15021,7 +15041,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260912-1537';
+  var APP_BUILD='20260912-1557';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
