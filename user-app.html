@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260912-1557">
+<link rel="stylesheet" href="user.css?v=20260912-1609">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -13808,14 +13808,17 @@ function kpImpDraw(){
     else {
       h+='<div class="kp-wrap"><table class="kp-tbl"><thead><tr><th>อันดับ</th><th>พนักงาน</th><th>ตำแหน่ง</th>'+
         '<th class="kp-r">เฉลี่ยทั้งปี</th><th class="kp-r">สูงสุด</th><th class="kp-r">จำนวนรอบ</th>'+
-        '<th class="kp-c">เกรดต่ำสุด</th><th class="kp-c">คงเส้นคงวา</th></tr></thead><tbody>';
+        '<th class="kp-c">เกรดสูงสุด</th><th class="kp-c">เกรดต่ำสุด</th>'+
+        '<th class="kp-c">คงเส้นคงวา</th></tr></thead><tbody>';
       r.top.forEach(function(x,i){
         h+='<tr><td>'+(i+1)+'</td><td><b>'+kpWho(x)+'</b><div class="kp-nick">'+esc([x.nick,x.dept].filter(Boolean).join(' · '))+'</div></td>'+
           '<td>'+esc(x.pos)+'</td><td class="kp-r"><b>'+x.avg.toFixed(2)+'</b></td>'+
           /* คะแนนสูงสุดของปี + เดือนที่ทำได้ (พี่กี้เสนอ 12 ก.ย. 69 — เฉลี่ยอย่างเดียวไม่บอกศักยภาพ) */
           '<td class="kp-r">'+(x.best===null||x.best===undefined?'—':
             ('<b>'+Number(x.best).toFixed(2)+'</b>'+(x.bestYm?('<div class="kp-nick">'+esc(kpLabel(x.bestYm))+'</div>'):'')))+'</td>'+
-          '<td class="kp-r">'+x.months+'</td><td class="kp-c">'+kpGradePill(x.minGrade)+'</td>'+
+          '<td class="kp-r">'+x.months+'</td>'+
+          '<td class="kp-c">'+kpGradePill(x.maxGrade)+'</td>'+
+          '<td class="kp-c">'+kpGradePill(x.minGrade)+'</td>'+
           '<td class="kp-c">'+(x.steady?'<span class="kp-dot kp-dot-ok">ใช่</span>':'<span class="kp-dot">มีเดือนที่ตก</span>')+'</td></tr>';
       });
       h+='</tbody></table></div>';
@@ -15041,7 +15044,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260912-1557';
+  var APP_BUILD='20260912-1609';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
