@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260912-2355">
+<link rel="stylesheet" href="user.css?v=20260913-0006">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -13867,12 +13867,17 @@ function kpImpDraw(){
     h+='<div class="card kp-noprint"><div class="kp-bar">'+kpRepTabs()+'</div>'+
       '<div class="kp-bar">'+kpYmPicker(r.ym,r.months,'kpRepYm')+kpStatusPill(r.status)+
       '<span class="kp-grow"></span>'+
-      /* ออกไฟล์จริงเก็บ Drive = ของที่เอาไปส่งลูกค้า · พิมพ์จากจอไว้ดูเร็ว ๆ เฉย ๆ
-         เปิดให้เฉพาะผู้ดูแล และเฉพาะรอบที่อนุมัติแล้ว (หลังบ้านกันอีกชั้น) */
-      (r.isAdmin?'<button class="btn btn-primary btn-sm" onclick="kpBookPdf()">📕 ออกไฟล์ PDF</button>'+
-        '<button class="btn btn-sm" onclick="kpBookSheet()">📗 ออกไฟล์ Google Sheet</button>'+
-        '<button class="btn btn-sm" onclick="kpBookSend()">📤 ส่งเข้ากลุ่ม LINE ลูกค้า</button>':'')+
-      '<button class="btn btn-ghost btn-sm" onclick="window.print()">พิมพ์จากหน้าจอ</button></div>'+
+      /* 🔴 เล่มที่สวยที่สุด = พิมพ์จากหน้านี้ (เบราว์เซอร์วาด · ใบในเล่ม = ใบรายคนเป๊ะ)
+         ปุ่มออกไฟล์ลง Drive (Google Docs วาด) เก็บไว้เพราะการส่งเข้ากลุ่ม LINE
+         ต้องมีไฟล์อยู่ใน Drive ถึงจะส่งลิงก์ให้ลูกค้าได้ (พี่กี้เลือกข้อ 1 · 13 ก.ย. 69) */
+      '<button class="btn btn-primary btn-sm" onclick="window.print()">🖨️ พิมพ์ / บันทึกเป็น PDF</button>'+
+      (r.isAdmin?'<button class="btn btn-sm" onclick="kpBookSend()">📤 ส่งเข้ากลุ่ม LINE ลูกค้า</button>'+
+        '<button class="btn btn-ghost btn-sm" onclick="kpBookPdf()">📕 ไฟล์ PDF ใน Drive</button>'+
+        '<button class="btn btn-ghost btn-sm" onclick="kpBookSheet()">📗 Google Sheet</button>':'')+
+      '</div>'+
+      '<div class="m-hint" style="margin:6px 0 0">เล่มที่สวยที่สุดคือกด <b>พิมพ์ / บันทึกเป็น PDF</b> '+
+      'จากหน้านี้ — ใบประเมินรายคนในเล่มจะหน้าตาเหมือนใบที่เปิดจากหน้าประวัติรายคนทุกประการ<br>'+
+      'ส่วน <b>ไฟล์ PDF ใน Drive</b> ใช้ตอนจะส่งลิงก์ให้ลูกค้าทาง LINE (ปุ่มส่งเข้ากลุ่มต้องใช้ไฟล์นี้)</div>'+
       (r.isAdmin&&String(r.status||'').indexOf('อนุมัติ')!==0
         ?'<div class="m-hint" style="margin:8px 0 0">เดือนนี้ยังไม่ได้อนุมัติรอบ — ออกไฟล์ส่งลูกค้าได้หลังอนุมัติค่ะ</div>':'')+
       '</div>';
@@ -15204,7 +15209,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260912-2355';
+  var APP_BUILD='20260913-0006';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
