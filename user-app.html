@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260912-2119">
+<link rel="stylesheet" href="user.css?v=20260912-2131">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1637,6 +1637,15 @@
     .main,#main{ padding:0 !important; margin:0 !important; background:none !important; }
     .kp-paper{ box-shadow:none; border:0; max-width:none; }
     .kp-noprint,.ds-sel,.mnav,.mtabs,.rm-bar{ display:none !important; }
+    /* 🔴 html ถูกทาสีแบรนด์ไว้กันจอขาวตอนโหลด (user.css) — ตอนพิมพ์ที่ว่างท้ายหน้าสุดท้าย
+       จึงกลายเป็นแผ่นสีฟ้าเต็มหน้า ต้องล้างทั้ง html และ body */
+    html,body{ background:#fff !important; }
+    /* ไม่หั่นกลางแถว · หัวข้อส่วนต้องไม่ค้างท้ายหน้าโดยไม่มีตารางตาม
+       · ท้ายใบ (สรุป+ลงนาม) ยกไปหน้าใหม่ทั้งก้อน ไม่ปล่อยให้เกรดตกไปบรรทัดเดียว */
+    .kp-doc-tb tr{ break-inside:avoid; page-break-inside:avoid; }
+    .kp-doc-sec{ break-after:avoid; page-break-after:avoid; }
+    .kp-doc-end{ break-inside:avoid; page-break-inside:avoid; }
+    .kp-doc-signs{ break-inside:avoid; page-break-inside:avoid; margin-top:26px; }
     .kp-doc-sec{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
     .kp-doc-tb th,.kp-doc-sum td,.kp-doc-tb td.lb{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   }
@@ -12149,7 +12158,8 @@
 
     /* ── สรุปผลการประเมิน — ตารางเกณฑ์อยู่ซ้าย ผลอยู่ขวาในกรอบเดียวกัน (ตามภาพที่พี่กี้ส่ง) ── */
     var gl=r.gradeTable||[];
-    h+='<div class="kp-doc-sec">สรุปผลการประเมิน</div>'+
+    h+='<div class="kp-doc-end">'+
+      '<div class="kp-doc-sec">สรุปผลการประเมิน</div>'+
       '<table class="kp-doc-tb kp-doc-fin"><thead><tr>'+
         '<th style="width:7%">เกรด</th><th style="width:14%">คะแนน</th>'+
         '<th style="width:49%">คำอธิบาย</th><th colspan="2" style="width:30%">ผลการประเมิน</th>'+
@@ -12179,7 +12189,8 @@
         '<p>วันที่ประเมิน ......../......../........</p></div>'+
       '<div><p>ลงชื่อ ...................................... ผู้ประเมิน</p>'+
         '<p>( ...................................... )</p>'+
-        '<p>วันที่ประเมิน ......../......../........</p></div></div>';
+        '<p>วันที่ประเมิน ......../......../........</p></div></div>'+
+      '</div>';
     return h;
   }
 
@@ -15159,7 +15170,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260912-2119';
+  var APP_BUILD='20260912-2131';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
