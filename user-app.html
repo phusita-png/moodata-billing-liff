@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260912-2218">
+<link rel="stylesheet" href="user.css?v=20260912-2344">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1645,6 +1645,8 @@
     .kp-doc-tb tr{ break-inside:avoid; page-break-inside:avoid; }
     .kp-doc-sec{ break-after:avoid; page-break-after:avoid; }
     .kp-doc-end{ break-inside:avoid; page-break-inside:avoid; }
+    /* ใบรายคนในเล่ม — ขึ้นหน้าใหม่ทุกใบ */
+    .kp-bookpage{ break-before:page; page-break-before:always; }
     .kp-doc-signs{ break-inside:avoid; page-break-inside:avoid; margin-top:26px; }
     .kp-doc-sec{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
     .kp-doc-tb th,.kp-doc-sum td,.kp-doc-tb td.lb{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
@@ -13840,7 +13842,7 @@ function kpImpDraw(){
   function renderKpiReport(){
     skel();
     var p;
-    if(KPRP_TAB==='book')         p={ action:'waKpiBook', uid:UID, what:'book', ym:KPR_YM||'' };
+    if(KPRP_TAB==='book')         p={ action:'waKpiBook', uid:UID, what:'book', ym:KPR_YM||'', sheets:'1' };
     else if(KPRP_TAB==='insight') p={ action:'waKpiBook', uid:UID, what:'insight', ym:KPR_YM||'' };
     else {
       p={ action:'waKpiReport', uid:UID, what:KPRP_TAB==='trend'?'trend':'month', ym:KPR_YM||'' };
@@ -13928,6 +13930,13 @@ function kpImpDraw(){
     });
     h+='</tbody></table></div><div class="m-hint">เกณฑ์เกรด: '+
       (r.grades||[]).map(function(g){ return 'เกรด '+g.grade+' = '+g.min+' ขึ้นไป'; }).join(' · ')+'</div></div>';
+
+    /* ── ใบประเมินรายคน คนละหน้า ต่อท้ายเล่ม (พี่กี้ 12 ก.ย. 69) ──
+       ใช้ kpDocPaper ตัวเดียวกับหน้าใบรายคน → ใบในเล่ม = ใบที่พี่ชอบ ไม่มีทางหลุดกัน
+       กด "พิมพ์ / บันทึกเป็น PDF" ที่หน้านี้ = ได้เล่มทั้งเล่มด้วยเครื่องวาดเดียวกับใบรายคน */
+    (r.sheets||[]).forEach(function(d){
+      h+='<div class="card kp-paper kp-bookpage">'+kpDocPaper(d)+'</div>';
+    });
     h+='</div>';
     return h;
   }
@@ -15192,7 +15201,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260912-2218';
+  var APP_BUILD='20260912-2344';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
