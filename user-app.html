@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260912-2344">
+<link rel="stylesheet" href="user.css?v=20260912-2355">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -11031,11 +11031,13 @@
   }
   function kpCacheBust(){ KP_CACHE={}; }
   /** ยิงคำขอแบบใช้แคชได้ · onData ถูกเรียกได้ 2 ครั้ง (ของเก่าทันที → ของใหม่เมื่อมาถึง) */
-  function kpFetch(p,onData,onErr){
+  function kpFetch(p,onData,onErr,waitMs){
     var key=kpCacheKey(p), hit=KP_CACHE[key], fresh=hit && (Date.now()-hit.at)<KP_CACHE_MS;
     if(fresh){ try{ onData(hit.data,true); }catch(e){} }
     else kpLoading();
-    jsonp(p).then(function(r){
+    /* งานที่หนักจริง (เช่นเล่มที่ต้องคิดใบรายคนทุกคน) ส่งเวลารอมาเอง
+       ไม่งั้นตัวลองใหม่อัตโนมัติจะยิงซ้ำแล้วจบด้วย "ระบบตอบช้าผิดปกติ" ทั้งที่ยังทำอยู่ */
+    jsonp(p, 0, waitMs||0).then(function(r){
       if(r&&r.ok) KP_CACHE[key]={ at:Date.now(), data:r };
       onData(r,false);
     }).catch(function(e){ if(onErr) onErr(e); else kpErr(e.message); });
@@ -13842,7 +13844,8 @@ function kpImpDraw(){
   function renderKpiReport(){
     skel();
     var p;
-    if(KPRP_TAB==='book')         p={ action:'waKpiBook', uid:UID, what:'book', ym:KPR_YM||'', sheets:'1' };
+    if(KPRP_TAB==='book'){ p={ action:'waKpiBook', uid:UID, what:'book', ym:KPR_YM||'', sheets:'1' };
+      kpLoading('กำลังประกอบเล่ม (ใบประเมินรายคนทุกคน · ใช้เวลาสักครู่)…'); }
     else if(KPRP_TAB==='insight') p={ action:'waKpiBook', uid:UID, what:'insight', ym:KPR_YM||'' };
     else {
       p={ action:'waKpiReport', uid:UID, what:KPRP_TAB==='trend'?'trend':'month', ym:KPR_YM||'' };
@@ -13855,7 +13858,7 @@ function kpImpDraw(){
             : (KPRP_TAB==='insight' ? kpInsightHtml(r)
             : (KPRP_TAB==='trend' ? kpTrendHtml(r) : kpMonthRepHtml(r)));
       kpPaint('kpireport', h);
-    });
+    }, null, KPRP_TAB==='book' ? 240000 : 0);
   }
 
   /* ── เล่มส่งลูกค้า — หน้าเดียวจบ กดพิมพ์เป็น PDF ได้จากเบราว์เซอร์ ── */
@@ -15201,7 +15204,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260912-2344';
+  var APP_BUILD='20260912-2355';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
