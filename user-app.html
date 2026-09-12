@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260912-1115">
+<link rel="stylesheet" href="user.css?v=20260912-1123">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1525,11 +1525,12 @@
   .kp-gcard{ position:relative; border-radius:14px; padding:12px 14px 13px; min-height:92px; }
   .kp-gcard-0{ opacity:.55; }                      /* ไม่มีใครได้เกรดนี้ = จางลง แต่ยังต้องเห็นว่ามีเกรดนี้อยู่ */
   /* เลขเกรดบนซ้าย + จำนวนคนล่างซ้าย ตัวใหญ่ทั้งคู่ — การ์ดนี้มีไว้ "กวาดตาแล้วรู้ทันที" */
-  /* ป้ายเกรดใช้สีพื้นเดียวกับการ์ด จึงต้องรองด้วยขาวโปร่ง ไม่งั้นกลืนหายไปกับพื้น
+  /* เลขเกรดเป็นตัวเลขเปล่า ไม่มีกรอบ (พี่กี้ 12 ก.ย. 69 — กรอบเด่นจนแย่งสายตาจากจำนวนคน
+     ซึ่งเป็นตัวเลขที่การ์ดนี้มีไว้บอก) · สีตัวอักษรยังมาจากคลาสเกรดเดิม
      🔴 ต้องเขียนเป็น .kp-gcard .kp-gcard-g (2 คลาส) — ด้านล่างมี @media จอกว้างสั่ง
-        .kp-g{font-size:15px} ทับอยู่ คลาสเดี่ยวจะแพ้แล้วเลขเกรดหดเหลือเท่าป้ายในตาราง */
-  .kp-gcard .kp-gcard-g{ font-size:30px; padding:0 17px; border-radius:14px;
-    background:rgba(255,255,255,.72); min-width:30px; }
+        .kp-g{font-size:15px; padding:3px 11px} ทับอยู่ คลาสเดี่ยวจะแพ้ */
+  .kp-gcard .kp-gcard-g{ font-size:22px; font-weight:700; padding:0; border-radius:0;
+    background:none; min-width:0; opacity:.8; }
   /* เลขจำนวนคนอยู่กลางการ์ด · คำว่า "คน" เกาะมุมขวาล่าง (พี่กี้ 12 ก.ย. 69)
      คำว่า "คน" วางแบบ absolute จึงไม่ดันความสูงการ์ด และเลขยังอยู่กลางจริง ๆ */
   .kp-gcard-n{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
@@ -14818,7 +14819,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260912-1115';
+  var APP_BUILD='20260912-1123';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
