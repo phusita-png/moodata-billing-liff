@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260913-1038">
+<link rel="stylesheet" href="user.css?v=20260913-1105">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1648,6 +1648,17 @@
     /* ใบรายคนในเล่ม — ขึ้นหน้าใหม่ทุกใบ */
     .kp-bookpage{ break-before:page; page-break-before:always; }
     .kp-doc-signs{ break-inside:avoid; page-break-inside:avoid; margin-top:26px; }
+    /* 🔴 แผ่นสีจาง ๆ คั่นระหว่างใบ (พี่กี้เจอจากตัวอย่างพิมพ์จริง 13 ก.ย. 69)
+       ต้นเหตุ 2 อย่างรวมกัน:
+         ① .card ทาพื้นสีธีม (--card) ลงกระดาษด้วย — ในห้องลูกค้าเป็นโทนม่วง/ฟ้าจาง
+         ② กฎ print ทั้งเว็บสั่ง .card{break-inside:avoid} ใบที่ยาวเกิน 1 หน้าเลยถูกดัน
+            ไปเริ่มหน้าใหม่ ทิ้งหน้าที่เหลือไว้เป็นการ์ดเปล่า = แผ่นสีเต็มหน้า
+       → ในเล่ม/ใบประเมิน ให้การ์ดเป็นกระดาษขาวล้วน และยอมให้ไหลข้ามหน้าได้ */
+    .kp-paper, .kp-book .card, .kp-paper.card{
+      background:#fff !important; box-shadow:none !important; border:0 !important;
+      break-inside:auto !important; page-break-inside:auto !important;
+    }
+    .kp-book{ background:none !important; }
     .kp-doc-sec{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
     .kp-doc-tb th,.kp-doc-sum td,.kp-doc-tb td.lb{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   }
@@ -12646,24 +12657,43 @@
       if(f.size>24*1024*1024){ toast('ไฟล์ใหญ่เกิน 24MB ค่ะ'); return; }
       var fr=new FileReader();
       fr.onload=function(){
+        /* 🔴 อัปขึ้น Drive ก่อนเสมอ — ยังไม่ส่ง (พี่กี้ 13 ก.ย. 69: "ไม่เห็นไฟล์ก่อนส่ง กดส่งเลยเหรอ")
+           ส่งผิดไฟล์/ผิดกลุ่ม = รายงานผลงานลูกค้าหลุด เรียกคืนไม่ได้
+           ลำดับที่ปลอดภัย: อัป → เปิดให้ตรวจ → บอกกลุ่มปลายทาง → ค่อยกดยืนยันส่ง */
         var p={ action:'waKpiBookUpload', uid:UID, ym:KPR_YM||'', file:fr.result };
-        if(send) p.send='1';
-        /* jsonpPost ใช้ fetch (ไม่มีตัวจับเวลาของตัวเอง) และ withRoom_ ให้เองอยู่แล้ว */
-        callBusy(send?'กำลังอัปไฟล์แล้วส่งเข้ากลุ่ม…':'กำลังอัปไฟล์เข้าระบบ…',
-          jsonpPost(p), send?'ส่งแล้ว':'อัปแล้ว')
+        callBusy('กำลังอัปไฟล์เข้าระบบ…', jsonpPost(p), 'อัปแล้ว')
           .then(function(r){
-            /* ห้องยังไม่ผูกกลุ่ม LINE → ไฟล์ขึ้น Drive แล้ว แต่ส่งไม่ได้
-               พาไปเลือกกลุ่มต่อเลย ดีกว่าเด้ง error แล้วให้พี่ไปหาเองว่าตั้งตรงไหน */
-            if(r&&r.needGroup){ toast('เก็บไฟล์แล้ว · เลือกกลุ่มปลายทางก่อนนะคะ'); kpBookGroupPick(r); return; }
             if(!r||!r.ok){ toast((r&&r.error)||'อัปไฟล์ไม่สำเร็จ'); return; }
-            toast(send?('📤 ส่งเข้ากลุ่ม '+(r.groupName||'ลูกค้า')+' แล้วค่ะ')
-                     :'📎 เก็บไฟล์เข้าระบบแล้ว · ปุ่ม ② จะใช้ไฟล์นี้');
+            if(!send){ toast('📎 เก็บไฟล์เข้าระบบแล้ว · ปุ่ม ② จะใช้ไฟล์นี้'); window.open(r.url,'_blank'); return; }
+            window.open(r.url,'_blank');          // เปิดให้ตรวจก่อน
+            kpBookConfirmSend(r);
           }).catch(function(e){ toast(e.message); });
       };
       fr.onerror=function(){ toast('อ่านไฟล์ไม่ได้ค่ะ'); };
       fr.readAsDataURL(f);
     };
     inp.click();
+  }
+  /* ขั้นยืนยันก่อนส่ง — ต้องเห็น 3 อย่างเสมอ: ไฟล์ไหน · ห้องไหน · กลุ่ม LINE ชื่ออะไร */
+  function kpBookConfirmSend(up){
+    callBusy('กำลังตรวจกลุ่มปลายทาง…', jsonp({ action:'waKpiBookGroup', uid:UID }), '')
+      .then(function(g){
+        if(!g||!g.ok){ toast((g&&g.error)||'อ่านข้อมูลกลุ่มไม่ได้'); return; }
+        if(!g.groupId){ toast('เก็บไฟล์แล้ว · ห้องนี้ยังไม่ได้ผูกกลุ่ม LINE'); kpBookGroupPick(g); return; }
+        var msg='ตรวจไฟล์ในแท็บที่เพิ่งเปิดแล้วนะคะ'+String.fromCharCode(10,10)+
+          'ไฟล์: '+(up.name||'เล่มรายงาน')+String.fromCharCode(10)+
+          'ลูกค้า: '+(g.roomName||'-')+String.fromCharCode(10)+
+          'กลุ่ม LINE: '+(g.groupName||g.groupId)+String.fromCharCode(10,10)+
+          'ส่งเข้ากลุ่มนี้เลยไหมคะ?';
+        if(!confirm(msg)){ toast('ยังไม่ส่งค่ะ · ไฟล์เก็บไว้ในระบบแล้ว กดปุ่ม ② ใหม่เมื่อพร้อม'); return; }
+        callBusy('กำลังส่งเข้ากลุ่ม…',
+          jsonp({ action:'waKpiBookSend', uid:UID, ym:KPR_YM||'', url:up.url,
+                  label:up.label||'', people:up.people||'' }, 0, 120000), 'ส่งแล้ว')
+          .then(function(r){
+            if(!r||!r.ok){ toast((r&&r.error)||'ส่งไม่สำเร็จ'); return; }
+            toast('📤 ส่งเข้ากลุ่ม '+(r.groupName||'ลูกค้า')+' แล้วค่ะ');
+          }).catch(function(e){ toast(e.message); });
+      }).catch(function(e){ toast(e.message); });
   }
   /* ส่งเล่มเข้ากลุ่ม LINE = ใช้ไฟล์ที่พี่พิมพ์เองเท่านั้น (kpBookPick(1))
      ปุ่ม "ให้ระบบออกเล่มแล้วส่งเอง" ถอดออก 13 ก.ย. 69 — ไฟล์ที่ Docs วาดไม่สวยพอส่งลูกค้า */
@@ -15294,7 +15324,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260913-1038';
+  var APP_BUILD='20260913-1105';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
