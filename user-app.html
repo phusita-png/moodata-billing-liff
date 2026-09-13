@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260913-1854">
+<link rel="stylesheet" href="user.css?v=20260913-2021">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1694,6 +1694,11 @@
       break-inside:auto !important; page-break-inside:auto !important;
     }
     .kp-book{ background:none !important; }
+    /* 🔴 ตารางในเล่มอยู่ในกล่องเลื่อนแนวนอน (overflow-x:auto) — ตอนพิมพ์กลายเป็น
+       แถบสกรอลติดลงกระดาษ และที่แย่กว่าคือ "คอลัมน์ขวาถูกตัดหาย" (พี่กี้เห็นจากตัวอย่างพิมพ์ 13 ก.ย. 69)
+       กระดาษไม่มีการเลื่อน → ต้องปล่อยให้ตารางกางเต็มความกว้างเสมอ */
+    .kp-wrap, .kp-gradebox, .tax-tbl-wrap{ overflow:visible !important; }
+    .kp-book table, .kp-paper table{ max-width:100% !important; }
     .kp-doc-sec{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
     .kp-doc-tb th,.kp-doc-sum td,.kp-doc-tb td.lb{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   }
@@ -15592,7 +15597,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260913-1854';
+  var APP_BUILD='20260913-2021';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
