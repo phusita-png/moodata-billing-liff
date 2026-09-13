@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ระบบประเมินผลงาน KPI — แนะนำการใช้งาน | ยินดี by Moodata</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --pp:#7C3AED; --pp2:#A78BFA; --pp-deep:#5B21B6; --pp-ink:#3B1D7A;
+    --tint:#F7F4FE; --soft:#EDE7FD; --line:#E6DEFB;
+    --ink:#252A35; --muted:#6C7280; --ok:#1E7A48; --warn:#B4740F;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{ font-family:'IBM Plex Sans Thai',system-ui,sans-serif; color:var(--ink);
+    background:#F4F1FC; -webkit-font-smoothing:antialiased; }
+
+  /* ── โครงสไลด์: เลื่อนอ่านเองก็ได้ · กดเปลี่ยนหน้าก็ได้ ── */
+  .deck{ scroll-snap-type:y mandatory; height:100dvh; overflow-y:auto; scroll-behavior:smooth; }
+  .s{ scroll-snap-align:start; min-height:100dvh; display:flex; flex-direction:column;
+    justify-content:center; padding:clamp(22px,4vw,54px) clamp(22px,4vw,54px) clamp(58px,7vw,72px);
+    position:relative; overflow-y:auto; }
+  .s + .s{ border-top:1px solid var(--line); }
+  .wrap{ width:100%; max-width:980px; margin:0 auto; }
+  .num{ position:absolute; top:18px; right:22px; font-size:12.5px; color:var(--muted); }
+  .cover .num{ color:rgba(255,255,255,.6); }   /* หน้าปกพื้นม่วง เลขสีเทาจะจมหายไป */
+
+  h1{ font-size:clamp(30px,5.2vw,50px); line-height:1.25; margin:0 0 14px; color:var(--pp-ink); font-weight:700; }
+  h2{ font-size:clamp(23px,3.6vw,34px); line-height:1.3; margin:0 0 8px; color:var(--pp-ink); font-weight:700; }
+  .lead{ font-size:clamp(15px,2vw,18.5px); color:var(--muted); line-height:1.75; margin:0 0 26px; }
+  .eyebrow{ display:inline-block; font-size:13px; font-weight:600; color:var(--pp);
+    background:var(--soft); border-radius:999px; padding:5px 14px; margin-bottom:16px; }
+
+  /* ปก */
+  .cover{ background:linear-gradient(160deg,#6D28D9 0%,#7C3AED 45%,#A78BFA 100%); color:#fff; }
+  .cover h1{ color:#fff; }
+  .cover .lead{ color:#EDE9FE; }
+  .cover .eyebrow{ background:rgba(255,255,255,.18); color:#fff; }
+  .cover .by{ margin-top:34px; font-size:14.5px; color:#DDD3FB; }
+
+  /* การ์ด */
+  .grid{ display:grid; gap:14px; }
+  .g2{ grid-template-columns:repeat(2,1fr); }
+  .g3{ grid-template-columns:repeat(3,1fr); }
+  @media(max-width:780px){ .g2,.g3{ grid-template-columns:1fr; } }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:18px 20px; }
+  .card h3{ margin:0 0 6px; font-size:17px; color:var(--pp-ink); }
+  .card p{ margin:0; font-size:14.5px; line-height:1.75; color:#4A5060; }
+
+  /* ขั้นตอน */
+  .steps{ display:flex; flex-direction:column; gap:12px; }
+  .step{ display:flex; gap:16px; align-items:flex-start; background:#fff;
+    border:1px solid var(--line); border-left:5px solid var(--pp); border-radius:0 14px 14px 0; padding:16px 18px; }
+  .step .n{ flex:none; width:34px; height:34px; border-radius:50%; background:var(--pp); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-weight:700; font-size:16px; }
+  /* 🔴 ต้องเจาะจง "> div > b" — ถ้าใช้ .step b เฉย ๆ ตัวหนาที่อยู่ในย่อหน้า (เช่น 3 ตารางในขั้น 3)
+     จะกลายเป็น block ขึ้นบรรทัดใหม่ทีละอัน สไลด์ยาวจนล้นจอ */
+  .step > div > b{ display:block; font-size:16.5px; color:var(--pp-ink); margin-bottom:3px; }
+  .step p b{ color:var(--pp-ink); }
+  .step p{ margin:0; font-size:14.5px; line-height:1.8; color:#4A5060; }
+  .who{ display:inline-block; font-size:12px; font-weight:600; border-radius:999px; padding:2px 10px; margin-left:8px; vertical-align:middle; }
+  .who-us{ background:#E7F2FF; color:#1D4ED8; }
+  .who-hr{ background:#E9F9EF; color:var(--ok); }
+
+  /* เมนูจำลอง */
+  .menu{ background:linear-gradient(168deg,#6D28D9,#8B5CF6); border-radius:16px; padding:13px 12px; color:#fff; }
+  .menu .mt{ font-size:11.5px; color:#DDD3FB; text-transform:uppercase; letter-spacing:.4px; margin:9px 6px 4px; }
+  .menu .mt:first-child{ margin-top:0; }
+  .mi{ display:flex; align-items:center; gap:9px; padding:6px 11px; border-radius:10px; font-size:13.8px; }
+  .mi.on{ background:#fff; color:var(--pp-deep); font-weight:700; }
+  .mi .ic{ width:20px; text-align:center; }
+
+  /* กล่องเตือน */
+  .note{ background:var(--tint); border-left:4px solid var(--pp); border-radius:0 12px 12px 0;
+    padding:14px 16px; font-size:14.5px; line-height:1.85; color:#3C4353; }
+  .note b{ color:var(--pp-ink); }
+  .warn{ background:#FFF8E9; border-left-color:#F59E0B; }
+  .warn b{ color:var(--warn); }
+
+  ul.tick{ margin:0; padding:0; list-style:none; }
+  ul.tick li{ position:relative; padding-left:28px; margin-bottom:11px; font-size:15.5px; line-height:1.8; }
+  ul.tick li::before{ content:'✓'; position:absolute; left:4px; top:0; color:var(--pp); font-weight:700; }
+
+  .kbd{ display:inline-block; border:1px solid #D6D9E0; border-bottom-width:2px; border-radius:6px;
+    padding:1px 7px; font-size:13px; background:#fff; color:#4A5060; }
+
+  /* ปุ่มเลื่อนหน้า */
+  .nav{ position:fixed; right:18px; bottom:18px; display:flex; gap:8px; z-index:9; }
+  .nav button{ width:44px; height:44px; border-radius:50%; border:0; background:var(--pp); color:#fff;
+    font-size:20px; cursor:pointer; box-shadow:0 6px 16px rgba(91,33,182,.32); }
+  .nav button:disabled{ opacity:.35; cursor:default; }
+  .hint{ position:fixed; left:18px; bottom:20px; font-size:12.5px; color:#4A5060; z-index:9;
+    background:rgba(255,255,255,.92); border-radius:999px; padding:7px 14px;
+    box-shadow:0 2px 10px rgba(60,40,120,.16); display:flex; align-items:center; gap:6px; }
+  @media(max-width:640px){ .hint{ display:none; } }
+  @media print{ .nav,.hint{ display:none; } .deck{ height:auto; overflow:visible; } .s{ min-height:auto; page-break-after:always; } }
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+  <!-- 1 ปก -->
+  <section id="s1" class="s cover"><div class="wrap">
+    <span class="eyebrow">สำหรับทีม HR</span>
+    <h1>ระบบประเมินผลงาน KPI</h1>
+    <p class="lead">จากไฟล์ Excel หลายสิบไฟล์ต่อเดือน → กรอกที่เดียว ระบบคิดคะแนนให้<br>
+      ออกใบประเมินรายคนและเล่มรายงานได้เองทุกเดือน</p>
+    <div class="by">ยินดี · ดูแลระบบโดย Moodata</div>
+  </div></section>
+
+  <!-- 2 ช่วยอะไร -->
+  <section id="s2" class="s"><span class="num">2</span><div class="wrap">
+    <span class="eyebrow">ทำไมต้องเปลี่ยน</span>
+    <h2>ระบบช่วยอะไรบ้าง</h2>
+    <p class="lead">สิ่งที่เคยทำมือทุกเดือน ระบบทำให้แทน</p>
+    <div class="grid g2">
+      <div class="card"><h3>ไม่ต้องคิดคะแนนเอง</h3><p>กรอกแค่ "ตัวเลขที่ทำได้จริง" ระบบคิดเปอร์เซ็นต์ คูณน้ำหนัก รวมคะแนน และตัดเกรดให้ทั้งหมด</p></div>
+      <div class="card"><h3>ทุกคนใช้เกณฑ์เดียวกัน</h3><p>เกณฑ์เก็บไว้ที่เดียว ทุกคนในตำแหน่งเดียวกันถูกวัดด้วยมาตรฐานเดียวกันเสมอ</p></div>
+      <div class="card"><h3>เห็นว่ายังขาดใคร</h3><p>ช่องที่ยังไม่ครบขึ้นสีแดง ครบแล้วเป็นสีเขียว ไม่ต้องไล่เปิดไฟล์ทีละคนเพื่อเช็ก</p></div>
+      <div class="card"><h3>ย้อนดูได้ทุกเดือน</h3><p>ประวัติคะแนนรายคนอยู่ในระบบ ใช้ตอนคุยประเมินหรือพิจารณาปรับเงินเดือนได้ทันที</p></div>
+    </div>
+  </div></section>
+
+  <!-- 3 ภาพรวมรอบเดือน -->
+  <section id="s3" class="s"><span class="num">3</span><div class="wrap">
+    <span class="eyebrow">ภาพรวม</span>
+    <h2>แต่ละเดือนมี 4 ขั้น</h2>
+    <p class="lead">ขั้น ① กับ ④ ทีมงานยินดีทำให้ · ขั้น ② กับ ③ เป็นหน้าที่ของ HR</p>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><div><b>เราเปิดรอบให้<span class="who who-us">ทีมยินดี</span></b>
+        <p>ต้นเดือนถัดไป ระบบสร้างชุดฟอร์มตามตำแหน่งของแต่ละคนไว้รอ</p></div></div>
+      <div class="step"><div class="n">2</div><div><b>HR กรอกข้อมูล 3 ส่วน<span class="who who-hr">HR</span></b>
+        <p>ผลงาน (KPI) · คุณลักษณะ · สถิติการมาทำงาน — กรอกทีละตำแหน่ง เห็นทุกคนพร้อมกัน</p></div></div>
+      <div class="step"><div class="n">3</div><div><b>HR กดส่งอนุมัติ<span class="who who-hr">HR</span></b>
+        <p>ตรวจให้ครบแล้วกดส่ง · ยังแก้ได้ตราบใดที่ทีมงานยังไม่กดอนุมัติ</p></div></div>
+      <div class="step"><div class="n">4</div><div><b>เราอนุมัติ + ส่งเล่มรายงาน<span class="who who-us">ทีมยินดี</span></b>
+        <p>คะแนนถูกล็อก แล้วส่งเล่มรายงานเข้ากลุ่ม LINE ให้</p></div></div>
+    </div>
+  </div></section>
+
+  <!-- 4 เข้าใช้งาน -->
+  <section id="s4" class="s"><span class="num">4</span><div class="wrap">
+    <span class="eyebrow">เริ่มต้น</span>
+    <h2>เข้าใช้งานยังไง</h2>
+    <div class="grid g3" style="margin-bottom:18px">
+      <div class="card"><h3>1 · เปิดลิงก์</h3><p>เปิดลิงก์ระบบที่ทีมงานส่งให้ในกลุ่ม LINE ใช้ได้ทั้งคอมและมือถือ</p></div>
+      <div class="card"><h3>2 · เข้าด้วย LINE</h3><p>กดปุ่มเดียว ไม่ต้องจำรหัสผ่าน ระบบรู้เองว่าเป็นใครในบริษัทไหน</p></div>
+      <div class="card"><h3>3 · เลือกโมดูล</h3><p>หน้าแรกเป็นการ์ดเมนู กดการ์ด <b>ประเมินผลงาน</b></p></div>
+    </div>
+    <div class="note"><b>แนะนำ:</b> เปิดจากคอมจะสะดวกกว่าตอนกรอกข้อมูลทั้งตำแหน่ง เพราะเห็นทุกคนในตารางเดียว</div>
+  </div></section>
+
+  <!-- 5 เมนู -->
+  <section id="s5" class="s"><span class="num">5</span><div class="wrap">
+    <span class="eyebrow">ผังเมนู</span>
+    <h2>เมนูที่ HR ใช้</h2>
+    <div class="grid g2" style="align-items:start">
+      <div class="menu">
+        <div class="mt">ประเมินผลงาน</div>
+        <div class="mi"><span class="ic">📊</span>ภาพรวม</div>
+        <div class="mi"><span class="ic">👥</span>ทะเบียนพนักงาน</div>
+        <div class="mi"><span class="ic">📋</span>รอบการประเมิน</div>
+        <div class="mi on"><span class="ic">✍️</span>ประเมินผลงาน</div>
+        <div class="mi"><span class="ic">📊</span>จัดการผลการประเมิน</div>
+        <div class="mt">รายงาน</div>
+        <div class="mi"><span class="ic">📄</span>รายงาน</div>
+        <div class="mi"><span class="ic">📈</span>ประวัติรายคน</div>
+        <div class="mi"><span class="ic">📘</span>คู่มือ</div>
+        <div class="mt">ตั้งค่าแบบประเมิน</div>
+        <div class="mi"><span class="ic">⚖️</span>เกณฑ์ทั้งองค์กร</div>
+        <div class="mi"><span class="ic">🎯</span>ตัวชี้วัด (KPI)</div>
+        <div class="mi"><span class="ic">🧭</span>คุณลักษณะรายบุคคล</div>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:12px"><h3>ใช้บ่อยที่สุด</h3>
+          <p><b>ประเมินผลงาน</b> — หน้ากรอกข้อมูลประจำเดือน<br>
+             <b>รอบการประเมิน</b> — ดูว่าใครยังไม่ครบ แล้วส่งอนุมัติ</p></div>
+        <div class="card" style="margin-bottom:12px"><h3>ไว้ดูผล</h3>
+          <p><b>จัดการผลการประเมิน</b> — คะแนน เกรด และใบประเมินรายคน<br>
+             <b>ภาพรวม · ประวัติรายคน · รายงาน</b> — มุมภาพรวมและย้อนหลัง</p></div>
+        <div class="note warn"><b>กลุ่มตั้งค่า</b> ดูได้ทุกเมนู แต่การแก้เกณฑ์ให้แจ้งทีมงานยินดี เพราะต้องกำหนดว่า "เริ่มใช้เดือนไหน" ไม่งั้นคะแนนเดือนที่ผ่านมาแล้วจะเปลี่ยนตาม</div>
+      </div>
+    </div>
+  </div></section>
+
+  <!-- 6 กรอกข้อมูล -->
+  <section id="s6" class="s"><span class="num">6</span><div class="wrap">
+    <span class="eyebrow">งานหลัก ①</span>
+    <h2>กรอกข้อมูลประจำเดือน</h2>
+    <p class="lead">เมนู <b>ประเมินผลงาน</b></p>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><div><b>เลือกเดือน</b><p>ช่องแรกด้านบนซ้าย</p></div></div>
+      <div class="step"><div class="n">2</div><div><b>เลือก "เลือกตามตำแหน่ง"</b>
+        <p>แล้วเลือกตำแหน่ง — จะเห็นทุกคนในตำแหน่งนั้นอยู่ในตารางเดียว กรอกรวดเดียวจบ ไม่ต้องเลือกทีละคน</p></div></div>
+      <div class="step"><div class="n">3</div><div><b>กรอก 3 ตาราง</b>
+        <p><b>การปฏิบัติงาน (KPI)</b> ใส่ตัวเลขที่ทำได้จริง · <b>คุณลักษณะ</b> ให้ระดับ 1-5 · <b>สถิติการมาทำงาน</b> ใส่จำนวนครั้ง</p></div></div>
+      <div class="step"><div class="n">4</div><div><b>กดบันทึกข้อมูล</b><p>ปุ่มอยู่ด้านล่างสุดของหน้า</p></div></div>
+    </div>
+    <div class="note warn" style="margin-top:16px"><b>จำข้อเดียวพอ:</b> ช่องที่ไม่มีเหตุการณ์ ต้องใส่เลข <b>0</b> อย่าเว้นว่าง —
+      เว้นว่างระบบถือว่า "ยังกรอกไม่ครบ" ไม่ใช่ "ไม่มี"</div>
+  </div></section>
+
+  <!-- 7 ส่งอนุมัติ -->
+  <section id="s7" class="s"><span class="num">7</span><div class="wrap">
+    <span class="eyebrow">งานหลัก ②</span>
+    <h2>เช็กให้ครบ แล้วส่งอนุมัติ</h2>
+    <p class="lead">เมนู <b>รอบการประเมิน</b></p>
+    <ul class="tick">
+      <li>ตารางโชว์ทุกคนในรอบ พร้อมช่อง <b>การปฏิบัติงาน (KPI)</b> และ <b>สถิติการมาทำงาน</b></li>
+      <li><span style="color:#C22B2B;font-weight:700">แดง = ยังไม่ครบ</span> · <span style="color:#1E7A48;font-weight:700">เขียว = ครบแล้ว</span></li>
+      <li>ใครยังแดง กดปุ่ม <b>กรอกข้อมูล</b> ท้ายแถว ระบบพาไปกรอกของคนนั้นทันที</li>
+      <li>เขียวครบทุกคน กดปุ่ม <b>ส่งอนุมัติ</b> — สถานะเปลี่ยนเป็น <b>รออนุมัติ</b></li>
+    </ul>
+    <div class="note" style="margin-top:18px"><b>คนเข้าใหม่ / ลาออกกลางเดือน:</b> ติ๊กเลือกคนเข้ารอบได้ที่หน้านี้
+      คนที่ไม่ติ๊กจะไม่ถูกประเมินเดือนนั้นและไม่มีในเล่มรายงาน · พนักงานใหม่ที่ยังไม่มีในระบบ เพิ่มที่เมนู <b>ทะเบียนพนักงาน</b> ก่อน</div>
+  </div></section>
+
+  <!-- 8 ดูผล -->
+  <section id="s8" class="s"><span class="num">8</span><div class="wrap">
+    <span class="eyebrow">หลังอนุมัติ</span>
+    <h2>ดูคะแนนและใบประเมิน</h2>
+    <div class="grid g3">
+      <div class="card"><h3>📊 จัดการผลการประเมิน</h3><p>เห็นคะแนนรวมและเกรดของทุกคน · กดปุ่ม <b>ใบประเมิน</b> ท้ายแถวเพื่อเปิดใบรายคน สั่งพิมพ์ได้</p></div>
+      <div class="card"><h3>📈 ประวัติรายคน</h3><p>ดูคะแนนย้อนหลังของคนเดียวหลายเดือน เห็นว่าดีขึ้นหรือแย่ลงตรงไหน</p></div>
+      <div class="card"><h3>📄 รายงาน</h3><p>ภาพรวมทั้งรอบ กราฟ และเล่มสรุปที่ทีมงานส่งให้ลูกค้า</p></div>
+    </div>
+    <div class="note warn" style="margin-top:18px"><b>คะแนนจะเห็นได้หลังรอบถูกอนุมัติแล้วเท่านั้น</b> —
+      ระหว่างที่ยังกรอกอยู่ ระบบจะไม่โชว์คะแนน เพื่อไม่ให้อ่านตัวเลขที่ยังไม่นิ่ง</div>
+  </div></section>
+
+  <!-- 9 ข้อควรระวัง -->
+  <section id="s9" class="s"><span class="num">9</span><div class="wrap">
+    <span class="eyebrow">กันพลาด</span>
+    <h2>5 ข้อที่ถามกันบ่อย</h2>
+    <div class="grid g2">
+      <div class="card"><h3>เว้นว่าง ≠ ศูนย์</h3><p>ช่องสถิติที่ไม่มีเหตุการณ์ ต้องกรอก 0 ถ้าเว้นว่างระบบถือว่ายังกรอกไม่ครบ</p></div>
+      <div class="card"><h3>อนุมัติแล้วแก้ไม่ได้</h3><p>คะแนนถูกล็อกให้ตรงกับเล่มที่ส่งไปแล้ว ถ้าพบว่าผิดจริง แจ้งทีมงานเปิดรอบกลับมาแก้ได้</p></div>
+      <div class="card"><h3>คนลาออก อย่าลบ</h3><p>แก้สถานะเป็น "ลาออกแล้ว" แทน ประวัติคะแนนเดิมจะยังเปิดดูได้</p></div>
+      <div class="card"><h3>เปลี่ยนตำแหน่งกลางปี</h3><p>แจ้งทีมงานเพื่อบันทึกประวัติตำแหน่ง ระบบจะใช้ตัวชี้วัดของตำแหน่ง ณ เดือนนั้นให้เอง</p></div>
+      <div class="card" style="grid-column:1/-1"><h3>อยากแก้เป้า / น้ำหนัก / เกณฑ์</h3>
+        <p>แจ้งทีมงาน จะตั้ง "เริ่มใช้เดือนไหน" ให้ — เดือนที่ผ่านไปแล้วจะไม่ถูกกระทบ คะแนนเก่าไม่ขยับ</p></div>
+    </div>
+  </div></section>
+
+  <!-- 10 ปิด -->
+  <section id="s10" class="s cover"><span class="num">10</span><div class="wrap">
+    <span class="eyebrow">เริ่มใช้ได้เลย</span>
+    <h1>มีคู่มืออยู่ในระบบ</h1>
+    <p class="lead">เมนู <b style="color:#fff">รายงาน ▸ คู่มือ</b> — อธิบายทุกเมนูว่าทำอะไรได้บ้าง
+      พร้อมเกณฑ์คิดคะแนนของบริษัทท่านที่ดึงมาแสดงจริง ไม่ใช่ตัวอย่าง</p>
+    <div style="background:rgba(255,255,255,.14); border-radius:16px; padding:20px 22px; font-size:15.5px; line-height:1.9">
+      <b>ติดตรงไหน ทักได้ตลอด</b><br>
+      ทักในกลุ่ม LINE ที่ใช้คุยกับทีมงานยินดี<br>
+      ถ้าเป็นเรื่องตัวเลขในใบประเมิน บอก <b>ชื่อพนักงาน + เดือน</b> มาด้วย จะตรวจให้เร็วขึ้น
+    </div>
+    <div class="by">ยินดี · ระบบผู้ช่วยงานสำนักงาน โดย Moodata</div>
+  </div></section>
+</div>
+
+<div class="hint">เลื่อนอ่านได้ · หรือกด <span class="kbd">↑</span> <span class="kbd">↓</span> เปลี่ยนหน้า</div>
+<div class="nav">
+  <button id="prev" aria-label="หน้าก่อน">↑</button>
+  <button id="next" aria-label="หน้าถัดไป">↓</button>
+</div>
+
+<script>
+  (function(){
+    var deck=document.getElementById('deck');
+    var secs=[].slice.call(deck.querySelectorAll('.s'));
+    function cur(){
+      var t=deck.scrollTop, best=0, min=1e9;
+      secs.forEach(function(s,i){ var d=Math.abs(s.offsetTop-t); if(d<min){ min=d; best=i; } });
+      return best;
+    }
+    function go(i){
+      i=Math.max(0,Math.min(secs.length-1,i));
+      deck.scrollTo({ top:secs[i].offsetTop, behavior:'smooth' });
+    }
+    document.getElementById('next').onclick=function(){ go(cur()+1); };
+    document.getElementById('prev').onclick=function(){ go(cur()-1); };
+    document.addEventListener('keydown', function(e){
+      if(e.key==='ArrowDown'||e.key==='PageDown'||e.key===' '){ e.preventDefault(); go(cur()+1); }
+      if(e.key==='ArrowUp'||e.key==='PageUp'){ e.preventDefault(); go(cur()-1); }
+      if(e.key==='Home'){ e.preventDefault(); go(0); }
+      if(e.key==='End'){ e.preventDefault(); go(secs.length-1); }
+    });
+    function sync(){
+      var i=cur();
+      document.getElementById('prev').disabled=(i===0);
+      document.getElementById('next').disabled=(i===secs.length-1);
+    }
+    deck.addEventListener('scroll', sync); sync();
+    /* เปิดลิงก์ตรงไปหน้าใดหน้าหนึ่งได้ เช่น ...#s6 (ส่งให้ลูกค้าดูเฉพาะขั้นตอนที่ถาม)
+       ต้อง scroll ที่ตัว .deck เอง — hash ปกติเลื่อนได้แค่หน้าต่าง ไม่ใช่กล่องที่ scroll อยู่ */
+    function jump(){
+      var h=(location.hash||'').replace('#','');
+      if(!h) return;
+      var el=document.getElementById(h);
+      /* 🔴 behavior:'auto' = "ตามค่า CSS" ซึ่ง .deck ตั้ง scroll-behavior:smooth ไว้
+         → เปิดลิงก์ #s6 แล้วมันค่อย ๆ ไถ แล้วโดน scroll-snap ดึงกลับหน้าแรก
+         ต้องสั่ง 'instant' ให้กระโดดตรงเป้าทันที */
+      if(el) deck.scrollTo({ top:el.offsetTop, behavior:'instant' });
+    }
+    window.addEventListener('hashchange', jump);
+    setTimeout(jump, 60);
+  })();
+</script>
+</body>
+</html>
