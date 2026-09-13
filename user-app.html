@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260913-1105">
+<link rel="stylesheet" href="user.css?v=20260913-1550">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1415,6 +1415,13 @@
   .kp-wnum{ display:flex; flex-direction:column; gap:4px; font-size:12.5px; color:#5b6b7d; font-weight:600; }
   .kp-wnum .inp{ width:92px; }
   /* เล่มส่งลูกค้า — ปุ่ม/แท็บไม่ต้องติดไปกับกระดาษ */
+  /* คู่มือการใช้งาน (kpihelp) — prefix kp- ตามกฎของโมดูลนี้ ห้ามใช้คลาสลอย */
+  .kp-hstep{ display:flex; gap:12px; align-items:flex-start; padding:10px 0; border-top:1px solid #eef1f6; }
+  .kp-hstep:first-of-type{ border-top:0; }
+  .kp-hnum{ flex:none; width:26px; height:26px; border-radius:50%; background:var(--red); color:#fff;
+    font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center; }
+  .kp-hnote{ background:#f7f9fc; border-left:3px solid var(--red); border-radius:0 8px 8px 0;
+    padding:10px 12px; font-size:13px; line-height:1.75; color:#4A5262; }
   .kp-bookhead{ text-align:center; padding:18px 0 8px; }
   .kp-bookco{ font-size:15px; color:#5b6b7d; }
   .kp-booktt{ font-size:22px; font-weight:800; color:#1F2733; margin-top:4px; }
@@ -1930,7 +1937,7 @@
     hubreq:['🏛️','คำขอสมัคร'], hubrooms:['🏢','ห้องลูกค้า'], roomset:['⚙️','ตั้งค่าห้อง'], home:['🏠','ภาพรวมประจำวัน'], clock:['🕐','ลงเวลา'],
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
     expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติเบิกจ่าย'], expone:['🔎','ใบเบิก'],
-    expdash:['📊','รายจ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ทะเบียนการจ่าย'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','ภาษีซื้อ/ภ.พ.30'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ทะเบียนใบสำคัญจ่าย'], sales:['💰','รายรับ'], ar:['📊','ลูกหนี้ค้างรับ'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51'], finhist:['📈','เทียบย้อนหลัง'], docdash:['📊','ภาพรวม'], docreg:['🗂️','จัดการเอกสาร'], doccheck:['✅','ตรวจก่อนส่ง'], docbycat:['📑','รายงานตามประเภท'], docreport:['📦','รายงานประจำเดือน'], doccat:['🏷️','จัดการหมวด'], hubmods:['🧩','โมดูลของแต่ละห้อง'], teamperm:['🔐','สิทธิ์ทีม'], kpiemp:['👥','ทะเบียนพนักงาน'], kpiperson:['📈','ประวัติรายคน'], kpidash:['📊','ภาพรวม'], kpientry:['✍️','กรอกผลงาน'], kpiscore:['⭐','คะแนนคุณลักษณะ'], kpidoc:['📄','ใบประเมิน'], kpiround:['📋','รอบการประเมิน'], kpifill:['✍️','ประเมินผลงาน'], kpimanage:['📊','จัดการผลการประเมิน'], kpirule:['⚖️','เกณฑ์ทั้งองค์กร'], kpimetric:['🎯','ตัวชี้วัด (KPI)'], kpitrait:['🧭','คุณลักษณะรายบุคคล'], kpiimport:['📥','นำเข้าข้อมูลเดิม'], kpireport:['📄','รายงาน']
+    expdash:['📊','รายจ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ทะเบียนการจ่าย'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','ภาษีซื้อ/ภ.พ.30'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ทะเบียนใบสำคัญจ่าย'], sales:['💰','รายรับ'], ar:['📊','ลูกหนี้ค้างรับ'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51'], finhist:['📈','เทียบย้อนหลัง'], docdash:['📊','ภาพรวม'], docreg:['🗂️','จัดการเอกสาร'], doccheck:['✅','ตรวจก่อนส่ง'], docbycat:['📑','รายงานตามประเภท'], docreport:['📦','รายงานประจำเดือน'], doccat:['🏷️','จัดการหมวด'], hubmods:['🧩','โมดูลของแต่ละห้อง'], teamperm:['🔐','สิทธิ์ทีม'], kpiemp:['👥','ทะเบียนพนักงาน'], kpiperson:['📈','ประวัติรายคน'], kpidash:['📊','ภาพรวม'], kpientry:['✍️','กรอกผลงาน'], kpiscore:['⭐','คะแนนคุณลักษณะ'], kpidoc:['📄','ใบประเมิน'], kpiround:['📋','รอบการประเมิน'], kpifill:['✍️','ประเมินผลงาน'], kpimanage:['📊','จัดการผลการประเมิน'], kpirule:['⚖️','เกณฑ์ทั้งองค์กร'], kpimetric:['🎯','ตัวชี้วัด (KPI)'], kpitrait:['🧭','คุณลักษณะรายบุคคล'], kpiimport:['📥','นำเข้าข้อมูลเดิม'], kpireport:['📄','รายงาน'], kpihelp:['📘','คู่มือการใช้งาน']
   };
   var PROJECTS=[], COMPANIES=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ) · COMPANIES=บริษัท auto (หน้าจัดการ)
   var ALL_TASKS=[], PJ_SEL='', MB_STATUSES=[];   // มุมมอง Project (dropdown เลือก · แยก 6 สถานะ + %) · MB_STATUSES=รายการสถานะ (ฟอร์มแก้งานมือถือ)
@@ -2111,7 +2118,7 @@
     if(gi) $('tbIcon').innerHTML=gi.replace('stroke-width="1.9"','stroke-width="2"'); else $('tbIcon').textContent=meta[0];
     $('tbTitle').textContent=meta[1];
     mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
-    ({ portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expone:renderExpOne, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51, finhist:renderFinHist, docreg:renderDocReg, doccheck:renderDocCheck, docdash:renderDocDash, docbycat:renderDocByCat, docreport:renderDocReport, doccat:renderDocCat, kpiemp:renderKpiEmp, kpiperson:renderKpiPerson, kpidash:renderKpiDash, kpientry:renderKpiEntry, kpiscore:renderKpiScore, kpidoc:renderKpiDoc, kpiround:renderKpiRound, kpifill:renderKpiFill, kpimanage:renderKpiManage, kpirule:renderKpiRule, kpimetric:renderKpiMetric, kpitrait:renderKpiTrait, kpiimport:renderKpiImport, kpireport:renderKpiReport }[v] || soon)();
+    ({ portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expone:renderExpOne, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51, finhist:renderFinHist, docreg:renderDocReg, doccheck:renderDocCheck, docdash:renderDocDash, docbycat:renderDocByCat, docreport:renderDocReport, doccat:renderDocCat, kpiemp:renderKpiEmp, kpiperson:renderKpiPerson, kpidash:renderKpiDash, kpientry:renderKpiEntry, kpiscore:renderKpiScore, kpidoc:renderKpiDoc, kpiround:renderKpiRound, kpifill:renderKpiFill, kpimanage:renderKpiManage, kpirule:renderKpiRule, kpimetric:renderKpiMetric, kpitrait:renderKpiTrait, kpiimport:renderKpiImport, kpireport:renderKpiReport, kpihelp:renderKpiHelp }[v] || soon)();
   }
 
   // ───── มือถือ: เมนูกลุ่ม (ล่าง) + แท็บย่อย (บน) · คอมใช้ sidebar เดิม ไม่เกี่ยว ─────
@@ -2223,11 +2230,13 @@
     { key:'work',    th:'ระบบงาน',      en:'WORK',        color:'#3f4658', g:['#64748b','#1e293b'], own:false,
       views:['home','projects','mytasks','review','senddoc','appt','announce','trash'], extra:['alltasks'] },
     { key:'kpi',     th:'ประเมินผลงาน',  en:'PERFORMANCE', color:'#c2410c', g:['#fb923c','#c2410c'], own:false,
-      views:['kpidash','kpiemp','kpiround','kpifill','kpimanage','kpireport','kpiperson','kpirule','kpimetric','kpitrait','kpiimport'],
+      views:['kpidash','kpiemp','kpiround','kpifill','kpimanage','kpireport','kpiperson','kpirule','kpimetric','kpitrait','kpiimport','kpihelp'],
       extra:['kpidoc','kpientry','kpiscore'],
       sec:[ ['ประเมินผลงาน', ['kpidash','kpiemp','kpiround','kpifill','kpimanage']],
             ['รายงาน', ['kpireport','kpiperson']],
-            ['ตั้งค่าแบบประเมิน', ['kpirule','kpimetric','kpitrait','kpiimport']] ] },
+            ['ตั้งค่าแบบประเมิน', ['kpirule','kpimetric','kpitrait','kpiimport']],
+            /* คู่มือของ HR ลูกค้า — วางไว้ท้ายสุด ไม่ปนกับเมนูที่ใช้ทำงานประจำ */
+            ['ช่วยเหลือ', ['kpihelp']] ] },
     { key:'docsys',  th:'ระบบเอกสาร',   en:'DOCUMENTS',   color:'#a16207', g:['#fbbf24','#a16207'], own:false,
       views:['docdash','docreg','doccheck','docbycat','docreport','doccat'],
       sec:[ ['ทะเบียนเอกสาร', ['docdash','docreg','doccheck']],
@@ -3083,7 +3092,7 @@
     expdash:'รายจ่าย', reimb:'ตั้งเบิกลูกค้า', petty:'เงินสดย่อย', payout:'ทะเบียนการจ่าย', expreport:'รายงานรายจ่าย', taxhub:'รายงานภาษี', whtin:'50 ทวิ ที่ถูกหัก', vatbuy:'ภาษีซื้อ',
     ot:'OT ของฉัน', otapprove:'อนุมัติ OT', docs:'เอกสาร',
     hrreport:'รายงาน HR', finreport:'รายงานการเงิน', taxdoc:'ภาษี/เอกสาร',
-    bizdash:'ภาพรวม', sales:'รายรับ', ar:'ลูกหนี้', salesreport:'รายงานรายรับ', poreport:'ทะเบียนใบสำคัญจ่าย', pnd51:'ภ.ง.ด.51', finhist:'เทียบย้อนหลัง', docdash:'ภาพรวมเอกสาร', docreg:'จัดการเอกสาร', doccheck:'ตรวจความครบก่อนส่งนักบัญชี', docbycat:'รายงานตามประเภทเอกสาร', docreport:'รายงานประจำเดือน (ปิดรอบ)', doccat:'จัดการหมวด', kpiemp:'ทะเบียนพนักงาน', kpiperson:'ประวัติรายคน', kpidash:'ภาพรวม', kpientry:'กรอกผลงาน', kpiscore:'คุณลักษณะ', kpidoc:'ใบประเมิน', kpiround:'รอบการประเมิน', kpifill:'ประเมินผลงาน', kpimanage:'จัดการผลการประเมิน', kpirule:'เกณฑ์ทั้งองค์กร', kpimetric:'ตัวชี้วัด (KPI)', kpitrait:'คุณลักษณะรายบุคคล', kpiimport:'นำเข้าข้อมูลเดิม', kpireport:'รายงาน' };
+    bizdash:'ภาพรวม', sales:'รายรับ', ar:'ลูกหนี้', salesreport:'รายงานรายรับ', poreport:'ทะเบียนใบสำคัญจ่าย', pnd51:'ภ.ง.ด.51', finhist:'เทียบย้อนหลัง', docdash:'ภาพรวมเอกสาร', docreg:'จัดการเอกสาร', doccheck:'ตรวจความครบก่อนส่งนักบัญชี', docbycat:'รายงานตามประเภทเอกสาร', docreport:'รายงานประจำเดือน (ปิดรอบ)', doccat:'จัดการหมวด', kpiemp:'ทะเบียนพนักงาน', kpiperson:'ประวัติรายคน', kpidash:'ภาพรวม', kpientry:'กรอกผลงาน', kpiscore:'คุณลักษณะ', kpidoc:'ใบประเมิน', kpiround:'รอบการประเมิน', kpifill:'ประเมินผลงาน', kpimanage:'จัดการผลการประเมิน', kpirule:'เกณฑ์ทั้งองค์กร', kpimetric:'ตัวชี้วัด (KPI)', kpitrait:'คุณลักษณะรายบุคคล', kpiimport:'นำเข้าข้อมูลเดิม', kpireport:'รายงาน', kpihelp:'คู่มือการใช้งาน' };
   // แท็บที่เห็นเฉพาะพี่/ผู้ดูแล · reimb = ตั้งเบิกลูกค้า (ชีตไม่มีเจ้าของรายคน + เป็นข้อมูลรายได้)
   // ⚠️ ซ่อนแท็บ ≠ กันข้อมูล — backend กรองสิทธิ์เองอีกชั้นเสมอ
   var OWNER_VIEWS={ review:1, approve:1, expapprove:1, otapprove:1, reimb:1, taxdoc:1, petty:1, payout:1, vatbuy:1, expreport:1, taxhub:1, whtin:1, hrreport:1, finreport:1, ar:1, pnd51:1, finhist:1, salesreport:1, hubmods:1, teamperm:1 };
@@ -13278,6 +13287,129 @@
       kpPaint(view, view==='kpirule'?kpRuleHtml(r):(view==='kpimetric'?kpMetricHtml(r):kpTraitHtml(r)));
     });
   }
+  /* ═════ 📘 คู่มือการใช้งาน KPI (สำหรับ HR ของลูกค้า · 13 ก.ย. 69) ═════
+     พี่กี้สั่งทำให้พีพีเอซี · คนอ่าน = HR ที่กรอกข้อมูล · ต้องอธิบายวิธีคิดคะแนนครบ
+     🔴 เกณฑ์ที่แสดงดึงจากห้องนั้นจริง (waKpiSetup) ไม่พิมพ์ตัวเลขค้างไว้ในคู่มือ
+        ไม่งั้นวันที่ลูกค้าปรับน้ำหนัก/เกณฑ์ คู่มือจะสอนผิดทันที */
+  function renderKpiHelp(){
+    skel();
+    /* วาดผ่าน kpPaint เสมอ — ผลที่มาช้าห้ามทับหน้าที่ผู้ใช้เปลี่ยนไปแล้ว (กฎของโมดูลนี้)
+       อ่านเกณฑ์ไม่ได้ก็ยังต้องเห็นคู่มือ — ส่วนที่หายไปคือตารางเกณฑ์เท่านั้น */
+    jsonp({ action:'waKpiSetup', uid:UID, ym:KPR_YM||'' })
+      .then(function(r){ kpPaint('kpihelp', kpHelpHtml(r&&r.ok ? r : null)); })
+      .catch(function(){ kpPaint('kpihelp', kpHelpHtml(null)); });
+  }
+  function kpHelpStep(n,title,body){
+    return '<div class="kp-hstep"><div class="kp-hnum">'+n+'</div><div><b>'+title+'</b>'+
+      '<div class="m-hint" style="margin:4px 0 0">'+body+'</div></div></div>';
+  }
+  /* num = คอลัมน์ที่เป็นตัวเลข (ชิดขวา) · ไม่ส่งมา = ข้อความล้วน ชิดซ้ายทั้งตาราง
+     🔴 อย่าชิดขวาทุกคอลัมน์ที่ไม่ใช่คอลัมน์แรก — คำอธิบายยาว ๆ ชิดขวาแล้วอ่านยากมาก
+        (เห็นจากภาพตรวจก่อนส่ง 13 ก.ย. 69) */
+  function kpHelpTbl(head,rows,num){
+    if(!rows.length) return '<div class="m-hint">— ยังไม่ได้ตั้งค่าส่วนนี้ —</div>';
+    var R=num||[];
+    return '<div class="kp-wrap"><table class="kp-tbl"><thead><tr>'+
+      head.map(function(x,i){ return '<th'+(R.indexOf(i)>=0?' class="kp-r"':'')+'>'+esc(x)+'</th>'; }).join('')+
+      '</tr></thead><tbody>'+
+      rows.map(function(rw){ return '<tr>'+rw.map(function(c,i){
+        return '<td'+(R.indexOf(i)>=0?' class="kp-r"':'')+'>'+c+'</td>'; }).join('')+'</tr>'; }).join('')+
+      '</tbody></table></div>';
+  }
+  function kpHelpNum(v){ var n=Number(v); return isFinite(n)?n:0; }
+  function kpHelpHtml(r){
+    var h='<div class="hm-hero"><h2>คู่มือการใช้งาน</h2><span class="hp">ระบบประเมินผลงาน</span></div>';
+
+    h+='<div class="card"><div class="section-h">แต่ละเดือนต้องทำอะไรบ้าง</div>'+
+      '<div class="m-hint" style="margin-bottom:10px">ขั้น ① กับ ④ ทีมงานยินดีทำให้ · ขั้น ② กับ ③ เป็นหน้าที่ของ HR</div>'+
+      kpHelpStep(1,'เราเปิดรอบให้ (ต้นเดือนถัดไป)',
+        'พอขึ้นเดือนใหม่ ทีมงานจะเปิดรอบของเดือนที่ผ่านมาให้ ระบบสร้างชุดฟอร์มตามตำแหน่งของแต่ละคนไว้รอ ' +
+        'ดูได้ที่เมนู <b>รอบการประเมิน</b>')+
+      kpHelpStep(2,'HR กรอกข้อมูล 3 ส่วน',
+        'เมนู <b>ประเมินผลงาน</b> — กรอกทีละตำแหน่ง เห็นทุกคนในตำแหน่งนั้นพร้อมกัน ไม่ต้องเลือกทีละคน<br>'+
+        'ช่องที่ยังไม่ครบขึ้น <b>สีแดง</b> ครบแล้วเป็น <b>สีเขียว</b> — กรอกจนเขียวหมดทุกคน')+
+      kpHelpStep(3,'HR ส่งอนุมัติ',
+        'ตรวจความถูกต้องแล้วกด <b>ส่งอนุมัติ</b> ที่เมนูรอบการประเมิน · หลังส่งแล้วยังแก้ได้ ถ้าทีมงานยังไม่กดอนุมัติ')+
+      kpHelpStep(4,'เราอนุมัติ + ส่งเล่มรายงานให้',
+        'ทีมงานตรวจแล้วกดอนุมัติ คะแนนจะถูกล็อก (ไม่เปลี่ยนอีก) แล้วส่งเล่มรายงานเข้ากลุ่ม LINE ให้')+
+      '</div>';
+
+    h+='<div class="card"><div class="section-h">ส่วนที่ 1 · กรอกผลงาน (ตัวชี้วัด KPI)</div>'+
+      '<div class="m-hint">กรอก "ตัวเลขที่ทำได้จริง" ของเดือนนั้น ระบบคิดเป็นคะแนนให้เอง ไม่ต้องคิดเปอร์เซ็นต์มาเอง</div>'+
+      '<div class="m-hint" style="margin-top:8px"><b>ตัวชี้วัดมี 5 แบบ ระบบคิดคนละอย่าง</b></div>'+
+      kpHelpTbl(['แบบ','กรอกอะไร','ระบบคิดยังไง'],[
+        ['<b>เป้าต่อวัน</b>','ยอดรวมทั้งเดือน + จำนวนวันทำงาน',
+         'ยอดรวม ÷ วันทำงาน ÷ เป้าต่อวัน<br><span class="m-hint">⚠️ หารด้วย <b>วันทำงานจริง</b> ไม่ใช่ 30 วัน — คนลาจะได้ไม่ถูกหักซ้ำสองต่อ</span>'],
+        ['<b>เป้าต่อเดือน</b>','ยอดรวมทั้งเดือน','ยอดที่ทำได้ ÷ เป้าของเดือน'],
+        ['<b>อัตราความถูกต้อง</b>','จำนวนงานทั้งหมด + จำนวนที่ผิด','คิดเป็น % ที่ถูกต้อง — ยิ่งมากยิ่งดี'],
+        ['<b>เพดานความผิดพลาด</b>','จำนวนงานทั้งหมด + จำนวนที่ผิด','ผิดไม่เกินเพดาน = ได้เต็ม — ยิ่งน้อยยิ่งดี'],
+        ['<b>หัวหน้าให้ระดับ</b>','ให้ระดับ 1-5','ระดับ × 20 = เปอร์เซ็นต์ (5 = 100%)']
+      ])+
+      '<div class="kp-hnote" style="margin-top:10px"><b>กติกาที่ต้องรู้</b><br>'+
+      '• ทำได้ <b>ถึงเป้า = ได้เต็ม</b> · ไม่ถึงเป้า = ได้ตามสัดส่วนที่ทำได้จริง · <b>ทำเกินเป้าไม่มีคะแนนโบนัส</b><br>'+
+      '• เดือนไหนข้อไหน<b>ไม่ได้ประเมิน</b> ให้ติ๊ก "ไม่ประเมิน" ระบบจะ<b>เกลี่ยน้ำหนักไปข้ออื่น</b>ให้เอง คะแนนเต็มของทุกคนเท่ากันเสมอ<br>'+
+      '• <b>"ยังไม่กรอก" ไม่เท่ากับ 0</b> — ช่องที่เว้นว่าง ระบบถือว่ายังไม่ครบ ไม่ใช่ได้ศูนย์</div></div>';
+
+    h+='<div class="card"><div class="section-h">ส่วนที่ 2 · คุณลักษณะส่วนบุคคล</div>'+
+      '<div class="m-hint">ให้คะแนนพฤติกรรม/ทัศนคติเป็นระดับ <b>1 ถึง 5</b> ในแต่ละหัวข้อ '+
+      '(1 = ต้องปรับปรุงมาก · 5 = ดีเยี่ยม) ที่เมนู <b>ประเมินผลงาน</b> แถบคุณลักษณะ</div>'+
+      '<div class="kp-hnote" style="margin-top:10px">'+
+      '• รองรับ<b>ผู้ประเมิน 2 คน</b> (เช่น หัวหน้าตรง + ผู้จัดการ) น้ำหนักคนละครึ่ง<br>'+
+      '• ถ้ากรอกมาคนเดียว ระบบ<b>เกลี่ยน้ำหนักไปให้คนที่กรอกจริง</b> คะแนนไม่หายไปไหน<br>'+
+      '• คิดจาก คะแนนที่ให้ ÷ (คะแนนเต็ม × จำนวนผู้ประเมินที่กรอกจริง)</div></div>';
+
+    var stat = [];
+    if(r && r.positions && r.positions.length){
+      stat = ((r.positions[0].statRules)||[]).map(function(x){
+        return [esc(x.label||''), kpHelpNum(x.weight||x.value2)+'', kpHelpNum(x.deduct)+''];
+      });
+    }
+    h+='<div class="card"><div class="section-h">ส่วนที่ 3 · สถิติการมาทำงาน</div>'+
+      '<div class="m-hint">กรอก <b>จำนวนครั้ง</b> ของเดือนนั้น — สาย / ขาดงาน / ลากิจ / ลาป่วย / ใบเตือน<br>'+
+      '<b>ไม่มีเลยให้กรอกเลข 0</b> อย่าเว้นว่าง (เว้นว่าง = ระบบถือว่ายังไม่ได้กรอก ไม่ใช่ไม่มี)</div>'+
+      (stat.length ? ('<div class="m-hint" style="margin:10px 0 6px"><b>เกณฑ์หักของบริษัทท่าน</b></div>'+
+        kpHelpTbl(['หัวข้อ','คะแนนเต็มของข้อนี้','หักต่อครั้ง'], stat, [1,2])) : '')+
+      '<div class="kp-hnote" style="margin-top:10px">'+
+      'แต่ละข้อมีคะแนนเต็มของตัวเอง ถ้าหักเกินคะแนนเต็มของข้อไหน <b>ข้อนั้นเหลือ 0 ไม่ลามไปข้ออื่น</b></div></div>';
+
+    var posRows = [];
+    if(r && r.positions){
+      posRows = r.positions.map(function(x){
+        var f=x.full||{};
+        return [esc((x.pos&&x.pos.name)||''), kpHelpNum(f.perf)+'%', kpHelpNum(f.trait)+'%', kpHelpNum(f.stat)+'%'];
+      });
+    }
+    var gradeRows = [];
+    if(r && r.grades){
+      gradeRows = r.grades.map(function(g,i,arr){
+        var upper = i>0 ? (kpHelpNum(arr[i-1].min)-1) : 100;
+        return ['<b>'+esc(String(g.grade))+'</b>',
+                (i===arr.length-1 ? ('ต่ำกว่า '+(upper+1)) : (g.min+'-'+upper)),
+                esc(g.label||'')];
+      });
+    }
+    h+='<div class="card"><div class="section-h">คะแนนรวมคิดยังไง</div>'+
+      '<div class="m-hint">คะแนนรวม = ผลงาน + คุณลักษณะ + สถิติ (เต็ม 100) สัดส่วนของแต่ละส่วนขึ้นกับตำแหน่ง</div>'+
+      (posRows.length ? ('<div class="m-hint" style="margin:10px 0 6px"><b>สัดส่วนคะแนนของแต่ละตำแหน่ง (ของบริษัทท่าน)</b></div>'+
+        kpHelpTbl(['ตำแหน่ง','ผลงาน','คุณลักษณะ','สถิติ'], posRows, [1,2,3])) : '')+
+      (gradeRows.length ? ('<div class="m-hint" style="margin:14px 0 6px"><b>ตารางเกรด</b></div>'+
+        kpHelpTbl(['เกรด','ช่วงคะแนน','คำอธิบาย'], gradeRows, [1])) : '')+
+      '</div>';
+
+    h+='<div class="card"><div class="section-h">ข้อควรระวัง (เจอบ่อย)</div>'+
+      '<div class="kp-hnote">'+
+      '<b>1. เว้นว่าง ไม่เท่ากับ ศูนย์</b> — ช่องสถิติที่ไม่มีเหตุการณ์ ต้องกรอก 0 ถ้าเว้นว่างระบบถือว่ายังกรอกไม่ครบ<br><br>'+
+      '<b>2. รอบที่อนุมัติแล้วแก้ไม่ได้</b> — คะแนนถูกล็อกให้ตรงกับเล่มรายงานที่ส่งไปแล้ว ถ้าพบว่าผิดจริง แจ้งทีมงานให้เปิดรอบกลับมาแก้<br><br>'+
+      '<b>3. คนเข้า-ออกระหว่างเดือน</b> — เลือกคนเข้ารอบตามจริง ระบบคิดเฉพาะคนที่อยู่ในรอบนั้น<br><br>'+
+      '<b>4. เปลี่ยนตำแหน่งกลางปี</b> — แจ้งทีมงานเพื่อบันทึกประวัติตำแหน่ง ระบบจะใช้ตัวชี้วัดของตำแหน่ง ณ เดือนนั้นให้อัตโนมัติ<br><br>'+
+      '<b>5. อยากแก้เป้า/น้ำหนัก</b> — แจ้งทีมงาน จะตั้ง "เริ่มใช้เดือนไหน" ให้ เดือนที่ผ่านไปแล้วจะไม่ถูกกระทบ</div></div>';
+
+    h+='<div class="card"><div class="section-h">ติดปัญหา ถามได้เลย</div>'+
+      '<div class="m-hint">ทักในกลุ่ม LINE ที่ใช้คุยกับทีมงานยินดีได้ตลอดค่ะ '+
+      'ถ้าเป็นเรื่องตัวเลขในใบประเมิน บอก <b>ชื่อพนักงาน + เดือน</b> มาด้วย จะตรวจให้เร็วขึ้น</div></div>';
+    return h;
+  }
+
   function renderKpiRule(){ kpSetupLoad('kpirule'); }
   function renderKpiMetric(){ kpSetupLoad('kpimetric'); }
   function renderKpiTrait(){ kpSetupLoad('kpitrait'); }
@@ -15324,7 +15456,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260913-1105';
+  var APP_BUILD='20260913-1550';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
