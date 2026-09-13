@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260913-1834">
+<link rel="stylesheet" href="user.css?v=20260913-1842">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1690,8 +1690,41 @@
       break-inside:auto !important; page-break-inside:auto !important;
     }
     .kp-book{ background:none !important; }
-    .kp-doc-sec{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-    .kp-doc-tb th,.kp-doc-sum td,.kp-doc-tb td.lb{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    /* ═══ พิมพ์ให้ครบโดยไม่ต้องติ๊ก "กราฟิกพื้นหลัง" (พี่กี้ 13 ก.ย. 69) ═══
+       ของที่สื่อความหมายด้วยพื้นสี ต้องมี "เส้น" กำกับเสมอ ไม่งั้นข้อมูลหายตอนพิมพ์
+       🔴 เส้นขอบพิมพ์ติดทุกกรณี · พื้นสีพิมพ์ติดเฉพาะตอนติ๊ก — อย่าให้ข้อมูลไปอยู่กับพื้นสี */
+
+    /* ① แถบหัวส่วนในใบประเมิน — เดิมพื้นม่วงตัวขาว ไม่ติ๊ก = กลายเป็นตัวขาวบนขาว (หายทั้งบรรทัด) */
+    .kp-doc-sec{ background:none !important; color:var(--red-deep) !important;
+      border-bottom:2px solid var(--red) !important; border-radius:0 !important;
+      padding-left:0 !important; }
+
+    /* ② หัวตาราง + แถวรวม + ช่องป้ายชื่อ — เดิมแยกด้วยพื้นม่วงอ่อน */
+    .kp-doc-tb th{ border-bottom:1.6px solid var(--red) !important; font-weight:700; }
+    .kp-doc-sum td, .kp-doc-tb td.lb{ border-top:1.2px solid var(--red) !important; font-weight:700; }
+
+    /* ③ บาร์กราฟ (การกระจายเกรด · คะแนนรายคน) — เดิมเป็นแท่งพื้นสีล้วน ไม่ติ๊ก = หายเกลี้ยง
+       ทำรางเป็นกรอบเส้น แล้วให้แท่งข้างในเป็นเส้นหนาแทนพื้น */
+    .kp-htrack, .kp-prog{ border:1px solid #9AA3B2 !important; background:none !important;
+      box-sizing:border-box; }
+    .kp-hfill, .kp-prog-in{ background:none !important;
+      border-top:12px solid #4A5262 !important; height:0 !important; }
+    .kp-prog-in{ border-top-width:5px !important; }
+
+    /* ④ ป้ายเกรด/ป้ายสถานะ — เดิมเป็นวงกลม/แคปซูลพื้นสี ตัวเลขจะลอยโดดไม่มีกรอบ */
+    .kp-g, .kp-dot, .lvb{ border:1.2px solid currentColor !important; background:none !important; }
+
+    /* ⑤ การ์ดสรุป (สรุปผู้บริหาร) — เดิมแยกใบด้วยพื้นสีอ่อน */
+    .ds-card, .stat-card, .kp-book .card{ border:1px solid #D8DEE8 !important; background:none !important; }
+
+    /* ⑥ หัวกล่องเมนูในคู่มือ — พื้นม่วงตัวขาว ถ้าพิมพ์คู่มือจะหายทั้งแถบเหมือนข้อ ① */
+    .kp-hwt{ background:none !important; color:var(--red-deep) !important;
+      border-bottom:2px solid var(--red) !important; }
+    .kp-hic{ color:var(--red) !important; }
+
+    /* ยังคง print-color-adjust ไว้ — ใครติ๊กกราฟิกพื้นหลังก็ได้สีเต็มเหมือนเดิม ไม่เสียหาย */
+    .kp-doc-sec, .kp-doc-tb th, .kp-doc-sum td, .kp-doc-tb td.lb{
+      -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   }
   /* 🔴 บล็อกจอกว้างต้องอยู่ท้ายสุดของสไตล์เสมอ — 10 ก.ย. 69 เจอว่ากฎฐานที่เขียนไว้
      ข้างล่างบล็อกนี้ (.kp-dot .kp-sub .kp-note-*) ทับ override ของจอกว้างเงียบ ๆ
@@ -15588,7 +15621,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260913-1834';
+  var APP_BUILD='20260913-1842';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
