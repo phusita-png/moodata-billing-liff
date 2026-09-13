@@ -727,7 +727,11 @@ textarea:focus,input[type=time]:focus{border-color:var(--red)}
        (พี่กี้ 9 ก.ย. 69: "ขอบสีฟ้าด้านบน ยาวพาดไปเลย จะได้ไม่มีช่องว่าง")
        ⚠️ ความมนเก็บไว้เฉพาะมุมขวาล่าง — มุมบนต้องชนแถบบนสนิทเสมอ */
     border-radius:0 0 26px 0;
+    /* 🔴 ซ่อนแถบสกรอล — จอเตี้ยยังเลื่อนเมนูได้ปกติ แต่ไม่มีแถบโผล่มาบังตา
+       (พี่กี้ 13 ก.ย. 69: "มีสกอบาร์แถบเมนูด้านซ้ายเกิดขึ้นมาใหม่ ไม่ชอบ") */
+    scrollbar-width:none;
   }
+  .nav::-webkit-scrollbar{ width:0; height:0; display:none; }
   .nav-btn{
     flex:0 0 auto; flex-direction:row; justify-content:flex-start;
     gap:12px; width:100%; padding:10px 14px; border-radius:12px;
