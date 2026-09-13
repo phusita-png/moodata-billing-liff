@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260913-1828">
+<link rel="stylesheet" href="user.css?v=20260913-1834">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1418,30 +1418,34 @@
   /* คู่มือการใช้งาน (kpihelp) — prefix kp- ตามกฎของโมดูลนี้ ห้ามใช้คลาสลอย */
   .kp-hstep{ display:flex; gap:12px; align-items:flex-start; padding:10px 0; border-top:1px solid #eef1f6; }
   .kp-hstep:first-of-type{ border-top:0; }
-  .kp-hnum{ flex:none; width:26px; height:26px; border-radius:50%; background:var(--red); color:#fff;
-    font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center; }
+  .kp-hnum{ flex:none; width:29px; height:29px; border-radius:50%; background:var(--red); color:#fff;
+    font-size:14.5px; font-weight:700; display:flex; align-items:center; justify-content:center; }
+  .kp-hstep b{ font-size:15.5px; }
   /* กล่องเมนูในคู่มือ — แถบสีม่วงด้านซ้าย + หัวพื้นม่วงอ่อน ให้แต่ละเมนูแยกกันชัด
      (พี่กี้ 13 ก.ย. 69: "ใช้ไอคอนเดียวกับเมนู และใช้แถบสีม่วง แยกเมนูให้ชัดเจนขึ้น") */
-  .kp-hwork{ border:1px solid #e8edf5; border-left:4px solid var(--red);
-    border-radius:0 12px 12px 0; padding:0 0 12px; margin-top:14px; overflow:hidden; }
+  .kp-hwork{ border:1px solid #e8edf5; border-left:5px solid var(--red);
+    border-radius:0 12px 12px 0; padding:0 0 14px; margin-top:16px; overflow:hidden; }
   .kp-hwork:first-of-type{ margin-top:10px; }
-  .kp-hwork > *:not(.kp-hwt){ margin-left:14px; margin-right:14px; }
-  .kp-hwt{ display:flex; align-items:center; gap:9px; font-weight:700; font-size:14.5px;
-    color:var(--red-deep); background:var(--red-tint); padding:10px 14px; margin:0 0 10px;
-    border-bottom:1px solid rgba(0,0,0,.06); }
-  .kp-hic{ flex:0 0 auto; display:flex; width:22px; height:22px; color:var(--red); }
-  .kp-hic svg{ width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.8;
+  .kp-hwork > *:not(.kp-hwt){ margin-left:15px; margin-right:15px; }
+  /* หัวเมนู = แถบสีเข้มตัวหนังสือขาว (ภาษาเดียวกับแถบหัวส่วนในใบประเมิน)
+     พี่กี้ 13 ก.ย.: "ขอสีม่วงเข้มชัดกว่านี้ · ฟอนต์เล็กไม่เด่นเลย" */
+  .kp-hwt{ display:flex; align-items:center; gap:10px; font-weight:700; font-size:16.5px;
+    color:#fff; background:var(--red); padding:11px 15px; margin:0 0 12px; }
+  .kp-hic{ flex:0 0 auto; display:flex; width:24px; height:24px; color:#fff; }
+  .kp-hic svg{ width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:1.9;
     stroke-linecap:round; stroke-linejoin:round; }
-  .kp-hgrp{ font-size:12px; font-weight:700; color:var(--red); letter-spacing:.3px;
-    margin:18px 0 2px; padding-top:10px; border-top:1px solid #eef1f6; }
+  .kp-hgrp{ font-size:14px; font-weight:800; color:var(--red-deep); letter-spacing:.2px;
+    margin:22px 0 4px; padding-top:12px; border-top:2px solid var(--red-soft,#E4DDFB); }
   .kp-hgrp:first-of-type{ border-top:0; padding-top:0; margin-top:10px; }
-  .kp-hsub{ font-size:13px; font-weight:700; color:#1F2733; margin:10px 0 4px; }
-  .kp-hul{ margin:8px 0 0; padding-left:18px; font-size:13px; line-height:1.9; color:#4A5262; }
-  .kp-hul li{ margin-bottom:3px; }
-  .kp-hol{ margin:8px 0 0; padding-left:20px; font-size:13px; line-height:1.9; color:#4A5262; }
-  .kp-hol li{ margin-bottom:3px; }
-  .kp-hnote{ background:#f7f9fc; border-left:3px solid var(--red); border-radius:0 8px 8px 0;
-    padding:10px 12px; font-size:13px; line-height:1.75; color:#4A5262; }
+  .kp-hsub{ font-size:14.5px; font-weight:700; color:var(--red-deep); margin:12px 0 5px; }
+  .kp-hul{ margin:8px 0 0; padding-left:18px; font-size:14.5px; line-height:1.95; color:#3C4553; }
+  .kp-hul li{ margin-bottom:5px; }
+  /* คู่มือคือของที่ "อ่าน" — ตัวหนังสือต้องใหญ่กว่าป้ายกำกับช่องกรอกทั่วไปในระบบ */
+  .kp-hol{ margin:9px 0 0; padding-left:22px; font-size:14.5px; line-height:1.95; color:#3C4553; }
+  .kp-hol li{ margin-bottom:5px; }
+  .kp-hwork .m-hint, .kp-hstep .m-hint{ font-size:14.5px; line-height:1.9; color:#3C4553; }
+  .kp-hnote{ background:var(--red-tint); border-left:4px solid var(--red); border-radius:0 10px 10px 0;
+    padding:12px 14px; font-size:14px; line-height:1.85; color:#3C4553; }
   .kp-bookhead{ text-align:center; padding:18px 0 8px; }
   .kp-bookco{ font-size:15px; color:#5b6b7d; }
   .kp-booktt{ font-size:22px; font-weight:800; color:#1F2733; margin-top:4px; }
@@ -15584,7 +15588,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260913-1828';
+  var APP_BUILD='20260913-1834';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
