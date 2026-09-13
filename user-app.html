@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260913-0929">
+<link rel="stylesheet" href="user.css?v=20260913-1017">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -11194,7 +11194,10 @@
      เลือกได้เฉพาะตอนเพิ่มตำแหน่งใหม่ · ตำแหน่งที่มีอยู่แล้วให้ดูอย่างเดียว (ระดับมีแหล่งเดียว) */
   var KPE_LEVELS = ['เจ้าหน้าที่','หัวหน้า','ผู้จัดการ'];
   var KPE_LV = {};                           // รหัสตำแหน่ง → ระดับ (เติมช่อง "ระดับ" ให้อัตโนมัติ)
-  var KPE_KEEP = { team:'', lineUid:'' };    // ช่องที่ซ่อนไว้ — ต้องส่งค่าเดิมกลับ ไม่งั้นบันทึกทับเป็นค่าว่าง
+  /* ช่องที่ซ่อนไว้ — ต้องส่งค่าเดิมกลับ ไม่งั้นบันทึกทับเป็นค่าว่าง
+     🔒 13 ก.ย. 69: เอา lineUid ออกจากที่นี่ — backend อ่านค่าเดิมจากชีตเองแล้ว
+        หน้าเว็บไม่ควรถือ LINE userId ของพนักงานไว้เลย (ข้อมูลส่วนบุคคล) */
+  var KPE_KEEP = { team:'' };
 
   /** dropdown จากรายการข้อความ — ค่าเดิมที่ไม่อยู่ในรายการต้องยังอยู่เสมอ (ข้อมูลเก่าห้ามหาย) */
   function kpOptList(list,cur,extraLabel){
@@ -11213,10 +11216,10 @@
       ซ่อนไว้ไม่ได้ลบ: รหัสทีม · LINE userId (ยังเก็บค่าเดิมในชีตครบ) */
   function kpEmpForm(r){
     var isNew = KPE_EDIT==='NEW';
-    var e = isNew ? { code:'', name:'', nick:'', pos:'', dept:'', rater1:'', rater2:'', team:'', lineUid:'', start:'', end:'', status:'ใช้งาน' }
+    var e = isNew ? { code:'', name:'', nick:'', pos:'', dept:'', rater1:'', rater2:'', team:'', start:'', end:'', status:'ใช้งาน' }
                   : (r.rows||[]).filter(function(x){ return x.code===KPE_EDIT; })[0];
     if(!e) return '';
-    KPE_KEEP = { team:e.team||'', lineUid:e.lineUid||'' };
+    KPE_KEEP = { team:e.team||'' };
     KPE_LV = {}; (r.positions||[]).forEach(function(p){ KPE_LV[p.code]=p.level||''; });
     function opt(list,cur,valFn,txtFn){
       return '<option value="">—</option>'+list.map(function(x){
@@ -11330,7 +11333,7 @@
       wPerf:(mkPos?pw.wPerf:''), wTrait:(mkPos?pw.wTrait:''), wStat:(mkPos?pw.wStat:''),
       rater1:v('kpeR1'), rater2:v('kpeR2'),
       /* 2 ช่องนี้ไม่มีบนฟอร์มแล้ว — ต้องส่งค่าเดิมกลับไป ไม่งั้น kpiUpsert_ เขียนทับเป็นค่าว่าง */
-      team:KPE_KEEP.team, lineUid:KPE_KEEP.lineUid,
+      team:KPE_KEEP.team,
       start:v('kpeStart'), end:v('kpeEnd'), status:v('kpeStatus') })
       .then(function(r){
         if(!r||!r.ok) return toast((r&&r.error)||'บันทึกไม่สำเร็จ');
@@ -14059,7 +14062,9 @@ function kpImpDraw(){
       h+='<div class="kp-wrap"><table class="kp-tbl"><thead><tr><th>ผู้ประเมิน</th><th class="kp-r">ประเมิน</th>'+
         '<th class="kp-r">ข้อที่ให้คะแนน</th><th class="kp-r">เฉลี่ยที่ให้</th><th class="kp-r">ห่างค่ากลาง</th></tr></thead><tbody>';
       r.raters.raters.forEach(function(x){
-        h+='<tr'+(x.flag?' class="kp-rowwarn"':'')+'><td>'+esc(x.name||x.rater)+'</td>'+
+        /* 🔴 เดิมเขียน x.name||x.rater — ชีตไม่มีชื่อเมื่อไหร่ หน้าเว็บโชว์ LINE userId ดิบทันที
+           backend เลิกส่ง x.rater มาแล้ว ตรงนี้จึงต้องไม่มี fallback ไปคีย์ใด ๆ อีก */
+        h+='<tr'+(x.flag?' class="kp-rowwarn"':'')+'><td>'+esc(x.name||'ไม่ระบุชื่อผู้ประเมิน')+'</td>'+
           '<td class="kp-r">'+x.people+' คน</td><td class="kp-r">'+x.items+'</td>'+
           '<td class="kp-r">'+x.avg.toFixed(2)+'</td>'+
           '<td class="kp-r">'+(x.diff>0?'+':'')+x.diff.toFixed(2)+'</td></tr>';
@@ -15268,7 +15273,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260913-0929';
+  var APP_BUILD='20260913-1017';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
