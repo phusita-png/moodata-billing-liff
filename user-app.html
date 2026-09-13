@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260913-2055">
+<link rel="stylesheet" href="user.css?v=20260914-1020">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -163,12 +163,12 @@
   .rm-i .ri-l small{ display:block; font-size:12px; color:var(--muted); margin-top:2px; }
   /* มือถือ: แถบแดงแคบ — โชว์แค่ไอคอน (ชื่อห้องอ่านได้จากแถบเตือนอยู่แล้ว)
      ถ้าโชว์ชื่อเต็มด้วย รูปมาสคอต+ชื่อระบบ+avatar จะดันกันจนล้นขอบจอ */
-  @media (max-width:1023px){
+  @media (max-width:899px){
     .rm-btn{ max-width:none; padding:7px 10px; margin-right:6px; }
     .rm-btn .rm-lb{ display:none; }
     .rm-bar button{ margin-left:0; }
   }
-  @media (min-width:1024px){
+  @media (min-width:900px){
     /* แถบเตือนแทรกเป็นแถวกลางของ grid (ซ่อนอยู่ = แถวสูง 0) */
     .app{ grid-template-rows:auto auto 1fr !important;
       grid-template-areas:"nav top" "nav room" "nav main" !important; }
@@ -186,7 +186,7 @@
     box-shadow:0 8px 26px rgba(10,25,60,.35); }
   .upd-bar button{ padding:6px 14px; border:none; border-radius:999px; background:#38bdf8;
     color:#08243d; font:inherit; font-size:12.5px; font-weight:800; cursor:pointer; }
-  @media (min-width:1024px){ .upd-bar{ bottom:26px; } }
+  @media (min-width:900px){ .upd-bar{ bottom:26px; } }
 
   /* ⚙️ หน้าตั้งค่าห้อง (T5) */
   .rs-h{ font-size:16px; font-weight:800; color:#1F2733; }
@@ -1021,7 +1021,10 @@
      หน้าเว็บมี meta no-cache จึงมาถึงผู้ใช้แน่นอนกว่าไฟล์ CSS แยก
      เพิ่มเมนูใหม่ในกลุ่มไหนก็ตาม เพดานนี้ต้องสูงกว่าจำนวนเมนู × ~42px เสมอ */
   .nav-g.open > .nav-gb{ max-height:1600px !important; }
-  @media(max-width:1023px){
+  /* 🔴 บล็อกนี้คือตัวสลับ "แถบเมนูซ้าย ↔ แถบล่างมือถือ" ตัวจริง
+     ต้องขยับพร้อมเกณฑ์ 900 ใน user.css เสมอ — ลืมอันใดอันหนึ่งแล้วช่วง 900-1023
+     จะโผล่ทั้งแถบซ้ายและแถบล่างพร้อมกัน */
+  @media(max-width:899px){
     .nav{ display:none !important; }   /* ซ่อนแถบ 10 ปุ่มเดิม → ใช้ 5 กลุ่มแทน */
     .mtabs{ display:flex; gap:6px; overflow-x:auto; -webkit-overflow-scrolling:touch;
       position:sticky; top:140px; z-index:14; background:#fff; border-bottom:1px solid var(--line);
@@ -15662,7 +15665,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260914-0910';
+  var APP_BUILD='20260914-1020';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ

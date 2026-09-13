@@ -657,13 +657,18 @@ textarea:focus,input[type=time]:focus{border-color:var(--red)}
 .reg-msg.err{color:var(--red-deep)}
 
 /* ════════════════════════════════════════════════════════════
-   DESKTOP / PC LAYOUT (≥1024px) — sidebar + เนื้อหากว้าง (v.70)
+   DESKTOP / PC LAYOUT (≥900px) — sidebar + เนื้อหากว้าง (v.70)
    มือถือไม่กระทบเลย (ทุกอย่างอยู่ใน media query นี้)
    ════════════════════════════════════════════════════════════ */
 .nav-admin{display:none}   /* ปุ่ม admin: ซ่อนทุกที่เป็น default (มือถือใช้ hub link) */
 .topbar,.nav-brand{display:none}   /* topbar + brand: desktop เท่านั้น (มือถือใช้แถบแดง .hd) */
 
-@media (min-width:1024px){
+/* 🖥️ เกณฑ์สลับเป็นหน้าจอแบบคอม — ลดจาก 1024 เหลือ 900 (14 ก.ย. 69)
+   เหตุผล: จอ 1366 ที่ Windows ตั้งขนาดตัวอักษร 150% เหลือพื้นที่จริง 911 จุด
+   ตกเกณฑ์เดิมไปแค่นิดเดียว ลูกค้าเลยได้หน้าจอแบบมือถือบนโน้ตบุ๊ก
+   ⚠️ คู่ min-width/max-width ต้องขยับพร้อมกันเสมอ ไม่งั้นช่วง 900-1023 จะได้ทั้ง
+      แถบเมนูซ้ายและแถบล่างมือถือพร้อมกัน */
+@media (min-width:900px){
   /* โครง grid: ซ้าย sidebar(มี brand) · ขวา topbar + content · เต็มจอจริง (v.71 เฟส1.5) */
   .app{
     max-width:none; padding-bottom:0;
