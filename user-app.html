@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260913-0831">
+<link rel="stylesheet" href="user.css?v=20260913-0929">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -12586,6 +12586,33 @@
         window.open(r.url,'_blank');
       }).catch(function(e){ toast(e.message); });
   }
+  /* ── อัปไฟล์ PDF ที่พี่กี้พิมพ์เองจากหน้านี้ (พี่กี้เคาะ 13 ก.ย. 69) ──
+     เล่มที่สวยที่สุด = เบราว์เซอร์วาดเอง แต่ไฟล์อยู่ในเครื่อง ส่ง LINE ให้ลูกค้าไม่ได้
+     → อัปขึ้นไปไว้ที่เดียวกับเล่มที่ระบบออก แล้วส่งเข้ากลุ่มด้วยไฟล์นี้ได้เลย */
+  function kpBookPick(send){
+    var inp=document.createElement('input');
+    inp.type='file'; inp.accept='application/pdf';
+    inp.onchange=function(){
+      var f=inp.files&&inp.files[0]; if(!f) return;
+      if(f.size>24*1024*1024){ toast('ไฟล์ใหญ่เกิน 24MB ค่ะ'); return; }
+      var fr=new FileReader();
+      fr.onload=function(){
+        var p={ action:'waKpiBookUpload', uid:UID, ym:KPR_YM||'', file:fr.result };
+        if(send) p.send='1';
+        /* jsonpPost ใช้ fetch (ไม่มีตัวจับเวลาของตัวเอง) และ withRoom_ ให้เองอยู่แล้ว */
+        callBusy(send?'กำลังอัปไฟล์แล้วส่งเข้ากลุ่ม…':'กำลังอัปไฟล์เข้าระบบ…',
+          jsonpPost(p), send?'ส่งแล้ว':'อัปแล้ว')
+          .then(function(r){
+            if(!r||!r.ok){ toast((r&&r.error)||'อัปไฟล์ไม่สำเร็จ'); return; }
+            toast(send?('📤 ส่งเข้ากลุ่ม '+(r.groupName||'ลูกค้า')+' แล้วค่ะ')
+                     :'📎 เก็บไฟล์เข้าระบบแล้ว · ปุ่มส่งเข้ากลุ่มจะใช้ไฟล์นี้');
+          }).catch(function(e){ toast(e.message); });
+      };
+      fr.onerror=function(){ toast('อ่านไฟล์ไม่ได้ค่ะ'); };
+      fr.readAsDataURL(f);
+    };
+    inp.click();
+  }
   function kpBookFormat(){
     var u=prompt('วางลิงก์ไฟล์ Google Doc ที่ปรับรูปแบบแล้วค่ะ\n(ระบบจะอ่านค่าอย่างเดียว ไม่แก้ไฟล์ของพี่)');
     if(!u) return;
@@ -13895,18 +13922,21 @@ function kpImpDraw(){
          ปุ่มออกไฟล์ลง Drive (Google Docs วาด) เก็บไว้เพราะการส่งเข้ากลุ่ม LINE
          ต้องมีไฟล์อยู่ใน Drive ถึงจะส่งลิงก์ให้ลูกค้าได้ (พี่กี้เลือกข้อ 1 · 13 ก.ย. 69) */
       '<button class="btn btn-primary btn-sm" onclick="window.print()">🖨️ พิมพ์ / บันทึกเป็น PDF</button>'+
-      (r.isAdmin?'<button class="btn btn-sm" onclick="kpBookSend()">📤 ส่งเข้ากลุ่ม LINE ลูกค้า</button>'+
+      (r.isAdmin?'<button class="btn btn-sm" onclick="kpBookPick(1)">📎 ส่งไฟล์ที่พิมพ์เองเข้ากลุ่ม LINE</button>'+
+        '<button class="btn btn-ghost btn-sm" onclick="kpBookPick(0)">📎 เก็บไฟล์ที่พิมพ์เองเข้าระบบ</button>'+
+        '<button class="btn btn-ghost btn-sm" onclick="kpBookSend()">📤 ส่งเล่มที่ระบบออกเข้ากลุ่ม</button>'+
         '<button class="btn btn-ghost btn-sm" onclick="kpBookPdf()">📕 ไฟล์ PDF ใน Drive</button>'+
         '<button class="btn btn-ghost btn-sm" onclick="kpBookSheet()">📗 Google Sheet</button>'+
         '<button class="btn btn-ghost btn-sm" onclick="kpBookDoc()">📝 ออกเป็น Doc (ไว้ปรับรูปแบบ)</button>'+
         '<button class="btn btn-ghost btn-sm" onclick="kpBookFormat()">📐 อ่านรูปแบบจาก Doc</button>':'')+
       '</div>'+
-      '<div class="m-hint" style="margin:6px 0 0">เล่มที่สวยที่สุดคือกด <b>พิมพ์ / บันทึกเป็น PDF</b> '+
-      'จากหน้านี้ — ใบประเมินรายคนในเล่มจะหน้าตาเหมือนใบที่เปิดจากหน้าประวัติรายคนทุกประการ<br>'+
-      'ส่วน <b>ไฟล์ PDF ใน Drive</b> ใช้ตอนจะส่งลิงก์ให้ลูกค้าทาง LINE (ปุ่มส่งเข้ากลุ่มต้องใช้ไฟล์นี้)<br>'+
-      'อยากเปลี่ยนหน้าตาเล่ม: กด <b>ออกเป็น Doc</b> แล้วจัดรูปแบบในไฟล์นั้นตามใจ '+
-      'เสร็จแล้วกด <b>อ่านรูปแบบจาก Doc</b> ระบบจะจดค่าที่พี่ปรับไว้ (ฟอนต์ · ขนาด · ความกว้างคอลัมน์ · สี) '+
-      'ไปตั้งเป็นมาตรฐาน ไม่ต้องอธิบายเป็นคำพูดแล้วให้เดาเอง</div>'+
+      '<div class="m-hint" style="margin:6px 0 0"><b>วิธีที่ได้เล่มสวยที่สุด (แนะนำ)</b><br>'+
+      '① กด <b>พิมพ์ / บันทึกเป็น PDF</b> จากหน้านี้ → เลือกปลายทางเป็น "บันทึกเป็น PDF" เก็บไฟล์ไว้ในเครื่อง<br>'+
+      '② กด <b>ส่งไฟล์ที่พิมพ์เองเข้ากลุ่ม LINE</b> แล้วเลือกไฟล์นั้น — ระบบเก็บขึ้น Drive ให้ '+
+      'แล้วส่งลิงก์เข้ากลุ่มลูกค้าต่อในครั้งเดียว (หน้าตาเหมือนที่เห็นบนจอเป๊ะ เพราะเบราว์เซอร์เป็นคนวาด)<br>'+
+      'ถ้ายังไม่อยากส่ง กด <b>เก็บไฟล์ที่พิมพ์เองเข้าระบบ</b> ไว้ก่อนได้ ปุ่มส่งเข้ากลุ่มจะใช้ไฟล์นั้น<br><br>'+
+      'ปุ่มที่เหลือคือเล่มที่ <b>ระบบวาดเอง</b> ด้วย Google Docs — สะดวกตรงไม่ต้องพิมพ์เอง '+
+      'แต่หน้าตาจะไม่เท่าการพิมพ์จากหน้านี้</div>'+
       (r.isAdmin&&String(r.status||'').indexOf('อนุมัติ')!==0
         ?'<div class="m-hint" style="margin:8px 0 0">เดือนนี้ยังไม่ได้อนุมัติรอบ — ออกไฟล์ส่งลูกค้าได้หลังอนุมัติค่ะ</div>':'')+
       '</div>';
@@ -15238,7 +15268,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260913-0831';
+  var APP_BUILD='20260913-0929';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
