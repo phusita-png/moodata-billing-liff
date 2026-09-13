@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260913-0006">
+<link rel="stylesheet" href="user.css?v=20260913-0831">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -12574,6 +12574,30 @@
       }).catch(function(e){ toast(e.message); });
   }
 
+  /* ── คู่ปรับรูปแบบเล่ม (พี่กี้สั่ง 13 ก.ย. 69) ──
+     เดิมพี่บอกว่าอยากให้หน้าตาเปลี่ยนยังไง แล้วหนูเดาค่าเอง เดาผิดก็วนแก้หลายรอบ
+     ทางใหม่: ออกไฟล์ Doc ที่แก้ได้ → พี่จัดเอง → กด "อ่านรูปแบบ" ให้ระบบจดค่าจริงไปตั้งเป็นมาตรฐาน */
+  function kpBookDoc(){
+    callBusy('กำลังสร้างไฟล์ Google Doc (อาจใช้เวลา 1-3 นาที)…',
+      jsonp({ action:'waKpiBookDoc', uid:UID, ym:KPR_YM||'' }, 0, 300000), 'ออกไฟล์แล้ว')
+      .then(function(r){
+        if(!r||!r.ok){ toast((r&&r.error)||'ออกไฟล์ไม่สำเร็จ'); return; }
+        toast('📝 ออกไฟล์ต้นฉบับแล้ว · ปรับรูปแบบได้เลยค่ะ');
+        window.open(r.url,'_blank');
+      }).catch(function(e){ toast(e.message); });
+  }
+  function kpBookFormat(){
+    var u=prompt('วางลิงก์ไฟล์ Google Doc ที่ปรับรูปแบบแล้วค่ะ\n(ระบบจะอ่านค่าอย่างเดียว ไม่แก้ไฟล์ของพี่)');
+    if(!u) return;
+    callBusy('กำลังอ่านรูปแบบจากไฟล์…',
+      jsonp({ action:'waKpiBookFormat', uid:UID, doc:u }, 0, 300000), 'อ่านแล้ว')
+      .then(function(r){
+        if(!r||!r.ok){ toast((r&&r.error)||'อ่านรูปแบบไม่สำเร็จ'); return; }
+        alert('📐 อ่านรูปแบบแล้วค่ะ\n\n'+r.digest+'\n\nไฟล์ค่าที่อ่านได้:\n'+(r.jsonUrl||'(เขียนไฟล์ไม่สำเร็จ)'));
+        if(r.jsonUrl) window.open(r.jsonUrl,'_blank');
+      }).catch(function(e){ toast(e.message); });
+  }
+
   /* ── ส่งเล่มเข้ากลุ่ม LINE ของลูกค้า (พี่กี้สั่ง 12 ก.ย. 69) ──
      ส่งผิดกลุ่ม = รายงานผลงานลูกค้าหลุดไปอีกเจ้า เรียกคืนไม่ได้
      → ก่อนส่งต้องเห็นชื่อกลุ่มปลายทางเสมอ แล้วกดยืนยันอีกที */
@@ -13873,11 +13897,16 @@ function kpImpDraw(){
       '<button class="btn btn-primary btn-sm" onclick="window.print()">🖨️ พิมพ์ / บันทึกเป็น PDF</button>'+
       (r.isAdmin?'<button class="btn btn-sm" onclick="kpBookSend()">📤 ส่งเข้ากลุ่ม LINE ลูกค้า</button>'+
         '<button class="btn btn-ghost btn-sm" onclick="kpBookPdf()">📕 ไฟล์ PDF ใน Drive</button>'+
-        '<button class="btn btn-ghost btn-sm" onclick="kpBookSheet()">📗 Google Sheet</button>':'')+
+        '<button class="btn btn-ghost btn-sm" onclick="kpBookSheet()">📗 Google Sheet</button>'+
+        '<button class="btn btn-ghost btn-sm" onclick="kpBookDoc()">📝 ออกเป็น Doc (ไว้ปรับรูปแบบ)</button>'+
+        '<button class="btn btn-ghost btn-sm" onclick="kpBookFormat()">📐 อ่านรูปแบบจาก Doc</button>':'')+
       '</div>'+
       '<div class="m-hint" style="margin:6px 0 0">เล่มที่สวยที่สุดคือกด <b>พิมพ์ / บันทึกเป็น PDF</b> '+
       'จากหน้านี้ — ใบประเมินรายคนในเล่มจะหน้าตาเหมือนใบที่เปิดจากหน้าประวัติรายคนทุกประการ<br>'+
-      'ส่วน <b>ไฟล์ PDF ใน Drive</b> ใช้ตอนจะส่งลิงก์ให้ลูกค้าทาง LINE (ปุ่มส่งเข้ากลุ่มต้องใช้ไฟล์นี้)</div>'+
+      'ส่วน <b>ไฟล์ PDF ใน Drive</b> ใช้ตอนจะส่งลิงก์ให้ลูกค้าทาง LINE (ปุ่มส่งเข้ากลุ่มต้องใช้ไฟล์นี้)<br>'+
+      'อยากเปลี่ยนหน้าตาเล่ม: กด <b>ออกเป็น Doc</b> แล้วจัดรูปแบบในไฟล์นั้นตามใจ '+
+      'เสร็จแล้วกด <b>อ่านรูปแบบจาก Doc</b> ระบบจะจดค่าที่พี่ปรับไว้ (ฟอนต์ · ขนาด · ความกว้างคอลัมน์ · สี) '+
+      'ไปตั้งเป็นมาตรฐาน ไม่ต้องอธิบายเป็นคำพูดแล้วให้เดาเอง</div>'+
       (r.isAdmin&&String(r.status||'').indexOf('อนุมัติ')!==0
         ?'<div class="m-hint" style="margin:8px 0 0">เดือนนี้ยังไม่ได้อนุมัติรอบ — ออกไฟล์ส่งลูกค้าได้หลังอนุมัติค่ะ</div>':'')+
       '</div>';
@@ -15209,7 +15238,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260913-0006';
+  var APP_BUILD='20260913-0831';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
