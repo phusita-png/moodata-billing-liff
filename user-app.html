@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260913-2039">
+<link rel="stylesheet" href="user.css?v=20260913-2055">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1434,6 +1434,11 @@
   .kp-hic{ flex:0 0 auto; display:flex; width:24px; height:24px; color:#fff; }
   .kp-hic svg{ width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:1.9;
     stroke-linecap:round; stroke-linejoin:round; }
+  .kp-sendbox{ border:1px solid #E5E0F5; border-radius:10px; padding:10px 12px; margin:10px 0 4px;
+    font-size:14px; line-height:1.9; }
+  .kp-sendbox > div{ display:flex; gap:10px; }
+  .kp-sendbox span{ flex:0 0 86px; color:var(--muted); }
+  .kp-sendbox b{ flex:1; min-width:0; word-break:break-word; color:#1F2733; }
   .kp-hgrp{ font-size:14px; font-weight:800; color:var(--red-deep); letter-spacing:.2px;
     margin:22px 0 4px; padding-top:12px; border-top:2px solid var(--red-soft,#E4DDFB); }
   .kp-hgrp:first-of-type{ border-top:0; padding-top:0; margin-top:10px; }
@@ -12721,7 +12726,9 @@
           .then(function(r){
             if(!r||!r.ok){ toast((r&&r.error)||'อัปไฟล์ไม่สำเร็จ'); return; }
             if(!send){ toast('📎 เก็บไฟล์เข้าระบบแล้ว · ปุ่ม ② จะใช้ไฟล์นี้'); window.open(r.url,'_blank'); return; }
-            window.open(r.url,'_blank');          // เปิดให้ตรวจก่อน
+            /* 🔴 ห้ามเปิดแท็บไฟล์ก่อนถาม — เบราว์เซอร์จะสลับไปแท็บใหม่ แล้วกล่องยืนยัน
+               ไปเด้งอยู่ในแท็บเดิมที่ถูกบัง ผู้ใช้เห็นเป็น "เงียบ ไม่ไปต่อ" (พี่กี้เจอจริง 13 ก.ย. 69)
+               → ถามในหน้าด้วย modal แล้วให้กดปุ่มเปิดไฟล์เองถ้าอยากตรวจ */
             kpBookConfirmSend(r);
           }).catch(function(e){ toast(e.message); });
       };
@@ -12731,28 +12738,44 @@
     inp.click();
   }
   /* ขั้นยืนยันก่อนส่ง — ต้องเห็น 3 อย่างเสมอ: ไฟล์ไหน · ห้องไหน · กลุ่ม LINE ชื่ออะไร */
+  /* ขั้นยืนยันก่อนส่ง — ต้องเห็น 3 อย่างเสมอ: ไฟล์ไหน · ห้องไหน · กลุ่ม LINE ชื่ออะไร
+     ใช้ modal ในหน้า ไม่ใช้ confirm() เพราะ confirm ถูกแท็บอื่นบังได้ (ดูหมายเหตุใน kpBookPick) */
+  var KPB_SEND=null;
   function kpBookConfirmSend(up){
     callBusy('กำลังตรวจกลุ่มปลายทาง…', jsonp({ action:'waKpiBookGroup', uid:UID }), '')
       .then(function(g){
         if(!g||!g.ok){ toast((g&&g.error)||'อ่านข้อมูลกลุ่มไม่ได้'); return; }
         if(!g.groupId){ toast('เก็บไฟล์แล้ว · ห้องนี้ยังไม่ได้ผูกกลุ่ม LINE'); kpBookGroupPick(g); return; }
-        var msg='ตรวจไฟล์ในแท็บที่เพิ่งเปิดแล้วนะคะ'+String.fromCharCode(10,10)+
-          'ไฟล์: '+(up.name||'เล่มรายงาน')+String.fromCharCode(10)+
-          'ลูกค้า: '+(g.roomName||'-')+String.fromCharCode(10)+
-          'กลุ่ม LINE: '+(g.groupName||g.groupId)+String.fromCharCode(10,10)+
-          'ส่งเข้ากลุ่มนี้เลยไหมคะ?';
-        if(!confirm(msg)){ toast('ยังไม่ส่งค่ะ · ไฟล์เก็บไว้ในระบบแล้ว กดปุ่ม ② ใหม่เมื่อพร้อม'); return; }
-        callBusy('กำลังส่งเข้ากลุ่ม…',
-          jsonp({ action:'waKpiBookSend', uid:UID, ym:KPR_YM||'', url:up.url,
-                  label:up.label||'', people:up.people||'' }, 0, 120000), 'ส่งแล้ว')
-          .then(function(r){
-            if(!r||!r.ok){ toast((r&&r.error)||'ส่งไม่สำเร็จ'); return; }
-            toast('📤 ส่งเข้ากลุ่ม '+(r.groupName||'ลูกค้า')+' แล้วค่ะ');
-          }).catch(function(e){ toast(e.message); });
+        KPB_SEND={ up:up, g:g };
+        modal('<h3>📤 ส่งเล่มให้ลูกค้าทาง LINE</h3>'+
+          '<div class="m-hint">ตรวจให้ชัดก่อนส่งนะคะ — ส่งแล้วเรียกคืนไม่ได้</div>'+
+          '<div class="kp-sendbox">'+
+            '<div><span>ไฟล์</span><b>'+esc(up.name||'เล่มรายงาน')+'</b></div>'+
+            '<div><span>ลูกค้า</span><b>'+esc(g.roomName||'-')+'</b></div>'+
+            '<div><span>กลุ่ม LINE</span><b>'+esc(g.groupName||g.groupId)+'</b></div>'+
+          '</div>'+
+          '<div class="m-act" style="flex-wrap:wrap">'+
+            '<button class="btn btn-ghost" onclick="kpBookOpenFile()">🔍 เปิดดูไฟล์ก่อน</button>'+
+            '<button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+            '<button class="btn btn-primary" onclick="kpBookSendGo()">📤 ส่งเข้ากลุ่ม</button>'+
+          '</div>');
       }).catch(function(e){ toast(e.message); });
   }
-  /* ส่งเล่มเข้ากลุ่ม LINE = ใช้ไฟล์ที่พี่พิมพ์เองเท่านั้น (kpBookPick(1))
-     ปุ่ม "ให้ระบบออกเล่มแล้วส่งเอง" ถอดออก 13 ก.ย. 69 — ไฟล์ที่ Docs วาดไม่สวยพอส่งลูกค้า */
+  /* เปิดไฟล์จากปุ่ม = user gesture จริง เบราว์เซอร์ไม่บล็อก และกล่องยืนยันยังอยู่ให้กดต่อ */
+  function kpBookOpenFile(){ if(KPB_SEND&&KPB_SEND.up) window.open(KPB_SEND.up.url,'_blank'); }
+  function kpBookSendGo(){
+    if(!KPB_SEND) return;
+    var up=KPB_SEND.up, g=KPB_SEND.g;
+    closeModal();
+    callBusy('กำลังส่งเข้ากลุ่ม…',
+      jsonp({ action:'waKpiBookSend', uid:UID, ym:KPR_YM||'', url:up.url,
+              label:up.label||'', people:up.people||'' }, 0, 120000), 'ส่งแล้ว')
+      .then(function(r){
+        if(!r||!r.ok){ toast((r&&r.error)||'ส่งไม่สำเร็จ'); return; }
+        toast('📤 ส่งเข้ากลุ่ม '+(r.groupName||g.groupName||'ลูกค้า')+' แล้วค่ะ');
+      }).catch(function(e){ toast(e.message); });
+  }
+
   /* ห้องนี้ยังไม่ผูกกลุ่ม — ให้เลือกจากกลุ่มที่ระบบรู้จัก แล้วจำไว้ให้ครั้งต่อไป */
   function kpBookGroupPick(r){
     var list=(r&&r.choices)||[];
@@ -15611,7 +15634,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260913-2039';
+  var APP_BUILD='20260913-2055';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
