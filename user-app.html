@@ -2034,6 +2034,13 @@
   function busyOk(m){ var b=$('busy'); if(!b) return;
     b.querySelector('.busy-box').innerHTML='<div class="busy-ok">✅</div><div class="busy-text">'+esc(m||'สำเร็จแล้ว')+'</div>';
     b.classList.add('show'); clearTimeout(_busyDone); _busyDone=setTimeout(unbusy, 1500); }
+  /* เปลี่ยนข้อความใต้วงกลมระหว่างรอ — ทำเฉพาะตอนที่ยังหมุนอยู่จริง
+     ถ้าขึ้น ✅ ไปแล้วห้ามแตะ (ไม่งั้นข้อความ "กำลังรอ" ไปทับคำว่าสำเร็จ) */
+  function busyNote_(m){
+    var b=$('busy'); if(!b || !b.classList.contains('show')) return;
+    if(!b.querySelector('.busy-spin')) return;
+    var t=b.querySelector('.busy-text'); if(t) t.textContent=m;
+  }
   // ครอบ call ที่ทำงานนาน → spinner ค้างจนเสร็จจริง · สำเร็จ = โชว์ ✅ ค้าง 1.5 วิ · พลาด = ปิด (caller แสดง error)
   function callBusy(m, p, okMsg){ busy(m);
     return p.then(function(r){ if(r&&r.ok) busyOk(okMsg||'สำเร็จแล้ว'); else unbusy(); return r; },
@@ -2123,23 +2130,44 @@
      (Google ตอบสถานะผิดพลาดกลับมาเอง: 404/429/5xx) · ถ้าเป็น network error เงียบ ๆ จะไม่ลองใหม่
      เพราะอาจบันทึกไปแล้วแต่คำตอบหาย — ลองใหม่จะได้ใบซ้ำ ซึ่งแย่กว่าให้ผู้ใช้กดเอง */
   var POST_RETRY_STATUS=[404,429,500,502,503,504];
-  function jsonpPost(params, _try){
+  /* 🔴 ฝั่งบันทึก (POST) เดิม "ไม่มีตัวจับเวลาเลย" ต่างจาก jsonp() ฝั่งอ่าน
+     คำขอที่ค้าง = วงกลมหมุนตลอดกาล ไม่มีข้อความ ไม่มีปุ่ม ผู้ใช้แยกไม่ออกว่า
+     ยังทำงานอยู่หรือตายไปแล้ว (ลูกค้าพีพีเอซีเจอจริงตอนแก้ทะเบียนพนักงาน 14 ก.ย. 69)
+     → ① ครบ 12 วิ บอกว่ายังรออยู่ อย่าเพิ่งปิดหน้า  ② ครบเวลาแล้วตัดจบพร้อมข้อความ
+     ⚠️ เวลารอตั้งยาว 120 วิ ตั้งใจ — งานหนักจริง (อัปไฟล์ · ออกเอกสาร · ส่ง LINE)
+        ใช้เวลาระดับนั้นได้ ตัดสั้นกว่านี้จะไปฆ่างานที่กำลังทำสำเร็จอยู่ */
+  var POST_WAIT_MS=120000, POST_SLOW_MS=12000;
+  function jsonpPost(params, _try, timeoutMs){
     _try=_try||0;
     if(!_try){
       params=withRoom_(params);
       if(!roomGuard_(params)) return Promise.reject(new Error('ยกเลิกแล้ว — ยังอยู่ในห้องลูกค้า'));
     }
     var body=Object.keys(params).map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(params[k]);}).join('&');
-    return fetch(execUrlFor_(params.action),{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:body})
+    var ctl=(typeof AbortController!=='undefined')?new AbortController():null, timedOut=false;
+    var slow=setTimeout(function(){ busyNote_('เซิร์ฟเวอร์ตอบช้ากว่าปกติ · ยังรออยู่นะคะ อย่าเพิ่งปิดหน้านี้'); }, POST_SLOW_MS);
+    var timer=setTimeout(function(){ timedOut=true; if(ctl) ctl.abort(); }, timeoutMs||POST_WAIT_MS);
+    function stop(){ clearTimeout(slow); clearTimeout(timer); }
+    var opt={method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:body};
+    if(ctl) opt.signal=ctl.signal;
+    return fetch(execUrlFor_(params.action),opt)
       .then(function(r){
         if(!r.ok){
           if(_try<2 && POST_RETRY_STATUS.indexOf(r.status)>=0){
             jsonpRetryNote_(_try+2);
-            return new Promise(function(res){ setTimeout(res, 800); }).then(function(){ return jsonpPost(params,_try+1); });
+            stop();   // รอบใหม่เริ่มจับเวลาของตัวเอง
+            return new Promise(function(res){ setTimeout(res, 800); }).then(function(){ return jsonpPost(params,_try+1,timeoutMs); });
           }
           throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ (รหัส '+r.status+')');
         }
         return r.json();
+      })
+      .then(function(d){ stop(); return d; }, function(err){
+        stop();
+        /* ตัดเพราะหมดเวลา ≠ บันทึกไม่สำเร็จเสมอไป — คำขออาจถึงเซิร์ฟเวอร์แล้ว
+           ข้อความจึงบอกให้ "เปิดดูอีกครั้ง" ก่อนกดซ้ำ กันบันทึกซ้ำสองรอบ */
+        if(timedOut) throw new Error('ระบบตอบช้าผิดปกติ เลยหยุดรอค่ะ — กดรีเฟรชแล้วดูว่าบันทึกเข้าไปแล้วหรือยัง ก่อนกดบันทึกซ้ำนะคะ');
+        throw err;
       });
   }
 
@@ -15634,7 +15662,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260913-2055';
+  var APP_BUILD='20260914-0910';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
