@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260913-1034">
+<link rel="stylesheet" href="user.css?v=20260913-1038">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -12620,21 +12620,8 @@
   }
   /** ปุ่มมุมขวาบน — เปิดใบประเมินของเดือนที่กำลังดูอยู่ (เล่มรวมทั้งรอบ) */
   function kpOpenBook(){ KPRP_TAB='book'; kpGo('kpireport'); }
-  /* ออกเล่ม PDF จริง (รายงาน + ใบประเมินรายคนต่อท้าย) เก็บเข้าโฟลเดอร์ Drive ของห้องนั้น
-     ใช้เวลาสร้างนานกว่าหน้าอื่นเพราะประกอบ Google Doc ทีละคน → ขึ้นข้อความรอให้ชัด */
-  function kpBookPdf(){
-    /* 🔴 งานหนักจริง (ประกอบ Google Doc ทีละคน) — ต้องส่งเวลารอมาเอง
-       ไม่งั้นตัวลองใหม่อัตโนมัติจะยิงซ้ำ = สร้างเล่มซ้ำหลายรอบแล้วขึ้น "ระบบตอบช้า" ทั้งที่กำลังทำอยู่ */
-    callBusy('กำลังประกอบเล่มรายงาน (คนละหน้า · อาจใช้เวลา 1-3 นาที)…',
-      jsonp({ action:'waKpiBookPdf', uid:UID, ym:KPR_YM||'' }, 0, 300000), 'ออกเล่มแล้ว')
-      .then(function(r){
-        if(!r||!r.ok){ toast((r&&r.error)||'ออกเล่มไม่สำเร็จ'); return; }
-        toast('📕 ออกเล่มแล้ว · '+r.people+' คน · ใบประเมินรายคน '+r.docs+' ใบ');
-        window.open(r.url,'_blank');
-      }).catch(function(e){ toast(e.message); });
-  }
-  /* ไฟล์ Google Sheet — เนื้อหาเดียวกับเล่ม PDF แต่ลูกค้าเอาไปกรอง/คำนวณต่อได้
-     (แท็บสรุป + แท็บผลรายบุคคล + แท็บใบประเมินรายคน) */
+  /* ไฟล์ Google Sheet — ตัวเลขชุดเดียวกับเล่ม ลูกค้าเอาไปกรอง/คำนวณต่อได้
+     (ตัวออก PDF จาก Google Docs ถอดออกจากหน้าเว็บแล้ว — ยังเรียกได้จากเมนูชีตถ้าจำเป็น) */
   function kpBookSheet(){
     callBusy('กำลังสร้างไฟล์ Google Sheet (อาจใช้เวลา 1-3 นาที)…',
       jsonp({ action:'waKpiBookSheet', uid:UID, ym:KPR_YM||'' }, 0, 300000), 'ออกไฟล์แล้ว')
@@ -12645,10 +12632,9 @@
       }).catch(function(e){ toast(e.message); });
   }
 
-  /* ปุ่ม "ออกเป็น Doc / อ่านรูปแบบจาก Doc" ถอดออกจากหน้าเว็บแล้ว (13 ก.ย. 69)
+  /* ตัวออก Doc / ตัวอ่านรูปแบบ ลบทิ้งทั้งชุดแล้ว (13 ก.ย. 69)
      พี่กี้ลองปรับรูปแบบใน Google Docs เองแล้วบอกว่า "งงเครื่องมือ ปรับเท่าไรก็ไม่สวย"
-     → หน้านี้เหลือเฉพาะทางที่พี่ใช้จริง · ตัวออก Doc/ตัวอ่านรูปแบบยังอยู่ที่เมนูชีต
-       (📊 KPI ▸ ออกเล่มเป็นไฟล์ Google Doc · อ่านรูปแบบจากไฟล์ Doc) เผื่อต้องใช้ตอนจูนรูปแบบ */
+     → เล่มที่ส่งลูกค้าใช้ทางเดียว: พิมพ์จากหน้านี้แล้วอัปไฟล์เข้าระบบ (โค้ดยังอยู่ใน git ถ้าจะย้อน) */
   /* ── อัปไฟล์ PDF ที่พี่กี้พิมพ์เองจากหน้านี้ (พี่กี้เคาะ 13 ก.ย. 69) ──
      เล่มที่สวยที่สุด = เบราว์เซอร์วาดเอง แต่ไฟล์อยู่ในเครื่อง ส่ง LINE ให้ลูกค้าไม่ได้
      → อัปขึ้นไปไว้ที่เดียวกับเล่มที่ระบบออก แล้วส่งเข้ากลุ่มด้วยไฟล์นี้ได้เลย */
@@ -12666,9 +12652,12 @@
         callBusy(send?'กำลังอัปไฟล์แล้วส่งเข้ากลุ่ม…':'กำลังอัปไฟล์เข้าระบบ…',
           jsonpPost(p), send?'ส่งแล้ว':'อัปแล้ว')
           .then(function(r){
+            /* ห้องยังไม่ผูกกลุ่ม LINE → ไฟล์ขึ้น Drive แล้ว แต่ส่งไม่ได้
+               พาไปเลือกกลุ่มต่อเลย ดีกว่าเด้ง error แล้วให้พี่ไปหาเองว่าตั้งตรงไหน */
+            if(r&&r.needGroup){ toast('เก็บไฟล์แล้ว · เลือกกลุ่มปลายทางก่อนนะคะ'); kpBookGroupPick(r); return; }
             if(!r||!r.ok){ toast((r&&r.error)||'อัปไฟล์ไม่สำเร็จ'); return; }
             toast(send?('📤 ส่งเข้ากลุ่ม '+(r.groupName||'ลูกค้า')+' แล้วค่ะ')
-                     :'📎 เก็บไฟล์เข้าระบบแล้ว · ปุ่มส่งเข้ากลุ่มจะใช้ไฟล์นี้');
+                     :'📎 เก็บไฟล์เข้าระบบแล้ว · ปุ่ม ② จะใช้ไฟล์นี้');
           }).catch(function(e){ toast(e.message); });
       };
       fr.onerror=function(){ toast('อ่านไฟล์ไม่ได้ค่ะ'); };
@@ -12676,40 +12665,8 @@
     };
     inp.click();
   }
-  function kpBookFormat(){
-    var u=prompt('วางลิงก์ไฟล์ Google Doc ที่ปรับรูปแบบแล้วค่ะ\n(ระบบจะอ่านค่าอย่างเดียว ไม่แก้ไฟล์ของพี่)');
-    if(!u) return;
-    callBusy('กำลังอ่านรูปแบบจากไฟล์…',
-      jsonp({ action:'waKpiBookFormat', uid:UID, doc:u }, 0, 300000), 'อ่านแล้ว')
-      .then(function(r){
-        if(!r||!r.ok){ toast((r&&r.error)||'อ่านรูปแบบไม่สำเร็จ'); return; }
-        alert('📐 อ่านรูปแบบแล้วค่ะ\n\n'+r.digest+'\n\nไฟล์ค่าที่อ่านได้:\n'+(r.jsonUrl||'(เขียนไฟล์ไม่สำเร็จ)'));
-        if(r.jsonUrl) window.open(r.jsonUrl,'_blank');
-      }).catch(function(e){ toast(e.message); });
-  }
-
-  /* ── ส่งเล่มเข้ากลุ่ม LINE ของลูกค้า (พี่กี้สั่ง 12 ก.ย. 69) ──
-     ส่งผิดกลุ่ม = รายงานผลงานลูกค้าหลุดไปอีกเจ้า เรียกคืนไม่ได้
-     → ก่อนส่งต้องเห็นชื่อกลุ่มปลายทางเสมอ แล้วกดยืนยันอีกที */
-  function kpBookSend(){
-    callBusy('กำลังตรวจกลุ่มปลายทาง…',
-      jsonp({ action:'waKpiBookGroup', uid:UID }), '')
-      .then(function(r){
-        if(!r||!r.ok){ toast((r&&r.error)||'อ่านข้อมูลกลุ่มไม่ได้'); return; }
-        if(!r.groupId){ kpBookGroupPick(r); return; }
-        var who=r.groupName||r.groupId;
-        if(!confirm('ส่งเล่มรายงานเดือนนี้เข้ากลุ่ม LINE\n\n"'+who+'"\n\nของ '+(r.roomName||'ลูกค้า')+' ใช่ไหมคะ?')) return;
-        kpBookSendGo();
-      }).catch(function(e){ toast(e.message); });
-  }
-  function kpBookSendGo(){
-    callBusy('กำลังออกเล่มและส่งเข้ากลุ่ม (อาจใช้เวลา 1-3 นาที)…',
-      jsonp({ action:'waKpiBookSend', uid:UID, ym:KPR_YM||'' }, 0, 300000), 'ส่งแล้ว')
-      .then(function(r){
-        if(!r||!r.ok){ toast((r&&r.error)||'ส่งไม่สำเร็จ'); return; }
-        toast('📤 ส่งเข้ากลุ่ม '+(r.groupName||'ลูกค้า')+' แล้วค่ะ · '+r.people+' คน');
-      }).catch(function(e){ toast(e.message); });
-  }
+  /* ส่งเล่มเข้ากลุ่ม LINE = ใช้ไฟล์ที่พี่พิมพ์เองเท่านั้น (kpBookPick(1))
+     ปุ่ม "ให้ระบบออกเล่มแล้วส่งเอง" ถอดออก 13 ก.ย. 69 — ไฟล์ที่ Docs วาดไม่สวยพอส่งลูกค้า */
   /* ห้องนี้ยังไม่ผูกกลุ่ม — ให้เลือกจากกลุ่มที่ระบบรู้จัก แล้วจำไว้ให้ครั้งต่อไป */
   function kpBookGroupPick(r){
     var list=(r&&r.choices)||[];
@@ -12737,7 +12694,8 @@
     callBusy('กำลังผูกกลุ่ม…', jsonp({ action:'waKpiBookGroup', uid:UID, set:gid }), 'ผูกแล้ว')
       .then(function(r){
         if(!r||!r.ok){ toast((r&&r.error)||'ผูกกลุ่มไม่สำเร็จ'); return; }
-        if(confirm('ผูกกลุ่ม "'+name+'" แล้วค่ะ\n\nส่งเล่มรายงานเดือนนี้เข้ากลุ่มเลยไหมคะ?')) kpBookSendGo();
+        /* ผูกกลุ่มเสร็จแล้วพาไปเลือกไฟล์ที่พิมพ์เองต่อ — เป็นทางเดียวที่ใช้ส่งลูกค้าแล้ว */
+        if(confirm('ผูกกลุ่ม "'+name+'" แล้วค่ะ\n\nเลือกไฟล์ PDF ที่พิมพ์ไว้ เพื่อส่งเข้ากลุ่มเลยไหมคะ?')) kpBookPick(1);
       }).catch(function(e){ toast(e.message); });
   }
 
@@ -13995,12 +13953,14 @@ function kpImpDraw(){
       (r.isAdmin?'<details style="margin-top:8px"><summary class="m-hint" style="cursor:pointer">ตัวเลือกอื่น (ไม่ต้องใช้ตามปกติ)</summary>'+
         '<div class="kp-bar" style="margin-top:8px">'+
         '<button class="btn btn-ghost btn-sm" onclick="kpBookPick(0)">📎 เก็บไฟล์ที่พิมพ์ไว้ก่อน (ยังไม่ส่ง)</button>'+
-        '<button class="btn btn-ghost btn-sm" onclick="kpBookSend()">📤 ให้ระบบออกเล่มแล้วส่งเอง</button>'+
-        '<button class="btn btn-ghost btn-sm" onclick="kpBookPdf()">📕 ไฟล์ PDF ที่ระบบออก</button>'+
-        '<button class="btn btn-ghost btn-sm" onclick="kpBookSheet()">📗 ไฟล์ Google Sheet</button>'+
+        '<button class="btn btn-ghost btn-sm" onclick="kpBookSheet()">📗 ไฟล์ Google Sheet (ลูกค้าคำนวณต่อได้)</button>'+
         '</div>'+
-        '<div class="m-hint" style="margin-top:6px">กลุ่มนี้คือเล่มที่ <b>ระบบวาดเอง</b> — ไม่ต้องพิมพ์เอง '+
-        'แต่หน้าตาไม่เท่าการพิมพ์จากหน้านี้ ใช้ตอนรีบหรือแค่อยากได้ไฟล์เก็บไว้</div></details>':'')+
+        /* 🔴 ปุ่มเล่มที่ Google Docs วาด (PDF + ส่งเล่มระบบ) ถอดออก 13 ก.ย. 69
+           พี่กี้: "ถ้าไฟล์ไม่สวย ก็ไม่เอาไว้ดีไหม สร้าง PDF ก็ไม่สวยอยู่แล้ว คงไม่ได้ใช้"
+           เหลือไว้แค่ไฟล์ Sheet ซึ่งมีประโยชน์คนละแบบ (ลูกค้าเอาไปกรอง/คำนวณต่อ ไม่ใช่เรื่องสวย)
+           ตัวออก PDF ยังอยู่ที่เมนูชีต เผื่อต้องใช้ฉุกเฉิน */
+        '<div class="m-hint" style="margin-top:6px">ไฟล์ Sheet ไว้ให้ลูกค้าเอาตัวเลขไปใช้ต่อ '+
+        'ไม่ใช่ไฟล์สำหรับพิมพ์</div></details>':'')+
       (r.isAdmin&&String(r.status||'').indexOf('อนุมัติ')!==0
         ?'<div class="m-hint" style="margin:8px 0 0">เดือนนี้ยังไม่ได้อนุมัติรอบ — ออกไฟล์ส่งลูกค้าได้หลังอนุมัติค่ะ</div>':'')+
       '</div>';
@@ -15334,7 +15294,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260913-1034';
+  var APP_BUILD='20260913-1038';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
