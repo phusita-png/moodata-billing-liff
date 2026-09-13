@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260913-1739">
+<link rel="stylesheet" href="user.css?v=20260913-1828">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1420,9 +1420,18 @@
   .kp-hstep:first-of-type{ border-top:0; }
   .kp-hnum{ flex:none; width:26px; height:26px; border-radius:50%; background:var(--red); color:#fff;
     font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center; }
-  .kp-hwork{ border:1px solid #e8edf5; border-radius:12px; padding:12px 14px; margin-top:12px; }
-  .kp-hwork:first-of-type{ margin-top:8px; }
-  .kp-hwt{ font-weight:700; font-size:14px; color:#1F2733; margin-bottom:4px; }
+  /* กล่องเมนูในคู่มือ — แถบสีม่วงด้านซ้าย + หัวพื้นม่วงอ่อน ให้แต่ละเมนูแยกกันชัด
+     (พี่กี้ 13 ก.ย. 69: "ใช้ไอคอนเดียวกับเมนู และใช้แถบสีม่วง แยกเมนูให้ชัดเจนขึ้น") */
+  .kp-hwork{ border:1px solid #e8edf5; border-left:4px solid var(--red);
+    border-radius:0 12px 12px 0; padding:0 0 12px; margin-top:14px; overflow:hidden; }
+  .kp-hwork:first-of-type{ margin-top:10px; }
+  .kp-hwork > *:not(.kp-hwt){ margin-left:14px; margin-right:14px; }
+  .kp-hwt{ display:flex; align-items:center; gap:9px; font-weight:700; font-size:14.5px;
+    color:var(--red-deep); background:var(--red-tint); padding:10px 14px; margin:0 0 10px;
+    border-bottom:1px solid rgba(0,0,0,.06); }
+  .kp-hic{ flex:0 0 auto; display:flex; width:22px; height:22px; color:var(--red); }
+  .kp-hic svg{ width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.8;
+    stroke-linecap:round; stroke-linejoin:round; }
   .kp-hgrp{ font-size:12px; font-weight:700; color:var(--red); letter-spacing:.3px;
     margin:18px 0 2px; padding-top:10px; border-top:1px solid #eef1f6; }
   .kp-hgrp:first-of-type{ border-top:0; padding-top:0; margin-top:10px; }
@@ -13328,6 +13337,12 @@
       '</tbody></table></div>';
   }
   function kpHelpNum(v){ var n=Number(v); return isFinite(n)?n:0; }
+  /* หัวข้อเมนูในคู่มือ — ไอคอนชุดเดียวกับแถบเมนูซ้าย (VIEW_ICON_EXTRA)
+     ผู้ใช้กวาดตาในคู่มือแล้วเจอไอคอนเดียวกับบนหน้าจอจริง · เปลี่ยนไอคอนที่เดียว คู่มือตามเอง */
+  function kpHelpMenu(view,label){
+    return '<div class="kp-hwt"><span class="kp-hic">'+(VIEW_ICON_EXTRA[view]||'')+'</span>'+
+      '<span>'+esc(label)+'</span></div>';
+  }
   function kpHelpHtml(r){
     var h='<div class="hm-hero"><h2>คู่มือการใช้งาน</h2><span class="hp">ระบบประเมินผลงาน</span></div>';
 
@@ -13351,7 +13366,7 @@
       /* ── กลุ่ม 1 ── */
       '<div class="kp-hgrp">กลุ่ม "ประเมินผลงาน"</div>'+
 
-      '<div class="kp-hwork"><div class="kp-hwt">📊 ภาพรวม</div>'+
+      '<div class="kp-hwork">'+kpHelpMenu('kpidash','ภาพรวม')+
       '<div class="m-hint">หน้าสรุปภาพรวมทั้งองค์กร ไม่ต้องกรอกอะไร — ใช้ดูว่าเดือนนี้เป็นยังไง</div>'+
       '<ul class="kp-hul">'+
       '<li><b>ภาพรวมการประเมินผลงาน</b> — จำนวนคนที่ประเมิน · คะแนนเฉลี่ย · คนที่ผ่านเกณฑ์</li>'+
@@ -13363,7 +13378,7 @@
       '</ul>'+
       '<div class="m-hint" style="margin-top:6px">⚠️ คะแนนจะขึ้นเฉพาะรอบที่<b>อนุมัติแล้ว</b> ระหว่างที่ยังกรอกอยู่จะยังไม่โชว์</div></div>'+
 
-      '<div class="kp-hwork"><div class="kp-hwt">👥 ทะเบียนพนักงาน</div>'+
+      '<div class="kp-hwork">'+kpHelpMenu('kpiemp','ทะเบียนพนักงาน')+
       '<div class="m-hint">รายชื่อคนที่อยู่ในระบบประเมิน — <b>ที่นี่คือที่เพิ่มพนักงานใหม่</b></div>'+
       '<div class="kp-hsub">เพิ่มพนักงานใหม่</div>'+
       '<ol class="kp-hol">'+
@@ -13380,7 +13395,7 @@
       '<div class="m-hint" style="margin-top:6px">ตารางโชว์: รหัส · ชื่อ · ชื่อเล่น · ตำแหน่ง · แผนก · สถานะ · '+
       '<b>เกรดล่าสุด</b> · <b>คะแนนเฉลี่ย</b> — กดที่แถวเพื่อแก้ไข</div></div>'+
 
-      '<div class="kp-hwork"><div class="kp-hwt">📋 รอบการประเมิน</div>'+
+      '<div class="kp-hwork">'+kpHelpMenu('kpiround','รอบการประเมิน')+
       '<div class="m-hint">ศูนย์กลางของรอบเดือนนั้น — เลือกคนเข้ารอบ ดูความคืบหน้า และส่งอนุมัติ</div>'+
       '<ul class="kp-hul">'+
       '<li><b>เลือกคนเข้ารอบ</b> — ติ๊กช่อง <b>เลือก</b> หน้าชื่อคน (มี <b>เลือกทั้งหมด</b> / <b>ไม่เลือกเลย</b>) '+
@@ -13392,7 +13407,7 @@
       '<li>ครบทุกคนแล้วกด <b>ส่งอนุมัติ</b> สถานะจะเปลี่ยนเป็น <b>รออนุมัติ</b></li>'+
       '</ul></div>'+
 
-      '<div class="kp-hwork"><div class="kp-hwt">✍️ ประเมินผลงาน — หน้าที่ใช้บ่อยที่สุด</div>'+
+      '<div class="kp-hwork">'+kpHelpMenu('kpifill','ประเมินผลงาน — หน้าที่ใช้บ่อยที่สุด')+
       '<div class="m-hint">หน้ากรอกข้อมูลจริงทั้ง 3 ส่วน</div>'+
       '<ol class="kp-hol">'+
       '<li>เลือก <b>เดือน</b> ที่ช่องบนซ้าย</li>'+
@@ -13405,7 +13420,7 @@
       '<div class="m-hint" style="margin-top:6px">🔴 <b>ช่องที่ไม่มีเหตุการณ์ต้องกรอก 0 อย่าเว้นว่าง</b> — '+
       'เว้นว่าง ระบบถือว่ายังกรอกไม่ครบ ไม่ใช่ "ไม่มี"</div></div>'+
 
-      '<div class="kp-hwork"><div class="kp-hwt">📊 จัดการผลการประเมิน</div>'+
+      '<div class="kp-hwork">'+kpHelpMenu('kpimanage','จัดการผลการประเมิน')+
       '<div class="m-hint">ดูผลคะแนนของรอบนั้นทั้งตาราง</div>'+
       '<ul class="kp-hul">'+
       '<li>คอลัมน์ <b>รวมคะแนน</b> และ <b>เกรด</b> ของทุกคน</li>'+
@@ -13416,7 +13431,7 @@
       /* ── กลุ่ม 2 ── */
       '<div class="kp-hgrp">กลุ่ม "รายงาน"</div>'+
 
-      '<div class="kp-hwork"><div class="kp-hwt">📄 รายงาน</div>'+
+      '<div class="kp-hwork">'+kpHelpMenu('kpireport','รายงาน')+
       '<div class="m-hint">มี 4 แท็บด้านบน</div>'+
       '<ul class="kp-hul">'+
       '<li><b>สรุปรายเดือน</b> — ผลของเดือนนั้นทั้งองค์กร</li>'+
@@ -13425,7 +13440,7 @@
       '<li><b>เชิงบริหาร</b> — มุมมองสำหรับผู้บริหาร (จุดแข็ง/จุดที่ต้องพัฒนาขององค์กร)</li>'+
       '</ul></div>'+
 
-      '<div class="kp-hwork"><div class="kp-hwt">📈 ประวัติรายคน</div>'+
+      '<div class="kp-hwork">'+kpHelpMenu('kpiperson','ประวัติรายคน')+
       '<div class="m-hint">เลือกพนักงาน 1 คน แล้วดูคะแนนย้อนหลังหลายเดือน — เห็นว่าดีขึ้นหรือแย่ลงตรงไหน '+
       'เหมาะกับตอนคุยประเมินรายบุคคลหรือพิจารณาปรับเงินเดือน</div></div>'+
 
@@ -13434,7 +13449,7 @@
       '<div class="m-hint" style="margin:6px 0 0">ดูได้ทุกเมนู แต่ <b>การแก้ไขให้แจ้งทีมงานยินดี</b> '+
       'เพราะต้องกำหนดว่า "เริ่มใช้เดือนไหน" ไม่งั้นคะแนนเดือนที่ผ่านมาแล้วจะเปลี่ยนตามไปด้วย</div>'+
 
-      '<div class="kp-hwork"><div class="kp-hwt">🎯 ตัวชี้วัด (KPI)</div>'+
+      '<div class="kp-hwork">'+kpHelpMenu('kpimetric','ตัวชี้วัด (KPI)')+
       '<div class="m-hint">ตัวชี้วัดของแต่ละตำแหน่ง — ตารางมีคอลัมน์ <b>รหัส · ชื่อตัวชี้วัด · วิธีวัด · เป้า · หน่วย · น้ำหนัก</b> '+
       'และมี <b>น้ำหนัก 3 ส่วน</b> (ผลงาน · คุณลักษณะ · สถิติ) ของตำแหน่งนั้นอยู่ด้านบน · เพิ่มด้วยปุ่ม <b>+ เพิ่มตัวชี้วัด</b></div>'+
       '<div class="kp-hsub">ช่อง "วิธีวัด" มี 5 แบบ ระบบคิดคะแนนคนละอย่าง</div>'+
@@ -13450,7 +13465,7 @@
       '• ทำได้ <b>ถึงเป้า = ได้เต็ม</b> · ไม่ถึงเป้า = ได้ตามสัดส่วนที่ทำได้จริง · <b>ทำเกินเป้าไม่มีโบนัส</b><br>'+
       '• เดือนไหนข้อไหน<b>ไม่ได้ประเมิน</b> ติ๊ก "ไม่ประเมิน" ระบบ<b>เกลี่ยน้ำหนักไปข้ออื่น</b>ให้เอง คะแนนเต็มเท่ากันทุกคนเสมอ</div></div>'+
 
-      '<div class="kp-hwork"><div class="kp-hwt">🧭 คุณลักษณะรายบุคคล</div>'+
+      '<div class="kp-hwork">'+kpHelpMenu('kpitrait','คุณลักษณะรายบุคคล')+
       '<div class="m-hint">หัวข้อพฤติกรรม/ทัศนคติของแต่ละตำแหน่ง — ตารางมี <b>รหัส · หัวข้อ · คะแนนเต็ม · น้ำหนัก · ลำดับ</b> '+
       '· เพิ่มด้วยปุ่ม <b>+ เพิ่มหัวข้อ</b></div>'+
       '<div class="kp-hnote" style="margin-top:8px">'+
@@ -13458,7 +13473,7 @@
       '• รองรับ<b>ผู้ประเมิน 2 คน</b> น้ำหนักคนละครึ่ง — ถ้ากรอกมาคนเดียว ระบบเกลี่ยให้คนที่กรอกจริง คะแนนไม่หาย<br>'+
       '• คิดจาก คะแนนที่ให้ ÷ (คะแนนเต็ม × จำนวนผู้ประเมินที่กรอกจริง)</div></div>'+
 
-      '<div class="kp-hwork"><div class="kp-hwt">⚖️ เกณฑ์ทั้งองค์กร</div>'+
+      '<div class="kp-hwork">'+kpHelpMenu('kpirule','เกณฑ์ทั้งองค์กร')+
       '<div class="m-hint">เกณฑ์ที่ใช้ร่วมกันทุกตำแหน่ง มี 2 แท็บ</div>'+
       '<div class="kp-hsub">แท็บ "ตารางเกรด" — คะแนนรวมเท่าไรได้เกรดอะไร</div>'+
       (function(){
@@ -13486,7 +13501,7 @@
       '<div class="kp-hnote" style="margin-top:8px">แต่ละข้อมีคะแนนเต็มของตัวเอง '+
       'ถ้าหักเกินคะแนนเต็มของข้อไหน <b>ข้อนั้นเหลือ 0 ไม่ลามไปข้ออื่น</b></div></div>'+
 
-      '<div class="kp-hwork"><div class="kp-hwt">📥 นำเข้าข้อมูลเดิม</div>'+
+      '<div class="kp-hwork">'+kpHelpMenu('kpiimport','นำเข้าข้อมูลเดิม')+
       '<div class="m-hint">ใช้ตอนย้ายข้อมูลจากไฟล์ Excel เดิมเข้าระบบ (คัดลอกจาก Excel มาวางได้เลย) '+
       'ระบบจะให้<b>ตรวจดูก่อนบันทึกเสมอ</b> ถ้าข้อมูลไม่ถูกจะไม่เขียนอะไรลงระบบ<br>'+
       'ปกติทีมงานทำให้ตอนเริ่มใช้งาน — ถ้าจะใช้เอง แนะนำให้แจ้งทีมงานช่วยดูรอบแรกก่อนค่ะ</div></div>'+
@@ -15569,7 +15584,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260913-1739';
+  var APP_BUILD='20260913-1828';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
