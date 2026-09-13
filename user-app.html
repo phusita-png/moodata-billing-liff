@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260913-1017">
+<link rel="stylesheet" href="user.css?v=20260913-1034">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -2634,6 +2634,14 @@
                 : '<button class="hr-go" type="button" data-room="'+esc(t.code)+
                   '" data-name="'+esc(t.name||t.code)+'">เข้าห้องนี้ →</button>')+'</div>';
       }).join('') : '<div class="emptybox">ยังไม่มีห้องลูกค้าค่ะ</div>') +'</div></div>';
+      /* 🩺 วัดความเร็ว — พี่กี้บอก "ช้าทุกหน้าตลอด" (13 ก.ย. 69) ต้องมีตัวเลขก่อนแก้
+         ระบบวิ่งบน 4 โปรเจกต์ · ทุกคำขอเสียเวลา "คอมไพล์โปรเจกต์" ก่อนโค้ดเราเริ่มทำงาน
+         เวลานั้นโตตามขนาดโค้ดของโปรเจกต์นั้น ไม่เกี่ยวกับหน้าที่เปิด → วัดแยกทีละชุด */
+      html+='<div class="card"><div class="section-h">🩺 วัดความเร็วระบบ</div>'+
+        '<div class="m-hint">ยิงคำสั่งทดสอบไปทุกโปรเจกต์ แล้วแยกให้ดูว่าเวลาหมดไปกับ '+
+        '<b>การคอมไพล์โค้ด+เครือข่าย</b> หรือ <b>งานจริงในโค้ดเรา</b></div>'+
+        '<button class="btn btn-sm" onclick="perfRun()">เริ่มวัด</button>'+
+        '<div id="perfOut" style="margin-top:10px"></div></div>';
       $('main').innerHTML=html;
       // กดจากหน้านี้ = เข้าห้องเหมือนปุ่ม 🏢 บนแถบบน (พี่กี้กดตรงนี้เป็นธรรมชาติกว่า)
       Array.prototype.forEach.call(document.querySelectorAll('.hr-go'), function(b){
@@ -2646,6 +2654,66 @@
         });
       });
     }).catch(function(e){ if(VIEW==='hubrooms') $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
+  }
+
+  /* ═════ 🩺 วัดความเร็วของแต่ละโปรเจกต์ (13 ก.ย. 69) ═════
+     ระบบแยกเป็น 4 โปรเจกต์ Apps Script · แต่ละคำขอ Google จะ "โหลด+คอมไพล์ทั้งโปรเจกต์"
+     ก่อนโค้ดเราเริ่มทำงาน — เวลานั้นโตตามขนาดโค้ด ไม่เกี่ยวกับหน้าที่เปิด
+     เวลารวมที่ผู้ใช้รู้สึก = (คอมไพล์+เครือข่าย) + (งานจริงในโค้ดเรา)
+     ตัวนี้จับเวลารวมฝั่งเบราว์เซอร์ แล้วลบ elapsed ที่เซิร์ฟเวอร์รายงาน = ได้ส่วนแรก */
+  var PERF_TARGETS=[
+    { key:'หลัก (บอท · การเงินเก่า · เมนูชีต)', url:EXEC_URL },
+    { key:'HR / KPI / ลา / OT / สลิป',          url:EXEC_URL_HR },
+    { key:'เอกสาร / งาน',                       url:EXEC_URL_DOC },
+    { key:'การเงิน / ภาษี',                     url:EXEC_URL_FIN }
+  ];
+  function perfOne(t){
+    var t0=Date.now();
+    var body='action=waPerf&uid='+encodeURIComponent(UID)+(ROOM&&ROOM.code?('&room='+encodeURIComponent(ROOM.code)):'');
+    return fetch(t.url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:body})
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        var total=Date.now()-t0;
+        if(!j||!j.ok) return { key:t.key, total:total, error:(j&&j.error)||'ไม่ตอบ' };
+        return { key:t.key, total:total, server:j.elapsed||0, overhead:Math.max(0,total-(j.elapsed||0)),
+                 tabs:j.tabs, marks:j.marks||[] };
+      })
+      .catch(function(e){ return { key:t.key, total:Date.now()-t0, error:e.message }; });
+  }
+  function perfRun(){
+    var box=$('perfOut'); if(box) box.innerHTML='<div class="m-hint">กำลังวัด… (ยิงทีละชุด ไม่พร้อมกัน เพื่อไม่ให้แย่งกันเอง)</div>';
+    /* ยิงทีละชุดตามลำดับ — ยิงพร้อมกันจะได้ตัวเลขที่แย่งทรัพยากรกันเอง อ่านผิด */
+    var out=[];
+    PERF_TARGETS.reduce(function(chain,t){
+      return chain.then(function(){ return perfOne(t).then(function(r){ out.push(r); }); });
+    }, Promise.resolve()).then(function(){
+      var h='<div class="kp-wrap"><table class="kp-tbl"><thead><tr><th>โปรเจกต์</th>'+
+        '<th class="kp-r">รวม</th><th class="kp-r">คอมไพล์+เน็ต</th><th class="kp-r">โค้ดเรา</th></tr></thead><tbody>';
+      out.forEach(function(r){
+        if(r.error){ h+='<tr><td>'+esc(r.key)+'</td><td class="kp-r">'+(r.total/1000).toFixed(1)+' วิ</td>'+
+          '<td colspan="2">'+esc(r.error)+'</td></tr>'; return; }
+        var warn=r.overhead>=4000;
+        h+='<tr'+(warn?' class="kp-rowwarn"':'')+'><td>'+esc(r.key)+'</td>'+
+          '<td class="kp-r"><b>'+(r.total/1000).toFixed(1)+' วิ</b></td>'+
+          '<td class="kp-r">'+(r.overhead/1000).toFixed(1)+' วิ</td>'+
+          '<td class="kp-r">'+(r.server/1000).toFixed(1)+' วิ</td></tr>';
+      });
+      h+='</tbody></table></div>';
+      var slow=out.filter(function(r){ return !r.error && r.overhead>=4000; });
+      h+='<div class="m-hint" style="margin-top:8px">'+
+        (slow.length ? '⚠️ ชุดที่ <b>คอมไพล์+เน็ต</b> เกิน 4 วินาที = โค้ดในโปรเจกต์นั้นใหญ่เกินไป '+
+            'แก้ด้วยการแยกโปรเจกต์/ตัดโค้ดที่ไม่ได้ใช้ ไม่ใช่ทำแคชเพิ่ม'
+          : 'ทุกชุดคอมไพล์เร็วปกติ — ถ้ายังรู้สึกช้า แปลว่าช้าที่งานจริงของบางหน้า บอกหนูว่าหน้าไหน')+
+        '</div>';
+      /* รายละเอียดช่วงที่ช้าที่สุดของแต่ละชุด — ไว้ดูว่าติดที่เปิดไฟล์ห้องหรืออ่านชีต */
+      out.forEach(function(r){
+        if(r.error||!r.marks.length) return;
+        var top=r.marks.slice().sort(function(a,b){ return (b.ms||0)-(a.ms||0); }).slice(0,3);
+        h+='<div class="m-hint" style="margin-top:6px">'+esc(r.key)+' · แท็บในไฟล์ห้อง '+(r.tabs||0)+' · ช้าสุด: '+
+          top.map(function(m){ return esc(m.name)+' '+((m.ms||0)/1000).toFixed(1)+' วิ'; }).join(' · ')+'</div>';
+      });
+      if(box) box.innerHTML=h;
+    });
   }
 
   /* ═════ 🏢 สลับห้อง (T3) ═════ */
@@ -12577,18 +12645,10 @@
       }).catch(function(e){ toast(e.message); });
   }
 
-  /* ── คู่ปรับรูปแบบเล่ม (พี่กี้สั่ง 13 ก.ย. 69) ──
-     เดิมพี่บอกว่าอยากให้หน้าตาเปลี่ยนยังไง แล้วหนูเดาค่าเอง เดาผิดก็วนแก้หลายรอบ
-     ทางใหม่: ออกไฟล์ Doc ที่แก้ได้ → พี่จัดเอง → กด "อ่านรูปแบบ" ให้ระบบจดค่าจริงไปตั้งเป็นมาตรฐาน */
-  function kpBookDoc(){
-    callBusy('กำลังสร้างไฟล์ Google Doc (อาจใช้เวลา 1-3 นาที)…',
-      jsonp({ action:'waKpiBookDoc', uid:UID, ym:KPR_YM||'' }, 0, 300000), 'ออกไฟล์แล้ว')
-      .then(function(r){
-        if(!r||!r.ok){ toast((r&&r.error)||'ออกไฟล์ไม่สำเร็จ'); return; }
-        toast('📝 ออกไฟล์ต้นฉบับแล้ว · ปรับรูปแบบได้เลยค่ะ');
-        window.open(r.url,'_blank');
-      }).catch(function(e){ toast(e.message); });
-  }
+  /* ปุ่ม "ออกเป็น Doc / อ่านรูปแบบจาก Doc" ถอดออกจากหน้าเว็บแล้ว (13 ก.ย. 69)
+     พี่กี้ลองปรับรูปแบบใน Google Docs เองแล้วบอกว่า "งงเครื่องมือ ปรับเท่าไรก็ไม่สวย"
+     → หน้านี้เหลือเฉพาะทางที่พี่ใช้จริง · ตัวออก Doc/ตัวอ่านรูปแบบยังอยู่ที่เมนูชีต
+       (📊 KPI ▸ ออกเล่มเป็นไฟล์ Google Doc · อ่านรูปแบบจากไฟล์ Doc) เผื่อต้องใช้ตอนจูนรูปแบบ */
   /* ── อัปไฟล์ PDF ที่พี่กี้พิมพ์เองจากหน้านี้ (พี่กี้เคาะ 13 ก.ย. 69) ──
      เล่มที่สวยที่สุด = เบราว์เซอร์วาดเอง แต่ไฟล์อยู่ในเครื่อง ส่ง LINE ให้ลูกค้าไม่ได้
      → อัปขึ้นไปไว้ที่เดียวกับเล่มที่ระบบออก แล้วส่งเข้ากลุ่มด้วยไฟล์นี้ได้เลย */
@@ -13921,25 +13981,26 @@ function kpImpDraw(){
     h+='<div class="card kp-noprint"><div class="kp-bar">'+kpRepTabs()+'</div>'+
       '<div class="kp-bar">'+kpYmPicker(r.ym,r.months,'kpRepYm')+kpStatusPill(r.status)+
       '<span class="kp-grow"></span>'+
-      /* 🔴 เล่มที่สวยที่สุด = พิมพ์จากหน้านี้ (เบราว์เซอร์วาด · ใบในเล่ม = ใบรายคนเป๊ะ)
-         ปุ่มออกไฟล์ลง Drive (Google Docs วาด) เก็บไว้เพราะการส่งเข้ากลุ่ม LINE
-         ต้องมีไฟล์อยู่ใน Drive ถึงจะส่งลิงก์ให้ลูกค้าได้ (พี่กี้เลือกข้อ 1 · 13 ก.ย. 69) */
-      '<button class="btn btn-primary btn-sm" onclick="window.print()">🖨️ พิมพ์ / บันทึกเป็น PDF</button>'+
-      (r.isAdmin?'<button class="btn btn-sm" onclick="kpBookPick(1)">📎 ส่งไฟล์ที่พิมพ์เองเข้ากลุ่ม LINE</button>'+
-        '<button class="btn btn-ghost btn-sm" onclick="kpBookPick(0)">📎 เก็บไฟล์ที่พิมพ์เองเข้าระบบ</button>'+
-        '<button class="btn btn-ghost btn-sm" onclick="kpBookSend()">📤 ส่งเล่มที่ระบบออกเข้ากลุ่ม</button>'+
-        '<button class="btn btn-ghost btn-sm" onclick="kpBookPdf()">📕 ไฟล์ PDF ใน Drive</button>'+
-        '<button class="btn btn-ghost btn-sm" onclick="kpBookSheet()">📗 Google Sheet</button>'+
-        '<button class="btn btn-ghost btn-sm" onclick="kpBookDoc()">📝 ออกเป็น Doc (ไว้ปรับรูปแบบ)</button>'+
-        '<button class="btn btn-ghost btn-sm" onclick="kpBookFormat()">📐 อ่านรูปแบบจาก Doc</button>':'')+
+      /* 🔴 พี่กี้ 13 ก.ย. 69: "งงกับปุ่ม ปุ่มเยอะ ควรทำอะไรก่อนหลัง"
+         เดิมเรียงปุ่ม 8 อันติดกันโดยไม่บอกลำดับ — จัดใหม่เป็น "2 ขั้นจบ"
+         ขั้น 1 พิมพ์เล่ม · ขั้น 2 ส่งให้ลูกค้า · ที่เหลือยุบเข้า "ตัวเลือกอื่น" ที่พับไว้
+         (ปุ่มออก Doc/อ่านรูปแบบ ย้ายไปเมนูชีตแล้ว — พี่ไม่ได้ใช้ ปรับ Docs เองไม่ไหว) */
+      '<button class="btn btn-primary btn-sm" onclick="window.print()">① 🖨️ พิมพ์เล่ม / บันทึกเป็น PDF</button>'+
+      (r.isAdmin?'<button class="btn btn-sm" onclick="kpBookPick(1)">② 📤 ส่งเล่มให้ลูกค้าทาง LINE</button>':'')+
       '</div>'+
-      '<div class="m-hint" style="margin:6px 0 0"><b>วิธีที่ได้เล่มสวยที่สุด (แนะนำ)</b><br>'+
-      '① กด <b>พิมพ์ / บันทึกเป็น PDF</b> จากหน้านี้ → เลือกปลายทางเป็น "บันทึกเป็น PDF" เก็บไฟล์ไว้ในเครื่อง<br>'+
-      '② กด <b>ส่งไฟล์ที่พิมพ์เองเข้ากลุ่ม LINE</b> แล้วเลือกไฟล์นั้น — ระบบเก็บขึ้น Drive ให้ '+
-      'แล้วส่งลิงก์เข้ากลุ่มลูกค้าต่อในครั้งเดียว (หน้าตาเหมือนที่เห็นบนจอเป๊ะ เพราะเบราว์เซอร์เป็นคนวาด)<br>'+
-      'ถ้ายังไม่อยากส่ง กด <b>เก็บไฟล์ที่พิมพ์เองเข้าระบบ</b> ไว้ก่อนได้ ปุ่มส่งเข้ากลุ่มจะใช้ไฟล์นั้น<br><br>'+
-      'ปุ่มที่เหลือคือเล่มที่ <b>ระบบวาดเอง</b> ด้วย Google Docs — สะดวกตรงไม่ต้องพิมพ์เอง '+
-      'แต่หน้าตาจะไม่เท่าการพิมพ์จากหน้านี้</div>'+
+      '<div class="m-hint" style="margin:6px 0 0">'+
+      '<b>① กดพิมพ์</b> → ในหน้าต่างที่เด้งขึ้นมา เลือกปลายทางเป็น <b>"บันทึกเป็น PDF"</b> แล้วกดบันทึกไว้ในเครื่อง<br>'+
+      '<b>② กดส่ง</b> → เลือกไฟล์ที่เพิ่งบันทึก ระบบจะเก็บขึ้น Drive แล้วส่งเข้ากลุ่ม LINE ของลูกค้าให้เอง<br>'+
+      'ทำ 2 ขั้นนี้พอค่ะ — เล่มที่ลูกค้าได้จะหน้าตาเหมือนที่พี่เห็นบนจอทุกอย่าง</div>'+
+      (r.isAdmin?'<details style="margin-top:8px"><summary class="m-hint" style="cursor:pointer">ตัวเลือกอื่น (ไม่ต้องใช้ตามปกติ)</summary>'+
+        '<div class="kp-bar" style="margin-top:8px">'+
+        '<button class="btn btn-ghost btn-sm" onclick="kpBookPick(0)">📎 เก็บไฟล์ที่พิมพ์ไว้ก่อน (ยังไม่ส่ง)</button>'+
+        '<button class="btn btn-ghost btn-sm" onclick="kpBookSend()">📤 ให้ระบบออกเล่มแล้วส่งเอง</button>'+
+        '<button class="btn btn-ghost btn-sm" onclick="kpBookPdf()">📕 ไฟล์ PDF ที่ระบบออก</button>'+
+        '<button class="btn btn-ghost btn-sm" onclick="kpBookSheet()">📗 ไฟล์ Google Sheet</button>'+
+        '</div>'+
+        '<div class="m-hint" style="margin-top:6px">กลุ่มนี้คือเล่มที่ <b>ระบบวาดเอง</b> — ไม่ต้องพิมพ์เอง '+
+        'แต่หน้าตาไม่เท่าการพิมพ์จากหน้านี้ ใช้ตอนรีบหรือแค่อยากได้ไฟล์เก็บไว้</div></details>':'')+
       (r.isAdmin&&String(r.status||'').indexOf('อนุมัติ')!==0
         ?'<div class="m-hint" style="margin:8px 0 0">เดือนนี้ยังไม่ได้อนุมัติรอบ — ออกไฟล์ส่งลูกค้าได้หลังอนุมัติค่ะ</div>':'')+
       '</div>';
@@ -15273,7 +15334,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260913-1017';
+  var APP_BUILD='20260913-1034';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
