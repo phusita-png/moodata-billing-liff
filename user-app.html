@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260914-0959">
+<link rel="stylesheet" href="user.css?v=20260914-1234">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1602,6 +1602,16 @@
   .kp-chk{ display:inline-flex; align-items:center; gap:6px; font-size:12.5px; color:#3d5164; }
   .kp-col{ display:inline-block; background:#f4f6f9; border-radius:6px; padding:1px 7px; margin:2px 3px 0 0; font-size:11.5px; }
   .kp-col.need{ background:#e8f2fb; color:#12558f; font-weight:600; }
+  /* แถบคำอธิบายคอลัมน์นำเข้า (14 ก.ย. 69) — พับไว้ ไม่ให้เบียดตารางกรอกที่เป็นงานหลักของหน้า */
+  .kp-imphelp{ border:1px solid #e3e8ef; border-radius:10px; margin:8px 0; background:#fbfcfe; }
+  .kp-imphelp>summary{ cursor:pointer; padding:8px 12px; font-size:12.5px; font-weight:600; color:#4b3a86; list-style:none; }
+  .kp-imphelp>summary::-webkit-details-marker{ display:none; }
+  .kp-imphelp>summary::before{ content:'📖 '; }
+  .kp-imphelp[open]>summary{ border-bottom:1px solid #eef1f6; }
+  .kp-imphelp .kp-wrap{ padding:4px 10px 10px; }
+  .kp-helptbl td{ vertical-align:top; white-space:normal; }
+  .kp-helptbl td:first-child{ white-space:nowrap; }
+  .kp-need-yes{ color:#12558f; font-weight:600; font-size:11.5px; }
   .kp-pair{ display:flex; gap:6px; flex-wrap:wrap; }
   .kp-f{ flex:1; min-width:62px; }
   .kp-f label{ display:block; font-size:10.5px; color:#8A94A6; margin-bottom:2px; }
@@ -13437,6 +13447,19 @@
     return '<div class="kp-hwt"><span class="kp-hic">'+(VIEW_ICON_EXTRA[view]||'')+'</span>'+
       '<span>'+esc(label)+'</span></div>';
   }
+  /** คู่มือ: ตารางคำอธิบายคอลัมน์ของแต่ละชนิดข้อมูล (พับไว้ชนิดละแถบ — 9 ชนิดกางหมดยาวเกินอ่าน) */
+  function kpHelpImport(r){
+    var ih = r && r.importHelp;
+    if(!ih || !ih.rows || !ih.kinds) return '';
+    var h='<div class="card"><div class="section-h">เตรียมไฟล์ก่อนนำเข้าข้อมูลเดิม</div>'+
+      '<div class="m-hint" style="margin-bottom:8px">แต่ละชนิดข้อมูลรับคอลัมน์ไม่เหมือนกัน — กดดูว่าช่องไหนใส่อะไร '+
+      '(เนื้อหาเดียวกับแถบคำอธิบายในหน้า <b>นำเข้าข้อมูลเดิม</b>)</div>';
+    for(var k in ih.kinds){
+      if(!Object.prototype.hasOwnProperty.call(ih.kinds,k)) continue;
+      h+='<details class="kp-imphelp"><summary>'+esc(ih.kinds[k])+'</summary>'+kpImpHelpTable(ih.rows[k]||[])+'</details>';
+    }
+    return h+'</div>';
+  }
   function kpHelpHtml(r){
     var h='<div class="hm-hero"><h2>คู่มือการใช้งาน</h2><span class="hp">ระบบประเมินผลงาน</span></div>';
 
@@ -13601,6 +13624,10 @@
       'ปกติทีมงานทำให้ตอนเริ่มใช้งาน — ถ้าจะใช้เอง แนะนำให้แจ้งทีมงานช่วยดูรอบแรกก่อนค่ะ</div></div>'+
 
       '</div>';
+
+    /* ── เตรียมไฟล์ก่อนนำเข้า — คำอธิบายรายคอลัมน์ (14 ก.ย. 69)
+       ใช้ตัววาดและเนื้อหาชุดเดียวกับแถบคำอธิบายในหน้านำเข้า แก้ที่หลังบ้านที่เดียวทั้งคู่ ── */
+    h+=kpHelpImport(r);
 
     /* ── สัดส่วนคะแนนของห้องนี้ (ของจริง) ── */
     var posRows = [];
@@ -14174,6 +14201,10 @@
       '<button class="btn btn-ghost btn-sm" onclick="kpImpMode()">สลับเป็นวางข้อความ</button></div>';
     h+='<div class="m-hint" id="kpImpNote">ก๊อปจาก Excel ทั้งบล็อก แล้วคลิกช่องแรกของตารางแล้ววาง (Ctrl+V) ได้เลย · '+
       'ช่องพื้นเหลือง = จำเป็นต้องมี · ระบบจะแกะให้ดูก่อน ยังไม่บันทึกจนกว่าจะกดยืนยันค่ะ</div>';
+    /* แถบคำอธิบายคอลัมน์ (พี่กี้ขอ 14 ก.ย. 69) — ต้องอยู่ตรงนี้ ไม่ใช่ในคู่มืออย่างเดียว
+       จังหวะที่ต้องการคำอธิบายคือตอนกำลังจ้องตารางอยู่ · เนื้อหามาจากหลังบ้าน (แหล่งเดียวกับคู่มือ) */
+    h+='<details class="kp-imphelp" id="kpImpHelpBox"><summary>คำอธิบายแต่ละคอลัมน์ — กดดูก่อนเตรียมไฟล์</summary>'+
+      '<div id="kpImpHelp"></div></details>';
     h+='<div id="kpImpBox"></div>';
     h+='<div class="kp-bar"><button class="btn btn-ghost btn-sm" onclick="kpImpAddRows()">+ เพิ่ม 10 แถว</button>'+
       '<button class="btn btn-ghost btn-sm" onclick="kpImpClear()">ล้างตาราง</button>'+
@@ -14191,22 +14222,46 @@ function kpImpDraw(){
     var box=$('kpImpBox'); if(!box||!KPI_IMP) return;
     var k=($('kpImpKind')||{}).value||'';
     var cols=KPI_IMP.cols[k]||[], req=KPI_IMP.required[k]||[];
+    kpImpHelpDraw(k);
     if(KPI_IMP_MODE!=='grid'){
       box.innerHTML='<textarea class="inp" id="kpImpText" rows="10" placeholder="วางข้อมูลที่นี่… (TSV / CSV / JSON)"></textarea>'+
         '<div class="m-hint">คอลัมน์ที่รับ: '+cols.map(function(c){
-          return '<span class="kp-col'+(req.indexOf(c)>=0?' need':'')+'">'+esc(c)+'</span>';
+          return '<span class="kp-col'+(req.indexOf(c)>=0?' need':'')+'" title="'+esc(kpImpHelpOf(k,c))+'">'+esc(c)+'</span>';
         }).join(' ')+'</div>';
       return;
     }
     var h='<div class="kp-wrap kp-impwrap"><table class="kp-tbl kp-in kp-impgrid" id="kpImpTbl"><thead><tr><th class="kp-c">#</th>';
     cols.forEach(function(c){
-      h+='<th class="kp-c'+(req.indexOf(c)>=0?' need':'')+'">'+esc(c)+(req.indexOf(c)>=0?' *':'')+'</th>';
+      h+='<th class="kp-c'+(req.indexOf(c)>=0?' need':'')+'" title="'+esc(kpImpHelpOf(k,c))+'">'+esc(c)+(req.indexOf(c)>=0?' *':'')+'</th>';
     });
     h+='</tr></thead><tbody>';
     for(var i=0;i<KPI_IMP_ROWS;i++) h+=kpImpRowHtml(i+1,cols,req);
     h+='</tbody></table></div>';
     box.innerHTML=h;
     kpImpBindPaste();
+  }
+  /* คำอธิบายคอลัมน์ — มาจากหลังบ้าน (KPI_IMPORT_HELP) ที่เดียว หน้าเว็บไม่เก็บข้อความเอง
+     ไม่งั้นแก้คำอธิบายแล้วคู่มือกับหน้านำเข้าพูดคนละเรื่อง */
+  function kpImpHelpRows(k){ return (KPI_IMP && KPI_IMP.help && KPI_IMP.help[k]) || []; }
+  function kpImpHelpOf(k,col){
+    var rows=kpImpHelpRows(k);
+    for(var i=0;i<rows.length;i++) if(rows[i].col===col) return rows[i].help||'';
+    return '';
+  }
+  /** ตารางคำอธิบายในแถบพับ — ใช้ตัววาดร่วมกับคู่มือ (kpImpHelpTable) */
+  function kpImpHelpDraw(k){
+    var box=$('kpImpHelp'); if(!box) return;
+    box.innerHTML=kpImpHelpTable(kpImpHelpRows(k));
+  }
+  function kpImpHelpTable(rows){
+    if(!rows.length) return '<div class="m-hint">— ยังไม่มีคำอธิบายของชนิดนี้ —</div>';
+    return '<div class="kp-wrap"><table class="kp-tbl kp-helptbl"><thead><tr>'+
+      '<th>คอลัมน์</th><th class="kp-c">จำเป็น</th><th>ใส่อะไร</th></tr></thead><tbody>'+
+      rows.map(function(x){
+        return '<tr><td><b>'+esc(x.col)+'</b></td>'+
+          '<td class="kp-c">'+(x.need?'<span class="kp-need-yes">ต้องมี</span>':'<span class="m-hint">ไม่บังคับ</span>')+'</td>'+
+          '<td>'+esc(x.help||'—')+'</td></tr>';
+      }).join('')+'</tbody></table></div>';
   }
   function kpImpRowHtml(no,cols,req){
     var h='<tr><td class="kp-c kp-impno">'+no+'</td>';
@@ -15696,7 +15751,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260914-0959';
+  var APP_BUILD='20260914-1234';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
