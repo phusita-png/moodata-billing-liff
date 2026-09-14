@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260914-1020">
+<link rel="stylesheet" href="user.css?v=20260914-0841">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -11276,7 +11276,12 @@
     jsonp({ action:'waKpiEmpDel', uid:UID, code:code }).then(function(r){
       if(!r||!r.ok){ unbusy(); closeModal(); return toast((r&&r.error)||'ลบไม่สำเร็จ'); }
       busyOk('ลบแล้ว'); closeModal(); toast('ลบออกจากทะเบียนแล้ว');
-      KPE_EDIT=''; renderKpiEmp();
+      KPE_EDIT='';
+      /* ⚡ ทะเบียนชุดใหม่ติดมากับคำตอบของการลบแล้ว — วาดจากตรงนี้เลย
+         เดิมเรียก renderKpiEmp() ซึ่งยิงคำขอรอบสองไปเอาข้อมูลเดิมซ้ำ = ผู้ใช้รอ 2 เท่า
+         (ยังเผื่อทางเดิมไว้ เผื่อเจอเซิร์ฟเวอร์เวอร์ชันเก่าที่ยังไม่ส่ง rows กลับมา) */
+      if(r.rows){ KPE=r; kpPaint('kpiemp', kpEmpHtml(r)); }
+      else renderKpiEmp();
     }).catch(function(e){ unbusy(); closeModal(); toast(e.message); });
   }
 
@@ -15670,7 +15675,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260914-1140';
+  var APP_BUILD='20260914-0841';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
