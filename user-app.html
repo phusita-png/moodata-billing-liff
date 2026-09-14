@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260914-0841">
+<link rel="stylesheet" href="user.css?v=20260914-0959">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -11365,7 +11365,10 @@
      ไม่ได้ให้พนักงานล็อกอินเข้ามาประเมินกันเอง ช่องผู้ประเมินจึงไม่ต้องเป็น LINE userId
      หลังบ้านเก็บ "ผู้ประเมิน" เป็นข้อความอิสระอยู่แล้ว (คีย์ของคะแนนคุณลักษณะ)
      เปลี่ยนเป็นบทบาทได้ทันทีโดยไม่ต้องแตะสูตรคิดคะแนน */
-  var KPE_RATERS = ['หัวหน้างาน','ผู้จัดการ','ผู้บริหาร'];
+  /* 🔴 ค่าสำรองเท่านั้น — ตัวจริงมาจากหลังบ้าน (KPI_RATER_ROLES · ส่งมากับ waKpiEmps)
+     ค่าที่ไม่ตรงกับหลังบ้าน = น้ำหนักผู้ประเมิน 50/50 จับคู่ไม่ติดแล้วตกไปใช้ค่าเฉลี่ยเงียบ ๆ (14 ก.ย. 69) */
+  var KPE_RATERS_FALLBACK = ['หัวหน้างาน','ผู้จัดการ','ผู้บริหาร'];
+  function kpRaterRoles(){ return (KPE && KPE.raterRoles && KPE.raterRoles.length) ? KPE.raterRoles : KPE_RATERS_FALLBACK; }
   /* ระดับของ "ตำแหน่ง" — 3 ระดับที่ระบบใช้จริง (เกณฑ์หักสถิติมาตรฐานทำมาตามนี้)
      เลือกได้เฉพาะตอนเพิ่มตำแหน่งใหม่ · ตำแหน่งที่มีอยู่แล้วให้ดูอย่างเดียว (ระดับมีแหล่งเดียว) */
   var KPE_LEVELS = ['เจ้าหน้าที่','หัวหน้า','ผู้จัดการ'];
@@ -11417,8 +11420,8 @@
         '<input class="inp" id="kpePosNew" style="display:none" placeholder="ชื่อตำแหน่งใหม่">')+
       kpFld('แผนก','<select class="inp" id="kpeDept" onchange="kpeDeptPick()">'+kpOptList(depts,e.dept||'','➕ เพิ่มแผนกใหม่…')+'</select>'+
         '<input class="inp" id="kpeDeptNew" style="display:none" placeholder="พิมพ์ชื่อแผนกใหม่">')+
-      kpFld('ผู้ประเมินคนที่ 1','<select class="inp" id="kpeR1">'+kpOptList(KPE_RATERS,e.rater1||'')+'</select>')+
-      kpFld('ผู้ประเมินคนที่ 2','<select class="inp" id="kpeR2">'+kpOptList(KPE_RATERS,e.rater2||'')+'</select>')+
+      kpFld('ผู้ประเมินคนที่ 1','<select class="inp" id="kpeR1">'+kpOptList(kpRaterRoles(),e.rater1||'')+'</select>')+
+      kpFld('ผู้ประเมินคนที่ 2','<select class="inp" id="kpeR2">'+kpOptList(kpRaterRoles(),e.rater2||'')+'</select>')+
       '<div class="kp-formbr"></div>'+
       kpFld('ระดับ','<select class="inp" id="kpeLevel" disabled title="ระดับเป็นของตำแหน่ง — เลือกได้ตอนเพิ่มตำแหน่งใหม่เท่านั้น">'+
         kpOptList(KPE_LEVELS, KPE_LV[e.pos]||'')+'</select>')+
@@ -13954,7 +13957,7 @@
         '<td class="kp-c"><input class="inp kp-nm kp-mid" data-f="target" type="number" step="any" value="'+m.target+'"></td>'+
         '<td class="kp-c"><input class="inp kp-nm kp-mid" data-f="unit" value="'+esc(m.unit||'')+'"></td>'+
         '<td class="kp-c"><input class="inp kp-nm kp-mid" data-f="weight" type="number" step="any" value="'+m.weight+'"></td>'+
-        '<td class="kp-c"><input class="inp kp-nm kp-mid" data-f="id" value="'+esc(m.id)+'"></td></tr>';
+        '<td class="kp-c">'+kpIdCell(m.id, (r.usedMetricIds||{})[m.id], 'ผลงาน')+'</td></tr>';
     });
     h+='</tbody></table></div>'+kpEffNote(r);
     if(r.canEdit) h+='<div class="kp-bar"><button class="btn btn-ghost btn-sm" onclick="kpAddRow(\'kpMetricTbl\')">+ เพิ่มตัวชี้วัด</button>'+
@@ -13998,6 +14001,18 @@
       h+='</tbody></table></div></div>';
     });
     return h;
+  }
+  /* ช่อง "รหัส" ของตัวชี้วัด/หัวข้อคุณลักษณะ (14 ก.ย. 69)
+     🔴 รหัสนี้คือกุญแจที่ผูกคะแนนที่กรอกไว้เข้ากับข้อ ไม่ใช่ป้ายชื่อ — แก้รหัสของข้อที่มีคะแนนแล้ว
+        = คะแนนกลายเป็นข้อมูลกำพร้า หน้ากรอกขึ้นว่างทั้งที่ข้อมูลยังอยู่ในชีต
+     ล็อกช่องให้ตรงกับด่าน kpiGuardIdsInUse_ ฝั่งหลังบ้านเสมอ (โชว์ช่องที่หลังบ้านปฏิเสธแน่ ๆ = หลอกผู้ใช้)
+     ข้อใหม่ยังเว้นว่างได้ ระบบตั้งรหัสให้เอง */
+  function kpIdCell(id,used,what){
+    var v=esc(id||'');
+    if(!used) return '<input class="inp kp-nm kp-mid" data-f="id" value="'+v+'" placeholder="ระบบตั้งให้">';
+    return '<input class="inp kp-nm kp-mid" data-f="id" value="'+v+'" readonly '+
+      'style="opacity:.62;cursor:not-allowed" '+
+      'title="ข้อนี้มีคะแนน'+esc(what)+'กรอกไว้แล้ว จึงเปลี่ยนรหัสไม่ได้ — รหัสเป็นตัวผูกคะแนนเข้ากับข้อค่ะ">';
   }
   function kpTypeSel(cur,types){
     var h='<select class="inp" data-f="type">';
@@ -14055,7 +14070,7 @@
         '<td class="kp-r"><input class="inp kp-nm" data-f="weight" type="number" step="any" value="'+(t.weight||'')+'"></td>'+
         '<td class="kp-r"><input class="inp kp-nm" data-f="rw1" type="number" step="any" value="'+(t.rw1||'')+'"></td>'+
         '<td class="kp-r"><input class="inp kp-nm" data-f="rw2" type="number" step="any" value="'+(t.rw2||'')+'"></td>'+
-        '<td><input class="inp kp-nm" data-f="id" value="'+esc(t.id)+'"></td></tr>';
+        '<td>'+kpIdCell(t.id, (r.usedTraitIds||{})[t.id], 'คุณลักษณะ')+'</td></tr>';
     });
     h+='</tbody></table></div>'+kpEffNote(r);
     if(r.canEdit) h+='<div class="kp-bar"><button class="btn btn-ghost btn-sm" onclick="kpAddRow(\'kpTraitTbl\')">+ เพิ่มหัวข้อ</button>'+
@@ -14275,6 +14290,11 @@ function kpImpDraw(){
         if(r.mode==='preview'){
           h+='<div class="kp-sub">จะบันทึก '+r.willWrite+' แถว'+(r.months.length?(' · เดือน '+r.months.join(', ')):'')+'</div>';
           if(r.problems.length) h+='<div class="kp-note-warn">พบปัญหา '+r.problems.length+' บรรทัด<br>'+r.problems.map(esc).join('<br>')+'</div>';
+          /* เตือนแต่ยังนำเข้าได้ — เช่น ผู้ประเมินที่พิมพ์ไม่ตรงบทบาทของระบบ (14 ก.ย. 69) */
+          if((r.warns||[]).length) h+='<div class="kp-note-warn">ข้อควรรู้ '+r.warns.length+' รายการ<br>'+r.warns.map(esc).join('<br>')+'</div>';
+          /* ช่องที่ไฟล์ไม่มี = เก็บค่าเดิมไว้ ไม่ล้างทิ้ง — บอกให้เห็น ไม่ต้องเดา */
+          if((r.keepCols||[]).length) h+='<div class="m-hint">ช่องที่ไฟล์นี้ไม่มี ระบบจะเก็บค่าเดิมในระบบไว้ให้: '+
+            r.keepCols.map(function(c){ return '<span class="kp-col">'+esc(c)+'</span>'; }).join(' ')+'</div>';
           if(r.sample.length){
             var cols=Object.keys(r.sample[0].data);
             h+='<div class="kp-wrap"><table class="kp-tbl"><thead><tr>'+cols.map(function(c){return '<th>'+esc(c)+'</th>';}).join('')+
@@ -14287,6 +14307,7 @@ function kpImpDraw(){
           h+='<div class="kp-note-ok">นำเข้าแล้ว '+r.wrote+' แถว'+(r.locked?' · ล็อกเป็นข้อมูลเดิม':'')+
             (r.months.length?(' · เดือน '+r.months.join(', ')):'')+'</div>';
           if(r.problems.length) h+='<div class="kp-note-warn">ข้ามไป '+r.problems.length+' บรรทัด<br>'+r.problems.map(esc).join('<br>')+'</div>';
+          if((r.warns||[]).length) h+='<div class="kp-note-warn">ข้อควรรู้ '+r.warns.length+' รายการ<br>'+r.warns.map(esc).join('<br>')+'</div>';
         }
         out.innerHTML=h;
       }).catch(function(e){ toast(e.message); });
@@ -15675,7 +15696,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260914-0841';
+  var APP_BUILD='20260914-0959';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
