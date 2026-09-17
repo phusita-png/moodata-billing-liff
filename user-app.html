@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260917-2035">
+<link rel="stylesheet" href="user.css?v=20260917-2100">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -189,11 +189,29 @@
   @media (min-width:900px){ .upd-bar{ bottom:26px; } }
 
   /* ⚙️ หน้าตั้งค่าห้อง (T5) */
-  .rs-co{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+  /* 🔴 .btn ของระบบตั้ง width:100% — ในแถวที่มีข้อความคู่กันต้องหยุดยืด
+        ไม่งั้นปุ่มกินที่จนข้อความเหลือความกว้างตัวอักษรเดียว (พี่กี้เจอ 17 ก.ย. 69) */
+  .rs-co{display:flex;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line)}
     .rs-co:last-child{border-bottom:0}
-    .rs-co-sw{width:26px;height:26px;border-radius:7px;flex:none;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
-    .rs-co-tx{flex:1;min-width:0;font-size:14px;line-height:1.45}
+    .rs-co .btn{width:auto;flex:none;padding:7px 15px;font-size:13px}
+    .rs-co-sw{display:block;width:26px;height:26px;border-radius:7px;flex:none;
+      box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
+    .rs-co-tx{flex:1 1 auto;min-width:0;font-size:14px;line-height:1.5;word-break:break-word}
     .rs-co-tx small{color:#8A94A6;font-size:12px}
+  /* แท็บย่อยของหน้าตั้งค่า — เรียงแนวนอนเหมือนแท็บชีต เลื่อนได้บนมือถือ */
+  .st-tabs{display:flex;gap:6px;overflow-x:auto;padding:4px 0 10px;-webkit-overflow-scrolling:touch}
+    .st-tabs::-webkit-scrollbar{height:0}
+    .st-tab{flex:none;padding:8px 15px;border-radius:10px 10px 0 0;border:1px solid var(--line);
+      border-bottom:2px solid transparent;background:#F4F7FB;color:#5A6B7B;font:inherit;font-size:13.5px;
+      cursor:pointer;white-space:nowrap}
+    .st-tab[aria-selected="true"]{background:#fff;color:var(--brand);font-weight:700;
+      border-bottom-color:var(--brand)}
+    .st-sub{display:flex;gap:16px;border-bottom:1px solid var(--line);margin:-2px 0 14px}
+    .st-sub button{padding:9px 2px;border:none;background:none;font:inherit;font-size:13.5px;
+      color:#5A6B7B;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+    .st-sub button[aria-selected="true"]{color:var(--brand);font-weight:700;border-bottom-color:var(--brand)}
+    .st-todo{background:#FDF6E7;border:1px solid #F0D9A8;border-radius:10px;padding:13px 15px;
+      font-size:13.5px;color:#7A5B12;line-height:1.7}
     .rs-h{ font-size:16px; font-weight:800; color:#1F2733; }
   .rs-sub{ font-size:12.5px; color:var(--muted); margin:4px 0 13px; line-height:1.6; }
   .rs-st{ display:flex; flex-direction:column; gap:3px; padding:12px 14px; border-radius:13px; margin-bottom:14px; }
@@ -2620,19 +2638,54 @@
       if(VIEW!=='roomset') return;
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
       RS_DATA=r;
-      $('main').innerHTML=roomSetHtml(r.info||{}, r.room||ROOM);
+      var room=r.room||ROOM;
+      $('main').innerHTML=
+        '<div class="hm-hero"><h2>ตั้งค่าห้อง</h2><span class="hp">'+esc((room&&room.name)||'Moodata')+'</span></div>'+
+        stTabsHtml()+stBodyHtml(r.info||{}, room);
       bindRoomSet();
     }).catch(function(e){ if(VIEW==='roomset') $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
   }
 
-  function roomSetHtml(info, room){
+  /* แท็บของหน้าตั้งค่าห้อง (พี่กี้ออกแบบ 17 ก.ย. 69) — กดแท็บไหนแสดงหน้านั้น ไม่ต้องเลื่อนยาว */
+  var ST_TABS = [
+    { key:'drive', label:'① ตั้งค่า Drive' },
+    { key:'co',    label:'② ตั้งค่าบริษัท' },
+    { key:'user',  label:'③ สิทธิ์ผู้ใช้งาน' },
+    { key:'docno', label:'④ เลขที่เอกสาร' },
+    { key:'money', label:'⑤ ช่องทางการเงิน' }
+  ];
+  var ST_TAB = 'drive', ST_SUB = 'in';
+  try{
+    var _t=sessionStorage.getItem('yd-st-tab'); if(_t) ST_TAB=_t;
+    var _u=sessionStorage.getItem('yd-st-sub'); if(_u) ST_SUB=_u;
+  }catch(e){}
+
+  function stTabsHtml(){
+    return '<div class="st-tabs" role="tablist">'+ST_TABS.map(function(t){
+      return '<button class="st-tab" role="tab" aria-selected="'+(t.key===ST_TAB)+'" '+
+        'onclick="stGo(&quot;'+t.key+'&quot;)">'+esc(t.label)+'</button>';
+    }).join('')+'</div>';
+  }
+
+  /** สลับแท็บ — จำไว้ใน sessionStorage ให้กลับมาที่แท็บเดิม */
+  function stGo(k){
+    ST_TAB=k;
+    try{ sessionStorage.setItem('yd-st-tab',k); }catch(e){}
+    renderRoomSet();
+  }
+  function stSub(k){
+    ST_SUB=k;
+    try{ sessionStorage.setItem('yd-st-sub',k); }catch(e){}
+    renderRoomSet();
+  }
+
+  function roomDriveHtml(info){
     var st = info.ok
       ? '<div class="rs-st rs-ok"><b>✅ ผูกเรียบร้อย</b><span>'+esc(info.folderName)+'</span>'+
         (info.url?('<a href="'+esc(info.url)+'" target="_blank" rel="noopener">เปิดโฟลเดอร์ ↗</a>'):'')+'</div>'
       : '<div class="rs-st rs-no"><b>⚠️ '+esc(info.error||'ยังไม่ได้ผูกโฟลเดอร์')+'</b>'+
         '<span>เอกสารจะยังออกได้ แต่ไปเก็บในโฟลเดอร์ที่ระบบสร้างให้ชั่วคราว</span></div>';
-    return '<div class="hm-hero"><h2>ตั้งค่าห้อง</h2><span class="hp">'+esc((room&&room.name)||'Moodata')+'</span></div>'+
-      '<div class="card"><div class="pb" style="padding:16px 18px">'+
+    return '<div class="card"><div class="pb" style="padding:16px 18px">'+
         '<div class="rs-h">📁 โฟลเดอร์เก็บเอกสาร</div>'+
         '<div class="rs-sub">ใบเสร็จ · ใบสำคัญจ่าย · 50 ทวิ · สลิปเงินเดือน จะถูกเก็บไว้ในโฟลเดอร์นี้</div>'+
         st+
@@ -2646,7 +2699,7 @@
         '<div class="rs-note">🔒 ระบบจะลองสร้างไฟล์ทดสอบในโฟลเดอร์แล้วลบทิ้งทันที '+
         'ผ่านแล้วถึงจะบันทึก — กันบันทึกผ่านแต่ไปพังตอนออกเอกสารจริง</div>'+
       '</div></div>'+
-      roomCoHtml() + roomBankHtml() + roomModHtml() + roomAiHtml();
+      '';   // เนื้อในแยกตามแท็บ (stBodyHtml) — ประกอบใน renderRoomSet
   }
 
   /* ── โมดูลที่เปิดให้ห้องนี้ (พี่กี้ขอ 6 ก.ย.: ติ๊กเลือก ไม่ต้องพิมพ์ csv ในชีต) ──
@@ -2718,9 +2771,96 @@
       '</div></div>';
   }
 
+  /** เนื้อในของแท็บที่เลือก */
+  function stBodyHtml(info, room){
+    if(ST_TAB==='co')   return roomCoHtml();
+    if(ST_TAB==='user') return stUserHtml();
+    if(ST_TAB==='docno')return stDocNoHtml();
+    if(ST_TAB==='money')return stMoneyHtml();
+    return roomDriveHtml(info) + roomModHtml() + roomAiHtml();     // ① Drive
+  }
+
+  /** ③ สิทธิ์ผู้ใช้งาน — ยังไม่มีหน้าจอ บอกตรง ๆ ว่าตอนนี้ทำที่ไหน */
+  function stUserHtml(){
+    return '<div class="card"><div class="pb" style="padding:16px 18px">'+
+      '<div class="rs-h">③ สิทธิ์ผู้ใช้งาน</div>'+
+      '<div class="rs-sub">ใครเข้าระบบได้ · เห็นโมดูลไหน · เป็นผู้ดูแลห้องหรือไม่</div>'+
+      '<div class="st-todo"><b>ยังไม่ได้ย้ายมาหน้านี้ค่ะ</b><br>'+
+      'ตอนนี้ตั้งที่ชีต <b>ทีมงาน</b> (คอลัมน์ "โมดูลที่เข้าได้") และทะเบียนกลางของห้อง<br>'+
+      'ถ้าพี่อยากให้ย้ายมาทำในหน้านี้ บอกหนูได้ค่ะ จะทำต่อในรอบถัดไป</div>'+
+      '</div></div>';
+  }
+
+  /** ④ เลขที่เอกสาร — ยังเป็นรูปแบบตายตัวในระบบ */
+  function stDocNoHtml(){
+    return '<div class="card"><div class="pb" style="padding:16px 18px">'+
+      '<div class="rs-h">④ เลขที่เอกสาร</div>'+
+      '<div class="rs-sub">ตัวอักษรนำหน้า · ปี/เดือน · จำนวนหลักของเลขรัน ของเอกสารแต่ละชนิด</div>'+
+      '<div class="st-todo"><b>ตอนนี้ระบบใช้รูปแบบตายตัว</b><br>'+
+      'เอกสารขาย: <b>QT-RM89-6809-001</b> (ชนิด-บริษัท-ปีเดือน พ.ศ.-เลขรัน 3 หลัก)<br>'+
+      'ใบฝั่งจ่าย/เงินสดย่อย: <b>PV-126090001</b> (ชนิด-เลขบริษัท 1 หลัก + ปี ค.ศ. + เดือน + เลขรัน 4 หลัก)<br>'+
+      'เลขกินตอนออกเอกสารจริง ไม่ใช่ตอนร่าง · แยกชุดต่อบริษัท × ชนิด × เดือน<br><br>'+
+      'ถ้าพี่อยากตั้งเองแบบ PEAK (เลือกตัวอักษรนำหน้า/ปี/เดือน/จำนวนหลัก) '+
+      'ต้องเคาะกันก่อนว่าจะให้เลขใบเก่าคงรูปเดิมทั้งหมด แล้วเริ่มรูปแบบใหม่เดือนถัดไป</div>'+
+      '</div></div>';
+  }
+
+  /** ⑤ ช่องทางการเงิน — 2 แท็บย่อย: รับชำระ / จ่ายชำระ */
+  function stMoneyHtml(){
+    var sub = '<div class="st-sub">'+
+      '<button aria-selected="'+(ST_SUB==='in')+'" onclick="stSub(&quot;in&quot;)">ช่องทางการรับชำระเงิน</button>'+
+      '<button aria-selected="'+(ST_SUB==='out')+'" onclick="stSub(&quot;out&quot;)">ช่องทางการจ่ายชำระเงิน</button>'+
+      '</div>';
+    if(ST_SUB==='out'){
+      return '<div class="card"><div class="pb" style="padding:16px 18px">'+
+        '<div class="rs-h">⑤ ช่องทางการเงิน</div>'+sub+
+        '<div class="rs-sub">บัญชี/ช่องทางที่บริษัทใช้จ่ายเงินออก — พิมพ์บนใบสำคัญจ่าย</div>'+
+        '<div class="st-todo"><b>ตอนนี้บันทึกตอนกดจ่ายรายครั้ง</b><br>'+
+        'ใบสั่งจ่ายจะให้เลือกช่องทาง (โอน · เช็ค · เงินสดย่อย) ตอนบันทึกการจ่าย<br>'+
+        'ถ้าอยากตั้ง "บัญชีที่บริษัทใช้จ่ายออก" ไว้ล่วงหน้าเป็นรายการให้เลือก บอกหนูได้ค่ะ</div>'+
+        '</div></div>';
+    }
+    return '<div class="card"><div class="pb" style="padding:16px 18px">'+
+      '<div class="rs-h">⑤ ช่องทางการเงิน</div>'+sub+
+      '<div class="rs-sub">บัญชีที่พิมพ์บนใบเสนอราคา/ใบแจ้งหนี้ให้ลูกค้าโอนเข้า · '+
+      'มีหลายบัญชีได้ · บัญชีที่ติ๊ก "เริ่มต้น" คือตัวที่ขึ้นบนเอกสาร</div>'+
+      '<div id="rsBankList"><div class="emptybox">กำลังโหลด…</div></div>'+
+      '<button class="btn btn-ghost" type="button" onclick="coBankEdit(-1)" style="margin-top:10px;width:auto">+ เพิ่มบัญชี</button>'+
+      '</div></div>';
+  }
+
+  /** แถวบริษัท 1 แถวในหน้าตั้งค่า — ฟังก์ชันบริสุทธิ์ (ของจริงกับ preview เรียกตัวเดียวกัน) */
+  function coRowHtml(e, i){
+    var miss=[];
+    if(!e.brandColor) miss.push('สี');
+    if(!e.hasLogo) miss.push('โลโก้');
+    if(!e.hasStamp) miss.push('ตราประทับ');
+    if(!e.phone&&!e.email) miss.push('ช่องทางติดต่อ');
+    return '<div class="rs-co">'+
+      '<span class="rs-co-sw" style="background:'+esc(e.brandColor||'#1F3864')+'"></span>'+
+      '<span class="rs-co-tx"><b>'+esc(e.name||e.code)+'</b><br>'+
+      '<small>'+esc(e.code)+(e.vatReg?' · จด VAT':' · ไม่จด VAT')+
+      (miss.length?(' · ยังไม่ได้ตั้ง: '+esc(miss.join(' · '))):' · ครบแล้ว ✅')+
+      '</small></span>'+
+      '<button class="btn btn-ghost" type="button" onclick="entEdit('+i+')">ตั้งค่า</button>'+
+    '</div>';
+  }
+
+  /** แถวบัญชีรับเงิน 1 แถว */
+  function bankRowHtml(b, i){
+    return '<div class="rs-co">'+
+      '<span class="rs-co-tx"><b>'+esc(b.bank)+' · '+esc(b.accNo)+(b.isDefault?'  ⭐ เริ่มต้น':'')+'</b><br>'+
+      '<small>'+esc(b.accName||'-')+(b.branch?(' · สาขา'+esc(b.branch)):'')+
+      (b.entity?(' · บริษัท '+esc(b.entity)):'')+'</small></span>'+
+      '<button class="btn btn-ghost" type="button" onclick="coBankEdit('+i+')">แก้</button>'+
+    '</div>';
+  }
+
   var CO_ENTS=[], CO_BANKS=[], CO_BANKNAMES=[];
   /** โหลดข้อมูลบริษัท + บัญชี มาเติม 2 ก้อนในหน้าตั้งค่าห้อง */
-  function roomCoLoad(){
+  /** โหลดเฉพาะส่วนที่แท็บนั้นใช้ (what = 'co' | 'bank') — ไม่ยิงคำขอที่ไม่ได้ใช้ */
+  function roomCoLoad(what){
+    if(what==='bank'){ roomBankLoad(); return; }
     jsonp({action:'waEntities',uid:UID}).then(function(r){
       if(VIEW!=='roomset') return;
       CO_ENTS=(r&&r.ok&&r.entities)||[];
@@ -2731,23 +2871,12 @@
         box.innerHTML='<div class="emptybox">ยังไม่มีบริษัทในระบบ — กดเมนู 🏢 ตั้งค่านิติบุคคล ในชีตก่อนค่ะ</div>';
         return;
       }
-      box.innerHTML=CO_ENTS.map(function(e,i){
-        var miss=[];
-        if(!e.brandColor) miss.push('สี');
-        if(!e.hasLogo) miss.push('โลโก้');
-        if(!e.hasStamp) miss.push('ตราประทับ');
-        if(!e.phone&&!e.email) miss.push('ช่องทางติดต่อ');
-        return '<div class="rs-co">'+
-          '<span class="rs-co-sw" style="background:'+esc(e.brandColor||'#1F3864')+'"></span>'+
-          '<span class="rs-co-tx"><b>'+esc(e.name||e.code)+'</b><br>'+
-          '<small>'+esc(e.code)+(e.vatReg?' · จด VAT':' · ไม่จด VAT')+
-          (miss.length?(' · ยังไม่ได้ตั้ง: '+esc(miss.join(' · '))):' · ครบแล้ว ✅')+
-          '</small></span>'+
-          '<button class="btn btn-ghost" type="button" onclick="entEdit('+i+')">ตั้งค่า</button>'+
-        '</div>';
-      }).join('');
+      box.innerHTML=CO_ENTS.map(coRowHtml).join('');
     }).catch(function(){});
 
+  }
+
+  function roomBankLoad(){
     jsonp({action:'waCoBank',uid:UID}).then(function(r){
       if(VIEW!=='roomset') return;
       CO_BANKS=(r&&r.ok&&r.banks)||[];
@@ -2758,15 +2887,7 @@
         box.innerHTML='<div class="emptybox">ยังไม่มีบัญชี — เอกสารจะไม่มีบล็อกชำระเงิน</div>';
         return;
       }
-      box.innerHTML=live.map(function(b){
-        var i=CO_BANKS.indexOf(b);
-        return '<div class="rs-co">'+
-          '<span class="rs-co-tx"><b>'+esc(b.bank)+' · '+esc(b.accNo)+(b.isDefault?'  ⭐ เริ่มต้น':'')+'</b><br>'+
-          '<small>'+esc(b.accName||'-')+(b.branch?(' · สาขา'+esc(b.branch)):'')+
-          (b.entity?(' · บริษัท '+esc(b.entity)):'')+'</small></span>'+
-          '<button class="btn btn-ghost" type="button" onclick="coBankEdit('+i+')">แก้</button>'+
-        '</div>';
-      }).join('');
+      box.innerHTML=live.map(function(b){ return bankRowHtml(b, CO_BANKS.indexOf(b)); }).join('');
     }).catch(function(){});
   }
 
@@ -2807,7 +2928,7 @@
       branch:((($('cbBr')||{}).value)||'').trim(),
       isDefault:(($('cbDef')||{}).checked?'1':'')}), 'บันทึกแล้ว').then(function(r){
       if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
-      closeModal(); toast('🏦 บันทึกบัญชีแล้ว'); roomCoLoad();
+      closeModal(); toast('🏦 บันทึกบัญชีแล้ว'); roomBankLoad();
     });
   }
 
@@ -2815,12 +2936,13 @@
     if(!window.confirm('ปิดบัญชีนี้ไหมคะ? (ไม่ลบทิ้ง — เอกสารเก่ายังอ้างเลขบัญชีนี้ได้)')) return;
     callBusy('กำลังปิด…', jsonp({action:'waCoBankClose',uid:UID,row:row}), 'ปิดแล้ว').then(function(r){
       if(!r||!r.ok){ mErr((r&&r.error)||'ปิดไม่สำเร็จ'); return; }
-      closeModal(); toast('ปิดบัญชีแล้ว'); roomCoLoad();
+      closeModal(); toast('ปิดบัญชีแล้ว'); roomBankLoad();
     });
   }
 
   function bindRoomSet(){
-    roomCoLoad();
+    if(ST_TAB==='co') roomCoLoad('co');
+    if(ST_TAB==='money' && ST_SUB==='in') roomCoLoad('bank');
     var ab=$('rsAiBtn');
     if(ab) ab.addEventListener('click', function(){
       var on=!(RS_DATA&&RS_DATA.aiOn);
@@ -11146,7 +11268,7 @@
   var ENTS=[], ENT_DEF='';
   /** กลับที่เดิมหลังแก้นิติบุคคล — เปิดจากตั้งค่าห้องต้องไม่เด้งไปหน้าจัดการนิติบุคคล */
   function entBack(){
-    if(VIEW==='roomset'){ closeModal(); roomCoLoad(); return; }
+    if(VIEW==='roomset'){ closeModal(); roomCoLoad('co'); return; }
     entManage();
   }
 
@@ -15981,7 +16103,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260917-2035';
+  var APP_BUILD='20260917-2100';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
