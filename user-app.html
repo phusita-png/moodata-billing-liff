@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260917-2253">
+<link rel="stylesheet" href="user.css?v=20260917-2301">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -2227,6 +2227,7 @@
     var _app=$('app'); if(_app) _app.classList.toggle('pmode', v==='portal');
     if(CURMOD) MG_LAST[CURMOD]=v;
     Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(b){ b.classList.toggle('active', b.dataset.view===v); });
+    if(v!=='roomset' && typeof navStItems==='function') navStItems();   // ออกจากหน้าตั้งค่า = เก็บหัวข้อย่อยออก
     var meta=VIEW_META[v]||['•',v];
     // ไอคอนแถบบน = ไอคอนเส้นของหมวดที่หน้านี้อยู่ (เรียบ ไม่สีสัน · พี่กี้ขอ 30 ก.ค.) · fallback emoji
     if(v==='portal'){   // หน้าเลือกโมดูล = แถบบนเป็นแบรนด์ ไม่ใช่ชื่อเมนู
@@ -2638,6 +2639,7 @@
 
   var RS_DATA=null;   // ผลจาก waRoomFolder — ใช้ต่อในส่วนติ๊กโมดูล
   function renderRoomSet(){
+    navStItems();      // เติมหัวข้อย่อยในแถบซ้ายทุกครั้งที่เข้าหน้านี้
     skel();
     jsonp({action:'waRoomFolder',uid:UID}).then(function(r){
       if(VIEW!=='roomset') return;
@@ -3595,22 +3597,7 @@
     }
     vs.forEach(addBtn);          // เมนูที่ไม่ได้อยู่ในช่วงไหน (หรือโมดูลที่ไม่แบ่งช่วง) ต่อท้ายเสมอ
 
-    /* หน้าตั้งค่าห้องมีหัวข้อย่อย 5 อัน — พี่กี้ขอให้ขึ้นในแถบซ้ายด้วย (17 ก.ย. 69)
-       กดจากแถบซ้ายหรือแท็บด้านบนก็ได้ ทั้งคู่เรียก stGo() ตัวเดียวกัน จึงไม่มีทางไม่ตรงกัน
-       ⚠️ ปุ่มพวกนี้ไม่เปลี่ยน view (ยังอยู่ roomset) จึงใช้ data-st ไม่ใช่ data-view */
-    if (VIEW === 'roomset' && typeof ST_TABS !== 'undefined') {
-      addSec('หัวข้อตั้งค่า');
-      ST_TABS.forEach(function (t) {
-        var b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'nav-btn nav-st' + (t.key === ST_TAB ? ' active' : '');
-        b.setAttribute('data-st', t.key);
-        b.setAttribute('aria-label', t.label);
-        b.innerHTML = '<span>' + esc(t.label) + '</span>';
-        b.addEventListener('click', function () { stGo(t.key); });
-        nav.appendChild(b);
-      });
-    }
+    navStItems();     // หัวข้อย่อยของหน้าตั้งค่า (ถ้ากำลังอยู่หน้านั้น)
 
     // ปุ่มกลับอยู่บนแถบบนที่เดียว (พี่กี้เคาะ 5 ก.ย.: ในแถบซ้ายซ้ำ)
     // — แถบบนเห็นตลอดโดยไม่ต้องเลื่อนแถบซ้ายลงไปสุด · มือถือใช้ปุ่ม "เมนูหลัก" ที่แถบล่าง
@@ -3624,6 +3611,38 @@
 
     // ไม่มีแถวไอคอนสลับโมดูลแล้ว (9 ก.ย. 69) — ออกทางปุ่ม "กลับเมนูหลัก" ข้างบนนี้ทางเดียว
   }
+  /**
+   * หัวข้อย่อยของหน้าตั้งค่าห้องในแถบซ้าย (พี่กี้ขอ 17 ก.ย. 69 · อ้างโครงเมนูซ้ายของ KPI)
+   * 🔴 ต้องเรียกได้ทุกเมื่อ ไม่ใช่เฉพาะตอนสร้างแถบซ้าย —
+   *    setModule() มี early-return เมื่อ CURMOD เท่าเดิม แล้ว buildNavForModule จะไม่ถูกเรียก
+   *    (เข้าหน้าตั้งค่าจากโมดูลเดิม เมนูย่อยจึงไม่มา — พี่กี้เจอจริง 17 ก.ย. 69)
+   * ปุ่มใช้ data-st ไม่ใช่ data-view เพราะไม่ได้เปลี่ยนหน้า (ยังอยู่ roomset)
+   */
+  function navStItems(){
+    var nav=document.querySelector('.nav'); if(!nav) return;
+    // ล้างของเดิมก่อนเสมอ (กันซ้อนเวลาเข้า-ออกหน้านี้หลายรอบ)
+    Array.prototype.forEach.call(nav.querySelectorAll('.nav-st,.nav-sec-st'), function(el){
+      nav.removeChild(el);
+    });
+    if(VIEW!=='roomset' || typeof ST_TABS==='undefined' || !ST_TABS) return;
+    var back=nav.querySelector('.nav-back');     // แทรกก่อนปุ่ม "กลับเมนูหลัก" ให้ปุ่มนั้นอยู่ท้ายสุด
+    function put(el){ if(back) nav.insertBefore(el, back); else nav.appendChild(el); }
+    var sec=document.createElement('div');
+    sec.className='nav-sec has-items nav-sec-st';
+    sec.textContent='หัวข้อตั้งค่า';
+    put(sec);
+    ST_TABS.forEach(function(t){
+      var b=document.createElement('button');
+      b.type='button';
+      b.className='nav-btn nav-st'+(t.key===ST_TAB?' active':'');
+      b.setAttribute('data-st', t.key);
+      b.setAttribute('aria-label', t.label);
+      b.innerHTML='<span>'+esc(t.label)+'</span>';
+      b.addEventListener('click', function(){ stGo(t.key); });
+      put(b);
+    });
+  }
+
   function buildNavGroups(){ buildNavForModule(); }   // ชื่อเดิมที่ start() เรียกอยู่
 
   function navToggleGroup(key){
@@ -16227,7 +16246,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260917-2253';
+  var APP_BUILD='20260917-2301';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
