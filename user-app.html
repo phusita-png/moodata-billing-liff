@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260915-1040">
+<link rel="stylesheet" href="user.css?v=20260917-1544">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -11065,11 +11065,89 @@
         '<option value="ปิด"'+(String(e.status||'').indexOf('ปิด')>=0?' selected':'')+'>ปิด (ไม่ให้เลือกตอนออกเอกสาร)</option>'+
       '</select></div>'+
       '<div class="fld"><label>หมายเหตุ</label><input id="enNote" value="'+esc(e.note||'')+'"></div>'+
-      '<div class="m-hint">โลโก้กับลายเซ็นยังตั้งในชีตเหมือนเดิมค่ะ (ต้องใส่ file id ของ Drive) — '+
-      'ไม่ใส่ลายเซ็น = ใช้ลายเซ็นพี่กี้</div>'+
+      // ── หน้าตาเอกสาร (17 ก.ย. 69) — สี · ช่องทางติดต่อ · โลโก้ · ตราประทับ ──
+      '<div style="margin:14px 0 6px;font-weight:600;color:var(--brand)">หน้าตาเอกสาร</div>'+
+      '<div class="fld"><label>สีองค์กร (ใช้กับชื่อใบ · กล่องเลขที่ · หัวตาราง)</label>'+
+        '<div style="display:flex;gap:8px;align-items:center">'+
+          '<input type="color" id="enColorPick" value="'+esc(e.brandColor||'#1F3864')+'" '+
+            'style="width:52px;height:38px;padding:2px;border:1px solid var(--line);border-radius:8px" '+
+            'oninput="enColorSync(1)">'+
+          '<input id="enColor" value="'+esc(e.brandColor||'')+'" placeholder="ว่าง = สีกลางของระบบ" '+
+            'oninput="enColorSync(0)" style="flex:1">'+
+        '</div></div>'+
+      '<div class="fld"><label>โทรศัพท์ (พิมพ์บนเอกสาร)</label><input id="enPhone" value="'+esc(e.phone||'')+'"></div>'+
+      '<div class="fld"><label>อีเมล (พิมพ์บนเอกสาร)</label><input id="enEmail" value="'+esc(e.email||'')+'"></div>'+
+      '<div class="fld"><label>เว็บไซต์ (พิมพ์บนเอกสาร)</label><input id="enWeb" value="'+esc(e.website||'')+'"></div>'+
+      (isNew ? '<div class="m-hint">บันทึกบริษัทก่อน แล้วกลับมาอัปโหลดโลโก้กับตราประทับได้ค่ะ</div>'
+        : ('<div class="fld"><label>โลโก้บริษัท</label>'+
+             '<div style="display:flex;gap:8px;align-items:center">'+
+             '<input type="file" id="enLogoFile" accept="image/*" style="flex:1">'+
+             '<button class="btn btn-ghost" onclick="enImgUp(&quot;logo&quot;)">อัปโหลด</button>'+
+             (e.hasLogo ? '<button class="btn btn-ghost" onclick="enImgClear(&quot;logo&quot;)">ลบ</button>' : '')+
+             '</div><div style="color:#8A94A6;font-size:12px;margin-top:3px">'+
+             (e.hasLogo?'✅ มีโลโก้แล้ว':'ยังไม่มีโลโก้ — เอกสารจะไม่ใส่โลโก้')+'</div></div>'+
+           '<div class="fld"><label>ตราประทับบริษัท (ประทับทุกใบข้างลายเซ็น)</label>'+
+             '<div style="display:flex;gap:8px;align-items:center">'+
+             '<input type="file" id="enStampFile" accept="image/*" style="flex:1">'+
+             '<button class="btn btn-ghost" onclick="enImgUp(&quot;stamp&quot;)">อัปโหลด</button>'+
+             (e.hasStamp ? '<button class="btn btn-ghost" onclick="enImgClear(&quot;stamp&quot;)">ลบ</button>' : '')+
+             '</div><div style="color:#8A94A6;font-size:12px;margin-top:3px">'+
+             (e.hasStamp?'✅ มีตราประทับแล้ว':'ยังไม่มีตราประทับ — เอกสารเว้นช่องไว้')+'</div></div>'))+
+      '<div class="m-hint">ลายเซ็นยังตั้งในชีตเหมือนเดิมค่ะ (file id ของ Drive) — ไม่ใส่ = ใช้ลายเซ็นพี่กี้</div>'+
       '<div class="m-act"><button class="btn btn-ghost" onclick="entManage()">ย้อนกลับ</button>'+
       '<button class="btn btn-primary" onclick="entSave()">บันทึก</button></div>');
   }
+  /** ช่องสีกับช่องข้อความเดินคู่กัน (from=1 คือลากจากตัวเลือกสี) */
+  function enColorSync(fromPicker){
+    var pick=$('enColorPick'), txt=$('enColor');
+    if(!pick||!txt) return;
+    if(fromPicker){ txt.value=String(pick.value||'').toUpperCase(); return; }
+    var v=String(txt.value||'').trim();
+    if(/^#?[0-9a-fA-F]{6}$/.test(v)) pick.value=(v.charAt(0)==='#'?v:'#'+v);
+  }
+
+  /** อัปโหลดโลโก้/ตราประทับ — ย่อรูปก่อนส่ง เพราะ POST มีเพดานขนาด */
+  function enImgUp(kind){
+    var code=((($('enCode')||{}).value)||'').trim();
+    var inp=$(kind==='logo'?'enLogoFile':'enStampFile');
+    var f=inp&&inp.files&&inp.files[0];
+    if(!code){ mErr('ยังไม่มีรหัสบริษัทค่ะ'); return; }
+    if(!f){ mErr('เลือกไฟล์รูปก่อนค่ะ'); return; }
+    var rd=new FileReader();
+    rd.onload=function(){
+      var img=new Image();
+      img.onload=function(){
+        // ย่อด้านยาวไม่เกิน 600px แล้วส่งเป็น PNG (โลโก้/ตราไม่ต้องใหญ่กว่านี้บนกระดาษ)
+        var max=600, w=img.width, h=img.height;
+        var sc=Math.min(1, max/Math.max(w,h));
+        var cv=document.createElement('canvas');
+        cv.width=Math.round(w*sc); cv.height=Math.round(h*sc);
+        cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+        callBusy('กำลังอัปโหลด…', jsonpPost({action:'waEntityImg',uid:UID,code:code,kind:kind,
+          img:cv.toDataURL('image/png')}), 'อัปโหลดแล้ว').then(function(r){
+          if(!r||!r.ok){ mErr((r&&r.error)||'อัปโหลดไม่สำเร็จ'); return; }
+          toast(kind==='logo'?'🖼️ อัปโหลดโลโก้แล้ว':'🔖 อัปโหลดตราประทับแล้ว');
+          entManage();
+        });
+      };
+      img.onerror=function(){ mErr('อ่านไฟล์รูปไม่ได้ค่ะ ลองไฟล์อื่นนะคะ'); };
+      img.src=rd.result;
+    };
+    rd.onerror=function(){ mErr('อ่านไฟล์ไม่สำเร็จค่ะ'); };
+    rd.readAsDataURL(f);
+  }
+
+  function enImgClear(kind){
+    var code=((($('enCode')||{}).value)||'').trim();
+    if(!code) return;
+    if(!confirm(kind==='logo'?'ลบโลโก้ของบริษัทนี้ไหมคะ':'ลบตราประทับของบริษัทนี้ไหมคะ')) return;
+    callBusy('กำลังลบ…', jsonp({action:'waEntityImgClear',uid:UID,code:code,kind:kind}), 'ลบแล้ว')
+      .then(function(r){
+        if(!r||!r.ok){ mErr((r&&r.error)||'ลบไม่สำเร็จ'); return; }
+        toast('ลบแล้วค่ะ'); entManage();
+      });
+  }
+
   function entSave(){
     var code=((($('enCode')||{}).value)||'').trim();
     var name=((($('enName')||{}).value)||'').trim();
@@ -11084,7 +11162,11 @@
       paidCapital:((($('enCap')||{}).value)||'').trim(),
       fiscalStart:((($('enFiscal')||{}).value)||'').trim(),
       status:(($('enStatus')||{}).value)||'ใช้งาน',
-      note:((($('enNote')||{}).value)||'').trim()}), 'บันทึกแล้ว').then(function(r){
+      note:((($('enNote')||{}).value)||'').trim(),
+      brandColor:((($('enColor')||{}).value)||'').trim(),
+      phone:((($('enPhone')||{}).value)||'').trim(),
+      email:((($('enEmail')||{}).value)||'').trim(),
+      website:((($('enWeb')||{}).value)||'').trim()}), 'บันทึกแล้ว').then(function(r){
       if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
       toast('🏢 บันทึก '+r.code+' แล้ว'+(r.isNew?' (บริษัทใหม่)':''));
       entManage();
@@ -15760,7 +15842,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260915-1040';
+  var APP_BUILD='20260917-1544';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
