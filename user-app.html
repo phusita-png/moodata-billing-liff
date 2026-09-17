@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260917-2311">
+<link rel="stylesheet" href="user.css?v=20260917-2338">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -206,6 +206,30 @@
     .st-wrap .kp-tab{flex:none;white-space:nowrap}
     .st-todo{background:#FDF6E7;border:1px solid #F0D9A8;border-radius:10px;padding:13px 15px;
       font-size:14px;color:#7A5B12;line-height:1.75}
+  /* หัวการ์ดตั้งค่า: ชื่อ+คำอธิบายซ้าย · ปุ่ม "แก้ไข" ขวา
+     พี่กี้ขอ 17 ก.ย. 69 — "กันกดพลาด ให้กดแก้ไขก่อนพิมพ์" · ค่าที่ตั้งไว้มีผลกับเอกสารทุกใบ
+     เผลอพิมพ์ทับแล้วบันทึกคือเอกสารเปลี่ยนทั้งระบบ จึงล็อกไว้ก่อนเสมอ */
+  .st-head{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;
+    border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:15px}
+    .st-head .st-hx{flex:1;min-width:0}
+    .st-head .st-hx .rs-sub{margin:4px 0 0}
+    .st-head .btn{width:auto;flex:none;padding:9px 26px}
+  /* โหมดอ่านอย่างเดียว — ช่องกรอกเทาลง · ปุ่มบันทึกกับกล่องอัปโหลดซ่อนไว้ */
+  .st-act{display:flex;gap:9px;flex-wrap:wrap;margin-top:15px}
+  .st-ro .st-act,.st-ro .st-onedit{display:none}
+  /* ต้องเจาะจงกว่า .fld input (ประกาศทีหลังในไฟล์นี้) ไม่งั้นพื้นขาวชนะ = ดูไม่ออกว่าล็อกอยู่ */
+  .st-ro .fld input,.st-ro .fld select,.st-ro .fld textarea,
+  .st-ro input,.st-ro select,.st-ro textarea{background:#F1F4F8;color:#44515F;cursor:default}
+  .st-ro .en-sw{cursor:default;opacity:.5}
+  .st-ro .en-sw.on{opacity:1}
+  /* กล่องตัวอย่างโลโก้/ตราประทับ — วางคู่กันตามแบบที่พี่กี้ส่งมา (17 ก.ย. 69) */
+  .co-imgs{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+    @media (max-width:560px){ .co-imgs{grid-template-columns:1fr} }
+    .co-img-t{font-weight:700;font-size:14.5px;color:#1F2733;margin-bottom:9px}
+    .co-img-b{border:1px dashed var(--line);border-radius:12px;background:#fff;height:172px;
+      display:flex;align-items:center;justify-content:center;padding:14px;box-sizing:border-box}
+    .co-img-b img{max-width:100%;max-height:144px;object-fit:contain}
+    .co-img-n{color:#8A94A6;font-size:12.5px;text-align:center;line-height:1.75}
   /* หัวข้อย่อยของหน้าตั้งค่าในแถบซ้าย — เยื้องเข้าให้เห็นว่าเป็นหัวข้อในหน้า ไม่ใช่เมนูใหม่ */
   .nav-btn.nav-st{padding-left:26px;font-size:14.5px}
     .nav-btn.nav-st svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.9;
@@ -2645,6 +2669,7 @@
   var RS_DATA=null;   // ผลจาก waRoomFolder — ใช้ต่อในส่วนติ๊กโมดูล
   function renderRoomSet(){
     navStItems();      // เติมหัวข้อย่อยในแถบซ้ายทุกครั้งที่เข้าหน้านี้
+    ST_EDIT = {};      // เข้าหน้า/สลับแท็บ = ล็อกทุกการ์ด (ต้องกดแก้ไขก่อนพิมพ์)
     skel();
     jsonp({action:'waRoomFolder',uid:UID}).then(function(r){
       if(VIEW!=='roomset') return;
@@ -2655,6 +2680,7 @@
         '<div class="hm-hero"><h2>ตั้งค่าห้อง</h2><span class="hp">'+esc((room&&room.name)||'Moodata')+'</span></div>'+
         stTabsHtml()+stBodyHtml(r.info||{}, room);
       bindRoomSet();
+      stLockAll();     // การ์ดที่วาดเสร็จแล้วต้องเริ่มจากโหมดอ่านอย่างเดียว
     }).catch(function(e){ if(VIEW==='roomset') $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
   }
 
@@ -2708,15 +2734,51 @@
     renderRoomSet();
   }
 
+  /* ── ล็อกการ์ดตั้งค่าไว้ก่อน ต้องกด "แก้ไข" จึงพิมพ์ได้ (พี่กี้ขอ 17 ก.ย. 69) ──
+     ST_EDIT เก็บทีละการ์ด (drive · mods · co · coimg) — เปิดแก้ใบหนึ่งไม่ปลดล็อกใบอื่น
+     🔴 เข้าหน้าใหม่ทุกครั้งต้องกลับไปล็อก (renderRoomSet ล้าง ST_EDIT ให้) */
+  var ST_EDIT = {};
+
+  /** หัวการ์ด: ชื่อ + คำอธิบาย + ปุ่มแก้ไข/ยกเลิก */
+  function stHeadHtml(title, sub, key){
+    return '<div class="st-head"><div class="st-hx">'+
+      '<div class="rs-h">'+title+'</div>'+
+      (sub?('<div class="rs-sub">'+sub+'</div>'):'')+
+      '</div><button class="btn btn-ghost" type="button" data-nolock '+
+      'onclick="stEdit(&quot;'+key+'&quot;)">'+(ST_EDIT[key]?'ยกเลิก':'แก้ไข')+'</button></div>';
+  }
+
+  /** สลับโหมดแก้ไขของการ์ดนั้น · กดยกเลิก = วาดใหม่จากค่าที่บันทึกไว้ (ทิ้งที่พิมพ์ค้าง) */
+  function stEdit(key){
+    ST_EDIT[key] = !ST_EDIT[key];
+    if(key==='co' || key==='coimg'){ coRender(); return; }   // 2 การ์ดนี้อยู่ในกล่องเดียวกัน
+    stLockAll();
+  }
+
+  /** ปิด/เปิดช่องกรอกในทุกการ์ดที่มี data-lock ให้ตรงกับ ST_EDIT
+      (ช่องที่ติด data-nolock ไม่ล็อก เช่น ปุ่มแก้ไขเอง กับแถบเลือกบริษัท) */
+  function stLockAll(){
+    Array.prototype.forEach.call(document.querySelectorAll('[data-lock]'), function(box){
+      var on = !!ST_EDIT[box.getAttribute('data-lock')];
+      box.classList.toggle('st-ro', !on);
+      Array.prototype.forEach.call(box.querySelectorAll('input,select,textarea,button'), function(el){
+        if(el.hasAttribute('data-nolock')) return;
+        el.disabled = !on;
+      });
+      var eb = box.querySelector('.st-head .btn');
+      if(eb) eb.textContent = on ? 'ยกเลิก' : 'แก้ไข';
+    });
+  }
+
   function roomDriveHtml(info){
     var st = info.ok
       ? '<div class="rs-st rs-ok"><b>✅ ผูกเรียบร้อย</b><span>'+esc(info.folderName)+'</span>'+
         (info.url?('<a href="'+esc(info.url)+'" target="_blank" rel="noopener">เปิดโฟลเดอร์ ↗</a>'):'')+'</div>'
       : '<div class="rs-st rs-no"><b>⚠️ '+esc(info.error||'ยังไม่ได้ผูกโฟลเดอร์')+'</b>'+
         '<span>เอกสารจะยังออกได้ แต่ไปเก็บในโฟลเดอร์ที่ระบบสร้างให้ชั่วคราว</span></div>';
-    return '<div class="card"><div class="pb" style="padding:16px 18px">'+
-        '<div class="rs-h">📁 โฟลเดอร์เก็บเอกสาร</div>'+
-        '<div class="rs-sub">ใบเสร็จ · ใบสำคัญจ่าย · 50 ทวิ · สลิปเงินเดือน จะถูกเก็บไว้ในโฟลเดอร์นี้</div>'+
+    return '<div class="card" data-lock="drive"><div class="pb" style="padding:16px 18px">'+
+        stHeadHtml('📁 โฟลเดอร์เก็บเอกสาร',
+          'ใบเสร็จ · ใบสำคัญจ่าย · 50 ทวิ · สลิปเงินเดือน จะถูกเก็บไว้ในโฟลเดอร์นี้', 'drive')+
         st+
         '<div class="rs-steps"><b>วิธีผูกโฟลเดอร์ของตัวเอง</b>'+
           '<ol><li>สร้างโฟลเดอร์ใน Google Drive ของบริษัท</li>'+
@@ -2724,7 +2786,8 @@
           '<li>คัดลอกลิงก์โฟลเดอร์มาวางด้านล่าง แล้วกดบันทึก</li></ol></div>'+
         '<div class="rs-f"><label>ลิงก์โฟลเดอร์</label>'+
           '<input id="rsLink" type="text" placeholder="https://drive.google.com/drive/folders/..." value=""></div>'+
-        '<button class="btn btn-primary" id="rsSave" type="button" style="width:100%;margin-top:12px">ทดสอบและบันทึก</button>'+
+        '<div class="st-act"><button class="btn btn-primary" id="rsSave" type="button" '+
+          'style="width:100%">ทดสอบและบันทึก</button></div>'+
         '<div class="rs-note">🔒 ระบบจะลองสร้างไฟล์ทดสอบในโฟลเดอร์แล้วลบทิ้งทันที '+
         'ผ่านแล้วถึงจะบันทึก — กันบันทึกผ่านแต่ไปพังตอนออกเอกสารจริง</div>'+
       '</div></div>'+
@@ -2761,9 +2824,9 @@
     if(!list.length) return '';
     var open=r.mods||[];               // [] = เปิดครบทุกโมดูล (กติกาเดิมของระบบ)
     var all=!open.length;
-    return '<div class="card"><div class="pb" style="padding:16px 18px">'+
-      '<div class="rs-h">🧩 โมดูลที่เปิดให้ห้องนี้</div>'+
-      '<div class="rs-sub">ติ๊กเฉพาะโมดูลที่ลูกค้าซื้อ · ไม่ติ๊กเลย = เปิดครบทุกโมดูล</div>'+
+    return '<div class="card" data-lock="mods"><div class="pb" style="padding:16px 18px">'+
+      stHeadHtml('🧩 โมดูลที่เปิดให้ห้องนี้',
+        'ติ๊กเฉพาะโมดูลที่ลูกค้าซื้อ · ไม่ติ๊กเลย = เปิดครบทุกโมดูล', 'mods')+
       '<div class="rs-mods">'+list.map(function(m){
         var on = m.free || all || open.indexOf(m.key)>=0;
         var dep = (m.deps||[]).length ? (' <span class="rs-dep">ต้องมี '+esc(m.deps.join(' + '))+'</span>') : '';
@@ -2771,7 +2834,8 @@
           '<input type="checkbox" value="'+esc(m.key)+'"'+(on?' checked':'')+(m.free?' disabled':'')+'>'+
           '<span>'+esc(m.label)+(m.free?' <span class="rs-dep">ฟรีทุกห้อง</span>':dep)+'</span></label>';
       }).join('')+'</div>'+
-      '<button class="btn btn-primary" id="rsModSave" type="button" style="width:100%;margin-top:12px">บันทึกโมดูล</button>'+
+      '<div class="st-act"><button class="btn btn-primary" id="rsModSave" type="button" '+
+        'style="width:100%">บันทึกโมดูล</button></div>'+
       '<div class="rs-note">ลูกค้าจะเห็นการ์ดเฉพาะโมดูลที่เปิดไว้ · '+
       'ปิดโมดูลไหน ปุ่มของโมดูลนั้นหายจากหน้าเขาทันทีที่รีเฟรช</div>'+
       '</div></div>';
@@ -2784,12 +2848,9 @@
      มีบริษัทเดียว = ฟอร์มขึ้นเลย · หลายบริษัท = แถวเลือกด้านบน แล้วฟอร์มของตัวที่เลือกอยู่ข้างล่าง */
   var CO_PICK = 0;
   function roomCoHtml(){
-    return '<div class="card"><div class="pb" style="padding:16px 18px">'+
-      '<div class="rs-h">ข้อมูลบริษัทและหน้าตาเอกสาร</div>'+
-      '<div class="rs-sub">ชื่อบริษัท · เลขที่ภาษี · ที่อยู่ · จด VAT · สีองค์กร · โลโก้ · ตราประทับ · ช่องทางติดต่อ<br>'+
-      'ตั้งที่นี่ที่เดียว มีผลกับเอกสารทุกใบและทุกระบบที่ออกเอกสาร</div>'+
-      '<div id="rsCoList"><div class="emptybox">กำลังโหลด…</div></div>'+
-      '</div></div>';
+    /* หัวการ์ดอยู่ใน coRender เพราะคำบนปุ่ม (แก้ไข/ยกเลิก) เปลี่ยนตามโหมด */
+    return '<div id="rsCoList"><div class="card"><div class="pb" style="padding:16px 18px">'+
+      '<div class="emptybox">กำลังโหลด…</div></div></div></div>';
   }
 
   /** เลือกบริษัทที่จะแก้ (เมื่อมีหลายบริษัท) */
@@ -2799,18 +2860,80 @@
   function coRender(){
     var box=$('rsCoList'); if(!box) return;
     if(!CO_ENTS.length){
-      box.innerHTML='<div class="emptybox">ยังไม่มีบริษัทในระบบ — กดเมนู 🏢 ตั้งค่านิติบุคคล ในชีตก่อนค่ะ</div>';
+      box.innerHTML='<div class="card"><div class="pb" style="padding:16px 18px">'+
+        '<div class="emptybox">ยังไม่มีบริษัทในระบบ — กดเมนู 🏢 ตั้งค่านิติบุคคล ในชีตก่อนค่ะ</div>'+
+        '</div></div>';
       return;
     }
     if(CO_PICK>=CO_ENTS.length) CO_PICK=0;
     var head='';
     if(CO_ENTS.length>1){
+      /* แถบเลือกบริษัท = แค่ดูของอีกบริษัท ไม่ใช่การแก้ค่า → data-nolock ให้กดได้ตอนล็อก */
       head='<div class="kp-tabs" style="margin:0 0 14px">'+CO_ENTS.map(function(e,i){
-        return '<button class="kp-tab'+(i===CO_PICK?' on':'')+'" onclick="coPick('+i+')">'+
-          esc(e.name||e.code)+'</button>';
+        return '<button class="kp-tab'+(i===CO_PICK?' on':'')+'" data-nolock '+
+          'onclick="coPick('+i+')">'+esc(e.name||e.code)+'</button>';
       }).join('')+'</div>';
     }
-    box.innerHTML=head+'<div class="co-form">'+entFormHtml(CO_ENTS[CO_PICK], false, true)+'</div>';
+    var e=CO_ENTS[CO_PICK];
+    box.innerHTML=
+      '<div class="card" data-lock="co"><div class="pb" style="padding:16px 18px">'+
+        head+
+        stHeadHtml('ข้อมูลบริษัทและหน้าตาเอกสาร',
+          'ชื่อบริษัท · เลขที่ภาษี · ที่อยู่ · จด VAT · สีองค์กร · ช่องทางติดต่อ<br>'+
+          'ตั้งที่นี่ที่เดียว มีผลกับเอกสารทุกใบและทุกระบบที่ออกเอกสาร', 'co')+
+        '<div class="co-form">'+entFormHtml(e, false, true)+'</div>'+
+      '</div></div>'+
+      coImgHtml(e);
+    stLockAll();
+  }
+
+  /* ── โลโก้และตราประทับ: การ์ดของตัวเอง โชว์ภาพที่ตั้งไว้คู่กัน (แบบที่พี่กี้ส่งมา 17 ก.ย. 69) ──
+     รูปเก็บใน Drive ของห้อง · โชว์ผ่าน thumbnail ของ Drive (ไฟล์ที่อัปจากหน้านี้เปิดให้ดูด้วยลิงก์แล้ว)
+     ไฟล์เก่าที่ตั้ง file id เองในชีตอาจยังไม่ได้แชร์ → ตกไปที่ coImgFail บอกทางแก้ */
+  function coImgHtml(e){
+    return '<div class="card" data-lock="coimg"><div class="pb" style="padding:16px 18px">'+
+      stHeadHtml('โลโก้และตราประทับ', 'โลโก้และตราประทับที่ตั้งค่าจะแสดงในหน้าเอกสาร', 'coimg')+
+      '<div class="co-imgs">'+
+        coImgBoxHtml('logo', 'โลโก้องค์กร', e)+
+        coImgBoxHtml('stamp', 'ตราประทับองค์กร', e)+
+      '</div></div></div>';
+  }
+
+  function coImgUrl(id){
+    return 'https://drive.google.com/thumbnail?id='+encodeURIComponent(id)+'&sz=w400';
+  }
+
+  function coImgBoxHtml(kind, label, e){
+    var id = String((kind==='logo' ? e.logoId : e.stampId) || '');
+    var body = id
+      ? '<img src="'+esc(coImgUrl(id))+'" alt="'+esc(label)+'" data-id="'+esc(id)+'" '+
+        'onerror="coImgFail(this)">'
+      : '<div class="co-img-n">ยังไม่ได้ตั้งค่า<br>'+
+        (kind==='logo' ? 'เอกสารจะไม่ใส่โลโก้' : 'เอกสารจะเว้นช่องตราประทับไว้')+'</div>';
+    return '<div><div class="co-img-t">'+esc(label)+'</div>'+
+      '<div class="co-img-b">'+body+'</div>'+
+      '<div class="st-onedit" style="margin-top:11px">'+
+        '<input type="file" id="en'+(kind==='logo'?'Logo':'Stamp')+'File" accept="image/*" '+
+          'style="width:100%">'+
+        '<div style="display:flex;gap:8px;margin-top:8px">'+
+          '<button class="btn btn-ghost" type="button" style="width:auto" '+
+            'onclick="enImgUp(&quot;'+kind+'&quot;)">อัปโหลดรูปใหม่</button>'+
+          (id ? ('<button class="btn btn-ghost" type="button" style="width:auto" '+
+            'onclick="enImgClear(&quot;'+kind+'&quot;)">ลบรูป</button>') : '')+
+        '</div>'+
+        '<div class="rs-note" style="margin-top:9px">ไฟล์ PNG พื้นหลังใสจะสวยที่สุด · '+
+        'ระบบย่อให้ด้านยาวไม่เกิน 600 px เอง</div>'+
+      '</div></div>';
+  }
+
+  /** รูปใน Drive ยังไม่ได้เปิดให้ดูด้วยลิงก์ = โชว์ตัวอย่างไม่ได้ (ตัวเอกสารยังใช้ได้ปกติ) */
+  function coImgFail(img){
+    var id=img.getAttribute('data-id')||'', box=img.parentNode;
+    if(!box) return;
+    box.innerHTML='<div class="co-img-n">ดูตัวอย่างไม่ได้ค่ะ<br>'+
+      '(ไฟล์ใน Drive ยังไม่ได้เปิดให้ดูด้วยลิงก์ — เอกสารยังใส่รูปนี้ได้ปกติ)<br>'+
+      (id?('<a href="https://drive.google.com/file/d/'+esc(id)+'/view" target="_blank" '+
+        'rel="noopener">เปิดไฟล์ใน Drive ↗</a>'):'')+'</div>';
   }
 
   /* 🏦 บัญชีที่แสดงบนเอกสารให้ลูกค้าโอน — จัดการจากเว็บ ไม่ต้องเข้าชีต */
@@ -11493,7 +11616,10 @@
       '<div class="fld"><label>โทรศัพท์ (แสดงบนเอกสาร)</label><input id="enPhone" value="'+esc(e.phone||'')+'"></div>'+
       '<div class="fld"><label>อีเมล (แสดงบนเอกสาร)</label><input id="enEmail" value="'+esc(e.email||'')+'"></div>'+
       '<div class="fld"><label>เว็บไซต์ (แสดงบนเอกสาร)</label><input id="enWeb" value="'+esc(e.website||'')+'"></div>'+
-      (isNew ? '<div class="m-hint">บันทึกบริษัทก่อน แล้วกลับมาอัปโหลดโลโก้กับตราประทับได้ค่ะ</div>'
+      /* inline (หน้าตั้งค่าห้อง) แยกโลโก้/ตราประทับไปเป็นการ์ดของตัวเอง → coImgHtml
+         ป๊อบอัพหน้าจัดการนิติบุคคลยังใช้ช่องอัปโหลดในฟอร์มเหมือนเดิม */
+      (inline ? ''
+        : isNew ? '<div class="m-hint">บันทึกบริษัทก่อน แล้วกลับมาอัปโหลดโลโก้กับตราประทับได้ค่ะ</div>'
         : ('<div style="margin:16px 0 8px;font-weight:600;color:var(--brand)">โลโก้และตราประทับ</div>'+
            '<div class="fld"><label>โลโก้บริษัท</label>'+
              '<div style="display:flex;gap:8px;align-items:center">'+
@@ -11511,7 +11637,9 @@
              (e.hasStamp?'✅ มีตราประทับแล้ว':'ยังไม่มีตราประทับ — เอกสารเว้นช่องไว้')+'</div></div>'))+
       '<div class="m-hint">ลายเซ็นยังตั้งในชีตเหมือนเดิมค่ะ (file id ของ Drive) — ไม่ใส่ = ใช้ลายเซ็นพี่กี้</div>'+
       (inline
-        ? '<div style="margin-top:14px"><button class="btn btn-primary" onclick="entSave()">บันทึกข้อมูลบริษัท</button></div>'
+        ? ('<div class="st-act">'+
+           '<button class="btn btn-primary" onclick="entSave()">บันทึกข้อมูลบริษัท</button>'+
+           '<button class="btn btn-ghost" onclick="stEdit(&quot;co&quot;)">ยกเลิก</button></div>')
         : ('<div class="m-act"><button class="btn btn-ghost" onclick="entBack()">ย้อนกลับ</button>'+
            '<button class="btn btn-primary" onclick="entSave()">บันทึก</button></div>'));
   }
@@ -11594,7 +11722,8 @@
       nameEn:((($('enNameEn')||{}).value)||'').trim()}), 'บันทึกแล้ว').then(function(r){
       if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
       toast('🏢 บันทึก '+r.code+' แล้ว'+(r.isNew?' (บริษัทใหม่)':''));
-      entManage();
+      ST_EDIT.co=false;                  // บันทึกแล้วล็อกกลับ กันพิมพ์ทับต่อโดยไม่ตั้งใจ
+      entBack();                         // อยู่หน้าตั้งค่าห้อง = โหลดการ์ดบริษัทใหม่ (ไม่เด้งหน้า)
     }).catch(function(e){ mErr(e.message); });
   }
   window.entManage=entManage; window.entEdit=entEdit; window.entSave=entSave;
@@ -16267,7 +16396,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260917-2311';
+  var APP_BUILD='20260917-2338';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
