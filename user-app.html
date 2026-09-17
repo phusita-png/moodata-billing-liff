@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260917-2202">
+<link rel="stylesheet" href="user.css?v=20260917-2205">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -206,6 +206,15 @@
     .st-wrap .kp-tab{flex:none;white-space:nowrap}
     .st-todo{background:#FDF6E7;border:1px solid #F0D9A8;border-radius:10px;padding:13px 15px;
       font-size:14px;color:#7A5B12;line-height:1.75}
+  /* ชุดสีสำเร็จ — กดเลือกได้เลย ไม่ต้องพิมพ์เลขสี */
+  .en-pal{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 8px}
+    .en-sw{width:34px;height:34px;border-radius:9px;border:2px solid transparent;cursor:pointer;padding:0;
+      box-shadow:inset 0 0 0 1px rgba(0,0,0,.14)}
+    .en-sw.on{border-color:#111827;box-shadow:inset 0 0 0 2px #fff, 0 0 0 1px rgba(0,0,0,.2)}
+    .en-sw:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+  /* ฟอร์มบริษัทที่แสดงในหน้า (ไม่ใช่ป๊อบอัพ) — ปุ่มไม่ยืดเต็มจอ */
+  .co-form .btn{width:auto}
+    .co-form .m-hint{margin-top:10px}
     .rs-h{ font-size:16px; font-weight:800; color:#1F2733; }
   .rs-sub{ font-size:12.5px; color:var(--muted); margin:4px 0 13px; line-height:1.6; }
   .rs-st{ display:flex; flex-direction:column; gap:3px; padding:12px 14px; border-radius:13px; margin-bottom:14px; }
@@ -2746,13 +2755,37 @@
   /* 🏢 ข้อมูลบริษัทและหน้าตาเอกสาร — พี่กี้ขอรวมมาไว้ที่ตั้งค่าห้อง (17 ก.ย. 69)
      ⚠️ ค่ายังเก็บที่ชีต "นิติบุคคล" ที่เดิม — ทุกระบบ (เอกสาร/ภาษี/เงินเดือน) อ่านจากที่นั่นอยู่แล้ว
         ตั้งที่นี่ทีเดียวจึงมีผลทุกระบบ โดยไม่ต้องย้ายข้อมูล */
+  /* พี่กี้ขอ 17 ก.ย. 69: "หน้าตั้งค่าบริษัท โชว์ออกมาเลย" — ไม่ต้องกดปุ่มเปิดป๊อบอัพ
+     มีบริษัทเดียว = ฟอร์มขึ้นเลย · หลายบริษัท = แถวเลือกด้านบน แล้วฟอร์มของตัวที่เลือกอยู่ข้างล่าง */
+  var CO_PICK = 0;
   function roomCoHtml(){
     return '<div class="card"><div class="pb" style="padding:16px 18px">'+
-      '<div class="rs-h">🏢 ข้อมูลบริษัทและหน้าตาเอกสาร</div>'+
+      '<div class="rs-h">ข้อมูลบริษัทและหน้าตาเอกสาร</div>'+
       '<div class="rs-sub">ชื่อบริษัท · เลขที่ภาษี · ที่อยู่ · จด VAT · สีองค์กร · โลโก้ · ตราประทับ · ช่องทางติดต่อ<br>'+
       'ตั้งที่นี่ที่เดียว มีผลกับเอกสารทุกใบและทุกระบบที่ออกเอกสาร</div>'+
       '<div id="rsCoList"><div class="emptybox">กำลังโหลด…</div></div>'+
       '</div></div>';
+  }
+
+  /** เลือกบริษัทที่จะแก้ (เมื่อมีหลายบริษัท) */
+  function coPick(i){ CO_PICK=i; coRender(); }
+
+  /** วาดก้อนบริษัท: แถวเลือก (ถ้ามีหลายบริษัท) + ฟอร์มของตัวที่เลือก */
+  function coRender(){
+    var box=$('rsCoList'); if(!box) return;
+    if(!CO_ENTS.length){
+      box.innerHTML='<div class="emptybox">ยังไม่มีบริษัทในระบบ — กดเมนู 🏢 ตั้งค่านิติบุคคล ในชีตก่อนค่ะ</div>';
+      return;
+    }
+    if(CO_PICK>=CO_ENTS.length) CO_PICK=0;
+    var head='';
+    if(CO_ENTS.length>1){
+      head='<div class="kp-tabs" style="margin:0 0 14px">'+CO_ENTS.map(function(e,i){
+        return '<button class="kp-tab'+(i===CO_PICK?' on':'')+'" onclick="coPick('+i+')">'+
+          esc(e.name||e.code)+'</button>';
+      }).join('')+'</div>';
+    }
+    box.innerHTML=head+'<div class="co-form">'+entFormHtml(CO_ENTS[CO_PICK], false, true)+'</div>';
   }
 
   /* 🏦 บัญชีที่พิมพ์บนเอกสารให้ลูกค้าโอน — จัดการจากเว็บ ไม่ต้องเข้าชีต */
@@ -2868,7 +2901,8 @@
         box.innerHTML='<div class="emptybox">ยังไม่มีบริษัทในระบบ — กดเมนู 🏢 ตั้งค่านิติบุคคล ในชีตก่อนค่ะ</div>';
         return;
       }
-      box.innerHTML=CO_ENTS.map(coRowHtml).join('');
+      ENTS=CO_ENTS;
+      coRender();
     }).catch(function(){});
 
   }
@@ -11294,10 +11328,33 @@
     }).catch(function(e){ unbusy(); toast(e.message); });
   }
   /** i = index ใน ENTS · -1 = เพิ่มใหม่ */
-  function entEdit(i){
-    var e=(i>=0?ENTS[i]:null)||{};
-    var isNew=(i<0);
-    modal('<h3>'+(isNew?'➕ เพิ่มนิติบุคคล':'✏️ แก้ '+esc(e.code))+'</h3><div id="mErr" class="m-err hidden"></div>'+
+  /** ชุดสีสำเร็จให้เลือก — ชุดเดียวกับที่พี่กี้เลือกไว้ตอนออกแบบฟอร์มเอกสาร (17 ก.ย. 69) */
+  var EN_PALETTE = [
+    ['#1E8FE1','ฟ้ายินดี'], ['#1F3864','น้ำเงินเข้ม'], ['#1D5347','เขียวหยก'],
+    ['#98191F','แดงเข้ม'], ['#41306F','ม่วงเข้ม'], ['#B45309','ส้มอิฐ']
+  ];
+  function enPaletteHtml(cur){
+    return '<div class="en-pal">'+EN_PALETTE.map(function(p){
+      var on = String(cur||'').toUpperCase()===p[0].toUpperCase();
+      return '<button type="button" class="en-sw'+(on?' on':'')+'" title="'+esc(p[1])+'" '+
+        'style="background:'+p[0]+'" onclick="enPick(&quot;'+p[0]+'&quot;)"></button>';
+    }).join('')+'</div>';
+  }
+  /** กดสวอตช์ = เติมลงช่องสีทั้งคู่ แล้วไฮไลต์ตัวที่เลือก */
+  function enPick(hex){
+    var t=$('enColor'), p=$('enColorPick');
+    if(t) t.value=hex;
+    if(p) p.value=hex;
+    Array.prototype.forEach.call(document.querySelectorAll('.en-sw'), function(b){
+      b.classList.toggle('on', (b.getAttribute('style')||'').toUpperCase().indexOf(hex.toUpperCase())>=0);
+    });
+  }
+
+  /** markup ฟอร์มบริษัท · inline=true คือแสดงในหน้า (ไม่ใช่ป๊อบอัพ) */
+  function entFormHtml(e, isNew, inline){
+    e = e || {};
+    return (inline ? '' : ('<h3>'+(isNew?'➕ เพิ่มนิติบุคคล':'✏️ แก้ '+esc(e.code))+'</h3>'))+
+      '<div id="mErr" class="m-err hidden"></div>'+
       '<div class="fld"><label>รหัสบริษัท (ไปอยู่ในเลขเอกสาร เช่น IV-<b>RM89</b>-6809-001)</label>'+
         '<input id="enCode" value="'+esc(e.code||'')+'"'+(isNew?'':' readonly style="background:#F3F4F7"')+
         ' placeholder="เช่น RM89"></div>'+
@@ -11325,6 +11382,7 @@
       // ── หน้าตาเอกสาร (17 ก.ย. 69) — สี · ช่องทางติดต่อ · โลโก้ · ตราประทับ ──
       '<div style="margin:14px 0 6px;font-weight:600;color:var(--brand)">หน้าตาเอกสาร</div>'+
       '<div class="fld"><label>สีองค์กร (ใช้กับชื่อใบ · กล่องเลขที่ · หัวตาราง)</label>'+
+        enPaletteHtml(e.brandColor)+
         '<div style="display:flex;gap:8px;align-items:center">'+
           '<input type="color" id="enColorPick" value="'+esc(e.brandColor||'#1F3864')+'" '+
             'style="width:52px;height:38px;padding:2px;border:1px solid var(--line);border-radius:8px" '+
@@ -11351,8 +11409,16 @@
              '</div><div style="color:#8A94A6;font-size:12px;margin-top:3px">'+
              (e.hasStamp?'✅ มีตราประทับแล้ว':'ยังไม่มีตราประทับ — เอกสารเว้นช่องไว้')+'</div></div>'))+
       '<div class="m-hint">ลายเซ็นยังตั้งในชีตเหมือนเดิมค่ะ (file id ของ Drive) — ไม่ใส่ = ใช้ลายเซ็นพี่กี้</div>'+
-      '<div class="m-act"><button class="btn btn-ghost" onclick="entBack()">ย้อนกลับ</button>'+
-      '<button class="btn btn-primary" onclick="entSave()">บันทึก</button></div>');
+      (inline
+        ? '<div style="margin-top:14px"><button class="btn btn-primary" onclick="entSave()">บันทึกข้อมูลบริษัท</button></div>'
+        : ('<div class="m-act"><button class="btn btn-ghost" onclick="entBack()">ย้อนกลับ</button>'+
+           '<button class="btn btn-primary" onclick="entSave()">บันทึก</button></div>'));
+  }
+
+  /** เปิดฟอร์มบริษัทเป็นป๊อบอัพ (ใช้จากหน้าจัดการนิติบุคคล) */
+  function entEdit(i){
+    var e=(i>=0?ENTS[i]:null)||{};
+    modal(entFormHtml(e, i<0, false));
   }
   /** ช่องสีกับช่องข้อความเดินคู่กัน (from=1 คือลากจากตัวเลือกสี) */
   function enColorSync(fromPicker){
@@ -16100,7 +16166,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260917-2202';
+  var APP_BUILD='20260917-2205';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
