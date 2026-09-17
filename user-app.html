@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260917-2301">
+<link rel="stylesheet" href="user.css?v=20260917-2311">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -207,7 +207,12 @@
     .st-todo{background:#FDF6E7;border:1px solid #F0D9A8;border-radius:10px;padding:13px 15px;
       font-size:14px;color:#7A5B12;line-height:1.75}
   /* หัวข้อย่อยของหน้าตั้งค่าในแถบซ้าย — เยื้องเข้าให้เห็นว่าเป็นหัวข้อในหน้า ไม่ใช่เมนูใหม่ */
-  .nav-btn.nav-st{padding-left:30px;font-size:14.5px}
+  .nav-btn.nav-st{padding-left:26px;font-size:14.5px}
+    .nav-btn.nav-st svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.9;
+      stroke-linecap:round;stroke-linejoin:round;flex:none}
+  /* 2 ช่องต่อแถว (จอคอม) — ประหยัดที่และดูสมดุล · มือถือซ้อนลงเป็นแถวเดียว */
+  .en-row{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+    @media (max-width:720px){ .en-row{grid-template-columns:1fr} }
   /* ชุดสีสำเร็จ — กดเลือกได้เลย ไม่ต้องพิมพ์เลขสี */
   .en-pal{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 8px}
     .en-sw{width:34px;height:34px;border-radius:9px;border:2px solid transparent;cursor:pointer;padding:0;
@@ -2654,6 +2659,15 @@
   }
 
   /* แท็บของหน้าตั้งค่าห้อง (พี่กี้ออกแบบ 17 ก.ย. 69) — กดแท็บไหนแสดงหน้านั้น ไม่ต้องเลื่อนยาว */
+  /* ไอคอนเส้นของหัวข้อตั้งค่า — โทนเดียวกับโมดูล KPI (เส้น 2px ไม่มีพื้นสี) */
+  var ST_ICON = {
+    drive:'<svg viewBox="0 0 24 24"><path d="M3.5 7.5A2 2 0 0 1 5.5 5.5h4l2 2.4h7a2 2 0 0 1 2 2v8.1a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/></svg>',
+    co:'<svg viewBox="0 0 24 24"><path d="M4 20V6.2a1.6 1.6 0 0 1 1.2-1.6l7-1.6a1.2 1.2 0 0 1 1.5 1.2V20"/><path d="M13.7 9.5h4.6A1.7 1.7 0 0 1 20 11.2V20"/><path d="M3 20h18"/><path d="M7.4 8.8h2.6M7.4 12.3h2.6M7.4 15.8h2.6"/></svg>',
+    user:'<svg viewBox="0 0 24 24"><circle cx="12" cy="8.4" r="3.4"/><path d="M5.4 20c0-3.4 2.9-5.4 6.6-5.4s6.6 2 6.6 5.4"/></svg>',
+    docno:'<svg viewBox="0 0 24 24"><path d="M6.5 3.5h7.8L19 8.2V20a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 20V5a1.5 1.5 0 0 1 1.5-1.5z"/><path d="M14 3.7V8.5h4.8"/><path d="M8.3 13.5h7.4M8.3 17h4.8"/></svg>',
+    money:'<svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="11" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M6.4 12h.01M17.6 12h.01"/></svg>'
+  };
+
   var ST_TABS = [
     { key:'drive', label:'ตั้งค่า Drive' },
     { key:'co',    label:'ตั้งค่าบริษัท' },
@@ -3595,7 +3609,10 @@
         list.forEach(addBtn);
       });
     }
-    vs.forEach(addBtn);          // เมนูที่ไม่ได้อยู่ในช่วงไหน (หรือโมดูลที่ไม่แบ่งช่วง) ต่อท้ายเสมอ
+    /* โมดูลที่มีหน้าเดียวและชื่อหน้าตรงกับชื่อโมดูล (เช่น ⚙️ ตั้งค่าห้อง) — หัวโมดูลบอกอยู่แล้ว
+       ใส่ปุ่มอีกก็ซ้ำกันสองอัน (พี่กี้ทัก 17 ก.ย. 69) */
+    var dupSolo = vs.length === 1 && String(VIEW_TAB[vs[0]] || '') === String(m.th || '');
+    if (!dupSolo) vs.forEach(addBtn);   // เมนูที่ไม่ได้อยู่ในช่วงไหน ต่อท้ายเสมอ
 
     navStItems();     // หัวข้อย่อยของหน้าตั้งค่า (ถ้ากำลังอยู่หน้านั้น)
 
@@ -3637,7 +3654,7 @@
       b.className='nav-btn nav-st'+(t.key===ST_TAB?' active':'');
       b.setAttribute('data-st', t.key);
       b.setAttribute('aria-label', t.label);
-      b.innerHTML='<span>'+esc(t.label)+'</span>';
+      b.innerHTML=(ST_ICON[t.key]||'')+'<span>'+esc(t.label)+'</span>';
       b.addEventListener('click', function(){ stGo(t.key); });
       put(b);
     });
@@ -11444,24 +11461,26 @@
         '<input type="checkbox" id="enVat"'+(e.vatReg?' checked':'')+' style="margin-top:3px">'+
         '<span><b>จดภาษีมูลค่าเพิ่ม (VAT)</b><br>'+
         '<span style="color:#8A94A6;font-size:12px">ติ๊ก = เอกสารขายบวก VAT 7% และใบเสร็จเป็นใบกำกับภาษีในตัว</span></span></label>'+
-      '<div class="fld"><label>ทุนจดทะเบียนที่ชำระแล้ว (ใช้ตัดสิน SME ใน ภ.ง.ด.51 · ไม่ใส่ก็ได้)</label>'+
-        '<input id="enCap" inputmode="decimal" value="'+esc(e.paidCapital||'')+'"></div>'+
-      /* พี่กี้ขอ 17 ก.ย. 69: ให้กดเลือกวัน/เดือน ไม่ต้องพิมพ์ MM-DD เอง
-         ค่าที่เก็บยังเป็น 'MM-DD' เหมือนเดิม (ตรรกะ ภ.ง.ด.51 อ่านรูปแบบนี้อยู่ ห้ามเปลี่ยน) */
-      '<div class="fld"><label>วันเริ่มรอบบัญชี (ไม่เลือก = 1 มกราคม)</label>'+
-        '<div style="display:flex;gap:8px">'+
-          '<select id="enFiscalD" style="flex:1" onchange="enFiscalSync()">'+enDayOpts(e.fiscalStart)+'</select>'+
-          '<select id="enFiscalM" style="flex:2" onchange="enFiscalSync()">'+enMonthOpts(e.fiscalStart)+'</select>'+
-        '</div>'+
-        '<input type="hidden" id="enFiscal" value="'+esc(e.fiscalStart||'')+'"></div>'+
+      /* พี่กี้ขอ 17 ก.ย. 69: ทุนจดทะเบียนกับรอบบัญชีอยู่แถวเดียวกัน ประหยัดที่และดูสมดุล
+         ค่ารอบบัญชีที่เก็บยังเป็น 'MM-DD' เหมือนเดิม (ตรรกะ ภ.ง.ด.51 อ่านรูปแบบนี้ ห้ามเปลี่ยน) */
+      '<div class="en-row">'+
+        '<div class="fld"><label>ทุนจดทะเบียนที่ชำระแล้ว (ใช้ตัดสิน SME ใน ภ.ง.ด.51 · ไม่ใส่ก็ได้)</label>'+
+          '<input id="enCap" inputmode="decimal" value="'+esc(e.paidCapital||'')+'"></div>'+
+        '<div class="fld"><label>วันเริ่มรอบบัญชี (ไม่เลือก = 1 มกราคม)</label>'+
+          '<div style="display:flex;gap:8px">'+
+            '<select id="enFiscalD" style="flex:1" onchange="enFiscalSync()">'+enDayOpts(e.fiscalStart)+'</select>'+
+            '<select id="enFiscalM" style="flex:1.6" onchange="enFiscalSync()">'+enMonthOpts(e.fiscalStart)+'</select>'+
+          '</div>'+
+          '<input type="hidden" id="enFiscal" value="'+esc(e.fiscalStart||'')+'"></div>'+
+      '</div>'+
       '<div class="fld"><label>สถานะ</label><select id="enStatus">'+
         '<option value="ใช้งาน"'+(String(e.status||'').indexOf('ปิด')>=0?'':' selected')+'>ใช้งาน</option>'+
         '<option value="ปิด"'+(String(e.status||'').indexOf('ปิด')>=0?' selected':'')+'>ปิด (ไม่ให้เลือกตอนออกเอกสาร)</option>'+
       '</select></div>'+
       '<div class="fld"><label>หมายเหตุ</label><input id="enNote" value="'+esc(e.note||'')+'"></div>'+
       // ── หน้าตาเอกสาร (17 ก.ย. 69) — สี · ช่องทางติดต่อ · โลโก้ · ตราประทับ ──
-      '<div style="margin:14px 0 6px;font-weight:600;color:var(--brand)">หน้าตาเอกสาร</div>'+
-      '<div class="fld"><label>สีองค์กร (ใช้กับชื่อใบ · กล่องเลขที่ · หัวตาราง)</label>'+
+      '<div style="margin:16px 0 8px;font-weight:600;color:var(--brand)">สีหลักของเอกสาร</div>'+
+      '<div class="fld"><label>ใช้กับชื่อใบ · กล่องเลขที่เอกสาร · หัวตาราง · กล่องยอดรวม</label>'+
         enPaletteHtml(e.brandColor)+
         '<div style="display:flex;gap:8px;align-items:center">'+
           '<input type="color" id="enColorPick" value="'+esc(e.brandColor||'#1F3864')+'" '+
@@ -11470,11 +11489,13 @@
           '<input id="enColor" value="'+esc(e.brandColor||'')+'" placeholder="ว่าง = สีกลางของระบบ" '+
             'oninput="enColorSync(0)" style="flex:1">'+
         '</div></div>'+
+      '<div style="margin:16px 0 8px;font-weight:600;color:var(--brand)">ช่องทางติดต่อบนเอกสาร</div>'+
       '<div class="fld"><label>โทรศัพท์ (แสดงบนเอกสาร)</label><input id="enPhone" value="'+esc(e.phone||'')+'"></div>'+
       '<div class="fld"><label>อีเมล (แสดงบนเอกสาร)</label><input id="enEmail" value="'+esc(e.email||'')+'"></div>'+
       '<div class="fld"><label>เว็บไซต์ (แสดงบนเอกสาร)</label><input id="enWeb" value="'+esc(e.website||'')+'"></div>'+
       (isNew ? '<div class="m-hint">บันทึกบริษัทก่อน แล้วกลับมาอัปโหลดโลโก้กับตราประทับได้ค่ะ</div>'
-        : ('<div class="fld"><label>โลโก้บริษัท</label>'+
+        : ('<div style="margin:16px 0 8px;font-weight:600;color:var(--brand)">โลโก้และตราประทับ</div>'+
+           '<div class="fld"><label>โลโก้บริษัท</label>'+
              '<div style="display:flex;gap:8px;align-items:center">'+
              '<input type="file" id="enLogoFile" accept="image/*" style="flex:1">'+
              '<button class="btn btn-ghost" onclick="enImgUp(&quot;logo&quot;)">อัปโหลด</button>'+
@@ -16246,7 +16267,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260917-2301';
+  var APP_BUILD='20260917-2311';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
