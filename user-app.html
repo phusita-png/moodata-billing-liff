@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260917-2100">
+<link rel="stylesheet" href="user.css?v=20260917-2202">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -198,20 +198,14 @@
       box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
     .rs-co-tx{flex:1 1 auto;min-width:0;font-size:14px;line-height:1.5;word-break:break-word}
     .rs-co-tx small{color:#8A94A6;font-size:12px}
-  /* แท็บย่อยของหน้าตั้งค่า — เรียงแนวนอนเหมือนแท็บชีต เลื่อนได้บนมือถือ */
-  .st-tabs{display:flex;gap:6px;overflow-x:auto;padding:4px 0 10px;-webkit-overflow-scrolling:touch}
-    .st-tabs::-webkit-scrollbar{height:0}
-    .st-tab{flex:none;padding:8px 15px;border-radius:10px 10px 0 0;border:1px solid var(--line);
-      border-bottom:2px solid transparent;background:#F4F7FB;color:#5A6B7B;font:inherit;font-size:13.5px;
-      cursor:pointer;white-space:nowrap}
-    .st-tab[aria-selected="true"]{background:#fff;color:var(--brand);font-weight:700;
-      border-bottom-color:var(--brand)}
-    .st-sub{display:flex;gap:16px;border-bottom:1px solid var(--line);margin:-2px 0 14px}
-    .st-sub button{padding:9px 2px;border:none;background:none;font:inherit;font-size:13.5px;
-      color:#5A6B7B;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
-    .st-sub button[aria-selected="true"]{color:var(--brand);font-weight:700;border-bottom-color:var(--brand)}
+  /* แท็บหน้าตั้งค่า — ใช้ .kp-tabs/.kp-tab ตัวเดียวกับโมดูล KPI (พี่กี้เคาะขนาดไว้แล้ว 10 ก.ย. 69:
+     แท็บต้องใหญ่กว่าเนื้อหาข้างในเพื่อให้เห็นว่าเป็นปุ่ม) — ไม่สร้างระบบแท็บที่สอง
+     ที่นี่แค่ทำให้เลื่อนแนวนอนได้บนมือถือ เพราะหน้าตั้งค่ามี 5 แท็บ */
+  .st-wrap .kp-tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .st-wrap .kp-tabs::-webkit-scrollbar{height:0}
+    .st-wrap .kp-tab{flex:none;white-space:nowrap}
     .st-todo{background:#FDF6E7;border:1px solid #F0D9A8;border-radius:10px;padding:13px 15px;
-      font-size:13.5px;color:#7A5B12;line-height:1.7}
+      font-size:14px;color:#7A5B12;line-height:1.75}
     .rs-h{ font-size:16px; font-weight:800; color:#1F2733; }
   .rs-sub{ font-size:12.5px; color:var(--muted); margin:4px 0 13px; line-height:1.6; }
   .rs-st{ display:flex; flex-direction:column; gap:3px; padding:12px 14px; border-radius:13px; margin-bottom:14px; }
@@ -2648,11 +2642,11 @@
 
   /* แท็บของหน้าตั้งค่าห้อง (พี่กี้ออกแบบ 17 ก.ย. 69) — กดแท็บไหนแสดงหน้านั้น ไม่ต้องเลื่อนยาว */
   var ST_TABS = [
-    { key:'drive', label:'① ตั้งค่า Drive' },
-    { key:'co',    label:'② ตั้งค่าบริษัท' },
-    { key:'user',  label:'③ สิทธิ์ผู้ใช้งาน' },
-    { key:'docno', label:'④ เลขที่เอกสาร' },
-    { key:'money', label:'⑤ ช่องทางการเงิน' }
+    { key:'drive', label:'ตั้งค่า Drive' },
+    { key:'co',    label:'ตั้งค่าบริษัท' },
+    { key:'user',  label:'สิทธิ์ผู้ใช้งาน' },
+    { key:'docno', label:'เลขที่เอกสาร' },
+    { key:'money', label:'ช่องทางการเงิน' }
   ];
   var ST_TAB = 'drive', ST_SUB = 'in';
   try{
@@ -2661,10 +2655,11 @@
   }catch(e){}
 
   function stTabsHtml(){
-    return '<div class="st-tabs" role="tablist">'+ST_TABS.map(function(t){
-      return '<button class="st-tab" role="tab" aria-selected="'+(t.key===ST_TAB)+'" '+
-        'onclick="stGo(&quot;'+t.key+'&quot;)">'+esc(t.label)+'</button>';
-    }).join('')+'</div>';
+    return '<div class="st-wrap"><div class="kp-tabs" role="tablist">'+ST_TABS.map(function(t){
+      return '<button class="kp-tab'+(t.key===ST_TAB?' on':'')+'" role="tab" '+
+        'aria-selected="'+(t.key===ST_TAB)+'" onclick="stGo(&quot;'+t.key+'&quot;)">'+
+        esc(t.label)+'</button>';
+    }).join('')+'</div></div>';
   }
 
   /** สลับแท็บ — จำไว้ใน sessionStorage ให้กลับมาที่แท็บเดิม */
@@ -2783,7 +2778,7 @@
   /** ③ สิทธิ์ผู้ใช้งาน — ยังไม่มีหน้าจอ บอกตรง ๆ ว่าตอนนี้ทำที่ไหน */
   function stUserHtml(){
     return '<div class="card"><div class="pb" style="padding:16px 18px">'+
-      '<div class="rs-h">③ สิทธิ์ผู้ใช้งาน</div>'+
+      '<div class="rs-h">สิทธิ์ผู้ใช้งาน</div>'+
       '<div class="rs-sub">ใครเข้าระบบได้ · เห็นโมดูลไหน · เป็นผู้ดูแลห้องหรือไม่</div>'+
       '<div class="st-todo"><b>ยังไม่ได้ย้ายมาหน้านี้ค่ะ</b><br>'+
       'ตอนนี้ตั้งที่ชีต <b>ทีมงาน</b> (คอลัมน์ "โมดูลที่เข้าได้") และทะเบียนกลางของห้อง<br>'+
@@ -2794,7 +2789,7 @@
   /** ④ เลขที่เอกสาร — ยังเป็นรูปแบบตายตัวในระบบ */
   function stDocNoHtml(){
     return '<div class="card"><div class="pb" style="padding:16px 18px">'+
-      '<div class="rs-h">④ เลขที่เอกสาร</div>'+
+      '<div class="rs-h">เลขที่เอกสาร</div>'+
       '<div class="rs-sub">ตัวอักษรนำหน้า · ปี/เดือน · จำนวนหลักของเลขรัน ของเอกสารแต่ละชนิด</div>'+
       '<div class="st-todo"><b>ตอนนี้ระบบใช้รูปแบบตายตัว</b><br>'+
       'เอกสารขาย: <b>QT-RM89-6809-001</b> (ชนิด-บริษัท-ปีเดือน พ.ศ.-เลขรัน 3 หลัก)<br>'+
@@ -2807,13 +2802,15 @@
 
   /** ⑤ ช่องทางการเงิน — 2 แท็บย่อย: รับชำระ / จ่ายชำระ */
   function stMoneyHtml(){
-    var sub = '<div class="st-sub">'+
-      '<button aria-selected="'+(ST_SUB==='in')+'" onclick="stSub(&quot;in&quot;)">ช่องทางการรับชำระเงิน</button>'+
-      '<button aria-selected="'+(ST_SUB==='out')+'" onclick="stSub(&quot;out&quot;)">ช่องทางการจ่ายชำระเงิน</button>'+
+    var sub = '<div class="kp-tabs" style="margin:10px 0 14px">'+
+      '<button class="kp-tab'+(ST_SUB==='in'?' on':'')+'" onclick="stSub(&quot;in&quot;)">'+
+        'ช่องทางการรับชำระเงิน</button>'+
+      '<button class="kp-tab'+(ST_SUB==='out'?' on':'')+'" onclick="stSub(&quot;out&quot;)">'+
+        'ช่องทางการจ่ายชำระเงิน</button>'+
       '</div>';
     if(ST_SUB==='out'){
       return '<div class="card"><div class="pb" style="padding:16px 18px">'+
-        '<div class="rs-h">⑤ ช่องทางการเงิน</div>'+sub+
+        '<div class="rs-h">ช่องทางการเงิน</div>'+sub+
         '<div class="rs-sub">บัญชี/ช่องทางที่บริษัทใช้จ่ายเงินออก — พิมพ์บนใบสำคัญจ่าย</div>'+
         '<div class="st-todo"><b>ตอนนี้บันทึกตอนกดจ่ายรายครั้ง</b><br>'+
         'ใบสั่งจ่ายจะให้เลือกช่องทาง (โอน · เช็ค · เงินสดย่อย) ตอนบันทึกการจ่าย<br>'+
@@ -2821,7 +2818,7 @@
         '</div></div>';
     }
     return '<div class="card"><div class="pb" style="padding:16px 18px">'+
-      '<div class="rs-h">⑤ ช่องทางการเงิน</div>'+sub+
+      '<div class="rs-h">ช่องทางการเงิน</div>'+sub+
       '<div class="rs-sub">บัญชีที่พิมพ์บนใบเสนอราคา/ใบแจ้งหนี้ให้ลูกค้าโอนเข้า · '+
       'มีหลายบัญชีได้ · บัญชีที่ติ๊ก "เริ่มต้น" คือตัวที่ขึ้นบนเอกสาร</div>'+
       '<div id="rsBankList"><div class="emptybox">กำลังโหลด…</div></div>'+
@@ -16103,7 +16100,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260917-2100';
+  var APP_BUILD='20260917-2202';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
