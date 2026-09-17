@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260917-1544">
+<link rel="stylesheet" href="user.css?v=20260917-2022">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -189,7 +189,12 @@
   @media (min-width:900px){ .upd-bar{ bottom:26px; } }
 
   /* ⚙️ หน้าตั้งค่าห้อง (T5) */
-  .rs-h{ font-size:16px; font-weight:800; color:#1F2733; }
+  .rs-co{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+    .rs-co:last-child{border-bottom:0}
+    .rs-co-sw{width:26px;height:26px;border-radius:7px;flex:none;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
+    .rs-co-tx{flex:1;min-width:0;font-size:14px;line-height:1.45}
+    .rs-co-tx small{color:#8A94A6;font-size:12px}
+    .rs-h{ font-size:16px; font-weight:800; color:#1F2733; }
   .rs-sub{ font-size:12.5px; color:var(--muted); margin:4px 0 13px; line-height:1.6; }
   .rs-st{ display:flex; flex-direction:column; gap:3px; padding:12px 14px; border-radius:13px; margin-bottom:14px; }
   .rs-st b{ font-size:14px; }
@@ -2641,7 +2646,7 @@
         '<div class="rs-note">🔒 ระบบจะลองสร้างไฟล์ทดสอบในโฟลเดอร์แล้วลบทิ้งทันที '+
         'ผ่านแล้วถึงจะบันทึก — กันบันทึกผ่านแต่ไปพังตอนออกเอกสารจริง</div>'+
       '</div></div>'+
-      roomModHtml() + roomAiHtml();
+      roomCoHtml() + roomBankHtml() + roomModHtml() + roomAiHtml();
   }
 
   /* ── โมดูลที่เปิดให้ห้องนี้ (พี่กี้ขอ 6 ก.ย.: ติ๊กเลือก ไม่ต้องพิมพ์ csv ในชีต) ──
@@ -2690,7 +2695,132 @@
       '</div></div>';
   }
 
+  /* 🏢 ข้อมูลบริษัทและหน้าตาเอกสาร — พี่กี้ขอรวมมาไว้ที่ตั้งค่าห้อง (17 ก.ย. 69)
+     ⚠️ ค่ายังเก็บที่ชีต "นิติบุคคล" ที่เดิม — ทุกระบบ (เอกสาร/ภาษี/เงินเดือน) อ่านจากที่นั่นอยู่แล้ว
+        ตั้งที่นี่ทีเดียวจึงมีผลทุกระบบ โดยไม่ต้องย้ายข้อมูล */
+  function roomCoHtml(){
+    return '<div class="card"><div class="pb" style="padding:16px 18px">'+
+      '<div class="rs-h">🏢 ข้อมูลบริษัทและหน้าตาเอกสาร</div>'+
+      '<div class="rs-sub">ชื่อบริษัท · เลขที่ภาษี · ที่อยู่ · จด VAT · สีองค์กร · โลโก้ · ตราประทับ · ช่องทางติดต่อ<br>'+
+      'ตั้งที่นี่ที่เดียว มีผลกับเอกสารทุกใบและทุกระบบที่ออกเอกสาร</div>'+
+      '<div id="rsCoList"><div class="emptybox">กำลังโหลด…</div></div>'+
+      '</div></div>';
+  }
+
+  /* 🏦 บัญชีที่พิมพ์บนเอกสารให้ลูกค้าโอน — จัดการจากเว็บ ไม่ต้องเข้าชีต */
+  function roomBankHtml(){
+    return '<div class="card"><div class="pb" style="padding:16px 18px">'+
+      '<div class="rs-h">🏦 บัญชีรับเงินของบริษัท</div>'+
+      '<div class="rs-sub">บัญชีที่พิมพ์บนใบเสนอราคา/ใบแจ้งหนี้ให้ลูกค้าโอนเข้า · มีหลายบัญชีได้ · '+
+      'บัญชีที่ติ๊ก "เริ่มต้น" คือตัวที่ขึ้นบนเอกสาร</div>'+
+      '<div id="rsBankList"><div class="emptybox">กำลังโหลด…</div></div>'+
+      '<button class="btn btn-ghost" type="button" onclick="coBankEdit(-1)" style="margin-top:10px">+ เพิ่มบัญชี</button>'+
+      '</div></div>';
+  }
+
+  var CO_ENTS=[], CO_BANKS=[], CO_BANKNAMES=[];
+  /** โหลดข้อมูลบริษัท + บัญชี มาเติม 2 ก้อนในหน้าตั้งค่าห้อง */
+  function roomCoLoad(){
+    jsonp({action:'waEntities',uid:UID}).then(function(r){
+      if(VIEW!=='roomset') return;
+      CO_ENTS=(r&&r.ok&&r.entities)||[];
+      ENTS=CO_ENTS;            // entEdit อ่านจาก ENTS — ต้องเติมให้ก่อนกดปุ่มตั้งค่า
+      ENT_DEF=(r&&r.defaultCode)||ENT_DEF;
+      var box=$('rsCoList'); if(!box) return;
+      if(!CO_ENTS.length){
+        box.innerHTML='<div class="emptybox">ยังไม่มีบริษัทในระบบ — กดเมนู 🏢 ตั้งค่านิติบุคคล ในชีตก่อนค่ะ</div>';
+        return;
+      }
+      box.innerHTML=CO_ENTS.map(function(e,i){
+        var miss=[];
+        if(!e.brandColor) miss.push('สี');
+        if(!e.hasLogo) miss.push('โลโก้');
+        if(!e.hasStamp) miss.push('ตราประทับ');
+        if(!e.phone&&!e.email) miss.push('ช่องทางติดต่อ');
+        return '<div class="rs-co">'+
+          '<span class="rs-co-sw" style="background:'+esc(e.brandColor||'#1F3864')+'"></span>'+
+          '<span class="rs-co-tx"><b>'+esc(e.name||e.code)+'</b><br>'+
+          '<small>'+esc(e.code)+(e.vatReg?' · จด VAT':' · ไม่จด VAT')+
+          (miss.length?(' · ยังไม่ได้ตั้ง: '+esc(miss.join(' · '))):' · ครบแล้ว ✅')+
+          '</small></span>'+
+          '<button class="btn btn-ghost" type="button" onclick="entEdit('+i+')">ตั้งค่า</button>'+
+        '</div>';
+      }).join('');
+    }).catch(function(){});
+
+    jsonp({action:'waCoBank',uid:UID}).then(function(r){
+      if(VIEW!=='roomset') return;
+      CO_BANKS=(r&&r.ok&&r.banks)||[];
+      CO_BANKNAMES=(r&&r.bankNames)||[];
+      var box=$('rsBankList'); if(!box) return;
+      var live=CO_BANKS.filter(function(b){ return String(b.status||'').indexOf('ปิด')<0; });
+      if(!live.length){
+        box.innerHTML='<div class="emptybox">ยังไม่มีบัญชี — เอกสารจะไม่มีบล็อกชำระเงิน</div>';
+        return;
+      }
+      box.innerHTML=live.map(function(b){
+        var i=CO_BANKS.indexOf(b);
+        return '<div class="rs-co">'+
+          '<span class="rs-co-tx"><b>'+esc(b.bank)+' · '+esc(b.accNo)+(b.isDefault?'  ⭐ เริ่มต้น':'')+'</b><br>'+
+          '<small>'+esc(b.accName||'-')+(b.branch?(' · สาขา'+esc(b.branch)):'')+
+          (b.entity?(' · บริษัท '+esc(b.entity)):'')+'</small></span>'+
+          '<button class="btn btn-ghost" type="button" onclick="coBankEdit('+i+')">แก้</button>'+
+        '</div>';
+      }).join('');
+    }).catch(function(){});
+  }
+
+  /** ฟอร์มบัญชีบริษัท (i = index ใน CO_BANKS · -1 = เพิ่มใหม่) */
+  function coBankEdit(i){
+    var b=(i>=0?CO_BANKS[i]:null)||{};
+    var isNew=(i<0);
+    var names=(CO_BANKNAMES.length?CO_BANKNAMES:['ธ.กสิกรไทย','ธ.ไทยพาณิชย์','ธ.กรุงไทย','ธ.กรุงเทพ','อื่นๆ']);
+    var bankOpts=names.map(function(n){
+      return '<option'+(n===b.bank?' selected':'')+'>'+esc(n)+'</option>';
+    }).join('');
+    var ents=(CO_ENTS.length?CO_ENTS:[{code:'',name:'บริษัทเริ่มต้น'}]);
+    var entOpts=ents.map(function(e){
+      return '<option value="'+esc(e.code)+'"'+(e.code===b.entity?' selected':'')+'>'+esc(e.name||e.code)+'</option>';
+    }).join('');
+    modal('<h3>'+(isNew?'➕ เพิ่มบัญชีรับเงิน':'✏️ แก้บัญชีรับเงิน')+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="fld"><label>บริษัทเจ้าของบัญชี</label><select id="cbEnt">'+entOpts+'</select></div>'+
+      '<div class="fld"><label>ธนาคาร</label><select id="cbBank">'+bankOpts+'</select></div>'+
+      '<div class="fld"><label>เลขที่บัญชี</label><input id="cbNo" inputmode="numeric" value="'+esc(b.accNo||'')+'" placeholder="048-1-25874-6"></div>'+
+      '<div class="fld"><label>ชื่อบัญชี</label><input id="cbName" value="'+esc(b.accName||'')+'"></div>'+
+      '<div class="fld"><label>สาขา (ไม่ใส่ก็ได้)</label><input id="cbBr" value="'+esc(b.branch||'')+'"></div>'+
+      '<label style="display:flex;gap:9px;align-items:flex-start;padding:10px;border:1px solid var(--line);border-radius:10px;margin:8px 0">'+
+        '<input type="checkbox" id="cbDef"'+(b.isDefault?' checked':'')+' style="margin-top:3px">'+
+        '<span><b>ใช้เป็นบัญชีเริ่มต้น</b><br><span style="color:#8A94A6;font-size:12px">'+
+        'บัญชีนี้จะขึ้นบนเอกสาร · ติ๊กแล้วบัญชีอื่นของบริษัทเดียวกันถูกปลดให้เอง</span></span></label>'+
+      '<div class="m-act">'+
+        (isNew?'':('<button class="btn btn-ghost" onclick="coBankClose('+(b.row||0)+')">ปิดบัญชีนี้</button>'))+
+        '<button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+        '<button class="btn btn-primary" onclick="coBankSave('+(b.row||0)+')">บันทึก</button></div>');
+  }
+
+  function coBankSave(row){
+    var no=((($('cbNo')||{}).value)||'').trim();
+    if(!no){ mErr('ใส่เลขที่บัญชีค่ะ'); return; }
+    callBusy('กำลังบันทึก…', jsonpPost({action:'waCoBankSave',uid:UID,row:row||'',
+      entity:(($('cbEnt')||{}).value)||'', bank:(($('cbBank')||{}).value)||'',
+      accNo:no, accName:((($('cbName')||{}).value)||'').trim(),
+      branch:((($('cbBr')||{}).value)||'').trim(),
+      isDefault:(($('cbDef')||{}).checked?'1':'')}), 'บันทึกแล้ว').then(function(r){
+      if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+      closeModal(); toast('🏦 บันทึกบัญชีแล้ว'); roomCoLoad();
+    });
+  }
+
+  function coBankClose(row){
+    if(!window.confirm('ปิดบัญชีนี้ไหมคะ? (ไม่ลบทิ้ง — เอกสารเก่ายังอ้างเลขบัญชีนี้ได้)')) return;
+    callBusy('กำลังปิด…', jsonp({action:'waCoBankClose',uid:UID,row:row}), 'ปิดแล้ว').then(function(r){
+      if(!r||!r.ok){ mErr((r&&r.error)||'ปิดไม่สำเร็จ'); return; }
+      closeModal(); toast('ปิดบัญชีแล้ว'); roomCoLoad();
+    });
+  }
+
   function bindRoomSet(){
+    roomCoLoad();
     var ab=$('rsAiBtn');
     if(ab) ab.addEventListener('click', function(){
       var on=!(RS_DATA&&RS_DATA.aiOn);
@@ -11013,7 +11143,13 @@
 
   /** 🏢 จัดการนิติบุคคล — ตั้งค่า "จด VAT" ได้จากที่นี่ ไม่ต้องพิมพ์ในชีต
    *  ⚠️ ค่าที่แก้มีผลกับใบที่ออก "หลังจากนี้" เท่านั้น (ใบเก่าเก็บ snapshot ของตัวเองไว้แล้ว) */
-  var ENTS=[];
+  var ENTS=[], ENT_DEF='';
+  /** กลับที่เดิมหลังแก้นิติบุคคล — เปิดจากตั้งค่าห้องต้องไม่เด้งไปหน้าจัดการนิติบุคคล */
+  function entBack(){
+    if(VIEW==='roomset'){ closeModal(); roomCoLoad(); return; }
+    entManage();
+  }
+
   function entManage(){
     busy('กำลังโหลดนิติบุคคล…');
     jsonp({action:'waEntities',uid:UID}).then(function(r){
@@ -11094,7 +11230,7 @@
              '</div><div style="color:#8A94A6;font-size:12px;margin-top:3px">'+
              (e.hasStamp?'✅ มีตราประทับแล้ว':'ยังไม่มีตราประทับ — เอกสารเว้นช่องไว้')+'</div></div>'))+
       '<div class="m-hint">ลายเซ็นยังตั้งในชีตเหมือนเดิมค่ะ (file id ของ Drive) — ไม่ใส่ = ใช้ลายเซ็นพี่กี้</div>'+
-      '<div class="m-act"><button class="btn btn-ghost" onclick="entManage()">ย้อนกลับ</button>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="entBack()">ย้อนกลับ</button>'+
       '<button class="btn btn-primary" onclick="entSave()">บันทึก</button></div>');
   }
   /** ช่องสีกับช่องข้อความเดินคู่กัน (from=1 คือลากจากตัวเลือกสี) */
@@ -11127,7 +11263,7 @@
           img:cv.toDataURL('image/png')}), 'อัปโหลดแล้ว').then(function(r){
           if(!r||!r.ok){ mErr((r&&r.error)||'อัปโหลดไม่สำเร็จ'); return; }
           toast(kind==='logo'?'🖼️ อัปโหลดโลโก้แล้ว':'🔖 อัปโหลดตราประทับแล้ว');
-          entManage();
+          entBack();
         });
       };
       img.onerror=function(){ mErr('อ่านไฟล์รูปไม่ได้ค่ะ ลองไฟล์อื่นนะคะ'); };
@@ -11144,7 +11280,7 @@
     callBusy('กำลังลบ…', jsonp({action:'waEntityImgClear',uid:UID,code:code,kind:kind}), 'ลบแล้ว')
       .then(function(r){
         if(!r||!r.ok){ mErr((r&&r.error)||'ลบไม่สำเร็จ'); return; }
-        toast('ลบแล้วค่ะ'); entManage();
+        toast('ลบแล้วค่ะ'); entBack();
       });
   }
 
@@ -15842,7 +15978,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260917-1544';
+  var APP_BUILD='20260917-2022';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
