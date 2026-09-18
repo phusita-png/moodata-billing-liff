@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260918-1700">
+<link rel="stylesheet" href="user.css?v=20260918-1731">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -9312,10 +9312,13 @@
     if(!x.receiptUrl) files='<div class="exd-nofile">📎 ไม่มีหลักฐานแนบจากพนักงาน'+
       (x.note?'<br><span style="font-weight:400">'+esc(x.note)+'</span>':'')+'</div>'+files;
 
+    /* ⚠️ ลิสต์ประเภทมาจากหน้าที่โหลดก่อนหน้า — ถ้าเข้าหน้านี้จากหน้าที่ไม่ได้ส่งลิสต์มา
+       ต้องไม่ปล่อยให้ช่องว่างเปล่าจนแก้อะไรไม่ได้ (พี่กี้เจอ 18 ก.ย. 69) */
     var typeOpts=EXP_TYPES.map(function(t){
       var lb=(typeof t==='string')?t:(t.label||t.key||'');
       return '<option value="'+esc(lb)+'"'+(lb===x.type?' selected':'')+'>'+esc(lb)+'</option>';
     }).join('');
+    if(!typeOpts) typeOpts='<option value="'+esc(x.type||'')+'" selected>'+esc(x.type||'— ไม่ระบุ —')+'</option>';
     var sectOpts='<option value="">— ไม่ระบุ —</option>'+SECTIONS.map(function(s){
       return '<option value="'+esc(s.code)+'"'+(s.code===x.incomeSection?' selected':'')+'>'+esc(s.code+' '+s.label)+'</option>';
     }).join('');
@@ -15871,6 +15874,8 @@ function kpImpDraw(){
         return;
       }
       DASH_YM=r.ym;
+      // ลิสต์ที่ฟอร์มแก้ไขใบเบิกต้องใช้ (หน้านี้เปิดหน้าแก้ไขต่อได้ · พี่กี้เจอ dropdown ว่าง 18 ก.ย. 69)
+      EXP_TYPES=r.types||EXP_TYPES; SECTIONS=r.sections||SECTIONS;
       // พี่/HR: บล็อกอนุมัติเบิกจ่าย อยู่บนสุดของหน้าสรุป (พี่ขอรวมหน้าเดียว 18 ก.ค.)
       var h=(IS_OWNER?'<div class="section-h">💸 อนุมัติเบิกจ่าย</div><div id="expApprBlock"></div><div class="section-h" style="margin-top:20px">📊 สรุปค่าใช้จ่าย</div>':'')+
         '<div class="ds-sel"><select id="dsYm" onchange="dsSetYm(this.value)">'+
@@ -16888,7 +16893,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260918-1700';
+  var APP_BUILD='20260918-1731';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
