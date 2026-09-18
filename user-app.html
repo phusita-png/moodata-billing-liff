@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260918-2142">
+<link rel="stylesheet" href="user.css?v=20260918-2212">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -267,6 +267,9 @@
   .us-tbl tr.us-off td{color:#8A94A6}
   .us-tbl .btn-sm{width:auto;padding:6px 12px;font-size:13px}
   .us-card .st-act .btn{width:auto}
+  /* แถวใบที่ยกเลิก — ยังอยู่ในตารางเป็นหลักฐานว่าเลขไม่ได้ขาดช่วง แต่ต้องดูออกทันทีว่าไม่มีผลแล้ว */
+  .ex-void td{color:#94A3B8;background:#FAFBFC}
+  .ex-void td:first-child{text-decoration:line-through}
   .us-perm-list{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;margin:4px 0 2px}
     @media (max-width:520px){ .us-perm-list{grid-template-columns:1fr} }
     .us-perm-it{display:flex;align-items:center;gap:9px;padding:9px 11px;border:1px solid var(--line);
@@ -5615,6 +5618,9 @@
           (เขาเห็นเฉพาะลิงก์เอกสารของใบตัวเองเหมือนเดิม)
        เมนูที่เหลือคงไว้เป็นทางลัด ไม่ต้องเปิดหน้ารายละเอียดก่อนก็ทำงานเดิมได้ */
     a.push({ key:'detail', label:'🔎 เปิดดู / แก้ไข', call:'exDetail(' + q + ')' });
+    /* ใบที่ยกเลิกแล้ว (เลขเอกสารออกไปแล้ว) — ดูได้ แต่แก้/อนุมัติ/จ่าย/ยกเลิกซ้ำไม่ได้
+       เงื่อนไขตรงกับด่าน backend (expenseDead_) */
+    if(expVoided(x)) return a;
     // ── งานหลักตามสถานะ (อยู่บนสุดของกลุ่มคำสั่ง) ──
     if(pending){
       // ใบธรรมดาผ่าน exApprove — มีหลายนิติบุคคลถึงจะถามบริษัทก่อน (บริษัทเดียว = อนุมัติทันทีเหมือนเดิม)
@@ -5670,7 +5676,8 @@
     if(x.bankAcct && String(x.status || '').indexOf('จ่ายแล้ว') < 0)
       flag += '<br><span style="color:#1B7F4B">🏦 ' + esc(x.bankName || '') + ' · <b>' + esc(x.bankAcct) + '</b>' +
               (x.bankOwner ? ' · ' + esc(x.bankOwner) : '') + '</span>';
-    return '<tr id="exr-' + esc(x.no) + '">' +
+    // ใบที่ยกเลิก = ยังอยู่ในตาราง แต่ทาให้จางและขีดเลขที่ ให้เห็นว่าเลขนี้ถูกยกเลิก ไม่ใช่เลขขาดช่วง
+    return '<tr id="exr-' + esc(x.no) + '"' + (expVoided(x) ? ' class="ex-void"' : '') + '>' +
       '<td>' + esc(x.no) + '</td>' +
       '<td>' + esc(String(x.createdAt || '').split(' ')[0] || '-') + '</td>' +
       (showNick ? '<td>' + esc(x.nick || '-') + '</td>' : '') +
@@ -5696,7 +5703,11 @@
   }
   window.expRow = expRow; window.expTable = expTable;
 
-  function expBadge(s){ s=String(s||''); if(s.indexOf('จ่าย')>=0)return'b-done'; if(s.indexOf('ไม่')>=0)return'b-cancel'; if(s.indexOf('อนุมัติ')>=0)return'b-doing'; return'b-new'; }
+  /* 🚫 ยกเลิก ต้องมาก่อนคำอื่น — ข้อความมีคำว่า "ยกเลิก" อย่างเดียว ไม่มีคำว่าจ่าย/อนุมัติ
+     แต่กันไว้ให้ชัดว่าใบยกเลิกใช้ป้ายสีเทา ไม่ใช่สีเดียวกับ "จ่ายแล้ว" */
+  function expBadge(s){ s=String(s||''); if(s.indexOf('ยกเลิก')>=0)return'b-cancel'; if(s.indexOf('จ่าย')>=0)return'b-done'; if(s.indexOf('ไม่')>=0)return'b-cancel'; if(s.indexOf('อนุมัติ')>=0)return'b-doing'; return'b-new'; }
+  /** ใบนี้ถูกยกเลิกแล้วหรือยัง (ใช้ทาสีแถว/ซ่อนปุ่มจัดการ) */
+  function expVoided(x){ return String((x&&x.status)||'').indexOf('ยกเลิก')>=0; }
   function paintExpense(list){
     var html='<button class="btn btn-primary" style="width:100%;margin-bottom:10px" onclick="openExpense()">➕ แจ้งเบิกค่าใช้จ่าย</button>'+
       '<button class="btn btn-ghost" style="width:100%;margin-bottom:8px" onclick="openSign()">✍️ ลายเซ็นของฉัน<span id="sigState" style="color:#8A94A6;font-weight:400"></span></button>'+
@@ -8141,7 +8152,10 @@
     html+=poBlock('⏳ รออนุมัติ', PO.pending, 'pending')+
           poBlock('💸 อนุมัติแล้ว · รอจ่ายเงิน', PO.topay, 'topay')+
           poBlock('✅ จ่ายแล้ว (40 ใบล่าสุด)', PO.paid, 'done')+
-          poBlock('❌ ไม่อนุมัติ', PO.rejected, 'done');
+          poBlock('❌ ไม่อนุมัติ', PO.rejected, 'done')+
+          /* ใบที่ยกเลิก — เลขที่กินไปแล้วตอนตั้งเรื่อง ต้องเห็นว่า "เลขนี้ถูกยกเลิก" ไม่ใช่เลขขาดช่วง
+             (พี่กี้เคาะ 18 ก.ย. 69) · ยอดไม่ถูกนับในสรุปใด ๆ */
+          poBlock('🚫 ยกเลิก (เลขที่ยังอยู่ในทะเบียน)', PO.voided, 'done');
     $('main').innerHTML=html;
   }
   function poBlock(title, list, mode){
@@ -16903,7 +16917,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260918-2142';
+  var APP_BUILD='20260918-2212';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
