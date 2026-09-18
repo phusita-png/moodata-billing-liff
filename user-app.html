@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260918-1220">
+<link rel="stylesheet" href="user.css?v=20260918-1429">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -261,6 +261,11 @@
   .us-tbl tr.us-off td{color:#8A94A6}
   .us-tbl .btn-sm{width:auto;padding:6px 12px;font-size:13px}
   .us-card .st-act .btn{width:auto}
+  .us-perm-list{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;margin:4px 0 2px}
+    @media (max-width:520px){ .us-perm-list{grid-template-columns:1fr} }
+    .us-perm-it{display:flex;align-items:center;gap:9px;padding:9px 11px;border:1px solid var(--line);
+      border-radius:11px;font-size:14px;cursor:pointer;background:#fff}
+    .us-perm-it input{width:17px;height:17px;flex:none}
   .us-sig-th{max-height:34px;max-width:100%;object-fit:contain;display:block;margin-bottom:2px}
   .us-sig-st{font-size:12px;color:#5B6472}
   .us-sig-bad{display:none}
@@ -2409,7 +2414,9 @@
     { key:'tax',     th:'ระบบภาษี',     en:'TAX',         color:'#7A5AF8', g:['#c084fc','#6d28d9'], own:true,
       views:['taxhub','vatbuy','pnd51','finhist','whtin','taxdoc'] },
     { key:'hr',      th:'ระบบบุคคล',    en:'HR',          color:'#168a52', g:['#34d399','#047857'], own:true,
-      views:['approve','otapprove','hrreport','teamperm'] },
+      /* 🔐 teamperm ย้ายไปรวมใน ⚙️ ตั้งค่าห้อง ▸ ตั้งค่าผู้ใช้งาน (18 ก.ย. 69)
+         คง view ไว้ใน extra เผื่อลิงก์เก่า/ปุ่มค้าง — เข้าไปแล้วพาไปที่ใหม่ให้ */
+      views:['approve','otapprove','hrreport'], extra:['teamperm'] },
     /* 💵 เงินเดือน — แยกจากบุคคล (พี่กี้เคาะ 5 ก.ย. เย็น)
        ลูกค้าแพ็กการเงินก็ต้องทำเงินเดือน (ภ.ง.ด.1 ต้องมี 40(1)) แต่ไม่ต้องพา
        พนักงานทั้งบริษัทมาลงเวลา/ลา — คนละภาระกันคนละเรื่อง */
@@ -2646,6 +2653,15 @@
 
   /* ── ชั้น 2: สิทธิ์รายคนในห้อง (เจ้าของห้องเป็นคนกำหนด) ── */
   function renderTeamPerm(){
+    /* ย้ายไปรวมที่ ⚙️ ตั้งค่าห้อง ▸ ตั้งค่าผู้ใช้งาน แล้ว — ใครเข้าทางลิงก์เก่าให้พาไปที่ใหม่
+       (ปล่อยหน้าเดิมไว้ = ตั้งค่าได้ 2 ที่ แล้วไม่รู้ว่าอันไหนของจริง) */
+    try{ ST_TAB='user'; ST_SUB='perm'; ST_SUBS['user']='perm';
+      sessionStorage.setItem('yd-st-tab','user');
+      sessionStorage.setItem('yd-st-subs',JSON.stringify(ST_SUBS)); }catch(e){}
+    switchView('roomset');
+    return;
+  }
+  function renderTeamPermOld_(){
     skel();
     jsonp(withRoom_({ action:'waTeamPerm', uid:UID })).then(function(r){
       if(VIEW!=='teamperm') return;
@@ -3004,6 +3020,63 @@
   }
 
   /** ③ สิทธิ์ผู้ใช้งาน — ยังไม่มีหน้าจอ บอกตรง ๆ ว่าตอนนี้ทำที่ไหน */
+  /* ── 🔐 สิทธิ์โมดูลรายคน — ย้ายจากเมนู "สิทธิ์ทีม" มารวมที่นี่ (พี่กี้เคาะ 18 ก.ย. 69)
+     เหตุผล: สิทธิ์กับข้อมูลของคนเดียวกันอยู่คนละเมนู ต้องจำว่าอะไรอยู่ตรงไหน
+     ใช้ backend เดิมทั้งดุ้น (waTeamPerm / waTeamPermSave) — ไม่มีตรรกะสิทธิ์สายที่สอง */
+  var US_PERM=null;   // payload จาก waTeamPerm: { modList, team }
+
+  /** สรุปสิทธิ์ของคนหนึ่งเป็นข้อความสั้น — ฟังก์ชันบริสุทธิ์ */
+  function usPermText(p, modList){
+    if(!p) return 'ยังไม่ได้ตั้ง';
+    if(p.all || !p.mods || !p.mods.length) return 'ทุกโมดูลที่เปิดไว้';
+    var names=(modList||[]).filter(function(m){ return p.mods.indexOf(m.key)>=0; })
+      .map(function(m){ return m.label; });
+    if(!names.length) return 'ทุกโมดูลที่เปิดไว้';
+    return names.length>3 ? (names.slice(0,3).join(' · ')+' +'+(names.length-3)) : names.join(' · ');
+  }
+  /** หาแถวสิทธิ์ของ uid จาก payload */
+  function usPermOf(uid){
+    var team=(US_PERM&&US_PERM.team)||[];
+    for(var i=0;i<team.length;i++) if(team[i].uid===uid) return team[i];
+    return null;
+  }
+
+  /** โมดัลติ๊กโมดูลของคนนั้น (ใช้ตัวบันทึกเดิม waTeamPermSave) */
+  function usPerm(uid){
+    var p=usPermOf(uid), mods=(US_PERM&&US_PERM.modList)||[];
+    if(!mods.length){ toast('ห้องนี้ยังไม่ได้เปิดโมดูลที่ต้องกำหนดสิทธิ์ค่ะ'); return; }
+    var name=(p&&(p.name||p.nick))||'';
+    var all = !p || p.all || !p.mods || !p.mods.length;
+    modal('<h3>🔐 สิทธิ์ของ '+esc(name)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">ติ๊กว่าคนนี้เห็นโมดูลไหนได้บ้าง · <b>ไม่ติ๊กเลย = เห็นทุกโมดูลที่บริษัทเปิดไว้</b><br>'+
+      'เลือกได้เฉพาะโมดูลที่บริษัทเปิดใช้อยู่ — เมนูส่วนตัวกับช่องแจ้งปัญหาทุกคนเห็นเสมอ</div>'+
+      '<div class="us-perm-list">'+mods.map(function(m){
+        var on = all || p.mods.indexOf(m.key)>=0;
+        return '<label class="us-perm-it"><input type="checkbox" data-mod="'+esc(m.key)+'"'+
+          (on?' checked':'')+'><span>'+esc(m.label)+'</span></label>';
+      }).join('')+'</div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button>'+
+      '<button class="btn btn-primary" onclick="usPermSave(&quot;'+esc(uid)+'&quot;)">บันทึกสิทธิ์</button></div>');
+  }
+
+  function usPermSave(uid){
+    var mods=(US_PERM&&US_PERM.modList)||[], picked=[];
+    Array.prototype.forEach.call(document.querySelectorAll('.us-perm-list input[data-mod]'), function(c){
+      if(c.checked) picked.push(c.getAttribute('data-mod'));
+    });
+    // ติ๊กครบ = ไม่จำกัด (กติกาเดิมของ waTeamPermSave — รวมโมดูลที่ห้องซื้อเพิ่มทีหลังด้วย)
+    if(picked.length===mods.length) picked=[];
+    callBusy('กำลังบันทึกสิทธิ์…',
+      jsonpPost(withRoom_({ action:'waTeamPermSave', uid:UID, member:uid, mods:JSON.stringify(picked) })), 'บันทึกแล้ว')
+      .then(function(res){
+        if(!res||!res.ok){ mErr((res&&res.error)||'บันทึกไม่สำเร็จ'); return; }
+        closeModal();
+        toast(res.all ? 'ให้เห็นทุกโมดูลของบริษัท' : ('เปิด '+res.modules.length+' โมดูลให้คนนี้'));
+        usReload();
+      }).catch(function(e){ mErr(e.message); });
+  }
+  window.usPerm=usPerm; window.usPermSave=usPermSave;
+
   /** <img> ลายเซ็นจาก Drive — ต้องใช้ลิงก์รูปย่อ (coImgUrl) เพราะลิงก์ไฟล์ปกติของ Drive
       แสดงใน <img> ไม่ได้ (พี่กี้เจอกล่องลายเซ็นว่าง 18 ก.ย. 69)
       payload เก่าที่ยังไม่มี fileId → ตกไปใช้ url เดิมไว้ก่อน */
@@ -3029,18 +3102,20 @@
         esc(m.name||m.nick||'(ยังไม่มีชื่อ)')+'</button>'+
         (m.status==='ลาออก'?'<span class="us-left">ลาออกแล้ว</span>':'')+'</td>'+
       '<td>'+esc(m.position||'—')+'</td>'+
-      '<td class="dt-nw">'+esc(m.phone||'—')+'</td>'+
       '<td>'+(usHasBank(m)?'มีบัญชี':'<span class="us-warn">ยังไม่มีบัญชี</span>')+'</td>'+
       '<td>'+(m.sign&&m.sign.has
         ? usSigImg(m.sign, 'ลายเซ็น '+(m.name||''), 'us-sig-th')+
           '<span class="us-sig-st">'+(m.sign.source==='admin'
             ? '<span class="us-warn">ผู้ดูแลอัปให้</span>' : 'เซ็นแล้ว')+'</span>'
         : '<span class="us-warn">ยังไม่เซ็น</span>')+'</td>'+
+      '<td>'+esc(usPermText(usPermOf(m.uid), (US_PERM&&US_PERM.modList)||[]))+'</td>'+
+      '<td class="dt-nw"><button class="btn btn-ghost btn-sm" type="button" '+
+        'onclick="usPerm(&quot;'+esc(m.uid)+'&quot;)">🔐 สิทธิ์</button></td>'+
       '</tr>';
   }
 
-  var US_COLS=[{t:'ชื่อ',w:'29%'},{t:'ตำแหน่ง',w:'21%'},{t:'โทรศัพท์',w:'15%'},
-    {t:'บัญชีรับโอนคืน',w:'16%'},{t:'ลายเซ็น',w:'19%'}];
+  var US_COLS=[{t:'ชื่อ',w:'22%'},{t:'ตำแหน่ง',w:'16%'},{t:'บัญชีรับโอนคืน',w:'13%'},
+    {t:'ลายเซ็น',w:'16%'},{t:'สิทธิ์เข้าใช้โมดูล',w:'23%'},{t:'',w:'10%'}];
   /** ตารางรายชื่อทั้งห้อง — ไม่มีคนก็ยังเห็นหัวตาราง (โครงมาก่อนข้อมูลเสมอ) */
   function usListHtml(list){
     return stTableHtml('usListBody', US_COLS, (list && list.length)
@@ -8408,6 +8483,14 @@
   /** ดึงข้อมูลใหม่จาก backend แล้ววาดใหม่ (เรียกหลังบันทึก/อัปลายเซ็น) */
   function usReload(){
     var wantList = (VIEW==='roomset');
+    // แท็บสิทธิ์ = ต้องมีข้อมูลสิทธิ์ด้วย → ยิงคู่กันทีเดียว (ห้ามให้ตารางวาดก่อนแล้วค่อยเติมทีหลัง
+    // ไม่งั้นคอลัมน์สิทธิ์จะขึ้น "ยังไม่ได้ตั้ง" แวบหนึ่งทุกครั้ง)
+    var needPerm = wantList && ST_SUB!=='people';
+    if(needPerm){
+      jsonp(withRoom_({action:'waTeamPerm',uid:UID})).then(function(p){
+        if(p&&p.ok) US_PERM=p; usPaint();
+      }).catch(function(){});
+    }
     return jsonp({action:'waUserSet',uid:UID,all:wantList?'1':''}).then(function(r){
       if(!r||!r.ok) throw new Error(r&&r.error||'โหลดข้อมูลไม่สำเร็จ');
       US_DATA=r; usPaint(); return r;
@@ -16792,7 +16875,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260918-1220';
+  var APP_BUILD='20260918-1429';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
