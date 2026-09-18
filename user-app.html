@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260918-1109">
+<link rel="stylesheet" href="user.css?v=20260918-1220">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -261,6 +261,10 @@
   .us-tbl tr.us-off td{color:#8A94A6}
   .us-tbl .btn-sm{width:auto;padding:6px 12px;font-size:13px}
   .us-card .st-act .btn{width:auto}
+  .us-sig-th{max-height:34px;max-width:100%;object-fit:contain;display:block;margin-bottom:2px}
+  .us-sig-st{font-size:12px;color:#5B6472}
+  .us-sig-bad{display:none}
+  .us-sig-no{color:var(--muted);font-size:12.5px;text-align:center}
   .us-sig{border:1px dashed var(--line);border-radius:12px;background:#fff;padding:10px;
     text-align:center;margin-bottom:4px}
     .us-sig img{max-height:86px;max-width:100%;object-fit:contain}
@@ -3000,6 +3004,16 @@
   }
 
   /** ③ สิทธิ์ผู้ใช้งาน — ยังไม่มีหน้าจอ บอกตรง ๆ ว่าตอนนี้ทำที่ไหน */
+  /** <img> ลายเซ็นจาก Drive — ต้องใช้ลิงก์รูปย่อ (coImgUrl) เพราะลิงก์ไฟล์ปกติของ Drive
+      แสดงใน <img> ไม่ได้ (พี่กี้เจอกล่องลายเซ็นว่าง 18 ก.ย. 69)
+      payload เก่าที่ยังไม่มี fileId → ตกไปใช้ url เดิมไว้ก่อน */
+  function usSigImg(sign, alt, cls){
+    var src = (sign && sign.id) ? coImgUrl(sign.id) : ((sign && sign.url) || '');
+    if(!src) return '';
+    return '<img'+(cls?' class="'+cls+'"':'')+' src="'+esc(src)+'" alt="'+esc(alt||'ลายเซ็น')+'" '+
+      'loading="lazy" onerror="this.classList.add(&quot;us-sig-bad&quot;)">';
+  }
+
   /** กรอกบัญชีครบหรือยัง — ตัดสินจากข้อมูลจริง ไม่พึ่งธงที่ backend ส่งมาอย่างเดียว */
   function usHasBank(m){
     if(m && m.hasBank) return true;
@@ -3018,7 +3032,9 @@
       '<td class="dt-nw">'+esc(m.phone||'—')+'</td>'+
       '<td>'+(usHasBank(m)?'มีบัญชี':'<span class="us-warn">ยังไม่มีบัญชี</span>')+'</td>'+
       '<td>'+(m.sign&&m.sign.has
-        ? (m.sign.source==='admin' ? '<span class="us-warn">ผู้ดูแลอัปให้</span>' : 'เซ็นแล้ว')
+        ? usSigImg(m.sign, 'ลายเซ็น '+(m.name||''), 'us-sig-th')+
+          '<span class="us-sig-st">'+(m.sign.source==='admin'
+            ? '<span class="us-warn">ผู้ดูแลอัปให้</span>' : 'เซ็นแล้ว')+'</span>'
         : '<span class="us-warn">ยังไม่เซ็น</span>')+'</td>'+
       '</tr>';
   }
@@ -8373,8 +8389,8 @@
       '<div class="us-sec">✍️ ลายเซ็น</div>'+
       '<div class="rs-st '+sl.cls+'"><b>'+esc(sl.txt)+'</b><span>'+esc(sl.note)+'</span></div>'+
       (m.sign&&m.sign.has
-        ? '<div class="us-sig"><img src="'+esc(m.sign.url)+'" alt="ลายเซ็น" onerror="this.style.display=\'none\'"></div>'
-        : '')+
+        ? '<div class="us-sig">'+usSigImg(m.sign, 'ลายเซ็น '+(m.name||''))+'</div>'
+        : '<div class="us-sig us-sig-no">ยังไม่มีลายเซ็นในระบบ</div>')+
       '<div class="st-act">'+
         '<button class="btn btn-ghost" type="button" onclick="usSign(&quot;'+esc(m.uid)+'&quot;,&quot;'+
           esc(m.name||m.nick||'')+'&quot;)">'+(m.sign&&m.sign.has?'เซ็นใหม่ / อัปรูปทับ':'เซ็น / อัปรูปลายเซ็น')+'</button>'+
@@ -8531,7 +8547,7 @@
       if(SIG_TARGET) r = usPickSign(r, SIG_TARGET);
       var el=$('sigCur'); if(!el||!r||!r.ok||!r.has) return;
       el.innerHTML='ลายเซ็นปัจจุบัน ('+esc(r.updatedAt||'')+') — บันทึกใหม่จะทับอันนี้<br>'+
-        '<img src="'+esc(r.url)+'" alt="" style="max-height:60px;margin-top:4px" onerror="this.style.display=\'none\'">';
+        '<img src="'+esc(r.id?coImgUrl(r.id):r.url)+'" alt="" style="max-height:60px;margin-top:4px">';
     }).catch(function(){});
   }
   function sigInitPad(c){
@@ -16776,7 +16792,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260918-1109';
+  var APP_BUILD='20260918-1220';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
