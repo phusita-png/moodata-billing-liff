@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260918-0942">
+<link rel="stylesheet" href="user.css?v=20260918-1109">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -3134,7 +3134,9 @@
       DN_DATA=r; DN_ENT=r.entity.code; dnPaint();
     }).catch(function(e){
       var body=$('dnBody');
-      if(body) body.innerHTML=stEmptyRow(DN_COLS.length, e.message);
+      var msg = /เชื่อมต่อเซิร์ฟเวอร์|ไม่ครบ|ไม่รับคำสั่ง/.test(e.message)
+        ? 'เมนูนี้ต้องอัปเดตหลังบ้านก่อนค่ะ (ยังไม่ได้ deploy)' : e.message;
+      if(body) body.innerHTML=stEmptyRow(DN_COLS.length, msg);
     });
   }
   function dnPick(code){ DN_ENT=code||''; var b=$('dnBody');
@@ -8393,6 +8395,11 @@
     return jsonp({action:'waUserSet',uid:UID,all:wantList?'1':''}).then(function(r){
       if(!r||!r.ok) throw new Error(r&&r.error||'โหลดข้อมูลไม่สำเร็จ');
       US_DATA=r; usPaint(); return r;
+    }).catch(function(e){
+      // หลังบ้านยังไม่ได้อัปเดต = คำสั่งนี้ยังไม่มี → บอกให้รู้ว่าต้องทำอะไร ไม่ใช่โยน error ดิบ
+      throw new Error(/เชื่อมต่อเซิร์ฟเวอร์|ไม่ครบ|ไม่รับคำสั่ง/.test(e.message)
+        ? 'เมนูนี้ต้องอัปเดตหลังบ้านก่อนค่ะ (ยังไม่ได้ deploy) — ส่วนอื่นของระบบใช้ได้ตามปกติ'
+        : e.message);
     });
   }
 
@@ -8648,8 +8655,13 @@
     var img=sigData();
     if(!img){ mErr('เซ็นในกรอบก่อนค่ะ (หรือกดอัปรูปลายเซ็น)'); return; }
     var b=$('sigSave'); if(b){ b.disabled=true; b.textContent='กำลังบันทึก…'; }
-    var q={action:'waUserSign',uid:UID,img:img};
-    if(SIG_TARGET) q.uid2=SIG_TARGET;   // ผู้ดูแลอัปแทน (backend อ่าน p.uid = คนที่ล็อกอิน · p.uid2 = เป้าหมาย)
+    /* 🔴 ลายเซ็นของตัวเอง = ใช้เส้นทางเดิม (waSignSave) เสมอ
+       หน้าเว็บขึ้น GitHub Pages ทันทีที่ push แต่หลังบ้าน deploy ทีหลัง — ถ้าให้ของเดิมวิ่งผ่าน
+       คำสั่งใหม่ ช่วงที่ยังไม่ deploy ผู้ใช้จะเซ็นลายเซ็นไม่ได้เลย (พี่กี้เจอ 18 ก.ย. 69)
+       ⚠️ กฎนี้ใช้ทุกครั้งที่ย้ายปุ่มเดิมไปคำสั่งใหม่: ของเดิมต้องไม่พึ่งของที่ยังไม่ขึ้น */
+    var q = SIG_TARGET
+      ? {action:'waUserSign',uid:UID,uid2:SIG_TARGET,img:img}   // ผู้ดูแลอัปแทน (ของใหม่)
+      : {action:'waSignSave',uid:UID,img:img};                   // ของตัวเอง (เส้นทางเดิม)
     callBusy('กำลังบันทึกลายเซ็น…', jsonpPost(q)).then(function(r){
       if(!r||!r.ok){ if(b){b.disabled=false;b.textContent='บันทึกลายเซ็น';} mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
       closeModal(); toast('✍️ บันทึกลายเซ็นแล้วค่ะ');
@@ -16764,7 +16776,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260918-0942';
+  var APP_BUILD='20260918-1109';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
