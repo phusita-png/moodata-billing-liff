@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260918-0909">
+<link rel="stylesheet" href="user.css?v=20260918-0942">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -237,7 +237,23 @@
     .us-sec span{font-weight:500;font-size:12.5px;color:var(--muted);margin-left:6px}
   .us-left{font-size:12px;font-weight:700;color:#78350F;background:#FEF3C7;
     border-radius:7px;padding:2px 8px;margin-left:6px;vertical-align:middle}
-  .us-tbl td{white-space:normal}
+  /* โครงตารางระหว่างรอข้อมูล — แถบเทาเลื่อนแสง (พี่กี้: ต้องเห็นโครงก่อนข้อมูลเสมอ) */
+  .st-skel{display:block;height:13px;border-radius:7px;
+    background:linear-gradient(90deg,#EDF1F6 25%,#F7F9FC 37%,#EDF1F6 63%);
+    background-size:400% 100%;animation:stSkel 1.4s ease-in-out infinite}
+  @keyframes stSkel{0%{background-position:100% 0}100%{background-position:0 0}}
+  .st-empty{text-align:center;color:var(--muted);padding:18px 10px!important;font-size:13px}
+  .dn-grp{display:block;font-size:12px;color:var(--muted);font-weight:500}
+  .dn-mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;letter-spacing:.2px}
+  /* หัวคอลัมน์ของ .tax-tbl เป็น nowrap — หัวยาวอย่าง "ออกแล้วเดือนนี้" จะดันตารางล้นขอบ
+     (เจอจากภาพ 18 ก.ย. 69) · ตารางชุดนี้เป็น table-layout:fixed อยู่แล้ว ตัดคำได้ปลอดภัย */
+  /* .dt-tbl บังคับ min-width 960px (ทำไว้ให้ตารางการเงินที่คอลัมน์เยอะ) — ตารางหน้าตั้งค่ามี 5 คอลัมน์
+     ใช้ค่านั้นแล้วล้นกรอบการ์ดบนจอคอม (เจอจากภาพ 18 ก.ย. 69) · มือถือยังเลื่อนแนวนอนได้เหมือนเดิม */
+  /* ⚠️ ต้องเจาะจงกว่า .dt-tbl (ประกาศทีหลังในไฟล์นี้) ไม่งั้น min-width 960px ชนะ = ตารางล้นกรอบ
+     วัดด้วย getBoundingClientRect ในหน้า preview แล้วเห็นว่า minw ยังเป็น 960px (18 ก.ย. 69) */
+  .tax-tbl.us-tbl{min-width:600px}
+  .tax-tbl.us-tbl th,.tax-tbl.us-tbl td{white-space:normal;vertical-align:top}
+  .dn-mono{word-break:break-word}
   .us-tbl .us-link{background:none;border:none;padding:0;font:inherit;font-weight:700;
     color:var(--brand);cursor:pointer;text-align:left}
   .us-tbl .us-link:hover{text-decoration:underline}
@@ -3007,15 +3023,13 @@
       '</tr>';
   }
 
-  /** ตารางรายชื่อทั้งห้อง */
+  var US_COLS=[{t:'ชื่อ',w:'29%'},{t:'ตำแหน่ง',w:'21%'},{t:'โทรศัพท์',w:'15%'},
+    {t:'บัญชีรับโอนคืน',w:'16%'},{t:'ลายเซ็น',w:'19%'}];
+  /** ตารางรายชื่อทั้งห้อง — ไม่มีคนก็ยังเห็นหัวตาราง (โครงมาก่อนข้อมูลเสมอ) */
   function usListHtml(list){
-    if(!list || !list.length) return '<div class="emptybox">ยังไม่มีใครในทีมค่ะ</div>';
-    return '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl us-tbl">'+
-      '<colgroup><col style="width:29%"><col style="width:21%"><col style="width:15%">'+
-      '<col style="width:16%"><col style="width:19%"></colgroup>'+
-      '<thead><tr><th>ชื่อ</th><th>ตำแหน่ง</th><th>โทรศัพท์</th><th>บัญชีรับโอนคืน</th>'+
-      '<th>ลายเซ็น</th></tr></thead><tbody>'+
-      list.map(usRowHtml).join('')+'</tbody></table></div>';
+    return stTableHtml('usListBody', US_COLS, (list && list.length)
+      ? list.map(usRowHtml).join('')
+      : stEmptyRow(US_COLS.length, 'ยังไม่มีใครในทีม — คนที่พิมพ์ "ลงทะเบียน" ในแชทจะมาโผล่ที่นี่'));
   }
 
   /** ③ ตั้งค่าผู้ใช้งาน — 2 แท็บย่อย: สิทธิ์ผู้ใช้งาน (รายชื่อ) ↔ รายบุคคล (ทีละคน)
@@ -3045,49 +3059,125 @@
         '<div class="rs-h">ตั้งค่าผู้ใช้งาน</div>'+sub+
         '<div class="rs-sub">ใครอยู่ในห้องนี้บ้าง · ข้อมูลครบหรือยัง — '+
         '<b>กดที่ชื่อ</b> เพื่อเข้าไปตั้งค่าของคนนั้น</div>'+
-        '<div id="usList"><div class="emptybox">กำลังโหลด…</div></div>'+
+        '<div id="usList">'+stTableHtml('usListSkel', US_COLS, stSkelRows(US_COLS.length,3))+'</div>'+
         '<div class="rs-steps" style="margin-top:14px"><b>สิทธิ์เข้าใช้แต่ละโมดูล</b>'+
         'ติ๊กเลือกได้ที่เมนู <strong>🔐 สิทธิ์ทีม</strong> (หมวดบุคคล) — ที่นั่นคุมว่าใครเห็นโมดูลไหน '+
         'ส่วนหน้านี้คุมข้อมูลของแต่ละคน</div>'+
       '</div></div>';
   }
 
-  /** ④ เลขที่เอกสาร — ยังเป็นรูปแบบตายตัวในระบบ */
+  /* ── โครงต้องมาก่อนข้อมูลเสมอ (พี่กี้ทัก 18 ก.ย. 69) ──
+     ระหว่างรอเซิร์ฟเวอร์ให้เห็น "หัวตาราง + แถวเปล่า" ไม่ใช่กล่องข้อความ "กำลังโหลด…"
+     ผู้ใช้จะรู้ตั้งแต่วินาทีแรกว่าหน้านี้เก็บอะไรบ้าง แม้ห้องนั้นยังไม่มีข้อมูลสักแถว */
+  function stSkelRows(cols, rows){
+    var td = ''; for(var c=0;c<cols;c++) td += '<td><span class="st-skel"></span></td>';
+    var out = ''; for(var r=0;r<(rows||3);r++) out += '<tr>'+td+'</tr>';
+    return out;
+  }
+  /** ตารางโครง: หัวคอลัมน์จริง + เนื้อใน (แถว skeleton / ข้อมูลจริง / ข้อความว่าง) */
+  function stTableHtml(id, cols, body){
+    return '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl us-tbl">'+
+      '<colgroup>'+cols.map(function(c){ return '<col style="width:'+c.w+'">'; }).join('')+'</colgroup>'+
+      '<thead><tr>'+cols.map(function(c){ return '<th>'+esc(c.t)+'</th>'; }).join('')+'</tr></thead>'+
+      '<tbody id="'+id+'">'+body+'</tbody></table></div>';
+  }
+  /** แถวเดียวกลางตาราง ไว้บอกว่ายังไม่มีข้อมูล (โครงตารางยังอยู่) */
+  function stEmptyRow(cols, msg){
+    return '<tr><td colspan="'+cols+'" class="st-empty">'+esc(msg)+'</td></tr>';
+  }
+
+  /* ── ④ ตั้งค่าเลขที่เอกสาร — ทะเบียนเลขทุกชนิดที่ระบบออก ──
+     เดิมหน้านี้เป็นข้อความอธิบายล้วน · ตอนนี้โชว์ของจริง: รูปแบบ · เลขถัดไป · ออกไปแล้วกี่ใบเดือนนี้
+     🔴 เลขถัดไปมาจากตัวออกเลขตัวจริงใน backend (nextDocNo_/nextRunNo_) ไม่ใช่หน้าเว็บคำนวณเอง */
+  var DN_DATA=null, DN_ENT='';
+  var DN_COLS=[{t:'เอกสาร',w:'26%'},{t:'ชนิด',w:'9%'},{t:'รูปแบบเลขที่',w:'31%'},
+    {t:'เลขถัดไป',w:'22%'},{t:'ออกแล้วเดือนนี้',w:'12%'}];
+
   function stDocNoHtml(){
     return '<div class="card"><div class="pb" style="padding:16px 18px">'+
-      '<div class="rs-h">เลขที่เอกสาร</div>'+
-      '<div class="rs-sub">ตัวอักษรนำหน้า · ปี/เดือน · จำนวนหลักของเลขรัน ของเอกสารแต่ละชนิด</div>'+
-      '<div class="st-todo"><b>ตอนนี้ระบบใช้รูปแบบตายตัว</b><br>'+
-      'เอกสารขาย: <b>QT-RM89-6809-001</b> (ชนิด-บริษัท-ปีเดือน พ.ศ.-เลขรัน 3 หลัก)<br>'+
-      'ใบฝั่งจ่าย/เงินสดย่อย: <b>PV-126090001</b> (ชนิด-เลขบริษัท 1 หลัก + ปี ค.ศ. + เดือน + เลขรัน 4 หลัก)<br>'+
-      'เลขกินตอนออกเอกสารจริง ไม่ใช่ตอนร่าง · แยกชุดต่อบริษัท × ชนิด × เดือน<br><br>'+
-      'ถ้าพี่อยากตั้งเองแบบ PEAK (เลือกตัวอักษรนำหน้า/ปี/เดือน/จำนวนหลัก) '+
-      'ต้องเคาะกันก่อนว่าจะให้เลขใบเก่าคงรูปเดิมทั้งหมด แล้วเริ่มรูปแบบใหม่เดือนถัดไป</div>'+
+        '<div class="rs-h">ตั้งค่าเลขที่เอกสาร</div>'+
+        '<div class="rs-sub">เลขที่ของเอกสารแต่ละชนิดที่ระบบออกให้ · '+
+        'เลขรันแยกกันต่อ <b>บริษัท × ชนิด × เดือน</b> และกินเลขตอนออกเอกสารจริง ไม่ใช่ตอนร่าง</div>'+
+        '<div class="fld" style="margin:0 0 12px"><label>บริษัทผู้ออกเอกสาร</label>'+
+          '<select id="dnEnt" onchange="dnPick(this.value)"><option>กำลังโหลด…</option></select></div>'+
+        stTableHtml('dnBody', DN_COLS, stSkelRows(DN_COLS.length, 5))+
+        '<div class="rs-steps" style="margin-top:14px"><b>อยากตั้งรูปแบบเองแบบโปรแกรมบัญชี</b>'+
+        'ทำได้ แต่ต้องเคาะก่อนว่าเอกสารที่ออกไปแล้วคงเลขเดิมทั้งหมด แล้วเริ่มรูปแบบใหม่เดือนถัดไป '+
+        '— บอกหนูได้ค่ะ</div>'+
       '</div></div>';
   }
 
-  /** ⑤ ช่องทางการเงิน — 2 แท็บย่อย: รับชำระ / จ่ายชำระ */
+  function dnRowHtml(r){
+    return '<tr'+(r.error?' class="us-off"':'')+'>'+
+      '<td>'+esc(r.label)+'<span class="dn-grp">'+esc(r.group)+'</span></td>'+
+      '<td><b>'+esc(r.key)+'</b></td>'+
+      '<td class="dn-mono">'+esc(r.pattern)+'</td>'+
+      '<td class="dn-mono">'+(r.error?'<span class="us-warn">'+esc(r.error)+'</span>':'<b>'+esc(r.next)+'</b>')+'</td>'+
+      '<td>'+(r.error?'—':esc(String(r.used))+' ใบ')+'</td>'+
+      '</tr>';
+  }
+
+  function dnPaint(){
+    var body=$('dnBody'); if(!body||!DN_DATA) return;
+    body.innerHTML = DN_DATA.rows && DN_DATA.rows.length
+      ? DN_DATA.rows.map(dnRowHtml).join('')
+      : stEmptyRow(DN_COLS.length, 'ยังไม่มีชนิดเอกสารในระบบ');
+    var sel=$('dnEnt');
+    if(sel) sel.innerHTML=(DN_DATA.entities||[]).map(function(e){
+      return '<option value="'+esc(e.code)+'"'+(e.code===DN_DATA.entity.code?' selected':'')+'>'+
+        esc(e.name)+(e.isDefault?' (บริษัทเริ่มต้น)':'')+'</option>'; }).join('');
+  }
+
+  function dnLoad(){
+    return jsonp({action:'waNumbering',uid:UID,entity:DN_ENT}).then(function(r){
+      if(!r||!r.ok) throw new Error(r&&r.error||'โหลดไม่สำเร็จ');
+      DN_DATA=r; DN_ENT=r.entity.code; dnPaint();
+    }).catch(function(e){
+      var body=$('dnBody');
+      if(body) body.innerHTML=stEmptyRow(DN_COLS.length, e.message);
+    });
+  }
+  function dnPick(code){ DN_ENT=code||''; var b=$('dnBody');
+    if(b) b.innerHTML=stSkelRows(DN_COLS.length,5); dnLoad(); }
+  window.dnPick=dnPick;
+
+  /** ⑤ ตั้งค่าช่องทางการเงิน — 2 แท็บย่อย: รับชำระ / จ่ายชำระ */
+  var MO_COLS=[{t:'ช่องทาง',w:'26%'},{t:'ใช้กับ',w:'46%'},{t:'บันทึกที่ไหน',w:'28%'}];
+  /** ช่องทางที่ระบบรองรับ — รายการมาจาก backend (ค่าคงที่ตัวจริง) ห้ามหน้าเว็บพิมพ์เอง */
+  function moChannelRows(r){
+    var pay=(r&&r.payMethods)||[], exp=(r&&r.expenseChannels)||[];
+    if(!pay.length && !exp.length) return stEmptyRow(MO_COLS.length,'ยังอ่านรายการช่องทางไม่ได้');
+    var rows = pay.map(function(m){
+      return { name:m, use:'ใบสั่งจ่ายของบริษัท — พิมพ์ลงใบสำคัญจ่าย (PV)', where:'เลือกตอนกดจ่าย' }; })
+      .concat(exp.map(function(m){
+        return { name:m, use:'จ่ายคืนใบเบิกพนักงาน', where:'เลือกตอนกดจ่ายคืน' }; }));
+    return rows.map(function(x){
+      return '<tr><td><b>'+esc(x.name)+'</b></td><td>'+esc(x.use)+'</td><td>'+esc(x.where)+'</td></tr>'; }).join('');
+  }
   function stMoneyHtml(){
     var sub = '<div class="kp-tabs" style="margin:10px 0 14px">'+
-      '<button class="kp-tab'+(ST_SUB==='in'?' on':'')+'" onclick="stSub(&quot;in&quot;)">'+
+      '<button class="kp-tab'+(ST_SUB!=='out'?' on':'')+'" onclick="stSub(&quot;in&quot;)">'+
         'ช่องทางการรับชำระเงิน</button>'+
       '<button class="kp-tab'+(ST_SUB==='out'?' on':'')+'" onclick="stSub(&quot;out&quot;)">'+
         'ช่องทางการจ่ายชำระเงิน</button>'+
       '</div>';
     if(ST_SUB==='out'){
       return '<div class="card"><div class="pb" style="padding:16px 18px">'+
-        '<div class="rs-h">ช่องทางการเงิน</div>'+sub+
-        '<div class="rs-sub">บัญชี/ช่องทางที่บริษัทใช้จ่ายเงินออก — พิมพ์บนใบสำคัญจ่าย</div>'+
-        '<div class="st-todo"><b>ตอนนี้บันทึกตอนกดจ่ายรายครั้ง</b><br>'+
-        'ใบสั่งจ่ายจะให้เลือกช่องทาง (โอน · เช็ค · เงินสดย่อย) ตอนบันทึกการจ่าย<br>'+
-        'ถ้าอยากตั้ง "บัญชีที่บริษัทใช้จ่ายออก" ไว้ล่วงหน้าเป็นรายการให้เลือก บอกหนูได้ค่ะ</div>'+
+        '<div class="rs-h">ตั้งค่าช่องทางการเงิน</div>'+sub+
+        '<div class="rs-sub">ช่องทางที่ระบบให้เลือกตอนบันทึกการจ่าย · ช่องทางที่เลือกจะถูกพิมพ์ลงใบสำคัญจ่าย</div>'+
+        stTableHtml('moBody', MO_COLS, stSkelRows(MO_COLS.length, 4))+
+        '<div class="rs-steps" style="margin-top:14px"><b>บัญชีที่บริษัทใช้จ่ายออก</b>'+
+        'ตอนนี้ระบบบันทึกช่องทางเป็นรายครั้ง ยังไม่ผูกกับบัญชีธนาคารของบริษัท — '+
+        'ถ้าอยากตั้งบัญชีจ่ายออกไว้ล่วงหน้าให้เลือกได้เลย บอกหนูได้ค่ะ</div>'+
         '</div></div>';
     }
     return '<div class="card"><div class="pb" style="padding:16px 18px">'+
-      '<div class="rs-h">ช่องทางการเงิน</div>'+sub+
+      '<div class="rs-h">ตั้งค่าช่องทางการเงิน</div>'+sub+
       '<div class="rs-sub">บัญชีที่พิมพ์บนใบเสนอราคา/ใบแจ้งหนี้ให้ลูกค้าโอนเข้า · '+
       'มีหลายบัญชีได้ · บัญชีที่ติ๊ก "เริ่มต้น" คือตัวที่ขึ้นบนเอกสาร</div>'+
-      '<div id="rsBankList"><div class="emptybox">กำลังโหลด…</div></div>'+
+      '<div id="rsBankList">'+
+        stTableHtml('rsBankSkel', [{t:'ธนาคาร',w:'26%'},{t:'เลขที่บัญชี',w:'24%'},
+          {t:'ชื่อบัญชี',w:'30%'},{t:'สาขา',w:'20%'}], stSkelRows(4,3))+'</div>'+
       '<button class="btn btn-ghost" type="button" onclick="coBankEdit(-1)" style="margin-top:10px;width:auto">+ เพิ่มบัญชี</button>'+
       '</div></div>';
   }
@@ -3145,10 +3235,16 @@
       if(VIEW!=='roomset') return;
       CO_BANKS=(r&&r.ok&&r.banks)||[];
       CO_BANKNAMES=(r&&r.bankNames)||[];
+      // แท็บย่อย "จ่ายชำระ" = ตารางช่องทางที่ระบบรองรับ (มากับ payload เดียวกัน)
+      var mo=$('moBody');
+      if(mo){ mo.innerHTML=moChannelRows(r); return; }
       var box=$('rsBankList'); if(!box) return;
       var live=CO_BANKS.filter(function(b){ return String(b.status||'').indexOf('ปิด')<0; });
       if(!live.length){
-        box.innerHTML='<div class="emptybox">ยังไม่มีบัญชี — เอกสารจะไม่มีบล็อกชำระเงิน</div>';
+        // ⚠️ ยังไม่มีบัญชี ก็ต้องเห็นว่าหน้านี้เก็บอะไร — โครงตารางอยู่ ข้อความว่างอยู่ในตาราง
+        box.innerHTML=stTableHtml('rsBankSkel',
+          [{t:'ธนาคาร',w:'26%'},{t:'เลขที่บัญชี',w:'24%'},{t:'ชื่อบัญชี',w:'30%'},{t:'สาขา',w:'20%'}],
+          stEmptyRow(4,'ยังไม่มีบัญชี — เอกสารจะไม่มีบล็อกชำระเงิน · กด "+ เพิ่มบัญชี" ด้านล่าง'));
         return;
       }
       box.innerHTML=live.map(function(b){ return bankRowHtml(b, CO_BANKS.indexOf(b)); }).join('');
@@ -3208,8 +3304,9 @@
     if(ST_TAB==='user'){ US_OPEN=''; usReload().catch(function(e){
       var b=$('usBox')||$('usList');
       if(b) b.innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; }); }
+    if(ST_TAB==='docno') dnLoad();
     if(ST_TAB==='co') roomCoLoad('co');
-    if(ST_TAB==='money' && ST_SUB==='in') roomCoLoad('bank');
+    if(ST_TAB==='money') roomCoLoad('bank');   // ทั้ง 2 แท็บย่อยใช้ payload เดียวกัน (บัญชี + ช่องทาง)
     var ab=$('rsAiBtn');
     if(ab) ab.addEventListener('click', function(){
       var on=!(RS_DATA&&RS_DATA.aiOn);
@@ -16667,7 +16764,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260918-0909';
+  var APP_BUILD='20260918-0942';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
