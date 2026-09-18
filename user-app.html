@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260918-0855">
+<link rel="stylesheet" href="user.css?v=20260918-0909">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -237,6 +237,13 @@
     .us-sec span{font-weight:500;font-size:12.5px;color:var(--muted);margin-left:6px}
   .us-left{font-size:12px;font-weight:700;color:#78350F;background:#FEF3C7;
     border-radius:7px;padding:2px 8px;margin-left:6px;vertical-align:middle}
+  .us-tbl td{white-space:normal}
+  .us-tbl .us-link{background:none;border:none;padding:0;font:inherit;font-weight:700;
+    color:var(--brand);cursor:pointer;text-align:left}
+  .us-tbl .us-link:hover{text-decoration:underline}
+  .us-tbl .us-warn{color:#92400E;font-weight:600}
+  .us-tbl tr.us-off td{color:#8A94A6}
+  .us-tbl .btn-sm{width:auto;padding:6px 12px;font-size:13px}
   .us-card .st-act .btn{width:auto}
   .us-sig{border:1px dashed var(--line);border-radius:12px;background:#fff;padding:10px;
     text-align:center;margin-bottom:4px}
@@ -2703,7 +2710,6 @@
     drive:'<svg viewBox="0 0 24 24"><path d="M3.5 7.5A2 2 0 0 1 5.5 5.5h4l2 2.4h7a2 2 0 0 1 2 2v8.1a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/></svg>',
     co:'<svg viewBox="0 0 24 24"><path d="M4 20V6.2a1.6 1.6 0 0 1 1.2-1.6l7-1.6a1.2 1.2 0 0 1 1.5 1.2V20"/><path d="M13.7 9.5h4.6A1.7 1.7 0 0 1 20 11.2V20"/><path d="M3 20h18"/><path d="M7.4 8.8h2.6M7.4 12.3h2.6M7.4 15.8h2.6"/></svg>',
     user:'<svg viewBox="0 0 24 24"><circle cx="12" cy="8.4" r="3.4"/><path d="M5.4 20c0-3.4 2.9-5.4 6.6-5.4s6.6 2 6.6 5.4"/></svg>',
-    people:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8.2" r="3.1"/><path d="M3.2 19.5c0-3.1 2.6-4.9 5.8-4.9s5.8 1.8 5.8 4.9"/><path d="M16.2 6.1a3.1 3.1 0 0 1 0 5.9"/><path d="M17.6 14.9c2 .5 3.4 1.9 3.4 4.6"/></svg>',
     docno:'<svg viewBox="0 0 24 24"><path d="M6.5 3.5h7.8L19 8.2V20a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 20V5a1.5 1.5 0 0 1 1.5-1.5z"/><path d="M14 3.7V8.5h4.8"/><path d="M8.3 13.5h7.4M8.3 17h4.8"/></svg>',
     money:'<svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="11" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M6.4 12h.01M17.6 12h.01"/></svg>'
   };
@@ -2711,16 +2717,21 @@
   var ST_TABS = [
     { key:'drive', label:'ตั้งค่า Drive' },
     { key:'co',    label:'ตั้งค่าบริษัท' },
-    { key:'people',label:'รายบุคคล' },
-    { key:'user',  label:'สิทธิ์ผู้ใช้งาน' },
-    { key:'docno', label:'เลขที่เอกสาร' },
-    { key:'money', label:'ช่องทางการเงิน' }
+    { key:'user',  label:'ตั้งค่าผู้ใช้งาน' },
+    { key:'docno', label:'ตั้งค่าเลขที่เอกสาร' },
+    { key:'money', label:'ตั้งค่าช่องทางการเงิน' }
   ];
-  var ST_TAB = 'drive', ST_SUB = 'in';
+  /* แท็บย่อยของแต่ละแท็บ — **แยกค่าต่อแท็บ** (เดิมใช้ตัวแปรเดียว ค่าของช่องทางการเงิน
+     จะไหลไปทับของผู้ใช้งานทันทีที่สลับแท็บ) · ST_SUB = ค่าของแท็บที่เปิดอยู่ตอนนี้ */
+  var ST_SUB_DEF = { user:'perm', money:'in' };
+  var ST_SUBS = {};
+  var ST_TAB = 'drive';
   try{
     var _t=sessionStorage.getItem('yd-st-tab'); if(_t) ST_TAB=_t;
-    var _u=sessionStorage.getItem('yd-st-sub'); if(_u) ST_SUB=_u;
+    var _u=sessionStorage.getItem('yd-st-subs'); if(_u) ST_SUBS=JSON.parse(_u)||{};
   }catch(e){}
+  function stSubOf(tab){ return ST_SUBS[tab] || ST_SUB_DEF[tab] || ''; }
+  var ST_SUB = stSubOf(ST_TAB);
 
   function stTabsHtml(){
     return '<div class="st-wrap"><div class="kp-tabs" role="tablist">'+ST_TABS.map(function(t){
@@ -2733,6 +2744,7 @@
   /** สลับแท็บ — จำไว้ใน sessionStorage ให้กลับมาที่แท็บเดิม */
   function stGo(k){
     ST_TAB=k;
+    ST_SUB=stSubOf(k);        // แท็บย่อยของแท็บใหม่ (ไม่ใช่ค่าที่ค้างจากแท็บก่อน)
     try{ sessionStorage.setItem('yd-st-tab',k); }catch(e){}
     navStSync();
     renderRoomSet();
@@ -2744,8 +2756,8 @@
     });
   }
   function stSub(k){
-    ST_SUB=k;
-    try{ sessionStorage.setItem('yd-st-sub',k); }catch(e){}
+    ST_SUB=k; ST_SUBS[ST_TAB]=k;
+    try{ sessionStorage.setItem('yd-st-subs',JSON.stringify(ST_SUBS)); }catch(e){}
     renderRoomSet();
   }
 
@@ -2965,7 +2977,6 @@
   /** เนื้อในของแท็บที่เลือก */
   function stBodyHtml(info, room){
     if(ST_TAB==='co')   return roomCoHtml();
-    if(ST_TAB==='people') return stPeopleHtml();
     if(ST_TAB==='user') return stUserHtml();
     if(ST_TAB==='docno')return stDocNoHtml();
     if(ST_TAB==='money')return stMoneyHtml();
@@ -2973,25 +2984,71 @@
   }
 
   /** ③ สิทธิ์ผู้ใช้งาน — ยังไม่มีหน้าจอ บอกตรง ๆ ว่าตอนนี้ทำที่ไหน */
-  /** ③ รายบุคคล — ผู้ดูแลแก้ข้อมูล/ลายเซ็นให้ทุกคนในห้อง (spec-user-settings) */
-  function stPeopleHtml(){
-    return '<div class="card"><div class="pb" style="padding:16px 18px">'+
-        '<div class="rs-h">รายบุคคล</div>'+
-        '<div class="rs-sub">ชื่อที่พิมพ์บนเอกสาร · ตำแหน่ง · เบอร์ติดต่อกลับ · บัญชีรับโอนคืน · ลายเซ็น'+
-        '<br>ทุกคนแก้ของตัวเองได้ที่เมนู 🙋 ส่วนตัว → ตั้งค่าของฉัน — หน้านี้ไว้แก้ให้คนอื่น</div>'+
-        '<div class="m-hint">ลายเซ็นที่ผู้ดูแลอัปแทน ระบบใช้กับ<b>เอกสารในนามบริษัท</b>เท่านั้น '+
-        '(ใบแทนใบเสร็จ · ใบสำคัญรับเงินฝั่งผู้จ่าย · เงินสดย่อย ยังต้องให้เจ้าตัวเซ็นเอง)</div>'+
-      '</div></div>'+
-      '<div id="usBox"><div class="card"><div class="emptybox">กำลังโหลด…</div></div></div>';
+  /** กรอกบัญชีครบหรือยัง — ตัดสินจากข้อมูลจริง ไม่พึ่งธงที่ backend ส่งมาอย่างเดียว */
+  function usHasBank(m){
+    if(m && m.hasBank) return true;
+    var b=(m&&m.bank)||{};
+    return !!(b.name && b.acct && b.owner);
   }
 
+  /** แถวรายชื่อในตาราง "สิทธิ์ผู้ใช้งาน" — ฟังก์ชันบริสุทธิ์ (ของจริงกับเทส/preview เรียกตัวเดียวกัน) */
+  function usRowHtml(m){
+    var sl = usSignLabel(m.sign);
+    return '<tr'+(m.status==='ลาออก'?' class="us-off"':'')+'>'+
+      '<td><button class="us-link" type="button" onclick="usPick(&quot;'+esc(m.uid)+'&quot;)">'+
+        esc(m.name||m.nick||'(ยังไม่มีชื่อ)')+'</button>'+
+        (m.status==='ลาออก'?'<span class="us-left">ลาออกแล้ว</span>':'')+'</td>'+
+      '<td>'+esc(m.position||'—')+'</td>'+
+      '<td class="dt-nw">'+esc(m.phone||'—')+'</td>'+
+      '<td>'+(usHasBank(m)?'มีบัญชี':'<span class="us-warn">ยังไม่มีบัญชี</span>')+'</td>'+
+      '<td>'+(m.sign&&m.sign.has
+        ? (m.sign.source==='admin' ? '<span class="us-warn">ผู้ดูแลอัปให้</span>' : 'เซ็นแล้ว')
+        : '<span class="us-warn">ยังไม่เซ็น</span>')+'</td>'+
+      '</tr>';
+  }
+
+  /** ตารางรายชื่อทั้งห้อง */
+  function usListHtml(list){
+    if(!list || !list.length) return '<div class="emptybox">ยังไม่มีใครในทีมค่ะ</div>';
+    return '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl us-tbl">'+
+      '<colgroup><col style="width:29%"><col style="width:21%"><col style="width:15%">'+
+      '<col style="width:16%"><col style="width:19%"></colgroup>'+
+      '<thead><tr><th>ชื่อ</th><th>ตำแหน่ง</th><th>โทรศัพท์</th><th>บัญชีรับโอนคืน</th>'+
+      '<th>ลายเซ็น</th></tr></thead><tbody>'+
+      list.map(usRowHtml).join('')+'</tbody></table></div>';
+  }
+
+  /** ③ ตั้งค่าผู้ใช้งาน — 2 แท็บย่อย: สิทธิ์ผู้ใช้งาน (รายชื่อ) ↔ รายบุคคล (ทีละคน)
+      พี่กี้เคาะ 18 ก.ย. 69: กดชื่อคนในหน้าสิทธิ์ → เด้งไปแท็บรายบุคคลของคนนั้น */
   function stUserHtml(){
+    var sub = '<div class="kp-tabs" style="margin:10px 0 14px">'+
+      '<button class="kp-tab'+(ST_SUB!=='people'?' on':'')+'" onclick="stSub(&quot;perm&quot;)">'+
+        'สิทธิ์ผู้ใช้งาน</button>'+
+      '<button class="kp-tab'+(ST_SUB==='people'?' on':'')+'" onclick="stSub(&quot;people&quot;)">'+
+        'รายบุคคล</button>'+
+      '</div>';
+
+    if(ST_SUB==='people'){
+      return '<div class="card"><div class="pb" style="padding:16px 18px">'+
+          '<div class="rs-h">ตั้งค่าผู้ใช้งาน</div>'+sub+
+          '<div class="rs-sub">ชื่อที่พิมพ์บนเอกสาร · ตำแหน่ง · เบอร์ติดต่อกลับ · บัญชีรับโอนคืน · ลายเซ็น '+
+          '— แก้ทีละคน</div>'+
+          '<div class="fld" style="margin:0"><label>เลือกคน</label>'+
+            '<select id="usWho" onchange="usPick(this.value)"></select></div>'+
+          '<div class="m-hint">ลายเซ็นที่ผู้ดูแลอัปแทน ระบบใช้กับ<b>เอกสารในนามบริษัท</b>เท่านั้น '+
+          '(ใบแทนใบเสร็จ · ใบสำคัญรับเงินฝั่งผู้จ่าย · เงินสดย่อย ยังต้องให้เจ้าตัวเซ็นเอง)</div>'+
+        '</div></div>'+
+        '<div id="usBox"><div class="card"><div class="emptybox">กำลังโหลด…</div></div></div>';
+    }
+
     return '<div class="card"><div class="pb" style="padding:16px 18px">'+
-      '<div class="rs-h">สิทธิ์ผู้ใช้งาน</div>'+
-      '<div class="rs-sub">ใครเข้าระบบได้ · เห็นโมดูลไหน · เป็นผู้ดูแลห้องหรือไม่</div>'+
-      '<div class="st-todo"><b>ยังไม่ได้ย้ายมาหน้านี้ค่ะ</b><br>'+
-      'ตอนนี้ตั้งที่ชีต <b>ทีมงาน</b> (คอลัมน์ "โมดูลที่เข้าได้") และทะเบียนกลางของห้อง<br>'+
-      'ถ้าพี่อยากให้ย้ายมาทำในหน้านี้ บอกหนูได้ค่ะ จะทำต่อในรอบถัดไป</div>'+
+        '<div class="rs-h">ตั้งค่าผู้ใช้งาน</div>'+sub+
+        '<div class="rs-sub">ใครอยู่ในห้องนี้บ้าง · ข้อมูลครบหรือยัง — '+
+        '<b>กดที่ชื่อ</b> เพื่อเข้าไปตั้งค่าของคนนั้น</div>'+
+        '<div id="usList"><div class="emptybox">กำลังโหลด…</div></div>'+
+        '<div class="rs-steps" style="margin-top:14px"><b>สิทธิ์เข้าใช้แต่ละโมดูล</b>'+
+        'ติ๊กเลือกได้ที่เมนู <strong>🔐 สิทธิ์ทีม</strong> (หมวดบุคคล) — ที่นั่นคุมว่าใครเห็นโมดูลไหน '+
+        'ส่วนหน้านี้คุมข้อมูลของแต่ละคน</div>'+
       '</div></div>';
   }
 
@@ -3148,8 +3205,9 @@
   }
 
   function bindRoomSet(){
-    if(ST_TAB==='people'){ US_OPEN=''; usReload().catch(function(e){
-      var b=$('usBox'); if(b) b.innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; }); }
+    if(ST_TAB==='user'){ US_OPEN=''; usReload().catch(function(e){
+      var b=$('usBox')||$('usList');
+      if(b) b.innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; }); }
     if(ST_TAB==='co') roomCoLoad('co');
     if(ST_TAB==='money' && ST_SUB==='in') roomCoLoad('bank');
     var ab=$('rsAiBtn');
@@ -8154,6 +8212,7 @@
      🔴 การ์ดล็อกไว้ก่อน ต้องกด "แก้ไข" ถึงพิมพ์ได้ (กติกาเดียวกับหน้าตั้งค่าห้อง) */
   var US_DATA=null;          // payload ล่าสุดจาก waUserSet
   var US_OPEN='';            // uid ของการ์ดที่กำลังเปิดแก้ ('' = ล็อกหมด · เปิดได้ทีละคน)
+  var US_PICK='';            // คนที่กำลังดูในแท็บย่อย "รายบุคคล" ('' = ยังไม่เลือก → ตัวเอง)
 
   /** หยิบลายเซ็นของ uid ออกจาก payload waUserSet → รูปเดียวกับที่ waSignGet ตอบ */
   function usPickSign(r, uid){
@@ -8240,9 +8299,22 @@
     });
   }
 
+  /** กดชื่อคนในตาราง (หรือเลือกจาก dropdown) → เปิดแท็บรายบุคคลของคนนั้น */
+  function usPick(uid){
+    US_PICK=String(uid||'');
+    US_OPEN='';
+    if(ST_SUB!=='people') stSub('people');   // stSub วาดหน้าใหม่ให้เอง
+    else usPaint();
+  }
+
   /** วาดเนื้อในของหน้า/แท็บที่กำลังเปิดอยู่ */
   function usPaint(){
-    var box = $('usBox'); if(!box||!US_DATA) return;
+    var box = $('usBox'); if(!US_DATA) return;
+    var list0 = (US_DATA.list && US_DATA.list.length) ? US_DATA.list : (US_DATA.me?[US_DATA.me]:[]);
+    // แท็บ "สิทธิ์ผู้ใช้งาน" = ตารางรายชื่อ (ไม่มีการ์ด · ไม่ต้องล็อกอะไร)
+    var listBox = $('usList');
+    if(listBox){ listBox.innerHTML = usListHtml(list0); return; }
+    if(!box) return;
     /* 🔴 ตัวล็อกของหน้าตั้งค่า (stLockAll) อ่านจาก ST_EDIT เท่านั้น — ต้อง sync ให้ตรงกับ US_OPEN
        ไม่งั้นการ์ดถูกล็อกค้างตลอด กดแก้ไขก็พิมพ์ไม่ได้ (เจอจากการตรวจด้วยภาพ 18 ก.ย. 69) */
     if(typeof ST_EDIT!=='undefined'){
@@ -8251,9 +8323,17 @@
     }
     var r = US_DATA, banks = r.banks||[];
     if(VIEW==='roomset'){
-      var list = r.list && r.list.length ? r.list : (r.me?[r.me]:[]);
-      box.innerHTML = list.length
-        ? list.map(function(m){ return usCardHtml(m, US_OPEN===m.uid, banks, m.uid===UID); }).join('')
+      /* แท็บย่อย "รายบุคคล" = ทีละคน (พี่กี้เคาะ — เดิมวางการ์ดทุกคนต่อกันยาวมาก) */
+      var pick = null;
+      for(var i=0;i<list0.length;i++) if(list0[i].uid===US_PICK){ pick=list0[i]; break; }
+      if(!pick) pick = r.me || list0[0] || null;
+      US_PICK = pick ? pick.uid : '';
+      var sel = $('usWho');
+      if(sel) sel.innerHTML = list0.map(function(m){
+        return '<option value="'+esc(m.uid)+'"'+(m.uid===US_PICK?' selected':'')+'>'+
+          esc(m.name||m.nick||m.uid)+(m.status==='ลาออก'?' (ลาออกแล้ว)':'')+'</option>'; }).join('');
+      box.innerHTML = pick
+        ? usCardHtml(pick, US_OPEN===pick.uid, banks, pick.uid===UID)
         : '<div class="card"><div class="emptybox">ยังไม่มีใครในทีมค่ะ</div></div>';
     } else {
       box.innerHTML = r.me
@@ -8294,7 +8374,7 @@
       $('usBox').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>';
     });
   }
-  window.usEdit=usEdit; window.usSave=usSave; window.usSign=usSign;
+  window.usEdit=usEdit; window.usSave=usSave; window.usSign=usSign; window.usPick=usPick;
 
   // ═══════════ ลายเซ็นของฉัน (เซ็นครั้งเดียว ใช้ตลอด · ระบบเอาไปฝังเอกสารที่ออกให้) ═══════════
   // ต้นแบบแผ่นวาด: skill handover-letter (วาดด้วยนิ้ว/เมาส์ หรืออัปรูปลายเซ็น)
@@ -16587,7 +16667,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260918-0855';
+  var APP_BUILD='20260918-0909';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
