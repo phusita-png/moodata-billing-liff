@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260917-2338">
+<link rel="stylesheet" href="user.css?v=20260918-0855">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -230,6 +230,17 @@
       display:flex;align-items:center;justify-content:center;padding:14px;box-sizing:border-box}
     .co-img-b img{max-width:100%;max-height:144px;object-fit:contain}
     .co-img-n{color:#8A94A6;font-size:12.5px;text-align:center;line-height:1.75}
+  /* 🙋 ตั้งค่ารายบุคคล (18 ก.ย. 69) — การ์ดคนละใบต่อคน · ล็อกจนกดแก้ไข (ใช้ .st-ro ร่วมกัน) */
+  .us-card{margin-bottom:14px}
+  .us-sec{font-weight:800;font-size:14px;color:#1F2733;margin:16px 0 10px;
+    padding-top:13px;border-top:1px solid var(--line)}
+    .us-sec span{font-weight:500;font-size:12.5px;color:var(--muted);margin-left:6px}
+  .us-left{font-size:12px;font-weight:700;color:#78350F;background:#FEF3C7;
+    border-radius:7px;padding:2px 8px;margin-left:6px;vertical-align:middle}
+  .us-card .st-act .btn{width:auto}
+  .us-sig{border:1px dashed var(--line);border-radius:12px;background:#fff;padding:10px;
+    text-align:center;margin-bottom:4px}
+    .us-sig img{max-height:86px;max-width:100%;object-fit:contain}
   /* หัวข้อย่อยของหน้าตั้งค่าในแถบซ้าย — เยื้องเข้าให้เห็นว่าเป็นหัวข้อในหน้า ไม่ใช่เมนูใหม่ */
   .nav-btn.nav-st{padding-left:26px;font-size:14.5px}
     .nav-btn.nav-st svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.9;
@@ -1975,6 +1986,8 @@
       <svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg><span>เอกสาร</span></button>
     <button class="nav-btn" data-view="taxdoc" aria-label="ภาษี/เอกสาร" id="navTaxDoc" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M5 3h9l5 5v13H5Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>ภาษี/เอกสาร</span></button>
+    <button class="nav-btn" data-view="myset" aria-label="ตั้งค่าของฉัน">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="8.4" r="3.4"/><path d="M5.4 20c0-3.4 2.9-5.4 6.6-5.4s6.6 2 6.6 5.4"/></svg><span>ตั้งค่าของฉัน</span></button>
 
     <div class="nav-sec">รายงาน</div>
     <button class="nav-btn" data-view="hrreport" aria-label="รายงาน HR" id="navHrReport" style="display:none">
@@ -2059,7 +2072,7 @@
     hubreq:['🏛️','คำขอสมัคร'], hubrooms:['🏢','ห้องลูกค้า'], roomset:['⚙️','ตั้งค่าห้อง'], home:['🏠','ภาพรวมประจำวัน'], clock:['🕐','ลงเวลา'],
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
     expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติเบิกจ่าย'], expone:['🔎','ใบเบิก'],
-    expdash:['📊','รายจ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ทะเบียนการจ่าย'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','ภาษีซื้อ/ภ.พ.30'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ทะเบียนใบสำคัญจ่าย'], sales:['💰','รายรับ'], ar:['📊','ลูกหนี้ค้างรับ'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51'], finhist:['📈','เทียบย้อนหลัง'], docdash:['📊','ภาพรวม'], docreg:['🗂️','จัดการเอกสาร'], doccheck:['✅','ตรวจก่อนส่ง'], docbycat:['📑','รายงานตามประเภท'], docreport:['📦','รายงานประจำเดือน'], doccat:['🏷️','จัดการหมวด'], hubmods:['🧩','โมดูลของแต่ละห้อง'], teamperm:['🔐','สิทธิ์ทีม'], kpiemp:['👥','ทะเบียนพนักงาน'], kpiperson:['📈','ประวัติรายคน'], kpidash:['📊','ภาพรวม'], kpientry:['✍️','กรอกผลงาน'], kpiscore:['⭐','คะแนนคุณลักษณะ'], kpidoc:['📄','ใบประเมิน'], kpiround:['📋','รอบการประเมิน'], kpifill:['✍️','ประเมินผลงาน'], kpimanage:['📊','จัดการผลการประเมิน'], kpirule:['⚖️','เกณฑ์ทั้งองค์กร'], kpimetric:['🎯','ตัวชี้วัด (KPI)'], kpitrait:['🧭','คุณลักษณะรายบุคคล'], kpiimport:['📥','นำเข้าข้อมูลเดิม'], kpireport:['📄','รายงาน'], kpihelp:['📘','คู่มือการใช้งาน']
+    expdash:['📊','รายจ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ทะเบียนการจ่าย'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','ภาษีซื้อ/ภ.พ.30'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ทะเบียนใบสำคัญจ่าย'], sales:['💰','รายรับ'], ar:['📊','ลูกหนี้ค้างรับ'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51'], finhist:['📈','เทียบย้อนหลัง'], docdash:['📊','ภาพรวม'], docreg:['🗂️','จัดการเอกสาร'], doccheck:['✅','ตรวจก่อนส่ง'], docbycat:['📑','รายงานตามประเภท'], docreport:['📦','รายงานประจำเดือน'], doccat:['🏷️','จัดการหมวด'], hubmods:['🧩','โมดูลของแต่ละห้อง'], teamperm:['🔐','สิทธิ์ทีม'], kpiemp:['👥','ทะเบียนพนักงาน'], kpiperson:['📈','ประวัติรายคน'], kpidash:['📊','ภาพรวม'], kpientry:['✍️','กรอกผลงาน'], kpiscore:['⭐','คะแนนคุณลักษณะ'], kpidoc:['📄','ใบประเมิน'], kpiround:['📋','รอบการประเมิน'], kpifill:['✍️','ประเมินผลงาน'], kpimanage:['📊','จัดการผลการประเมิน'], kpirule:['⚖️','เกณฑ์ทั้งองค์กร'], kpimetric:['🎯','ตัวชี้วัด (KPI)'], kpitrait:['🧭','คุณลักษณะรายบุคคล'], kpiimport:['📥','นำเข้าข้อมูลเดิม'], kpireport:['📄','รายงาน'], kpihelp:['📘','คู่มือการใช้งาน'], myset:['🙋','ตั้งค่าของฉัน']
   };
   var PROJECTS=[], COMPANIES=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ) · COMPANIES=บริษัท auto (หน้าจัดการ)
   var ALL_TASKS=[], PJ_SEL='', MB_STATUSES=[];   // มุมมอง Project (dropdown เลือก · แยก 6 สถานะ + %) · MB_STATUSES=รายการสถานะ (ฟอร์มแก้งานมือถือ)
@@ -2269,7 +2282,7 @@
     if(gi) $('tbIcon').innerHTML=gi.replace('stroke-width="1.9"','stroke-width="2"'); else $('tbIcon').textContent=meta[0];
     $('tbTitle').textContent=meta[1];
     mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
-    ({ portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, perf:renderPerf, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expone:renderExpOne, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51, finhist:renderFinHist, docreg:renderDocReg, doccheck:renderDocCheck, docdash:renderDocDash, docbycat:renderDocByCat, docreport:renderDocReport, doccat:renderDocCat, kpiemp:renderKpiEmp, kpiperson:renderKpiPerson, kpidash:renderKpiDash, kpientry:renderKpiEntry, kpiscore:renderKpiScore, kpidoc:renderKpiDoc, kpiround:renderKpiRound, kpifill:renderKpiFill, kpimanage:renderKpiManage, kpirule:renderKpiRule, kpimetric:renderKpiMetric, kpitrait:renderKpiTrait, kpiimport:renderKpiImport, kpireport:renderKpiReport, kpihelp:renderKpiHelp }[v] || soon)();
+    ({ portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, perf:renderPerf, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expone:renderExpOne, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51, finhist:renderFinHist, docreg:renderDocReg, doccheck:renderDocCheck, docdash:renderDocDash, docbycat:renderDocByCat, docreport:renderDocReport, doccat:renderDocCat, kpiemp:renderKpiEmp, kpiperson:renderKpiPerson, kpidash:renderKpiDash, kpientry:renderKpiEntry, kpiscore:renderKpiScore, kpidoc:renderKpiDoc, kpiround:renderKpiRound, kpifill:renderKpiFill, kpimanage:renderKpiManage, kpirule:renderKpiRule, kpimetric:renderKpiMetric, kpitrait:renderKpiTrait, kpiimport:renderKpiImport, kpireport:renderKpiReport, kpihelp:renderKpiHelp, myset:renderMyset }[v] || soon)();
   }
 
   // ───── มือถือ: เมนูกลุ่ม (ล่าง) + แท็บย่อย (บน) · คอมใช้ sidebar เดิม ไม่เกี่ยว ─────
@@ -2285,7 +2298,7 @@
     /* ลำดับตามผังการเงิน 10 หมวดของพี่กี้: ① ภาพรวมธุรกิจ ② รายรับ ③ ลูกหนี้ ④ รายงานรายรับ
        ⑤ รายจ่าย (+เงินสดย่อย) ⑥ ทะเบียนการจ่าย ⑦⑧ รายงานรายจ่าย/เจ้าหนี้ ⑨ รายงานภาษี (+ภาษีซื้อ +ภ.ง.ด.51)
        ⑩ 50 ทวิ ที่ถูกหัก · taxdoc ซ่อนไว้ก่อน */
-    { key:'me',   icon:'🙋', label:'ส่วนตัว', views:['clock','leave','ot','expense','docs'] }
+    { key:'me',   icon:'🙋', label:'ส่วนตัว', views:['clock','leave','ot','expense','docs','myset'] }
   ];
   // ไอคอนหัวกลุ่มบน sidebar คอม = SVG เส้นสีเดียว (พี่กี้ขอ 30 ก.ค.: เรียบ ๆ ไม่สีสัน)
   // เข้าชุดกับปุ่มย่อยที่เป็น SVG อยู่แล้ว · emoji ใน NAV_GROUPS ยังใช้ที่แถบล่างมือถือ (จอเล็กอ่านง่ายกว่า)
@@ -2401,7 +2414,7 @@
     { key:'audit',   th:'ระบบตรวจสอบ',  en:'AUDIT',       color:'#be123c', g:['#fb7185','#9f1239'], own:true, views:[],
       soon:'ยังไม่กำหนดขอบเขต — จองที่ไว้ก่อน' },
     { key:'me',      th:'พนักงาน',      en:'MY PROFILE',  color:'#0EA5A5', g:['#2dd4bf','#0f766e'], own:false,
-      views:['clock','leave','ot','expense','docs'] },
+      views:['clock','leave','ot','expense','docs','myset'] },
     /* เครื่องมือของทีมพัฒนา · perf อยู่ใน OWNER_VIEWS = พี่กี้เห็นเมนู คนอื่นยังเจอการ์ด "กำลังพัฒนา" เหมือนเดิม */
     { key:'dev',     th:'ระบบพัฒนา',    en:'FEEDBACK',    color:'#4f46e5', g:['#818cf8','#4338ca'], own:false,
       views:['perf'],
@@ -2690,6 +2703,7 @@
     drive:'<svg viewBox="0 0 24 24"><path d="M3.5 7.5A2 2 0 0 1 5.5 5.5h4l2 2.4h7a2 2 0 0 1 2 2v8.1a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/></svg>',
     co:'<svg viewBox="0 0 24 24"><path d="M4 20V6.2a1.6 1.6 0 0 1 1.2-1.6l7-1.6a1.2 1.2 0 0 1 1.5 1.2V20"/><path d="M13.7 9.5h4.6A1.7 1.7 0 0 1 20 11.2V20"/><path d="M3 20h18"/><path d="M7.4 8.8h2.6M7.4 12.3h2.6M7.4 15.8h2.6"/></svg>',
     user:'<svg viewBox="0 0 24 24"><circle cx="12" cy="8.4" r="3.4"/><path d="M5.4 20c0-3.4 2.9-5.4 6.6-5.4s6.6 2 6.6 5.4"/></svg>',
+    people:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8.2" r="3.1"/><path d="M3.2 19.5c0-3.1 2.6-4.9 5.8-4.9s5.8 1.8 5.8 4.9"/><path d="M16.2 6.1a3.1 3.1 0 0 1 0 5.9"/><path d="M17.6 14.9c2 .5 3.4 1.9 3.4 4.6"/></svg>',
     docno:'<svg viewBox="0 0 24 24"><path d="M6.5 3.5h7.8L19 8.2V20a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 20V5a1.5 1.5 0 0 1 1.5-1.5z"/><path d="M14 3.7V8.5h4.8"/><path d="M8.3 13.5h7.4M8.3 17h4.8"/></svg>',
     money:'<svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="11" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M6.4 12h.01M17.6 12h.01"/></svg>'
   };
@@ -2697,6 +2711,7 @@
   var ST_TABS = [
     { key:'drive', label:'ตั้งค่า Drive' },
     { key:'co',    label:'ตั้งค่าบริษัท' },
+    { key:'people',label:'รายบุคคล' },
     { key:'user',  label:'สิทธิ์ผู้ใช้งาน' },
     { key:'docno', label:'เลขที่เอกสาร' },
     { key:'money', label:'ช่องทางการเงิน' }
@@ -2950,6 +2965,7 @@
   /** เนื้อในของแท็บที่เลือก */
   function stBodyHtml(info, room){
     if(ST_TAB==='co')   return roomCoHtml();
+    if(ST_TAB==='people') return stPeopleHtml();
     if(ST_TAB==='user') return stUserHtml();
     if(ST_TAB==='docno')return stDocNoHtml();
     if(ST_TAB==='money')return stMoneyHtml();
@@ -2957,6 +2973,18 @@
   }
 
   /** ③ สิทธิ์ผู้ใช้งาน — ยังไม่มีหน้าจอ บอกตรง ๆ ว่าตอนนี้ทำที่ไหน */
+  /** ③ รายบุคคล — ผู้ดูแลแก้ข้อมูล/ลายเซ็นให้ทุกคนในห้อง (spec-user-settings) */
+  function stPeopleHtml(){
+    return '<div class="card"><div class="pb" style="padding:16px 18px">'+
+        '<div class="rs-h">รายบุคคล</div>'+
+        '<div class="rs-sub">ชื่อที่พิมพ์บนเอกสาร · ตำแหน่ง · เบอร์ติดต่อกลับ · บัญชีรับโอนคืน · ลายเซ็น'+
+        '<br>ทุกคนแก้ของตัวเองได้ที่เมนู 🙋 ส่วนตัว → ตั้งค่าของฉัน — หน้านี้ไว้แก้ให้คนอื่น</div>'+
+        '<div class="m-hint">ลายเซ็นที่ผู้ดูแลอัปแทน ระบบใช้กับ<b>เอกสารในนามบริษัท</b>เท่านั้น '+
+        '(ใบแทนใบเสร็จ · ใบสำคัญรับเงินฝั่งผู้จ่าย · เงินสดย่อย ยังต้องให้เจ้าตัวเซ็นเอง)</div>'+
+      '</div></div>'+
+      '<div id="usBox"><div class="card"><div class="emptybox">กำลังโหลด…</div></div></div>';
+  }
+
   function stUserHtml(){
     return '<div class="card"><div class="pb" style="padding:16px 18px">'+
       '<div class="rs-h">สิทธิ์ผู้ใช้งาน</div>'+
@@ -3120,6 +3148,8 @@
   }
 
   function bindRoomSet(){
+    if(ST_TAB==='people'){ US_OPEN=''; usReload().catch(function(e){
+      var b=$('usBox'); if(b) b.innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; }); }
     if(ST_TAB==='co') roomCoLoad('co');
     if(ST_TAB==='money' && ST_SUB==='in') roomCoLoad('bank');
     var ab=$('rsAiBtn');
@@ -3619,7 +3649,7 @@
       if(i>=0){ fin.views.splice(i,1); if(me.views.indexOf('expdash')<0) me.views.push('expdash'); }
     });
   }
-  var VIEW_TAB={ portal:'เมนูหลัก', payroll:'ระบบเงินเดือน', modsoon:'กำลังพัฒนา', perf:'วัดความเร็วระบบ', hubreq:'คำขอสมัคร', hubrooms:'ห้องลูกค้า', roomset:'ตั้งค่าห้อง', home:'ภาพรวมประจำวัน', projects:'บอร์ดงาน', mytasks:'งานของฉัน', review:'รอตรวจ', trash:'ถังขยะ',
+  var VIEW_TAB={ portal:'เมนูหลัก', payroll:'ระบบเงินเดือน', modsoon:'กำลังพัฒนา', perf:'วัดความเร็วระบบ', hubreq:'คำขอสมัคร', hubrooms:'ห้องลูกค้า', roomset:'ตั้งค่าห้อง', myset:'ตั้งค่าของฉัน', home:'ภาพรวมประจำวัน', projects:'บอร์ดงาน', mytasks:'งานของฉัน', review:'รอตรวจ', trash:'ถังขยะ',
     senddoc:'ส่งงานลูกค้า', appt:'นัดประชุม', announce:'ประกาศ',
     leave:'ลาของฉัน', approve:'อนุมัติลา', expense:'เบิกของฉัน', expapprove:'อนุมัติเบิก',
     expdash:'รายจ่าย', reimb:'ตั้งเบิกลูกค้า', petty:'เงินสดย่อย', payout:'ทะเบียนการจ่าย', expreport:'รายงานรายจ่าย', taxhub:'รายงานภาษี', whtin:'50 ทวิ ที่ถูกหัก', vatbuy:'ภาษีซื้อ',
@@ -8117,6 +8147,155 @@
   window.poOpenPay=poOpenPay; window.poMethodChange=poMethodChange; window.doPoPay=doPoPay;
   window.poCancel=poCancel; window.doPoCancel=doPoCancel;
 
+  /* ═══════════ 🙋 ตั้งค่ารายบุคคล — ชื่อ · ตำแหน่ง · เบอร์ · บัญชี · ลายเซ็น ═══════════
+     spec docs/spec-user-settings.md · ทางเข้า 2 ทาง หลังบ้านชุดเดียว:
+       · 🙋 ส่วนตัว → ตั้งค่าของฉัน (view myset) = การ์ดของตัวเองใบเดียว ทุกคนเข้าได้
+       · ⚙️ ตั้งค่าห้อง → แท็บ รายบุคคล  = ตารางทุกคน (ผู้ดูแลเท่านั้น)
+     🔴 การ์ดล็อกไว้ก่อน ต้องกด "แก้ไข" ถึงพิมพ์ได้ (กติกาเดียวกับหน้าตั้งค่าห้อง) */
+  var US_DATA=null;          // payload ล่าสุดจาก waUserSet
+  var US_OPEN='';            // uid ของการ์ดที่กำลังเปิดแก้ ('' = ล็อกหมด · เปิดได้ทีละคน)
+
+  /** หยิบลายเซ็นของ uid ออกจาก payload waUserSet → รูปเดียวกับที่ waSignGet ตอบ */
+  function usPickSign(r, uid){
+    if(!r||!r.ok) return { ok:false };
+    var m = (r.me && r.me.uid===uid) ? r.me : null;
+    if(!m && r.list) for(var i=0;i<r.list.length;i++) if(r.list[i].uid===uid){ m=r.list[i]; break; }
+    if(!m) return { ok:true, has:false };
+    return { ok:true, has:!!(m.sign&&m.sign.has), url:(m.sign&&m.sign.url)||'', updatedAt:(m.sign&&m.sign.updatedAt)||'' };
+  }
+
+  /** ป้ายสถานะลายเซ็น — ฟังก์ชันบริสุทธิ์ (ของจริงกับเทสเรียกตัวเดียวกัน) */
+  function usSignLabel(sign){
+    if(!sign||!sign.has) return { cls:'rs-no', txt:'ยังไม่มีลายเซ็นในระบบ',
+      note:'เอกสารที่ต้องลงนามจะเว้นเส้นไว้ให้เซ็นมือ' };
+    if(sign.source==='admin') return { cls:'rs-no', txt:'ผู้ดูแลอัปให้'+(sign.byName?(' ('+sign.byName+')'):''),
+      note:'ใช้ได้เฉพาะเอกสารในนามบริษัท — ใบแทนใบเสร็จ · ใบสำคัญรับเงินฝั่งผู้จ่าย · เงินสดย่อย ยังต้องให้เจ้าตัวเซ็นเอง' };
+    return { cls:'rs-ok', txt:'เซ็นแล้ว'+(sign.updatedAt?(' ('+sign.updatedAt+')'):''),
+      note:'ระบบฝังลายเซ็นนี้ให้อัตโนมัติทุกใบที่ออกให้' };
+  }
+
+  /** การ์ดข้อมูลรายคน 1 ใบ · open=true คือกำลังแก้ไข (ปลดล็อกช่องกรอก) */
+  function usCardHtml(m, open, banks, isSelf){
+    var p = 'us_'+m.uid;
+    var sl = usSignLabel(m.sign);
+    var bankOpts = (banks||[]).map(function(b){
+      return '<option value="'+esc(b)+'"'+(b===m.bank.name?' selected':'')+'>'+esc(b)+'</option>'; }).join('');
+    return '<div class="card us-card" data-lock="'+esc(p)+'"><div class="pb" style="padding:16px 18px">'+
+      '<div class="st-head"><div class="st-hx">'+
+        '<div class="rs-h">'+esc(m.name||m.nick||'(ยังไม่มีชื่อ)')+
+          (m.status==='ลาออก'?' <span class="us-left">ลาออกแล้ว</span>':'')+'</div>'+
+        '<div class="rs-sub">'+esc(m.position||'ยังไม่ได้ระบุตำแหน่ง')+
+          (isSelf?' · <b>ข้อมูลของคุณ</b>':'')+'</div>'+
+      '</div><button class="btn btn-ghost" type="button" data-nolock '+
+        'onclick="usEdit(&quot;'+esc(m.uid)+'&quot;)">'+(open?'ยกเลิก':'แก้ไข')+'</button></div>'+
+
+      '<div class="en-row">'+
+        '<div class="fld"><label>ชื่อ-สกุล (พิมพ์บนเอกสาร)</label>'+
+          '<input id="'+p+'_name" type="text" value="'+esc(m.name||'')+'"></div>'+
+        '<div class="fld"><label>ชื่อเล่น (ใช้ในการ์ด/แจ้งเตือน)</label>'+
+          '<input id="'+p+'_nick" type="text" value="'+esc(m.nick||'')+'"></div>'+
+        '<div class="fld"><label>ตำแหน่ง</label>'+
+          '<input id="'+p+'_position" type="text" value="'+esc(m.position||'')+'"></div>'+
+        '<div class="fld"><label>โทรศัพท์ (ช่อง "ติดต่อกลับที่" บนเอกสาร)</label>'+
+          '<input id="'+p+'_phone" type="text" inputmode="tel" value="'+esc(m.phone||'')+'"></div>'+
+        '<div class="fld"><label>อีเมล</label>'+
+          '<input id="'+p+'_email" type="text" value="'+esc(m.email||'')+'"></div>'+
+      '</div>'+
+
+      '<div class="us-sec">🏦 บัญชีรับโอนคืน <span>ใช้ตอนจ่ายคืนใบเบิก</span></div>'+
+      '<div class="en-row">'+
+        '<div class="fld"><label>ธนาคาร</label><select id="'+p+'_bankName">'+
+          '<option value="">— เลือกธนาคาร —</option>'+bankOpts+'</select></div>'+
+        '<div class="fld"><label>เลขที่บัญชี</label>'+
+          '<input id="'+p+'_bankAcct" type="text" inputmode="numeric" value="'+esc(m.bank.acct||'')+'"></div>'+
+        '<div class="fld"><label>ชื่อบัญชี</label>'+
+          '<input id="'+p+'_bankOwner" type="text" value="'+esc(m.bank.owner||'')+'"></div>'+
+      '</div>'+
+
+      '<div class="us-sec">✍️ ลายเซ็น</div>'+
+      '<div class="rs-st '+sl.cls+'"><b>'+esc(sl.txt)+'</b><span>'+esc(sl.note)+'</span></div>'+
+      (m.sign&&m.sign.has
+        ? '<div class="us-sig"><img src="'+esc(m.sign.url)+'" alt="ลายเซ็น" onerror="this.style.display=\'none\'"></div>'
+        : '')+
+      '<div class="st-act">'+
+        '<button class="btn btn-ghost" type="button" onclick="usSign(&quot;'+esc(m.uid)+'&quot;,&quot;'+
+          esc(m.name||m.nick||'')+'&quot;)">'+(m.sign&&m.sign.has?'เซ็นใหม่ / อัปรูปทับ':'เซ็น / อัปรูปลายเซ็น')+'</button>'+
+        '<button class="btn btn-primary" type="button" onclick="usSave(&quot;'+esc(m.uid)+'&quot;)">บันทึก</button>'+
+      '</div>'+
+      '</div></div>';
+  }
+
+  /** กดแก้ไข/ยกเลิก — เปิดได้ทีละคน (กันแก้ค้างหลายใบแล้วกดบันทึกผิดคน) */
+  function usEdit(uid){
+    US_OPEN = (US_OPEN===uid) ? '' : uid;
+    usPaint();
+  }
+
+  /** ดึงข้อมูลใหม่จาก backend แล้ววาดใหม่ (เรียกหลังบันทึก/อัปลายเซ็น) */
+  function usReload(){
+    var wantList = (VIEW==='roomset');
+    return jsonp({action:'waUserSet',uid:UID,all:wantList?'1':''}).then(function(r){
+      if(!r||!r.ok) throw new Error(r&&r.error||'โหลดข้อมูลไม่สำเร็จ');
+      US_DATA=r; usPaint(); return r;
+    });
+  }
+
+  /** วาดเนื้อในของหน้า/แท็บที่กำลังเปิดอยู่ */
+  function usPaint(){
+    var box = $('usBox'); if(!box||!US_DATA) return;
+    /* 🔴 ตัวล็อกของหน้าตั้งค่า (stLockAll) อ่านจาก ST_EDIT เท่านั้น — ต้อง sync ให้ตรงกับ US_OPEN
+       ไม่งั้นการ์ดถูกล็อกค้างตลอด กดแก้ไขก็พิมพ์ไม่ได้ (เจอจากการตรวจด้วยภาพ 18 ก.ย. 69) */
+    if(typeof ST_EDIT!=='undefined'){
+      Object.keys(ST_EDIT).forEach(function(k){ if(k.indexOf('us_')===0) delete ST_EDIT[k]; });
+      if(US_OPEN) ST_EDIT['us_'+US_OPEN]=true;
+    }
+    var r = US_DATA, banks = r.banks||[];
+    if(VIEW==='roomset'){
+      var list = r.list && r.list.length ? r.list : (r.me?[r.me]:[]);
+      box.innerHTML = list.length
+        ? list.map(function(m){ return usCardHtml(m, US_OPEN===m.uid, banks, m.uid===UID); }).join('')
+        : '<div class="card"><div class="emptybox">ยังไม่มีใครในทีมค่ะ</div></div>';
+    } else {
+      box.innerHTML = r.me
+        ? usCardHtml(r.me, US_OPEN===r.me.uid, banks, true)
+        : '<div class="card"><div class="emptybox">ยังไม่มีข้อมูลของคุณในชีตทีมงาน — พิมพ์ "ลงทะเบียน" ในแชทก่อนค่ะ</div></div>';
+    }
+    stLockAll();   // การ์ดที่ไม่ได้กดแก้ไข = ล็อกช่องกรอกทั้งใบ
+  }
+
+  /** บันทึกข้อมูลของคนนั้น — ส่งเฉพาะช่องที่มีในฟอร์ม (backend คงค่าเดิมให้ช่องที่ไม่ส่ง) */
+  function usSave(uid){
+    var p='us_'+uid;
+    function v(k){ var el=$(p+'_'+k); return el?el.value:undefined; }
+    var q={ action:'waUserSave', uid:UID, uid2:uid,
+      name:v('name'), nick:v('nick'), position:v('position'), phone:v('phone'), email:v('email') };
+    // บัญชี: ส่งเมื่อกรอกครบ 3 ช่อง หรือปล่อยว่างทั้งชุด (กรอกค้างครึ่งเดียว = ไม่ส่ง กันเตือนรก)
+    var bn=v('bankName'), ba=v('bankAcct'), bo=v('bankOwner');
+    if(bn && ba && bo){ q.bankName=bn; q.bankAcct=ba; q.bankOwner=bo; }
+    else if((bn||ba||bo)){ toast('กรอกบัญชีให้ครบทั้ง 3 ช่องนะคะ (ธนาคาร · เลขที่ · ชื่อบัญชี)'); return; }
+    callBusy('กำลังบันทึก…', jsonpPost(q)).then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+      US_OPEN=''; toast('บันทึกแล้วค่ะ'); usReload();
+    }).catch(function(e){ toast(e.message); });
+  }
+
+  /** เปิดแผ่นวาดลายเซ็น — ตัวเอง หรือผู้ดูแลอัปแทนคนอื่น */
+  function usSign(uid, name){ openSign(uid, name); }
+
+  /** 🙋 หน้า "ตั้งค่าของฉัน" (โมดูลส่วนตัว · ทุกคนเข้าได้) */
+  function renderMyset(){
+    US_OPEN='';
+    $('main').innerHTML='<div class="phead"><h2>🙋 ตั้งค่าของฉัน</h2>'+
+      '<div class="psub">ชื่อที่พิมพ์บนเอกสาร · ตำแหน่ง · เบอร์ติดต่อกลับ · บัญชีรับโอนคืน · ลายเซ็น'+
+      '<br>กด <b>แก้ไข</b> ที่มุมขวาของการ์ดก่อน แล้วจึงพิมพ์/เซ็นได้ค่ะ</div></div>'+
+      '<div id="usBox"><div class="card"><div class="emptybox">กำลังโหลด…</div></div></div>';
+    usReload().catch(function(e){
+      if(VIEW!=='myset') return;
+      $('usBox').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>';
+    });
+  }
+  window.usEdit=usEdit; window.usSave=usSave; window.usSign=usSign;
+
   // ═══════════ ลายเซ็นของฉัน (เซ็นครั้งเดียว ใช้ตลอด · ระบบเอาไปฝังเอกสารที่ออกให้) ═══════════
   // ต้นแบบแผ่นวาด: skill handover-letter (วาดด้วยนิ้ว/เมาส์ หรืออัปรูปลายเซ็น)
   var SIG_HAS=false, SIG_PHOTO=null;   // SIG_PHOTO = รูปถ่ายต้นฉบับ (เก็บไว้ประมวลผลใหม่ตอนเลื่อนสไลเดอร์)
@@ -8129,10 +8308,17 @@
       el.textContent = r.has ? ' · เซ็นแล้ว ('+(r.updatedAt||'')+')' : ' · ยังไม่ได้เซ็น';
     }).catch(function(){});
   }
-  function openSign(){
+  /* เป้าหมายของแผ่นวาด — '' = ตัวเอง · มี uid = ผู้ดูแลอัปแทนคนนั้น (ตั้งค่ารายบุคคล 18 ก.ย. 69)
+     ⚠️ ลายเซ็นที่ผู้ดูแลอัปแทน ระบบใช้ได้เฉพาะเอกสารในนามบริษัท (spec-user-settings §4.2) */
+  var SIG_TARGET='', SIG_TARGET_NAME='';
+  function openSign(targetUid, targetName){
     SIG_PHOTO=null;
-    modal('<h3>✍️ ลายเซ็นของฉัน</h3><div id="mErr" class="m-err hidden"></div>'+
-      '<div class="m-hint">เซ็นครั้งเดียว ระบบจำไว้ใช้ตลอด — เอกสารที่ออกให้ (ใบสำคัญรับเงิน / ใบแทนใบเสร็จ) จะฝังลายเซ็นนี้อัตโนมัติ ไม่ต้องเซ็นซ้ำทุกใบค่ะ</div>'+
+    SIG_TARGET = (targetUid && String(targetUid)!==String(UID)) ? String(targetUid) : '';
+    SIG_TARGET_NAME = SIG_TARGET ? String(targetName||'') : '';
+    modal('<h3>✍️ '+(SIG_TARGET?('ลายเซ็นของ '+esc(SIG_TARGET_NAME)):'ลายเซ็นของฉัน')+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      (SIG_TARGET
+        ? '<div class="m-hint" style="background:#FEF3C7;color:#78350F">คุณกำลังอัปลายเซ็นแทนคนอื่น — ลายเซ็นนี้ระบบจะใช้กับ<b>เอกสารในนามบริษัท</b>เท่านั้น (ใบสำคัญจ่าย · ใบสั่งจ่าย · เอกสารขาย)<br>เอกสารที่เป็นการรับรองของตัวเขาเอง (ใบแทนใบเสร็จ · ใบสำคัญรับเงินฝั่งผู้จ่าย · เงินสดย่อย) ยังต้องให้เจ้าตัวเซ็นเองค่ะ</div>'
+        : '<div class="m-hint">เซ็นครั้งเดียว ระบบจำไว้ใช้ตลอด — เอกสารที่ออกให้ (ใบสำคัญรับเงิน / ใบแทนใบเสร็จ) จะฝังลายเซ็นนี้อัตโนมัติ ไม่ต้องเซ็นซ้ำทุกใบค่ะ</div>')+
       '<div class="fld"><label>เซ็นในกรอบ (ใช้นิ้ววาด) หรือถ่ายรูปลายเซ็นบนกระดาษ</label>'+
         // พื้นตารางหมากรุก = โชว์ให้เห็นว่าพื้นโปร่งใสจริง (ไม่ใช่พื้นขาว)
         '<canvas id="sigPad" width="600" height="200" style="width:100%;height:auto;border:1.5px dashed #B9C2D0;border-radius:10px;touch-action:none;'+
@@ -8157,7 +8343,8 @@
     sigInitPad($('sigPad'));
     var up=$('sigUp'); if(up) up.addEventListener('change', sigUpload);
     // โชว์ลายเซ็นเดิม (ถ้ามี) ให้เห็นว่าจะทับอันไหน
-    jsonp({action:'waSignGet',uid:UID}).then(function(r){
+    jsonp(SIG_TARGET?{action:'waUserSet',uid:UID,all:'1'}:{action:'waSignGet',uid:UID}).then(function(r){
+      if(SIG_TARGET) r = usPickSign(r, SIG_TARGET);
       var el=$('sigCur'); if(!el||!r||!r.ok||!r.has) return;
       el.innerHTML='ลายเซ็นปัจจุบัน ('+esc(r.updatedAt||'')+') — บันทึกใหม่จะทับอันนี้<br>'+
         '<img src="'+esc(r.url)+'" alt="" style="max-height:60px;margin-top:4px" onerror="this.style.display=\'none\'">';
@@ -8284,9 +8471,13 @@
     var img=sigData();
     if(!img){ mErr('เซ็นในกรอบก่อนค่ะ (หรือกดอัปรูปลายเซ็น)'); return; }
     var b=$('sigSave'); if(b){ b.disabled=true; b.textContent='กำลังบันทึก…'; }
-    callBusy('กำลังบันทึกลายเซ็น…', jsonpPost({action:'waSignSave',uid:UID,img:img})).then(function(r){
+    var q={action:'waUserSign',uid:UID,img:img};
+    if(SIG_TARGET) q.uid2=SIG_TARGET;   // ผู้ดูแลอัปแทน (backend อ่าน p.uid = คนที่ล็อกอิน · p.uid2 = เป้าหมาย)
+    callBusy('กำลังบันทึกลายเซ็น…', jsonpPost(q)).then(function(r){
       if(!r||!r.ok){ if(b){b.disabled=false;b.textContent='บันทึกลายเซ็น';} mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
-      closeModal(); toast('✍️ บันทึกลายเซ็นแล้วค่ะ'); sigRefresh();
+      closeModal(); toast('✍️ บันทึกลายเซ็นแล้วค่ะ');
+      if(SIG_TARGET || VIEW==='myset' || VIEW==='roomset'){ SIG_TARGET=''; if(typeof usReload==='function') usReload(); }
+      sigRefresh();
     }).catch(function(e){ if(b){b.disabled=false;b.textContent='บันทึกลายเซ็น';} mErr(e.message); });
   }
   window.openSign=openSign; window.sigClear=sigClear; window.sigSave=sigSave; window.sigRedraw=sigRedraw;
@@ -16396,7 +16587,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260917-2338';
+  var APP_BUILD='20260918-0855';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
