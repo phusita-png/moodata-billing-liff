@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260918-1731">
+<link rel="stylesheet" href="user.css?v=20260918-1801">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -9362,15 +9362,19 @@
            เดิมเป็นปุ่มแยกอยู่ล่างสุด · ย้ายเข้าฟอร์มให้แก้พร้อมช่องอื่นแล้วกดบันทึกทีเดียว
            ⚠️ เงื่อนไขต้องตรงกับด่าน backend: ใบ RV เปลี่ยนไม่ได้ · ออกเอกสารแล้วเปลี่ยนไม่ได้ */
         (rv
-          ? '<div class="fld"><label>หลักฐาน</label><input value="'+esc(x.docType||'')+'" disabled></div>'
-          : (hasDoc
-            ? '<div class="fld"><label>หลักฐาน — ออกเอกสารแล้ว เปลี่ยนไม่ได้</label>'+
-              '<input value="'+esc(x.docType||'')+'" disabled></div>'
-            : '<div class="fld"><label>หลักฐาน</label><select id="exdProof">'+
-                '<option value="rcp"'+(proofIsSr?'':' selected')+'>🧾 มีใบเสร็จ (แนบไฟล์มาแล้ว)</option>'+
-                '<option value="sr"'+(proofIsSr?' selected':'')+'>📄 ไม่มีใบเสร็จ → ระบบออกใบรับรองแทนให้</option>'+
-              '</select>'+
-              '<div class="m-hint" style="margin-top:4px">เลือก "ไม่มีใบเสร็จ" แล้วบันทึก ระบบจะออกใบรับรองแทนใบเสร็จให้ทันทีถ้าใบนี้อนุมัติ/จ่ายแล้ว</div></div>'))+
+          /* ⛔ ล็อกเฉพาะใบสำคัญรับเงิน — คนละสายเอกสาร (ตรงกับด่าน handleWaExpSetProof_ ที่ห้ามเฉพาะ RV)
+             ⚠️ อย่าล็อกเพราะ "มี 50 ทวิ" — ใบที่มีใบเสร็จ+หักภาษีคือเคสที่พี่ต้องแก้บ่อยที่สุด */
+          ? '<div class="fld"><label>หลักฐาน — ใบสำคัญรับเงิน เปลี่ยนตรงนี้ไม่ได้</label>'+
+            '<input value="'+esc(x.docType||'')+'" disabled></div>'
+          : '<div class="fld"><label>หลักฐาน</label><select id="exdProof">'+
+              '<option value="rcp"'+(proofIsSr?'':' selected')+'>🧾 มีใบเสร็จ (แนบไฟล์มาแล้ว)</option>'+
+              '<option value="sr"'+(proofIsSr?' selected':'')+'>📄 ไม่มีใบเสร็จ → ระบบออกใบรับรองแทนให้</option>'+
+            '</select>'+
+            '<div class="m-hint" style="margin-top:4px">'+
+              (x.docNo
+                ? '⚠️ ใบนี้ออกเอกสาร '+esc(x.docNo)+' ไปแล้ว — เปลี่ยนประเภทได้ แต่เอกสารเดิมยังอยู่ ต้องตรวจให้ตรงกันเอง'
+                : 'เลือก "ไม่มีใบเสร็จ" แล้วบันทึก ระบบจะออกใบรับรองแทนใบเสร็จให้ทันทีถ้าใบนี้อนุมัติ/จ่ายแล้ว')+
+            '</div></div>')+
         '<div class="fld"><label>ยอดเงิน (บาท)'+(canAmt?'':' — จ่ายแล้ว แก้ไม่ได้')+'</label>'+
           '<input id="exdAmt" inputmode="decimal" value="'+esc(String(x.amount||''))+'"'+(canAmt?'':' disabled')+'></div>'+
         '<div class="fld exd-wide"><label>รายละเอียด</label>'+
@@ -16893,7 +16897,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260918-1731';
+  var APP_BUILD='20260918-1801';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
