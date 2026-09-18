@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260918-1429">
+<link rel="stylesheet" href="user.css?v=20260918-1638">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -3191,6 +3191,7 @@
         'เลขรันแยกกันต่อ <b>บริษัท × ชนิด × เดือน</b> และกินเลขตอนออกเอกสารจริง ไม่ใช่ตอนร่าง</div>'+
         '<div class="fld" style="margin:0 0 12px"><label>บริษัทผู้ออกเอกสาร</label>'+
           '<select id="dnEnt" onchange="dnPick(this.value)"><option>กำลังโหลด…</option></select></div>'+
+        '<div id="dnNote" class="rs-st rs-ok" style="display:none"></div>'+
         stTableHtml('dnBody', DN_COLS, stSkelRows(DN_COLS.length, 5))+
         '<div class="rs-steps" style="margin-top:14px"><b>อยากตั้งรูปแบบเองแบบโปรแกรมบัญชี</b>'+
         'ทำได้ แต่ต้องเคาะก่อนว่าเอกสารที่ออกไปแล้วคงเลขเดิมทั้งหมด แล้วเริ่มรูปแบบใหม่เดือนถัดไป '+
@@ -3213,6 +3214,10 @@
     body.innerHTML = DN_DATA.rows && DN_DATA.rows.length
       ? DN_DATA.rows.map(dnRowHtml).join('')
       : stEmptyRow(DN_COLS.length, 'ยังไม่มีชนิดเอกสารในระบบ');
+    var note=$('dnNote');
+    if(note && DN_DATA.codeNote){
+      note.style.display=''; note.innerHTML='<b>รหัสบริษัทในเลขที่</b><span>'+esc(DN_DATA.codeNote)+'</span>';
+    }
     var sel=$('dnEnt');
     if(sel) sel.innerHTML=(DN_DATA.entities||[]).map(function(e){
       return '<option value="'+esc(e.code)+'"'+(e.code===DN_DATA.entity.code?' selected':'')+'>'+
@@ -16875,7 +16880,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260918-1429';
+  var APP_BUILD='20260918-1638';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
