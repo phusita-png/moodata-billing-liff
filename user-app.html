@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260919-2013">
+<link rel="stylesheet" href="user.css?v=20260919-2054">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -9811,6 +9811,11 @@
       toast(r.voided
         ? ('🚫 ยกเลิก '+no+' แล้ว · เลขที่ '+(r.docNo||r.whtNo||'')+' ยังอยู่ในทะเบียน')
         : ('🗑️ ย้าย '+no+' ไปถังขยะแล้ว · กู้คืนได้ที่เมนูถังขยะ'));
+      /* ⚠️ ยกเลิกเอกสารในเดือนที่ยื่นภาษีไปแล้ว — ต้องค้างให้อ่าน ไม่ใช่ toast ที่หายไปใน 3 วิ
+         เพราะพี่ต้องไปแก้แบบยื่นต่อ ถ้าพลาดข้อความนี้จะไม่มีใครรู้ว่าตัวเลขเริ่มไม่ตรง */
+      if(r.filedWarn) modal('<h3>⚠️ ต้องแก้แบบยื่นภาษีด้วย</h3>'+
+        '<div class="m-hint" style="margin:0 0 14px">'+esc(r.filedWarn)+'</div>'+
+        '<button class="btn" style="width:100%" onclick="closeModal()">รับทราบ</button>');
       exReload();
     }).catch(function(e){ toast(e.message); });
   }
@@ -17098,7 +17103,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260919-2013';
+  var APP_BUILD='20260919-2054';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
