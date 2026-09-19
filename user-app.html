@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260919-1928">
+<link rel="stylesheet" href="user.css?v=20260919-1954">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -2771,24 +2771,28 @@
     drive:'<svg viewBox="0 0 24 24"><path d="M3.5 7.5A2 2 0 0 1 5.5 5.5h4l2 2.4h7a2 2 0 0 1 2 2v8.1a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/></svg>',
     co:'<svg viewBox="0 0 24 24"><path d="M4 20V6.2a1.6 1.6 0 0 1 1.2-1.6l7-1.6a1.2 1.2 0 0 1 1.5 1.2V20"/><path d="M13.7 9.5h4.6A1.7 1.7 0 0 1 20 11.2V20"/><path d="M3 20h18"/><path d="M7.4 8.8h2.6M7.4 12.3h2.6M7.4 15.8h2.6"/></svg>',
     user:'<svg viewBox="0 0 24 24"><circle cx="12" cy="8.4" r="3.4"/><path d="M5.4 20c0-3.4 2.9-5.4 6.6-5.4s6.6 2 6.6 5.4"/></svg>',
-    docno:'<svg viewBox="0 0 24 24"><path d="M6.5 3.5h7.8L19 8.2V20a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 20V5a1.5 1.5 0 0 1 1.5-1.5z"/><path d="M14 3.7V8.5h4.8"/><path d="M8.3 13.5h7.4M8.3 17h4.8"/></svg>',
-    money:'<svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="11" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M6.4 12h.01M17.6 12h.01"/></svg>'
+    docno:'<svg viewBox="0 0 24 24"><path d="M6.5 3.5h7.8L19 8.2V20a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 20V5a1.5 1.5 0 0 1 1.5-1.5z"/><path d="M14 3.7V8.5h4.8"/><path d="M8.3 13.5h7.4M8.3 17h4.8"/></svg>'
   };
 
   var ST_TABS = [
     { key:'drive', label:'ตั้งค่า Drive' },
     { key:'co',    label:'ตั้งค่าบริษัท' },
     { key:'user',  label:'ตั้งค่าผู้ใช้งาน' },
-    { key:'docno', label:'ตั้งค่าเลขที่เอกสาร' },
-    { key:'money', label:'ตั้งค่าช่องทางการเงิน' }
+    { key:'docno', label:'ตั้งค่าเลขที่เอกสาร' }
   ];
+  /* 🏦 แท็บ "ตั้งค่าช่องทางการเงิน" ถูกถอดออก 19 ก.ย. 2569 (พี่กี้สั่ง)
+     ทะเบียนบัญชีย้ายไปเมนู 🏦 ธนาคาร ครบแล้ว · ช่องทางรับ/จ่ายไม่ใช่ค่าที่ต้องตั้ง
+     เหลือไว้แต่ป้ายบอกทางก็รกเปล่า ๆ */
   /* แท็บย่อยของแต่ละแท็บ — **แยกค่าต่อแท็บ** (เดิมใช้ตัวแปรเดียว ค่าของช่องทางการเงิน
      จะไหลไปทับของผู้ใช้งานทันทีที่สลับแท็บ) · ST_SUB = ค่าของแท็บที่เปิดอยู่ตอนนี้ */
-  var ST_SUB_DEF = { user:'perm', money:'in' };
+  var ST_SUB_DEF = { user:'perm' };
   var ST_SUBS = {};
   var ST_TAB = 'drive';
   try{
-    var _t=sessionStorage.getItem('yd-st-tab'); if(_t) ST_TAB=_t;
+    var _t=sessionStorage.getItem('yd-st-tab');
+    /* 🔴 แท็บที่จำไว้อาจถูกถอดออกไปแล้ว (เช่น money 19 ก.ย. 69) — ต้องเช็คว่ายังมีจริง
+       ไม่งั้นคนที่ค้างอยู่แท็บนั้นเปิดหน้ามาเจอจอเปล่า และไม่รู้ว่าต้องกดอะไร */
+    if(_t && ST_TABS.some(function(t){ return t.key===_t; })) ST_TAB=_t;
     var _u=sessionStorage.getItem('yd-st-subs'); if(_u) ST_SUBS=JSON.parse(_u)||{};
   }catch(e){}
   function stSubOf(tab){ return ST_SUBS[tab] || ST_SUB_DEF[tab] || ''; }
@@ -3040,7 +3044,6 @@
     if(ST_TAB==='co')   return roomCoHtml();
     if(ST_TAB==='user') return stUserHtml();
     if(ST_TAB==='docno')return stDocNoHtml();
-    if(ST_TAB==='money')return stMoneyHtml();
     return roomDriveHtml(info) + roomModHtml() + roomAiHtml();     // ① Drive
   }
 
@@ -3264,37 +3267,6 @@
     if(b) b.innerHTML=stSkelRows(DN_COLS.length,5); dnLoad(); }
   window.dnPick=dnPick;
 
-  /** ⑤ ตั้งค่าช่องทางการเงิน — 2 แท็บย่อย: รับชำระ / จ่ายชำระ */
-  var MO_COLS=[{t:'ช่องทาง',w:'26%'},{t:'ใช้กับ',w:'46%'},{t:'บันทึกที่ไหน',w:'28%'}];
-  /** ช่องทางที่ระบบรองรับ — รายการมาจาก backend (ค่าคงที่ตัวจริง) ห้ามหน้าเว็บพิมพ์เอง */
-  function moChannelRows(r){
-    var pay=(r&&r.payMethods)||[], exp=(r&&r.expenseChannels)||[];
-    if(!pay.length && !exp.length) return stEmptyRow(MO_COLS.length,'ยังอ่านรายการช่องทางไม่ได้');
-    var rows = pay.map(function(m){
-      return { name:m, use:'ใบสั่งจ่ายของบริษัท — พิมพ์ลงใบสำคัญจ่าย (PV)', where:'เลือกตอนกดจ่าย' }; })
-      .concat(exp.map(function(m){
-        return { name:m, use:'จ่ายคืนใบเบิกพนักงาน', where:'เลือกตอนกดจ่ายคืน' }; }));
-    return rows.map(function(x){
-      return '<tr><td><b>'+esc(x.name)+'</b></td><td>'+esc(x.use)+'</td><td>'+esc(x.where)+'</td></tr>'; }).join('');
-  }
-  /* แท็บ "ตั้งค่าช่องทางการเงิน" — ย้ายเนื้อหาไปเมนู 🏦 ธนาคาร แล้ว (พี่กี้เคาะ 19 ก.ย. 2569)
-     🔴 คงแท็บไว้ 1 รอบ ไม่ตัดทิ้งทันที — คนที่เคยกดแท็บนี้ต้องไม่เจอหน้าเปล่า
-        และปุ่ม/action เดิม (waCoBank · coBankEdit) ยังวิ่งเส้นทางเดิมทุกอย่าง */
-  function stMoneyHtml(){
-    return '<div class="card"><div class="pb" style="padding:16px 18px">'+
-      '<div class="rs-h">ย้ายไปเมนู 🏦 ธนาคาร แล้ว</div>'+
-      '<div class="rs-sub">ทะเบียนบัญชีธนาคารของบริษัทย้ายไปอยู่ที่ <b>การเงิน ▸ ธนาคาร ▸ บัญชีธนาคาร</b> '+
-      'เพราะตอนนี้ไม่ใช่ค่าที่ตั้งครั้งเดียวแล้ว — ต้องเลือกบัญชีทุกครั้งที่รับเงินและจ่ายเงิน '+
-      'เพื่อเอาไปกระทบยอดกับสมุดบัญชีธนาคาร</div>'+
-      '<button class="btn" type="button" onclick="switchView(&quot;bank&quot;)" style="margin-top:12px;width:auto">'+
-      'ไปหน้าบัญชีธนาคาร →</button>'+
-      '<div class="rs-steps" style="margin-top:16px"><b>ช่องทางรับ/จ่ายเงิน</b>'+
-      'ไม่ต้องตั้งค่าแล้วค่ะ — ระบบมีให้เลือกตอนบันทึกรับเงิน (โอน · เงินสด · เช็ค) '+
-      'และตอนกดจ่าย (โอน · เช็ค · เงินสด · เงินสดย่อย) อยู่ในตัวฟอร์มเลย</div>'+
-      '</div></div>';
-  }
-
-
   /** แถวบริษัท 1 แถวในหน้าตั้งค่า — ฟังก์ชันบริสุทธิ์ (ของจริงกับ preview เรียกตัวเดียวกัน) */
   function coRowHtml(e, i){
     var miss=[];
@@ -3485,9 +3457,6 @@
       if(VIEW!=='roomset' && VIEW!=='bank') return;
       CO_BANKS=(r&&r.ok&&r.banks)||[];
       CO_BANKNAMES=(r&&r.bankNames)||[];
-      // แท็บย่อย "จ่ายชำระ" = ตารางช่องทางที่ระบบรองรับ (มากับ payload เดียวกัน)
-      var mo=$('moBody');
-      if(mo){ mo.innerHTML=moChannelRows(r); return; }
       var box=$('rsBankList'); if(!box) return;
       var live=CO_BANKS.filter(function(b){ return String(b.status||'').indexOf('ปิด')<0; });
       if(!live.length){
@@ -3556,7 +3525,6 @@
       if(b) b.innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; }); }
     if(ST_TAB==='docno') dnLoad();
     if(ST_TAB==='co') roomCoLoad('co');
-    if(ST_TAB==='money') roomCoLoad('bank');   // ทั้ง 2 แท็บย่อยใช้ payload เดียวกัน (บัญชี + ช่องทาง)
     var ab=$('rsAiBtn');
     if(ab) ab.addEventListener('click', function(){
       var on=!(RS_DATA&&RS_DATA.aiOn);
@@ -17120,7 +17088,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260919-1928';
+  var APP_BUILD='20260919-1954';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
