@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260919-1954">
+<link rel="stylesheet" href="user.css?v=20260919-2013">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -581,6 +581,11 @@
   .tk-badge{ margin-left:auto; font-size:12px; padding:3px 10px; border-radius:999px; font-weight:600; white-space:nowrap; }
   .b-new{ background:#EEF1F6; color:#5B6472; } .b-doing{ background:#E3EEFD; color:var(--red); }
   .b-review{ background:#FDF0E1; color:#C87F1E; } .b-done{ background:#E4F5EA; color:#1E9E5A; }
+  /* 🚫 เอกสารที่ถูกยกเลิก — เห็นได้ แต่ต้องไม่ถูกอ่านเป็นตัวเลขที่ใช้ได้ (19 ก.ย. 2569) */
+  .b-void{ background:#FDECEA; color:#B3261E; }
+  .tk-void{ opacity:.72; }
+  .tk-void .tk-no{ text-decoration:line-through; }
+  .amt-void{ text-decoration:line-through; color:#8A8F98; }
   .b-cancel{ background:#FCE7E7; color:#D14343; }
   .ex-amt{ font-size:15px; font-weight:700; color:#1F2733; margin-top:6px; }
   .ex-amt .ex-t{ font-weight:600; color:#4A5262; }
@@ -16230,9 +16235,14 @@ function kpImpDraw(){
       var links='';
       if(x.link) links+='<a class="ex-lk" href="'+esc(x.link)+'" target="_blank">📄 เปิด</a>';
       if(x.link2) links+='<a class="ex-lk" href="'+esc(x.link2)+'" target="_blank">📄 ฉบับผู้รับเงิน</a>';
-      return '<div class="tk"><div class="tk-top"><span class="tk-no">'+esc(x.no||'-')+'</span><span class="tk-badge b-review">'+esc(x.docType)+(x.form?' · '+esc(x.form):'')+'</span></div>'+
+      /* 🚫 ใบที่ยกเลิกแล้ว — ยังต้องเห็นในทะเบียน (เลขห้ามหาย) แต่ต้องดูออกทันทีว่าใช้ไม่ได้
+         ตัวเลขถูกขีดฆ่า เพราะเลขนี้ไม่ได้เข้ารายงาน/ภาษีแล้ว (19 ก.ย. 2569) */
+      var vd = !!x.voided;
+      return '<div class="tk'+(vd?' tk-void':'')+'"><div class="tk-top"><span class="tk-no">'+esc(x.no||'-')+'</span>'+
+        (vd?'<span class="tk-badge b-void">🚫 ยกเลิก</span>':'')+
+        '<span class="tk-badge b-review">'+esc(x.docType)+(x.form?' · '+esc(x.form):'')+'</span></div>'+
         '<div class="tk-cust">'+esc(x.who||'-')+'</div>'+
-        (x.amount?'<div class="ex-amt">'+money(x.amount)+' บาท</div>':'')+
+        (x.amount?'<div class="ex-amt'+(vd?' amt-void':'')+'">'+money(x.amount)+' บาท</div>':'')+
         '<div class="ex-meta">'+esc(x.dateText||'')+(links?'<br>'+links:'')+'</div></div>';
     }).join('');
   }
@@ -17088,7 +17098,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260919-1954';
+  var APP_BUILD='20260919-2013';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
