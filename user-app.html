@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260919-2054">
+<link rel="stylesheet" href="user.css?v=20260919-2130">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -581,6 +581,16 @@
   .tk-badge{ margin-left:auto; font-size:12px; padding:3px 10px; border-radius:999px; font-weight:600; white-space:nowrap; }
   .b-new{ background:#EEF1F6; color:#5B6472; } .b-doing{ background:#E3EEFD; color:var(--red); }
   .b-review{ background:#FDF0E1; color:#C87F1E; } .b-done{ background:#E4F5EA; color:#1E9E5A; }
+  /* 💵 แถบเลือกวงเงินสดย่อย (19 ก.ย. 2569) — เลื่อนแนวนอนได้เมื่อวงเยอะ
+     ยอดคงเหลืออยู่บนปุ่มเลย เพราะคนเลือกวงจากยอดในมือ ไม่ใช่จากชื่อ */
+  .pt-funds{ display:flex; gap:8px; overflow-x:auto; padding:2px 0 8px; margin-bottom:4px; }
+  .pt-fund{ flex:0 0 auto; text-align:left; background:var(--card); border:1px solid var(--line);
+    border-radius:12px; padding:9px 14px; cursor:pointer; font:inherit; color:inherit; width:auto; }
+  .pt-fund b{ display:block; font-size:14px; }
+  .pt-fund span{ display:block; font-size:12px; color:var(--muted); margin-top:2px; }
+  .pt-fund.on{ border-color:var(--t-blue-i); background:var(--t-blue); }
+  .pt-fund.on b{ color:var(--t-blue-i); }
+
   /* 🚫 เอกสารที่ถูกยกเลิก — เห็นได้ แต่ต้องไม่ถูกอ่านเป็นตัวเลขที่ใช้ได้ (19 ก.ย. 2569) */
   .b-void{ background:#FDECEA; color:#B3261E; }
   .tk-void{ opacity:.72; }
@@ -6767,12 +6777,22 @@
   /* ═══════════ 💵 เงินสดย่อย (E2 · spec-expense-side.md §4) ═══════════
      วงเงินหมุน: เงินออกจากมือ → ติ๊กรวมเป็นใบสรุปเบิก (PC) → ตั้งเบิกต่อ → บริษัทคืนเงิน วงเงินกลับเต็ม
      ⚠️ ฟอร์มทุกอันเป็น "ฟอร์มในหน้า" ไม่ใช่ป็อบอัพซ้อน (พี่กี้ขอ — รายรับจะตามแบบนี้ทีหลัง) */
-  var PT_ENT='', PT_DATA=null, PT_SEL={}, PT_FORM='';
-  function ptSetEnt(v){ PT_ENT=v||''; PT_SEL={}; PT_FORM=''; renderPetty(); }
+  var PT_ENT='', PT_FUND='', PT_DATA=null, PT_SEL={}, PT_FORM='';
+  function ptSetEnt(v){ PT_ENT=v||''; PT_FUND=''; PT_SEL={}; PT_FORM=''; renderPetty(); }
+  /* 💵 หลายวงต่อบริษัท (19 ก.ย. 69) — สลับวงแล้วต้องล้างที่ติ๊กไว้ด้วย
+     ไม่งั้นติ๊กรายการของวง A ไว้ แล้วสลับไปวง B กดออกใบสรุป = หลังบ้านปฏิเสธว่า "คนละวงเงิน"
+     ซึ่งถูกต้อง แต่คนกดไม่รู้ว่าเกิดจากอะไร */
+  function ptSetFund(v){ PT_FUND=v||''; PT_SEL={}; PT_FORM=''; renderPetty(); }
   function ptForm(kind){ PT_FORM=(PT_FORM===kind?'':kind); ptPaint(); }
   /** ติ๊ก/เอาติ๊กออก 1 รายการ → อัปเดตปุ่มออกใบสรุปทันที (ไม่โหลดหน้าใหม่) */
   function ptToggle(no,on){ if(on) PT_SEL[no]=1; else delete PT_SEL[no]; ptSum(); }
   function ptSelected(){ return Object.keys(PT_SEL); }
+  /* วงที่กำลังดูอยู่ — ยังไม่เลือก = วงแรกที่หลังบ้านส่งมา (เท่ากับพฤติกรรมเดิมตอนมีวงเดียว) */
+  function ptFundId(){
+    if(PT_FUND) return PT_FUND;
+    var f=(PT_DATA&&PT_DATA.myFunds)||[];
+    return f.length?(f[0].fundId||f[0].key||''):'';
+  }
   function ptSum(){
     var items=(PT_DATA&&PT_DATA.items)||[], sel=ptSelected(), total=0;
     items.forEach(function(x){ if(PT_SEL[x.no]) total+=Number(x.amount)||0; });
@@ -7931,9 +7951,9 @@
   function renderPetty(){
     if(!IS_OWNER){ $('main').innerHTML='<div class="card"><div class="emptybox">เฉพาะผู้ดูแลค่ะ</div></div>'; return; }
     skel();
-    jsonp({action:'waPettyInit',uid:UID,entity:PT_ENT}).then(function(r){
+    jsonp({action:'waPettyInit',uid:UID,entity:PT_ENT,fund:PT_FUND}).then(function(r){
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
-      PT_DATA=r; PT_ENT=r.entity||''; ptPaint();
+      PT_DATA=r; PT_ENT=r.entity||''; PT_FUND=r.fund||''; ptPaint();
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
   }
   /** วาดหน้าจากข้อมูลที่โหลดไว้แล้ว (ใช้ตอนเปิด/ปิดฟอร์มโดยไม่ยิงใหม่) */
@@ -7947,6 +7967,18 @@
           var v=e.isDefault?'':e.code;
           return '<option value="'+esc(v)+'"'+(v===PT_ENT?' selected':'')+'>'+esc(e.name||e.code)+'</option>';
         }).join('')+'</select></div>';
+    }
+
+    /* แถบเลือกวง — มีวงเดียวก็ไม่ต้องโผล่ หน้าตาเหมือนเดิมทุกอย่าง */
+    var myFunds=r.myFunds||[];
+    if(myFunds.length>1){
+      h+='<div class="pt-funds">'+myFunds.map(function(f,i){
+        var on = PT_FUND ? (f.key===PT_FUND) : (i===0);
+        return '<button type="button" class="pt-fund'+(on?' on':'')+'" '+
+          'onclick="ptSetFund(&quot;'+esc(f.key)+'&quot;)">'+
+          '<b>'+esc(f.label)+'</b>'+
+          '<span>เหลือในมือ '+money(f.onHand)+(f.over?' ⚠️':'')+'</span></button>';
+      }).join('')+'</div>';
     }
 
     if(!b.hasFund){
@@ -7976,17 +8008,26 @@
         '<div class="tax-acts">'+
           '<button class="btn btn-primary" onclick="ptForm(\'cash\')">➕ บันทึกจ่ายสด</button>'+
           '<button class="btn btn-ghost" onclick="ptForm(\'fund\')">⚙️ แก้วงเงิน</button>'+
+          '<button class="btn btn-ghost" onclick="ptForm(\'newfund\')">➕ เพิ่มวงเงิน</button>'+
         '</div></div>';
     }
 
     // ── ฟอร์มในหน้า (ไม่ใช่ป็อบอัพ) ──
-    if(PT_FORM==='fund'){
-      h+='<div class="card"><div class="ds-h">⚙️ ตั้ง/แก้วงเงินเงินสดย่อย</div><div id="mErr" class="m-err hidden"></div>'+
-        '<div class="fld"><label>วงเงิน (บาท)</label><input id="ptFundAmt" type="number" inputmode="decimal" value="'+(b.limit||'')+'"></div>'+
-        '<div class="fld"><label>ผู้ถือเงิน (คนที่บริษัทต้องจ่ายคืน)</label><input id="ptFundHolder" value="'+esc(b.holder||'')+'"></div>'+
-        '<div class="m-hint">แก้วงเงินได้ตลอด · ระบบบันทึกผู้แก้ + เวลาไว้ทุกครั้ง</div>'+
-        '<div class="tax-acts"><button class="btn btn-ghost" onclick="ptForm(\'fund\')">ปิด</button>'+
-        '<button class="btn btn-primary" onclick="ptSaveFund()">บันทึกวงเงิน</button></div></div>';
+    /* 🔴 2 ฟอร์มคนละตัว ไม่ใช่ฟอร์มเดียวสลับโหมด — "แก้วงเดิม" กับ "เพิ่มวงใหม่"
+       ผลต่างกันคนละเรื่อง (ทับของเดิม vs เกิดวงใหม่) ปุ่มกับหัวข้อจึงต้องอ่านแล้วต่างทันที */
+    if(PT_FORM==='fund'||PT_FORM==='newfund'){
+      var isNew=(PT_FORM==='newfund');
+      h+='<div class="card"><div class="ds-h">'+(isNew?'➕ เพิ่มวงเงินใหม่':'⚙️ แก้วงเงิน'+(b.label?' — '+esc(b.label):''))+
+        '</div><div id="mErr" class="m-err hidden"></div>'+
+        (isNew?'<div class="fld"><label>ชื่อวง (เช่น วงหน้างาน · วงออฟฟิศ)</label><input id="ptFundName" placeholder="ไม่ใส่ก็ได้ — จะเรียกตามชื่อผู้ถือ"></div>':'')+
+        '<div class="fld"><label>วงเงิน (บาท)</label><input id="ptFundAmt" type="number" inputmode="decimal" value="'+(isNew?'':(b.limit||''))+'"></div>'+
+        '<div class="fld"><label>ผู้ถือเงิน (คนที่บริษัทต้องจ่ายคืน)</label><input id="ptFundHolder" value="'+(isNew?'':esc(b.holder||''))+'"></div>'+
+        '<div class="m-hint">'+(isNew
+          ? 'วงใหม่เริ่มต้นด้วยยอดคงเหลือเต็มวง · รายการเก่าไม่ถูกย้ายมา'
+          : 'แก้วงเงินได้ตลอด · ระบบบันทึกผู้แก้ + เวลาไว้ทุกครั้ง')+'</div>'+
+        '<div class="tax-acts"><button class="btn btn-ghost" onclick="ptForm(\''+PT_FORM+'\')">ปิด</button>'+
+        '<button class="btn btn-primary" onclick="ptSaveFund('+(isNew?'1':'0')+')">'+
+        (isNew?'เพิ่มวงเงิน':'บันทึกวงเงิน')+'</button></div></div>';
     }
     if(PT_FORM==='cash'){
       var topts=(r.types||[]).map(function(t){ return '<option value="'+esc(t.key)+'">'+esc(t.label)+'</option>'; }).join('');
@@ -8065,13 +8106,19 @@
     if(PT_FORM==='cash') imgsFldBind('ptcImgs');
     ptSum();
   }
-  function ptSaveFund(){
+  function ptSaveFund(isNew){
     var amt=($('ptFundAmt')||{}).value, holder=(($('ptFundHolder')||{}).value||'').trim();
     if(!(Number(amt)>0)){ mErr('ใส่วงเงินเป็นตัวเลขมากกว่า 0 ค่ะ'); return; }
     if(!holder){ mErr('ใส่ชื่อผู้ถือเงินค่ะ'); return; }
-    callBusy('กำลังบันทึก…', jsonp({action:'waPettyFund',uid:UID,entity:PT_ENT,amount:amt,holder:holder}), 'บันทึกแล้ว').then(function(r){
+    var b=(PT_DATA&&PT_DATA.balance)||{};
+    var q={action:'waPettyFund',uid:UID,entity:PT_ENT,amount:amt,holder:holder};
+    if(isNew){ q.newFund='1'; q.fundName=(($('ptFundName')||{}).value||'').trim(); }
+    else if(b.fundId) q.fundId=b.fundId;   // แก้วงที่เปิดอยู่ ไม่ใช่วงแรกเสมอไป
+    callBusy('กำลังบันทึก…', jsonp(q), 'บันทึกแล้ว').then(function(r){
       if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
-      PT_FORM=''; toast('✅ บันทึกวงเงินแล้ว'); renderPetty();
+      PT_FORM='';
+      if(isNew&&r.fundId) PT_FUND=r.fundId;   // เพิ่มวงเสร็จ พาไปยืนที่วงใหม่เลย
+      toast(isNew?'✅ เพิ่มวงเงินแล้ว':'✅ บันทึกวงเงินแล้ว'); renderPetty();
     }).catch(function(e){ mErr(e.message); });
   }
   function ptSaveCash(){
@@ -8079,7 +8126,7 @@
     if(!detail){ mErr('กรอกรายละเอียดค่ะ'); return; }
     if(!(Number(amt)>0)){ mErr('จำนวนเงินไม่ถูกต้องค่ะ'); return; }
     var b=$('ptcSend'); if(b){ b.disabled=true; b.textContent='กำลังบันทึก…'; }
-    callBusy('กำลังบันทึก…', jsonpPost({action:'waPettyCash',uid:UID,entity:PT_ENT,
+    callBusy('กำลังบันทึก…', jsonpPost({action:'waPettyCash',uid:UID,entity:PT_ENT,fundId:ptFundId(),
       payDate:($('ptcDate')||{}).value||'', type:($('ptcType')||{}).value||'',
       payee:(($('ptcPayee')||{}).value||'').trim(), detail:detail, amount:amt,
       imgs:JSON.stringify(IMGS['ptcImgs']||[])}), 'บันทึกแล้ว').then(function(r){
@@ -8101,7 +8148,8 @@
   function ptClaim(){
     var nos=ptSelected();
     if(!nos.length){ toast('ติ๊กรายการก่อนค่ะ'); return; }
-    callBusy('กำลังออกใบสรุปเบิก…', jsonp({action:'waPettyClaim',uid:UID,entity:PT_ENT,nos:nos.join(',')}), 'ออกใบแล้ว').then(function(r){
+    callBusy('กำลังออกใบสรุปเบิก…', jsonp({action:'waPettyClaim',uid:UID,entity:PT_ENT,
+      fundId:ptFundId(),nos:nos.join(',')}), 'ออกใบแล้ว').then(function(r){
       if(!r||!r.ok){ toast((r&&r.error)||'ออกใบไม่สำเร็จ'); return; }
       PT_SEL={}; toast('📑 ออกใบสรุปเบิก '+r.no+' · '+r.count+' รายการ · '+money(r.total)+' บาท'); renderPetty();
     }).catch(function(e){ toast(e.message); });
@@ -8146,7 +8194,8 @@
     }).catch(function(e){ toast(e.message); });
   }
   window.ptDoc=ptDoc; window.ptClaimDoc=ptClaimDoc; window.ptClaimPayout=ptClaimPayout; window.ptSettleClaim=ptSettleClaim;
-  window.renderPetty=renderPetty; window.ptSetEnt=ptSetEnt; window.ptForm=ptForm; window.ptToggle=ptToggle;
+  window.renderPetty=renderPetty; window.ptSetEnt=ptSetEnt; window.ptSetFund=ptSetFund;
+  window.ptForm=ptForm; window.ptToggle=ptToggle;
   window.ptSaveFund=ptSaveFund; window.ptSaveCash=ptSaveCash; window.ptVoid=ptVoid;
   window.ptClaim=ptClaim; window.ptCancelClaim=ptCancelClaim;
 
@@ -17103,7 +17152,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260919-2054';
+  var APP_BUILD='20260919-2130';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
