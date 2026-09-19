@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260919-1915">
+<link rel="stylesheet" href="user.css?v=20260919-1923">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -3319,23 +3319,34 @@
   /** ตารางประเภท — ฟังก์ชันบริสุทธิ์ (ของจริงกับเทสเรียกตัวเดียวกัน) */
   function ecTableHtml(cats, isOwner){
     var rows=(cats||[]).map(function(c){
-      var q="'"+String(c.code).replace(/'/g,"\\'")+"'";
+      var q="'"+String(c.code).replace(/'/g,"\'")+"'";
       var off = c.status==='ปิด';
+      var used = Number(c.used)||0;
+      /* 🔴 ปุ่มลบโผล่เฉพาะกลุ่มที่ยังไม่มีใบใช้ (พี่กี้ทัก 19 ก.ย.: ระหว่างจัดกลุ่มต้องลองผิดลองถูกได้)
+         เงื่อนไขบนจอต้องตรงกับด่าน backend เป๊ะ — ที่นั่นก็เช็ค used เหมือนกัน */
+      /* 🔴 ปุ่ม 3 อันเรียงเหมือนกันทุกแถว: แก้ไข · ปิด/เปิด · ลบ (พี่กี้แนะ 19 ก.ย.)
+         ปุ่มลบ "ปิดใช้งาน" แทนที่จะซ่อน — ตำแหน่งปุ่มคงที่ กวาดตาง่าย และบอกเหตุผลได้ว่าทำไมลบไม่ได้
+         เงื่อนไขตรงกับด่าน backend เป๊ะ (ที่นั่นเช็คจำนวนใบที่ใช้เหมือนกัน) */
+      var acts = isOwner ? ('<button class="btn btn-ghost btn-sm" onclick="ecEdit('+q+')">แก้ไข</button> '+
+        (off ? '<button class="btn btn-ghost btn-sm btn-on" onclick="ecToggle('+q+',1)">เปิด</button>'
+             : '<button class="btn btn-ghost btn-sm btn-off" onclick="ecToggle('+q+',0)">ปิด</button>')+
+        ' <button class="btn btn-ghost btn-sm"'+
+          (used ? (' disabled title="ลบไม่ได้ — มีใบใช้อยู่ '+used+' ใบ · กดปิดแทนได้ค่ะ"')
+                : (' onclick="ecDelete('+q+')"'))+
+        '>ลบ</button>') : '';
       return '<tr'+(off?' style="opacity:.55"':'')+'>'+
         '<td><b>'+esc(c.name)+'</b>'+(off?' <span class="m-hint" style="margin:0">(ปิดอยู่)</span>':'')+'</td>'+
         '<td class="dt-nw">'+esc(c.kind||'')+'</td>'+
         '<td class="dt-nw">'+esc(c.sect||'—')+'</td>'+
-        (isOwner ? ('<td class="dt-nw">'+
-          '<button class="btn btn-ghost btn-sm" onclick="ecRename('+q+')">เปลี่ยนชื่อ</button> '+
-          (off ? '<button class="btn btn-ghost btn-sm btn-on" onclick="ecToggle('+q+',1)">เปิด</button>'
-               : '<button class="btn btn-ghost btn-sm btn-off" onclick="ecToggle('+q+',0)">ปิด</button>')+
-          '</td>') : '<td></td>')+
+        '<td class="dt-nw">'+(used ? (used+' ใบ') : '<span class="m-hint" style="margin:0">ยังไม่มีใบใช้</span>')+'</td>'+
+        '<td class="dt-nw">'+acts+'</td>'+
         '</tr>';
     }).join('');
     return '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl">'+
-      '<colgroup><col style="width:42%"><col style="width:14%"><col style="width:16%"><col style="width:28%"></colgroup>'+
-      '<thead><tr><th>ประเภท</th><th>ชนิด</th><th>มาตราเริ่มต้น</th><th></th></tr></thead>'+
-      '<tbody>'+(rows || stEmptyRow(4,'ยังไม่มีประเภท — กดเพิ่มด้านล่างได้เลยค่ะ'))+'</tbody></table></div>';
+      '<colgroup><col style="width:34%"><col style="width:12%"><col style="width:14%">'+
+      '<col style="width:14%"><col style="width:26%"></colgroup>'+
+      '<thead><tr><th>ประเภท</th><th>ชนิด</th><th>มาตราเริ่มต้น</th><th>ใบที่ใช้อยู่</th><th></th></tr></thead>'+
+      '<tbody>'+(rows || stEmptyRow(5,'ยังไม่มีประเภท — กดเพิ่มด้านล่างได้เลยค่ะ'))+'</tbody></table></div>';
   }
   function ecPaint(){
     var own=!!(EC&&EC.isOwner);
@@ -3347,9 +3358,10 @@
       (own ? ('<div class="fld" style="margin-top:12px"><label>เพิ่มประเภทใหม่</label>'+
         '<input id="ecNew" placeholder="เช่น ค่ารับรองลูกค้า"></div>'+
         '<div class="tax-acts"><button class="btn btn-primary" onclick="ecAdd()">เพิ่มประเภท</button></div>') : '')+
-      '<div class="rs-steps" style="margin-top:16px"><b>ปิดกลุ่มที่เลิกใช้</b>'+
-      'กลุ่มที่ปิดจะไม่โผล่ให้เลือกตอนตั้งใบใหม่ แต่ใบเก่าที่ใช้กลุ่มนั้นยังอ่านชื่อได้ตามปกติ · '+
-      'ลบไม่ได้โดยตั้งใจ เพื่อไม่ให้รายงานย้อนหลังกลายเป็น "ไม่รู้จัก"</div>'+
+      '<div class="rs-steps" style="margin-top:16px"><b>ลบ กับ ปิด ต่างกันตรงนี้</b>'+
+      '<b>ลบ</b> ได้เฉพาะกลุ่มที่ยังไม่มีใบไหนใช้ (ช่วงจัดกลุ่มลองผิดลองถูกได้เต็มที่) · '+
+      'พอมีใบใช้แล้วปุ่มลบจะหายไปเอง ให้กด <b>ปิด</b> แทน — กลุ่มจะไม่โผล่ตอนตั้งใบใหม่ '+
+      'แต่ใบเก่ายังอ่านชื่อได้ รายงานย้อนหลังจึงไม่กลายเป็น "ไม่รู้จัก"</div>'+
       '</div></div>';
   }
   function ecSave(p){
@@ -3364,19 +3376,50 @@
     if(!v){ toast('ใส่ชื่อประเภทก่อนนะคะ'); return; }
     ecSave({ name:v });
   }
-  function ecRename(code){
-    var cur=((EC&&EC.cats)||[]).filter(function(c){ return c.code===code; })[0];
-    var v=prompt('ชื่อใหม่ของประเภทนี้', (cur&&cur.name)||'');
-    if(v===null) return;
-    v=String(v).trim(); if(!v){ toast('ชื่อว่างไม่ได้ค่ะ'); return; }
-    ecSave({ code:code, name:v });
+  /** ฟอร์มแก้ประเภท — แก้ได้ทั้งชื่อ ลำดับ และมาตราเริ่มต้น (backend รับครบอยู่แล้ว) */
+  function ecEdit(code){
+    var c=((EC&&EC.cats)||[]).filter(function(x){ return x.code===code; })[0];
+    if(!c) return;
+    var secs=(EC&&EC.sections)||[];
+    var opts='<option value="">— ไม่ตั้ง (ไม่หักภาษีโดยอัตโนมัติ) —</option>'+secs.map(function(sx){
+      var v=sx.code||sx; var lb=sx.label||v;
+      return '<option value="'+esc(v)+'"'+(c.sect===v?' selected':'')+'>'+esc(lb)+'</option>';
+    }).join('');
+    modal('<h3>🏷️ แก้ไขประเภทค่าใช้จ่าย</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">รหัส <b>'+esc(c.code)+'</b>'+
+        (Number(c.used)||0 ? (' · มีใบใช้อยู่ '+c.used+' ใบ (เปลี่ยนชื่อได้ ใบเก่าไม่กำพร้าเพราะใบเก็บรหัส)') : ' · ยังไม่มีใบใช้')+
+      '</div>'+
+      '<div class="fld"><label>ชื่อที่แสดง</label><input id="ecName" value="'+esc(c.name)+'"></div>'+
+      '<div class="fld"><label>ลำดับในรายการ (เลขน้อย = อยู่บน)</label>'+
+        '<input id="ecOrder" type="number" value="'+esc(String(c.order||500))+'"></div>'+
+      '<div class="fld"><label>มาตราเงินได้เริ่มต้น</label><select id="ecSect">'+opts+'</select>'+
+        '<div class="m-hint" style="margin:6px 0 0">ตั้งไว้เพื่อ "เติมให้" ตอนอนุมัติเท่านั้น แก้รายใบได้เสมอ</div></div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" onclick="ecEditSave('+"'"+String(code).replace(/'/g,"\'")+"'"+')">บันทึก</button></div>');
+  }
+  function ecEditSave(code){
+    var name=((($('ecName')||{}).value)||'').trim();
+    if(!name){ mErr('ใส่ชื่อประเภทค่ะ'); return; }
+    ecSave({ code:code, name:name,
+      order:((($('ecOrder')||{}).value)||''),
+      sect:((($('ecSect')||{}).value)||'') }).then(function(){ closeModal(); });
   }
   function ecToggle(code, on){
     var cur=((EC&&EC.cats)||[]).filter(function(c){ return c.code===code; })[0];
     if(!cur) return;
     ecSave({ code:code, name:cur.name, status: on ? 'ใช้งาน' : 'ปิด' });
   }
-  window.ecAdd=ecAdd; window.ecRename=ecRename; window.ecToggle=ecToggle;
+  function ecDelete(code){
+    var cur=((EC&&EC.cats)||[]).filter(function(c){ return c.code===code; })[0];
+    if(!cur) return;
+    if(!confirm('ลบประเภท "'+cur.name+'" ออกจากทะเบียนเลยไหมคะ?' + "\\n\\n" + '(ลบได้เพราะยังไม่มีใบไหนใช้ · ถ้าเปลี่ยนใจภายหลังก็เพิ่มใหม่ได้)')) return;
+    callBusy('กำลังลบ…', jsonpPost(withRoom_({ action:'waExpCat', uid:UID, op:'delete', code:code })))
+      .then(function(r){
+        if(!r||!r.ok){ toast((r&&r.error)||'ลบไม่สำเร็จ'); return; }
+        EC=r; ecPaint(); toast('ลบแล้วค่ะ');
+      }).catch(function(e){ toast(e.message); });
+  }
+  window.ecAdd=ecAdd; window.ecEdit=ecEdit; window.ecEditSave=ecEditSave; window.ecToggle=ecToggle; window.ecDelete=ecDelete;
 
   /* ═══════════ 🏦 บัญชีธนาคาร (view `bank` · 19 ก.ย. 2569) ═══════════
      ย้ายมาจาก ⚙️ ตั้งค่าห้อง ▸ ตั้งค่าช่องทางการเงิน (พี่กี้เคาะ: กดประจำ ห้ามซุกในตั้งค่า)
@@ -17068,7 +17111,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260919-1915';
+  var APP_BUILD='20260919-1923';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
