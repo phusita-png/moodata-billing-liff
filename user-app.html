@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260918-2221">
+<link rel="stylesheet" href="user.css?v=20260919-1431">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -2013,6 +2013,8 @@
       <svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="11" rx="2"/><path d="M7 7V5.5a1 1 0 0 1 1.3-.95L18 7"/><circle cx="16.5" cy="12.5" r="1.4"/></svg><span>เงินสดย่อย</span></button>
     <button class="nav-btn" data-view="payout" aria-label="ทะเบียนการจ่าย" id="navPayout" style="display:none">
       <svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6.5 12h.01M17.5 12h.01"/></svg><span>ทะเบียนการจ่าย</span></button>
+    <button class="nav-btn" data-view="bank" aria-label="บัญชีธนาคาร" id="navBank" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M3 9.5 12 4l9 5.5"/><path d="M5 9.5V19h14V9.5"/><path d="M9 19v-5h6v5"/></svg><span>บัญชีธนาคาร</span></button>
     <button class="nav-btn" data-view="clock" aria-label="ลงเวลา">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 1.8"/></svg><span>ลงเวลา</span></button>
     <button class="nav-btn" data-view="leave" aria-label="การลา">
@@ -2113,7 +2115,7 @@
     hubreq:['🏛️','คำขอสมัคร'], hubrooms:['🏢','ห้องลูกค้า'], roomset:['⚙️','ตั้งค่าห้อง'], home:['🏠','ภาพรวมประจำวัน'], clock:['🕐','ลงเวลา'],
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
     expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติเบิกจ่าย'], expone:['🔎','ใบเบิก'],
-    expdash:['📊','รายจ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ทะเบียนการจ่าย'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','ภาษีซื้อ/ภ.พ.30'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ทะเบียนใบสำคัญจ่าย'], sales:['💰','รายรับ'], ar:['📊','ลูกหนี้ค้างรับ'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51'], finhist:['📈','เทียบย้อนหลัง'], docdash:['📊','ภาพรวม'], docreg:['🗂️','จัดการเอกสาร'], doccheck:['✅','ตรวจก่อนส่ง'], docbycat:['📑','รายงานตามประเภท'], docreport:['📦','รายงานประจำเดือน'], doccat:['🏷️','จัดการหมวด'], hubmods:['🧩','โมดูลของแต่ละห้อง'], teamperm:['🔐','สิทธิ์ทีม'], kpiemp:['👥','ทะเบียนพนักงาน'], kpiperson:['📈','ประวัติรายคน'], kpidash:['📊','ภาพรวม'], kpientry:['✍️','กรอกผลงาน'], kpiscore:['⭐','คะแนนคุณลักษณะ'], kpidoc:['📄','ใบประเมิน'], kpiround:['📋','รอบการประเมิน'], kpifill:['✍️','ประเมินผลงาน'], kpimanage:['📊','จัดการผลการประเมิน'], kpirule:['⚖️','เกณฑ์ทั้งองค์กร'], kpimetric:['🎯','ตัวชี้วัด (KPI)'], kpitrait:['🧭','คุณลักษณะรายบุคคล'], kpiimport:['📥','นำเข้าข้อมูลเดิม'], kpireport:['📄','รายงาน'], kpihelp:['📘','คู่มือการใช้งาน'], myset:['🙋','ตั้งค่าของฉัน']
+    expdash:['📊','รายจ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ทะเบียนการจ่าย'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','ภาษีซื้อ/ภ.พ.30'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ทะเบียนใบสำคัญจ่าย'], sales:['💰','รายรับ'], ar:['📊','ลูกหนี้ค้างรับ'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51'], finhist:['📈','เทียบย้อนหลัง'], docdash:['📊','ภาพรวม'], docreg:['🗂️','จัดการเอกสาร'], doccheck:['✅','ตรวจก่อนส่ง'], docbycat:['📑','รายงานตามประเภท'], docreport:['📦','รายงานประจำเดือน'], doccat:['🏷️','จัดการหมวด'], hubmods:['🧩','โมดูลของแต่ละห้อง'], teamperm:['🔐','สิทธิ์ทีม'], kpiemp:['👥','ทะเบียนพนักงาน'], kpiperson:['📈','ประวัติรายคน'], kpidash:['📊','ภาพรวม'], kpientry:['✍️','กรอกผลงาน'], kpiscore:['⭐','คะแนนคุณลักษณะ'], kpidoc:['📄','ใบประเมิน'], kpiround:['📋','รอบการประเมิน'], kpifill:['✍️','ประเมินผลงาน'], kpimanage:['📊','จัดการผลการประเมิน'], kpirule:['⚖️','เกณฑ์ทั้งองค์กร'], kpimetric:['🎯','ตัวชี้วัด (KPI)'], kpitrait:['🧭','คุณลักษณะรายบุคคล'], kpiimport:['📥','นำเข้าข้อมูลเดิม'], kpireport:['📄','รายงาน'], kpihelp:['📘','คู่มือการใช้งาน'], myset:['🙋','ตั้งค่าของฉัน'], bank:['🏦','บัญชีธนาคาร']
   };
   var PROJECTS=[], COMPANIES=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ) · COMPANIES=บริษัท auto (หน้าจัดการ)
   var ALL_TASKS=[], PJ_SEL='', MB_STATUSES=[];   // มุมมอง Project (dropdown เลือก · แยก 6 สถานะ + %) · MB_STATUSES=รายการสถานะ (ฟอร์มแก้งานมือถือ)
@@ -2323,7 +2325,7 @@
     if(gi) $('tbIcon').innerHTML=gi.replace('stroke-width="1.9"','stroke-width="2"'); else $('tbIcon').textContent=meta[0];
     $('tbTitle').textContent=meta[1];
     mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
-    ({ portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, perf:renderPerf, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expone:renderExpOne, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51, finhist:renderFinHist, docreg:renderDocReg, doccheck:renderDocCheck, docdash:renderDocDash, docbycat:renderDocByCat, docreport:renderDocReport, doccat:renderDocCat, kpiemp:renderKpiEmp, kpiperson:renderKpiPerson, kpidash:renderKpiDash, kpientry:renderKpiEntry, kpiscore:renderKpiScore, kpidoc:renderKpiDoc, kpiround:renderKpiRound, kpifill:renderKpiFill, kpimanage:renderKpiManage, kpirule:renderKpiRule, kpimetric:renderKpiMetric, kpitrait:renderKpiTrait, kpiimport:renderKpiImport, kpireport:renderKpiReport, kpihelp:renderKpiHelp, myset:renderMyset }[v] || soon)();
+    ({ bank:renderBank, portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, perf:renderPerf, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expone:renderExpOne, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51, finhist:renderFinHist, docreg:renderDocReg, doccheck:renderDocCheck, docdash:renderDocDash, docbycat:renderDocByCat, docreport:renderDocReport, doccat:renderDocCat, kpiemp:renderKpiEmp, kpiperson:renderKpiPerson, kpidash:renderKpiDash, kpientry:renderKpiEntry, kpiscore:renderKpiScore, kpidoc:renderKpiDoc, kpiround:renderKpiRound, kpifill:renderKpiFill, kpimanage:renderKpiManage, kpirule:renderKpiRule, kpimetric:renderKpiMetric, kpitrait:renderKpiTrait, kpiimport:renderKpiImport, kpireport:renderKpiReport, kpihelp:renderKpiHelp, myset:renderMyset }[v] || soon)();
   }
 
   // ───── มือถือ: เมนูกลุ่ม (ล่าง) + แท็บย่อย (บน) · คอมใช้ sidebar เดิม ไม่เกี่ยว ─────
@@ -2414,11 +2416,14 @@
      g = สีไล่ระดับของไอคอน (2 สี) — การ์ดเป็นกระจกฝ้า สีจึงมาจากไอคอนเป็นหลัก */
   var MODULES=[
     { key:'fin',     th:'ระบบการเงิน',  en:'FINANCE',     color:'#1E8FE1', g:['#38bdf8','#1d4ed8'], own:true,
-      views:['bizdash','sales','ar','salesreport','reimb','expdash','petty','payout','poreport','expreport','finreport'],
+      views:['bizdash','sales','ar','salesreport','reimb','expdash','petty','payout','poreport','bank','expreport','finreport'],
       extra:['expapprove'],
+      /* 🏦 ธนาคาร (19 ก.ย. 69) — ทะเบียนบัญชีย้ายออกจาก ⚙️ ตั้งค่าห้อง มาอยู่ที่นี่
+         เพราะเลิกเป็นค่าตั้งครั้งเดียว กลายเป็นของที่แตะทุกวัน (เลือกตอนรับ/จ่าย · กระทบยอด) */
       sec:[ ['', ['bizdash']],
             ['รายรับ', ['sales','ar','salesreport','reimb']],
             ['รายจ่าย', ['expdash','petty','payout','poreport']],
+            ['ธนาคาร', ['bank']],
             ['รายงาน', ['expreport','finreport']] ] },
     { key:'tax',     th:'ระบบภาษี',     en:'TAX',         color:'#7A5AF8', g:['#c084fc','#6d28d9'], own:true,
       views:['taxhub','vatbuy','pnd51','finhist','whtin','taxdoc'] },
@@ -3261,33 +3266,23 @@
     return rows.map(function(x){
       return '<tr><td><b>'+esc(x.name)+'</b></td><td>'+esc(x.use)+'</td><td>'+esc(x.where)+'</td></tr>'; }).join('');
   }
+  /* แท็บ "ตั้งค่าช่องทางการเงิน" — ย้ายเนื้อหาไปเมนู 🏦 ธนาคาร แล้ว (พี่กี้เคาะ 19 ก.ย. 2569)
+     🔴 คงแท็บไว้ 1 รอบ ไม่ตัดทิ้งทันที — คนที่เคยกดแท็บนี้ต้องไม่เจอหน้าเปล่า
+        และปุ่ม/action เดิม (waCoBank · coBankEdit) ยังวิ่งเส้นทางเดิมทุกอย่าง */
   function stMoneyHtml(){
-    var sub = '<div class="kp-tabs" style="margin:10px 0 14px">'+
-      '<button class="kp-tab'+(ST_SUB!=='out'?' on':'')+'" onclick="stSub(&quot;in&quot;)">'+
-        'ช่องทางการรับชำระเงิน</button>'+
-      '<button class="kp-tab'+(ST_SUB==='out'?' on':'')+'" onclick="stSub(&quot;out&quot;)">'+
-        'ช่องทางการจ่ายชำระเงิน</button>'+
-      '</div>';
-    if(ST_SUB==='out'){
-      return '<div class="card"><div class="pb" style="padding:16px 18px">'+
-        '<div class="rs-h">ตั้งค่าช่องทางการเงิน</div>'+sub+
-        '<div class="rs-sub">ช่องทางที่ระบบให้เลือกตอนบันทึกการจ่าย · ช่องทางที่เลือกจะถูกพิมพ์ลงใบสำคัญจ่าย</div>'+
-        stTableHtml('moBody', MO_COLS, stSkelRows(MO_COLS.length, 4))+
-        '<div class="rs-steps" style="margin-top:14px"><b>บัญชีที่บริษัทใช้จ่ายออก</b>'+
-        'ตอนนี้ระบบบันทึกช่องทางเป็นรายครั้ง ยังไม่ผูกกับบัญชีธนาคารของบริษัท — '+
-        'ถ้าอยากตั้งบัญชีจ่ายออกไว้ล่วงหน้าให้เลือกได้เลย บอกหนูได้ค่ะ</div>'+
-        '</div></div>';
-    }
     return '<div class="card"><div class="pb" style="padding:16px 18px">'+
-      '<div class="rs-h">ตั้งค่าช่องทางการเงิน</div>'+sub+
-      '<div class="rs-sub">บัญชีที่พิมพ์บนใบเสนอราคา/ใบแจ้งหนี้ให้ลูกค้าโอนเข้า · '+
-      'มีหลายบัญชีได้ · บัญชีที่ติ๊ก "เริ่มต้น" คือตัวที่ขึ้นบนเอกสาร</div>'+
-      '<div id="rsBankList">'+
-        stTableHtml('rsBankSkel', [{t:'ธนาคาร',w:'26%'},{t:'เลขที่บัญชี',w:'24%'},
-          {t:'ชื่อบัญชี',w:'30%'},{t:'สาขา',w:'20%'}], stSkelRows(4,3))+'</div>'+
-      '<button class="btn btn-ghost" type="button" onclick="coBankEdit(-1)" style="margin-top:10px;width:auto">+ เพิ่มบัญชี</button>'+
+      '<div class="rs-h">ย้ายไปเมนู 🏦 ธนาคาร แล้ว</div>'+
+      '<div class="rs-sub">ทะเบียนบัญชีธนาคารของบริษัทย้ายไปอยู่ที่ <b>การเงิน ▸ ธนาคาร ▸ บัญชีธนาคาร</b> '+
+      'เพราะตอนนี้ไม่ใช่ค่าที่ตั้งครั้งเดียวแล้ว — ต้องเลือกบัญชีทุกครั้งที่รับเงินและจ่ายเงิน '+
+      'เพื่อเอาไปกระทบยอดกับสมุดบัญชีธนาคาร</div>'+
+      '<button class="btn" type="button" onclick="switchView(&quot;bank&quot;)" style="margin-top:12px;width:auto">'+
+      'ไปหน้าบัญชีธนาคาร →</button>'+
+      '<div class="rs-steps" style="margin-top:16px"><b>ช่องทางรับ/จ่ายเงิน</b>'+
+      'ไม่ต้องตั้งค่าแล้วค่ะ — ระบบมีให้เลือกตอนบันทึกรับเงิน (โอน · เงินสด · เช็ค) '+
+      'และตอนกดจ่าย (โอน · เช็ค · เงินสด · เงินสดย่อย) อยู่ในตัวฟอร์มเลย</div>'+
       '</div></div>';
   }
+
 
   /** แถวบริษัท 1 แถวในหน้าตั้งค่า — ฟังก์ชันบริสุทธิ์ (ของจริงกับ preview เรียกตัวเดียวกัน) */
   function coRowHtml(e, i){
@@ -3307,6 +3302,25 @@
   }
 
   /** แถวบัญชีรับเงิน 1 แถว */
+  /* ═══════════ 🏦 บัญชีธนาคาร (view `bank` · 19 ก.ย. 2569) ═══════════
+     ย้ายมาจาก ⚙️ ตั้งค่าห้อง ▸ ตั้งค่าช่องทางการเงิน (พี่กี้เคาะ: กดประจำ ห้ามซุกในตั้งค่า)
+     🔴 ใช้ action `waCoBank` / `coBankEdit` ตัวเดิมทั้งดุ้น — ของเดิมต้องไม่พังตอน push หน้าเว็บ
+        ก่อน deploy หลังบ้าน (บทเรียน 18 ก.ย. 69) */
+  function renderBank(){
+    var cols=[{t:'ธนาคาร',w:'24%'},{t:'เลขที่บัญชี',w:'22%'},{t:'ชื่อบัญชี',w:'28%'},{t:'สาขา',w:'16%'},{t:'',w:'10%'}];
+    setBody('<div class="card"><div class="pb" style="padding:16px 18px">'+
+      '<div class="rs-h">บัญชีธนาคารของบริษัท</div>'+
+      '<div class="rs-sub">บัญชีในทะเบียนนี้ใช้ 3 ที่: พิมพ์บนใบเสนอราคา/ใบแจ้งหนี้ให้ลูกค้าโอนเข้า · '+
+      'เลือกตอนบันทึกรับเงิน · เลือกตอนกดจ่ายเงิน (ไว้กระทบยอดกับสมุดบัญชีธนาคาร)</div>'+
+      '<div id="rsBankList">'+stTableHtml('bkSkel', cols, stSkelRows(cols.length,3))+'</div>'+
+      '<button class="btn btn-ghost" type="button" onclick="coBankEdit(-1)" style="margin-top:12px;width:auto">+ เพิ่มบัญชี</button>'+
+      '<div class="rs-steps" style="margin-top:16px"><b>บัญชีที่ติ๊ก "เริ่มต้น"</b>'+
+      'คือบัญชีที่ขึ้นบนเอกสารเมื่อไม่ได้เลือกบัญชีอื่น · ปิดบัญชีที่เลิกใช้ได้ (เอกสารเก่ายังอ่านได้เหมือนเดิม '+
+      'เพราะใบเก็บชื่อธนาคารกับเลขบัญชีไว้ในตัวใบแล้ว)</div>'+
+      '</div></div>');
+    roomBankLoad();
+  }
+
   function bankRowHtml(b, i){
     return '<div class="rs-co">'+
       '<span class="rs-co-tx"><b>'+esc(b.bank)+' · '+esc(b.accNo)+(b.isDefault?'  ⭐ เริ่มต้น':'')+'</b><br>'+
@@ -3339,7 +3353,8 @@
 
   function roomBankLoad(){
     jsonp({action:'waCoBank',uid:UID}).then(function(r){
-      if(VIEW!=='roomset') return;
+      // ใช้ร่วม 2 หน้า: ⚙️ ตั้งค่าห้อง (ของเดิม) และ 🏦 บัญชีธนาคาร (ที่ใหม่ 19 ก.ย. 69)
+      if(VIEW!=='roomset' && VIEW!=='bank') return;
       CO_BANKS=(r&&r.ok&&r.banks)||[];
       CO_BANKNAMES=(r&&r.bankNames)||[];
       // แท็บย่อย "จ่ายชำระ" = ตารางช่องทางที่ระบบรองรับ (มากับ payload เดียวกัน)
@@ -3917,10 +3932,10 @@
     expdash:'รายจ่าย', reimb:'ตั้งเบิกลูกค้า', petty:'เงินสดย่อย', payout:'ทะเบียนการจ่าย', expreport:'รายงานรายจ่าย', taxhub:'รายงานภาษี', whtin:'50 ทวิ ที่ถูกหัก', vatbuy:'ภาษีซื้อ',
     ot:'OT ของฉัน', otapprove:'อนุมัติ OT', docs:'เอกสาร',
     hrreport:'รายงาน HR', finreport:'รายงานการเงิน', taxdoc:'ภาษี/เอกสาร',
-    bizdash:'ภาพรวม', sales:'รายรับ', ar:'ลูกหนี้', salesreport:'รายงานรายรับ', poreport:'ทะเบียนใบสำคัญจ่าย', pnd51:'ภ.ง.ด.51', finhist:'เทียบย้อนหลัง', docdash:'ภาพรวมเอกสาร', docreg:'จัดการเอกสาร', doccheck:'ตรวจความครบก่อนส่งนักบัญชี', docbycat:'รายงานตามประเภทเอกสาร', docreport:'รายงานประจำเดือน (ปิดรอบ)', doccat:'จัดการหมวด', kpiemp:'ทะเบียนพนักงาน', kpiperson:'ประวัติรายคน', kpidash:'ภาพรวม', kpientry:'กรอกผลงาน', kpiscore:'คุณลักษณะ', kpidoc:'ใบประเมิน', kpiround:'รอบการประเมิน', kpifill:'ประเมินผลงาน', kpimanage:'จัดการผลการประเมิน', kpirule:'เกณฑ์ทั้งองค์กร', kpimetric:'ตัวชี้วัด (KPI)', kpitrait:'คุณลักษณะรายบุคคล', kpiimport:'นำเข้าข้อมูลเดิม', kpireport:'รายงาน', kpihelp:'คู่มือ' };
+    bank:'บัญชีธนาคาร', bizdash:'ภาพรวม', sales:'รายรับ', ar:'ลูกหนี้', salesreport:'รายงานรายรับ', poreport:'ทะเบียนใบสำคัญจ่าย', pnd51:'ภ.ง.ด.51', finhist:'เทียบย้อนหลัง', docdash:'ภาพรวมเอกสาร', docreg:'จัดการเอกสาร', doccheck:'ตรวจความครบก่อนส่งนักบัญชี', docbycat:'รายงานตามประเภทเอกสาร', docreport:'รายงานประจำเดือน (ปิดรอบ)', doccat:'จัดการหมวด', kpiemp:'ทะเบียนพนักงาน', kpiperson:'ประวัติรายคน', kpidash:'ภาพรวม', kpientry:'กรอกผลงาน', kpiscore:'คุณลักษณะ', kpidoc:'ใบประเมิน', kpiround:'รอบการประเมิน', kpifill:'ประเมินผลงาน', kpimanage:'จัดการผลการประเมิน', kpirule:'เกณฑ์ทั้งองค์กร', kpimetric:'ตัวชี้วัด (KPI)', kpitrait:'คุณลักษณะรายบุคคล', kpiimport:'นำเข้าข้อมูลเดิม', kpireport:'รายงาน', kpihelp:'คู่มือ' };
   // แท็บที่เห็นเฉพาะพี่/ผู้ดูแล · reimb = ตั้งเบิกลูกค้า (ชีตไม่มีเจ้าของรายคน + เป็นข้อมูลรายได้)
   // ⚠️ ซ่อนแท็บ ≠ กันข้อมูล — backend กรองสิทธิ์เองอีกชั้นเสมอ
-  var OWNER_VIEWS={ perf:1, review:1, approve:1, expapprove:1, otapprove:1, reimb:1, taxdoc:1, petty:1, payout:1, vatbuy:1, expreport:1, taxhub:1, whtin:1, hrreport:1, finreport:1, ar:1, pnd51:1, finhist:1, salesreport:1, hubmods:1, teamperm:1 };
+  var OWNER_VIEWS={ bank:1, perf:1, review:1, approve:1, expapprove:1, otapprove:1, reimb:1, taxdoc:1, petty:1, payout:1, vatbuy:1, expreport:1, taxhub:1, whtin:1, hrreport:1, finreport:1, ar:1, pnd51:1, finhist:1, salesreport:1, hubmods:1, teamperm:1 };
   var MGROUP='', MG_LAST={};
   function mVisibleViews(g){ return g.views.filter(function(v){ return IS_OWNER || !OWNER_VIEWS[v]; }); }
   function mGroupOf(v){ for(var i=0;i<NAV_GROUPS.length;i++){ if(NAV_GROUPS[i].views.indexOf(v)>=0) return NAV_GROUPS[i]; } return null; }
@@ -8355,19 +8370,42 @@
       '<div class="fld"><label>วันที่จ่ายจริง</label><input id="poPayDate" type="date" value="'+esc(String(x.payDate||'').slice(0,10)||todayISO())+'"></div>'+
       '<div class="fld"><label>ช่องทาง</label><select id="poMethod" onchange="poMethodChange()">'+mOpts+'</select></div>'+
       '<div class="fld hidden" id="poChqFld"><label>เลขที่เช็ค</label><input id="poChq" placeholder="เช่น 0012345" value="'+esc(x.chequeNo||'')+'"></div>'+
+      /* บัญชีที่เงินออก (19 ก.ย. 69) — จำเป็นตอนกระทบยอดกับสมุดบัญชีธนาคาร
+         ไม่มีบัญชีในทะเบียน = บอกทางไปเพิ่ม ไม่ใช่ปล่อยช่องว่างให้สงสัย */
+      '<div class="fld" id="poAcctFld"><label>บัญชีที่จ่ายออก</label>'+poAcctSelHtml(x)+'</div>'+
       imgsFldHtml('poSlip','📎 สลิปโอน / หลักฐานการจ่าย (รูป หรือ PDF)')+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
       '<button class="btn btn-primary" id="poPayBtn" onclick="doPoPay(\''+esc(no)+'\')">บันทึกจ่ายแล้ว</button></div>');
     imgsFldBind('poSlip'); poMethodChange();
   }
+  /** ช่องเลือกบัญชีที่จ่ายออก — รายการมาจาก backend (waPoInit) ห้ามหน้าเว็บพิมพ์เอง */
+  function poAcctSelHtml(x){
+    var list=PO.payAccounts||[];
+    if(!list.length){
+      return '<div class="m-hint" style="margin:0">ยังไม่มีบัญชีในทะเบียน — บันทึกจ่ายได้ปกติ '+
+        'แต่จะกระทบยอดกับสมุดบัญชีธนาคารไม่ได้ · เพิ่มได้ที่เมนู 🏦 บัญชีธนาคาร</div>'+
+        '<input type="hidden" id="poAcct" value="">';
+    }
+    var cur=String((x&&x.payAccount)||'');
+    var opts='<option value="">— ไม่ระบุ —</option>'+list.map(function(a){
+      // ใบที่จ่ายแล้วเก็บเป็น label → เทียบด้วย label เพื่อเลือกค้างให้ถูกตัว
+      var sel=(cur===a.label)||(!cur&&a.isDefault&&!(x&&x.payAccount));
+      return '<option value="'+esc(a.id)+'"'+(sel?' selected':'')+'>'+esc(a.label)+
+        (a.accName?(' · '+esc(a.accName)):'')+'</option>';
+    }).join('');
+    return '<select id="poAcct">'+opts+'</select>';
+  }
   function poMethodChange(){
-    var m=(($('poMethod')||{}).value)||'', f=$('poChqFld');
+    var m=(($('poMethod')||{}).value)||'', f=$('poChqFld'), af=$('poAcctFld');
     if(f) f.classList.toggle('hidden', m!=='เช็ค');
+    // จ่ายเงินสด = ไม่มีบัญชีธนาคารเกี่ยวข้อง (เงื่อนไขเดียวกับด่านเตือนฝั่ง backend)
+    if(af) af.classList.toggle('hidden', m==='เงินสด');
   }
   function doPoPay(no){
     var p={action:'waPoPay', uid:UID, no:no,
       payDate:(($('poPayDate')||{}).value)||'', method:(($('poMethod')||{}).value)||'',
-      chequeNo:((($('poChq')||{}).value)||'').trim()};
+      chequeNo:((($('poChq')||{}).value)||'').trim(),
+      account:((($('poAcct')||{}).value)||'').trim()};   // บัญชีที่เงินออก (19 ก.ย. 69)
     var slips=IMGS['poSlip']||[];
     if(slips.length) p.imgs=JSON.stringify(slips);
     var btn=$('poPayBtn'); if(btn){ btn.disabled=true; btn.textContent='กำลังบันทึก…'; }
@@ -11638,6 +11676,20 @@
 
   // ═══════════ 💵 รับชำระ + ใบเสร็จ/ใบกำกับภาษี (เฟส A4) ═══════════
   // ยอดคงค้างมาจาก backend เสมอ (ชีตรับชำระ = แหล่งความจริงเดียว) — หน้าเว็บไม่คิดยอดเอง
+  /** ช่องบัญชีที่รับเงินเข้า — ทะเบียนมาจาก backend (waRecvInit) */
+  function rvAcctFldHtml(){
+    var list=(RECV&&RECV.payAccounts)||[];
+    if(!list.length){
+      return '<input id="rvBank" placeholder="เช่น กสิกร xxx-x-x1234-x">'+
+        '<div class="m-hint" style="margin:6px 0 0">เพิ่มบัญชีไว้ที่เมนู 🏦 บัญชีธนาคาร แล้วครั้งหน้าจะเลือกได้เลย</div>';
+    }
+    var opts='<option value="">— ไม่ระบุ —</option>'+list.map(function(a){
+      return '<option value="'+esc(a.id)+'"'+(a.isDefault?' selected':'')+'>'+esc(a.label)+
+        (a.accName?(' · '+esc(a.accName)):'')+'</option>';
+    }).join('');
+    return '<select id="rvAcct">'+opts+'</select>';
+  }
+
   var RECV = null;
 
   function recvOpen(ivNo){
@@ -11661,7 +11713,9 @@
         '<div id="rvSum" class="m-hint"></div>'+
         '<div class="fld"><label>วันที่รับเงิน</label><input id="rvDate" type="date" value="'+todayISO()+'"></div>'+
         '<div class="fld"><label>ช่องทาง</label><select id="rvMethod">'+mOpts+'</select></div>'+
-        '<div class="fld"><label>บัญชีที่รับเข้า (ไม่ใส่ก็ได้)</label><input id="rvBank" placeholder="เช่น กสิกร xxx-x-x1234-x"></div>'+
+        /* บัญชีที่รับเข้า (19 ก.ย. 69) — เลือกจากทะเบียนถ้ามี · ยังไม่มีทะเบียนก็พิมพ์เองได้เหมือนเดิม
+           (ห้องเก่าที่ยังไม่ได้เพิ่มบัญชีต้องบันทึกเงินเข้าได้ตามปกติ) */
+        '<div class="fld"><label>บัญชีที่รับเข้า</label>'+rvAcctFldHtml()+'</div>'+
         imgsFldHtml('rvSlip','📎 สลิป/หลักฐานเงินเข้า')+
         imgsFldHtml('rvCert','🧾 50 ทวิ ที่ลูกค้าออกให้ (ถ้าได้มาแล้ว)')+
         '<div class="fld"><label>หมายเหตุ</label><input id="rvNote" placeholder="เช่น โอนเข้าบัญชีบริษัท"></div>'+
@@ -11705,6 +11759,7 @@
   function recvSave(ivNo){
     var amt=((($('rvAmt')||{}).value)||'').trim();
     var p={action:'waRecvSave',uid:UID,no:ivNo,amount:amt,
+      account:((($('rvAcct')||{}).value)||'').trim(),   // รหัสบัญชีจากทะเบียน (19 ก.ย. 69)
       wht:((($('rvWht')||{}).value)||'0').trim(),
       recvDate:(($('rvDate')||{}).value)||'', method:(($('rvMethod')||{}).value)||'',
       bank:((($('rvBank')||{}).value)||'').trim(), note:((($('rvNote')||{}).value)||'').trim(),
@@ -16838,7 +16893,8 @@ function kpImpDraw(){
         var noa=$('navOtAppr'); if(noa) noa.style.display='';              // แท็บอนุมัติ OT = เฉพาะพี่/HR
         var nhr=$('navHrReport'); if(nhr) nhr.style.display='';            // รายงาน HR = เฉพาะพี่/HR (ข้อมูลทั้งทีม)
         var npt=$('navPetty'); if(npt) npt.style.display='';               // 💵 เงินสดย่อย = พี่คนเดียว (backend pettyGate_ กันซ้ำอีกชั้น)
-        var npo=$('navPayout'); if(npo) npo.style.display='';               // 💵 จ่ายออก = พี่คนเดียว (รวมข้อมูลบริษัทลูกค้า)
+        var npo=$('navPayout'); if(npo) npo.style.display='';
+        var nbk=$('navBank'); if(nbk) nbk.style.display='';                 // 🏦 บัญชีธนาคาร = ผู้ดูแล (ใช้เลือกตอนรับ/จ่ายเงิน)               // 💵 จ่ายออก = พี่คนเดียว (รวมข้อมูลบริษัทลูกค้า)
         var nbd=$('navBizDash'); if(nbd) nbd.style.display='';             // 📊 ภาพรวมธุรกิจ = พี่/HR
         var nsl=$('navSales'); if(nsl) nsl.style.display='';               // 💰 รายรับ (ฝั่งขาย) = พี่/HR
         var nar=$('navAr'); if(nar) nar.style.display='';                   // 📊 ลูกหนี้ค้างรับ = พี่/HR
@@ -16935,7 +16991,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260918-2221';
+  var APP_BUILD='20260919-1431';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
