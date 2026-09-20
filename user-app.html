@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260920-1133">
+<link rel="stylesheet" href="user.css?v=20260920-1439">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -2022,21 +2022,35 @@
     <button class="nav-btn" data-view="expense" aria-label="เบิกค่าใช้จ่าย">
       <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9v6M18 9v6"/></svg><span>เบิกค่าใช้จ่าย</span></button>
     <button class="nav-btn" data-view="expdash" aria-label="สรุปค่าใช้จ่าย">
-      <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span id="navExpDashLabel">สรุปค่าใช้จ่าย</span></button>
+      <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span id="navExpDashLabel">ใบเบิกพนักงาน</span></button>
     <button class="nav-btn" data-view="reimb" aria-label="ตั้งเบิกลูกค้า" id="navReimb" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6Z"/><path d="M14 3v5h5M9 12h6M9 16h4"/></svg><span>ตั้งเบิกลูกค้า</span></button>
     <button class="nav-btn" data-view="bizdash" aria-label="ภาพรวมธุรกิจ" id="navBizDash" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>ภาพรวมธุรกิจ</span></button>
-    <button class="nav-btn" data-view="sales" aria-label="รายรับ" id="navSales" style="display:none">
-      <svg viewBox="0 0 24 24"><path d="M4.5 5.5h15v13h-15z"/><path d="M8 9.5h8M8 13h8M8 16h4"/></svg><span>รายรับ</span></button>
-    <button class="nav-btn" data-view="ar" aria-label="ลูกหนี้" id="navAr" style="display:none">
-      <svg viewBox="0 0 24 24"><path d="M3 20h18"/><path d="M6.5 17V10M11.5 17V6M16.5 17v-4"/></svg><span>ลูกหนี้</span></button>
+    <!-- รายรับแยกตามชนิดเอกสาร ตามผังพี่กี้ §2.6 — แถบซ้าย = เมนูหลัก · รายการย่อยเป็นแท็บในหน้า -->
+    <button class="nav-btn" data-view="salesqt" aria-label="ใบเสนอราคา" id="navSalesQt" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M5 4.5h11l3 3V19.5H5z"/><path d="M8 10h8M8 13.5h8M8 17h5"/></svg><span>ใบเสนอราคา (QT)</span></button>
+    <button class="nav-btn" data-view="salesiv" aria-label="ใบแจ้งหนี้" id="navSalesIv" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M4.5 5.5h15v13h-15z"/><path d="M8 9.5h8M8 13h8M8 16h4"/></svg><span>ใบแจ้งหนี้ (IV)</span></button>
+    <button class="nav-btn" data-view="salesre" aria-label="ใบเสร็จรับเงิน" id="navSalesRe" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M5 3.5v17l2-1.4 2 1.4 2-1.4 2 1.4 2-1.4 2 1.4v-17z"/><path d="M8.5 9h7M8.5 13h5"/></svg><span>ใบเสร็จรับเงิน (RE)</span></button>
+    <button class="nav-btn" data-view="salescn" aria-label="ใบลดหนี้" id="navSalesCn" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M4.5 5.5h15v13h-15z"/><path d="M8 12h8"/></svg><span>ใบลดหนี้ (CN)</span></button>
+    <button class="nav-btn" data-view="ar" aria-label="ทะเบียนลูกหนี้" id="navAr" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M3 20h18"/><path d="M6.5 17V10M11.5 17V6M16.5 17v-4"/></svg><span>ทะเบียนลูกหนี้</span></button>
+    <!-- ยังไม่มีของจริง (เฟส 6) — โชว์ในเมนูเพื่อให้เห็นแผนทั้งหมด กดเข้าไปบอกว่ากำลังทำ -->
+    <button class="nav-btn" data-view="wtreg" aria-label="ภาษีที่หัก 50 ทวิ" id="navWtReg" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M6 3.5h12v17l-3-1.6-3 1.6-3-1.6-3 1.6z"/><path d="M9 9h6M9 13h4"/><path d="M15.5 16.5l1.5 1.5 3-3"/></svg><span>ภาษีที่หัก 50 ทวิ (WT)</span></button>
+    <button class="nav-btn" data-view="statement" aria-label="กระทบยอด Statement" id="navStatement" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M3.5 6.5h17v11h-17z"/><path d="M7 10.5h4M7 14h6"/><path d="M15.5 13.5l2 2 3.5-4"/></svg><span>กระทบยอด Statement</span></button>
+    <button class="nav-btn" data-view="cashreport" aria-label="รายงานเงินสด/ธนาคาร" id="navCashReport" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M4 19.5h16"/><path d="M7 16v-6M12 16V7M17 16v-3"/><circle cx="12" cy="4.5" r="1.2"/></svg><span>รายงานเงินสด/ธนาคาร</span></button>
     <button class="nav-btn" data-view="salesreport" aria-label="รายงานรายรับ" id="navSalesReport" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M4 19.5h16"/><path d="M7 16V8.5M12 16V5M17 16v-5.5"/></svg><span>รายงานรายรับ</span></button>
     <button class="nav-btn" data-view="petty" aria-label="เงินสดย่อย" id="navPetty" style="display:none">
       <svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="11" rx="2"/><path d="M7 7V5.5a1 1 0 0 1 1.3-.95L18 7"/><circle cx="16.5" cy="12.5" r="1.4"/></svg><span>เงินสดย่อย</span></button>
     <button class="nav-btn" data-view="payout" aria-label="ทะเบียนการจ่าย" id="navPayout" style="display:none">
-      <svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6.5 12h.01M17.5 12h.01"/></svg><span>ทะเบียนการจ่าย</span></button>
+      <svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6.5 12h.01M17.5 12h.01"/></svg><span>ใบสั่งจ่าย (PO)</span></button>
     <button class="nav-btn" data-view="expcat" aria-label="ประเภทค่าใช้จ่าย" id="navExpCat" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M3 12.5 12.5 3H21v8.5L11.5 21z"/><circle cx="17" cy="7" r="1.4"/></svg><span>ประเภทค่าใช้จ่าย</span></button>
     <button class="nav-btn" data-view="bank" aria-label="บัญชีธนาคาร" id="navBank" style="display:none">
@@ -2062,11 +2076,11 @@
     <button class="nav-btn" data-view="hrreport" aria-label="รายงาน HR" id="navHrReport" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/><circle cx="10" cy="4" r="1.6"/></svg><span>รายงาน HR</span></button>
     <button class="nav-btn" data-view="poreport" aria-label="ทะเบียนใบสำคัญจ่าย" id="navPoReport" style="display:none">
-      <svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M7 9.5h10M7 13h7M7 16.5h4"/></svg><span>ทะเบียนใบสำคัญจ่าย</span></button>
+      <svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M7 9.5h10M7 13h7M7 16.5h4"/></svg><span>ใบสำคัญจ่าย (PV)</span></button>
     <button class="nav-btn" data-view="taxhub" aria-label="รายงานภาษี" id="navTaxHub" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M3 20h18M5 20V10M9.5 20V10M14.5 20V10M19 20V10"/><path d="M12 3.5 21 9H3z"/></svg><span>รายงานภาษี</span></button>
     <button class="nav-btn" data-view="whtin" aria-label="50 ทวิ ที่ถูกหัก" id="navWhtIn" style="display:none">
-      <svg viewBox="0 0 24 24"><path d="M6 3.5h12v17l-3-1.6-3 1.6-3-1.6-3 1.6z"/><path d="M9 9h6M9 13h4"/></svg><span>50 ทวิ ที่ถูกหัก</span></button>
+      <svg viewBox="0 0 24 24"><path d="M6 3.5h12v17l-3-1.6-3 1.6-3-1.6-3 1.6z"/><path d="M9 9h6M9 13h4"/></svg><span>50 ทวิ ที่ถูกหัก (WI)</span></button>
     <button class="nav-btn" data-view="expreport" aria-label="รายงานรายจ่าย" id="navExpReport" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M4 19.5h16"/><path d="M7 16V9M12 16V6M17 16v-4"/><path d="M3 4.5h6"/></svg><span>รายงานรายจ่าย</span></button>
     <button class="nav-btn" data-view="vatbuy" aria-label="ภาษีซื้อ" id="navVatBuy" style="display:none">
@@ -2141,7 +2155,7 @@
     hubreq:['🏛️','คำขอสมัคร'], hubrooms:['🏢','ห้องลูกค้า'], roomset:['⚙️','ตั้งค่าห้อง'], home:['🏠','ภาพรวมประจำวัน'], clock:['🕐','ลงเวลา'],
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
     expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติเบิกจ่าย'], expone:['🔎','ใบเบิก'],
-    expdash:['📊','รายจ่าย'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ทะเบียนการจ่าย'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','ภาษีซื้อ/ภ.พ.30'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ทะเบียนใบสำคัญจ่าย'], sales:['💰','รายรับ'], ar:['📊','ลูกหนี้ค้างรับ'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51'], finhist:['📈','เทียบย้อนหลัง'], docdash:['📊','ภาพรวม'], docreg:['🗂️','จัดการเอกสาร'], doccheck:['✅','ตรวจก่อนส่ง'], docbycat:['📑','รายงานตามประเภท'], docreport:['📦','รายงานประจำเดือน'], doccat:['🏷️','จัดการหมวด'], hubmods:['🧩','โมดูลของแต่ละห้อง'], teamperm:['🔐','สิทธิ์ทีม'], kpiemp:['👥','ทะเบียนพนักงาน'], kpiperson:['📈','ประวัติรายคน'], kpidash:['📊','ภาพรวม'], kpientry:['✍️','กรอกผลงาน'], kpiscore:['⭐','คะแนนคุณลักษณะ'], kpidoc:['📄','ใบประเมิน'], kpiround:['📋','รอบการประเมิน'], kpifill:['✍️','ประเมินผลงาน'], kpimanage:['📊','จัดการผลการประเมิน'], kpirule:['⚖️','เกณฑ์ทั้งองค์กร'], kpimetric:['🎯','ตัวชี้วัด (KPI)'], kpitrait:['🧭','คุณลักษณะรายบุคคล'], kpiimport:['📥','นำเข้าข้อมูลเดิม'], kpireport:['📄','รายงาน'], kpihelp:['📘','คู่มือการใช้งาน'], myset:['🙋','ตั้งค่าของฉัน'], bank:['🏦','บัญชีธนาคาร'], expcat:['🏷️','ประเภทค่าใช้จ่าย']
+    expdash:['📊','ใบเบิกพนักงาน'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ใบสั่งจ่าย (PO)'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','ภาษีซื้อ/ภ.พ.30'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก (WI)'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ใบสำคัญจ่าย (PV)'], sales:['💰','รายรับ'], salesqt:['📄','ใบเสนอราคา (QT)'], salesiv:['🧾','ใบแจ้งหนี้ (IV)'], salesre:['💵','ใบเสร็จรับเงิน (RE)'], salescn:['↩️','ใบลดหนี้ (CN)'], wtreg:['🧾','ภาษีที่หัก 50 ทวิ (WT)'], statement:['🏦','กระทบยอด Statement'], cashreport:['📊','รายงานเงินสด/ธนาคาร'], ar:['📊','ทะเบียนลูกหนี้'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51'], finhist:['📈','เทียบย้อนหลัง'], docdash:['📊','ภาพรวม'], docreg:['🗂️','จัดการเอกสาร'], doccheck:['✅','ตรวจก่อนส่ง'], docbycat:['📑','รายงานตามประเภท'], docreport:['📦','รายงานประจำเดือน'], doccat:['🏷️','จัดการหมวด'], hubmods:['🧩','โมดูลของแต่ละห้อง'], teamperm:['🔐','สิทธิ์ทีม'], kpiemp:['👥','ทะเบียนพนักงาน'], kpiperson:['📈','ประวัติรายคน'], kpidash:['📊','ภาพรวม'], kpientry:['✍️','กรอกผลงาน'], kpiscore:['⭐','คะแนนคุณลักษณะ'], kpidoc:['📄','ใบประเมิน'], kpiround:['📋','รอบการประเมิน'], kpifill:['✍️','ประเมินผลงาน'], kpimanage:['📊','จัดการผลการประเมิน'], kpirule:['⚖️','เกณฑ์ทั้งองค์กร'], kpimetric:['🎯','ตัวชี้วัด (KPI)'], kpitrait:['🧭','คุณลักษณะรายบุคคล'], kpiimport:['📥','นำเข้าข้อมูลเดิม'], kpireport:['📄','รายงาน'], kpihelp:['📘','คู่มือการใช้งาน'], myset:['🙋','ตั้งค่าของฉัน'], bank:['🏦','บัญชีธนาคาร'], expcat:['🏷️','ประเภทค่าใช้จ่าย']
   };
   var PROJECTS=[], COMPANIES=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ) · COMPANIES=บริษัท auto (หน้าจัดการ)
   var ALL_TASKS=[], PJ_SEL='', MB_STATUSES=[];   // มุมมอง Project (dropdown เลือก · แยก 6 สถานะ + %) · MB_STATUSES=รายการสถานะ (ฟอร์มแก้งานมือถือ)
@@ -2351,7 +2365,7 @@
     if(gi) $('tbIcon').innerHTML=gi.replace('stroke-width="1.9"','stroke-width="2"'); else $('tbIcon').textContent=meta[0];
     $('tbTitle').textContent=meta[1];
     mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
-    ({ bank:renderBank, expcat:renderExpCat, portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, perf:renderPerf, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expone:renderExpOne, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51, finhist:renderFinHist, docreg:renderDocReg, doccheck:renderDocCheck, docdash:renderDocDash, docbycat:renderDocByCat, docreport:renderDocReport, doccat:renderDocCat, kpiemp:renderKpiEmp, kpiperson:renderKpiPerson, kpidash:renderKpiDash, kpientry:renderKpiEntry, kpiscore:renderKpiScore, kpidoc:renderKpiDoc, kpiround:renderKpiRound, kpifill:renderKpiFill, kpimanage:renderKpiManage, kpirule:renderKpiRule, kpimetric:renderKpiMetric, kpitrait:renderKpiTrait, kpiimport:renderKpiImport, kpireport:renderKpiReport, kpihelp:renderKpiHelp, myset:renderMyset }[v] || soon)();
+    ({ bank:renderBank, expcat:renderExpCat, portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, perf:renderPerf, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expone:renderExpOne, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, salesqt:renderSalesQt, salesiv:renderSalesIv, salesre:renderSalesRe, salescn:renderSalesCn, wtreg:renderSoonPage, statement:renderSoonPage, cashreport:renderSoonPage, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51, finhist:renderFinHist, docreg:renderDocReg, doccheck:renderDocCheck, docdash:renderDocDash, docbycat:renderDocByCat, docreport:renderDocReport, doccat:renderDocCat, kpiemp:renderKpiEmp, kpiperson:renderKpiPerson, kpidash:renderKpiDash, kpientry:renderKpiEntry, kpiscore:renderKpiScore, kpidoc:renderKpiDoc, kpiround:renderKpiRound, kpifill:renderKpiFill, kpimanage:renderKpiManage, kpirule:renderKpiRule, kpimetric:renderKpiMetric, kpitrait:renderKpiTrait, kpiimport:renderKpiImport, kpireport:renderKpiReport, kpihelp:renderKpiHelp, myset:renderMyset }[v] || soon)();
   }
 
   // ───── มือถือ: เมนูกลุ่ม (ล่าง) + แท็บย่อย (บน) · คอมใช้ sidebar เดิม ไม่เกี่ยว ─────
@@ -2363,10 +2377,10 @@
     { key:'home', icon:'🏠', label:'เมนูหลัก', views:['portal'] },   // หน้าแรก = เลือกโมดูล + สรุปประจำวัน (5 ก.ย.)
     { key:'work', icon:'📊', label:'งาน',    views:['projects','mytasks','review','senddoc','appt','announce','trash'] },
     { key:'hr',   icon:'👥', label:'HR',     views:['approve','otapprove','hrreport'] },
-    { key:'fin',  icon:'💰', label:'การเงิน', views:['bizdash','sales','ar','salesreport','reimb','expdash','petty','payout','poreport','expcat','bank','expreport','taxhub','vatbuy','pnd51','finhist','whtin','finreport','taxdoc'] },
-    /* ลำดับตามผังการเงิน 10 หมวดของพี่กี้: ① ภาพรวมธุรกิจ ② รายรับ ③ ลูกหนี้ ④ รายงานรายรับ
-       ⑤ รายจ่าย (+เงินสดย่อย) ⑥ ทะเบียนการจ่าย ⑦⑧ รายงานรายจ่าย/เจ้าหนี้ ⑨ รายงานภาษี (+ภาษีซื้อ +ภ.ง.ด.51)
-       ⑩ 50 ทวิ ที่ถูกหัก · taxdoc ซ่อนไว้ก่อน */
+    /* ⬇️ ลำดับตามโครงเมนูที่พี่กี้วางไว้ (HANDOFF §2.6) — ภาพรวม · รายรับ · รายจ่าย · ธนาคาร · รายงาน
+       หลักของผัง: **แถบซ้ายมีแต่เมนูหลัก · รายการย่อยเป็นแท็บในหน้า** · หน้ากรอก/รายละเอียด
+       เปิดจากปุ่ม "+ สร้าง" หรือกดแถว ไม่ทำเป็นเมนู · ตัดเมนู "สรุปรายงาน" ในรายรับ/รายจ่าย */
+    { key:'fin',  icon:'💰', label:'การเงิน', views:['bizdash','salesqt','salesiv','salesre','salescn','whtin','ar','payout','petty','poreport','wtreg','bank','statement','salesreport','expreport','cashreport','sales','reimb','expdash','expcat','taxhub','vatbuy','pnd51','finhist','finreport','taxdoc'] },
     { key:'me',   icon:'🙋', label:'ส่วนตัว', views:['clock','leave','ot','expense','docs','myset'] }
   ];
   // ไอคอนหัวกลุ่มบน sidebar คอม = SVG เส้นสีเดียว (พี่กี้ขอ 30 ก.ค.: เรียบ ๆ ไม่สีสัน)
@@ -2442,15 +2456,19 @@
      g = สีไล่ระดับของไอคอน (2 สี) — การ์ดเป็นกระจกฝ้า สีจึงมาจากไอคอนเป็นหลัก */
   var MODULES=[
     { key:'fin',     th:'ระบบการเงิน',  en:'FINANCE',     color:'#1E8FE1', g:['#38bdf8','#1d4ed8'], own:true,
-      views:['bizdash','sales','ar','salesreport','reimb','expdash','petty','payout','poreport','expcat','bank','expreport','finreport'],
-      extra:['expapprove'],
-      /* 🏦 ธนาคาร (19 ก.ย. 69) — ทะเบียนบัญชีย้ายออกจาก ⚙️ ตั้งค่าห้อง มาอยู่ที่นี่
-         เพราะเลิกเป็นค่าตั้งครั้งเดียว กลายเป็นของที่แตะทุกวัน (เลือกตอนรับ/จ่าย · กระทบยอด) */
+      views:['bizdash','salesqt','salesiv','salesre','salescn','whtin','ar','payout','expdash','petty','poreport','wtreg','bank','statement','salesreport','expreport','cashreport'],
+      /* หน้าที่ยังเข้าได้จากลิงก์เก่า/ปุ่มในหน้า แต่ไม่อยู่ในแถบเมนูแล้ว (ผัง §2.6 ตัดออก)
+         ⚠️ ต้องคงไว้ใน extra ไม่งั้นเข้าจากลิงก์ตรงแล้วแถบซ้ายหาย ออกไม่ได้ (บทเรียน 5 ก.ย.) */
+      extra:['expapprove','sales','reimb','expcat'],
+      /* 📐 โครงเมนูตามที่พี่กี้วางไว้ (HANDOFF §2.6) — รายการย่อยของแต่ละหัวข้อเป็น "แท็บในหน้า"
+         ไม่ใช่เมนูย่อย · หน้ากรอก/รายละเอียดเปิดจากปุ่ม "+ สร้าง" หรือกดแถว */
       sec:[ ['', ['bizdash']],
-            ['รายรับ', ['sales','ar','salesreport','reimb']],
-            ['รายจ่าย', ['expdash','petty','payout','poreport','expcat']],
-            ['ธนาคาร', ['bank']],
-            ['รายงาน', ['expreport','finreport']] ] },
+            ['รายรับ', ['salesqt','salesiv','salesre','salescn','whtin','ar']],
+            /* ผัง §2.6 มี PO · เงินสดย่อย · PV · WT — ใบเบิก (expdash) ยังคงไว้เพราะเล่มเดิม
+               ยังมีใบเดินอยู่ ถอดตอนนี้ = พี่เปิดดูใบเบิกไม่ได้ · ถอดเมื่อปิดเล่มเดิมครบ (เฟส 2e) */
+            ['รายจ่าย', ['payout','expdash','petty','poreport','wtreg']],
+            ['ธนาคาร', ['bank','statement']],
+            ['รายงาน', ['salesreport','expreport','cashreport']] ] },
     { key:'tax',     th:'ระบบภาษี',     en:'TAX',         color:'#7A5AF8', g:['#c084fc','#6d28d9'], own:true,
       views:['taxhub','vatbuy','pnd51','finhist','whtin','taxdoc'] },
     { key:'hr',      th:'ระบบบุคคล',    en:'HR',          color:'#168a52', g:['#34d399','#047857'], own:true,
@@ -4046,7 +4064,7 @@
     bank:'บัญชีธนาคาร', expcat:'ประเภทค่าใช้จ่าย', bizdash:'ภาพรวม', sales:'รายรับ', ar:'ลูกหนี้', salesreport:'รายงานรายรับ', poreport:'ทะเบียนใบสำคัญจ่าย', pnd51:'ภ.ง.ด.51', finhist:'เทียบย้อนหลัง', docdash:'ภาพรวมเอกสาร', docreg:'จัดการเอกสาร', doccheck:'ตรวจความครบก่อนส่งนักบัญชี', docbycat:'รายงานตามประเภทเอกสาร', docreport:'รายงานประจำเดือน (ปิดรอบ)', doccat:'จัดการหมวด', kpiemp:'ทะเบียนพนักงาน', kpiperson:'ประวัติรายคน', kpidash:'ภาพรวม', kpientry:'กรอกผลงาน', kpiscore:'คุณลักษณะ', kpidoc:'ใบประเมิน', kpiround:'รอบการประเมิน', kpifill:'ประเมินผลงาน', kpimanage:'จัดการผลการประเมิน', kpirule:'เกณฑ์ทั้งองค์กร', kpimetric:'ตัวชี้วัด (KPI)', kpitrait:'คุณลักษณะรายบุคคล', kpiimport:'นำเข้าข้อมูลเดิม', kpireport:'รายงาน', kpihelp:'คู่มือ' };
   // แท็บที่เห็นเฉพาะพี่/ผู้ดูแล · reimb = ตั้งเบิกลูกค้า (ชีตไม่มีเจ้าของรายคน + เป็นข้อมูลรายได้)
   // ⚠️ ซ่อนแท็บ ≠ กันข้อมูล — backend กรองสิทธิ์เองอีกชั้นเสมอ
-  var OWNER_VIEWS={ bank:1, expcat:1, perf:1, review:1, approve:1, expapprove:1, otapprove:1, reimb:1, taxdoc:1, petty:1, payout:1, vatbuy:1, expreport:1, taxhub:1, whtin:1, hrreport:1, finreport:1, ar:1, pnd51:1, finhist:1, salesreport:1, hubmods:1, teamperm:1 };
+  var OWNER_VIEWS={ bank:1, expcat:1, perf:1, salesqt:1, salesiv:1, salesre:1, salescn:1, wtreg:1, statement:1, cashreport:1, review:1, approve:1, expapprove:1, otapprove:1, reimb:1, taxdoc:1, petty:1, payout:1, vatbuy:1, expreport:1, taxhub:1, whtin:1, hrreport:1, finreport:1, ar:1, pnd51:1, finhist:1, salesreport:1, hubmods:1, teamperm:1 };
   var MGROUP='', MG_LAST={};
   function mVisibleViews(g){ return g.views.filter(function(v){ return IS_OWNER || !OWNER_VIEWS[v]; }); }
   function mGroupOf(v){ for(var i=0;i<NAV_GROUPS.length;i++){ if(NAV_GROUPS[i].views.indexOf(v)>=0) return NAV_GROUPS[i]; } return null; }
@@ -8314,9 +8332,14 @@
     return s.formIfPerson==='PND1' ? 'ภ.ง.ด.1' : (s.formIfPerson==='PND53' ? 'ภ.ง.ด.53' : 'ภ.ง.ด.3');
   }
   function paintPayout(){
-    var html='<button class="btn btn-primary" style="width:100%;margin-bottom:10px" onclick="openPayout()">➕ ตั้งเรื่องจ่ายเงิน</button>'+
-      '<div class="m-hint" style="margin:0 0 12px">💵 ใบจ่ายของบริษัท — จ่ายค่าเช่า/ค่าจ้าง/ซัพพลาย ในนามนิติบุคคล '+
-      '(คนละชุดกับใบเบิกที่พนักงานสำรองจ่าย) · เห็นเฉพาะผู้ดูแลค่ะ</div>';
+    var html='<div class="section-h">💵 ใบสั่งจ่าย (PO)</div>'+
+      '<div class="tax-acts" style="margin:0 0 12px">'+
+      '<button class="btn btn-primary" onclick="openPayout()">+ ตั้งเรื่องจ่ายเงิน</button>'+
+      /* ทะเบียนประเภทค่าใช้จ่าย = ของตั้งค่า → ปุ่มในหน้า ไม่ใช่เมนูหลัก (ผัง §2.6)
+         ⚠️ ถอดออกจากเมนูแล้วต้องมีทางเข้าที่นี่เสมอ ไม่งั้นพี่หาไม่เจอ */
+      '<button class="btn btn-ghost" onclick="switchView(&quot;expcat&quot;)">ทะเบียนประเภทค่าใช้จ่าย</button></div>'+
+      '<div class="m-hint" style="margin:0 0 12px">ใบจ่ายของบริษัท — จ่ายค่าเช่า/ค่าจ้าง/ซัพพลาย ในนามนิติบุคคล '+
+      'ตอนนี้ใบเบิกของพนักงานมารวมเล่มเดียวกันแล้ว · เห็นเฉพาะผู้ดูแลค่ะ</div>';
     html+=poBlock('⏳ รออนุมัติ', PO.pending, 'pending')+
           poBlock('💸 อนุมัติแล้ว · รอจ่ายเงิน', PO.topay, 'topay')+
           poBlock('✅ จ่ายแล้ว (40 ใบล่าสุด)', PO.paid, 'done')+
@@ -10272,7 +10295,10 @@
     jsonp({action:'waSalesInit',uid:UID,kind:SALES_KIND_F}).then(function(r){
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
       SALES=r;
-      var h='<div class="section-h">💰 รายรับ (ใบเสนอราคา · ใบแจ้งหนี้ · ใบเสร็จ)</div>';
+      var pg=SALES_PAGE[SALES_KIND_F]||SALES_PAGE[''];
+      var h='<div class="section-h">'+pg.icon+' '+esc(pg.title)+'</div>';
+      // แท็บในหน้า (ผัง §2.6) — ใบแจ้งหนี้มีแท็บ "ใบวางบิล" อยู่ข้างใน ไม่แยกเป็นเมนู
+      if(pg.tabs) h+=pageTabs(SALES_KIND_F, pg.tabs);
       // ยังไม่มีทะเบียน = ทำอะไรไม่ได้ → บอกทางออกให้ชัดก่อนเลย
       if(!r.customers.length || !r.services.length){
         h+='<div class="m-hint" style="color:#C8730B">⚠️ ยังตั้งทะเบียนไม่ครบ: '+
@@ -10283,24 +10309,95 @@
         h+='<div class="m-hint">👥 ลูกค้าที่มีกลุ่ม LINE แต่ยังไม่อยู่ในทะเบียน '+r.missingCustomers.length+' ราย: '+
           esc(r.missingCustomers.slice(0,5).join(', '))+(r.missingCustomers.length>5?' …':'')+'</div>';
       }
-      h+='<div class="tax-acts" style="margin:0 0 12px">'+
-        '<button class="btn btn-primary" onclick="salesNew()">ออกเอกสารใหม่</button>'+
-        '<button class="btn btn-ghost" onclick="salesBnOpen(\'\')">ออกใบวางบิล</button>'+
-        '<button class="btn btn-ghost" onclick="svcManage()">ทะเบียนบริการ</button>'+
-        '<button class="btn btn-ghost" onclick="custManage()">ทะเบียนลูกค้า</button>'+
-        '<button class="btn btn-ghost" onclick="entManage()">นิติบุคคล</button>'+
-        '<button class="btn btn-ghost" onclick="reimbMigrate()">ย้ายตั้งเบิกเดิม</button></div>';
-      // ตัวกรองใช้ "ทุกชนิด" (allKinds) ไม่ใช่ชนิดที่ออกจากฟอร์มได้ — ไม่งั้นหาใบเสร็จ/วางบิล/ลดหนี้ไม่เจอ
-      h+='<div class="ed-filter"><select id="skf" onchange="salesFilter(this.value)">'+
-        '<option value="">ชนิด: ทั้งหมด</option>'+
-        (r.allKinds||r.kinds).map(function(k){ return '<option value="'+esc(k.key)+'"'+(k.key===SALES_KIND_F?' selected':'')+'>'+esc(k.label)+'</option>'; }).join('')+
-        '</select></div>';
+      /* ปุ่มบนหน้า = งานที่ทำกับ "ชนิดที่เปิดอยู่" เท่านั้น (ผัง §2.6: หน้ากรอกเปิดจากปุ่ม + สร้าง)
+         ทะเบียนลูกค้า/บริการ/นิติบุคคล เป็นของตั้งค่า → ต่อท้ายแถว ไม่ใช่ปุ่มหลัก */
+      h+='<div class="tax-acts" style="margin:0 0 12px">'+pg.acts+
+        /* ทะเบียนลูกค้า/บริการ/นิติบุคคล ใช้ตอน "ออกเอกสาร" เท่านั้น
+           โชว์ทุกหน้า = 5 ปุ่มเรียงกันจนตกบรรทัด (เห็นจากภาพตัวอย่าง 20 ก.ย.) */
+        (pg.reg?'<button class="btn btn-ghost" onclick="custManage()">ทะเบียนลูกค้า</button>'+
+                '<button class="btn btn-ghost" onclick="svcManage()">ทะเบียนบริการ</button>'+
+                '<button class="btn btn-ghost" onclick="entManage()">นิติบุคคล</button>':'')+
+        '</div>';
+      /* เปิดจากเมนูชนิดไหน = ล็อกชนิดนั้น ไม่มี dropdown ให้สับสนซ้ำ (เมนูคือตัวกรองอยู่แล้ว)
+         เข้าจากลิงก์เก่า (view 'sales') ยังมีตัวกรองเหมือนเดิม */
+      if(!pg.fixed){
+        h+='<div class="ed-filter"><select id="skf" onchange="salesFilter(this.value)">'+
+          '<option value="">ชนิด: ทั้งหมด</option>'+
+          (r.allKinds||r.kinds).map(function(k){ return '<option value="'+esc(k.key)+'"'+(k.key===SALES_KIND_F?' selected':'')+'>'+esc(k.label)+'</option>'; }).join('')+
+          '</select></div>';
+      }
       h+='<div id="salesTbl"></div>';
       $('main').innerHTML=h;
       paintSalesTable(r.docs||[]);
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
   }
   function salesFilter(v){ SALES_KIND_F=v; renderSales(); }
+
+  /* ── แท็บในหน้า: ตัวเดียวของทั้งระบบ (ผัง §2.6 "หลักเดียวทั้งระบบ") ──
+     list = [[key, label, onclick]] · active = key ที่เลือกอยู่ */
+  function pageTabs(active,list){
+    return '<div class="tax-acts" style="margin:0 0 12px">'+list.map(function(x){
+      return '<button class="btn '+(active===x[0]?'btn-primary':'btn-ghost')+
+        '" style="flex:1" onclick="'+x[2]+'">'+esc(x[1])+'</button>';
+    }).join('')+'</div>';
+  }
+  window.pageTabs = pageTabs;
+
+  /* หัวเรื่อง + ปุ่ม + แท็บ ของหน้ารายรับ แยกตามชนิดที่เปิดจากเมนู (ผัง §2.6)
+     fixed = เปิดจากเมนูชนิดนั้นโดยตรง → ไม่ต้องมี dropdown ให้เลือกชนิดซ้ำ */
+  var SALES_PAGE={
+    '':   { icon:'💰', title:'รายรับ (ทุกชนิดเอกสาร)', fixed:false, reg:true,
+            /* "ย้ายตั้งเบิกเดิม" = เครื่องมือครั้งเดียว วางที่หน้ารวม ไม่ให้เบียดแถวปุ่มของหน้าชนิด */
+            acts:'<button class="btn btn-primary" onclick="salesNew()">ออกเอกสารใหม่</button>'+
+                 '<button class="btn btn-ghost" onclick="reimbMigrate()">ย้ายตั้งเบิกเดิม</button>' },
+    'QT': { icon:'📄', title:'ใบเสนอราคา (QT)', fixed:true, reg:true,
+            acts:'<button class="btn btn-primary" onclick="salesNew()">+ ออกใบเสนอราคา</button>' },
+    'IV': { icon:'🧾', title:'ใบแจ้งหนี้ (IV)', fixed:true, reg:true,
+            tabs:[['IV','ใบแจ้งหนี้ (IV)',"salesGo('IV')"],['BN','ใบวางบิล (BN)',"salesGo('BN')"]],
+            acts:'<button class="btn btn-primary" onclick="salesNew()">+ ออกใบแจ้งหนี้</button>' },
+    'BN': { icon:'🧾', title:'ใบวางบิล (BN)', fixed:true, reg:true,
+            tabs:[['IV','ใบแจ้งหนี้ (IV)',"salesGo('IV')"],['BN','ใบวางบิล (BN)',"salesGo('BN')"]],
+            acts:'<button class="btn btn-primary" onclick="salesBnOpen(\'\')">+ ออกใบวางบิล</button>' },
+    'RE': { icon:'💵', title:'ใบเสร็จรับเงิน (RE)', fixed:true,
+            acts:'<div class="m-hint" style="flex:1;margin:0">ใบเสร็จเกิดตอนบันทึกรับเงินจากใบแจ้งหนี้ — ไม่ออกเองที่หน้านี้</div>' },
+    'CN': { icon:'↩️', title:'ใบลดหนี้ (CN)', fixed:true,
+            acts:'<div class="m-hint" style="flex:1;margin:0">ใบลดหนี้ออกจากปุ่มบนใบเสร็จที่ต้องการลด</div>' }
+  };
+  /** เปิดหน้ารายรับโดยล็อกชนิด (ใช้ทั้งจากเมนูและจากแท็บ) */
+  function salesGo(kind){ SALES_KIND_F=kind||''; renderSales(); }
+  window.salesGo = salesGo;
+  function renderSalesQt(){ salesGo('QT'); }
+  function renderSalesIv(){ salesGo('IV'); }
+  function renderSalesRe(){ salesGo('RE'); }
+  function renderSalesCn(){ salesGo('CN'); }
+
+  /* หน้าที่อยู่ในผังแล้วแต่ยังทำไม่ถึง — บอกตรง ๆ ว่าจะมีอะไร ไม่ปล่อยจอว่าง
+     (pattern เดียวกับการ์ด "เร็ว ๆ นี้" บนหน้าเลือกโมดูลที่พี่กี้เคาะไว้) */
+  var SOON_PAGE={
+    wtreg:{ icon:'🧾', title:'ภาษีที่หัก 50 ทวิ (WT)',
+      lines:['ทะเบียนใบ 50 ทวิ ที่เราออกให้ผู้รับเงิน',
+             'คอลัมน์สถานะ ส่งให้ผู้รับแล้ว / ยัง',
+             'ออกอัตโนมัติตอนกดจ่าย — ไม่มีปุ่มสร้างเอง'],
+      note:'ระหว่างนี้ดูได้ที่ ระบบภาษี ▸ รายงานภาษี (ภ.ง.ด.1 / 3 / 53) ซึ่งดึงจากทะเบียนเดียวกัน' },
+    statement:{ icon:'🏦', title:'กระทบยอด Statement',
+      lines:['นำเข้า Statement จากธนาคาร',
+             'จับคู่รายการอัตโนมัติ — เงินเข้า ↔ ใบเสร็จ · เงินออก ↔ ใบสำคัญจ่าย',
+             'รายการที่ยังไม่ตรง ไว้ตามเก็บ'],
+      note:'ทุกใบเก็บ "บัญชีที่รับเข้า/จ่ายออก" ไว้ให้แล้วตั้งแต่เฟส 1 — พร้อมต่อทันทีที่ถึงคิว' },
+    cashreport:{ icon:'📊', title:'รายงานเงินสด/ธนาคาร',
+      lines:['กระทบยอดธนาคารรายเดือน','เงินสดย่อยคงเหลือรายผู้ถือ'],
+      note:'ทำต่อจากหน้ากระทบยอด Statement' }
+  };
+  function renderSoonPage(){
+    var pg=SOON_PAGE[VIEW]||{ icon:'🛠️', title:'กำลังพัฒนา', lines:[], note:'' };
+    $('main').innerHTML='<div class="section-h">'+pg.icon+' '+esc(pg.title)+'</div>'+
+      '<div class="card"><div class="ds-h">กำลังพัฒนา — อยู่ในแผนเฟสถัดไป</div>'+
+      '<div style="color:var(--muted);font-size:14px;margin-top:6px">หน้านี้จะมี</div>'+
+      '<ul style="margin:8px 0 0;padding-left:20px;font-size:14px;line-height:1.9">'+
+      pg.lines.map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+'</ul>'+
+      (pg.note?'<div class="m-hint" style="margin-top:12px">'+esc(pg.note)+'</div>':'')+'</div>';
+  }
+
 
   /** ใบปลายทางที่อ้างถึงใบนี้ (refBy มาจาก backend) — ว่าง = ยังไม่มีใบไหนต่อยอด */
   function salesRefBy(d,kind){
@@ -17118,7 +17215,11 @@ function kpImpDraw(){
         var nbk=$('navBank'); if(nbk) nbk.style.display='';
         var nec=$('navExpCat'); if(nec) nec.style.display='';              // 🏷️ ประเภทค่าใช้จ่าย = ผู้ดูแล                 // 🏦 บัญชีธนาคาร = ผู้ดูแล (ใช้เลือกตอนรับ/จ่ายเงิน)               // 💵 จ่ายออก = พี่คนเดียว (รวมข้อมูลบริษัทลูกค้า)
         var nbd=$('navBizDash'); if(nbd) nbd.style.display='';             // 📊 ภาพรวมธุรกิจ = พี่/HR
-        var nsl=$('navSales'); if(nsl) nsl.style.display='';               // 💰 รายรับ (ฝั่งขาย) = พี่/HR
+        var nsl=$('navSales'); if(nsl) nsl.style.display='';               // 💰 รายรับ (ลิงก์เก่า) = พี่/HR
+        /* รายรับแยกตามชนิดเอกสาร + หน้าที่ยังทำไม่ถึง (ผัง §2.6 · 20 ก.ย. 69)
+           ⚠️ เพิ่มปุ่มใหม่ต้องปลดซ่อนที่นี่ด้วย ไม่งั้นเมนูไม่โผล่ทั้งที่ลงทะเบียนครบ */
+        ['navSalesQt','navSalesIv','navSalesRe','navSalesCn','navWtReg','navStatement','navCashReport']
+          .forEach(function(id){ var el=$(id); if(el) el.style.display=''; });
         var nar=$('navAr'); if(nar) nar.style.display='';                   // 📊 ลูกหนี้ค้างรับ = พี่/HR
         var nsr=$('navSalesReport'); if(nsr) nsr.style.display='';           // 📊 รายงานรายรับ = พี่/HR
         var npr=$('navPoReport'); if(npr) npr.style.display='';           // 📊 ทะเบียนใบสำคัญจ่าย = พี่คนเดียว (backend poGate_ กันซ้ำอีกชั้น)
@@ -17213,7 +17314,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260920-1133';
+  var APP_BUILD='20260920-1439';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
