@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260920-1028">
+<link rel="stylesheet" href="user.css?v=20260920-1105">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -12516,9 +12516,13 @@
         '</select></div>';
       // ── การ์ดตัวเลขหลัก ──
       h+='<div class="ds-grid">'+
-        statCard('กำไรเบื้องต้น', money(r.profit), 'รายได้ − รายจ่ายเดือนนี้', r.profit<0?'ds-warn':'')+
+        statCard('กำไรเบื้องต้น', money(r.profit), 'รายได้ออกบิล − เงินที่จ่ายออกจริง', r.profit<0?'ds-warn':'')+
         statCard('รายได้ (ออกบิล)', money(r.income), 'รับเงินแล้ว '+money(r.incomeReceived))+
-        statCard('รายจ่ายรวม', money(r.outgo), 'เบิกพนักงาน '+money(r.expense.amt)+' · ใบสั่งจ่าย '+money(r.payout.amt))+
+        /* รายจ่าย = เงินที่ออกจริงเดือนนี้ 3 ทาง (พี่กี้เคาะ 20 ก.ย. 69) — ต้องบอกที่มาให้ครบ
+           ไม่งั้นพี่เทียบกับรายงานรายจ่าย (ซึ่งรวมใบที่ยังไม่จ่ายด้วย) แล้วงงว่าทำไมไม่ตรง */
+        statCard('รายจ่ายรวม (จ่ายจริง)', money(r.outgo),
+          'เบิกพนักงาน '+money(r.expense.amt)+' · ใบสั่งจ่าย '+money(r.payout.amt)+
+          ' · เงินสดย่อย '+money((r.petty||{amt:0}).amt))+
         statCard('ภาษีขาย (VAT)', money(r.vatSale), r.vatBuyReady?'':'ยังไม่มีข้อมูลภาษีซื้อ')+
         '</div>';
       // ── ลูกหนี้ ──
@@ -12527,9 +12531,12 @@
         statCard('เกินกำหนดชำระ', money(r.overdue.amt), r.overdue.n+' ใบ', r.overdue.n?'ds-warn':'')+
         '</div>';
       // ── งานที่ต้องทำ ──
+      /* "อนุมัติแล้วยังไม่โอน" แยก 2 เล่ม — ตั้งแต่ 20 ก.ย. ยอดพวกนี้ไม่เข้ากำไรแล้ว
+         ถ้าไม่โชว์แยก พี่จะไม่รู้ว่าเงินที่ต้องจ่ายจริง ๆ ยังค้างอยู่เท่าไร */
       var todo=[['⏳ ใบเบิกรออนุมัติ', r.todo.pendingExpense, 'expapprove'],
                 ['⏳ ใบสั่งจ่ายรออนุมัติ', r.todo.pendingPayout, 'payout'],
-                ['💸 อนุมัติแล้วยังไม่โอน', r.todo.unpaidPayout, 'payout'],
+                ['💸 ใบเบิกอนุมัติแล้วยังไม่โอนคืน', r.todo.unpaidExpense||{n:0,amt:0}, 'expapprove'],
+                ['💸 ใบสั่งจ่ายอนุมัติแล้วยังไม่โอน', r.todo.unpaidPayout, 'payout'],
                 ['⚠️ ใบแจ้งหนี้เกินกำหนด', r.todo.overdueInvoice, 'sales']];
       h+='<div class="card"><div class="ds-h">งานที่ต้องทำ</div>'+
         todo.map(function(x){
@@ -17171,7 +17178,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260920-1028';
+  var APP_BUILD='20260920-1105';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
