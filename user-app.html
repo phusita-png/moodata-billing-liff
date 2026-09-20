@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260920-2232">
+<link rel="stylesheet" href="user.css?v=20260920-2245">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1258,6 +1258,12 @@
   .bz-lg .am{font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
   .bz-lg .pc{width:38px;text-align:right;color:var(--muted)}
   /* ใบรออนุมัติ — กดแถวแล้วไปหน้าที่อนุมัติได้เลย */
+  /* แถวล่าง: เงินสด/เงินฝาก คู่กับ ใบรออนุมัติ (พี่กี้ขอ 20 ก.ย. 69)
+     จอแคบซ้อนลงเป็นแถวเดียว */
+  .bz-row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+  .bz-row2 .pnl{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:16px}
+  /* บัญชีที่ยอด 0 หรือติดลบ — ไม่มีชิ้นในวง แต่ต้องเห็นในรายการ */
+  .bz-lg .am.zero{color:var(--muted);font-weight:400}
   .bz-pd{display:flex;flex-direction:column;gap:6px}
   .bz-pdr{display:flex;align-items:center;gap:10px;width:100%;text-align:left;font:inherit;
     border:1px solid var(--line);background:#fff;border-radius:12px;padding:9px 12px;cursor:pointer}
@@ -1268,7 +1274,7 @@
   .bz-pdr .rt{text-align:right;display:flex;flex-direction:column;line-height:1.35;flex:none}
   .bz-pdr .rt small{color:var(--muted);font-size:11px;white-space:nowrap}
   /* 🔴 .m-hint ในหน้านี้เป็นกล่องคำอธิบาย ไม่ใช่ในตาราง — ปล่อยให้ใช้สไตล์เดิมได้ */
-  @media (max-width:1100px){ .bz-cards{grid-template-columns:repeat(2,1fr)} .bz-grid{grid-template-columns:1fr} }
+  @media (max-width:1100px){ .bz-cards{grid-template-columns:repeat(2,1fr)} .bz-grid{grid-template-columns:1fr} .bz-row2{grid-template-columns:1fr} }
   @media (max-width:560px){ .bz-cards{grid-template-columns:1fr} .bz-top .bz-fl{margin-left:0;width:100%} }
 
   /* แท็บสลับ 2 ฝั่งของทะเบียนการจ่าย (20 ก.ย. 69)
@@ -14151,31 +14157,50 @@
       '</svg>';
   }
 
-  /** วงกลม (โดนัท) เงินอยู่ที่ไหน — แยกรายบัญชี + เงินสดย่อย */
   /* สีชิ้นวงกลม = สีแยกข้อมูล ไม่ใช่สีแบรนด์ — ห้องลูกค้าเปลี่ยนธีมเป็นม่วง
      ใช้สีแบรนด์ตรง ๆ = ชิ้นนั้นกลายเป็นสีเดียวกับปุ่ม/แถบ ดูเหมือนกดได้ */
   var BZ_PIE = ['#0F9D58','#7A5AF8','#2563EB','#F59E0B','#E0514B','#0E7490','#C2410C','#64748B'];
+  /** วงกลม (โดนัท) เงินสด/เงินฝากธนาคาร — แยกรายบัญชี + เงินสดย่อย */
   function bzDonut(items, total){
-    if(!items.length || total <= 0){
+    items = items || [];
+    /* วงแหวนคิดจาก "ยอดที่เป็นบวก" เท่านั้น — บัญชีติดลบ (เบิกเกิน) วาดเป็นชิ้นพายไม่ได้
+       แต่ต้องไม่หายจากรายการข้างขวา ไม่งั้นพี่จะไม่รู้ว่ามีบัญชีติดลบอยู่ */
+    var pos = items.filter(function(it){ return (Number(it.amt)||0) > 0; });
+    var ring = pos.reduce(function(a,it){ return a + it.amt; }, 0);
+    if(!items.length || ring <= 0){
       return '<div class="m-hint">ยังไม่มียอดคงเหลือให้แสดง — นำเข้า statement ของบัญชีธนาคารก่อนนะคะ</div>';
     }
-    var a0=-Math.PI/2, C=90, R=74, r0=46;
-    var arcs=items.map(function(it,i){
-      var a1=a0+(it.amt/total)*Math.PI*2;
-      var big=(a1-a0)>Math.PI?1:0;
-      function p(rad,ang){ return (C+rad*Math.cos(ang)).toFixed(2)+' '+(C+rad*Math.sin(ang)).toFixed(2); }
-      var d='M '+p(R,a0)+' A '+R+' '+R+' 0 '+big+' 1 '+p(R,a1)+' L '+p(r0,a1)+' A '+r0+' '+r0+' 0 '+big+' 0 '+p(r0,a0)+' Z';
-      a0=a1;
-      return '<path d="'+d+'" fill="'+BZ_PIE[i%BZ_PIE.length]+'"/>';
-    }).join('');
-    return '<div class="bz-donut"><svg viewBox="0 0 180 180" width="180" height="180" role="img" aria-label="สัดส่วนเงินแต่ละบัญชี">'+arcs+
+    var C=90, R=74, r0=46, mid=(R+r0)/2, wide=R-r0;
+    var svg;
+    if(pos.length === 1){
+      /* 🔴 บัญชีเดียว = เต็มวง — วาดด้วย path ไม่ได้ เพราะจุดเริ่มกับจุดจบเป็นจุดเดียวกัน
+         SVG จะตีว่า "ส่วนโค้งยาว 0" แล้ววาดออกมาเป็นวงเปล่า (พี่กี้เจอจริง 20 ก.ย. 69)
+         → ใช้เส้นขอบวงกลมหนาเท่าความหนาแหวนแทน */
+      svg = '<circle cx="'+C+'" cy="'+C+'" r="'+mid+'" fill="none" stroke="'+BZ_PIE[0]+'" stroke-width="'+wide+'"/>';
+    } else {
+      var a0=-Math.PI/2;
+      svg = pos.map(function(it,i){
+        var a1=a0+(it.amt/ring)*Math.PI*2;
+        var big=(a1-a0)>Math.PI?1:0;
+        function p(rad,ang){ return (C+rad*Math.cos(ang)).toFixed(2)+' '+(C+rad*Math.sin(ang)).toFixed(2); }
+        var d='M '+p(R,a0)+' A '+R+' '+R+' 0 '+big+' 1 '+p(R,a1)+
+              ' L '+p(r0,a1)+' A '+r0+' '+r0+' 0 '+big+' 0 '+p(r0,a0)+' Z';
+        a0=a1;
+        return '<path d="'+d+'" fill="'+BZ_PIE[i%BZ_PIE.length]+'"/>';
+      }).join('');
+    }
+    /* สีในรายการต้องตรงกับสีในวง — ไล่สีตามลำดับของ "ชิ้นที่เป็นบวก" ไม่ใช่ลำดับในรายการทั้งหมด */
+    var ci = 0, color = {};
+    pos.forEach(function(it){ color[it.name] = BZ_PIE[ci++ % BZ_PIE.length]; });
+    return '<div class="bz-donut"><svg viewBox="0 0 180 180" width="180" height="180" role="img" aria-label="สัดส่วนเงินแต่ละบัญชี">'+svg+
       '<text x="90" y="84" text-anchor="middle" font-size="11" fill="#8A93A5">เงินทั้งหมด</text>'+
       '<text x="90" y="104" text-anchor="middle" font-size="16" font-weight="800" fill="#1b2130">'+esc(bzShort(total))+'</text></svg>'+
-      '<div class="bz-leg">'+items.map(function(it,i){
-        return '<div class="bz-lg"><span class="dot" style="background:'+BZ_PIE[i%BZ_PIE.length]+'"></span>'+
+      '<div class="bz-leg">'+items.map(function(it){
+        var neg = (Number(it.amt)||0) <= 0;
+        return '<div class="bz-lg"><span class="dot" style="background:'+(neg?'#C2CAD6':color[it.name])+'"></span>'+
           '<span class="nm"><b>'+esc(it.name)+'</b><small>'+esc(it.sub||'')+'</small></span>'+
-          '<span class="am">'+money(it.amt)+'</span>'+
-          '<span class="pc">'+Math.round(it.amt/total*100)+'%</span></div>';
+          '<span class="am'+(neg?' zero':'')+'">'+money(it.amt)+'</span>'+
+          '<span class="pc">'+(neg?'–':Math.round(it.amt/ring*100)+'%')+'</span></div>';
       }).join('')+'</div></div>';
   }
 
@@ -14271,7 +14296,7 @@
           value:bzNeg(cur.profit), sub:'รายได้ − รายจ่าย'+(cur.income?(' · อัตรากำไร '+rate.toFixed(1)+'%'):'')})+
         '</div>';
 
-      /* ── ซ้าย: ตาราง · ขวา: กราฟ 2 อัน + วงกลม + ใบรออนุมัติ ── */
+      /* ── ซ้าย: ตารางงบ · ขวา: กราฟ 2 อัน ── */
       h+='<div class="bz-grid"><div>'+
         '<div class="pnl"><div class="pnl-h">📑 งบกำไรขาดทุน<span class="sp">หน่วย: บาท</span></div>'+
         '<div class="bz-tw">'+bzTable(r)+'</div>'+
@@ -14281,10 +14306,15 @@
         '<div class="bz-lgd"><span><i style="background:#0F9D58"></i>รายได้</span>'+
         '<span><i style="background:#E0514B"></i>รายจ่าย</span></div>'+bzLine(r.rows)+'</div>'+
         '<div class="pnl"><div class="pnl-h">📊 กำไร/(ขาดทุน) รายเดือน</div>'+bzBars(r.rows)+'</div>'+
-        '<div class="pnl"><div class="pnl-h">🏦 เงินอยู่ที่ไหน<span class="sp">ณ '+esc(r.cashMonthThai)+'</span></div>'+
+        '</div></div>';
+
+      /* ── เงินสด/เงินฝาก คู่กับ ใบรออนุมัติ (พี่กี้ขอให้อยู่ข้างกัน 20 ก.ย. 69) ──
+         2 ก้อนนี้คือ "เงินที่มี" กับ "เงินที่กำลังจะออก" — อ่านคู่กันได้ความมากกว่าแยกกันอยู่ */
+      h+='<div class="bz-row2">'+
+        '<div class="pnl"><div class="pnl-h">🏦 เงินสด / เงินฝากธนาคาร<span class="sp">ณ '+esc(r.cashMonthThai)+'</span></div>'+
         bzDonut(cash.items, cash.total)+'</div>'+
         bzPending(r)+
-        '</div></div>';
+        '</div>';
 
       /* ── ค้างรับ + งานที่ต้องทำ (ของเดิม ยังจำเป็น) ── */
       h+='<div class="ds-grid" style="margin-top:2px">'+
@@ -18913,7 +18943,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260920-2232';
+  var APP_BUILD='20260920-2245';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
