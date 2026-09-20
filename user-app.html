@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260920-2127">
+<link rel="stylesheet" href="user.css?v=20260920-2232">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1193,6 +1193,83 @@
   .nav-g.cur > .nav-gh .gn, .nav-gh:hover .gn{ color:#fff; background:rgba(255,255,255,.28); }
   /* หัวข้อต้องกดง่ายบนมือถือ — จอเล็กกดพลาดไปโดนเมนูแทน */
   .nav-gh{ min-height:40px; }
+
+  /* ═══ 📊 ภาพรวมธุรกิจ โฉมใหม่ (20 ก.ย. 2569) ═══
+     🔴 อยู่ในหน้า ไม่ใช่ user.css — หน้าเว็บมี meta no-cache จึงถึงผู้ใช้แน่นอนกว่าไฟล์ CSS แยก
+        (บทเรียน 4 ก.ย.: CSS แยกถูกแคชค้าง แล้วเมนูหาย/หน้าเพี้ยนโดยไม่มีใครรู้) */
+  .bz-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 16px}
+  .bz-top h2{font-size:19px;margin:0}
+  .bz-top .bz-scope{color:var(--muted);font-size:13px}
+  .bz-top .bz-fl{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+  .bz-sel{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px;
+    font:inherit;font-size:13.5px;color:var(--ink)}
+  /* ปุ่มสลับ รายปี/รายเดือน — ชุดเดียวกับที่ใช้ในหน้า KPI (พี่กี้ชี้ว่าชอบแบบนั้น) */
+  .bz-seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+  .bz-seg button{border:none;background:none;font:inherit;font-size:13.5px;padding:8px 15px;
+    cursor:pointer;color:var(--muted)}
+  .bz-seg button.on{background:var(--red);color:#fff;font-weight:700}
+  /* การ์ด 4 ช่อง พื้นสีเต็มใบ */
+  .bz-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
+  .bz-c{position:relative;border-radius:16px;padding:16px 18px 14px;overflow:hidden;color:#fff;
+    box-shadow:0 8px 20px rgba(18,42,74,.12)}
+  .bz-c .bz-ic{position:absolute;right:14px;top:10px;font-size:30px;opacity:.3}
+  .bz-c .bz-lb{font-size:12.5px;opacity:.93;font-weight:600}
+  .bz-c .bz-vl{font-size:25px;font-weight:800;letter-spacing:-.4px;margin:4px 0 2px;
+    font-variant-numeric:tabular-nums}
+  .bz-c .bz-sub{font-size:11.5px;opacity:.9;line-height:1.5}
+  .bz-cash{background:linear-gradient(140deg,#38bdf8,#1d4ed8)}
+  .bz-in{background:linear-gradient(140deg,#34d399,#047857)}
+  .bz-out{background:linear-gradient(140deg,#fb7185,#be123c)}
+  .bz-pf{background:linear-gradient(140deg,#c084fc,#6d28d9)}
+  /* ขาดทุน = เปลี่ยนสีการ์ดทั้งใบ ไม่ใช่แค่ตัวเลขติดลบ — เห็นแต่ไกลว่าเดือนนี้ไม่ปกติ */
+  .bz-loss{background:linear-gradient(140deg,#fbbf24,#b45309)}
+  /* ซ้ายตาราง · ขวากราฟ */
+  .bz-grid{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);gap:16px;align-items:start}
+  .bz-grid .pnl{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:16px}
+  .pnl-h{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:700;margin-bottom:12px}
+  .pnl-h .sp{margin-left:auto;font-size:12px;font-weight:400;color:var(--muted)}
+  .bz-lgd{display:flex;gap:16px;font-size:12px;color:#5B6472;margin-bottom:2px}
+  .bz-lgd i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
+  /* ตารางงบกำไรขาดทุน — จอแคบให้เลื่อนในกล่องตัวเอง ไม่ดันทั้งหน้า */
+  .bz-tw{overflow-x:auto}
+  .bz-tbl{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+  .bz-tbl th{background:#F4F8FD;color:#44506A;font-weight:700;padding:7px 8px;
+    border-bottom:1px solid #E3EAF3;font-size:11.5px;white-space:nowrap}
+  .bz-tbl th.vat{background:#FFF7EC;color:#8A5A12}
+  .bz-tbl td{padding:6px 8px;border-bottom:1px solid #F1F4F9;white-space:nowrap}
+  .bz-tbl td.num,.bz-tbl th.num{text-align:right}
+  .bz-tbl td.mo,.bz-tbl th.mo{text-align:left;font-weight:600;color:#44506A}
+  .bz-tbl td.vat{background:#FFFCF6}
+  .bz-tbl td.pos{color:#0F7B3E}
+  .bz-tbl td.neg{color:#B23B3B}
+  .bz-tbl tr.off td{color:#B6BECC}
+  .bz-tbl tr.on td{background:var(--red-tint)}   /* โทนแบรนด์ของห้อง — ห้องลูกค้าเป็นม่วง */
+  .bz-tbl tr.on td.vat{background:#FDF3E3}
+  .bz-tbl .z{color:#C2CAD6}
+  .bz-tbl tfoot td{border-top:2px solid #D7E0EC;font-weight:800;background:#FAFCFF;padding:9px 8px}
+  /* วงกลมเงินคงเหลือ */
+  .bz-donut{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+  .bz-leg{flex:1;min-width:210px;display:flex;flex-direction:column;gap:7px}
+  .bz-lg{display:flex;align-items:center;gap:9px;font-size:12.5px}
+  .bz-lg .dot{width:11px;height:11px;border-radius:4px;flex:none}
+  .bz-lg .nm{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.35}
+  .bz-lg .nm b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bz-lg .nm small{color:var(--muted);font-size:11px}
+  .bz-lg .am{font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
+  .bz-lg .pc{width:38px;text-align:right;color:var(--muted)}
+  /* ใบรออนุมัติ — กดแถวแล้วไปหน้าที่อนุมัติได้เลย */
+  .bz-pd{display:flex;flex-direction:column;gap:6px}
+  .bz-pdr{display:flex;align-items:center;gap:10px;width:100%;text-align:left;font:inherit;
+    border:1px solid var(--line);background:#fff;border-radius:12px;padding:9px 12px;cursor:pointer}
+  .bz-pdr:hover{border-color:var(--red);background:#F7FAFF}
+  .bz-pdr .ic{font-size:17px;flex:none}
+  .bz-pdr .tx{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.35}
+  .bz-pdr .tx small{color:var(--muted);font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bz-pdr .rt{text-align:right;display:flex;flex-direction:column;line-height:1.35;flex:none}
+  .bz-pdr .rt small{color:var(--muted);font-size:11px;white-space:nowrap}
+  /* 🔴 .m-hint ในหน้านี้เป็นกล่องคำอธิบาย ไม่ใช่ในตาราง — ปล่อยให้ใช้สไตล์เดิมได้ */
+  @media (max-width:1100px){ .bz-cards{grid-template-columns:repeat(2,1fr)} .bz-grid{grid-template-columns:1fr} }
+  @media (max-width:560px){ .bz-cards{grid-template-columns:1fr} .bz-top .bz-fl{margin-left:0;width:100%} }
 
   /* แท็บสลับ 2 ฝั่งของทะเบียนการจ่าย (20 ก.ย. 69)
      ใช้คลาส .mtab ตัวเดิมของแท็บมือถือ — แต่ต้องเห็นบนจอคอมด้วย
@@ -13997,74 +14074,235 @@
 
   // ═══════════ VIEW: 📊 ภาพรวมธุรกิจ (พี่กี้ขอตามคอนเซปต์ SMEAccFlow) ═══════════
   var BIZ_YM='';
+  /* ═══════════ VIEW: 📊 ภาพรวมธุรกิจ (ยกเครื่อง 20 ก.ย. 2569 ตามที่พี่กี้เคาะ) ═══════════
+     การ์ด 4 ช่อง: เงินสด/เงินฝาก · รายได้ · รายจ่าย · กำไร(ขาดทุน)
+     ซ้าย = ตารางงบกำไรขาดทุน (รายได้/รายจ่าย/กำไร | ภาษีขาย/ภาษีซื้อ/ภ.พ.30)
+     ขวา = กราฟเส้นรายได้-รายจ่าย · กราฟแท่งกำไรรายเดือน · วงกลมเงินแยกบัญชี · ใบรออนุมัติ
+     🔴 ตัวกรองเดียวคุมทั้งหน้า รวมถึงเงินคงเหลือ (พี่กี้ย้ำ) — ตัวเลือกอยู่ "ด้านขวา" ของหัวหน้า
+     กราฟวาดด้วย SVG เอง ไม่พึ่งไลบรารีนอก (หน้านี้เปิดผ่าน LIFF ต้องไม่รอ CDN) */
+  var BIZ_YEAR = 0, BIZ_MODE = 'year';
+
+  /** ย่อจำนวนเงินให้พอใส่แกนกราฟ (1,250,000 → 1.3ล. · 45,000 → 45พ.) */
+  function bzShort(n){
+    n = Number(n) || 0;
+    var a = Math.abs(n);
+    if(a >= 1000000) return (n/1000000).toFixed(1)+'ล.';
+    if(a >= 1000) return Math.round(n/1000)+'พ.';
+    return String(Math.round(n));
+  }
+  /** ตัวเลขติดลบใส่วงเล็บแบบงบการเงิน — (1,250.00) อ่านง่ายกว่า -1,250.00 */
+  function bzNeg(v){ return (Number(v)||0) < 0 ? '('+money(-v)+')' : money(v); }
+  /** ชื่อเดือนสั้นจากคีย์ '2569-09' → 'ก.ย.' */
+  var BZ_MON = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  function bzMon(ym){ return BZ_MON[parseInt(String(ym||'').split('-')[1],10)-1] || ''; }
+
+  /** การ์ดหัวหน้า 1 ใบ (พื้นสีเต็มใบ · ตัวเลขใหญ่) */
+  function bzCard(o){
+    return '<div class="bz-c bz-'+o.tone+'"><div class="bz-ic">'+o.icon+'</div>'+
+      '<div class="bz-lb">'+esc(o.label)+'</div>'+
+      '<div class="bz-vl">'+esc(o.value)+'</div>'+
+      '<div class="bz-sub">'+esc(o.sub||'')+'</div></div>';
+  }
+
+  /** กราฟเส้น รายได้ vs รายจ่าย (12 เดือน) */
+  function bzLine(rows){
+    var W=560,H=210,PL=52,PR=12,PT=14,PB=26;
+    var mx=1; rows.forEach(function(r){ mx=Math.max(mx,r.income,r.outgo); });
+    var top=Math.max(1,Math.ceil(mx/50000)*50000);
+    function x(i){ return PL+(W-PL-PR)*(rows.length>1?i/(rows.length-1):0.5); }
+    function y(v){ return PT+(H-PT-PB)*(1-v/top); }
+    function pts(k){ return rows.map(function(r,i){ return x(i)+','+y(r[k]); }).join(' '); }
+    var grid=[0,0.25,0.5,0.75,1].map(function(f){
+      var v=top*f;
+      return '<line x1="'+PL+'" x2="'+(W-PR)+'" y1="'+y(v)+'" y2="'+y(v)+'" stroke="#E8EDF4"/>'+
+        '<text x="'+(PL-8)+'" y="'+(y(v)+4)+'" text-anchor="end" font-size="10" fill="#8A93A5">'+bzShort(v)+'</text>';
+    }).join('');
+    function dots(k,c){ return rows.map(function(r,i){
+      return '<circle cx="'+x(i)+'" cy="'+y(r[k])+'" r="3.2" fill="#fff" stroke="'+c+'" stroke-width="2"/>'; }).join(''); }
+    return '<svg viewBox="0 0 '+W+' '+H+'" width="100%" height="'+H+'" role="img" aria-label="กราฟรายได้เทียบรายจ่าย">'+grid+
+      '<polyline points="'+pts('income')+'" fill="none" stroke="#0F9D58" stroke-width="2.4" stroke-linejoin="round"/>'+
+      '<polyline points="'+pts('outgo')+'" fill="none" stroke="#E0514B" stroke-width="2.4" stroke-linejoin="round"/>'+
+      dots('income','#0F9D58')+dots('outgo','#E0514B')+
+      rows.map(function(r,i){ return '<text x="'+x(i)+'" y="'+(H-8)+'" text-anchor="middle" font-size="10" fill="#8A93A5">'+esc(bzMon(r.ym))+'</text>'; }).join('')+
+      '</svg>';
+  }
+
+  /** กราฟแท่ง กำไร/(ขาดทุน) รายเดือน — เดือนที่ขาดทุนแท่งชี้ลง */
+  function bzBars(rows){
+    var W=560,H=190,PL=52,PR=12,PT=16,PB=26;
+    var mx=1; rows.forEach(function(r){ mx=Math.max(mx,Math.abs(r.profit)); });
+    var top=Math.max(1,Math.ceil(mx/20000)*20000);
+    var zone=H-PT-PB, zero=PT+zone/2;
+    var bw=(W-PL-PR)/rows.length*0.52;
+    function x(i){ return PL+(W-PL-PR)*((i+0.5)/rows.length); }
+    function y(v){ return zero-(zone/2)*(v/top); }
+    var grid=[top,top/2,0,-top/2,-top].map(function(v){
+      return '<line x1="'+PL+'" x2="'+(W-PR)+'" y1="'+y(v)+'" y2="'+y(v)+'" stroke="'+(v===0?'#C9D3E0':'#E8EDF4')+'"/>'+
+        '<text x="'+(PL-8)+'" y="'+(y(v)+4)+'" text-anchor="end" font-size="10" fill="#8A93A5">'+bzShort(v)+'</text>';
+    }).join('');
+    var bars=rows.map(function(r,i){
+      if(!r.has) return '';
+      var up=r.profit>=0, hh=Math.max(1.5,Math.abs(y(r.profit)-zero));
+      return '<rect x="'+(x(i)-bw/2)+'" y="'+(up?zero-hh:zero)+'" width="'+bw+'" height="'+hh+'" rx="3" fill="'+(up?'#1B9E5A':'#E0514B')+'"/>'+
+        '<text x="'+x(i)+'" y="'+(up?zero-hh-5:zero+hh+12)+'" text-anchor="middle" font-size="9.5" fill="'+(up?'#0F7B3E':'#B23B3B')+'" font-weight="700">'+bzShort(r.profit)+'</text>';
+    }).join('');
+    return '<svg viewBox="0 0 '+W+' '+H+'" width="100%" height="'+H+'" role="img" aria-label="กราฟกำไรรายเดือน">'+grid+bars+
+      rows.map(function(r,i){ return '<text x="'+x(i)+'" y="'+(H-8)+'" text-anchor="middle" font-size="10" fill="#8A93A5">'+esc(bzMon(r.ym))+'</text>'; }).join('')+
+      '</svg>';
+  }
+
+  /** วงกลม (โดนัท) เงินอยู่ที่ไหน — แยกรายบัญชี + เงินสดย่อย */
+  /* สีชิ้นวงกลม = สีแยกข้อมูล ไม่ใช่สีแบรนด์ — ห้องลูกค้าเปลี่ยนธีมเป็นม่วง
+     ใช้สีแบรนด์ตรง ๆ = ชิ้นนั้นกลายเป็นสีเดียวกับปุ่ม/แถบ ดูเหมือนกดได้ */
+  var BZ_PIE = ['#0F9D58','#7A5AF8','#2563EB','#F59E0B','#E0514B','#0E7490','#C2410C','#64748B'];
+  function bzDonut(items, total){
+    if(!items.length || total <= 0){
+      return '<div class="m-hint">ยังไม่มียอดคงเหลือให้แสดง — นำเข้า statement ของบัญชีธนาคารก่อนนะคะ</div>';
+    }
+    var a0=-Math.PI/2, C=90, R=74, r0=46;
+    var arcs=items.map(function(it,i){
+      var a1=a0+(it.amt/total)*Math.PI*2;
+      var big=(a1-a0)>Math.PI?1:0;
+      function p(rad,ang){ return (C+rad*Math.cos(ang)).toFixed(2)+' '+(C+rad*Math.sin(ang)).toFixed(2); }
+      var d='M '+p(R,a0)+' A '+R+' '+R+' 0 '+big+' 1 '+p(R,a1)+' L '+p(r0,a1)+' A '+r0+' '+r0+' 0 '+big+' 0 '+p(r0,a0)+' Z';
+      a0=a1;
+      return '<path d="'+d+'" fill="'+BZ_PIE[i%BZ_PIE.length]+'"/>';
+    }).join('');
+    return '<div class="bz-donut"><svg viewBox="0 0 180 180" width="180" height="180" role="img" aria-label="สัดส่วนเงินแต่ละบัญชี">'+arcs+
+      '<text x="90" y="84" text-anchor="middle" font-size="11" fill="#8A93A5">เงินทั้งหมด</text>'+
+      '<text x="90" y="104" text-anchor="middle" font-size="16" font-weight="800" fill="#1b2130">'+esc(bzShort(total))+'</text></svg>'+
+      '<div class="bz-leg">'+items.map(function(it,i){
+        return '<div class="bz-lg"><span class="dot" style="background:'+BZ_PIE[i%BZ_PIE.length]+'"></span>'+
+          '<span class="nm"><b>'+esc(it.name)+'</b><small>'+esc(it.sub||'')+'</small></span>'+
+          '<span class="am">'+money(it.amt)+'</span>'+
+          '<span class="pc">'+Math.round(it.amt/total*100)+'%</span></div>';
+      }).join('')+'</div></div>';
+  }
+
+  /** ตารางงบกำไรขาดทุน — เดือนละแถว + แถวรวมทั้งปี */
+  function bzTable(r){
+    function cell(v,cls){
+      return '<td class="num '+(cls||'')+'">'+((Number(v)||0)===0?'<span class="z">–</span>':money(v))+'</td>';
+    }
+    var body=r.rows.map(function(x){
+      if(!x.has){
+        /* เดือนอนาคต กับ เดือนที่ผ่านไปแล้วแต่ไม่มีรายการ — คนละความหมาย ต้องเขียนคนละคำ */
+        return '<tr class="off"><td class="mo">'+esc(bzMon(x.ym))+'</td>'+
+          '<td colspan="6" class="num"><span class="z">'+(x.future?'ยังไม่ถึง':'ยังไม่มีรายการ')+'</span></td></tr>';
+      }
+      var on = (x.ym===r.ym && r.mode==='month');
+      return '<tr'+(on?' class="on"':'')+'><td class="mo">'+esc(bzMon(x.ym))+'</td>'+
+        cell(x.income)+cell(x.outgo)+
+        '<td class="num '+(x.profit>=0?'pos':'neg')+'"><b>'+bzNeg(x.profit)+'</b></td>'+
+        cell(x.vatSale,'vat')+cell(x.vatBuy,'vat')+
+        '<td class="num vat">'+bzNeg(x.pp30)+'</td></tr>';
+    }).join('');
+    return '<table class="bz-tbl"><thead>'+
+      '<tr><th rowspan="2" class="mo">เดือน</th><th colspan="3">งบกำไรขาดทุน</th>'+
+      '<th colspan="3" class="vat">ภาษีมูลค่าเพิ่ม</th></tr>'+
+      '<tr><th class="num">รายได้</th><th class="num">รายจ่าย</th><th class="num">กำไร/(ขาดทุน)</th>'+
+      '<th class="num vat">ภาษีขาย</th><th class="num vat">ภาษีซื้อ</th><th class="num vat">ภ.พ.30</th></tr>'+
+      '</thead><tbody>'+body+'</tbody>'+
+      '<tfoot><tr><td class="mo">รวมทั้งปี</td>'+
+      '<td class="num">'+money(r.sum.income)+'</td><td class="num">'+money(r.sum.outgo)+'</td>'+
+      '<td class="num '+(r.sum.profit>=0?'pos':'neg')+'"><b>'+bzNeg(r.sum.profit)+'</b></td>'+
+      '<td class="num vat">'+money(r.sum.vatSale)+'</td><td class="num vat">'+money(r.sum.vatBuy)+'</td>'+
+      '<td class="num vat">'+bzNeg(r.sum.pp30)+'</td></tr></tfoot></table>';
+  }
+
+  /** ใบที่รออนุมัติ — พี่กี้ขอให้เห็นบนหน้านี้เลย ไม่ต้องเข้าไปอีกหน้า */
+  function bzPending(r){
+    var list=r.pending||[];
+    if(!list.length){
+      return '<div class="pnl"><div class="pnl-h">✅ ใบรออนุมัติ</div>'+
+        '<div class="m-hint">ไม่มีใบค้างอนุมัติค่ะ</div></div>';
+    }
+    return '<div class="pnl"><div class="pnl-h">⏳ ใบรออนุมัติ'+
+      '<span class="sp">'+r.pendingN+' ใบ'+(r.pendingN>list.length?(' · แสดง '+list.length+' ใบแรก'):'')+'</span></div>'+
+      '<div class="bz-pd">'+list.map(function(x){
+        var go = x.kind==='payout' ? 'payout' : 'expapprove';
+        return '<button type="button" class="bz-pdr" onclick="switchView(&quot;'+go+'&quot;)">'+
+          '<span class="ic">'+(x.kind==='payout'?'💵':'🧾')+'</span>'+
+          '<span class="tx"><b>'+esc(x.no||'(ยังไม่มีเลข)')+'</b>'+
+          '<small>'+esc([x.who,x.detail].filter(Boolean).join(' · '))+'</small></span>'+
+          '<span class="rt"><b>'+money(x.amount)+'</b>'+
+          '<small>'+esc(x.dateText)+(x.days>=3?(' · ค้าง '+x.days+' วัน'):'')+'</small></span></button>';
+      }).join('')+'</div></div>';
+  }
+
   function renderBizDash(){
     skel();
-    jsonp({action:'waBizDash',uid:UID,ym:BIZ_YM}).then(function(r){
+    var q={action:'waBizDash',uid:UID,mode:BIZ_MODE};
+    if(BIZ_YEAR) q.year=BIZ_YEAR;
+    if(BIZ_YM) q.ym=BIZ_YM;
+    jsonp(q).then(function(r){
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
-      BIZ_YM=r.ym;
-      var h='<div class="hm-hero"><h2>📊 ภาพรวมธุรกิจ</h2><span class="hp">'+esc(r.monthThai)+'</span></div>';
-      h+='<div class="ds-sel"><select id="bizYm" onchange="bizSetYm(this.value)">'+
-        r.months.slice().reverse().map(function(m){
-          return '<option value="'+esc(m)+'"'+(m===r.ym?' selected':'')+'>'+esc(ymThai(m))+'</option>'; }).join('')+
-        '</select></div>';
-      // ── การ์ดตัวเลขหลัก ──
-      h+='<div class="ds-grid">'+
-        statCard('กำไรเบื้องต้น', money(r.profit), 'รายได้ออกบิล − เงินที่จ่ายออกจริง', r.profit<0?'ds-warn':'')+
-        statCard('รายได้ (ออกบิล)', money(r.income), 'รับเงินแล้ว '+money(r.incomeReceived))+
-        /* รายจ่าย = เงินที่ออกจริงเดือนนี้ 3 ทาง (พี่กี้เคาะ 20 ก.ย. 69) — ต้องบอกที่มาให้ครบ
-           ไม่งั้นพี่เทียบกับรายงานรายจ่าย (ซึ่งรวมใบที่ยังไม่จ่ายด้วย) แล้วงงว่าทำไมไม่ตรง */
-        statCard('รายจ่ายรวม (จ่ายจริง)', money(r.outgo),
-          'เบิกพนักงาน '+money(r.expense.amt)+' · ใบสั่งจ่าย '+money(r.payout.amt)+
-          ' · เงินสดย่อย '+money((r.petty||{amt:0}).amt))+
-        statCard('ภาษีขาย (VAT)', money(r.vatSale), r.vatBuyReady?'':'ยังไม่มีข้อมูลภาษีซื้อ')+
+      BIZ_YEAR=r.year; BIZ_YM=r.ym; BIZ_MODE=r.mode;
+      var cur=r.cur||{}, cash=r.cash||{items:[],total:0};
+      var scope = r.mode==='month' ? esc(r.monthThai) : ('ทั้งปี '+r.year);
+
+      /* หัวหน้า + ตัวกรอง (ชิดขวาตามที่พี่กี้ขอ) */
+      var h='<div class="bz-top"><h2>📊 ภาพรวมธุรกิจ</h2><span class="bz-scope">'+scope+'</span>'+
+        '<div class="bz-fl">'+
+        '<div class="bz-seg">'+
+          '<button type="button" class="'+(r.mode==='year'?'on':'')+'" onclick="bizSetMode(&quot;year&quot;)">รายปี</button>'+
+          '<button type="button" class="'+(r.mode==='month'?'on':'')+'" onclick="bizSetMode(&quot;month&quot;)">รายเดือน</button>'+
+        '</div>'+
+        '<select class="bz-sel" onchange="bizSetYear(this.value)">'+
+          (r.years||[]).map(function(y){ return '<option value="'+y+'"'+(y===r.year?' selected':'')+'>ปี '+y+'</option>'; }).join('')+
+        '</select>'+
+        (r.mode==='month'
+          ? '<select class="bz-sel" onchange="bizSetYm(this.value)">'+
+            (r.months||[]).map(function(m){ return '<option value="'+esc(m)+'"'+(m===r.ym?' selected':'')+'>'+esc(ymThai(m))+'</option>'; }).join('')+
+            '</select>'
+          : '')+
+        '</div></div>';
+
+      /* ── การ์ด 4 ช่อง ── */
+      var rate = cur.income ? (cur.profit/cur.income*100) : 0;
+      h+='<div class="bz-cards">'+
+        bzCard({tone:'cash', icon:'🏦', label:'เงินสด / เงินฝาก', value:money(cash.total),
+          sub:(cash.items.length?cash.items.length+' บัญชี · ':'')+'ณ '+esc(r.cashMonthThai)+
+              (cash.partial?' ⚠️ ยังไม่ครบทุกบัญชี':'')})+
+        bzCard({tone:'in', icon:'📈', label:'รายได้', value:money(cur.income), sub:'ออกบิลแล้ว · '+scope})+
+        bzCard({tone:'out', icon:'📉', label:'รายจ่าย', value:money(cur.outgo),
+          sub:'จ่ายจริง · ใบเบิก + ใบสั่งจ่าย + เงินสดย่อย'})+
+        bzCard({tone:(cur.profit<0?'loss':'pf'), icon:(cur.profit<0?'⚠️':'🏆'), label:'กำไร / (ขาดทุน)',
+          value:bzNeg(cur.profit), sub:'รายได้ − รายจ่าย'+(cur.income?(' · อัตรากำไร '+rate.toFixed(1)+'%'):'')})+
         '</div>';
-      // ── ลูกหนี้ ──
+
+      /* ── ซ้าย: ตาราง · ขวา: กราฟ 2 อัน + วงกลม + ใบรออนุมัติ ── */
+      h+='<div class="bz-grid"><div>'+
+        '<div class="pnl"><div class="pnl-h">📑 งบกำไรขาดทุน<span class="sp">หน่วย: บาท</span></div>'+
+        '<div class="bz-tw">'+bzTable(r)+'</div>'+
+        (r.multiEntity?'<div class="m-hint" style="margin-top:10px">ห้องนี้มีหลายนิติบุคคล — คอลัมน์ภาษีเป็นยอดรวมทุกบริษัท ยื่นจริงดูที่เมนูรายงานภาษี</div>':'')+
+        '</div></div><div>'+
+        '<div class="pnl"><div class="pnl-h">📈 รายได้ vs รายจ่าย</div>'+
+        '<div class="bz-lgd"><span><i style="background:#0F9D58"></i>รายได้</span>'+
+        '<span><i style="background:#E0514B"></i>รายจ่าย</span></div>'+bzLine(r.rows)+'</div>'+
+        '<div class="pnl"><div class="pnl-h">📊 กำไร/(ขาดทุน) รายเดือน</div>'+bzBars(r.rows)+'</div>'+
+        '<div class="pnl"><div class="pnl-h">🏦 เงินอยู่ที่ไหน<span class="sp">ณ '+esc(r.cashMonthThai)+'</span></div>'+
+        bzDonut(cash.items, cash.total)+'</div>'+
+        bzPending(r)+
+        '</div></div>';
+
+      /* ── ค้างรับ + งานที่ต้องทำ (ของเดิม ยังจำเป็น) ── */
       h+='<div class="ds-grid" style="margin-top:2px">'+
         statCard('ค้างรับทั้งหมด', money(r.outstanding.amt), r.outstanding.n+' ใบ','ds-wait')+
         statCard('เกินกำหนดชำระ', money(r.overdue.amt), r.overdue.n+' ใบ', r.overdue.n?'ds-warn':'')+
+        statCard('อนุมัติแล้วยังไม่โอน',
+          money(round2((r.todo.unpaidExpense.amt||0)+(r.todo.unpaidPayout.amt||0))),
+          (r.todo.unpaidExpense.n+r.todo.unpaidPayout.n)+' ใบ · ยังไม่เข้ากำไร')+
         '</div>';
-      // ── งานที่ต้องทำ ──
-      /* "อนุมัติแล้วยังไม่โอน" แยก 2 เล่ม — ตั้งแต่ 20 ก.ย. ยอดพวกนี้ไม่เข้ากำไรแล้ว
-         ถ้าไม่โชว์แยก พี่จะไม่รู้ว่าเงินที่ต้องจ่ายจริง ๆ ยังค้างอยู่เท่าไร */
-      var todo=[['⏳ ใบเบิกรออนุมัติ', r.todo.pendingExpense, 'expapprove'],
-                ['⏳ ใบสั่งจ่ายรออนุมัติ', r.todo.pendingPayout, 'payout'],
-                ['💸 ใบเบิกอนุมัติแล้วยังไม่โอนคืน', r.todo.unpaidExpense||{n:0,amt:0}, 'expapprove'],
-                ['💸 ใบสั่งจ่ายอนุมัติแล้วยังไม่โอน', r.todo.unpaidPayout, 'payout'],
-                ['⚠️ ใบแจ้งหนี้เกินกำหนด', r.todo.overdueInvoice, 'sales']];
-      h+='<div class="card"><div class="ds-h">งานที่ต้องทำ</div>'+
-        todo.map(function(x){
-          return '<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);cursor:pointer" onclick="switchView(\''+x[2]+'\')">'+
-            '<span>'+esc(x[0])+'</span><b'+(x[1].n?' style="color:#C8730B"':'')+'>'+x[1].n+' ใบ · '+money(x[1].amt)+'</b></div>';
-        }).join('')+'</div>';
-      // ── กราฟ 6 เดือน (รายรับ vs รายจ่าย · CSS ล้วน ไม่พึ่งไลบรารีนอก) ──
-      var mx=1; r.trend.forEach(function(x){ mx=Math.max(mx,x.income,x.outgo); });
-      h+='<div class="card"><div class="ds-h">รายรับ vs รายจ่าย 6 เดือน</div><div class="ds-bars">'+
-        r.trend.map(function(x){
-          var hi=Math.round((x.income/mx)*90), ho=Math.round((x.outgo/mx)*90);
-          return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px">'+
-            '<div style="display:flex;gap:2px;align-items:flex-end;height:96px">'+
-              '<div title="รายรับ '+money(x.income)+'" style="width:14px;height:'+Math.max(hi,2)+'px;background:#1E9E5A;border-radius:3px 3px 0 0"></div>'+
-              '<div title="รายจ่าย '+money(x.outgo)+'" style="width:14px;height:'+Math.max(ho,2)+'px;background:#E5484D;border-radius:3px 3px 0 0"></div>'+
-            '</div><span style="font-size:11px;color:#8A94A6">'+esc(ymShort(x.ym))+'</span></div>';
-        }).join('')+'</div>'+
-        '<div style="font-size:12px;color:#8A94A6;margin-top:6px"><span style="color:#1E9E5A">■</span> รายรับ · <span style="color:#E5484D">■</span> รายจ่าย</div></div>';
-      // ── เอกสารขายล่าสุด ──
-      if(r.recent.length){
-        h+='<div class="card"><div class="ds-h">เอกสารขายล่าสุด</div>'+
-          r.recent.map(function(d){
-            return '<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)">'+
-              '<span>'+(d.link?'<a class="ex-lk" href="'+esc(d.link)+'" target="_blank">'+esc(d.no)+'</a>':esc(d.no))+
-              ' · '+esc(d.customer)+'<br><span style="font-size:11.5px;color:#8A94A6">'+esc(d.date)+' · '+esc(d.status)+'</span></span>'+
-              '<b>'+money(d.total)+'</b></div>';
-          }).join('')+'</div>';
-      } else {
-        h+='<div class="card"><div class="emptybox">ยังไม่มีเอกสารขาย — กด 💰 รายรับ เพื่อออกใบแรก</div></div>';
-      }
       $('main').innerHTML=h;
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
   }
-  function bizSetYm(v){ BIZ_YM=v; renderBizDash(); }
+  function round2(n){ return Math.round((Number(n)||0)*100)/100; }
+  function bizSetYm(v){ BIZ_YM=v; BIZ_MODE='month'; renderBizDash(); }
+  function bizSetYear(v){ BIZ_YEAR=parseInt(v,10)||0; BIZ_YM=''; renderBizDash(); }
+  function bizSetMode(m){ BIZ_MODE=(m==='month'?'month':'year'); if(m==='year') BIZ_YM=''; renderBizDash(); }
   window.renderBizDash=renderBizDash; window.bizSetYm=bizSetYm;
+  window.bizSetYear=bizSetYear; window.bizSetMode=bizSetMode;
 
   // ═══════════ VIEW: 📊 สรุปค่าใช้จ่าย + 🧾 ตั้งเบิกลูกค้า (dashboard) ═══════════
   // สิทธิ์: พนักงานเห็นของตัวเอง · พี่เห็นทั้งบริษัท (backend กรองให้ · หน้าจอแค่แสดงตามที่ได้มา)
@@ -18675,7 +18913,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260920-2127';
+  var APP_BUILD='20260920-2232';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
