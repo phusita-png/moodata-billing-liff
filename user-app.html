@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260920-1016">
+<link rel="stylesheet" href="user.css?v=20260920-1028">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -5651,6 +5651,7 @@
       EXP_TYPES=r.types||EXP_TYPES; SECTIONS=r.sections||SECTIONS;   // sections ไว้ให้ปุ่มแก้ภาษีในหน้านี้
       ENTITIES=r.entities||ENTITIES; DEF_ENT=r.defaultEntity||DEF_ENT;   // บริษัทผู้ออกเอกสาร (E1)
       PETTY_ENTS=r.pettyEntities||PETTY_ENTS; PAY_CHANNELS=r.payChannels||PAY_CHANNELS;   // เงินสดย่อย (E2)
+      PAY_ACCTS=r.payAccounts||PAY_ACCTS;   // บัญชีบริษัทที่เงินออก (ขั้น ④)
       MYBANK=r.myBank||{name:'',acct:'',owner:''}; BANK_LIST=r.banks||[]; HAS_BANK=!!r.hasBank;
       paintExpense(r.expenses||[]);
       sigRefresh();
@@ -9082,6 +9083,7 @@
       SECTIONS=r.sections||SECTIONS; KIND_CO=r.companyKind||KIND_CO; EXP_TYPES=r.types||EXP_TYPES;   // หน้าอนุมัติก็ต้องมีลิสต์ประเภท (waExpenseInit ไม่ได้ถูกเรียกในหน้านี้)
       ENTITIES=r.entities||ENTITIES; DEF_ENT=r.defaultEntity||DEF_ENT;   // บริษัทผู้ออกเอกสาร (E1)
       PETTY_ENTS=r.pettyEntities||PETTY_ENTS; PAY_CHANNELS=r.payChannels||PAY_CHANNELS;   // เงินสดย่อย (E2)
+      PAY_ACCTS=r.payAccounts||PAY_ACCTS;   // บัญชีบริษัทที่เงินออก (ขั้น ④)
       // ตาราง 3 ก้อนตามงานที่ต้องทำ (พี่กี้เคาะ 1 ก.ย. 69: ตาราง + เมนู ⋮ แทนการ์ดปุ่มเยอะ)
       var html='';
       html+=expTable('⏳ รออนุมัติ', pd, true, 'ไม่มีใบเบิกรออนุมัติ 🎉');
@@ -9179,7 +9181,7 @@
   // นิติบุคคลที่ออกเอกสารได้ (E1) — โหลดจาก waExpPending/waExpenseInit · มีบริษัทเดียว = ไม่ต้องถามพี่เลย
   var ENTITIES=[], DEF_ENT='';
   // เงินสดย่อย (E2): บริษัทที่ตั้งวงเงินไว้แล้ว + ช่องทางจ่ายคืนที่เลือกได้
-  var PETTY_ENTS=[], PAY_CHANNELS=['เงินสดย่อย','โอนจากบัญชีบริษัท'];
+  var PETTY_ENTS=[], PAY_CHANNELS=['เงินสดย่อย','โอนจากบัญชีบริษัท'], PAY_ACCTS=[];
   /** ชื่อบริษัทจากรหัส (ว่าง = บริษัทเริ่มต้น) */
   function entName(code){
     var c=String(code||'')||DEF_ENT;
@@ -9761,7 +9763,7 @@
       : '';
     modal('<h3>💰 จ่ายคืน '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
       '<div class="m-hint">โอนคืน <b>'+esc(nick)+'</b> · '+money+' บาท</div>'+
-      chFld+
+      chFld+exAcctFldHtml()+
       // จ่ายก่อนผู้รับเซ็นได้ แต่ต้องรู้ว่ายังต้องตามลายเซ็น (เอกสาร+50 ทวิ ออกตอนเซ็นเสร็จ)
       (unsigned?'<div class="m-hint" style="color:#C8730B">⚠️ ผู้รับเงิน<b>ยังไม่ได้ลงนาม</b> — บันทึกจ่ายได้เลยค่ะ '+
         'แต่ใบสำคัญรับเงินกับ 50 ทวิ จะออกให้ตอนผู้รับเซ็นเสร็จ (ระบบรวมแฟ้มใหม่ให้เอง) · อย่าลืมตามลิงก์เซ็นนะคะ</div>':'')+
@@ -9769,6 +9771,20 @@
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
       '<button class="btn btn-primary" id="pSend" onclick="exDoPay(\''+esc(no)+'\')">บันทึกจ่ายคืน</button></div>');
     imgsFldBind('pSlips');
+  }
+  /* ช่องเลือกบัญชีที่เงินออก (ขั้น ④) — รายการมาจากทะเบียนเท่านั้น หน้าเว็บห้ามพิมพ์เอง
+     ไม่มีบัญชีในทะเบียน = บอกทางไปเพิ่ม ไม่ใช่ปล่อยช่องว่างให้สงสัย (เหมือนหน้าใบสั่งจ่าย) */
+  function exAcctFldHtml(){
+    if(!PAY_ACCTS.length){
+      return '<div class="fld"><label>บัญชีที่จ่ายออก</label>'+
+        '<div class="m-hint" style="margin:0">ยังไม่มีบัญชีในทะเบียน — บันทึกจ่ายได้ปกติ '+
+        'แต่จะกระทบยอดกับสมุดบัญชีธนาคารไม่ได้ · เพิ่มได้ที่เมนู 🏦 บัญชีธนาคาร</div>'+
+        '<input type="hidden" id="payAcct" value=""></div>';
+    }
+    var opts='<option value="">— ไม่ระบุ —</option>'+PAY_ACCTS.map(function(a){
+      return '<option value="'+esc(a.id)+'"'+(a.isDefault?' selected':'')+'>'+esc(a.label)+'</option>';
+    }).join('');
+    return '<div class="fld"><label>บัญชีที่จ่ายออก</label><select id="payAcct">'+opts+'</select></div>';
   }
   function exDoPay(no,force){
     var slips=IMGS['pSlips']||[];
@@ -9780,7 +9796,7 @@
     }
     var b=$('pSend'); if(b){ b.disabled=true; b.textContent='กำลังบันทึก…'; }
     toast('กำลังบันทึก…');
-    callBusy('กำลังสร้างเอกสาร + แฟ้ม…', jsonpPost({action:'waExpPay',uid:UID,no:no,imgs:JSON.stringify(slips),channel:(($('payCh')||{}).value||'')}), 'บันทึกจ่ายคืนแล้ว').then(function(r){
+    callBusy('กำลังสร้างเอกสาร + แฟ้ม…', jsonpPost({action:'waExpPay',uid:UID,no:no,imgs:JSON.stringify(slips),channel:(($('payCh')||{}).value||''),account:((($('payAcct')||{}).value)||'').trim()}), 'บันทึกจ่ายคืนแล้ว').then(function(r){
       if(!r||!r.ok){ if(b){b.disabled=false;b.textContent='บันทึกจ่ายคืน';} mErr((r&&r.error)||'ไม่สำเร็จ'); return; }
       closeModal(); IMGS['pSlips']=[];
       // แฟ้มครบชุดรวมให้เองตอนนี้ · ไม่เกิด/ขาดชิ้น = ไม่ใช่เรื่องใหญ่ (เงินจ่ายแล้ว) แต่ต้องบอกให้รู้
@@ -9788,7 +9804,8 @@
         ? ('💰 จ่ายคืนแล้ว · 🗂️ รวมแฟ้มครบชุดให้แล้ว'+missTxt(r.missing))
         : '💰 จ่ายคืนแล้ว · แฟ้มยังไม่รวม (กด 🗂️ ที่รายการเพื่อสร้าง)');
       // เงินสดย่อย: บอกว่าตัดวงเงินแล้ว + เตือนถ้าจ่ายเกินวงเงิน (เงินออกไปแล้ว บันทึกเสมอ)
-      if(r.pettyNo) setTimeout(function(){ toast('💵 ตัดวงเงินเงินสดย่อยแล้ว ('+r.pettyNo+')'+(r.pettyWarn?' · '+r.pettyWarn:'')); },1200);
+      if(r.pvNo) setTimeout(function(){ toast('🧾 ออกใบสำคัญจ่าย '+r.pvNo+' แล้ว'); },1200);
+      else if(r.pettyNo) setTimeout(function(){ toast('💵 ตัดวงเงินเงินสดย่อยแล้ว ('+r.pettyNo+')'+(r.pettyWarn?' · '+r.pettyWarn:'')); },1200);
       else if(r.pettyError) setTimeout(function(){ toast('⚠️ บันทึกเงินสดย่อยไม่สำเร็จ: '+r.pettyError); },1200);
       exFade(no);
     }).catch(function(e){ if(b){b.disabled=false;b.textContent='บันทึกจ่ายคืน';} mErr(e.message); });
@@ -17154,7 +17171,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260920-1016';
+  var APP_BUILD='20260920-1028';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
