@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260920-2108">
+<link rel="stylesheet" href="user.css?v=20260920-2127">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1186,6 +1186,25 @@
      หน้าเว็บมี meta no-cache จึงมาถึงผู้ใช้แน่นอนกว่าไฟล์ CSS แยก
      เพิ่มเมนูใหม่ในกลุ่มไหนก็ตาม เพดานนี้ต้องสูงกว่าจำนวนเมนู × ~42px เสมอ */
   .nav-g.open > .nav-gb{ max-height:1600px !important; }
+  /* หัวข้อพับได้ (20 ก.ย. 69) — ตัวเลขบอกจำนวนเมนูข้างใน จะได้รู้ว่าคุ้มกดไหม
+     กฎนี้เขียนไว้ในหน้า ไม่ใช่ user.css ด้วยเหตุผลเดียวกับเพดานข้างบน (CSS แยกโดนแคชค้าง) */
+  .nav-gh .gn{ font-size:11px; font-weight:700; color:var(--nav-dim);
+    background:rgba(255,255,255,.16); border-radius:9px; padding:1px 7px; line-height:1.7; flex:none; }
+  .nav-g.cur > .nav-gh .gn, .nav-gh:hover .gn{ color:#fff; background:rgba(255,255,255,.28); }
+  /* หัวข้อต้องกดง่ายบนมือถือ — จอเล็กกดพลาดไปโดนเมนูแทน */
+  .nav-gh{ min-height:40px; }
+
+  /* แท็บสลับ 2 ฝั่งของทะเบียนการจ่าย (20 ก.ย. 69)
+     ใช้คลาส .mtab ตัวเดิมของแท็บมือถือ — แต่ต้องเห็นบนจอคอมด้วย
+     (.mtabs ถูก display:none บนจอกว้าง จึงต้องมีกล่องของตัวเอง) */
+  .po-tabs{ display:flex; gap:6px; flex-wrap:wrap; margin:0 0 14px; }
+  .po-tabs .mtab{ display:inline-flex; align-items:center; white-space:nowrap;
+    padding:8px 15px; border:1px solid var(--line); border-radius:999px; background:#fff;
+    font:inherit; font-size:13.5px; color:var(--muted); cursor:pointer; }
+  /* 🔴 โทนสีของธีมนี้ชื่อ --red (ค่าจริงเป็นสีฟ้า) — ไม่มี --brand ในระบบ
+     เขียน var(--brand) = ค่าว่าง → พื้นหาย เหลือตัวหนังสือขาวบนการ์ดขาว (เห็นจากภาพ 20 ก.ย. 69) */
+  .po-tabs .mtab:hover{ border-color:var(--red); color:var(--red); }
+  .po-tabs .mtab.on{ background:var(--red); border-color:var(--red); color:#fff; font-weight:700; }
   /* 🔴 บล็อกนี้คือตัวสลับ "แถบเมนูซ้าย ↔ แถบล่างมือถือ" ตัวจริง
      ต้องขยับพร้อมเกณฑ์ 900 ใน user.css เสมอ — ลืมอันใดอันหนึ่งแล้วช่วง 900-1023
      จะโผล่ทั้งแถบซ้ายและแถบล่างพร้อมกัน */
@@ -2387,7 +2406,11 @@
        = ผู้ใช้ตันอยู่ในหน้านั้น ออกไปไหนไม่ได้เลย (พี่กี้เจอในห้องลูกค้า หน้าภาพรวมธุรกิจ) */
     var _app=$('app'); if(_app) _app.classList.toggle('pmode', v==='portal');
     if(CURMOD) MG_LAST[CURMOD]=v;
-    Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(b){ b.classList.toggle('active', b.dataset.view===v); });
+    /* ใบเบิกเป็นแท็บในหน้าทะเบียนการจ่าย — ไม่มีปุ่มเมนูของตัวเองแล้ว
+       ให้ปุ่มแม่สว่างแทน ไม่งั้นแถบซ้ายจะดูเหมือน "หลุดออกจากเมนู" */
+    var navV = (v==='expdash') ? 'payout' : v;
+    Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(b){ b.classList.toggle('active', b.dataset.view===navV); });
+    navSyncGroups(navV);
     if(v!=='roomset' && typeof navStItems==='function') navStItems();   // ออกจากหน้าตั้งค่า = เก็บหัวข้อย่อยออก
     var meta=VIEW_META[v]||['•',v];
     // ไอคอนแถบบน = ไอคอนเส้นของหมวดที่หน้านี้อยู่ (เรียบ ไม่สีสัน · พี่กี้ขอ 30 ก.ค.) · fallback emoji
@@ -2492,17 +2515,18 @@
      g = สีไล่ระดับของไอคอน (2 สี) — การ์ดเป็นกระจกฝ้า สีจึงมาจากไอคอนเป็นหลัก */
   var MODULES=[
     { key:'fin',     th:'ระบบการเงิน',  en:'FINANCE',     color:'#1E8FE1', g:['#38bdf8','#1d4ed8'], own:true,
-      views:['bizdash','salesqt','salesiv','salesre','salescn','whtin','ar','payout','expdash','petty','poreport','wtreg','bank','statement','salesreport','expreport','cashreport','datain'],
+      views:['bizdash','salesqt','salesiv','salesre','salescn','whtin','ar','payout','petty','poreport','wtreg','bank','statement','salesreport','expreport','cashreport','datain'],
       /* หน้าที่ยังเข้าได้จากลิงก์เก่า/ปุ่มในหน้า แต่ไม่อยู่ในแถบเมนูแล้ว (ผัง §2.6 ตัดออก)
          ⚠️ ต้องคงไว้ใน extra ไม่งั้นเข้าจากลิงก์ตรงแล้วแถบซ้ายหาย ออกไม่ได้ (บทเรียน 5 ก.ย.) */
-      extra:['expapprove','sales','reimb','expcat','contract','recvkind','airead'],
+      extra:['expapprove','sales','reimb','expcat','contract','recvkind','airead','expdash'],
       /* 📐 โครงเมนูตามที่พี่กี้วางไว้ (HANDOFF §2.6) — รายการย่อยของแต่ละหัวข้อเป็น "แท็บในหน้า"
          ไม่ใช่เมนูย่อย · หน้ากรอก/รายละเอียดเปิดจากปุ่ม "+ สร้าง" หรือกดแถว */
       sec:[ ['', ['bizdash']],
             ['รายรับ', ['salesqt','salesiv','salesre','salescn','whtin','ar']],
-            /* ผัง §2.6 มี PO · เงินสดย่อย · PV · WT — ใบเบิก (expdash) ยังคงไว้เพราะเล่มเดิม
-               ยังมีใบเดินอยู่ ถอดตอนนี้ = พี่เปิดดูใบเบิกไม่ได้ · ถอดเมื่อปิดเล่มเดิมครบ (เฟส 2e) */
-            ['รายจ่าย', ['payout','expdash','petty','poreport','wtreg']],
+            /* ผัง §2.6 มี PO · เงินสดย่อย · PV · WT
+               🔴 expdash (ใบเบิกพนักงาน) ถอดออกจากเมนูแล้ว 20 ก.ย. 69 — กลายเป็นแท็บในหน้า payout
+                  (พี่กี้: "มันคืออันเดียวกัน") · ต้องคงใน extra ไม่งั้นลิงก์เก่า/ปุ่มในหน้าเข้าไม่ได้ */
+            ['รายจ่าย', ['payout','petty','poreport','wtreg']],
             ['ธนาคาร', ['bank','statement']],
             ['รายงาน', ['salesreport','expreport','cashreport']],
             /* 📥 ผัง §2.6 มี "นำเข้าเอกสาร (DOC)" ท้ายทั้งรายรับและรายจ่าย — เมนูเดียวใส่ 2 กลุ่มไม่ได้
@@ -4161,6 +4185,18 @@
     if(!el){ el=document.createElement('div'); el.id='navPool'; document.body.appendChild(el); }
     return el;
   }
+  /* จำว่าหัวข้อไหนพี่คลี่ไว้ — แยกตามโมดูล (การเงินกับ KPI คนละชุด)
+     เก็บในเครื่องผู้ใช้เท่านั้น ไม่ต้องยิงหลังบ้าน · อ่านไม่ได้ = ใช้ค่าเริ่มต้น ไม่พัง */
+  function navGrpKey(){ return 'yd.nav.' + (CURMOD||'-'); }
+  function navGrpRead(){
+    try{ return JSON.parse(localStorage.getItem(navGrpKey())||'null'); }catch(e){ return null; }
+  }
+  function navGrpSave(label, open){
+    try{
+      var o=navGrpRead()||{}; o[label]=!!open;
+      localStorage.setItem(navGrpKey(), JSON.stringify(o));
+    }catch(e){}
+  }
   function buildNavForModule(){
     var nav=document.querySelector('.nav'); if(!nav) return;
     var pool=navPool_();
@@ -4198,29 +4234,55 @@
       b.addEventListener('click', function(){ switchView(v); });
       return b;
     }
-    function addBtn(v){
+    function addBtn(v, box){
       var b=pool.querySelector('.nav-btn[data-view="'+v+'"]') || nav.querySelector('.nav-btn[data-view="'+v+'"]');
       if(!b) b=mkBtn(v);
       if(done[v]) return;
       b.style.display='';        // สิทธิ์กรองด้วย modViews แล้ว — ปลดที่ซ่อนไว้ใน markup
       b.classList.remove('solo');
-      nav.appendChild(b); done[v]=1;
+      (box||nav).appendChild(b); done[v]=1;
     }
-    function addSec(label){ var d=document.createElement('div');
-      d.className='nav-sec has-items';   // ⚠️ .nav-sec เปล่า ๆ ถูก CSS ซ่อน (display:none) ต้องมี has-items
-      d.textContent=label; nav.appendChild(d); }
+    /* ── หัวข้อ = กลุ่มพับได้ (พี่กี้ 20 ก.ย. 69: "เมนูยาวมาก ทำเป็นเซ็ตกดขยาย-พับ") ──
+       หมวดการเงินมี 17 เมนู 6 หัวข้อ = แถบซ้ายยาวเกินจอ ต้องเลื่อนหาทุกครั้ง
+       เปิดมาคลี่เฉพาะหัวข้อของหน้าที่อยู่ · ที่เหลือพับ → เห็นครบทุกหัวข้อในจอเดียว
+       ⚠️ ใช้ CSS .nav-g/.nav-gh/.nav-gb ชุดเดิม (เพดาน max-height อยู่ในหน้า บรรทัด ~1188) */
+    function addGroup(label, list, openIt){
+      var g=document.createElement('div');
+      g.className='nav-g'+(openIt?' open':'')+(list.indexOf(VIEW)>=0?' cur':'');
+      g.setAttribute('data-g', label);
+      var h=document.createElement('button');
+      h.type='button'; h.className='nav-gh';
+      h.setAttribute('aria-expanded', openIt?'true':'false');
+      h.innerHTML='<span class="gl">'+esc(label)+'</span><span class="gc">›</span>'+
+        '<span class="gn">'+list.length+'</span>';
+      var body=document.createElement('div'); body.className='nav-gb';
+      h.addEventListener('click', function(){
+        var on=!g.classList.contains('open');
+        g.classList.toggle('open', on);
+        h.setAttribute('aria-expanded', on?'true':'false');
+        navGrpSave(label, on);
+      });
+      g.appendChild(h); g.appendChild(body); nav.appendChild(g);
+      list.forEach(function(v){ addBtn(v, body); });
+    }
     if(secs){
+      /* หัวข้อไหนคลี่: ที่ผู้ใช้เคยเปิดไว้ → ไม่เคยตั้ง = คลี่เฉพาะหัวข้อของหน้าที่อยู่ตอนนี้ */
+      var saved=navGrpRead();
       secs.forEach(function(sc){
         var list=sc[1].filter(function(v){ return vs.indexOf(v)>=0; });
         if(!list.length) return;
-        if(sc[0]) addSec(sc[0]);
-        list.forEach(addBtn);
+        if(!sc[0]){ list.forEach(function(v){ addBtn(v); }); return; }   // หัวข้อว่าง = ปุ่มลอย ไม่ต้องพับ
+        var has=list.indexOf(VIEW)>=0;
+        var open = (saved && saved.hasOwnProperty(sc[0])) ? !!saved[sc[0]] : has;
+        if(has) open=true;                       // หน้าที่เปิดอยู่ ต้องมองเห็นเสมอ
+        addGroup(sc[0], list, open);
       });
     }
     /* โมดูลที่มีหน้าเดียวและชื่อหน้าตรงกับชื่อโมดูล (เช่น ⚙️ ตั้งค่าห้อง) — หัวโมดูลบอกอยู่แล้ว
        ใส่ปุ่มอีกก็ซ้ำกันสองอัน (พี่กี้ทัก 17 ก.ย. 69) */
     var dupSolo = vs.length === 1 && String(VIEW_TAB[vs[0]] || '') === String(m.th || '');
-    if (!dupSolo) vs.forEach(addBtn);   // เมนูที่ไม่ได้อยู่ในช่วงไหน ต่อท้ายเสมอ
+    /* ⚠️ ส่งผ่าน function เสมอ — forEach ยัดเลข index เข้าพารามิเตอร์ที่ 2 (กล่องที่จะใส่ปุ่ม) */
+    if (!dupSolo) vs.forEach(function(v){ addBtn(v); });   // เมนูที่ไม่ได้อยู่ในช่วงไหน ต่อท้ายเสมอ
 
     navStItems();     // หัวข้อย่อยของหน้าตั้งค่า (ถ้ากำลังอยู่หน้านั้น)
 
@@ -4274,8 +4336,18 @@
     var el=document.querySelector('.nav-g[data-g="'+key+'"]');
     if(el) el.classList.toggle('open');
   }
-  /* ไม่มีกลุ่มพับแล้ว (แยกโมดูลแทน) — ปุ่ม active จัดการใน switchView */
-  function navSyncGroups(v){ }
+  /* หน้าที่เปิดอยู่ ต้องมองเห็นเสมอ — เข้าหน้าจากปุ่มในหน้า/ลิงก์ตรง หัวข้อของมันต้องคลี่เอง
+     (buildNavForModule ไม่ถูกเรียกซ้ำถ้าโมดูลเดิม — กลุ่มจึงค้างพับได้) */
+  function navSyncGroups(v){
+    Array.prototype.forEach.call(document.querySelectorAll('.nav-g'), function(g){
+      var has = !!g.querySelector('.nav-btn[data-view="'+v+'"]');
+      g.classList.toggle('cur', has);
+      if(has && !g.classList.contains('open')){
+        g.classList.add('open');
+        var h=g.querySelector('.nav-gh'); if(h) h.setAttribute('aria-expanded','true');
+      }
+    });
+  }
   window.navToggleGroup=navToggleGroup;
   function mSelectGroup(gkey){
     var g=null; for(var i=0;i<NAV_GROUPS.length;i++){ if(NAV_GROUPS[i].key===gkey){ g=NAV_GROUPS[i]; break; } }
@@ -8380,15 +8452,28 @@
     if(kind==='นิติบุคคล') return 'ภ.ง.ด.53';
     return s.formIfPerson==='PND1' ? 'ภ.ง.ด.1' : (s.formIfPerson==='PND53' ? 'ภ.ง.ด.53' : 'ภ.ง.ด.3');
   }
+  /* ── ทะเบียนการจ่าย = ที่เดียว 2 แท็บ (พี่กี้ 20 ก.ย. 69: "สรุปรายจ่ายเอาไปรวมใบสั่งจ่าย มันคืออันเดียวกัน") ──
+     ถูกแล้วที่เป็นเล่มเดียว — ตั้งแต่ 20 ก.ย. ใบเบิกพนักงานลงชีตจ่ายออกและได้เลข PO เหมือนกัน
+     🔴 แต่ "รายการ" ยังต้องแยก 2 ฝั่ง และห้ามรวมเป็นตารางเดียว:
+        listPayouts_ ตัดใบเบิกออกด้วย payoutIsStaffClaim_ ส่วน expenseRowsAll_ เอาเฉพาะใบเบิก
+        ด่านนี้คือตัวกันยอดเบิ้ล (ใบเดียวถูกนับ 2 ทาง) — เอาออกเมื่อไหร่ รายงานการเงินผิดทันที
+     จึงรวมที่ "ทางเข้า" แทน: เมนูเหลือปุ่มเดียว · เข้ามาแล้วสลับฝั่งด้วยแท็บ */
+  function poTabsHtml(cur){
+    function tb(v, label){
+      return '<button class="mtab'+(v===cur?' on':'')+'" type="button" onclick="switchView(&quot;'+v+'&quot;)">'+
+        esc(label)+'</button>';
+    }
+    return '<div class="po-tabs">'+tb('payout','💵 ใบจ่ายของบริษัท')+tb('expdash','🧾 ใบเบิกพนักงาน')+'</div>';
+  }
   function paintPayout(){
-    var html='<div class="section-h">💵 ใบสั่งจ่าย (PO)</div>'+
+    var html=poTabsHtml('payout')+'<div class="section-h">💵 ใบสั่งจ่าย (PO)</div>'+
       '<div class="tax-acts" style="margin:0 0 12px">'+
       '<button class="btn btn-primary" onclick="openPayout()">+ ตั้งเรื่องจ่ายเงิน</button>'+
       /* ทะเบียนประเภทค่าใช้จ่าย = ของตั้งค่า → ปุ่มในหน้า ไม่ใช่เมนูหลัก (ผัง §2.6)
          ⚠️ ถอดออกจากเมนูแล้วต้องมีทางเข้าที่นี่เสมอ ไม่งั้นพี่หาไม่เจอ */
       '<button class="btn btn-ghost" onclick="switchView(&quot;expcat&quot;)">ทะเบียนประเภทค่าใช้จ่าย</button></div>'+
       '<div class="m-hint" style="margin:0 0 12px">ใบจ่ายของบริษัท — จ่ายค่าเช่า/ค่าจ้าง/ซัพพลาย ในนามนิติบุคคล '+
-      'ตอนนี้ใบเบิกของพนักงานมารวมเล่มเดียวกันแล้ว · เห็นเฉพาะผู้ดูแลค่ะ</div>';
+      'เลขที่ PO ชุดเดียวกับใบเบิกพนักงาน · ดูใบเบิกที่แท็บข้างบน · เห็นเฉพาะผู้ดูแลค่ะ</div>';
     html+=poBlock('⏳ รออนุมัติ', PO.pending, 'pending')+
           poBlock('💸 อนุมัติแล้ว · รอจ่ายเงิน', PO.topay, 'topay')+
           poBlock('✅ จ่ายแล้ว (40 ใบล่าสุด)', PO.paid, 'done')+
@@ -17555,7 +17640,7 @@ function kpImpDraw(){
     jsonp({action:'waExpDash',uid:UID,ym:DASH_YM}).then(function(r){
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
       if(r.empty){
-        $('main').innerHTML=(IS_OWNER?'<div class="section-h">💸 อนุมัติเบิกจ่าย</div><div id="expApprBlock"></div>':'')+'<div class="card"><div class="emptybox">ยังไม่มีรายการเบิก 😊</div></div>';
+        $('main').innerHTML=(IS_OWNER?poTabsHtml('expdash'):'')+(IS_OWNER?'<div class="section-h">💸 อนุมัติเบิกจ่าย</div><div id="expApprBlock"></div>':'')+'<div class="card"><div class="emptybox">ยังไม่มีรายการเบิก 😊</div></div>';
         if(IS_OWNER) renderExpAppr('expApprBlock','expdash');
         return;
       }
@@ -17563,7 +17648,7 @@ function kpImpDraw(){
       // ลิสต์ที่ฟอร์มแก้ไขใบเบิกต้องใช้ (หน้านี้เปิดหน้าแก้ไขต่อได้ · พี่กี้เจอ dropdown ว่าง 18 ก.ย. 69)
       EXP_TYPES=r.types||EXP_TYPES; SECTIONS=r.sections||SECTIONS;
       // พี่/HR: บล็อกอนุมัติเบิกจ่าย อยู่บนสุดของหน้าสรุป (พี่ขอรวมหน้าเดียว 18 ก.ค.)
-      var h=(IS_OWNER?'<div class="section-h">💸 อนุมัติเบิกจ่าย</div><div id="expApprBlock"></div><div class="section-h" style="margin-top:20px">📊 สรุปค่าใช้จ่าย</div>':'')+
+      var h=(IS_OWNER?poTabsHtml('expdash'):'')+(IS_OWNER?'<div class="section-h">💸 อนุมัติเบิกจ่าย</div><div id="expApprBlock"></div><div class="section-h" style="margin-top:20px">📊 สรุปค่าใช้จ่าย</div>':'')+
         '<div class="ds-sel"><select id="dsYm" onchange="dsSetYm(this.value)">'+
         r.months.slice().reverse().map(function(m){
           return '<option value="'+esc(m)+'"'+(m===r.ym?' selected':'')+'>'+esc(ymThai(m))+'</option>';
@@ -18590,7 +18675,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260920-2108';
+  var APP_BUILD='20260920-2127';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
