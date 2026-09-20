@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260920-1541">
+<link rel="stylesheet" href="user.css?v=20260920-1608">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -279,6 +279,32 @@
   .tax-tbl.ct-tbl{min-width:680px}
   .ct-row{cursor:pointer}
   .ct-row:hover td{background:var(--line-soft,#F2F6FA)}
+  /* ตารางกระทบยอด Statement (เฟส 6) — คอลัมน์เยอะกว่าเพื่อน (วันที่/รายละเอียด/เข้า/ออก/คู่/ปุ่ม)
+     ⚠️ 2 คลาสเสมอ (`.tax-tbl.sm-tbl`) ไม่งั้นแพ้ .dt-tbl ที่ประกาศทีหลัง — บทเรียนเดิมของ us-tbl/ct-tbl */
+  .tax-tbl.sm-tbl{min-width:880px}
+  .tax-tbl.sm-gtbl{min-width:640px}
+  /* 🔴 nowrap จำเป็น — คอลัมน์ปุ่มแคบ ตัวหนังสือในปุ่มถูกตัดเป็น "จับ / คู่" คนละบรรทัด
+     (เห็นจากภาพ 20 ก.ย. · เทสจับไม่ได้เพราะ HTML ถูกต้องทุกตัวอักษร) */
+  .sm-tbl .btn-sm,.sm-gtbl .btn-sm{width:auto;padding:6px 10px;font-size:13px;white-space:nowrap}
+  .sm-tbl .ec-acts{flex-wrap:wrap;gap:5px}
+  /* 🔴 `.m-hint` มี background+padding — ยกมาใส่ในเซลล์ตารางแล้วกลายเป็นกล่องเทาทับข้อความ
+     (กับดักเดิมที่ `.kp-tbl` เจอมาก่อน · เห็นจากภาพเท่านั้น เทสจับไม่ได้) */
+  .sm-tbl .m-hint,.sm-gtbl .m-hint{background:none;padding:0;margin:2px 0 0;font-size:11.5px;line-height:1.4}
+  .sm-tbl td{vertical-align:top}
+  .sm-tbl .sm-dt{white-space:nowrap}
+  .sm-in{color:#0F7B3E;font-weight:700}
+  .sm-out{color:#B23B3B;font-weight:700}
+  /* ตัวเลือกที่ระบบเสนอ — ต้องอ่านออกว่า "เสนอ" ไม่ใช่ "จับให้แล้ว" (กฎ ① ของ Statement.gs) */
+  .sm-cand{display:inline-block;font-size:12.5px;color:#5B6472;background:#F2F6FA;
+    border:1px solid var(--line);border-radius:99px;padding:2px 9px;margin:3px 4px 0 0}
+  .sm-pick{display:block;width:100%;text-align:left;border:1px solid var(--line);border-radius:11px;
+    background:#fff;padding:10px 12px;margin-bottom:8px;cursor:pointer;font:inherit}
+  .sm-pick:hover{border-color:var(--brand);background:#F7FAFF}
+  .sm-pick b{display:block}
+  .sm-tie{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:12px;background:#fff}
+  .sm-tie .sm-eq{font-size:14px;line-height:2}
+  .sm-tie .sm-diff{font-weight:800}
+  .sm-tie .sm-ok{color:#0F7B3E} .sm-tie .sm-bad{color:#B23B3B}
   .ec-tbl .btn-sm{width:auto;padding:6px 12px;font-size:13px}
   .ec-acts{display:flex;gap:6px;justify-content:flex-end;flex-wrap:nowrap}
   .us-card .st-act .btn{width:auto}
@@ -2134,7 +2160,7 @@
      เทส tests/test-split-routes.js ล็อกไว้ว่าสองที่ต้องตรงกัน */
   var HR_SPLIT_RE  = /^wa(Kpi|Leave|Ot|Payslip|Face|Clock|Bootstrap|HubEnter|HubRooms|Bell|Perf|RoomFolder)/;
   var DOC_SPLIT_RE = /^wa(Doc|Task|Assign|Board|PmBoard|Project|Send|MyTasks|AllTasks|CreateTask|Claim|Transfer|Cancel|Announce|GenRecurring|MyProjects|Bulk|RenameCustomer|Set(Due|Status|Title|Customer|WorkLink|Reviewer|Type|Category))/;
-  var FIN_SPLIT_RE = /^wa(Sales|Exp|Po|Petty|Recv|Receivables|Cn|Wht|Vat|Pnd|Fin|Reimb|Tax|Payout|Biz|Customer|Service|Loss|Masterlist|Contract)/;
+  var FIN_SPLIT_RE = /^wa(Sales|Exp|Po|Petty|Recv|Receivables|Cn|Wht|Vat|Pnd|Fin|Reimb|Tax|Payout|Biz|Customer|Service|Loss|Masterlist|Contract|Stmt)/;
   function execUrlFor_(action){
     var a = String(action || '');
     if (EXEC_URL_HR  && HR_SPLIT_RE.test(a))  return EXEC_URL_HR;
@@ -2375,7 +2401,7 @@
     if(gi) $('tbIcon').innerHTML=gi.replace('stroke-width="1.9"','stroke-width="2"'); else $('tbIcon').textContent=meta[0];
     $('tbTitle').textContent=meta[1];
     mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
-    ({ bank:renderBank, expcat:renderExpCat, portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, perf:renderPerf, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expone:renderExpOne, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, salesqt:renderSalesQt, salesiv:renderSalesIv, salesre:renderSalesRe, salescn:renderSalesCn, datain:renderDataIn, contract:renderContract, recvkind:renderRecvKind, wtreg:renderSoonPage, statement:renderSoonPage, cashreport:renderSoonPage, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51, finhist:renderFinHist, docreg:renderDocReg, doccheck:renderDocCheck, docdash:renderDocDash, docbycat:renderDocByCat, docreport:renderDocReport, doccat:renderDocCat, kpiemp:renderKpiEmp, kpiperson:renderKpiPerson, kpidash:renderKpiDash, kpientry:renderKpiEntry, kpiscore:renderKpiScore, kpidoc:renderKpiDoc, kpiround:renderKpiRound, kpifill:renderKpiFill, kpimanage:renderKpiManage, kpirule:renderKpiRule, kpimetric:renderKpiMetric, kpitrait:renderKpiTrait, kpiimport:renderKpiImport, kpireport:renderKpiReport, kpihelp:renderKpiHelp, myset:renderMyset }[v] || soon)();
+    ({ bank:renderBank, expcat:renderExpCat, portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, perf:renderPerf, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expone:renderExpOne, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, salesqt:renderSalesQt, salesiv:renderSalesIv, salesre:renderSalesRe, salescn:renderSalesCn, datain:renderDataIn, contract:renderContract, recvkind:renderRecvKind, wtreg:renderSoonPage, statement:renderStatement, cashreport:renderSoonPage, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51, finhist:renderFinHist, docreg:renderDocReg, doccheck:renderDocCheck, docdash:renderDocDash, docbycat:renderDocByCat, docreport:renderDocReport, doccat:renderDocCat, kpiemp:renderKpiEmp, kpiperson:renderKpiPerson, kpidash:renderKpiDash, kpientry:renderKpiEntry, kpiscore:renderKpiScore, kpidoc:renderKpiDoc, kpiround:renderKpiRound, kpifill:renderKpiFill, kpimanage:renderKpiManage, kpirule:renderKpiRule, kpimetric:renderKpiMetric, kpitrait:renderKpiTrait, kpiimport:renderKpiImport, kpireport:renderKpiReport, kpihelp:renderKpiHelp, myset:renderMyset }[v] || soon)();
   }
 
   // ───── มือถือ: เมนูกลุ่ม (ล่าง) + แท็บย่อย (บน) · คอมใช้ sidebar เดิม ไม่เกี่ยว ─────
@@ -10408,8 +10434,8 @@
       desc:'ใบตั้งเบิกที่ทำไว้ก่อนมีระบบเอกสารขาย · ลองดูก่อนได้ ไม่เขียนทับของเดิม',
       go:'reimbMigrate()', btn:'เปิดตัวย้าย', ready:true },
     { icon:'🏦', title:'Statement ธนาคาร',
-      desc:'นำเข้ารายการเดินบัญชี แล้วจับคู่กับใบเสร็จ/ใบสำคัญจ่ายที่บันทึกไว้',
-      go:"switchView('statement')", btn:'ดูรายละเอียด', ready:false, when:'เฟส 6' },
+      desc:'วางรายการเดินบัญชีจากไฟล์ธนาคาร แล้วจับคู่กับใบเสร็จ/ใบสำคัญจ่ายที่บันทึกไว้ · กันนำเข้าซ้ำให้เอง',
+      go:"switchView('statement')", btn:'ไปหน้ากระทบยอด Statement', ready:true },
     { icon:'📗', title:'ข้อมูลจากระบบบัญชี (GL)',
       desc:'นำเข้า GL บัญชีภาษีถูกหัก ณ ที่จ่าย หรือรายงานจากโปรแกรมบัญชี เพื่อใช้ตั้งหลักกระทบยอด',
       go:"switchView('whtin')", btn:'ดูหน้าที่เกี่ยวข้อง', ready:false, when:'เฟส 6' },
@@ -10687,6 +10713,334 @@
   window.renderContract=renderContract;
   window.rkAdd=rkAdd; window.rkEdit=rkEdit; window.rkEditSave=rkEditSave; window.rkToggle=rkToggle;
 
+  /* ═══════════ 🏦 กระทบยอด Statement (view `statement` · เฟส 6 · 20 ก.ย. 2569) ═══════════
+     ผัง HANDOFF §2.6 กลุ่มธนาคาร — 3 แท็บ: นำเข้า Statement · จับคู่รายการ · รายการที่ยังไม่ตรง
+     หลังบ้าน Statement.gs (route waStmt / waStmtImport / waStmtMatch)
+
+     🔴 กติกาที่ต้องอ่านออกจากหน้าจอ ไม่ใช่รู้กันเองในโค้ด
+        · ระบบจับให้เฉพาะตอน "ยอดตรง + อยู่ในกรอบวัน + เจอตัวเลือกเดียว"
+          เจอหลายตัว = **เสนอ** ให้คนกด ไม่ตัดสินแทน (ริชมอนด์เดิมจับด้วยยอดอย่างเดียว ผิดคน 11 ใบ)
+        · เอกสาร 1 ใบ ผูกได้กับรายการเดียว — จับซ้ำ backend ปฏิเสธพร้อมบอกว่าไปอยู่กับแถวไหน
+        · ติ๊ก "ไม่ต้องจับคู่" ต้องใส่เหตุผลเสมอ
+     🔑 บรรทัด tie-out อยู่บนสุดของแท็บจับคู่ — เป็นคำตอบของคำถามทั้งหน้า ("ต่างกันเท่าไหร่")
+     ⚠️ ปุ่มอ้างแถวด้วย **ลำดับใน SM.rows** ไม่ใช่ key — key มี `|` และข้อความไทยจากธนาคาร
+        ยัดลง onclick แล้วพังเงียบ (บทเรียน heredoc/escape) */
+  var SM=null, SM_TAB='match', SM_F={ year:'', account:'', ym:'' }, SM_PV=null;
+  var SM_MON=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  var SM_TABS=[['import','นำเข้า Statement',"smTab('import')"],
+               ['match','จับคู่รายการ',"smTab('match')"],
+               ['gap','รายการที่ยังไม่ตรง',"smTab('gap')"]];
+
+  function renderStatement(){
+    skel();
+    jsonp(withRoom_({ action:'waStmt', uid:UID, year:SM_F.year, account:SM_F.account, ym:SM_F.ym }))
+      .then(function(r){
+        if(VIEW!=='statement') return;
+        if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+        SM=r; SM_F.year=r.year||SM_F.year;
+        /* ยังไม่มีรายการสักแถว = เปิดที่แท็บนำเข้าเลย จะได้ไม่เจอตารางเปล่าแล้วงงว่าเริ่มตรงไหน
+           (ผังเรียงแท็บ นำเข้า → จับคู่ → ยังไม่ตรง · แต่คนที่นำเข้าแล้วมาใช้งานประจำที่แท็บจับคู่) */
+        if(!(r.rows||[]).length && !SM_F.ym && !SM_F.account) SM_TAB='import';
+        smPaint();
+      }).catch(function(e){ if(VIEW==='statement') $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
+  }
+  function smTab(t){ SM_TAB=t; smPaint(); }
+
+  /** ตัวกรอง ปี/บัญชี/เดือน — ฟังก์ชันบริสุทธิ์ */
+  function smFilterHtml(d){
+    d=d||{};
+    var yo=(d.years||[]).map(function(y){
+      return '<option value="'+esc(String(y))+'"'+(String(y)===String(d.year)?' selected':'')+'>ปี '+esc(String(y))+'</option>'; }).join('');
+    var ao='<option value="">ทุกบัญชี</option>'+(d.accounts||[]).map(function(a){
+      return '<option value="'+esc(a.id)+'"'+(a.id===SM_F.account?' selected':'')+'>'+esc(a.label)+'</option>'; }).join('');
+    var mo='<option value="">ทั้งปี</option>';
+    for(var m=1;m<=12;m++){
+      var ym=String(d.year||'')+'-'+(m<10?'0':'')+m;
+      mo+='<option value="'+esc(ym)+'"'+(ym===SM_F.ym?' selected':'')+'>'+esc(SM_MON[m-1]||String(m))+'</option>';
+    }
+    return '<div class="tax-acts" style="margin:0 0 12px">'+
+      '<select onchange="smSetF(\'year\',this.value)" style="flex:1">'+yo+'</select>'+
+      '<select onchange="smSetF(\'account\',this.value)" style="flex:1.4">'+ao+'</select>'+
+      '<select onchange="smSetF(\'ym\',this.value)" style="flex:1">'+mo+'</select></div>';
+  }
+  function smSetF(k,v){
+    SM_F[k]=v;
+    /* เปลี่ยนปี = เดือนที่เลือกอยู่เป็นของปีเก่า ต้องล้าง ไม่งั้นกรองแล้วว่างโดยไม่มีใครรู้ว่าทำไม */
+    if(k==='year') SM_F.ym='';
+    renderStatement();
+  }
+
+  /** การ์ดยอด + บรรทัด tie-out — ฟังก์ชันบริสุทธิ์ */
+  function smSumHtml(s){
+    s=s||{};
+    var diff=Number(s.diff)||0, ok=Math.abs(diff)<0.005;
+    return '<div class="ds-grid">'+
+      statCard('รายการทั้งหมด', String(s.count||0)+' รายการ',
+        'จับคู่แล้ว '+(s.matchCount||0)+' · ไม่ต้องจับ '+(s.skipCount||0))+
+      statCard('รอจับคู่', String(s.waitCount||0)+' รายการ',
+        'เข้า '+money(s.waitIn)+' · ออก '+money(s.waitOut), (s.waitCount?'ds-wait':''))+
+      statCard('เงินเข้าตาม statement', money(s.stmtIn), 'ที่ระบบรู้จักแล้ว '+money(s.docIn))+
+      statCard('เงินออกตาม statement', money(s.stmtOut), 'ที่ระบบรู้จักแล้ว '+money(s.docOut))+
+      '</div>'+
+      '<div class="sm-tie"><div class="ds-h">ยอดตรงกันไหม</div>'+
+      '<div class="sm-eq">เงินเดินจริงสุทธิ <b>'+money(s.stmtNet)+'</b> '+
+        '− ที่ระบบมีเอกสารรองรับ <b>'+money(s.docNet)+'</b> = '+
+        '<span class="sm-diff '+(ok?'sm-ok':'sm-bad')+'">'+money(diff)+'</span></div>'+
+      '<div class="m-hint" style="margin:6px 0 0">'+
+        (ok ? 'ตรงกันทุกบาท — ทุกรายการที่เดินในบัญชีมีเอกสารรองรับแล้วค่ะ'
+            : 'ส่วนต่างนี้คือเงินที่เดินในบัญชีจริงแต่ระบบยังไม่มีเอกสารรองรับ '+
+              '(หรือมีเอกสารแต่ยังไม่ได้จับคู่) — ไล่จากรายการที่ยัง "รอจับคู่" ด้านล่างค่ะ')+
+      '</div></div>';
+  }
+
+  /** ตารางรายการเดินบัญชี — ฟังก์ชันบริสุทธิ์ (ของจริงกับเทสเรียกตัวเดียวกัน) */
+  function smTableHtml(rows){
+    var body=(rows||[]).map(function(r,i){
+      var wait=(r.status||'').indexOf('รอจับคู่')>=0;
+      var skip=(r.status||'').indexOf('ไม่ต้องจับ')>=0;
+      var cand=r.cand||[];
+      var act='', pair='';
+      if(skip){
+        pair='<b>'+esc(r.status||'')+'</b>'+(r.note?'<div class="m-hint" style="margin:2px 0 0">'+esc(r.note)+'</div>':'');
+        act='<button class="btn btn-ghost btn-sm" onclick="smUnmatch('+i+')">เอากลับมารอจับ</button>';
+      } else if(wait){
+        /* เสนอได้มากสุด 5 ตัว (backend ตัดมาให้) — โชว์ 2 ตัวแรกพอให้เห็นว่ามีอะไรรออยู่
+           🔴 คำว่า "น่าจะเป็น" ต้องอยู่ตรงนี้ ห้ามทำให้ดูเหมือนจับให้แล้ว */
+        pair=cand.length
+          ? '<span class="m-hint" style="margin:0">น่าจะเป็น</span><br>'+cand.slice(0,2).map(function(c){
+              return '<span class="sm-cand">'+esc(c.no)+(c.why?' · '+esc(c.why):'')+'</span>'; }).join('')+
+            (cand.length>2?'<span class="sm-cand">+อีก '+(cand.length-2)+'</span>':'')
+          : '<span class="m-hint" style="margin:0">ยังไม่เจอเอกสารที่เข้าคู่</span>';
+        act='<div class="ec-acts"><button class="btn btn-primary btn-sm" onclick="smPick('+i+')">จับคู่</button>'+
+            '<button class="btn btn-ghost btn-sm" onclick="smSkip('+i+')">ไม่ต้องจับ</button></div>';
+      } else {
+        pair='<b>'+esc(r.matchKind||'')+' '+esc(r.matchNo||'')+'</b>'+
+          '<div class="m-hint" style="margin:2px 0 0">'+esc(r.matchBy||'')+'</div>';
+        act='<button class="btn btn-ghost btn-sm" onclick="smUnmatch('+i+')">ปลดคู่</button>';
+      }
+      return '<tr'+(skip?' style="opacity:.6"':'')+'>'+
+        '<td class="sm-dt">'+esc(r.date||'')+(r.time?'<div class="m-hint" style="margin:2px 0 0">'+esc(r.time)+'</div>':'')+'</td>'+
+        '<td>'+esc(r.detail||'')+
+          '<div class="m-hint" style="margin:2px 0 0">'+esc(r.accountLabel||'')+
+          (r.ref?(' · อ้างอิง '+esc(r.ref)):'')+'</div></td>'+
+        '<td class="sm-dt" style="text-align:right">'+(r.moneyIn?'<span class="sm-in">'+money(r.moneyIn)+'</span>':'')+'</td>'+
+        '<td class="sm-dt" style="text-align:right">'+(r.moneyOut?'<span class="sm-out">'+money(r.moneyOut)+'</span>':'')+'</td>'+
+        '<td>'+pair+'</td>'+
+        '<td>'+act+'</td></tr>';
+    }).join('');
+    return '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl sm-tbl">'+
+      '<colgroup><col style="width:11%"><col style="width:27%"><col style="width:11%">'+
+      '<col style="width:11%"><col style="width:22%"><col style="width:18%"></colgroup>'+
+      '<thead><tr><th>วันที่</th><th>รายละเอียดจากธนาคาร</th>'+
+      '<th style="text-align:right">เงินเข้า</th><th style="text-align:right">เงินออก</th>'+
+      '<th>เอกสารที่คู่กัน</th><th></th></tr></thead>'+
+      '<tbody>'+(body || stEmptyRow(6,'ยังไม่มีรายการเดินบัญชีในช่วงนี้ — นำเข้า statement ที่แท็บแรกค่ะ'))+
+      '</tbody></table></div>';
+  }
+
+  /** เอกสารที่ระบบมีแต่ยังไม่เจอใน statement — ฟังก์ชันบริสุทธิ์ */
+  function smGapHtml(gap){
+    gap=gap||{};
+    function tbl(list,head){
+      var rows=(list||[]).map(function(d){
+        return '<tr><td class="sm-dt">'+esc(d.date||'')+'</td>'+
+          '<td><b>'+esc(d.no||'')+'</b>'+(d.ref?'<div class="m-hint" style="margin:2px 0 0">'+esc(d.ref)+'</div>':'')+'</td>'+
+          '<td>'+esc(d.party||'')+'</td>'+
+          '<td class="sm-dt" style="text-align:right">'+money(d.amount)+'</td></tr>';
+      }).join('');
+      return '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl sm-gtbl">'+
+        '<colgroup><col style="width:16%"><col style="width:30%"><col style="width:34%"><col style="width:20%"></colgroup>'+
+        '<thead><tr><th>วันที่</th><th>เลขที่</th><th>'+esc(head)+'</th>'+
+        '<th style="text-align:right">ยอด</th></tr></thead>'+
+        '<tbody>'+(rows || stEmptyRow(4,'ไม่มี — ทุกใบเจอในรายการเดินบัญชีแล้วค่ะ'))+'</tbody></table></div>';
+    }
+    var wait=((SM&&SM.rows)||[]).filter(function(r){ return (r.status||'').indexOf('รอจับคู่')>=0; });
+    return '<div class="m-hint" style="margin:0 0 12px">หน้านี้ตอบว่า "ไม่ตรงตรงไหน" จาก 2 ด้าน — '+
+      'เงินที่เดินในบัญชีแต่ยังไม่มีเอกสาร และเอกสารที่บันทึกไว้แต่ยังไม่เห็นเงินเดินจริง</div>'+
+      '<div class="card" style="margin-bottom:12px"><div class="pb" style="padding:14px 16px">'+
+      '<div class="ds-h">① เงินเดินในบัญชีแล้ว แต่ยังไม่มีเอกสาร ('+wait.length+' รายการ)</div>'+
+      '<div class="m-hint" style="margin:6px 0 10px">เงินเข้าที่ยังไม่ได้บันทึกรับชำระ · เงินออกที่ยังไม่ได้ทำใบสำคัญจ่าย '+
+      '· หรือเป็นดอกเบี้ย/ค่าธรรมเนียมที่ควรติ๊ก "ไม่ต้องจับ"</div>'+
+      smTableHtml(wait)+'</div></div>'+
+      '<div class="card" style="margin-bottom:12px"><div class="pb" style="padding:14px 16px">'+
+      '<div class="ds-h">② บันทึกรับเงินไว้ แต่ยังไม่เห็นเงินเข้าบัญชี ('+((gap.inDocs||[]).length)+' ใบ)</div>'+
+      '<div class="m-hint" style="margin:6px 0 10px">อาจยังไม่ได้นำเข้า statement ของช่วงนั้น · เงินยังไม่เข้าจริง '+
+      '· หรือรับเป็นเงินสด (เงินสดไม่เดินผ่านบัญชี ระบบไม่เอามาจับอยู่แล้ว)</div>'+
+      tbl(gap.inDocs,'ลูกค้า')+'</div></div>'+
+      '<div class="card"><div class="pb" style="padding:14px 16px">'+
+      '<div class="ds-h">③ ออกใบสำคัญจ่ายไว้ แต่ยังไม่เห็นเงินออกจากบัญชี ('+((gap.outDocs||[]).length)+' ใบ)</div>'+
+      '<div class="m-hint" style="margin:6px 0 10px">ยอดที่เทียบคือ <b>จ่ายสุทธิ</b> (หลังหักภาษี ณ ที่จ่าย) '+
+      'เพราะนั่นคือเงินที่ออกจากบัญชีจริง</div>'+
+      tbl(gap.outDocs,'ผู้รับเงิน')+'</div></div>';
+  }
+
+  /** แท็บนำเข้า — ฟังก์ชันบริสุทธิ์ */
+  function smImportHtml(d){
+    d=d||{};
+    var ao=(d.accounts||[]).map(function(a){
+      return '<option value="'+esc(a.id)+'">'+esc(a.label)+'</option>'; }).join('');
+    return '<div class="card"><div class="pb" style="padding:16px 18px">'+
+      '<div class="rs-h">🏦 นำเข้ารายการเดินบัญชี</div>'+
+      '<div class="rs-sub">เปิดไฟล์ statement ที่โหลดจากธนาคาร (CSV / Excel) แล้ว<b>ลากคลุมทั้งตารางรวมบรรทัดหัวคอลัมน์</b> '+
+      'มาวางในช่องนี้ — ระบบเดาให้เองว่าคอลัมน์ไหนคือวันที่ เงินเข้า เงินออก</div>'+
+      (ao ? ('<div class="fld"><label>statement นี้เป็นของบัญชีไหน</label><select id="smAcc">'+ao+'</select></div>')
+          : '<div class="m-hint">ยังไม่มีบัญชีในทะเบียน — เพิ่มที่เมนู 🏦 บัญชีธนาคาร ก่อนนะคะ</div>')+
+      '<div class="fld"><label>วางข้อมูลที่นี่</label>'+
+      '<textarea id="smText" rows="8" placeholder="วันที่\tรายละเอียด\tถอน\tฝาก\tคงเหลือ"></textarea></div>'+
+      '<div class="tax-acts">'+
+      '<button class="btn btn-ghost" onclick="smPreview()">ลองดูก่อน (ยังไม่บันทึก)</button></div>'+
+      '<div id="smPv"></div>'+
+      '<div class="rs-steps" style="margin-top:16px"><b>สิ่งที่ระบบทำให้</b>'+
+      '<b>กันนำเข้าซ้ำ</b> จำรายการที่เคยเข้าแล้วจากตัวรายการเอง ไม่ใช่ชื่อไฟล์ — '+
+      'วางไฟล์เดิมซ้ำจึงไม่เกิดแถวซ้ำ และการจับคู่ที่ทำไปแล้วไม่หาย'+
+      '<b>ข้ามบรรทัดที่ไม่ใช่รายการ</b> ยอดยกมา/บรรทัดสรุปท้ายไฟล์จะถูกข้ามแล้วรายงานจำนวนให้'+
+      '<b>แยกชีตตามปี</b> statement ที่คร่อมปีใหม่ ระบบแยกลงชีตของแต่ละปีให้เอง</div>'+
+      '</div></div>';
+  }
+
+  function smPaint(){
+    var h='<div class="section-h">🏦 กระทบยอด Statement</div>'+pageTabs(SM_TAB, SM_TABS);
+    if(SM_TAB==='import'){ h+=smImportHtml(SM||{}); }
+    else {
+      h+=smFilterHtml(SM||{});
+      if(SM_TAB==='match'){
+        h+=smSumHtml((SM&&SM.sum)||{})+
+          '<div class="tax-acts" style="margin:0 0 12px">'+
+          '<button class="btn btn-primary" onclick="smAuto()">ให้ระบบลองจับคู่ให้</button>'+
+          '<div class="m-hint" style="flex:1;margin:0">จับให้เฉพาะรายการที่<b>ยอดตรงและเจอเอกสารเดียว</b> '+
+          'ถ้าเจอหลายใบจะปล่อยไว้ให้เลือกเอง</div></div>'+
+          smTableHtml((SM&&SM.rows)||[]);
+      } else { h+=smGapHtml((SM&&SM.gap)||{}); }
+    }
+    $('main').innerHTML=h;
+  }
+
+  /* ── นำเข้า ── */
+  function smImportCall(preview){
+    var acc=((($('smAcc')||{}).value)||'').trim();
+    var text=((($('smText')||{}).value)||'').trim();
+    if(!acc){ toast('เลือกบัญชีก่อนนะคะ'); return null; }
+    if(!text){ toast('วางข้อมูล statement ก่อนนะคะ'); return null; }
+    return callBusy(preview?'กำลังอ่านข้อมูล…':'กำลังนำเข้า…', jsonpPost(withRoom_({
+      action:'waStmtImport', uid:UID, account:acc, text:text, preview:preview?'1':'' })));
+  }
+  function smPreview(){
+    var p=smImportCall(true); if(!p) return;
+    p.then(function(r){
+      var box=$('smPv'); if(!box) return;
+      if(!r||!r.ok){ box.innerHTML='<div class="m-err">⚠️ '+esc((r&&r.error)||'อ่านไม่สำเร็จ')+'</div>'; return; }
+      SM_PV=r;
+      var sample=(r.sample||[]).map(function(x){
+        return '<tr><td class="sm-dt">'+esc(x.date)+'</td><td>'+esc(x.detail)+'</td>'+
+          '<td style="text-align:right">'+(x.moneyIn?money(x.moneyIn):'')+'</td>'+
+          '<td style="text-align:right">'+(x.moneyOut?money(x.moneyOut):'')+'</td></tr>';
+      }).join('');
+      box.innerHTML='<div class="sm-tie" style="margin-top:12px">'+
+        '<div class="ds-h">อ่านได้แล้ว — ตรวจก่อนบันทึก</div>'+
+        '<div class="sm-eq">บัญชี <b>'+esc(r.account||'')+'</b> · ช่วง '+esc(r.from||'')+' ถึง '+esc(r.to||'')+'</div>'+
+        '<div class="sm-eq">จะเพิ่มใหม่ <b>'+(r.added||0)+'</b> รายการ · '+
+          'ซ้ำของเดิม '+(r.dup||0)+' · ข้ามบรรทัดที่ไม่ใช่รายการ '+(r.skipped||0)+'</div>'+
+        (sample?('<div class="tax-tbl-wrap" style="margin-top:10px"><table class="tax-tbl dt-tbl sm-gtbl">'+
+          '<thead><tr><th>วันที่</th><th>รายละเอียด</th><th style="text-align:right">เข้า</th>'+
+          '<th style="text-align:right">ออก</th></tr></thead><tbody>'+sample+'</tbody></table></div>'):'')+
+        (r.added ? '<div class="tax-acts" style="margin-top:12px">'+
+            '<button class="btn btn-primary" onclick="smImportGo()">นำเข้า '+(r.added||0)+' รายการ</button></div>'
+          : '<div class="m-hint" style="margin-top:10px">ไม่มีรายการใหม่ — ไฟล์นี้เคยนำเข้าไปแล้วค่ะ</div>')+
+        '</div>';
+    }).catch(function(e){ toast(e.message); });
+  }
+  function smImportGo(){
+    var p=smImportCall(false); if(!p) return;
+    p.then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'นำเข้าไม่สำเร็จ'); return; }
+      toast('✅ นำเข้าแล้ว '+(r.added||0)+' รายการ'+(r.dup?(' · ข้ามที่ซ้ำ '+r.dup):''));
+      SM_TAB='match'; SM_PV=null; renderStatement();
+    }).catch(function(e){ toast(e.message); });
+  }
+
+  /* ── จับคู่ ── */
+  function smRow(i){ return ((SM&&SM.rows)||[])[i]||null; }
+  function smCall(p,msg){
+    return callBusy(msg||'กำลังบันทึก…', jsonpPost(withRoom_(Object.assign(
+      { action:'waStmtMatch', uid:UID, year:(SM&&SM.year)||'' }, p))));
+  }
+  function smAuto(){
+    smCall({ mode:'auto' },'กำลังลองจับคู่ให้…').then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; }
+      toast('จับให้ '+(r.matched||0)+' รายการ'+
+        (r.many?(' · มีหลายตัวเลือก '+r.many+' รายการ รอเลือกเอง'):'')+
+        (r.none?(' · ไม่เจอเอกสารที่เข้าคู่ '+r.none):''));
+      renderStatement();
+    }).catch(function(e){ toast(e.message); });
+  }
+  /** เลือกเอกสารที่จะผูกกับรายการนี้ — ตัวเลือกที่ระบบเสนอ + ช่องพิมพ์เลขเอง */
+  function smPick(i){
+    var r=smRow(i); if(!r) return;
+    var isIn=Number(r.moneyIn)>0;
+    var cand=(r.cand||[]).map(function(c){
+      return '<button class="sm-pick" onclick="smSet('+i+',\''+esc(c.kind)+'\',\''+esc(c.no)+'\')">'+
+        '<b>'+esc(c.no)+' · '+money(c.amount)+'</b>'+
+        '<span class="m-hint" style="margin:2px 0 0;display:block">'+esc(c.party||'')+
+        ' · '+esc(c.date||'')+(c.why?(' · '+esc(c.why)):'')+'</span></button>';
+    }).join('');
+    var kind=isIn?'รับชำระ':'ใบสำคัญจ่าย';
+    modal('<h3>🔗 จับคู่รายการ</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">'+esc(r.date||'')+' · '+esc(r.detail||'')+'<br>'+
+      (isIn?('เงินเข้า <b>'+money(r.moneyIn)+'</b>'):('เงินออก <b>'+money(r.moneyOut)+'</b>'))+'</div>'+
+      (cand ? ('<div class="fld"><label>ระบบเสนอ (ยอดตรง + อยู่ในกรอบวัน)</label>'+cand+'</div>')
+            : '<div class="m-hint">ไม่เจอเอกสารที่ยอดตรงและอยู่ในกรอบวัน — พิมพ์เลขที่เองได้ค่ะ</div>')+
+      '<div class="fld"><label>หรือพิมพ์เลขที่เอกสารเอง ('+esc(kind)+')</label>'+
+      '<input id="smNo" placeholder="'+(isIn?'เช่น RE-2609-001':'เช่น PV-2609-001')+'"></div>'+
+      '<div class="m-hint">เอกสาร 1 ใบผูกได้กับรายการเดียว — ถ้าใบนี้ถูกจับไปแล้ว ระบบจะบอกว่าไปอยู่กับรายการไหน</div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button>'+
+      '<button class="btn btn-primary" onclick="smSetTyped('+i+')">จับคู่</button></div>');
+  }
+  function smSetTyped(i){
+    var r=smRow(i); if(!r) return;
+    var no=((($('smNo')||{}).value)||'').trim();
+    if(!no){ mErr('เลือกจากรายการที่เสนอ หรือพิมพ์เลขที่เอกสารค่ะ'); return; }
+    smSet(i, Number(r.moneyIn)>0 ? 'รับชำระ' : 'ใบสำคัญจ่าย', no);
+  }
+  function smSet(i,kind,no){
+    var r=smRow(i); if(!r) return;
+    smCall({ mode:'set', key:r.key, kind:kind, no:no }).then(function(res){
+      if(!res||!res.ok){ mErr((res&&res.error)||'จับคู่ไม่สำเร็จ'); return; }
+      closeModal(); toast('จับคู่กับ '+no+' แล้วค่ะ'); renderStatement();
+    }).catch(function(e){ mErr(e.message); });
+  }
+  /** ติ๊กไม่ต้องจับคู่ — เหตุผลบังคับ (หลังบ้านปฏิเสธถ้าเว้นว่าง เงื่อนไขบนจอต้องตรงกัน) */
+  function smSkip(i){
+    var r=smRow(i); if(!r) return;
+    modal('<h3>🚫 ไม่ต้องจับคู่</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">'+esc(r.date||'')+' · '+esc(r.detail||'')+'</div>'+
+      '<div class="fld"><label>เหตุผล (บังคับ)</label>'+
+      '<input id="smNote" placeholder="เช่น ดอกเบี้ยรับ · ค่าธรรมเนียมธนาคาร · โอนระหว่างบัญชีตัวเอง"></div>'+
+      '<div class="m-hint">รายการนี้จะออกจากกองรอจับคู่ แต่ยังนับอยู่ในยอดเงินเดินจริง — '+
+      'เหตุผลจำเป็นเพราะเดือนหน้ากลับมาดู จะได้รู้ว่าทำไมข้ามใบนี้</div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" onclick="smSkipSave('+i+')">บันทึก</button></div>');
+  }
+  function smSkipSave(i){
+    var r=smRow(i); if(!r) return;
+    var note=((($('smNote')||{}).value)||'').trim();
+    if(!note){ mErr('ใส่เหตุผลด้วยค่ะ'); return; }
+    smCall({ mode:'skip', key:r.key, note:note }).then(function(res){
+      if(!res||!res.ok){ mErr((res&&res.error)||'บันทึกไม่สำเร็จ'); return; }
+      closeModal(); toast('ทำเครื่องหมายไม่ต้องจับคู่แล้วค่ะ'); renderStatement();
+    }).catch(function(e){ mErr(e.message); });
+  }
+  function smUnmatch(i){
+    var r=smRow(i); if(!r) return;
+    smCall({ mode:'unmatch', key:r.key, note:'' }).then(function(res){
+      if(!res||!res.ok){ toast((res&&res.error)||'ไม่สำเร็จ'); return; }
+      toast('เอากลับมารอจับคู่แล้วค่ะ'); renderStatement();
+    }).catch(function(e){ toast(e.message); });
+  }
+  window.renderStatement=renderStatement; window.smTab=smTab; window.smSetF=smSetF;
+  window.smPreview=smPreview; window.smImportGo=smImportGo; window.smAuto=smAuto;
+  window.smPick=smPick; window.smSet=smSet; window.smSetTyped=smSetTyped;
+  window.smSkip=smSkip; window.smSkipSave=smSkipSave; window.smUnmatch=smUnmatch;
+
   /* หน้าที่อยู่ในผังแล้วแต่ยังทำไม่ถึง — บอกตรง ๆ ว่าจะมีอะไร ไม่ปล่อยจอว่าง
      (pattern เดียวกับการ์ด "เร็ว ๆ นี้" บนหน้าเลือกโมดูลที่พี่กี้เคาะไว้) */
   var SOON_PAGE={
@@ -10695,14 +11049,9 @@
              'คอลัมน์สถานะ ส่งให้ผู้รับแล้ว / ยัง',
              'ออกอัตโนมัติตอนกดจ่าย — ไม่มีปุ่มสร้างเอง'],
       note:'ระหว่างนี้ดูได้ที่ ระบบภาษี ▸ รายงานภาษี (ภ.ง.ด.1 / 3 / 53) ซึ่งดึงจากทะเบียนเดียวกัน' },
-    statement:{ icon:'🏦', title:'กระทบยอด Statement',
-      lines:['นำเข้า Statement จากธนาคาร',
-             'จับคู่รายการอัตโนมัติ — เงินเข้า ↔ ใบเสร็จ · เงินออก ↔ ใบสำคัญจ่าย',
-             'รายการที่ยังไม่ตรง ไว้ตามเก็บ'],
-      note:'ทุกใบเก็บ "บัญชีที่รับเข้า/จ่ายออก" ไว้ให้แล้วตั้งแต่เฟส 1 — พร้อมต่อทันทีที่ถึงคิว' },
     cashreport:{ icon:'📊', title:'รายงานเงินสด/ธนาคาร',
       lines:['กระทบยอดธนาคารรายเดือน','เงินสดย่อยคงเหลือรายผู้ถือ'],
-      note:'ทำต่อจากหน้ากระทบยอด Statement' }
+      note:'ทำต่อจากหน้ากระทบยอด Statement ซึ่งเปิดใช้แล้วที่เมนู ธนาคาร ▸ กระทบยอด Statement' }
   };
   function renderSoonPage(){
     var pg=SOON_PAGE[VIEW]||{ icon:'🛠️', title:'กำลังพัฒนา', lines:[], note:'' };
@@ -17630,7 +17979,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260920-1541';
+  var APP_BUILD='20260920-1608';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
