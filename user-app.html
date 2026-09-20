@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260920-1719">
+<link rel="stylesheet" href="user.css?v=20260920-1740">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -11420,29 +11420,211 @@
                   : '<button class="btn btn-primary btn-sm" onclick="arApply('+i+')">ส่งเข้าทะเบียน</button>'))+
         '</td></tr>';
     }).join('');
-    var table = (o.docType==='wht_received')
-      ? '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl sm-tbl">'+
+    var table;
+    if(o.docType==='wht_received'){
+      table='<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl sm-tbl">'+
         '<colgroup><col style="width:10%"><col style="width:32%"><col style="width:14%">'+
         '<col style="width:14%"><col style="width:12%"><col style="width:18%"></colgroup>'+
         '<thead><tr><th></th><th>ผู้จ่าย / เลขที่</th><th>วันที่จ่าย</th>'+
         '<th style="text-align:right">ยอดเงิน</th><th style="text-align:right">ภาษีที่ถูกหัก</th><th></th></tr></thead>'+
-        '<tbody>'+(rows || stEmptyRow(6,'ไม่พบใบ 50 ทวิ ในไฟล์นี้'))+'</tbody></table></div>'
-      /* ชนิดอื่นยังไม่มีปลายทาง — โชว์ค่าที่อ่านได้ให้ดูก่อน ไม่แกล้งทำเป็นส่งต่อได้ */
-      : '<div class="card"><div class="pb" style="padding:14px 16px">'+
-        '<div class="m-hint" style="margin:0 0 8px">ชนิดนี้ยังไม่ได้ต่อปลายทางอัตโนมัติ — '+
-        'ดูค่าที่อ่านได้แล้วนำไปกรอกในหน้าที่เกี่ยวข้องค่ะ</div>'+
+        '<tbody>'+(rows || stEmptyRow(6,'ไม่พบใบ 50 ทวิ ในไฟล์นี้'))+'</tbody></table></div>';
+    }
+    else if(o.docType==='purchase_invoice') table=arVatHtml(o,stop);
+    else if(o.docType==='bank_slip')        table=arSlipHtml(o);
+    else if(o.docType==='bank_statement')   table=arStmtHtml(o,stop);
+    else table='<div class="card"><div class="pb" style="padding:14px 16px">'+
         '<pre style="white-space:pre-wrap;font-size:12.5px;margin:0">'+
         esc(JSON.stringify(o.data||{},null,1)).slice(0,4000)+'</pre></div></div>';
     return '<div class="section-h">🤖 '+esc(o.fileName||o.id||'')+'</div>'+
       '<div class="tax-acts" style="margin:0 0 12px">'+
       '<button class="btn btn-ghost" onclick="renderAiRead()">← กลับคิวเอกสาร</button>'+
       '<button class="btn btn-ghost" onclick="arRequeue(\''+String(o.id||'').replace(/'/g,"\\'")+'\')">อ่านใหม่</button>'+
-      '</div>'+block+table+
-      '<div class="rs-steps" style="margin-top:14px"><b>ก่อนกดส่งเข้าทะเบียน</b>'+
-      'ตัวเลขที่เห็นคือค่าที่ AI อ่านมา ไม่ใช่ค่าที่ยืนยันแล้ว — เทียบกับใบจริงอีกครั้งเสมอ'+
-      '<b>ใบที่ขึ้น ❌</b> ส่งไม่ได้จนกว่าจะแก้ เพราะเป็นข้อผิดพลาดที่ทำให้ยอดภาษีเพี้ยนทั้งเล่ม'+
-      '<b>ส่งแล้วแก้ได้</b> ที่หน้า 🧾 50 ทวิ ที่ถูกหัก ตามปกติ</div>';
+      '</div>'+block+table+ arFootHtml(o.docType);
   }
+
+  /** ข้อความท้ายหน้า — ต้องพูดถึงปลายทางของชนิดนั้นจริง ๆ
+      🔴 ใช้ข้อความก้อนเดียวกับทุกชนิดไม่ได้ (เคยเขียนถึง "ทะเบียน 50 ทวิ" ในหน้าใบกำกับซื้อ
+         ทั้งที่ปลายทางคือใบสั่งจ่าย — เห็นจากภาพ 20 ก.ย.) */
+  function arFootHtml(docType){
+    var common='ตัวเลขที่เห็นคือค่าที่ AI อ่านมา ไม่ใช่ค่าที่ยืนยันแล้ว — เทียบกับใบจริงอีกครั้งเสมอ'+
+      '<b>ใบที่ขึ้น ❌</b> ส่งต่อไม่ได้จนกว่าจะแก้ เพราะเป็นข้อผิดพลาดที่ทำให้ตัวเลขเพี้ยนทั้งเล่ม';
+    var tail = (docType==='wht_received')
+        ? '<b>ส่งแล้วแก้ได้</b> ที่หน้า 🧾 50 ทวิ ที่ถูกหัก ตามปกติ'
+      : (docType==='purchase_invoice')
+        ? '<b>บันทึกแล้วแก้ได้</b> ที่เมนู ⋮ ของใบนั้น (🧾 ใบกำกับภาษีซื้อ) · '+
+          'เดือนที่นำไปเครดิตยึด<b>วันที่บนใบกำกับ</b> ไม่ใช่วันที่จ่ายเงิน'
+      : (docType==='bank_slip')
+        ? '<b>แนบสลิปไม่ใช่การจ่ายเงิน</b> — สถานะใบไม่เปลี่ยน ยอดไม่ขยับ เป็นการเติมหลักฐานอย่างเดียว'
+      : (docType==='bank_statement')
+        ? '<b>นำเข้าแล้วไปต่อที่หน้ากระทบยอด</b> — จับคู่เงินเข้า/ออกกับใบเสร็จและใบสำคัญจ่ายตรงนั้น · '+
+          'วางไฟล์เดิมซ้ำไม่เกิดรายการซ้ำ'
+        : '';
+    return '<div class="rs-steps" style="margin-top:14px"><b>ก่อนกดส่งต่อ</b>'+common+tail+'</div>';
+  }
+  /** ช่องข้อมูลแบบอ่านอย่างเดียว (ค่าที่ AI อ่านมา) — ฟังก์ชันบริสุทธิ์ */
+  function arFieldRows(list){
+    return '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl sm-gtbl">'+
+      '<colgroup><col style="width:34%"><col style="width:66%"></colgroup><tbody>'+
+      list.map(function(x){
+        return '<tr><td>'+esc(x[0])+'</td><td><b>'+(x[2]?esc(x[1]):(x[1]||'<span class="m-hint" style="margin:0">—</span>'))+'</b></td></tr>';
+      }).join('')+'</tbody></table></div>';
+  }
+
+  /* ── ② ใบกำกับภาษีซื้อ → บันทึกภาษีซื้อเข้าใบสั่งจ่าย/ใบเบิก ── */
+  function arVatHtml(o,stop){
+    var f=o.form||{};
+    var rows=(o.targets||[]).map(function(t){
+      var q="'"+String(t.no).replace(/'/g,"\\'")+"'";
+      var k="'"+String(t.kind).replace(/'/g,"\\'")+"'";
+      return '<tr><td><b>'+esc(t.no)+'</b>'+
+          '<div class="m-hint" style="margin:2px 0 0">'+esc(t.label)+' · '+esc(t.party||'')+'</div></td>'+
+        '<td class="sm-dt" style="text-align:right">'+money(t.amount)+'</td>'+
+        '<td>'+esc(t.status||'')+
+          (t.hasVat?'<div class="m-hint" style="margin:2px 0 0">มีใบกำกับแล้ว '+esc(t.hasVat)+'</div>':'')+'</td>'+
+        '<td>'+(stop ? '<span class="m-hint" style="margin:0">แก้ค่าที่ ❌ ก่อน</span>'
+          : '<button class="btn btn-primary btn-sm" onclick="arApplyVat('+k+','+q+')">'+
+            (t.hasVat?'บันทึกทับ':'บันทึกใบนี้')+'</button>')+'</td></tr>';
+    }).join('');
+    return arFieldRows([
+      ['ชนิดเอกสาร', f.docKind, true],
+      ['เลขที่ใบกำกับ', f.invNo, true],
+      ['วันที่บนใบกำกับ', arDate(f.invDate), true],
+      ['ผู้ขาย', f.seller, true],
+      ['เลขผู้เสียภาษีผู้ขาย', f.sellerId, true],
+      ['มูลค่าก่อน VAT', f.base===''?'':money(f.base), false],
+      ['ภาษีมูลค่าเพิ่ม', f.vat===''?'':money(f.vat), false],
+      ['ยอดรวมทั้งสิ้น', money(f.total), false]
+    ])+
+    '<div class="section-h" style="margin-top:16px">แนบเข้าใบไหน</div>'+
+    '<div class="m-hint" style="margin:0 0 12px">เรียงใบที่ยอดใกล้เคียงและวันใกล้กันไว้บน — '+
+    '<b>ระบบไม่เลือกให้เอง</b> เพราะบิลค่าใช้จ่ายยอดซ้ำกันได้บ่อย</div>'+
+    '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl sm-tbl">'+
+    '<colgroup><col style="width:36%"><col style="width:16%"><col style="width:24%"><col style="width:24%"></colgroup>'+
+    '<thead><tr><th>ใบปลายทาง</th><th style="text-align:right">ยอดในใบ</th><th>สถานะ</th><th></th></tr></thead>'+
+    '<tbody>'+(rows || stEmptyRow(4,'ยังไม่มีใบสั่งจ่าย/ใบเบิกที่เข้าเกณฑ์ — ตั้งใบก่อนแล้วกลับมาแนบค่ะ'))+
+    '</tbody></table></div>';
+  }
+  function arApplyVat(kind,no){
+    var o=AR_ONE; if(!o) return;
+    if(!confirm('บันทึกภาษีซื้อใบนี้เข้า '+no+' ?\n\nใบกำกับ '+(o.form.invNo||'-')+
+      '\nฐาน '+money(o.form.base)+' · VAT '+money(o.form.vat))) return;
+    callBusy('กำลังบันทึก…', jsonpPost(withRoom_({
+      action:'waAiApply', uid:UID, mode:'vat', id:o.id, kind:kind, no:no,
+      form:JSON.stringify(o.form||{}) })))
+      .then(function(r){
+        if(!r||!r.ok){ toast((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+        toast('✅ บันทึกภาษีซื้อเข้า '+no+' แล้ว (ฐาน '+money(r.base)+' · VAT '+money(r.vat)+')');
+        if(r.warn&&r.warn.length) alert('⚠️ ข้อที่ต้องดู:\n\n'+r.warn.join('\n'));
+        renderAiRead();
+      }).catch(function(e){ toast(e.message); });
+  }
+
+  /* ── ③ สลิปโอน → แนบเป็นหลักฐาน ── */
+  function arSlipHtml(o){
+    var f=o.form||{}, t=o.targets||{};
+    function tbl(list,act){
+      var rows=(list||[]).map(function(x){
+        var q="'"+String(x.no).replace(/'/g,"\\'")+"'";
+        var k="'"+String(x.kind).replace(/'/g,"\\'")+"'";
+        return '<tr><td><b>'+esc(x.no)+'</b>'+
+            '<div class="m-hint" style="margin:2px 0 0">'+esc(x.label)+' · '+esc(x.party||'')+'</div></td>'+
+          '<td class="sm-dt" style="text-align:right">'+money(x.amount)+'</td>'+
+          '<td>'+esc(x.status||'')+'</td>'+
+          '<td>'+(act==='attach'
+            ? '<button class="btn btn-primary btn-sm" onclick="arAttachSlip('+k+','+q+')">แนบสลิปนี้</button>'
+            : '<button class="btn btn-ghost btn-sm" onclick="arGotoDoc('+k+')">ไปหน้าจ่ายเงิน</button>')+
+          '</td></tr>';
+      }).join('');
+      return '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl sm-tbl">'+
+        '<colgroup><col style="width:36%"><col style="width:16%"><col style="width:24%"><col style="width:24%"></colgroup>'+
+        '<thead><tr><th>ใบ</th><th style="text-align:right">ยอด</th><th>สถานะ</th><th></th></tr></thead>'+
+        '<tbody>'+(rows || stEmptyRow(4,'ไม่มีใบที่ยอดและวันตรงกับสลิปนี้'))+'</tbody></table></div>';
+    }
+    return arFieldRows([
+      ['วันเวลาที่โอน', (arDate(f.date)+' '+(f.time||'')).trim(), true],
+      ['ยอดโอน', money(f.amount), false],
+      ['ค่าธรรมเนียม', f.fee?money(f.fee):'', false],
+      ['จาก', f.from, true],
+      ['ถึง', (f.to||'')+(f.toBank?(' · '+f.toBank):''), true],
+      ['เลขอ้างอิง', f.ref, true]
+    ])+
+    '<div class="section-h" style="margin-top:16px">แนบเป็นหลักฐานของใบไหน</div>'+
+    '<div class="m-hint" style="margin:0 0 12px">แนบได้เฉพาะใบที่<b>จ่าย/รับเงินไปแล้วแต่ยังไม่มีสลิป</b> — '+
+    'เป็นการเติมหลักฐาน ไม่ขยับเงินและไม่เปลี่ยนสถานะใบ</div>'+
+    tbl(t.attach,'attach')+
+    ((t.goto||[]).length
+      ? '<div class="section-h" style="margin-top:16px">ใบที่ยอดตรงแต่ยังไม่ได้จ่าย</div>'+
+        '<div class="m-hint" style="margin:0 0 12px">หน้านี้<b>ไม่กดจ่ายแทน</b> — การจ่ายมีขั้นตอนของมันเอง '+
+        '(เลือกบัญชี · ออกใบสำคัญจ่าย · 50 ทวิ · แฟ้ม) ไปทำที่หน้านั้นแล้วแนบสลิปตรงนั้นได้เลย</div>'+
+        tbl(t.goto,'goto')
+      : '');
+  }
+  function arAttachSlip(kind,no){
+    var o=AR_ONE; if(!o) return;
+    callBusy('กำลังแนบสลิป…', jsonpPost(withRoom_({
+      action:'waAiApply', uid:UID, mode:'slip', id:o.id, kind:kind, no:no })))
+      .then(function(r){
+        if(!r||!r.ok){ toast((r&&r.error)||'แนบไม่สำเร็จ'); return; }
+        toast('✅ แนบสลิปเข้า '+no+' แล้ว'); renderAiRead();
+      }).catch(function(e){ toast(e.message); });
+  }
+  function arGotoDoc(kind){ switchView(kind==='payout'?'payout':'expdash'); }
+
+  /* ── ④ statement → นำเข้าหน้ากระทบยอด ── */
+  function arStmtHtml(o,stop){
+    var f=o.form||{};
+    var opts=(o.accounts||[]).map(function(a){
+      return '<option value="'+esc(a.id)+'"'+(a.id===o.guessAccount?' selected':'')+'>'+esc(a.label)+'</option>';
+    }).join('');
+    return arFieldRows([
+      ['ธนาคาร', f.bank, true],
+      ['บัญชี (4 หลักท้าย)', f.last4, true],
+      ['ช่วงเวลา', (arDate(f.from)+' – '+arDate(f.to)), true],
+      ['ยอดยกมา', money(f.open), false],
+      ['ยอดยกไป', money(f.close), false],
+      ['จำนวนรายการที่อ่านได้', String(f.count||0)+' รายการ', true]
+    ])+
+    '<div class="card" style="margin-top:16px"><div class="pb" style="padding:16px 18px">'+
+      '<div class="rs-h">นำเข้าหน้ากระทบยอด Statement</div>'+
+      (opts
+        ? '<div class="fld"><label>statement นี้เป็นของบัญชีไหน</label><select id="arStmtAcc">'+opts+'</select>'+
+          (o.guessAccount?'<div class="m-hint" style="margin:6px 0 0">เลือกให้จาก 4 หลักท้ายที่อ่านได้ — ตรวจอีกครั้งนะคะ</div>':'')+
+          '</div>'
+        : '<div class="m-hint">ยังไม่มีบัญชีในทะเบียน — เพิ่มที่เมนู 🏦 บัญชีธนาคาร ก่อนค่ะ</div>')+
+      (stop
+        ? '<div class="m-hint" style="background:#FFF1F1;color:#B23B3B">ผลตรวจขึ้น ❌ — '+
+          'ยอดยกมา + รายการ ไม่เท่ายอดยกไป แปลว่าอ่านมาไม่ครบ นำเข้าไปจะทำให้ยอดเพี้ยน '+
+          'ลองแบ่งไฟล์แล้วอ่านใหม่ค่ะ</div>'
+        : '<div class="tax-acts">'+
+          '<button class="btn btn-ghost" onclick="arStmtGo(1)">ลองดูก่อน (ยังไม่บันทึก)</button></div>')+
+      '<div id="arStmtPv"></div>'+
+    '</div></div>';
+  }
+  function arStmtGo(preview){
+    var o=AR_ONE; if(!o) return;
+    var acc=((($('arStmtAcc')||{}).value)||'').trim();
+    if(!acc){ toast('เลือกบัญชีก่อนนะคะ'); return; }
+    callBusy(preview?'กำลังอ่านรายการ…':'กำลังนำเข้า…', jsonpPost(withRoom_({
+      action:'waAiApply', uid:UID, mode:'stmt', id:o.id, account:acc, preview:preview?'1':'' })))
+      .then(function(r){
+        var box=$('arStmtPv');
+        if(!r||!r.ok){ if(box) box.innerHTML='<div class="m-err">⚠️ '+esc((r&&r.error)||'ไม่สำเร็จ')+'</div>'; return; }
+        if(!preview){
+          toast('✅ นำเข้าแล้ว '+(r.added||0)+' รายการ');
+          switchView('statement'); return;
+        }
+        if(box) box.innerHTML='<div class="sm-tie" style="margin-top:12px">'+
+          '<div class="ds-h">อ่านได้แล้ว — ตรวจก่อนบันทึก</div>'+
+          '<div class="sm-eq">บัญชี <b>'+esc(r.account||'')+'</b> · ช่วง '+esc(r.from||'')+' ถึง '+esc(r.to||'')+'</div>'+
+          '<div class="sm-eq">จะเพิ่มใหม่ <b>'+(r.added||0)+'</b> รายการ · ซ้ำของเดิม '+(r.dup||0)+
+            ' · ข้ามบรรทัดที่ไม่ใช่รายการ '+(r.skipped||0)+'</div>'+
+          (r.added?'<div class="tax-acts" style="margin-top:12px">'+
+            '<button class="btn btn-primary" onclick="arStmtGo(0)">นำเข้า '+(r.added||0)+' รายการ</button></div>'
+           :'<div class="m-hint" style="margin-top:10px">ไม่มีรายการใหม่ — ไฟล์นี้เคยนำเข้าไปแล้วค่ะ</div>')+
+          '</div>';
+      }).catch(function(e){ toast(e.message); });
+  }
+
   function arPaintOne(){ $('main').innerHTML=arOneHtml(AR_ONE); }
 
   function arApply(i){
@@ -11460,6 +11642,8 @@
   }
   window.renderAiRead=renderAiRead; window.arUpload=arUpload; window.arRunNow=arRunNow;
   window.arRequeue=arRequeue; window.arOpen=arOpen; window.arApply=arApply;
+  window.arApplyVat=arApplyVat; window.arAttachSlip=arAttachSlip; window.arGotoDoc=arGotoDoc;
+  window.arStmtGo=arStmtGo;
 
   /* หน้าที่อยู่ในผังแล้วแต่ยังทำไม่ถึง — บอกตรง ๆ ว่าจะมีอะไร ไม่ปล่อยจอว่าง
      (pattern เดียวกับการ์ด "เร็ว ๆ นี้" บนหน้าเลือกโมดูลที่พี่กี้เคาะไว้) */
@@ -18396,7 +18580,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260920-1719';
+  var APP_BUILD='20260920-1740';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
