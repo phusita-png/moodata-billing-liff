@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260920-1105">
+<link rel="stylesheet" href="user.css?v=20260920-1125">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -11851,6 +11851,28 @@
   // ═══════════ 💵 รับชำระ + ใบเสร็จ/ใบกำกับภาษี (เฟส A4) ═══════════
   // ยอดคงค้างมาจาก backend เสมอ (ชีตรับชำระ = แหล่งความจริงเดียว) — หน้าเว็บไม่คิดยอดเอง
   /** ช่องบัญชีที่รับเงินเข้า — ทะเบียนมาจาก backend (waRecvInit) */
+  /* dropdown ประเภทการรับเงิน — รายการมาจากทะเบียน หน้าเว็บห้ามพิมพ์เอง
+     ใต้ช่องมีคำอธิบายว่าประเภทที่เลือกจะตัดลูกหนี้ไหม (เปลี่ยนตามที่เลือกทันที) */
+  function rvKindFldHtml(kinds){
+    var list=kinds||[];
+    if(!list.length) return '<input type="hidden" id="rvKind" value="">';
+    var opts=list.map(function(k){
+      return '<option value="'+esc(k.code)+'"'+(k.cutAr?' selected':'')+'>'+esc(k.name)+'</option>';
+    }).join('');
+    return '<div class="fld"><label>ประเภทการรับเงิน</label>'+
+      '<select id="rvKind" onchange="recvKindNote()">'+opts+'</select>'+
+      '<div id="rvKindNote" class="m-hint" style="margin-top:4px"></div></div>';
+  }
+  /** อธิบายผลของประเภทที่เลือก — ผู้ใช้ต้องรู้ก่อนกดบันทึกว่ายอดนี้จะไปลดหนี้หรือไม่ */
+  function recvKindNote(){
+    var box=$('rvKindNote'); if(!box||!RECV) return;
+    var code=(($('rvKind')||{}).value)||'';
+    var k=(RECV.recvKinds||[]).filter(function(x){ return x.code===code; })[0];
+    if(!k){ box.textContent=''; return; }
+    box.innerHTML=(k.cutAr?'✅ ตัดยอดค้างชำระของใบนี้':'↩️ <b>ไม่ตัด</b>ยอดค้างชำระของใบนี้')+
+      (k.advance?' · เก็บเป็นเงินรับล่วงหน้า':'')+
+      (k.vatSale?' · เกิดภาษีขาย':' · ไม่เกิดภาษีขาย');
+  }
   function rvAcctFldHtml(){
     var list=(RECV&&RECV.payAccounts)||[];
     if(!list.length){
@@ -11880,6 +11902,9 @@
         '<br>คงค้าง <b style="font-size:15px">'+money(r.balance)+'</b> บาท'+
         (r.dueDate?' · ครบกำหนด '+esc(r.dueDate):'')+'</div>'+
         recvHistoryHtml(r.history)+
+        /* ประเภทการรับเงิน (เฟส 4a) — อยู่บนสุดเพราะมันเปลี่ยนความหมายของช่องอื่น
+           (ประเภทที่ไม่ตัดลูกหนี้ = ยอดนี้ไม่ไปลดหนี้ใบนี้) */
+        rvKindFldHtml(r.recvKinds)+
         '<div class="fld"><label>เงินที่เข้าบัญชีจริง (บาท)</label>'+
           '<input id="rvAmt" inputmode="decimal" value="'+esc(String(r.balance))+'" oninput="recvPreview()"></div>'+
         '<div class="fld"><label>ภาษีที่ลูกค้าหักไว้ (บาท · ไม่มีใส่ 0)</label>'+
@@ -11897,7 +11922,7 @@
           '<input type="checkbox" id="rvIssue" checked> ออกใบเสร็จ/ใบกำกับภาษีให้เลย</label>'+
         '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
         '<button class="btn btn-primary" id="rvBtn" onclick="recvSave(\''+esc(ivNo)+'\')">บันทึกรับชำระ</button></div>');
-      imgsFldBind('rvSlip'); imgsFldBind('rvCert'); recvPreview();
+      imgsFldBind('rvSlip'); imgsFldBind('rvCert'); recvPreview(); recvKindNote();
     }).catch(function(e){ unbusy(); toast(e.message); });
   }
   /** ประวัติรับชำระของใบนี้ (รวมรายการที่ยกเลิกไว้ให้เห็น — เงินต้องตามรอยได้) */
@@ -11923,6 +11948,15 @@
     var amt=Number(((($('rvAmt')||{}).value)||'0').replace(/,/g,''))||0;
     var wht=Number(((($('rvWht')||{}).value)||'0').replace(/,/g,''))||0;
     var settled=Math.round((amt+wht)*100)/100;
+    /* ประเภทที่ไม่ตัดลูกหนี้ (มัดจำ/รับเงินอื่น) ไม่มีหนี้ให้เทียบ — ห้ามขึ้น "เกินยอดคงค้าง"
+       เงื่อนไขบนจอต้องตรงกับด่านหลังบ้านเป๊ะ ไม่งั้นผู้ใช้เห็นเตือนแดงทั้งที่บันทึกได้ */
+    var kcode=(($('rvKind')||{}).value)||'';
+    var kk=(RECV.recvKinds||[]).filter(function(x){ return x.code===kcode; })[0];
+    var cutAr=kk?!!kk.cutAr:true;
+    if(!cutAr){
+      box.innerHTML='รับเงิน <b>'+money(settled)+'</b> บาท · ไม่ตัดยอดค้างชำระของใบนี้';
+      return;
+    }
     var left=Math.round((RECV.balance-settled)*100)/100;
     var over=settled>RECV.balance+0.005;
     box.innerHTML='ปิดหนี้รอบนี้ <b>'+money(settled)+'</b> บาท (เงินเข้า '+money(amt)+
@@ -11933,6 +11967,7 @@
   function recvSave(ivNo){
     var amt=((($('rvAmt')||{}).value)||'').trim();
     var p={action:'waRecvSave',uid:UID,no:ivNo,amount:amt,
+      kind:((($('rvKind')||{}).value)||'').trim(),      // ประเภทการรับเงิน (เฟส 4a)
       account:((($('rvAcct')||{}).value)||'').trim(),   // รหัสบัญชีจากทะเบียน (19 ก.ย. 69)
       wht:((($('rvWht')||{}).value)||'0').trim(),
       recvDate:(($('rvDate')||{}).value)||'', method:(($('rvMethod')||{}).value)||'',
@@ -17178,7 +17213,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260920-1105';
+  var APP_BUILD='20260920-1125';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
