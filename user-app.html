@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260920-1740">
+<link rel="stylesheet" href="user.css?v=20260920-2108">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -2393,7 +2393,7 @@
     // ไอคอนแถบบน = ไอคอนเส้นของหมวดที่หน้านี้อยู่ (เรียบ ไม่สีสัน · พี่กี้ขอ 30 ก.ค.) · fallback emoji
     if(v==='portal'){   // หน้าเลือกโมดูล = แถบบนเป็นแบรนด์ ไม่ใช่ชื่อเมนู
       $('tbIcon').innerHTML='<img src="mascot-wave2.png" alt="" style="width:26px;height:26px;object-fit:contain;vertical-align:middle">';
-      $('tbTitle').textContent='Moodata Yindee';
+      $('tbTitle').textContent=roomBrand();
       mSyncNav(v); renderPortal(); return;
     }
     var mm=modOfView(v), gi=mm&&MOD_ICON[mm.key];
@@ -3747,6 +3747,11 @@
   /* ═════ 🏢 สลับห้อง (T3) ═════ */
 
   /* ทาสีห้องปัจจุบัน — เรียกหลัง bootstrap ทุกครั้งที่ ROOM เปลี่ยน */
+  /* ชื่อที่ขึ้นหัวระบบ — ห้องบ้าน=แบรนด์เรา · ห้องลูกค้า=ชื่อบริษัทเขา (คู่กับ brandSystemName_ ฝั่งบอท) */
+  function roomBrand(){
+    return (ROOM && ROOM.code && ROOM.code!=='MOODATA' && ROOM.name) ? ROOM.name : 'Moodata Yindee';
+  }
+
   function paintRoom(){
     var app=$('app'); if(!app) return;
     var inRoom=!!(ROOM && ROOM.code && ROOM.code!=='MOODATA');
@@ -3758,6 +3763,11 @@
     });
     var sub=document.querySelector('.tb-sub');
     if(sub) sub.textContent=(ROOM&&ROOM.name)||'Moodata';
+    /* 🔴 แถบเมนูซ้าย + หัวหน้าเลือกโมดูล เคยเขียน "Moodata Yindee" ตายตัว
+       → ลูกค้าเข้าห้องตัวเองก็เห็นชื่อเรา (เทียบกับฝั่งบอท 20 ก.ย. 69) */
+    var nb=document.querySelector('.nb-txt');
+    if(nb) nb.childNodes[0].nodeValue = inRoom ? ((ROOM&&ROOM.name)||'') : 'Moodata Yindee';
+    if(VIEW==='portal'){ var tt=$('tbTitle'); if(tt) tt.textContent=roomBrand(); }
     /* 🔴 แถบ "กำลังดูแลห้องของลูกค้า" — เอาออก (พี่กี้เคาะ 7 ก.ย. 69)
        ① มันเช็คแค่ "ห้องปัจจุบัน ≠ Moodata" ไม่ได้เช็คว่าเป็นผู้ดูแลระบบ
           → **ลูกค้าที่อยู่ในห้องตัวเองก็เห็นแถบนี้ + ปุ่ม "กลับห้อง Moodata"** ซึ่งไม่ใช่เรื่องของเขาเลย
@@ -18580,7 +18590,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260920-1740';
+  var APP_BUILD='20260920-2108';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
