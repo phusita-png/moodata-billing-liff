@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260920-1608">
+<link rel="stylesheet" href="user.css?v=20260920-1622">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -2160,7 +2160,7 @@
      เทส tests/test-split-routes.js ล็อกไว้ว่าสองที่ต้องตรงกัน */
   var HR_SPLIT_RE  = /^wa(Kpi|Leave|Ot|Payslip|Face|Clock|Bootstrap|HubEnter|HubRooms|Bell|Perf|RoomFolder)/;
   var DOC_SPLIT_RE = /^wa(Doc|Task|Assign|Board|PmBoard|Project|Send|MyTasks|AllTasks|CreateTask|Claim|Transfer|Cancel|Announce|GenRecurring|MyProjects|Bulk|RenameCustomer|Set(Due|Status|Title|Customer|WorkLink|Reviewer|Type|Category))/;
-  var FIN_SPLIT_RE = /^wa(Sales|Exp|Po|Petty|Recv|Receivables|Cn|Wht|Vat|Pnd|Fin|Reimb|Tax|Payout|Biz|Customer|Service|Loss|Masterlist|Contract|Stmt)/;
+  var FIN_SPLIT_RE = /^wa(Sales|Exp|Po|Petty|Recv|Receivables|Cn|Wht|Vat|Pnd|Fin|Reimb|Tax|Payout|Biz|Customer|Service|Loss|Masterlist|Contract|Stmt|Cash)/;
   function execUrlFor_(action){
     var a = String(action || '');
     if (EXEC_URL_HR  && HR_SPLIT_RE.test(a))  return EXEC_URL_HR;
@@ -2401,7 +2401,7 @@
     if(gi) $('tbIcon').innerHTML=gi.replace('stroke-width="1.9"','stroke-width="2"'); else $('tbIcon').textContent=meta[0];
     $('tbTitle').textContent=meta[1];
     mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
-    ({ bank:renderBank, expcat:renderExpCat, portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, perf:renderPerf, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expone:renderExpOne, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, salesqt:renderSalesQt, salesiv:renderSalesIv, salesre:renderSalesRe, salescn:renderSalesCn, datain:renderDataIn, contract:renderContract, recvkind:renderRecvKind, wtreg:renderSoonPage, statement:renderStatement, cashreport:renderSoonPage, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51, finhist:renderFinHist, docreg:renderDocReg, doccheck:renderDocCheck, docdash:renderDocDash, docbycat:renderDocByCat, docreport:renderDocReport, doccat:renderDocCat, kpiemp:renderKpiEmp, kpiperson:renderKpiPerson, kpidash:renderKpiDash, kpientry:renderKpiEntry, kpiscore:renderKpiScore, kpidoc:renderKpiDoc, kpiround:renderKpiRound, kpifill:renderKpiFill, kpimanage:renderKpiManage, kpirule:renderKpiRule, kpimetric:renderKpiMetric, kpitrait:renderKpiTrait, kpiimport:renderKpiImport, kpireport:renderKpiReport, kpihelp:renderKpiHelp, myset:renderMyset }[v] || soon)();
+    ({ bank:renderBank, expcat:renderExpCat, portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, perf:renderPerf, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expone:renderExpOne, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, salesqt:renderSalesQt, salesiv:renderSalesIv, salesre:renderSalesRe, salescn:renderSalesCn, datain:renderDataIn, contract:renderContract, recvkind:renderRecvKind, wtreg:renderSoonPage, statement:renderStatement, cashreport:renderCashReport, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51, finhist:renderFinHist, docreg:renderDocReg, doccheck:renderDocCheck, docdash:renderDocDash, docbycat:renderDocByCat, docreport:renderDocReport, doccat:renderDocCat, kpiemp:renderKpiEmp, kpiperson:renderKpiPerson, kpidash:renderKpiDash, kpientry:renderKpiEntry, kpiscore:renderKpiScore, kpidoc:renderKpiDoc, kpiround:renderKpiRound, kpifill:renderKpiFill, kpimanage:renderKpiManage, kpirule:renderKpiRule, kpimetric:renderKpiMetric, kpitrait:renderKpiTrait, kpiimport:renderKpiImport, kpireport:renderKpiReport, kpihelp:renderKpiHelp, myset:renderMyset }[v] || soon)();
   }
 
   // ───── มือถือ: เมนูกลุ่ม (ล่าง) + แท็บย่อย (บน) · คอมใช้ sidebar เดิม ไม่เกี่ยว ─────
@@ -11041,6 +11041,206 @@
   window.smPick=smPick; window.smSet=smSet; window.smSetTyped=smSetTyped;
   window.smSkip=smSkip; window.smSkipSave=smSkipSave; window.smUnmatch=smUnmatch;
 
+  /* ═══════════ 📊 รายงานเงินสด/ธนาคาร (view `cashreport` · 20 ก.ย. 2569) ═══════════
+     ผัง HANDOFF §2.6 กลุ่มรายงาน — กระทบยอดธนาคารรายเดือน · เงินสดย่อยคงเหลือรายผู้ถือ
+     หลังบ้าน CashReport.gs (route waCashReport / waCashReportPdf)
+
+     🔴 สิ่งที่หน้านี้ต้องพูดให้ชัด ไม่ใช่ปล่อยให้คนเดา
+        · ยอดธนาคาร = **เท่าที่นำเข้า statement มา** ไม่ได้ต่อ API ธนาคาร
+          เดือนที่ยังไม่นำเข้า ต้องเขียนว่า "ยังไม่ได้นำเข้า" ห้ามโชว์ 0 ให้เข้าใจผิดว่าเงินหมด
+        · ส่วนต่าง 2 ชั้นคนละเรื่องกัน — ชั้น statement ไม่ครบ (แก้ที่การนำเข้า)
+          กับชั้นเอกสารยังไม่ตรง (แก้ที่การบันทึก/จับคู่) เขียนแยกให้เห็น ไม่รวมเป็นตัวเลขเดียว */
+  var CR=null, CR_F={ ym:'', entity:'' };
+
+  function renderCashReport(){
+    skel();
+    jsonp(withRoom_({ action:'waCashReport', uid:UID, ym:CR_F.ym, entity:CR_F.entity }))
+      .then(function(r){
+        if(VIEW!=='cashreport') return;
+        if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+        CR=r; CR_F.ym=r.ym; crPaint();
+      }).catch(function(e){ if(VIEW==='cashreport') $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
+  }
+  function crSetF(k,v){ CR_F[k]=v; renderCashReport(); }
+
+  /** ตัวเลือกเดือน/บริษัท — ฟังก์ชันบริสุทธิ์ */
+  function crFilterHtml(d){
+    d=d||{};
+    var ym=String(d.ym||''), yNow=Number(ym.slice(0,4))||(new Date().getFullYear()+543);
+    var mNow=ym.slice(5,7);
+    var yo='';
+    for(var y=yNow+1;y>=yNow-3;y--) yo+='<option value="'+y+'"'+(y===yNow?' selected':'')+'>ปี '+y+'</option>';
+    var mo='';
+    for(var m=1;m<=12;m++){
+      var mm=(m<10?'0':'')+m;
+      mo+='<option value="'+mm+'"'+(mm===mNow?' selected':'')+'>'+esc(SM_MON[m-1])+'</option>';
+    }
+    var ents=(d.entities||[]);
+    var eo='<option value="">ทุกบริษัท</option>'+ents.map(function(x){
+      return '<option value="'+esc(x.code)+'"'+(x.code===CR_F.entity?' selected':'')+'>'+esc(x.name)+'</option>'; }).join('');
+    return '<div class="tax-acts" style="margin:0 0 12px">'+
+      '<select onchange="crSetYm(this.value,null)" style="flex:1">'+yo+'</select>'+
+      '<select onchange="crSetYm(null,this.value)" style="flex:1">'+mo+'</select>'+
+      (ents.length>1 ? '<select onchange="crSetF(\'entity\',this.value)" style="flex:1.2">'+eo+'</select>' : '')+
+      '<button class="btn btn-ghost" onclick="crPdf()">ออกแท็บ + PDF</button></div>';
+  }
+  function crSetYm(y,m){
+    var cur=String(CR_F.ym||((new Date().getFullYear()+543)+'-01'));
+    CR_F.ym=(y||cur.slice(0,4))+'-'+(m||cur.slice(5,7));
+    renderCashReport();
+  }
+
+  /** การ์ดเงินคงเหลือรวม — ฟังก์ชันบริสุทธิ์ */
+  function crTotalHtml(tot,bankSum){
+    tot=tot||{}; bankSum=bankSum||{};
+    var warn='';
+    /* 🔴 ยอดรวมที่ขาดบัญชีไปโดยไม่บอก อันตรายกว่าไม่มีตัวเลข — เตือนให้เห็นทุกครั้ง */
+    if(tot.partial) warn='<div class="m-hint" style="margin:0 0 12px;background:#FFF6E5;color:#92400E">'+
+      '⚠️ ยอดนี้<b>ยังไม่ครบ</b> — มี '+tot.partial+' บัญชีที่เดือนนี้ยังไม่ได้นำเข้า statement '+
+      'หรือไฟล์ที่นำเข้าไม่มีคอลัมน์ยอดคงเหลือ · นำเข้าที่เมนู 🏦 กระทบยอด Statement</div>';
+    return '<div class="ds-grid">'+
+      statCard('เงินในบัญชีธนาคาร', money(tot.bank), 'ปลายงวด · '+(bankSum.n||0)+' บัญชี')+
+      statCard('เงินสดย่อยในมือ', money(tot.petty), 'รวมทุกวง')+
+      statCard('เงินคงเหลือรวม', money(tot.all), tot.partial?'ยังไม่ครบทุกบัญชี':'ครบทุกช่องทาง',
+        tot.partial?'ds-wait':'')+
+      statCard('รอจับคู่ในบัญชี', String(bankSum.waitCount||0)+' รายการ',
+        'เงินเดินแล้วยังไม่มีเอกสาร', (bankSum.waitCount?'ds-warn':''))+
+      '</div>'+warn;
+  }
+
+  /** ตารางธนาคารรายบัญชี — ฟังก์ชันบริสุทธิ์ */
+  function crBankHtml(accts){
+    var rows=(accts||[]).map(function(b){
+      var note='';
+      if(!b.count) note='<div class="m-hint" style="margin:2px 0 0;color:#92400E">ยังไม่ได้นำเข้า statement ของเดือนนี้</div>';
+      else if(b.checkable && Math.abs(Number(b.gapBal)||0)>=0.005)
+        note='<div class="m-hint" style="margin:2px 0 0;color:#B23B3B">⚠️ statement อาจนำเข้าไม่ครบ — '+
+          'ยกมา+เข้า−ออก ได้ '+money(b.calcClose)+' แต่ธนาคารพิมพ์ '+money(b.closeBal)+
+          ' (ต่าง '+money(b.gapBal)+')</div>';
+      else if(!b.closeKnown && b.count)
+        note='<div class="m-hint" style="margin:2px 0 0">ไฟล์ที่นำเข้าไม่มีคอลัมน์ยอดคงเหลือ — ตรวจความครบไม่ได้</div>';
+      var unk='<span class="m-hint" style="margin:0">ไม่มีข้อมูล</span>';
+      /* 🔴 บัญชีที่ยังไม่นำเข้า statement ห้ามโชว์ 0.00 ในช่องเงินเข้า/ออกด้วย
+         "0" อ่านได้ว่าเดือนนี้ไม่มีเงินเดินเลย ซึ่งคนละเรื่องกับ "ยังไม่รู้"
+         (เห็นจากภาพ 20 ก.ย. — เทสตอนแรกเช็คแค่จำนวนช่องที่เขียนว่าไม่มีข้อมูล เลยรอดมาได้) */
+      return '<tr><td><b>'+esc(b.label)+'</b>'+
+          (b.accName?'<div class="m-hint" style="margin:2px 0 0">'+esc(b.accName)+'</div>':'')+note+'</td>'+
+        '<td style="text-align:right">'+(b.openKnown?money(b.openBal):unk)+'</td>'+
+        '<td style="text-align:right">'+(b.count?('<span class="sm-in">'+money(b.stmtIn)+'</span>'):unk)+'</td>'+
+        '<td style="text-align:right">'+(b.count?('<span class="sm-out">'+money(b.stmtOut)+'</span>'):unk)+'</td>'+
+        '<td style="text-align:right">'+(b.closeKnown?('<b>'+money(b.closeBal)+'</b>'):unk)+'</td>'+
+        '<td style="text-align:right">'+(b.closeKnown?money(b.bookBal):unk)+'</td></tr>';
+    }).join('');
+    return '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl sm-tbl">'+
+      '<colgroup><col style="width:34%"><col style="width:13%"><col style="width:13%">'+
+      '<col style="width:13%"><col style="width:14%"><col style="width:13%"></colgroup>'+
+      '<thead><tr><th>บัญชี</th><th style="text-align:right">ยกมา</th>'+
+      '<th style="text-align:right">เงินเข้า</th><th style="text-align:right">เงินออก</th>'+
+      '<th style="text-align:right">คงเหลือ (ธนาคาร)</th><th style="text-align:right">ยอดตามระบบ</th></tr></thead>'+
+      '<tbody>'+(rows || stEmptyRow(6,'ยังไม่มีบัญชีธนาคารในทะเบียน — เพิ่มที่เมนู 🏦 บัญชีธนาคาร'))+
+      '</tbody></table></div>';
+  }
+
+  /** บันไดกระทบยอดต่อบัญชี + รายการที่ต้องตามต่อ — ฟังก์ชันบริสุทธิ์ */
+  function crReconHtml(accts){
+    var blocks=(accts||[]).filter(function(b){ return b.closeKnown && (b.inTransit.n || b.outstanding.n); })
+      .map(function(b){
+        function list(rows,label){
+          return (rows||[]).map(function(x){
+            return '<tr><td>'+esc(label)+'</td><td><b>'+esc(x.no)+'</b>'+
+              '<div class="m-hint" style="margin:2px 0 0">'+esc(x.party||'')+'</div></td>'+
+              '<td class="sm-dt">'+esc(x.date||'')+'</td>'+
+              '<td style="text-align:right">'+money(x.amount)+'</td></tr>';
+          }).join('');
+        }
+        return '<div class="card" style="margin-bottom:12px"><div class="pb" style="padding:14px 16px">'+
+          '<div class="ds-h">'+esc(b.label)+'</div>'+
+          '<div class="sm-tie" style="margin:10px 0 12px">'+
+            '<div class="sm-eq">ยอดคงเหลือตามธนาคาร <b>'+money(b.closeBal)+'</b></div>'+
+            '<div class="sm-eq">+ เงินรับที่บันทึกแล้วยังไม่เข้าบัญชี <b>'+money(b.inTransit.amt)+'</b>'+
+              ' <span class="m-hint" style="margin:0">('+b.inTransit.n+' ใบ)</span></div>'+
+            '<div class="sm-eq">− ใบสำคัญจ่ายที่ออกแล้วยังไม่ตัดบัญชี <b>'+money(b.outstanding.amt)+'</b>'+
+              ' <span class="m-hint" style="margin:0">('+b.outstanding.n+' ใบ)</span></div>'+
+            '<div class="sm-eq">= <b>ยอดตามระบบ '+money(b.bookBal)+'</b></div>'+
+          '</div>'+
+          '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl sm-gtbl">'+
+          '<colgroup><col style="width:34%"><col style="width:28%"><col style="width:18%"><col style="width:20%"></colgroup>'+
+          '<thead><tr><th>รายการ</th><th>เลขที่</th><th>วันที่</th>'+
+          '<th style="text-align:right">ยอด</th></tr></thead><tbody>'+
+          list(b.inTransit.rows,'รับเงินไว้แล้ว ยังไม่เข้าบัญชี')+
+          list(b.outstanding.rows,'ออกใบสำคัญจ่ายแล้ว ยังไม่ตัดบัญชี')+
+          '</tbody></table></div></div></div>';
+      }).join('');
+    return blocks || '<div class="card"><div class="pb" style="padding:14px 16px">'+
+      '<div class="m-hint" style="margin:0">ไม่มีรายการค้าง — เอกสารทุกใบเจอเงินเดินในบัญชีแล้วค่ะ</div></div></div>';
+  }
+
+  /** ตารางเงินสดย่อยรายผู้ถือ — ฟังก์ชันบริสุทธิ์ */
+  function crPettyHtml(p){
+    p=p||{};
+    var rows=(p.rows||[]).map(function(r){
+      return '<tr'+(r.over?' style="background:#FFF6F6"':'')+'>'+
+        '<td><b>'+esc(r.label||'')+'</b>'+
+          (r.entityName?'<div class="m-hint" style="margin:2px 0 0">'+esc(r.entityName)+'</div>':'')+'</td>'+
+        '<td>'+esc(r.holder||'')+'</td>'+
+        '<td style="text-align:right">'+money(r.limit)+'</td>'+
+        '<td style="text-align:right">'+money(r.waiting)+
+          '<div class="m-hint" style="margin:2px 0 0">'+(r.waitingN||0)+' รายการ</div></td>'+
+        '<td style="text-align:right">'+money(r.inClaim)+
+          '<div class="m-hint" style="margin:2px 0 0">'+(r.inClaimN||0)+' รายการ</div></td>'+
+        '<td style="text-align:right"><b>'+money(r.onHand)+'</b>'+
+          (r.over?'<div class="m-hint" style="margin:2px 0 0;color:#B23B3B">จ่ายเกินวงเงิน</div>':'')+'</td></tr>';
+    }).join('');
+    var s=p.sum||{};
+    var foot=(p.rows||[]).length ? '<tr><td colspan="2"><b>รวมทุกวง</b></td>'+
+      '<td style="text-align:right"><b>'+money(s.limit)+'</b></td>'+
+      '<td style="text-align:right"><b>'+money(s.waiting)+'</b></td>'+
+      '<td style="text-align:right"><b>'+money(s.inClaim)+'</b></td>'+
+      '<td style="text-align:right"><b>'+money(s.onHand)+'</b></td></tr>' : '';
+    return '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl sm-tbl">'+
+      '<colgroup><col style="width:24%"><col style="width:18%"><col style="width:14%">'+
+      '<col style="width:16%"><col style="width:16%"><col style="width:12%"></colgroup>'+
+      '<thead><tr><th>วง</th><th>ผู้ถือ</th><th style="text-align:right">วงเงิน</th>'+
+      '<th style="text-align:right">จ่ายแล้ว รอตั้งเบิก</th>'+
+      '<th style="text-align:right">อยู่ในใบสรุป รอรับคืน</th>'+
+      '<th style="text-align:right">คงเหลือในมือ</th></tr></thead>'+
+      '<tbody>'+(rows || stEmptyRow(6,'ยังไม่มีวงเงินสดย่อย — ตั้งวงที่เมนู 💵 เงินสดย่อย'))+foot+'</tbody></table></div>';
+  }
+
+  function crPaint(){
+    var d=CR||{};
+    $('main').innerHTML='<div class="section-h">📊 รายงานเงินสด/ธนาคาร</div>'+
+      crFilterHtml(d)+
+      '<div class="m-hint" style="margin:0 0 12px">ยอดของเดือน <b>'+esc(d.monthText||'')+'</b> · '+
+      'ตัวเลขธนาคารมาจาก statement ที่นำเข้าไว้เท่านั้น (ระบบไม่ได้ต่อกับธนาคารโดยตรง)</div>'+
+      crTotalHtml(d.total,(d.bank&&d.bank.sum))+
+      '<div class="section-h" style="margin-top:4px">① กระทบยอดธนาคารรายเดือน</div>'+
+      crBankHtml((d.bank&&d.bank.accounts)||[])+
+      '<div class="section-h" style="margin-top:16px">② รายการที่ต้องตามต่อ</div>'+
+      '<div class="m-hint" style="margin:0 0 12px">ส่วนต่างระหว่าง "ยอดที่ธนาคารบอก" กับ "ยอดตามระบบ" '+
+      'มาจากรายการชุดนี้ — บันทึกไว้แล้วแต่เงินยังไม่เดิน (หรือกลับกัน)</div>'+
+      crReconHtml((d.bank&&d.bank.accounts)||[])+
+      '<div class="section-h" style="margin-top:16px">③ เงินสดย่อยคงเหลือรายผู้ถือ</div>'+
+      crPettyHtml(d.petty)+
+      '<div class="rs-steps" style="margin-top:16px"><b>อ่านตัวเลขยังไง</b>'+
+      '<b>คงเหลือ (ธนาคาร)</b> ยอดที่ธนาคารพิมพ์ไว้ในรายการสุดท้ายของเดือน'+
+      '<b>ยอดตามระบบ</b> ยอดธนาคาร + เงินรับที่บันทึกแล้วแต่ยังไม่เข้า − ใบสำคัญจ่ายที่ยังไม่ตัดบัญชี'+
+      '<b>เตือน "นำเข้าไม่ครบ"</b> คนละเรื่องกับเอกสารไม่ตรง — อันนี้แปลว่ารายการในไฟล์ statement ขาดไป '+
+      'ให้นำเข้าไฟล์ช่วงนั้นเพิ่มที่เมนูกระทบยอด Statement</div>';
+  }
+
+  function crPdf(){
+    callBusy('กำลังสร้างแท็บ + PDF…', jsonpPost(withRoom_({
+      action:'waCashReportPdf', uid:UID, ym:CR_F.ym, entity:CR_F.entity })))
+      .then(function(r){
+        if(!r||!r.ok){ toast((r&&r.error)||'ออกรายงานไม่สำเร็จ'); return; }
+        toast('สร้างแท็บ '+r.sheet+' แล้วค่ะ');
+        if(r.pdfUrl) window.open(r.pdfUrl,'_blank');
+      }).catch(function(e){ toast(e.message); });
+  }
+  window.renderCashReport=renderCashReport; window.crSetF=crSetF; window.crSetYm=crSetYm;
+  window.crPdf=crPdf;
+
   /* หน้าที่อยู่ในผังแล้วแต่ยังทำไม่ถึง — บอกตรง ๆ ว่าจะมีอะไร ไม่ปล่อยจอว่าง
      (pattern เดียวกับการ์ด "เร็ว ๆ นี้" บนหน้าเลือกโมดูลที่พี่กี้เคาะไว้) */
   var SOON_PAGE={
@@ -11048,10 +11248,7 @@
       lines:['ทะเบียนใบ 50 ทวิ ที่เราออกให้ผู้รับเงิน',
              'คอลัมน์สถานะ ส่งให้ผู้รับแล้ว / ยัง',
              'ออกอัตโนมัติตอนกดจ่าย — ไม่มีปุ่มสร้างเอง'],
-      note:'ระหว่างนี้ดูได้ที่ ระบบภาษี ▸ รายงานภาษี (ภ.ง.ด.1 / 3 / 53) ซึ่งดึงจากทะเบียนเดียวกัน' },
-    cashreport:{ icon:'📊', title:'รายงานเงินสด/ธนาคาร',
-      lines:['กระทบยอดธนาคารรายเดือน','เงินสดย่อยคงเหลือรายผู้ถือ'],
-      note:'ทำต่อจากหน้ากระทบยอด Statement ซึ่งเปิดใช้แล้วที่เมนู ธนาคาร ▸ กระทบยอด Statement' }
+      note:'ระหว่างนี้ดูได้ที่ ระบบภาษี ▸ รายงานภาษี (ภ.ง.ด.1 / 3 / 53) ซึ่งดึงจากทะเบียนเดียวกัน' }
   };
   function renderSoonPage(){
     var pg=SOON_PAGE[VIEW]||{ icon:'🛠️', title:'กำลังพัฒนา', lines:[], note:'' };
@@ -17979,7 +18176,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260920-1608';
+  var APP_BUILD='20260920-1622';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
