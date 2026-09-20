@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260920-1622">
+<link rel="stylesheet" href="user.css?v=20260920-1719">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -2160,7 +2160,7 @@
      เทส tests/test-split-routes.js ล็อกไว้ว่าสองที่ต้องตรงกัน */
   var HR_SPLIT_RE  = /^wa(Kpi|Leave|Ot|Payslip|Face|Clock|Bootstrap|HubEnter|HubRooms|Bell|Perf|RoomFolder)/;
   var DOC_SPLIT_RE = /^wa(Doc|Task|Assign|Board|PmBoard|Project|Send|MyTasks|AllTasks|CreateTask|Claim|Transfer|Cancel|Announce|GenRecurring|MyProjects|Bulk|RenameCustomer|Set(Due|Status|Title|Customer|WorkLink|Reviewer|Type|Category))/;
-  var FIN_SPLIT_RE = /^wa(Sales|Exp|Po|Petty|Recv|Receivables|Cn|Wht|Vat|Pnd|Fin|Reimb|Tax|Payout|Biz|Customer|Service|Loss|Masterlist|Contract|Stmt|Cash)/;
+  var FIN_SPLIT_RE = /^wa(Sales|Exp|Po|Petty|Recv|Receivables|Cn|Wht|Vat|Pnd|Fin|Reimb|Tax|Payout|Biz|Customer|Service|Loss|Masterlist|Contract|Stmt|Cash|Ai)/;
   function execUrlFor_(action){
     var a = String(action || '');
     if (EXEC_URL_HR  && HR_SPLIT_RE.test(a))  return EXEC_URL_HR;
@@ -2191,7 +2191,7 @@
     hubreq:['🏛️','คำขอสมัคร'], hubrooms:['🏢','ห้องลูกค้า'], roomset:['⚙️','ตั้งค่าห้อง'], home:['🏠','ภาพรวมประจำวัน'], clock:['🕐','ลงเวลา'],
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
     expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติเบิกจ่าย'], expone:['🔎','ใบเบิก'],
-    expdash:['📊','ใบเบิกพนักงาน'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ใบสั่งจ่าย (PO)'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','ภาษีซื้อ/ภ.พ.30'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก (WI)'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ใบสำคัญจ่าย (PV)'], sales:['💰','รายรับ'], salesqt:['📄','ใบเสนอราคา (QT)'], salesiv:['🧾','ใบแจ้งหนี้ (IV)'], salesre:['💵','ใบเสร็จรับเงิน (RE)'], salescn:['↩️','ใบลดหนี้ (CN)'], wtreg:['🧾','ภาษีที่หัก 50 ทวิ (WT)'], datain:['📥','นำเข้าข้อมูล'], contract:['📑','สัญญาบริการ'], recvkind:['💰','ประเภทการรับเงิน'], statement:['🏦','กระทบยอด Statement'], cashreport:['📊','รายงานเงินสด/ธนาคาร'], ar:['📊','ทะเบียนลูกหนี้'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51'], finhist:['📈','เทียบย้อนหลัง'], docdash:['📊','ภาพรวม'], docreg:['🗂️','จัดการเอกสาร'], doccheck:['✅','ตรวจก่อนส่ง'], docbycat:['📑','รายงานตามประเภท'], docreport:['📦','รายงานประจำเดือน'], doccat:['🏷️','จัดการหมวด'], hubmods:['🧩','โมดูลของแต่ละห้อง'], teamperm:['🔐','สิทธิ์ทีม'], kpiemp:['👥','ทะเบียนพนักงาน'], kpiperson:['📈','ประวัติรายคน'], kpidash:['📊','ภาพรวม'], kpientry:['✍️','กรอกผลงาน'], kpiscore:['⭐','คะแนนคุณลักษณะ'], kpidoc:['📄','ใบประเมิน'], kpiround:['📋','รอบการประเมิน'], kpifill:['✍️','ประเมินผลงาน'], kpimanage:['📊','จัดการผลการประเมิน'], kpirule:['⚖️','เกณฑ์ทั้งองค์กร'], kpimetric:['🎯','ตัวชี้วัด (KPI)'], kpitrait:['🧭','คุณลักษณะรายบุคคล'], kpiimport:['📥','นำเข้าข้อมูลเดิม'], kpireport:['📄','รายงาน'], kpihelp:['📘','คู่มือการใช้งาน'], myset:['🙋','ตั้งค่าของฉัน'], bank:['🏦','บัญชีธนาคาร'], expcat:['🏷️','ประเภทค่าใช้จ่าย']
+    expdash:['📊','ใบเบิกพนักงาน'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ใบสั่งจ่าย (PO)'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','ภาษีซื้อ/ภ.พ.30'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก (WI)'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ใบสำคัญจ่าย (PV)'], sales:['💰','รายรับ'], salesqt:['📄','ใบเสนอราคา (QT)'], salesiv:['🧾','ใบแจ้งหนี้ (IV)'], salesre:['💵','ใบเสร็จรับเงิน (RE)'], salescn:['↩️','ใบลดหนี้ (CN)'], wtreg:['🧾','ภาษีที่หัก 50 ทวิ (WT)'], datain:['📥','นำเข้าข้อมูล'], airead:['🤖','อ่านเอกสารด้วย AI'], contract:['📑','สัญญาบริการ'], recvkind:['💰','ประเภทการรับเงิน'], statement:['🏦','กระทบยอด Statement'], cashreport:['📊','รายงานเงินสด/ธนาคาร'], ar:['📊','ทะเบียนลูกหนี้'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51'], finhist:['📈','เทียบย้อนหลัง'], docdash:['📊','ภาพรวม'], docreg:['🗂️','จัดการเอกสาร'], doccheck:['✅','ตรวจก่อนส่ง'], docbycat:['📑','รายงานตามประเภท'], docreport:['📦','รายงานประจำเดือน'], doccat:['🏷️','จัดการหมวด'], hubmods:['🧩','โมดูลของแต่ละห้อง'], teamperm:['🔐','สิทธิ์ทีม'], kpiemp:['👥','ทะเบียนพนักงาน'], kpiperson:['📈','ประวัติรายคน'], kpidash:['📊','ภาพรวม'], kpientry:['✍️','กรอกผลงาน'], kpiscore:['⭐','คะแนนคุณลักษณะ'], kpidoc:['📄','ใบประเมิน'], kpiround:['📋','รอบการประเมิน'], kpifill:['✍️','ประเมินผลงาน'], kpimanage:['📊','จัดการผลการประเมิน'], kpirule:['⚖️','เกณฑ์ทั้งองค์กร'], kpimetric:['🎯','ตัวชี้วัด (KPI)'], kpitrait:['🧭','คุณลักษณะรายบุคคล'], kpiimport:['📥','นำเข้าข้อมูลเดิม'], kpireport:['📄','รายงาน'], kpihelp:['📘','คู่มือการใช้งาน'], myset:['🙋','ตั้งค่าของฉัน'], bank:['🏦','บัญชีธนาคาร'], expcat:['🏷️','ประเภทค่าใช้จ่าย']
   };
   var PROJECTS=[], COMPANIES=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ) · COMPANIES=บริษัท auto (หน้าจัดการ)
   var ALL_TASKS=[], PJ_SEL='', MB_STATUSES=[];   // มุมมอง Project (dropdown เลือก · แยก 6 สถานะ + %) · MB_STATUSES=รายการสถานะ (ฟอร์มแก้งานมือถือ)
@@ -2401,7 +2401,7 @@
     if(gi) $('tbIcon').innerHTML=gi.replace('stroke-width="1.9"','stroke-width="2"'); else $('tbIcon').textContent=meta[0];
     $('tbTitle').textContent=meta[1];
     mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
-    ({ bank:renderBank, expcat:renderExpCat, portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, perf:renderPerf, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expone:renderExpOne, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, salesqt:renderSalesQt, salesiv:renderSalesIv, salesre:renderSalesRe, salescn:renderSalesCn, datain:renderDataIn, contract:renderContract, recvkind:renderRecvKind, wtreg:renderSoonPage, statement:renderStatement, cashreport:renderCashReport, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51, finhist:renderFinHist, docreg:renderDocReg, doccheck:renderDocCheck, docdash:renderDocDash, docbycat:renderDocByCat, docreport:renderDocReport, doccat:renderDocCat, kpiemp:renderKpiEmp, kpiperson:renderKpiPerson, kpidash:renderKpiDash, kpientry:renderKpiEntry, kpiscore:renderKpiScore, kpidoc:renderKpiDoc, kpiround:renderKpiRound, kpifill:renderKpiFill, kpimanage:renderKpiManage, kpirule:renderKpiRule, kpimetric:renderKpiMetric, kpitrait:renderKpiTrait, kpiimport:renderKpiImport, kpireport:renderKpiReport, kpihelp:renderKpiHelp, myset:renderMyset }[v] || soon)();
+    ({ bank:renderBank, expcat:renderExpCat, portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, perf:renderPerf, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expone:renderExpOne, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, salesqt:renderSalesQt, salesiv:renderSalesIv, salesre:renderSalesRe, salescn:renderSalesCn, datain:renderDataIn, contract:renderContract, recvkind:renderRecvKind, wtreg:renderSoonPage, statement:renderStatement, cashreport:renderCashReport, airead:renderAiRead, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51, finhist:renderFinHist, docreg:renderDocReg, doccheck:renderDocCheck, docdash:renderDocDash, docbycat:renderDocByCat, docreport:renderDocReport, doccat:renderDocCat, kpiemp:renderKpiEmp, kpiperson:renderKpiPerson, kpidash:renderKpiDash, kpientry:renderKpiEntry, kpiscore:renderKpiScore, kpidoc:renderKpiDoc, kpiround:renderKpiRound, kpifill:renderKpiFill, kpimanage:renderKpiManage, kpirule:renderKpiRule, kpimetric:renderKpiMetric, kpitrait:renderKpiTrait, kpiimport:renderKpiImport, kpireport:renderKpiReport, kpihelp:renderKpiHelp, myset:renderMyset }[v] || soon)();
   }
 
   // ───── มือถือ: เมนูกลุ่ม (ล่าง) + แท็บย่อย (บน) · คอมใช้ sidebar เดิม ไม่เกี่ยว ─────
@@ -2416,7 +2416,7 @@
     /* ⬇️ ลำดับตามโครงเมนูที่พี่กี้วางไว้ (HANDOFF §2.6) — ภาพรวม · รายรับ · รายจ่าย · ธนาคาร · รายงาน
        หลักของผัง: **แถบซ้ายมีแต่เมนูหลัก · รายการย่อยเป็นแท็บในหน้า** · หน้ากรอก/รายละเอียด
        เปิดจากปุ่ม "+ สร้าง" หรือกดแถว ไม่ทำเป็นเมนู · ตัดเมนู "สรุปรายงาน" ในรายรับ/รายจ่าย */
-    { key:'fin',  icon:'💰', label:'การเงิน', views:['bizdash','salesqt','salesiv','salesre','salescn','whtin','ar','payout','petty','poreport','wtreg','bank','statement','salesreport','expreport','cashreport','datain','contract','recvkind','sales','reimb','expdash','expcat','taxhub','vatbuy','pnd51','finhist','finreport','taxdoc'] },
+    { key:'fin',  icon:'💰', label:'การเงิน', views:['bizdash','salesqt','salesiv','salesre','salescn','whtin','ar','payout','petty','poreport','wtreg','bank','statement','salesreport','expreport','cashreport','datain','airead','contract','recvkind','sales','reimb','expdash','expcat','taxhub','vatbuy','pnd51','finhist','finreport','taxdoc'] },
     { key:'me',   icon:'🙋', label:'ส่วนตัว', views:['clock','leave','ot','expense','docs','myset'] }
   ];
   // ไอคอนหัวกลุ่มบน sidebar คอม = SVG เส้นสีเดียว (พี่กี้ขอ 30 ก.ค.: เรียบ ๆ ไม่สีสัน)
@@ -2495,7 +2495,7 @@
       views:['bizdash','salesqt','salesiv','salesre','salescn','whtin','ar','payout','expdash','petty','poreport','wtreg','bank','statement','salesreport','expreport','cashreport','datain'],
       /* หน้าที่ยังเข้าได้จากลิงก์เก่า/ปุ่มในหน้า แต่ไม่อยู่ในแถบเมนูแล้ว (ผัง §2.6 ตัดออก)
          ⚠️ ต้องคงไว้ใน extra ไม่งั้นเข้าจากลิงก์ตรงแล้วแถบซ้ายหาย ออกไม่ได้ (บทเรียน 5 ก.ย.) */
-      extra:['expapprove','sales','reimb','expcat','contract','recvkind'],
+      extra:['expapprove','sales','reimb','expcat','contract','recvkind','airead'],
       /* 📐 โครงเมนูตามที่พี่กี้วางไว้ (HANDOFF §2.6) — รายการย่อยของแต่ละหัวข้อเป็น "แท็บในหน้า"
          ไม่ใช่เมนูย่อย · หน้ากรอก/รายละเอียดเปิดจากปุ่ม "+ สร้าง" หรือกดแถว */
       sec:[ ['', ['bizdash']],
@@ -4103,7 +4103,7 @@
     bank:'บัญชีธนาคาร', expcat:'ประเภทค่าใช้จ่าย', datain:'นำเข้าข้อมูล', contract:'สัญญาบริการ', recvkind:'ประเภทการรับเงิน', bizdash:'ภาพรวม', sales:'รายรับ', ar:'ลูกหนี้', salesreport:'รายงานรายรับ', poreport:'ทะเบียนใบสำคัญจ่าย', pnd51:'ภ.ง.ด.51', finhist:'เทียบย้อนหลัง', docdash:'ภาพรวมเอกสาร', docreg:'จัดการเอกสาร', doccheck:'ตรวจความครบก่อนส่งนักบัญชี', docbycat:'รายงานตามประเภทเอกสาร', docreport:'รายงานประจำเดือน (ปิดรอบ)', doccat:'จัดการหมวด', kpiemp:'ทะเบียนพนักงาน', kpiperson:'ประวัติรายคน', kpidash:'ภาพรวม', kpientry:'กรอกผลงาน', kpiscore:'คุณลักษณะ', kpidoc:'ใบประเมิน', kpiround:'รอบการประเมิน', kpifill:'ประเมินผลงาน', kpimanage:'จัดการผลการประเมิน', kpirule:'เกณฑ์ทั้งองค์กร', kpimetric:'ตัวชี้วัด (KPI)', kpitrait:'คุณลักษณะรายบุคคล', kpiimport:'นำเข้าข้อมูลเดิม', kpireport:'รายงาน', kpihelp:'คู่มือ' };
   // แท็บที่เห็นเฉพาะพี่/ผู้ดูแล · reimb = ตั้งเบิกลูกค้า (ชีตไม่มีเจ้าของรายคน + เป็นข้อมูลรายได้)
   // ⚠️ ซ่อนแท็บ ≠ กันข้อมูล — backend กรองสิทธิ์เองอีกชั้นเสมอ
-  var OWNER_VIEWS={ bank:1, expcat:1, perf:1, salesqt:1, salesiv:1, salesre:1, salescn:1, wtreg:1, statement:1, cashreport:1, datain:1, contract:1, recvkind:1, review:1, approve:1, expapprove:1, otapprove:1, reimb:1, taxdoc:1, petty:1, payout:1, vatbuy:1, expreport:1, taxhub:1, whtin:1, hrreport:1, finreport:1, ar:1, pnd51:1, finhist:1, salesreport:1, hubmods:1, teamperm:1 };
+  var OWNER_VIEWS={ bank:1, expcat:1, airead:1, perf:1, salesqt:1, salesiv:1, salesre:1, salescn:1, wtreg:1, statement:1, cashreport:1, datain:1, contract:1, recvkind:1, review:1, approve:1, expapprove:1, otapprove:1, reimb:1, taxdoc:1, petty:1, payout:1, vatbuy:1, expreport:1, taxhub:1, whtin:1, hrreport:1, finreport:1, ar:1, pnd51:1, finhist:1, salesreport:1, hubmods:1, teamperm:1 };
   var MGROUP='', MG_LAST={};
   function mVisibleViews(g){ return g.views.filter(function(v){ return IS_OWNER || !OWNER_VIEWS[v]; }); }
   function mGroupOf(v){ for(var i=0;i<NAV_GROUPS.length;i++){ if(NAV_GROUPS[i].views.indexOf(v)>=0) return NAV_GROUPS[i]; } return null; }
@@ -10439,9 +10439,9 @@
     { icon:'📗', title:'ข้อมูลจากระบบบัญชี (GL)',
       desc:'นำเข้า GL บัญชีภาษีถูกหัก ณ ที่จ่าย หรือรายงานจากโปรแกรมบัญชี เพื่อใช้ตั้งหลักกระทบยอด',
       go:"switchView('whtin')", btn:'ดูหน้าที่เกี่ยวข้อง', ready:false, when:'เฟส 6' },
-    { icon:'🧾', title:'ใบกำกับภาษีซื้อจากไฟล์',
-      desc:'อ่านบิล/ใบกำกับที่แนบกับใบสั่งจ่าย แล้วเติมข้อมูลภาษีซื้อให้',
-      go:"switchView('vatbuy')", btn:'ไปหน้าภาษีซื้อ', ready:false, when:'เฟส 7' }
+    { icon:'🤖', title:'ให้ AI อ่านเอกสารให้',
+      desc:'50 ทวิ · ใบกำกับภาษีซื้อ · สลิปโอน · Statement — ระบบอ่านแล้วเติมฟอร์มให้ตรวจ ไม่บันทึกเอง',
+      go:"switchView('airead')", btn:'เปิดหน้าอ่านเอกสารด้วย AI', ready:true }
   ];
   function renderDataIn(){
     var h='<div class="section-h">📥 นำเข้าข้อมูล</div>'+
@@ -11240,6 +11240,226 @@
   }
   window.renderCashReport=renderCashReport; window.crSetF=crSetF; window.crSetYm=crSetYm;
   window.crPdf=crPdf;
+
+  /* ═══════════ 🤖 อ่านเอกสารด้วย AI (view `airead` · เฟส 7 · 20 ก.ย. 2569) ═══════════
+     ผัง HANDOFF §2.7 · หลังบ้าน DocReader.gs + DocQueue.gs + AiIntake.gs
+     เข้าจากการ์ดในหน้า 📥 นำเข้าข้อมูล (ไม่เพิ่มเมนูแถบซ้าย — ผัง §2.6 ไม่มีเมนูนี้)
+
+     🔴 สิ่งที่หน้านี้ต้องพูดให้ชัด
+        · **AI เติมฟอร์มให้ ไม่ได้บันทึกให้** — ทุกใบต้องมีคนกดยืนยัน
+        · ใบที่มีคำเตือน ❌ **ส่งเข้าทะเบียนไม่ได้** จนกว่าจะแก้ค่าเอง
+        · ทุกครั้งที่อ่านคือเงินจริง — โชว์ค่าใช้จ่ายสะสมไว้ให้เห็นตลอด
+        · อ่านไม่ทันในคำขอเดียว = เข้าคิวให้ตัวอ่านเบื้องหลังทำ ไม่ใช่ให้คนนั่งรอจอค้าง */
+  var AR=null, AR_ONE=null, AR_TYPE='wht_received';
+
+  /** วันที่จาก AI เป็น ISO ค.ศ. — แสดงเป็น พ.ศ. ให้เข้าชุดกับทั้งระบบ
+      🔴 แปลงเฉพาะตอน "แสดง" เท่านั้น — ค่าที่ส่งกลับ backend ต้องคง YYYY-MM-DD ค.ศ. ไว้
+         (saveWhtIn_ อ่านด้วย parseDateOnly_ ซึ่งรับรูปนี้รูปเดียว แปลงทิ้งเมื่อไหร่ = บันทึกไม่ได้) */
+  function arDate(s){
+    var m=String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if(!m) return String(s||'');
+    return Number(m[3])+'/'+Number(m[2])+'/'+(Number(m[1])+543);
+  }
+
+  function renderAiRead(){
+    skel(); AR_ONE=null;
+    jsonp(withRoom_({ action:'waAiQueue', uid:UID })).then(function(r){
+      if(VIEW!=='airead') return;
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      AR=r; arPaint();
+    }).catch(function(e){ if(VIEW==='airead') $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
+  }
+
+  /** แถบบอกความพร้อม — ฟังก์ชันบริสุทธิ์ */
+  function arReadyHtml(rd){
+    rd=rd||{};
+    if(rd.ready && rd.hasTrigger) return '';
+    var bad=!rd.hasKey||!rd.allowed;
+    return '<div class="m-hint" style="margin:0 0 12px;background:'+(bad?'#FFF1F1':'#FFF6E5')+
+      ';color:'+(bad?'#B23B3B':'#92400E')+'">'+(bad?'⛔ ':'⚠️ ')+esc(rd.reason||'')+
+      (!rd.hasKey?' — ตั้งที่ Script Property ก่อนใช้งานค่ะ':'')+
+      (rd.hasKey&&rd.allowed&&!rd.hasTrigger?' (เมนูชีต 🤖 อ่านเอกสารด้วย AI ▸ เปิดตัวอ่านเบื้องหลัง)':'')+
+      '</div>';
+  }
+
+  /** การ์ดสรุปคิว — ฟังก์ชันบริสุทธิ์ */
+  function arSumHtml(s,rd){
+    s=s||{}; rd=rd||{};
+    return '<div class="ds-grid">'+
+      statCard('รออ่าน', String(s.wait||0)+' ใบ', (s.running?('กำลังอ่าน '+s.running+' ใบ'):'ตัวอ่านเบื้องหลังจะทยอยอ่านให้'),
+        (s.wait?'ds-wait':''))+
+      statCard('อ่านแล้ว รอตรวจ', String(s.review||0)+' ใบ',
+        (s.needFix?('ต้องแก้ก่อนส่ง '+s.needFix+' ใบ'):'ตรวจแล้วกดส่งเข้าทะเบียนได้'),
+        (s.needFix?'ds-warn':''))+
+      statCard('ส่งเข้าทะเบียนแล้ว', String(s.done||0)+' ใบ', 'อ่านไม่สำเร็จ '+(s.failed||0)+' ใบ')+
+      statCard('ค่าใช้จ่ายสะสม', money(s.costThb)+' ฿', 'โมเดล '+esc(rd.model||'-'))+
+      '</div>';
+  }
+
+  /** ตารางคิว — ฟังก์ชันบริสุทธิ์ */
+  function arTableHtml(rows,types){
+    var lbl={};
+    (types||[]).forEach(function(t){ lbl[t.key]=t.label; });
+    var body=(rows||[]).map(function(x){
+      var q="'"+String(x.id).replace(/'/g,"\\'")+"'";
+      var wait=(x.status||'').indexOf('รออ่าน')>=0;
+      var review=(x.status||'').indexOf('รอตรวจ')>=0;
+      var fail=(x.status||'').indexOf('ไม่สำเร็จ')>=0;
+      var act = review ? '<button class="btn btn-primary btn-sm" onclick="arOpen('+q+')">ดูผล / ส่งเข้าทะเบียน</button>'
+        : wait ? '<button class="btn btn-ghost btn-sm" onclick="arRunNow('+q+')">อ่านเดี๋ยวนี้</button>'
+        : fail ? '<button class="btn btn-ghost btn-sm" onclick="arRequeue('+q+')">ลองอ่านใหม่</button>'
+        : '<button class="btn btn-ghost btn-sm" onclick="arOpen('+q+')">ดูผล</button>';
+      return '<tr><td><b>'+esc(x.fileName||x.id)+'</b>'+
+          '<div class="m-hint" style="margin:2px 0 0">'+esc(lbl[x.docType]||x.docType)+
+          (x.created?(' · '+esc(x.created)):'')+'</div></td>'+
+        '<td>'+esc(x.status||'')+
+          (x.result?('<div class="m-hint" style="margin:2px 0 0">'+esc(x.result)+
+            (x.warnCount?(' · เตือน '+x.warnCount):'')+'</div>'):'')+
+          (fail&&x.note?('<div class="m-hint" style="margin:2px 0 0;color:#B23B3B">'+esc(String(x.note).slice(0,120))+'</div>'):'')+'</td>'+
+        '<td class="sm-dt" style="text-align:right">'+(x.cost?money(x.cost):'')+'</td>'+
+        '<td>'+act+'</td></tr>';
+    }).join('');
+    return '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl sm-tbl">'+
+      '<colgroup><col style="width:38%"><col style="width:26%"><col style="width:12%"><col style="width:24%"></colgroup>'+
+      '<thead><tr><th>ไฟล์</th><th>สถานะ</th><th style="text-align:right">ค่าอ่าน (฿)</th><th></th></tr></thead>'+
+      '<tbody>'+(body || stEmptyRow(4,'ยังไม่มีเอกสารในคิว — เลือกไฟล์ด้านบนเพื่อเริ่มค่ะ'))+'</tbody></table></div>';
+  }
+
+  function arPaint(){
+    var d=AR||{};
+    var opts=(d.docTypes||[]).map(function(t){
+      return '<option value="'+esc(t.key)+'"'+(t.key===AR_TYPE?' selected':'')+'>'+
+        esc(t.label)+' → '+esc(t.target)+'</option>'; }).join('');
+    $('main').innerHTML='<div class="section-h">🤖 อ่านเอกสารด้วย AI</div>'+
+      arReadyHtml(d.ready)+
+      arSumHtml(d.sum,d.ready)+
+      '<div class="card" style="margin-bottom:12px"><div class="pb" style="padding:16px 18px">'+
+        '<div class="rs-h">ส่งเอกสารให้อ่าน</div>'+
+        '<div class="rs-sub">ระบบอ่านแล้ว<b>เติมฟอร์มให้ตรวจ</b> ไม่ได้บันทึกให้เอง — '+
+        'ทุกใบต้องกดยืนยันก่อนเข้าทะเบียนเสมอ</div>'+
+        '<div class="fld"><label>ชนิดเอกสาร</label><select id="arType">'+opts+'</select></div>'+
+        '<div class="fld"><label>ไฟล์ (PDF หรือรูป)</label>'+
+        '<input type="file" id="arFile" accept="application/pdf,image/*"></div>'+
+        '<div class="tax-acts"><button class="btn btn-primary" onclick="arUpload()">ส่งเข้าคิวอ่าน</button></div>'+
+        '<div class="m-hint" style="margin:10px 0 0">ไฟล์ใหญ่/หลายหน้าใช้เวลาอ่านสักครู่ '+
+        'จึงเข้าคิวให้ตัวอ่านเบื้องหลังทำ — ไม่ต้องเปิดหน้านี้ค้างไว้</div>'+
+      '</div></div>'+
+      '<div class="section-h" style="margin-top:4px">คิวเอกสาร</div>'+
+      arTableHtml(d.rows,d.docTypes);
+  }
+
+  function arUpload(){
+    var sel=$('arType'), inp=$('arFile');
+    var f=inp&&inp.files&&inp.files[0];
+    if(!f){ toast('เลือกไฟล์ก่อนนะคะ'); return; }
+    AR_TYPE=(sel&&sel.value)||AR_TYPE;
+    var fr=new FileReader();
+    fr.onload=function(){
+      callBusy('กำลังส่งเข้าคิว…', jsonpPost(withRoom_({
+        action:'waAiEnqueue', uid:UID, docType:AR_TYPE,
+        fileName:f.name, mime:f.type||'application/pdf', file:String(fr.result||'') })))
+        .then(function(r){
+          if(!r||!r.ok){ toast((r&&r.error)||'ส่งไม่สำเร็จ'); return; }
+          toast(r.dup ? 'ไฟล์นี้อยู่ในคิวอยู่แล้วค่ะ' : '✅ เข้าคิวแล้ว — ระบบจะอ่านให้');
+          renderAiRead();
+        }).catch(function(e){ toast(e.message); });
+    };
+    fr.onerror=function(){ toast('อ่านไฟล์ไม่สำเร็จ'); };
+    fr.readAsDataURL(f);
+  }
+
+  function arRunNow(id){
+    callBusy('กำลังอ่าน…', jsonpPost(withRoom_({ action:'waAiRunNow', uid:UID, id:id })))
+      .then(function(r){
+        if(!r||!r.ok){ toast((r&&r.error)||'อ่านไม่สำเร็จ'); return; }
+        toast(r.review ? 'อ่านแล้ว — มีจุดที่ต้องตรวจค่ะ' : 'อ่านเสร็จแล้วค่ะ');
+        renderAiRead();
+      }).catch(function(e){ toast(e.message); });
+  }
+  function arRequeue(id){
+    callBusy('กำลังส่งกลับเข้าคิว…', jsonpPost(withRoom_({ action:'waAiRequeue', uid:UID, id:id })))
+      .then(function(r){
+        if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; }
+        toast('ส่งกลับเข้าคิวแล้วค่ะ'); renderAiRead();
+      }).catch(function(e){ toast(e.message); });
+  }
+  function arOpen(id){
+    callBusy('กำลังเปิดผล…', jsonp(withRoom_({ action:'waAiQueue', uid:UID, id:id })))
+      .then(function(r){
+        if(!r||!r.ok||!r.one){ toast((r&&r.error)||'เปิดไม่สำเร็จ'); return; }
+        AR_ONE=r.one; arPaintOne();
+      }).catch(function(e){ toast(e.message); });
+  }
+
+  /** หน้าผลของไฟล์เดียว — ฟังก์ชันบริสุทธิ์ (ของจริงกับเทสเรียกตัวเดียวกัน) */
+  function arOneHtml(o){
+    o=o||{};
+    var warns=(o.warn||[]);
+    var block = warns.length ? '<div class="sm-tie" style="margin-bottom:12px">'+
+      '<div class="ds-h">สิ่งที่ระบบตรวจเจอ</div>'+
+      warns.map(function(w){
+        /* ❌ = ห้ามใช้ต่อ · ⚠️ = ใช้ได้แต่ต้องดู · 🔍 = โมเดลบอกเองว่าไม่มั่นใจ */
+        var bad=String(w).indexOf('❌')===0;
+        return '<div class="sm-eq" style="color:'+(bad?'#B23B3B':'#5B6472')+'">'+esc(w)+'</div>';
+      }).join('')+'</div>' : '';
+    var stop = warns.some(function(w){ return String(w).indexOf('❌')===0; });
+    var applied=o.applied||{};
+    var rows=(o.certs||[]).map(function(c,i){
+      var done=applied[i];
+      return '<tr'+(done?' style="opacity:.6"':'')+'>'+
+        '<td class="sm-dt">ใบที่ '+(i+1)+'</td>'+
+        '<td><b>'+esc(c.payer||'(ไม่รู้ชื่อผู้จ่าย)')+'</b>'+
+          '<div class="m-hint" style="margin:2px 0 0">'+esc(c.docNo||'ไม่มีเลขที่')+
+          (c.form?(' · '+esc(c.form)):'')+'</div></td>'+
+        '<td class="sm-dt">'+esc(arDate(c.payDate))+'</td>'+
+        '<td style="text-align:right">'+money(c.amount)+'</td>'+
+        '<td style="text-align:right"><b>'+money(c.tax)+'</b></td>'+
+        '<td>'+(done
+          ? '<span class="m-hint" style="margin:0">เข้าทะเบียนแล้ว '+esc(done)+'</span>'
+          : (stop ? '<span class="m-hint" style="margin:0">แก้ค่าที่ ❌ ก่อนค่ะ</span>'
+                  : '<button class="btn btn-primary btn-sm" onclick="arApply('+i+')">ส่งเข้าทะเบียน</button>'))+
+        '</td></tr>';
+    }).join('');
+    var table = (o.docType==='wht_received')
+      ? '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl sm-tbl">'+
+        '<colgroup><col style="width:10%"><col style="width:32%"><col style="width:14%">'+
+        '<col style="width:14%"><col style="width:12%"><col style="width:18%"></colgroup>'+
+        '<thead><tr><th></th><th>ผู้จ่าย / เลขที่</th><th>วันที่จ่าย</th>'+
+        '<th style="text-align:right">ยอดเงิน</th><th style="text-align:right">ภาษีที่ถูกหัก</th><th></th></tr></thead>'+
+        '<tbody>'+(rows || stEmptyRow(6,'ไม่พบใบ 50 ทวิ ในไฟล์นี้'))+'</tbody></table></div>'
+      /* ชนิดอื่นยังไม่มีปลายทาง — โชว์ค่าที่อ่านได้ให้ดูก่อน ไม่แกล้งทำเป็นส่งต่อได้ */
+      : '<div class="card"><div class="pb" style="padding:14px 16px">'+
+        '<div class="m-hint" style="margin:0 0 8px">ชนิดนี้ยังไม่ได้ต่อปลายทางอัตโนมัติ — '+
+        'ดูค่าที่อ่านได้แล้วนำไปกรอกในหน้าที่เกี่ยวข้องค่ะ</div>'+
+        '<pre style="white-space:pre-wrap;font-size:12.5px;margin:0">'+
+        esc(JSON.stringify(o.data||{},null,1)).slice(0,4000)+'</pre></div></div>';
+    return '<div class="section-h">🤖 '+esc(o.fileName||o.id||'')+'</div>'+
+      '<div class="tax-acts" style="margin:0 0 12px">'+
+      '<button class="btn btn-ghost" onclick="renderAiRead()">← กลับคิวเอกสาร</button>'+
+      '<button class="btn btn-ghost" onclick="arRequeue(\''+String(o.id||'').replace(/'/g,"\\'")+'\')">อ่านใหม่</button>'+
+      '</div>'+block+table+
+      '<div class="rs-steps" style="margin-top:14px"><b>ก่อนกดส่งเข้าทะเบียน</b>'+
+      'ตัวเลขที่เห็นคือค่าที่ AI อ่านมา ไม่ใช่ค่าที่ยืนยันแล้ว — เทียบกับใบจริงอีกครั้งเสมอ'+
+      '<b>ใบที่ขึ้น ❌</b> ส่งไม่ได้จนกว่าจะแก้ เพราะเป็นข้อผิดพลาดที่ทำให้ยอดภาษีเพี้ยนทั้งเล่ม'+
+      '<b>ส่งแล้วแก้ได้</b> ที่หน้า 🧾 50 ทวิ ที่ถูกหัก ตามปกติ</div>';
+  }
+  function arPaintOne(){ $('main').innerHTML=arOneHtml(AR_ONE); }
+
+  function arApply(i){
+    var o=AR_ONE; if(!o) return;
+    var c=(o.certs||[])[i]; if(!c) return;
+    if(!confirm('ส่งใบนี้เข้าทะเบียน 50 ทวิ?\n\n'+(c.payer||'')+'\nยอด '+money(c.amount)+
+      ' · ภาษี '+money(c.tax))) return;
+    callBusy('กำลังบันทึกเข้าทะเบียน…', jsonpPost(withRoom_({
+      action:'waAiApply', uid:UID, id:o.id, index:String(i), form:JSON.stringify(c) })))
+      .then(function(r){
+        if(!r||!r.ok){ toast((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+        toast('✅ '+r.no+(r.matchNo?(' · จับคู่กับ '+r.matchNo):' · ยังไม่พบคู่'));
+        arOpen(o.id);
+      }).catch(function(e){ toast(e.message); });
+  }
+  window.renderAiRead=renderAiRead; window.arUpload=arUpload; window.arRunNow=arRunNow;
+  window.arRequeue=arRequeue; window.arOpen=arOpen; window.arApply=arApply;
 
   /* หน้าที่อยู่ในผังแล้วแต่ยังทำไม่ถึง — บอกตรง ๆ ว่าจะมีอะไร ไม่ปล่อยจอว่าง
      (pattern เดียวกับการ์ด "เร็ว ๆ นี้" บนหน้าเลือกโมดูลที่พี่กี้เคาะไว้) */
@@ -18176,7 +18396,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260920-1622';
+  var APP_BUILD='20260920-1719';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
