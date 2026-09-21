@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260921-0936">
+<link rel="stylesheet" href="user.css?v=20260921-1011">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1326,6 +1326,9 @@
   }
   /* ── Project (บริหารโครงการ) ── */
   .btn-sm{ padding:6px 12px; font-size:13px; }
+  /* ปุ่มในเซลล์ตารางมาตรฐาน — ปลด width:100% ของ .btn ไม่งั้นปุ่มกินเต็มคอลัมน์
+     (เคยแก้เฉพาะหน้าไปแล้วหลายที่: .us-tbl · .sm-tbl · .ec-tbl → รวมมาที่ .dt-tbl ทีเดียว) */
+  .dt-tbl .btn-sm{ width:auto; white-space:nowrap; }
   .pjc{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow);
     padding:16px 17px; margin-bottom:12px; cursor:pointer; transition:box-shadow .15s, transform .05s; }
   .pjc:hover{ box-shadow:0 6px 20px rgba(120,150,200,.22); } .pjc:active{ transform:scale(.995); }
@@ -2206,6 +2209,8 @@
       <svg viewBox="0 0 24 24"><path d="M3 12.5 12.5 3H21v8.5L11.5 21z"/><circle cx="17" cy="7" r="1.4"/></svg><span>ประเภทค่าใช้จ่าย</span></button>
     <button class="nav-btn" data-view="bank" aria-label="บัญชีธนาคาร" id="navBank" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M3 9.5 12 4l9 5.5"/><path d="M5 9.5V19h14V9.5"/><path d="M9 19v-5h6v5"/></svg><span>บัญชีธนาคาร</span></button>
+    <button class="nav-btn" data-view="svcreg" aria-label="ทะเบียนสินค้า/บริการ" id="navSvcReg" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M4 8.2 12 4l8 4.2v7.6L12 20l-8-4.2z"/><path d="M4 8.2 12 12.4l8-4.2M12 12.4V20"/></svg><span>สินค้า/บริการ</span></button>
     <button class="nav-btn" data-view="clock" aria-label="ลงเวลา">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 1.8"/></svg><span>ลงเวลา</span></button>
     <button class="nav-btn" data-view="leave" aria-label="การลา">
@@ -2306,7 +2311,8 @@
     hubreq:['🏛️','คำขอสมัคร'], hubrooms:['🏢','ห้องลูกค้า'], roomset:['⚙️','ตั้งค่าห้อง'], home:['🏠','ภาพรวมประจำวัน'], clock:['🕐','ลงเวลา'],
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
     expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติเบิกจ่าย'], expone:['🔎','ใบเบิก'],
-    expdash:['📊','ใบเบิกพนักงาน'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ใบสั่งจ่าย (PO)'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','ภาษีซื้อ/ภ.พ.30'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก (WI)'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ใบสำคัญจ่าย (PV)'], sales:['💰','รายรับ'], salesqt:['📄','ใบเสนอราคา (QT)'], salesiv:['🧾','ใบแจ้งหนี้ (IV)'], salesre:['💵','ใบเสร็จรับเงิน (RE)'], salescn:['↩️','ใบลดหนี้ (CN)'], wtreg:['🧾','ภาษีที่หัก 50 ทวิ (WT)'], datain:['📥','นำเข้าข้อมูล'], airead:['🤖','อ่านเอกสารด้วย AI'], contract:['📑','สัญญาบริการ'], recvkind:['💰','ประเภทการรับเงิน'], statement:['🏦','กระทบยอด Statement'], cashreport:['📊','รายงานเงินสด/ธนาคาร'], ar:['📊','ทะเบียนลูกหนี้'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51'], finhist:['📈','เทียบย้อนหลัง'], docdash:['📊','ภาพรวม'], docreg:['🗂️','จัดการเอกสาร'], doccheck:['✅','ตรวจก่อนส่ง'], docbycat:['📑','รายงานตามประเภท'], docreport:['📦','รายงานประจำเดือน'], doccat:['🏷️','จัดการหมวด'], hubmods:['🧩','โมดูลของแต่ละห้อง'], teamperm:['🔐','สิทธิ์ทีม'], kpiemp:['👥','ทะเบียนพนักงาน'], kpiperson:['📈','ประวัติรายคน'], kpidash:['📊','ภาพรวม'], kpientry:['✍️','กรอกผลงาน'], kpiscore:['⭐','คะแนนคุณลักษณะ'], kpidoc:['📄','ใบประเมิน'], kpiround:['📋','รอบการประเมิน'], kpifill:['✍️','ประเมินผลงาน'], kpimanage:['📊','จัดการผลการประเมิน'], kpirule:['⚖️','เกณฑ์ทั้งองค์กร'], kpimetric:['🎯','ตัวชี้วัด (KPI)'], kpitrait:['🧭','คุณลักษณะรายบุคคล'], kpiimport:['📥','นำเข้าข้อมูลเดิม'], kpireport:['📄','รายงาน'], kpihelp:['📘','คู่มือการใช้งาน'], myset:['🙋','ตั้งค่าของฉัน'], bank:['🏦','บัญชีธนาคาร'], expcat:['🏷️','ประเภทค่าใช้จ่าย']
+    expdash:['📊','ใบเบิกพนักงาน'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ใบสั่งจ่าย (PO)'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','ภาษีซื้อ/ภ.พ.30'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก (WI)'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ใบสำคัญจ่าย (PV)'], sales:['💰','รายรับ'], salesqt:['📄','ใบเสนอราคา (QT)'], salesiv:['🧾','ใบแจ้งหนี้ (IV)'], salesre:['💵','ใบเสร็จรับเงิน (RE)'], salescn:['↩️','ใบลดหนี้ (CN)'], wtreg:['🧾','ภาษีที่หัก 50 ทวิ (WT)'], datain:['📥','นำเข้าข้อมูล'], airead:['🤖','อ่านเอกสารด้วย AI'], contract:['📑','สัญญาบริการ'], recvkind:['💰','ประเภทการรับเงิน'], statement:['🏦','กระทบยอด Statement'], cashreport:['📊','รายงานเงินสด/ธนาคาร'], ar:['📊','ทะเบียนลูกหนี้'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51'], finhist:['📈','เทียบย้อนหลัง'], docdash:['📊','ภาพรวม'], docreg:['🗂️','จัดการเอกสาร'], doccheck:['✅','ตรวจก่อนส่ง'], docbycat:['📑','รายงานตามประเภท'], docreport:['📦','รายงานประจำเดือน'], doccat:['🏷️','จัดการหมวด'], hubmods:['🧩','โมดูลของแต่ละห้อง'], teamperm:['🔐','สิทธิ์ทีม'], kpiemp:['👥','ทะเบียนพนักงาน'], kpiperson:['📈','ประวัติรายคน'], kpidash:['📊','ภาพรวม'], kpientry:['✍️','กรอกผลงาน'], kpiscore:['⭐','คะแนนคุณลักษณะ'], kpidoc:['📄','ใบประเมิน'], kpiround:['📋','รอบการประเมิน'], kpifill:['✍️','ประเมินผลงาน'], kpimanage:['📊','จัดการผลการประเมิน'], kpirule:['⚖️','เกณฑ์ทั้งองค์กร'], kpimetric:['🎯','ตัวชี้วัด (KPI)'], kpitrait:['🧭','คุณลักษณะรายบุคคล'], kpiimport:['📥','นำเข้าข้อมูลเดิม'], kpireport:['📄','รายงาน'], kpihelp:['📘','คู่มือการใช้งาน'], myset:['🙋','ตั้งค่าของฉัน'], bank:['🏦','บัญชีธนาคาร'], expcat:['🏷️','ประเภทค่าใช้จ่าย'],
+    svcreg:['🧰','ทะเบียนสินค้า/บริการ']
   };
   var PROJECTS=[], COMPANIES=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ) · COMPANIES=บริษัท auto (หน้าจัดการ)
   var ALL_TASKS=[], PJ_SEL='', MB_STATUSES=[];   // มุมมอง Project (dropdown เลือก · แยก 6 สถานะ + %) · MB_STATUSES=รายการสถานะ (ฟอร์มแก้งานมือถือ)
@@ -2520,7 +2526,7 @@
     if(gi) $('tbIcon').innerHTML=gi.replace('stroke-width="1.9"','stroke-width="2"'); else $('tbIcon').textContent=meta[0];
     $('tbTitle').textContent=meta[1];
     mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
-    ({ bank:renderBank, expcat:renderExpCat, portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, perf:renderPerf, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expone:renderExpOne, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, salesqt:renderSalesQt, salesiv:renderSalesIv, salesre:renderSalesRe, salescn:renderSalesCn, datain:renderDataIn, contract:renderContract, recvkind:renderRecvKind, wtreg:renderSoonPage, statement:renderStatement, cashreport:renderCashReport, airead:renderAiRead, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51, finhist:renderFinHist, docreg:renderDocReg, doccheck:renderDocCheck, docdash:renderDocDash, docbycat:renderDocByCat, docreport:renderDocReport, doccat:renderDocCat, kpiemp:renderKpiEmp, kpiperson:renderKpiPerson, kpidash:renderKpiDash, kpientry:renderKpiEntry, kpiscore:renderKpiScore, kpidoc:renderKpiDoc, kpiround:renderKpiRound, kpifill:renderKpiFill, kpimanage:renderKpiManage, kpirule:renderKpiRule, kpimetric:renderKpiMetric, kpitrait:renderKpiTrait, kpiimport:renderKpiImport, kpireport:renderKpiReport, kpihelp:renderKpiHelp, myset:renderMyset }[v] || soon)();
+    ({ bank:renderBank, expcat:renderExpCat, svcreg:renderSvcReg, portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, perf:renderPerf, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expone:renderExpOne, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, salesqt:renderSalesQt, salesiv:renderSalesIv, salesre:renderSalesRe, salescn:renderSalesCn, datain:renderDataIn, contract:renderContract, recvkind:renderRecvKind, wtreg:renderSoonPage, statement:renderStatement, cashreport:renderCashReport, airead:renderAiRead, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51, finhist:renderFinHist, docreg:renderDocReg, doccheck:renderDocCheck, docdash:renderDocDash, docbycat:renderDocByCat, docreport:renderDocReport, doccat:renderDocCat, kpiemp:renderKpiEmp, kpiperson:renderKpiPerson, kpidash:renderKpiDash, kpientry:renderKpiEntry, kpiscore:renderKpiScore, kpidoc:renderKpiDoc, kpiround:renderKpiRound, kpifill:renderKpiFill, kpimanage:renderKpiManage, kpirule:renderKpiRule, kpimetric:renderKpiMetric, kpitrait:renderKpiTrait, kpiimport:renderKpiImport, kpireport:renderKpiReport, kpihelp:renderKpiHelp, myset:renderMyset }[v] || soon)();
   }
 
   // ───── มือถือ: เมนูกลุ่ม (ล่าง) + แท็บย่อย (บน) · คอมใช้ sidebar เดิม ไม่เกี่ยว ─────
@@ -2535,7 +2541,7 @@
     /* ⬇️ ลำดับตามโครงเมนูที่พี่กี้วางไว้ (HANDOFF §2.6) — ภาพรวม · รายรับ · รายจ่าย · ธนาคาร · รายงาน
        หลักของผัง: **แถบซ้ายมีแต่เมนูหลัก · รายการย่อยเป็นแท็บในหน้า** · หน้ากรอก/รายละเอียด
        เปิดจากปุ่ม "+ สร้าง" หรือกดแถว ไม่ทำเป็นเมนู · ตัดเมนู "สรุปรายงาน" ในรายรับ/รายจ่าย */
-    { key:'fin',  icon:'💰', label:'การเงิน', views:['bizdash','salesqt','salesiv','salesre','salescn','whtin','ar','payout','petty','poreport','wtreg','bank','statement','salesreport','expreport','cashreport','datain','airead','contract','recvkind','sales','reimb','expdash','expcat','taxhub','vatbuy','pnd51','finhist','finreport','taxdoc'] },
+    { key:'fin',  icon:'💰', label:'การเงิน', views:['bizdash','salesqt','salesiv','salesre','salescn','whtin','ar','payout','petty','poreport','wtreg','bank','statement','salesreport','expreport','cashreport','svcreg','datain','airead','contract','recvkind','sales','reimb','expdash','expcat','taxhub','vatbuy','pnd51','finhist','finreport','taxdoc'] },
     { key:'me',   icon:'🙋', label:'ส่วนตัว', views:['clock','leave','ot','expense','docs','myset'] }
   ];
   // ไอคอนหัวกลุ่มบน sidebar คอม = SVG เส้นสีเดียว (พี่กี้ขอ 30 ก.ค.: เรียบ ๆ ไม่สีสัน)
@@ -2611,14 +2617,16 @@
      g = สีไล่ระดับของไอคอน (2 สี) — การ์ดเป็นกระจกฝ้า สีจึงมาจากไอคอนเป็นหลัก */
   var MODULES=[
     { key:'fin',     th:'ระบบการเงิน',  en:'FINANCE',     color:'#1E8FE1', g:['#38bdf8','#1d4ed8'], own:true,
-      views:['bizdash','salesqt','salesiv','salesre','salescn','whtin','ar','payout','petty','poreport','wtreg','bank','statement','salesreport','expreport','cashreport','datain'],
+      views:['bizdash','salesqt','salesiv','salesre','salescn','whtin','ar','payout','petty','poreport','wtreg','bank','statement','salesreport','expreport','cashreport','svcreg','datain'],
       /* หน้าที่ยังเข้าได้จากลิงก์เก่า/ปุ่มในหน้า แต่ไม่อยู่ในแถบเมนูแล้ว (ผัง §2.6 ตัดออก)
          ⚠️ ต้องคงไว้ใน extra ไม่งั้นเข้าจากลิงก์ตรงแล้วแถบซ้ายหาย ออกไม่ได้ (บทเรียน 5 ก.ย.) */
       extra:['expapprove','sales','reimb','expcat','contract','recvkind','airead','expdash'],
       /* 📐 โครงเมนูตามที่พี่กี้วางไว้ (HANDOFF §2.6) — รายการย่อยของแต่ละหัวข้อเป็น "แท็บในหน้า"
          ไม่ใช่เมนูย่อย · หน้ากรอก/รายละเอียดเปิดจากปุ่ม "+ สร้าง" หรือกดแถว */
       sec:[ ['', ['bizdash']],
-            ['รายรับ', ['salesqt','salesiv','salesre','salescn','whtin','ar']],
+            /* 🧰 สินค้า/บริการ อยู่ท้ายกลุ่มรายรับ · 👥 ทะเบียนลูกค้าเป็นแท็บในหน้าทะเบียนลูกหนี้
+               (พี่กี้เคาะ 21 ก.ย. 69 — ของสองอย่างนี้ใช้ตอนออกเอกสาร ไม่ใช่ค่าตั้งระบบ) */
+            ['รายรับ', ['salesqt','salesiv','salesre','salescn','whtin','ar','svcreg']],
             /* ผัง §2.6 มี PO · เงินสดย่อย · PV · WT
                🔴 expdash (ใบเบิกพนักงาน) ถอดออกจากเมนูแล้ว 20 ก.ย. 69 — กลายเป็นแท็บในหน้า payout
                   (พี่กี้: "มันคืออันเดียวกัน") · ต้องคงใน extra ไม่งั้นลิงก์เก่า/ปุ่มในหน้าเข้าไม่ได้ */
@@ -3145,18 +3153,23 @@
     var box=$('rsCoList'); if(!box) return;
     if(!CO_ENTS.length){
       box.innerHTML='<div class="card"><div class="pb" style="padding:16px 18px">'+
-        '<div class="emptybox">ยังไม่มีบริษัทในระบบ — กดเมนู 🏢 ตั้งค่านิติบุคคล ในชีตก่อนค่ะ</div>'+
+        '<div class="emptybox">ยังไม่มีบริษัทในระบบ</div>'+
+        '<div class="tax-acts" style="margin:10px 0 0"><button class="btn btn-primary" onclick="entEdit(-1)">+ เพิ่มบริษัท</button></div>'+
         '</div></div>';
       return;
     }
     if(CO_PICK>=CO_ENTS.length) CO_PICK=0;
-    var head='';
+    var head='<div class="kp-tabs" style="margin:0 0 14px">'+
+      '<button class="kp-tab" data-nolock onclick="entEdit(-1)">+ เพิ่มบริษัท</button></div>';
     if(CO_ENTS.length>1){
       /* แถบเลือกบริษัท = แค่ดูของอีกบริษัท ไม่ใช่การแก้ค่า → data-nolock ให้กดได้ตอนล็อก */
       head='<div class="kp-tabs" style="margin:0 0 14px">'+CO_ENTS.map(function(e,i){
         return '<button class="kp-tab'+(i===CO_PICK?' on':'')+'" data-nolock '+
           'onclick="coPick('+i+')">'+esc(e.name||e.code)+'</button>';
-      }).join('')+'</div>';
+      }).join('')+
+      /* 🔴 21 ก.ย. 69 ปุ่มนิติบุคคลถูกถอดจากหน้าเอกสารขายแล้ว — ถ้าไม่มีปุ่มนี้
+         จะเพิ่มบริษัทใหม่จากเว็บไม่ได้อีกเลย (ต้องไปกดเมนูในชีต) */
+      '<button class="kp-tab" data-nolock onclick="entEdit(-1)">+ เพิ่มบริษัท</button></div>';
     }
     var e=CO_ENTS[CO_PICK];
     box.innerHTML=
@@ -4230,7 +4243,7 @@
     expdash:'รายจ่าย', reimb:'ตั้งเบิกลูกค้า', petty:'เงินสดย่อย', payout:'ทะเบียนการจ่าย', expreport:'รายงานรายจ่าย', taxhub:'รายงานภาษี', whtin:'50 ทวิ ที่ถูกหัก', vatbuy:'ภาษีซื้อ',
     ot:'OT ของฉัน', otapprove:'อนุมัติ OT', docs:'เอกสาร',
     hrreport:'รายงาน HR', finreport:'รายงานการเงิน', taxdoc:'ภาษี/เอกสาร',
-    bank:'บัญชีธนาคาร', expcat:'ประเภทค่าใช้จ่าย', datain:'นำเข้าข้อมูล', contract:'สัญญาบริการ', recvkind:'ประเภทการรับเงิน', bizdash:'ภาพรวม', sales:'รายรับ', ar:'ลูกหนี้', salesreport:'รายงานรายรับ', poreport:'ทะเบียนใบสำคัญจ่าย', pnd51:'ภ.ง.ด.51', finhist:'เทียบย้อนหลัง', docdash:'ภาพรวมเอกสาร', docreg:'จัดการเอกสาร', doccheck:'ตรวจความครบก่อนส่งนักบัญชี', docbycat:'รายงานตามประเภทเอกสาร', docreport:'รายงานประจำเดือน (ปิดรอบ)', doccat:'จัดการหมวด', kpiemp:'ทะเบียนพนักงาน', kpiperson:'ประวัติรายคน', kpidash:'ภาพรวม', kpientry:'กรอกผลงาน', kpiscore:'คุณลักษณะ', kpidoc:'ใบประเมิน', kpiround:'รอบการประเมิน', kpifill:'ประเมินผลงาน', kpimanage:'จัดการผลการประเมิน', kpirule:'เกณฑ์ทั้งองค์กร', kpimetric:'ตัวชี้วัด (KPI)', kpitrait:'คุณลักษณะรายบุคคล', kpiimport:'นำเข้าข้อมูลเดิม', kpireport:'รายงาน', kpihelp:'คู่มือ' };
+    bank:'บัญชีธนาคาร', expcat:'ประเภทค่าใช้จ่าย', svcreg:'สินค้า/บริการ', datain:'นำเข้าข้อมูล', contract:'สัญญาบริการ', recvkind:'ประเภทการรับเงิน', bizdash:'ภาพรวม', sales:'รายรับ', ar:'ลูกหนี้', salesreport:'รายงานรายรับ', poreport:'ทะเบียนใบสำคัญจ่าย', pnd51:'ภ.ง.ด.51', finhist:'เทียบย้อนหลัง', docdash:'ภาพรวมเอกสาร', docreg:'จัดการเอกสาร', doccheck:'ตรวจความครบก่อนส่งนักบัญชี', docbycat:'รายงานตามประเภทเอกสาร', docreport:'รายงานประจำเดือน (ปิดรอบ)', doccat:'จัดการหมวด', kpiemp:'ทะเบียนพนักงาน', kpiperson:'ประวัติรายคน', kpidash:'ภาพรวม', kpientry:'กรอกผลงาน', kpiscore:'คุณลักษณะ', kpidoc:'ใบประเมิน', kpiround:'รอบการประเมิน', kpifill:'ประเมินผลงาน', kpimanage:'จัดการผลการประเมิน', kpirule:'เกณฑ์ทั้งองค์กร', kpimetric:'ตัวชี้วัด (KPI)', kpitrait:'คุณลักษณะรายบุคคล', kpiimport:'นำเข้าข้อมูลเดิม', kpireport:'รายงาน', kpihelp:'คู่มือ' };
   // แท็บที่เห็นเฉพาะพี่/ผู้ดูแล · reimb = ตั้งเบิกลูกค้า (ชีตไม่มีเจ้าของรายคน + เป็นข้อมูลรายได้)
   // ⚠️ ซ่อนแท็บ ≠ กันข้อมูล — backend กรองสิทธิ์เองอีกชั้นเสมอ
   var OWNER_VIEWS={ bank:1, expcat:1, airead:1, perf:1, salesqt:1, salesiv:1, salesre:1, salescn:1, wtreg:1, statement:1, cashreport:1, datain:1, contract:1, recvkind:1, review:1, approve:1, expapprove:1, otapprove:1, reimb:1, taxdoc:1, petty:1, payout:1, vatbuy:1, expreport:1, taxhub:1, whtin:1, hrreport:1, finreport:1, ar:1, pnd51:1, finhist:1, salesreport:1, hubmods:1, teamperm:1 };
@@ -10544,9 +10557,9 @@
       h+='<div class="tax-acts" style="margin:0 0 12px">'+pg.acts+
         /* ทะเบียนลูกค้า/บริการ/นิติบุคคล ใช้ตอน "ออกเอกสาร" เท่านั้น
            โชว์ทุกหน้า = 5 ปุ่มเรียงกันจนตกบรรทัด (เห็นจากภาพตัวอย่าง 20 ก.ย.) */
-        (pg.reg?'<button class="btn btn-ghost" onclick="custManage()">ทะเบียนลูกค้า</button>'+
-                '<button class="btn btn-ghost" onclick="svcManage()">ทะเบียนบริการ</button>'+
-                '<button class="btn btn-ghost" onclick="entManage()">นิติบุคคล</button>':'')+
+        /* 🔴 21 ก.ย. 69 พี่กี้สั่งถอดปุ่มทะเบียนออกจากหน้าเอกสาร:
+           ลูกค้า → แท็บในหน้าทะเบียนลูกหนี้ · สินค้า/บริการ → เมนูของตัวเอง
+           นิติบุคคล → ⚙️ ตั้งค่าห้อง ▸ ตั้งค่าบริษัท (ที่เดียวกับที่ตั้งค่าอย่างอื่นของบริษัท) */
         '</div>';
       /* เปิดจากเมนูชนิดไหน = ล็อกชนิดนั้น ไม่มี dropdown ให้สับสนซ้ำ (เมนูคือตัวกรองอยู่แล้ว)
          เข้าจากลิงก์เก่า (view 'sales') ยังมีตัวกรองเหมือนเดิม */
@@ -13709,12 +13722,28 @@
 
   // ═══════════ VIEW: 📊 ลูกหนี้ค้างรับ (อายุหนี้) — พี่/HR เท่านั้น ═══════════
   // นับจาก "ใบแจ้งหนี้" เท่านั้น (ใบเสนอราคายังไม่ใช่หนี้ · ใบวางบิลคือใบเดิมที่รวมมาวาง)
+  /* หน้าทะเบียนลูกหนี้มี 2 แท็บ (พี่กี้เคาะ 21 ก.ย. 69): ยอดค้างรับ + ทะเบียนลูกค้า
+     — คนเดียวกันทั้งสองเรื่อง (ใครติดเงินเรา / ข้อมูลเขาบนเอกสาร) จึงอยู่หน้าเดียวกัน */
+  var AR_TAB='ar';
+  function arTab(t){ AR_TAB=(t==='cust'?'cust':'ar'); renderAr(); }
+  window.arTab=arTab;
+  function arTabsHtml(){
+    return pageTabs(AR_TAB, [['ar','📊 ลูกหนี้ค้างรับ',"arTab('ar')"],
+                             ['cust','👥 ทะเบียนลูกค้า',"arTab('cust')"]]);
+  }
   function renderAr(){
     if(!IS_OWNER){ $('main').innerHTML='<div class="card"><div class="emptybox">เฉพาะผู้ดูแล (พี่/HR) ค่ะ</div></div>'; return; }
     skel();
+    if(AR_TAB==='cust'){
+      regLoad(function(r){
+        if(VIEW!=='ar'||AR_TAB!=='cust') return;
+        $('main').innerHTML='<div class="section-h">👥 ทะเบียนลูกค้า</div>'+arTabsHtml()+custRegHtml(r);
+      });
+      return;
+    }
     jsonp({action:'waReceivables',uid:UID}).then(function(r){
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
-      var h='<div class="section-h">📊 ลูกหนี้ค้างรับ <span style="font-weight:400;color:#8A94A6;font-size:12px">ณ '+esc(r.asOf)+'</span></div>';
+      var h='<div class="section-h">📊 ลูกหนี้ค้างรับ <span style="font-weight:400;color:#8A94A6;font-size:12px">ณ '+esc(r.asOf)+'</span></div>'+arTabsHtml();
       if(!r.customers.length){
         $('main').innerHTML=h+'<div class="card"><div class="emptybox">ไม่มียอดค้างรับ เก็บเงินครบทุกใบ 🎉</div></div>'; return; }
       var t=r.totals;
@@ -13752,7 +13781,8 @@
   function arToggle(i){ var el=$('arD'+i); if(el) el.classList.toggle('hidden'); }
 
   /** 🧰 ทะเบียนบริการ */
-  function svcManage(){
+  function svcManage(){ switchView('svcreg'); }
+  function svcManageOld_(){
     var rows=(SALES.services||[]).map(function(s){
       return '<tr><td>'+esc(s.code)+'</td><td>'+esc(s.name)+'</td><td>'+esc(s.unit||'-')+'</td>'+
         '<td class="ta-r">'+money(s.price)+'</td></tr>'; }).join('');
@@ -13771,14 +13801,119 @@
     var n=(($('svName')||{}).value||'').trim();
     if(!n){ mErr('กรอกชื่อบริการก่อนค่ะ'); return; }
     callBusy('กำลังบันทึก…', jsonp({action:'waServiceSave',uid:UID,name:n,
+      code:($('svCode')||{}).value||'', category:($('svCat')||{}).value||'',
       unit:($('svUnit')||{}).value||'',price:($('svPrice')||{}).value||'0'}), 'บันทึกแล้ว').then(function(r){
       if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
-      closeModal(); toast('✅ เพิ่ม '+r.code+' แล้ว'); renderSales();
+      closeModal(); toast('✅ บันทึก '+r.code+' แล้ว');
+      if(VIEW==='svcreg') renderSvcReg(); else renderSales();
     }).catch(function(e){ mErr(e.message); });
   }
 
-  /** 👥 ทะเบียนลูกค้า — เลขผู้เสียภาษี + ที่อยู่ ต้องมีก่อนออกใบกำกับ */
-  function custManage(){
+  /* ══════ 🧰 ทะเบียนสินค้า/บริการ · 👥 ทะเบียนลูกค้า ══════
+     พี่กี้เคาะ 21 ก.ย. 69: สินค้า/บริการ = เมนูในกลุ่มรายรับ · ลูกค้า = แท็บในหน้าทะเบียนลูกหนี้
+     🔴 โหลดด้วย light=1 — หน้านี้ไม่ใช้เอกสารขาย ไม่ต้องจ่ายค่าอ่านทั้งชีต
+     🔴 ชื่อลูกค้าตอนแก้ไขเป็นช่องอ่านอย่างเดียว — หลังบ้านจับคู่แถวด้วย "ชื่อ"
+        แก้ชื่อ = ได้ลูกค้าใหม่อีกแถว เอกสารเก่าจะชี้คนละรายกับของใหม่ */
+  var REG=null;
+  function regLoad(then){
+    jsonp({action:'waSalesInit',uid:UID,light:'1'}).then(function(r){
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      REG=r; if(!SALES) SALES=r;
+      then(r);
+    }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
+  }
+
+  function renderSvcReg(){
+    skel();
+    regLoad(function(r){
+      if(VIEW!=='svcreg') return;
+      var sv=r.services||[];
+      var rows=sv.map(function(x,i){
+        return '<tr><td class="dt-nw"><b>'+esc(x.code)+'</b></td>'+
+          '<td>'+esc(x.name)+(x.category?'<br><span style="color:#8A94A6;font-size:11.5px">'+esc(x.category)+'</span>':'')+'</td>'+
+          '<td class="dt-nw">'+esc(x.unit||'—')+'</td>'+
+          '<td class="dt-amt">'+money(x.price)+'</td>'+
+          '<td class="dt-nw"><button class="btn btn-ghost btn-sm" onclick="svcForm('+i+')">แก้ไข</button></td></tr>';
+      });
+      var h='<div class="section-h">🧰 ทะเบียนสินค้า/บริการ</div>'+
+        '<div class="m-hint" style="margin:0 0 12px">ราคาที่นี่เป็น<b>ราคาตั้งต้น</b> — ตอนออกเอกสารแก้ตัวเลขได้ '+
+        'และใบที่ออกไปแล้วคงราคาตามที่ออกจริงเสมอ</div>'+
+        '<div class="tax-acts" style="margin:0 0 12px">'+
+        '<button class="btn btn-primary" style="flex:none;min-width:0" onclick="svcForm(-1)">+ เพิ่มสินค้า/บริการ</button></div>';
+      h+=rows.length
+        ? dtTable([{label:'รหัส',cls:'dt-nw',w:'12%'},{label:'ชื่อ'},{label:'หน่วย',cls:'dt-nw',w:'12%'},
+                   {label:'ราคาตั้งต้น',cls:'ta-r',w:'15%'},{label:'',w:'92px'}], rows, '')
+        : '<div class="card"><div class="emptybox">ยังไม่มีสินค้า/บริการในทะเบียน 😊</div></div>';
+      $('main').innerHTML=h;
+    });
+  }
+
+  /** i = index ใน REG.services · -1 = เพิ่มใหม่ (รหัสระบบออกให้เอง) */
+  function svcForm(i){
+    var sv=(REG&&REG.services)||[], x=(i>=0?sv[i]:null)||{};
+    modal('<h3>'+(i<0?'➕ เพิ่มสินค้า/บริการ':'✏️ แก้ไข '+esc(x.code||''))+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<input type="hidden" id="svCode" value="'+esc(x.code||'')+'">'+
+      '<div class="fld"><label>ชื่อสินค้า/บริการ (ขึ้นบนเอกสาร)</label><input id="svName" value="'+esc(x.name||'')+'"></div>'+
+      '<div class="fld"><label>หน่วย (เดือน / ครั้ง / งาน)</label><input id="svUnit" value="'+esc(x.unit||'')+'"></div>'+
+      '<div class="fld"><label>ราคาตั้งต้น</label><input id="svPrice" inputmode="decimal" value="'+esc(String(x.price||0))+'"></div>'+
+      '<div class="fld"><label>หมวด (ไม่บังคับ)</label><input id="svCat" value="'+esc(x.category||'')+'"></div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button>'+
+      '<button class="btn btn-primary" onclick="svcSave()">บันทึก</button></div>');
+  }
+
+  /** ตารางทะเบียนลูกค้า — ใช้ในแท็บของหน้าทะเบียนลูกหนี้ */
+  function custRegHtml(r){
+    var cs=(r&&r.customers)||[], miss=(r&&r.missingCustomers)||[];
+    var rows=cs.map(function(c,i){
+      return '<tr><td><b>'+esc(c.name)+'</b>'+
+        (c.legalName&&c.legalName!==c.name?'<br><span style="color:#8A94A6;font-size:11.5px">'+esc(c.legalName)+'</span>':'')+'</td>'+
+        '<td class="dt-nw">'+esc(c.taxId||'—')+'</td>'+
+        '<td>'+esc(c.branch||'สำนักงานใหญ่')+'</td>'+
+        '<td class="dt-amt">'+(c.creditDays||0)+' วัน</td>'+
+        '<td class="dt-nw"><button class="btn btn-ghost btn-sm" onclick="custForm('+i+')">แก้ไข</button></td></tr>';
+    });
+    var h='<div class="m-hint" style="margin:0 0 12px">ข้อมูลชุดนี้ถูกคัดลอกลงเอกสารตอนออกใบ — '+
+      'แก้ที่นี่มีผลกับใบที่ออก<b>หลังจากนี้</b>เท่านั้น ใบเก่าคงข้อมูลเดิมตามที่ส่งให้ลูกค้าไปแล้ว</div>'+
+      '<div class="tax-acts" style="margin:0 0 12px">'+
+      '<button class="btn btn-primary" style="flex:none;min-width:0" onclick="custForm(-1)">+ เพิ่มลูกค้า</button></div>';
+    if(miss.length){
+      h+='<div class="m-hint">👥 มีกลุ่ม LINE แล้วแต่ยังไม่อยู่ในทะเบียน '+miss.length+' ราย: '+
+        esc(miss.slice(0,6).join(', '))+(miss.length>6?' …':'')+'</div>';
+    }
+    return h+(rows.length
+      ? dtTable([{label:'ลูกค้า'},{label:'เลขผู้เสียภาษี',cls:'dt-nw',w:'18%'},{label:'สาขา',w:'16%'},
+                 {label:'เครดิต',cls:'ta-r',w:'10%'},{label:'',w:'92px'}], rows, '')
+      : '<div class="card"><div class="emptybox">ยังไม่มีลูกค้าในทะเบียน 😊</div></div>');
+  }
+
+  /** i = index ใน REG.customers · -1 = เพิ่มใหม่ */
+  function custForm(i){
+    var cs=(REG&&REG.customers)||[], c=(i>=0?cs[i]:null)||{};
+    var miss=(REG&&REG.missingCustomers)||[];
+    var pick=(i<0&&miss.length)?('<div class="fld"><label>ลูกค้าที่มีกลุ่ม LINE แล้ว (เลือกเพื่อเติมชื่อ)</label>'+
+      '<select onchange="if(this.value)document.getElementById(\'cuName\').value=this.value">'+
+      '<option value="">— เลือก —</option>'+
+      miss.map(function(n){ return '<option value="'+esc(n)+'">'+esc(n)+'</option>'; }).join('')+'</select></div>'):'';
+    modal('<h3>'+(i<0?'➕ เพิ่มลูกค้า':'✏️ แก้ไขลูกค้า')+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      pick+
+      '<div class="fld"><label>ชื่อลูกค้า (ต้องตรงกับชีตกลุ่มลูกค้า)</label>'+
+      '<input id="cuName" value="'+esc(c.name||'')+'"'+(i<0?'':' readonly')+'>'+
+      (i<0?'':'<div class="m-hint" style="margin:6px 0 0">ชื่อเป็นตัวจับคู่กับเอกสารเดิม จึงแก้ไม่ได้ '+
+            'ถ้าต้องเปลี่ยนชื่อ ให้เพิ่มรายใหม่แล้วเลิกใช้รายเดิม</div>')+'</div>'+
+      '<div class="fld"><label>ชื่อเต็มตามหนังสือรับรอง (ขึ้นบนเอกสาร)</label><input id="cuLegal" value="'+esc(c.legalName||'')+'"></div>'+
+      '<div class="fld"><label>เลขประจำตัวผู้เสียภาษี (13 หลัก)</label><input id="cuTax" inputmode="numeric" value="'+esc(c.taxId||'')+'"></div>'+
+      '<div class="fld"><label>ที่อยู่ (สำหรับใบกำกับภาษี)</label><textarea id="cuAddr">'+esc(c.address||'')+'</textarea></div>'+
+      branchFieldHtml('cu', c.branch||'')+
+      '<div class="fld"><label>เครดิตเทอม (วัน)</label><input id="cuCredit" inputmode="numeric" value="'+
+      esc(String(c.creditDays||(REG&&REG.creditDays)||15))+'"></div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button>'+
+      '<button class="btn btn-primary" onclick="custSave()">บันทึกลูกค้า</button></div>');
+  }
+  window.renderSvcReg=renderSvcReg; window.svcForm=svcForm; window.custForm=custForm;
+
+  /** 👥 ปุ่มเดิมทั่วระบบยังเรียกชื่อนี้ — พาไปแท็บทะเบียนลูกค้าในหน้าทะเบียนลูกหนี้ */
+  function custManage(){ AR_TAB='cust'; switchView('ar'); }
+  function custManageOld_(){
     var miss=(SALES.missingCustomers||[]);
     var opts=miss.length?('<div class="fld"><label>ลูกค้าที่มีกลุ่ม LINE แล้ว (เลือกเพื่อเติมชื่อ)</label>'+
       '<select onchange="if(this.value)$(\'cuName\').value=this.value"><option value="">— เลือก —</option>'+
@@ -13807,7 +13942,8 @@
       address:($('cuAddr')||{}).value||'', branch:branchValue('cu'),
       creditDays:($('cuCredit')||{}).value||''}), 'บันทึกแล้ว').then(function(r){
       if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
-      closeModal(); toast('✅ บันทึก '+r.name+' แล้ว'); renderSales();
+      closeModal(); toast('✅ บันทึก '+r.name+' แล้ว');
+      if(VIEW==='ar') renderAr(); else renderSales();
     }).catch(function(e){ mErr(e.message); });
   }
   /** ช่อง "สำนักงานใหญ่/สาขา" — แยกจากที่อยู่ (พี่กี้เคาะ 3 ก.ย. 69)
@@ -18935,7 +19071,8 @@ function kpImpDraw(){
         var nsl=$('navSales'); if(nsl) nsl.style.display='';               // 💰 รายรับ (ลิงก์เก่า) = พี่/HR
         /* รายรับแยกตามชนิดเอกสาร + หน้าที่ยังทำไม่ถึง (ผัง §2.6 · 20 ก.ย. 69)
            ⚠️ เพิ่มปุ่มใหม่ต้องปลดซ่อนที่นี่ด้วย ไม่งั้นเมนูไม่โผล่ทั้งที่ลงทะเบียนครบ */
-        ['navSalesQt','navSalesIv','navSalesRe','navSalesCn','navWtReg','navStatement','navCashReport','navDataIn']
+        ['navSalesQt','navSalesIv','navSalesRe','navSalesCn','navWtReg','navStatement','navCashReport','navDataIn',
+         'navSvcReg']
           .forEach(function(id){ var el=$(id); if(el) el.style.display=''; });
         var nar=$('navAr'); if(nar) nar.style.display='';                   // 📊 ลูกหนี้ค้างรับ = พี่/HR
         var nsr=$('navSalesReport'); if(nsr) nsr.style.display='';           // 📊 รายงานรายรับ = พี่/HR
@@ -19031,7 +19168,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260921-0936';
+  var APP_BUILD='20260921-1011';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
