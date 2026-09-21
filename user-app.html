@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260921-1716">
+<link rel="stylesheet" href="user.css?v=20260921-1729">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -2452,7 +2452,7 @@
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
     expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติเบิกจ่าย'], expone:['🔎','ใบเบิก'],
     expdash:['📊','ใบเบิกพนักงาน'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ใบสั่งจ่าย (PO)'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','ภาษีซื้อ/ภ.พ.30'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก (WI)'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ใบสำคัญจ่าย (PV)'], sales:['💰','รายรับ'], salesqt:['📄','ใบเสนอราคา (QT)'], salesiv:['🧾','ใบแจ้งหนี้ (IV)'], salesre:['💵','ใบเสร็จรับเงิน (RE)'], salescn:['↩️','ใบลดหนี้ (CN)'], wtreg:['🧾','ภาษีที่หัก 50 ทวิ (WT)'], datain:['📥','นำเข้าข้อมูล'], airead:['🤖','อ่านเอกสารด้วย AI'], contract:['📑','สัญญาบริการ'], recvkind:['💰','ประเภทการรับเงิน'], statement:['🏦','กระทบยอด Statement'], cashreport:['📊','รายงานเงินสด/ธนาคาร'], ar:['📊','ทะเบียนลูกหนี้'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51'], finhist:['📈','เทียบย้อนหลัง'], docdash:['📊','ภาพรวม'], docreg:['🗂️','จัดการเอกสาร'], doccheck:['✅','ตรวจก่อนส่ง'], docbycat:['📑','รายงานตามประเภท'], docreport:['📦','รายงานประจำเดือน'], doccat:['🏷️','จัดการหมวด'], hubmods:['🧩','โมดูลของแต่ละห้อง'], teamperm:['🔐','สิทธิ์ทีม'], kpiemp:['👥','ทะเบียนพนักงาน'], kpiperson:['📈','ประวัติรายคน'], kpidash:['📊','ภาพรวม'], kpientry:['✍️','กรอกผลงาน'], kpiscore:['⭐','คะแนนคุณลักษณะ'], kpidoc:['📄','ใบประเมิน'], kpiround:['📋','รอบการประเมิน'], kpifill:['✍️','ประเมินผลงาน'], kpimanage:['📊','จัดการผลการประเมิน'], kpirule:['⚖️','เกณฑ์ทั้งองค์กร'], kpimetric:['🎯','ตัวชี้วัด (KPI)'], kpitrait:['🧭','คุณลักษณะรายบุคคล'], kpiimport:['📥','นำเข้าข้อมูลเดิม'], kpireport:['📄','รายงาน'], kpihelp:['📘','คู่มือการใช้งาน'], myset:['🙋','ตั้งค่าของฉัน'], bank:['🏦','บัญชีธนาคาร'], expcat:['🏷️','ประเภทค่าใช้จ่าย'],
-    svcreg:['🧰','ทะเบียนสินค้า/บริการ'], salesone:['📄','รายละเอียดเอกสาร'], salesform:['✏️','ออกเอกสารขาย']
+    svcreg:['🧰','ทะเบียนสินค้า/บริการ'], salesone:['📄','รายละเอียดเอกสาร'], salesform:['✏️','ออกเอกสารขาย'], ctform:['✏️','สร้างสัญญาบริการ']
   };
   var PROJECTS=[], COMPANIES=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ) · COMPANIES=บริษัท auto (หน้าจัดการ)
   var ALL_TASKS=[], PJ_SEL='', MB_STATUSES=[];   // มุมมอง Project (dropdown เลือก · แยก 6 สถานะ + %) · MB_STATUSES=รายการสถานะ (ฟอร์มแก้งานมือถือ)
@@ -2666,7 +2666,7 @@
     if(gi) $('tbIcon').innerHTML=gi.replace('stroke-width="1.9"','stroke-width="2"'); else $('tbIcon').textContent=meta[0];
     $('tbTitle').textContent=meta[1];
     mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
-    ({ bank:renderBank, expcat:renderExpCat, svcreg:renderSvcReg, salesone:renderSalesOne, salesform:renderSalesForm, portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, perf:renderPerf, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expone:renderExpOne, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, salesqt:renderSalesQt, salesiv:renderSalesIv, salesre:renderSalesRe, salescn:renderSalesCn, datain:renderDataIn, contract:renderContract, recvkind:renderRecvKind, wtreg:renderSoonPage, statement:renderStatement, cashreport:renderCashReport, airead:renderAiRead, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51, finhist:renderFinHist, docreg:renderDocReg, doccheck:renderDocCheck, docdash:renderDocDash, docbycat:renderDocByCat, docreport:renderDocReport, doccat:renderDocCat, kpiemp:renderKpiEmp, kpiperson:renderKpiPerson, kpidash:renderKpiDash, kpientry:renderKpiEntry, kpiscore:renderKpiScore, kpidoc:renderKpiDoc, kpiround:renderKpiRound, kpifill:renderKpiFill, kpimanage:renderKpiManage, kpirule:renderKpiRule, kpimetric:renderKpiMetric, kpitrait:renderKpiTrait, kpiimport:renderKpiImport, kpireport:renderKpiReport, kpihelp:renderKpiHelp, myset:renderMyset }[v] || soon)();
+    ({ bank:renderBank, expcat:renderExpCat, svcreg:renderSvcReg, salesone:renderSalesOne, salesform:renderSalesForm, ctform:renderCtForm, portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, perf:renderPerf, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expone:renderExpOne, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, salesqt:renderSalesQt, salesiv:renderSalesIv, salesre:renderSalesRe, salescn:renderSalesCn, datain:renderDataIn, contract:renderContract, recvkind:renderRecvKind, wtreg:renderSoonPage, statement:renderStatement, cashreport:renderCashReport, airead:renderAiRead, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51, finhist:renderFinHist, docreg:renderDocReg, doccheck:renderDocCheck, docdash:renderDocDash, docbycat:renderDocByCat, docreport:renderDocReport, doccat:renderDocCat, kpiemp:renderKpiEmp, kpiperson:renderKpiPerson, kpidash:renderKpiDash, kpientry:renderKpiEntry, kpiscore:renderKpiScore, kpidoc:renderKpiDoc, kpiround:renderKpiRound, kpifill:renderKpiFill, kpimanage:renderKpiManage, kpirule:renderKpiRule, kpimetric:renderKpiMetric, kpitrait:renderKpiTrait, kpiimport:renderKpiImport, kpireport:renderKpiReport, kpihelp:renderKpiHelp, myset:renderMyset }[v] || soon)();
   }
 
   // ───── มือถือ: เมนูกลุ่ม (ล่าง) + แท็บย่อย (บน) · คอมใช้ sidebar เดิม ไม่เกี่ยว ─────
@@ -2681,7 +2681,7 @@
     /* ⬇️ ลำดับตามโครงเมนูที่พี่กี้วางไว้ (HANDOFF §2.6) — ภาพรวม · รายรับ · รายจ่าย · ธนาคาร · รายงาน
        หลักของผัง: **แถบซ้ายมีแต่เมนูหลัก · รายการย่อยเป็นแท็บในหน้า** · หน้ากรอก/รายละเอียด
        เปิดจากปุ่ม "+ สร้าง" หรือกดแถว ไม่ทำเป็นเมนู · ตัดเมนู "สรุปรายงาน" ในรายรับ/รายจ่าย */
-    { key:'fin',  icon:'💰', label:'การเงิน', views:['bizdash','salesqt','salesiv','salesre','salescn','whtin','ar','payout','petty','poreport','wtreg','bank','statement','salesreport','expreport','cashreport','svcreg','salesone','salesform','datain','airead','contract','recvkind','sales','reimb','expdash','expcat','taxhub','vatbuy','pnd51','finhist','finreport','taxdoc'] },
+    { key:'fin',  icon:'💰', label:'การเงิน', views:['bizdash','salesqt','salesiv','salesre','salescn','whtin','ar','payout','petty','poreport','wtreg','bank','statement','salesreport','expreport','cashreport','svcreg','salesone','salesform','ctform','datain','airead','contract','recvkind','sales','reimb','expdash','expcat','taxhub','vatbuy','pnd51','finhist','finreport','taxdoc'] },
     { key:'me',   icon:'🙋', label:'ส่วนตัว', views:['clock','leave','ot','expense','docs','myset'] }
   ];
   // ไอคอนหัวกลุ่มบน sidebar คอม = SVG เส้นสีเดียว (พี่กี้ขอ 30 ก.ค.: เรียบ ๆ ไม่สีสัน)
@@ -2760,7 +2760,7 @@
       views:['bizdash','salesqt','salesiv','salesre','salescn','whtin','ar','payout','petty','poreport','wtreg','bank','statement','salesreport','expreport','cashreport','svcreg','datain'],
       /* หน้าที่ยังเข้าได้จากลิงก์เก่า/ปุ่มในหน้า แต่ไม่อยู่ในแถบเมนูแล้ว (ผัง §2.6 ตัดออก)
          ⚠️ ต้องคงไว้ใน extra ไม่งั้นเข้าจากลิงก์ตรงแล้วแถบซ้ายหาย ออกไม่ได้ (บทเรียน 5 ก.ย.) */
-      extra:['expapprove','sales','reimb','expcat','contract','recvkind','airead','expdash','salesone','salesform'],
+      extra:['expapprove','sales','reimb','expcat','contract','recvkind','airead','expdash','salesone','salesform','ctform'],
       /* 📐 โครงเมนูตามที่พี่กี้วางไว้ (HANDOFF §2.6) — รายการย่อยของแต่ละหัวข้อเป็น "แท็บในหน้า"
          ไม่ใช่เมนูย่อย · หน้ากรอก/รายละเอียดเปิดจากปุ่ม "+ สร้าง" หรือกดแถว */
       sec:[ ['', ['bizdash']],
@@ -4383,7 +4383,7 @@
     expdash:'รายจ่าย', reimb:'ตั้งเบิกลูกค้า', petty:'เงินสดย่อย', payout:'ทะเบียนการจ่าย', expreport:'รายงานรายจ่าย', taxhub:'รายงานภาษี', whtin:'50 ทวิ ที่ถูกหัก', vatbuy:'ภาษีซื้อ',
     ot:'OT ของฉัน', otapprove:'อนุมัติ OT', docs:'เอกสาร',
     hrreport:'รายงาน HR', finreport:'รายงานการเงิน', taxdoc:'ภาษี/เอกสาร',
-    bank:'บัญชีธนาคาร', expcat:'ประเภทค่าใช้จ่าย', svcreg:'สินค้า/บริการ', salesone:'รายละเอียดเอกสาร', salesform:'ออกเอกสาร', datain:'นำเข้าข้อมูล', contract:'สัญญาบริการ', recvkind:'ประเภทการรับเงิน', bizdash:'ภาพรวม', sales:'รายรับ', ar:'ลูกหนี้', salesreport:'รายงานรายรับ', poreport:'ทะเบียนใบสำคัญจ่าย', pnd51:'ภ.ง.ด.51', finhist:'เทียบย้อนหลัง', docdash:'ภาพรวมเอกสาร', docreg:'จัดการเอกสาร', doccheck:'ตรวจความครบก่อนส่งนักบัญชี', docbycat:'รายงานตามประเภทเอกสาร', docreport:'รายงานประจำเดือน (ปิดรอบ)', doccat:'จัดการหมวด', kpiemp:'ทะเบียนพนักงาน', kpiperson:'ประวัติรายคน', kpidash:'ภาพรวม', kpientry:'กรอกผลงาน', kpiscore:'คุณลักษณะ', kpidoc:'ใบประเมิน', kpiround:'รอบการประเมิน', kpifill:'ประเมินผลงาน', kpimanage:'จัดการผลการประเมิน', kpirule:'เกณฑ์ทั้งองค์กร', kpimetric:'ตัวชี้วัด (KPI)', kpitrait:'คุณลักษณะรายบุคคล', kpiimport:'นำเข้าข้อมูลเดิม', kpireport:'รายงาน', kpihelp:'คู่มือ' };
+    bank:'บัญชีธนาคาร', expcat:'ประเภทค่าใช้จ่าย', svcreg:'สินค้า/บริการ', salesone:'รายละเอียดเอกสาร', salesform:'ออกเอกสาร', ctform:'สร้างสัญญา', datain:'นำเข้าข้อมูล', contract:'สัญญาบริการ', recvkind:'ประเภทการรับเงิน', bizdash:'ภาพรวม', sales:'รายรับ', ar:'ลูกหนี้', salesreport:'รายงานรายรับ', poreport:'ทะเบียนใบสำคัญจ่าย', pnd51:'ภ.ง.ด.51', finhist:'เทียบย้อนหลัง', docdash:'ภาพรวมเอกสาร', docreg:'จัดการเอกสาร', doccheck:'ตรวจความครบก่อนส่งนักบัญชี', docbycat:'รายงานตามประเภทเอกสาร', docreport:'รายงานประจำเดือน (ปิดรอบ)', doccat:'จัดการหมวด', kpiemp:'ทะเบียนพนักงาน', kpiperson:'ประวัติรายคน', kpidash:'ภาพรวม', kpientry:'กรอกผลงาน', kpiscore:'คุณลักษณะ', kpidoc:'ใบประเมิน', kpiround:'รอบการประเมิน', kpifill:'ประเมินผลงาน', kpimanage:'จัดการผลการประเมิน', kpirule:'เกณฑ์ทั้งองค์กร', kpimetric:'ตัวชี้วัด (KPI)', kpitrait:'คุณลักษณะรายบุคคล', kpiimport:'นำเข้าข้อมูลเดิม', kpireport:'รายงาน', kpihelp:'คู่มือ' };
   // แท็บที่เห็นเฉพาะพี่/ผู้ดูแล · reimb = ตั้งเบิกลูกค้า (ชีตไม่มีเจ้าของรายคน + เป็นข้อมูลรายได้)
   // ⚠️ ซ่อนแท็บ ≠ กันข้อมูล — backend กรองสิทธิ์เองอีกชั้นเสมอ
   var OWNER_VIEWS={ bank:1, expcat:1, airead:1, perf:1, salesqt:1, salesiv:1, salesre:1, salescn:1, wtreg:1, statement:1, cashreport:1, datain:1, contract:1, recvkind:1, review:1, approve:1, expapprove:1, otapprove:1, reimb:1, taxdoc:1, petty:1, payout:1, vatbuy:1, expreport:1, taxhub:1, whtin:1, hrreport:1, finreport:1, ar:1, pnd51:1, finhist:1, salesreport:1, hubmods:1, teamperm:1 };
@@ -10880,14 +10880,16 @@
       var off=(c.status==='ยกเลิก');
       /* ความคืบหน้าอ่านจากยอด ไม่ใช่นับใบ — ลูกค้าจ่ายครึ่งงวดก็ยังเห็นว่าเดินไปเท่าไหร่ */
       var prog=(Number(s.total)||0) ? Math.round((Number(s.paid)||0)/(Number(s.total)||1)*100) : 0;
+      /* บรรทัดรองในเซลล์ใช้ตัวเทาเล็ก ไม่ใช่ .m-hint (ซึ่งมีพื้นเทา = กลายเป็นกล่องซ้อนในตาราง) */
+      var sub='color:#8A94A6;font-size:12px;margin-top:2px';
       return '<tr'+(off?' style="opacity:.55"':'')+' class="ct-row" onclick="ctOpen('+q+')">'+
-        '<td><b>'+esc(c.no)+'</b>'+(off?' <span class="m-hint" style="margin:0">(ยกเลิก)</span>':'')+
-          '<div class="m-hint" style="margin:2px 0 0">'+esc(c.title||'')+'</div></td>'+
-        '<td>'+esc(c.customer||'')+'</td>'+
+        '<td><b>'+esc(c.no)+'</b>'+(off?' <span style="color:#8A94A6;font-size:12px">(ยกเลิก)</span>':'')+
+          '<div style="'+sub+'">'+esc(c.title||'')+'</div></td>'+
+        '<td>'+esc(custShowName(c.customer)||'')+'</td>'+
         '<td class="dt-nw">'+esc(String(c.periods||0))+' งวด × '+money(c.amount)+'</td>'+
         '<td class="dt-nw">'+esc(c.startDate||'')+'</td>'+
         '<td class="dt-nw">'+(Number(s.future)||0 ? ('เหลืออีก '+s.future+' งวด') : 'ครบงวดแล้ว')+
-          '<div class="m-hint" style="margin:2px 0 0">รับแล้ว '+prog+'%</div></td>'+
+          '<div style="'+sub+'">รับแล้ว '+prog+'%</div></td>'+
         '</tr>';
     }).join('');
     return '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl ct-tbl">'+
@@ -10896,57 +10898,124 @@
       '<thead><tr><th>เลขที่ / เรื่อง</th><th>ลูกค้า</th><th>งวด × ยอด</th><th>งวดแรก</th><th>สถานะ</th></tr></thead>'+
       '<tbody>'+(rows || stEmptyRow(5,'ยังไม่มีสัญญา — กดปุ่มด้านบนเพื่อสร้างใบแรกค่ะ'))+'</tbody></table></div>';
   }
-  function ctPaint(){
-    $('main').innerHTML='<div class="section-h">🧾 ใบแจ้งหนี้ (IV)</div>'+
-      pageTabs('CT', CONTRACT_TABS)+
-      '<div class="tax-acts" style="margin:0 0 12px">'+
-        '<button class="btn btn-primary" onclick="ctNew()">+ สร้างสัญญา</button></div>'+
-      '<div class="m-hint" style="margin:0 0 12px">สัญญา 1 ฉบับ = ออกใบแจ้งหนี้ล่วงหน้า<b>ครบทุกงวดทันที</b> · '+
-      'งวดที่ยังไม่ถึงวันจะขึ้น "ยังไม่ถึงงวด" และ<b>ยังไม่ถูกนับเป็นลูกหนี้หรือรายได้</b> — '+
-      'กดที่แถวเพื่อดูงวดทั้งหมด</div>'+
-      ctTableHtml((CT&&CT.list)||[]);
+  /** ค้นหาในสัญญาที่โหลดมาแล้ว (ไม่ยิงคำขอใหม่ทุกตัวอักษร — เหมือนหน้ารายรับ) */
+  var CT_FIND='';
+  function ctFind(v){ CT_FIND=v; ctPaintRows(); }
+  function ctApplyFind(list){
+    var q=String(CT_FIND||'').trim().toLowerCase();
+    if(!q) return list||[];
+    return (list||[]).filter(function(c){
+      return [c.no,c.customer,c.title].join(' ').toLowerCase().indexOf(q)>=0; });
   }
+  function ctPaintRows(){
+    var box=$('ctTbl'); if(box) box.innerHTML=ctTableHtml(ctApplyFind((CT&&CT.list)||[]));
+  }
+  window.ctFind=ctFind;
+
+  /** หัวหน้าสัญญา — โครงเดียวกับแท็บใบวางบิล (พี่กี้สั่ง 21 ก.ย. 69)
+   *  การ์ดเดียวครอบ: ซ้าย = ชื่อ + คำอธิบาย · ขวา = ค้นหา + ปุ่มสร้าง (ไม่กินเต็มแถว) */
+  function ctPaint(){
+    $('main').innerHTML=
+      '<div class="bc"><button class="lnk" onclick="switchView(&quot;bizdash&quot;)">รายรับ</button> › สัญญาบริการ</div>'+
+      pageTabs('CT', CONTRACT_TABS)+
+      '<div class="lst-card"><div class="lst-head">'+
+        '<div class="t"><b>สัญญาบริการ <span class="doc-code">CT</span></b>'+
+        '<div>สัญญา 1 ฉบับ = ออกใบแจ้งหนี้ล่วงหน้าครบทุกงวดทันที · '+
+        'งวดที่ยังไม่ถึงวันยังไม่นับเป็นลูกหนี้หรือรายได้ — กดที่แถวเพื่อดูงวดทั้งหมด</div></div>'+
+        '<div class="lst-tools">'+
+          '<input class="s-find" id="ctFindBox" placeholder="ค้นหาเลขที่ / ลูกค้า / เรื่อง" '+
+            'value="'+esc(CT_FIND)+'" oninput="ctFind(this.value)">'+
+          '<button class="btn btn-primary" onclick="ctNew()">+ สร้างสัญญา</button>'+
+        '</div></div>'+
+        '<div id="ctTbl"></div></div>';
+    ctPaintRows();
+  }
+  /* ═══════════ ✏️ ฟอร์มสร้างสัญญา — หน้าเต็ม (view ctform · พี่กี้สั่ง 21 ก.ย. 69) ═══════════
+     🔴 ฟอร์มที่มีช่องเยอะห้ามเป็นป็อบอัป — กรอกยาว เลื่อนดูของที่กรอกไปแล้วไม่ได้
+     ใช้โครงการ์ดชุดเดียวกับฟอร์มออกเอกสารขาย (sf-card / sf-grid / sf-bar) */
   function ctNew(){
     if(!CT) return;
-    var custs=(CT.customers)||[];
-    if(!custs.length){ toast('เพิ่มลูกค้าในทะเบียนก่อนค่ะ'); switchView('salesiv'); return; }
-    var co=custs.map(function(c){ return '<option value="'+esc(c.name)+'">'+esc(c.name)+'</option>'; }).join('');
-    var eo=((CT.entities)||[]).map(function(x){ return '<option value="'+esc(x.code)+'">'+esc(x.name)+'</option>'; }).join('');
-    modal('<h3>📑 สร้างสัญญาบริการ</h3><div id="mErr" class="m-err hidden"></div>'+
-      '<div class="fld"><label>ออกในนามบริษัท</label><select id="ctEnt">'+eo+'</select></div>'+
-      '<div class="fld"><label>ลูกค้า</label><select id="ctCust">'+co+'</select></div>'+
-      '<div class="fld"><label>เรื่อง / ชื่อบริการ</label><input id="ctTitle" placeholder="เช่น ค่าบริการบัญชีรายเดือน"></div>'+
-      '<div class="fld"><label>ยอดต่องวด (บาท)</label><input id="ctAmt" inputmode="decimal" placeholder="เช่น 5000"></div>'+
-      '<div class="fld"><label>จำนวนงวด</label><input id="ctPer" type="number" min="1" value="12"></div>'+
-      '<div class="fld"><label>วันที่ของงวดแรก</label><input id="ctStart" type="date" value="'+todayISO()+'"></div>'+
-      '<div class="fld"><label>ออกใบวันที่เท่าไหร่ของเดือน</label><input id="ctDay" type="number" min="1" max="31" placeholder="ว่าง = วันเดียวกับงวดแรก">'+
-        '<div class="m-hint" style="margin:6px 0 0">เดือนที่ไม่มีวันนั้น (เช่น 31 ก.พ.) ระบบเลื่อนเป็นวันสุดท้ายของเดือนให้เอง</div></div>'+
-      '<div class="fld"><label>เครดิต (วัน)</label><input id="ctCredit" type="number" min="0" value="0"></div>'+
-      '<div class="fld"><label>อ้างใบเสนอราคา (ถ้ามี)</label><input id="ctQt" placeholder="เช่น QT-2609-001"></div>'+
-      '<div class="fld"><label>หมายเหตุ</label><textarea id="ctNote"></textarea></div>'+
-      '<div class="m-hint">กดสร้างแล้วระบบจะออกใบแจ้งหนี้ให้<b>ครบทุกงวดทันที</b> — ตรวจยอดกับจำนวนงวดอีกครั้งนะคะ</div>'+
-      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
-      '<button class="btn btn-primary" onclick="ctSave()">สร้างสัญญา</button></div>');
+    if(!((CT.customers||[]).length)){ toast('เพิ่มลูกค้าในทะเบียนก่อนค่ะ'); switchView('salesiv'); return; }
+    switchView('ctform');
   }
+  function ctFormCancel(){ switchView('contract'); }
+  function ctErr(m){ var b=$('ctErr'); if(!b) return; b.textContent=m; b.classList.remove('hidden');
+    try{ b.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){} }
+  window.ctFormCancel=ctFormCancel;
+
+  /** โครงฟอร์มทั้งหน้า — ฟังก์ชันบริสุทธิ์ (หน้าจริงกับพรีวิวเรียกตัวนี้ตัวเดียว) */
+  function ctFormHtml(){
+    var custs=(CT&&CT.customers)||[], ents=(CT&&CT.entities)||[];
+    /* ช่องลูกค้าแสดงชื่อบริษัทจริง แต่ค่าที่ส่งยังเป็นชื่อในทะเบียน (คีย์จับคู่เอกสาร) */
+    var co=custs.map(function(c){
+      return '<option value="'+esc(c.name)+'">'+esc(c.legalName||c.name)+'</option>'; }).join('');
+    var eo=ents.map(function(x){ return '<option value="'+esc(x.code)+'">'+esc(x.name)+'</option>'; }).join('');
+    var h='<div class="bc"><button class="lnk" onclick="switchView(&quot;contract&quot;)">สัญญาบริการ</button> › สร้างสัญญา</div>'+
+      '<div class="pg-title" style="margin:0 0 12px"><h2>สร้างสัญญาบริการ</h2></div>'+
+      '<div id="ctErr" class="m-err hidden" style="margin-bottom:12px"></div>';
+
+    /* ① คู่สัญญา — บริษัทผู้ออกโชว์เฉพาะห้องที่มีหลายนิติบุคคล (ห้องเดียวไม่มีอะไรให้เลือก) */
+    h+='<div class="sf-card"><div class="sf-h">📑 ข้อมูลสัญญา</div><div class="sf-grid">'+
+      (ents.length>1
+        ? ('<div class="sf-f c4"><label>ออกในนามบริษัท</label><select id="ctEnt">'+eo+'</select></div>')
+        : ('<input type="hidden" id="ctEnt" value="'+esc((ents[0]&&ents[0].code)||'')+'">'))+
+      '<div class="sf-f c4"><label>ลูกค้า</label><select id="ctCust">'+co+'</select></div>'+
+      '<div class="sf-f c4"><label>เรื่อง / ชื่อบริการ</label>'+
+        '<input id="ctTitle" placeholder="เช่น ค่าบริการบัญชีรายเดือน"></div>'+
+      '</div></div>';
+
+    /* ② งวดและยอด */
+    h+='<div class="sf-card"><div class="sf-h">🗓️ งวดและยอด</div><div class="sf-grid">'+
+      '<div class="sf-f c3"><label>ยอดต่องวด (บาท)</label>'+
+        '<input id="ctAmt" inputmode="decimal" placeholder="เช่น 5000"></div>'+
+      '<div class="sf-f c2"><label>จำนวนงวด</label><input id="ctPer" type="number" min="1" value="12"></div>'+
+      '<div class="sf-f c3"><label>วันที่ของงวดแรก</label>'+
+        '<input id="ctStart" type="date" value="'+todayISO()+'"></div>'+
+      '<div class="sf-f c2"><label>ออกใบวันที่เท่าไหร่ของเดือน</label>'+
+        '<input id="ctDay" type="number" min="1" max="31" placeholder="ว่าง = วันเดียวกับงวดแรก"></div>'+
+      '<div class="sf-f c2"><label>เครดิต (วัน)</label><input id="ctCredit" type="number" min="0" value="0"></div>'+
+      '<div class="sf-f wide"><div class="sf-note">เดือนที่ไม่มีวันนั้น (เช่น 31 ก.พ.) ระบบเลื่อนเป็นวันสุดท้ายของเดือนให้เอง</div></div>'+
+      '</div></div>';
+
+    /* ③ อ้างอิง */
+    h+='<div class="sf-card"><div class="sf-h">📎 อ้างอิงและหมายเหตุ</div><div class="sf-grid">'+
+      '<div class="sf-f c4"><label>อ้างใบเสนอราคา (ถ้ามี)</label>'+
+        '<input id="ctQt" placeholder="เช่น QT-2609-001"></div>'+
+      '<div class="sf-f wide"><label>หมายเหตุ</label><textarea id="ctNote"></textarea></div>'+
+      '</div></div>';
+
+    /* 🔴 คำเตือนนี้ต้องอยู่ติดปุ่มสร้าง — กดแล้วใบออกครบทุกงวดทันที ย้อนกลับไม่ได้ง่าย ๆ */
+    h+='<div class="m-hint" style="margin:0 0 12px">กดสร้างแล้วระบบจะออกใบแจ้งหนี้ให้<b>ครบทุกงวดทันที</b>'+
+      ' — ตรวจยอดกับจำนวนงวดอีกครั้งนะคะ</div>';
+    h+='<div class="sf-bar">'+
+      '<button class="btn btn-ghost" onclick="ctFormCancel()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" onclick="ctSave()">สร้างสัญญา</button></div>';
+    return h;
+  }
+  function renderCtForm(){
+    /* เข้าหน้านี้ตรง ๆ (รีเฟรช/ลิงก์) แล้วยังไม่มีทะเบียน → โหลดก่อนแล้วค่อยวาด */
+    if(!CT){ renderContract(); return; }
+    $('main').innerHTML=ctFormHtml();
+  }
+  window.ctFormHtml=ctFormHtml;
   function ctSave(){
     var v=function(id){ return ((($(id)||{}).value)||'').trim(); };
-    if(!v('ctTitle')){ mErr('ใส่เรื่อง/ชื่อบริการค่ะ'); return; }
-    if(!(Number(v('ctAmt').replace(/,/g,''))>0)){ mErr('ใส่ยอดต่องวดมากกว่า 0 ค่ะ'); return; }
-    if(!(Number(v('ctPer'))>0)){ mErr('ใส่จำนวนงวดมากกว่า 0 ค่ะ'); return; }
-    if(!v('ctStart')){ mErr('เลือกวันที่ของงวดแรกค่ะ'); return; }
+    if(!v('ctTitle')){ ctErr('ใส่เรื่อง/ชื่อบริการค่ะ'); return; }
+    if(!(Number(v('ctAmt').replace(/,/g,''))>0)){ ctErr('ใส่ยอดต่องวดมากกว่า 0 ค่ะ'); return; }
+    if(!(Number(v('ctPer'))>0)){ ctErr('ใส่จำนวนงวดมากกว่า 0 ค่ะ'); return; }
+    if(!v('ctStart')){ ctErr('เลือกวันที่ของงวดแรกค่ะ'); return; }
     callBusy('กำลังสร้างสัญญาและออกใบแจ้งหนี้…', jsonpPost(withRoom_({
       action:'waContractCreate', uid:UID, entity:v('ctEnt'), customer:v('ctCust'),
       title:v('ctTitle'), amount:v('ctAmt'), periods:v('ctPer'), startDate:v('ctStart'),
       billDay:v('ctDay'), creditDays:v('ctCredit'), qtNo:v('ctQt'), note:v('ctNote') })))
       .then(function(r){
-        if(!r||!r.ok){ mErr((r&&r.error)||'สร้างไม่สำเร็จ'); return; }
-        closeModal();
+        if(!r||!r.ok){ ctErr((r&&r.error)||'สร้างไม่สำเร็จ'); return; }
         toast('✅ '+r.no+' — ออกใบแจ้งหนี้แล้ว '+r.count+' งวด');
         /* บางงวดไม่สำเร็จ = ต้องบอกให้เห็นชัด ไม่ใช่ปล่อยให้ toast วิ่งผ่าน
            (สัญญาที่ใบขาดงวด ไปโผล่เป็นยอดหายในรายงานอีกหลายเดือนข้างหน้า) */
         if(r.warn) alert('⚠️ บางงวดออกใบไม่สำเร็จ:\n\n'+r.warn+'\n\nเปิดสัญญาดูว่าขาดงวดไหน แล้วออกใบงวดนั้นเองได้ที่หน้าใบแจ้งหนี้ค่ะ');
-        renderContract();
-      }).catch(function(e){ mErr(e.message); });
+        switchView('contract');
+      }).catch(function(e){ ctErr(e.message); });
   }
   /** เปิดดูงวดทั้งหมดของสัญญา 1 ฉบับ */
   function ctOpen(no){
@@ -12218,7 +12287,7 @@
         '<td class="ta-c dt-nw" style="color:#8A94A6">'+(i+1)+'</td>'+
         '<td class="dt-nw"><button class="lnk" onclick="salesEdit('+q+')">'+esc(d.no)+'</button></td>'+
         '<td class="dt-nw">'+esc(d.docDate?fmtDate(d.docDate):'-')+'</td>'+
-        '<td>'+esc(d.customer||'-')+'</td>'+
+        '<td>'+esc(custShowName(d.customer)||'-')+'</td>'+
         '<td class="dt-detail">'+esc(d.title||'-')+'</td>'+
         '<td class="dt-amt">'+money(d.total)+'</td>'+
         qtIvCell(d)+
@@ -12364,7 +12433,7 @@
       return '<tr>'+
         '<td class="dt-nw">'+esc(d.no)+(d.refNo?'<br><span style="color:#8A94A6;font-size:11px">↩ '+esc(d.refNo)+'</span>':'')+'</td>'+
         '<td class="dt-nw">'+esc(d.docDate?fmtDate(d.docDate):'-')+'</td>'+
-        '<td>'+esc(d.customer||'-')+'</td>'+
+        '<td>'+esc(custShowName(d.customer)||'-')+'</td>'+
         '<td class="dt-detail">'+esc(d.title||'-')+
           (d.kind==='CN'&&d.refundStatus?'<br><span style="color:#8A94A6;font-size:11px">'+esc(d.refundStatus)+'</span>':'')+'</td>'+
         // ใบลดหนี้ = ยอดที่หักออกจากยอดขาย → แสดงติดลบสีแดง (ชีตเก็บเป็นบวก)
@@ -12453,14 +12522,24 @@
      บันทึก = name เสมอ เพราะเป็นคีย์จับคู่เอกสารเดิมทั้งระบบ
      🔴 สลับ 2 อย่างนี้เมื่อไหร่ เอกสารเก่าจะหาลูกค้าไม่เจอทันที */
   function sfCustShow(c){ return (c && (c.legalName || c.name)) || ''; }
-  /** หาลูกค้าจากข้อความในช่อง — ตรงกับชื่อจริงหรือชื่อในทะเบียนก็ได้ */
+  /** ทะเบียนลูกค้าที่โหลดไว้ — หน้ารายรับโหลดมาใน SALES · หน้าสัญญาโหลดมาใน CT */
+  function custRegList(){
+    return ((SALES&&SALES.customers)||[]).concat((CT&&CT.customers)||[]);
+  }
+  /** หาลูกค้าจากข้อความ — ตรงกับชื่อจริงหรือชื่อในทะเบียนก็ได้ */
   function sfCustFind(v){
     v=String(v||'').trim(); if(!v) return null;
     var out=null;
-    (SALES&&SALES.customers||[]).forEach(function(x){
+    custRegList().forEach(function(x){
       if(x.name===v || (x.legalName && x.legalName===v)) out=x; });
     return out;
   }
+  /** ชื่อที่เอาไว้ "แสดงในตาราง" — ชื่อบริษัทจริง · ไม่เจอในทะเบียน = ใช้ชื่อที่บันทึกไว้กับใบ
+   *  🔴 ใช้ตอนแสดงผลเท่านั้น ห้ามเอาไปเป็นค่าที่ส่งกลับไปบันทึก (ดูหมายเหตุที่ sfCustShow) */
+  function custShowName(name){
+    return sfCustShow(sfCustFind(name)) || String(name||'');
+  }
+  window.custShowName=custShowName;
   /** ค่าที่ส่งไปบันทึก = ชื่อในทะเบียน (ไม่เจอในทะเบียน = ข้อความที่พิมพ์เอง) */
   function sfCustKey(){
     var v=((($('slCust')||{}).value)||'').trim();
@@ -20099,7 +20178,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260921-1716';
+  var APP_BUILD='20260921-1729';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
