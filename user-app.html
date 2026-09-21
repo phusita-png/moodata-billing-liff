@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260921-1710">
+<link rel="stylesheet" href="user.css?v=20260921-1716">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -12433,9 +12433,8 @@
   }
   /** เครดิตเทอมของลูกค้าที่เลือกอยู่ (ไม่มีในทะเบียน = ค่ากลางของห้อง) */
   function sfCreditDays(){
-    var name=(($('slCust')||{}).value||'').trim(), out=(SALES&&SALES.creditDays)||15;
-    (SALES&&SALES.customers||[]).forEach(function(c){ if(c.name===name && c.creditDays) out=c.creditDays; });
-    return out;
+    var c=sfCustFind(((($('slCust')||{}).value)||'').trim());
+    return (c && c.creditDays) || (SALES&&SALES.creditDays) || 15;
   }
 
   var SF_MODE='new';     /* new | edit */
@@ -12448,20 +12447,42 @@
   }
   window.salesFormOpen=salesFormOpen;
 
+  /* ── ชื่อลูกค้า: สิ่งที่ "แสดง" กับสิ่งที่ "บันทึก" เป็นคนละค่า (พี่กี้สั่ง 21 ก.ย. 69) ──
+     แสดง = ชื่อบริษัทจริงตามหนังสือรับรอง (legalName) — ชื่อในชีตกลุ่มลูกค้ามักเป็นชื่อกลุ่ม
+            เช่น "กานต์ชุดา ADMIN ระบบ bot เก็บออเดอร์" ซึ่งไม่ใช่ชื่อที่ควรขึ้นให้คนออกใบเห็น
+     บันทึก = name เสมอ เพราะเป็นคีย์จับคู่เอกสารเดิมทั้งระบบ
+     🔴 สลับ 2 อย่างนี้เมื่อไหร่ เอกสารเก่าจะหาลูกค้าไม่เจอทันที */
+  function sfCustShow(c){ return (c && (c.legalName || c.name)) || ''; }
+  /** หาลูกค้าจากข้อความในช่อง — ตรงกับชื่อจริงหรือชื่อในทะเบียนก็ได้ */
+  function sfCustFind(v){
+    v=String(v||'').trim(); if(!v) return null;
+    var out=null;
+    (SALES&&SALES.customers||[]).forEach(function(x){
+      if(x.name===v || (x.legalName && x.legalName===v)) out=x; });
+    return out;
+  }
+  /** ค่าที่ส่งไปบันทึก = ชื่อในทะเบียน (ไม่เจอในทะเบียน = ข้อความที่พิมพ์เอง) */
+  function sfCustKey(){
+    var v=((($('slCust')||{}).value)||'').trim();
+    var c=sfCustFind(v);
+    return c?c.name:v;
+  }
+  window.sfCustShow=sfCustShow; window.sfCustFind=sfCustFind; window.sfCustKey=sfCustKey;
+
   /** พิมพ์/เลือก "รหัสลูกค้า" → เติมชื่อลูกค้าให้ แล้ววาดข้อมูลติดต่อใหม่ */
   function sfPickCustByCode(){
     var code=((($('slCustCode')||{}).value)||'').trim();
     var c=null;
     (SALES&&SALES.customers||[]).forEach(function(x){ if(x.code&&x.code===code) c=x; });
-    if(c && $('slCust')) $('slCust').value=c.name;
+    if(c && $('slCust')) $('slCust').value=sfCustShow(c);
     sfCustHint();
   }
   window.sfPickCustByCode=sfPickCustByCode;
 
   function sfCustHint(){
     var box=$('sfCustInfo'); if(!box||!SALES) return;
-    var name=($('slCust')||{}).value, c=null;
-    (SALES.customers||[]).forEach(function(x){ if(x.name===name) c=x; });
+    var name=(($('slCust')||{}).value||'').trim();
+    var c=sfCustFind(name);
     /* ช่องแถว 2 (ที่อยู่ · อีเมล · เบอร์) เติมจากทะเบียนทุกครั้งที่เปลี่ยนลูกค้า */
     var put=function(id,v){ var el=$(id); if(el) el.value=v||''; };
     put('slCustAddr', c&&c.address); put('slCustEmail', c&&c.email); put('slCustPhone', c&&c.phone);
@@ -12481,14 +12502,14 @@
     var miss=[];
     if(!c.taxId) miss.push('เลขผู้เสียภาษี');
     if(!c.address) miss.push('ที่อยู่');
+    /* 🔴 ข้อมูลครบ = ไม่ขึ้นข้อความอะไรเลย (พี่กี้ขีดฆ่า 21 ก.ย. 69)
+       ชื่อจริง · เลขภาษี · ที่อยู่ มีช่องของตัวเองอยู่แล้ว บรรทัดนี้เลยซ้ำเปล่า ๆ
+       เหลือไว้เฉพาะ 2 เรื่องที่ต้องบอก: ยังไม่มีในทะเบียน · ข้อมูลไม่ครบพอออกใบกำกับ */
+    if(!miss.length){ box.innerHTML=''; return; }
     /* บรรทัดที่ 1 = ตัวตนบนเอกสาร · บรรทัดที่ 2 = ที่อยู่ · บรรทัดที่ 3 = ช่องทางติดต่อ
        (พี่กี้ขอให้เห็นที่อยู่/อีเมล/เบอร์โทรตรงนี้ 21 ก.ย. 69) */
-    /* ที่อยู่/อีเมล/เบอร์ ขึ้นเป็นช่องจริงในแถว 2 แล้ว — บรรทัดนี้เหลือ "ตัวตนบนเอกสาร" */
-    box.innerHTML=[c.legalName||c.name, c.taxId?('เลขภาษี '+esc(c.taxId)):'',
-      esc(c.branch||'สำนักงานใหญ่'), 'เครดิต '+(c.creditDays||0)+' วัน',
-      c.contact?('ผู้ติดต่อ '+esc(c.contact)):''].filter(Boolean).join(' · ')+
-      (miss.length?'<br><span style="color:#C0490F">ยังไม่มี '+esc(miss.join(' / '))+
-        ' — ใบกำกับภาษีต้องมีข้อมูลนี้ แก้ได้ที่ทะเบียนลูกค้า</span>':'');
+    box.innerHTML='<span style="color:#C0490F">ยังไม่มี '+esc(miss.join(' / '))+
+      ' — ใบกำกับภาษีต้องมีข้อมูลนี้ แก้ได้ที่ทะเบียนลูกค้า</span>';
   }
   window.sfCustHint=sfCustHint;
 
@@ -12549,7 +12570,7 @@
     /* ช่องลูกค้าเป็นช่องพิมพ์ + datalist → ค้นหาได้ และพิมพ์ชื่อใหม่ได้ (พี่กี้ขอ 21 ก.ย. 69)
        ชื่อที่ไม่มีในทะเบียน = ปุ่ม "เพิ่มเข้าทะเบียน" ขึ้นใต้ช่อง ไม่บันทึกเงียบ ๆ */
     var custOpts=(SALES.customers||[]).map(function(c){
-      return '<option value="'+esc(c.name)+'">'+esc(c.code||'')+'</option>'; }).join('');
+      return '<option value="'+esc(c.legalName||c.name)+'">'+esc(c.code||'')+'</option>'; }).join('');
     /* ช่องรหัสลูกค้า: เลือกจากทะเบียนได้ พิมพ์รหัสแล้วชื่อ/ที่อยู่เติมให้เอง (พี่กี้ขอ 21 ก.ย. 69) */
     var custCodeOpts=(SALES.customers||[]).filter(function(c){ return c.code; }).map(function(c){
       return '<option value="'+esc(c.code)+'">'+esc(c.name)+'</option>'; }).join('');
@@ -12587,6 +12608,8 @@
        เก็บเป็น hidden ไว้ให้ตัวบันทึกอ่าน · บริษัทผู้ออกโชว์เฉพาะห้องที่มีหลายนิติบุคคล
        (ห้องที่มีบริษัทเดียวไม่มีอะไรให้เลือก การถามซ้ำคือขั้นตอนเปล่า) */
     var manyEnt=((SALES.entities||[]).length>1);
+    /* ใบเก่าเก็บชื่อในทะเบียน → หาชื่อบริษัทจริงมาแสดงแทน (หาไม่เจอก็ใช้ของเดิม) */
+    var edCustShow=ed?(sfCustShow(sfCustFind(ed.customer))||ed.customer||''):'';
     h+='<input type="hidden" id="slKind" value="'+esc(kindNow)+'">'+
       '<div class="sf-card"><div class="sf-h">🧾 ข้อมูลเอกสาร'+stBadge+'</div><div class="sf-grid">'+
       (manyEnt
@@ -12600,10 +12623,11 @@
         '<input id="slCustCode" list="sfCustCodeList" placeholder="เช่น CU-001"'+
           ((ed&&scope.custLocked)?' readonly':' oninput="sfPickCustByCode()"')+' autocomplete="off">'+
         '<datalist id="sfCustCodeList">'+custCodeOpts+'</datalist></div>'+
+      /* ค่าในช่อง = ชื่อบริษัทจริง · ค่าที่บันทึกมาจาก sfCustKey() (ดูหมายเหตุที่ sfCustShow) */
       '<div class="sf-f c4"><label>ลูกค้า</label>'+
-        (ed&&scope.custLocked?'<input value="'+esc(ed.customer||'')+'" readonly>'
+        (ed&&scope.custLocked?'<input value="'+esc(edCustShow)+'" readonly>'
            :'<input id="slCust" list="sfCustList" placeholder="พิมพ์เพื่อค้นหา หรือพิมพ์ชื่อใหม่" '+
-             'value="'+esc(ed?(ed.customer||''):'')+'" oninput="sfCustHint()" autocomplete="off">'+
+             'value="'+esc(ed?edCustShow:'')+'" oninput="sfCustHint()" autocomplete="off">'+
             '<datalist id="sfCustList">'+custOpts+'</datalist>')+
         '<div class="sf-note" id="sfCustInfo"></div></div>'+
       /* เลขผู้เสียภาษีต่อจากช่องลูกค้า (พี่กี้ขอ 21 ก.ย. 69) — ดึงจากทะเบียน ตรวจก่อนออกใบกำกับ */
@@ -12613,8 +12637,7 @@
         '<input id="slDate" type="date" value="'+esc(ed?(ed.docDate||''):todayISO())+'"'+(lockAll?' readonly':'')+
         ' onchange="sfDueSync()"></div>'+
       '<div class="sf-f c2"><label>'+(kindNow==='QT'?'วันที่ใช้ได้ถึง':'วันครบกำหนด')+'</label>'+
-        '<input id="slDue" type="date" value="'+esc(ed?(ed.dueDate||''):'')+'"'+(lockAll?' readonly':'')+'>'+
-        '<div class="sf-note" id="sfDueNote"></div></div>'+
+        '<input id="slDue" type="date" value="'+esc(ed?(ed.dueDate||''):'')+'"'+(lockAll?' readonly':'')+'></div>'+
       /* แถว 2: ข้อมูลติดต่อของลูกค้า — อ่านอย่างเดียว ดึงจากทะเบียนตอนเลือกลูกค้า
          🔴 ไม่ให้พิมพ์ทับที่นี่ เพราะที่อยู่บนใบกำกับภาษีต้องมาจากทะเบียนที่เดียว
             (แก้ที่นี่ทีละใบ = ลูกค้าคนเดียวกันมีที่อยู่คนละแบบในแต่ละใบ) */
@@ -12630,8 +12653,7 @@
           .map(function(m){
             var cur=ed?(ed.priceMode||'excl'):'excl';
             return '<option value="'+esc(m.key)+'"'+(m.key===cur?' selected':'')+'>'+esc(m.label)+'</option>';
-          }).join(''))+'</select>'+
-        '<div class="sf-note" id="sfPmNote"></div></div>'+
+          }).join(''))+'</select></div>'+
       /* 🔴 ไม่มีช่อง "รายละเอียด (หัวเอกสาร)" แล้ว (พี่กี้ขีดฆ่า 21 ก.ย. 69)
          ชื่อเรื่องของใบ = รายละเอียดบรรทัดแรกในตารางรายการ — เก็บเป็น hidden ให้ตัวบันทึกอ่าน
          (ตารางหน้ารายการยังมีคอลัมน์ "รายละเอียด" ใช้ค่านี้เหมือนเดิม) */
@@ -12896,7 +12918,7 @@
       t.value=(items[0].detail||'').trim()+(items.length>1?(' และอื่น ๆ ('+items.length+' รายการ)'):'');
     }
     var p={action:'waSalesCreate',uid:UID,
-      kind:($('slKind')||{}).value, entity:($('slEnt')||{}).value, customer:($('slCust')||{}).value,
+      kind:($('slKind')||{}).value, entity:($('slEnt')||{}).value, customer:sfCustKey(),
       docDate:($('slDate')||{}).value, dueDate:($('slDue')||{}).value||'',
       priceMode:($('slPriceMode')||{}).value||'excl',
       title:(($('slTitle')||{}).value||'').trim(),
@@ -12979,7 +13001,7 @@
         return (it.serviceName||'').trim() || (it.detail||'').trim() || it.service; });
       if(!items.length){ sfErr('ใส่รายการอย่างน้อย 1 บรรทัดค่ะ'); return; }
       p.items=JSON.stringify(items);
-      p.customer=($('slCust')||{}).value||'';
+      p.customer=sfCustKey();
       p.docDate=($('slDate')||{}).value||'';
       p.priceMode=($('slPriceMode')||{}).value||'';
       p.discount=($('slDisc')||{}).value||'0';
@@ -14847,7 +14869,8 @@
         jsonp({action:'waSalesInit',uid:UID,light:'1'}).then(function(x){
           if(x&&x.ok){ SALES.customers=x.customers; SALES.services=x.services; }
           renderSalesForm();
-          var el=$('slCust'); if(el){ el.value=r.name; sfCustHint(); }
+          var el=$('slCust');
+          if(el){ el.value=sfCustShow(sfCustFind(r.name))||r.name; sfCustHint(); }
         }).catch(function(){ renderSalesForm(); });
         return;
       }
@@ -20076,7 +20099,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260921-1710';
+  var APP_BUILD='20260921-1716';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
