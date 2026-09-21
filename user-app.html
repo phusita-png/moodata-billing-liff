@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260921-2033">
+<link rel="stylesheet" href="user.css?v=20260921-2052">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -722,6 +722,24 @@
   /* 2 ช่องต่อแถวในฟอร์มใบ 50 ทวิ — จอแคบยุบเป็นช่องละแถวเอง */
   .wf-row{ display:grid; grid-template-columns:1fr 1fr; gap:0 12px; }
   @media (max-width:520px){ .wf-row{ grid-template-columns:1fr; } }
+  /* กราฟภาพรวมหน้ากระทบยอด GL — ซ้ายแคบ ขวากว้าง (แท่ง 12 เดือนต้องการที่) */
+  .wg-charts{ display:grid; gap:14px; grid-template-columns:minmax(0,340px) minmax(0,1fr); margin:0 0 14px; }
+  .wg-card{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:16px 18px; }
+  .wg-h{ font-weight:700; font-size:14.5px; margin:0 0 10px; }
+  .wg-h .wg-sub{ font-weight:400; font-size:12px; color:#8A94A6; }
+  .wg-donut{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  .wg-donut svg{ width:150px; height:150px; flex:none; }
+  .wg-side{ flex:1; min-width:150px; display:flex; flex-direction:column; gap:7px; }
+  .wg-row{ display:flex; justify-content:space-between; gap:8px; font-size:12.5px; color:#5B6472;
+    padding:7px 10px; border-radius:9px; }
+  .wg-row b{ font-variant-numeric:tabular-nums; }
+  .wg-row.ok{ background:#E3F5EA; color:#146B3D; }
+  .wg-row.wait{ background:#FCF1DF; color:#8A5710; }
+  .wg-warn{ font-size:12px; color:#B23B3B; background:#FBEAE7; border-radius:9px; padding:8px 10px; line-height:1.5; }
+  .wg-okmsg{ font-size:12px; color:#1E9E5A; padding:4px 2px; }
+  .wg-lg{ display:flex; gap:14px; font-size:12px; color:#5B6472; margin:0 0 6px; }
+  .wg-lg i{ width:10px; height:10px; border-radius:3px; display:inline-block; margin-right:5px; vertical-align:-1px; }
+  @media (max-width:900px){ .wg-charts{ grid-template-columns:1fr; } }
   .wg-note{ width:100%; box-sizing:border-box; padding:6px 9px; border:1px solid var(--line);
     border-radius:8px; font-family:inherit; font-size:13px; background:#fff; }
   .lst-card{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:18px 20px 6px; }
@@ -6749,6 +6767,83 @@
   }
   window.wgTableHtml=wgTableHtml;
 
+  /* ═══ กราฟภาพรวม (พี่กี้เลือก 21 ก.ย. 69: ซ้าย=ความคืบหน้า · ขวา=รายเดือน) ═══
+     🔴 ฟังก์ชันบริสุทธิ์ — ของจริงกับเทส/พรีวิวเรียกตัวเดียวกัน
+     สีมาจากตัวแปรธีม (ห้องลูกค้าเป็นโทนม่วง ฮาร์ดโค้ดแล้วกราฟหลุดธีม) */
+  var WG_C_OK='#1E9E5A', WG_C_WAIT='#C87F1E';
+
+  /** วงแหวนความคืบหน้า — ตามใบไปได้กี่ % ของยอดที่บัญชีลงไว้ */
+  function wgDonutHtml(s){
+    s=s||{};
+    var okAmt=(s.matched&&s.matched.amt)||0, waitAmt=(s.nocert&&s.nocert.amt)||0;
+    var tot=Math.round((okAmt+waitAmt)*100)/100;
+    var pct=tot>0?Math.round(okAmt/tot*100):0;
+    var r=62, c=Math.round(2*Math.PI*r);               /* เส้นรอบวง */
+    var on=Math.round(c*pct/100);
+    return '<div class="wg-card"><div class="wg-h">🎯 ตามใบไปได้เท่าไหร่แล้ว</div>'+
+      '<div class="wg-donut">'+
+        '<svg viewBox="0 0 160 160" role="img" aria-label="ความคืบหน้าการตามใบ '+pct+'%">'+
+          '<circle cx="80" cy="80" r="'+r+'" fill="none" stroke="#E6EAF2" stroke-width="20"/>'+
+          '<circle cx="80" cy="80" r="'+r+'" fill="none" stroke="'+WG_C_OK+'" stroke-width="20" '+
+            'stroke-linecap="round" stroke-dasharray="'+on+' '+(c-on)+'" transform="rotate(-90 80 80)"/>'+
+          '<text x="80" y="76" text-anchor="middle" font-size="30" font-weight="700" fill="#0F1826">'+pct+'%</text>'+
+          '<text x="80" y="97" text-anchor="middle" font-size="11" fill="#7E8CA3">ของยอดที่ลงบัญชี</text>'+
+        '</svg>'+
+        '<div class="wg-side">'+
+          '<div class="wg-row ok"><span>ได้ใบแล้ว · '+((s.matched&&s.matched.n)||0)+' รายการ</span>'+
+            '<b>'+money(okAmt)+'</b></div>'+
+          '<div class="wg-row wait"><span>ยังไม่มีใบ · '+((s.nocert&&s.nocert.n)||0)+' รายการ</span>'+
+            '<b>'+money(waitAmt)+'</b></div>'+
+          /* 🔴 ตัวเลขที่ทำให้คนลงมือตาม: ไม่ได้ใบ = เครดิตภาษีหายจริง ๆ */
+          (waitAmt>0
+            ? '<div class="wg-warn">ถ้าตามใบไม่ทันก่อนยื่น ภ.ง.ด.50 <b>เครดิตภาษีหาย '+money(waitAmt)+' บาท</b></div>'
+            : '<div class="wg-okmsg">ได้ใบครบทุกรายการแล้ว 🎉</div>')+
+        '</div>'+
+      '</div></div>';
+  }
+  window.wgDonutHtml=wgDonutHtml;
+
+  /** แท่งรายเดือน — เดือนไหนใบยังมาไม่ครบ */
+  function wgBarsHtml(s){
+    s=s||{};
+    var mm=s.byMonth||[];
+    var names=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+    var max=0;
+    mm.forEach(function(m){ var t=(m.matched||0)+(m.nocert||0); if(t>max) max=t; });
+    /* ยังไม่มีข้อมูล = บอกตรง ๆ ไม่ใช่วาดแกนเปล่าให้งง */
+    if(!(max>0)){
+      return '<div class="wg-card"><div class="wg-h">📅 ภาษีที่ลงบัญชีรายเดือน '+
+        '<span class="wg-sub">(ตามวันที่ GL)</span></div>'+
+        '<div class="emptybox" style="margin:0">ยังไม่มีรายการ GL ในปีนี้ — '+
+        'กด "นำเข้าไฟล์ GL" แล้วกราฟจะขึ้นให้เองค่ะ</div></div>';
+    }
+    /* เว้นที่ซ้ายให้ป้ายยอดเต็มจำนวน (ไม่ย่อเป็น K — พี่กี้ขอเลขเต็มทุกที่) */
+    var W=620, H=190, base=150, x0=88, bw=29, gap=14;
+    var bars='', labs='';
+    for(var i=0;i<12;i++){
+      var m=mm[i]||{matched:0,nocert:0};
+      var x=x0+i*(bw+gap);
+      var ho=Math.round((m.matched||0)/max*120);
+      var hw=Math.round((m.nocert||0)/max*120);
+      if(ho>0) bars+='<rect x="'+x+'" y="'+(base-ho)+'" width="'+bw+'" height="'+ho+'" rx="3" fill="'+WG_C_OK+'"/>';
+      if(hw>0) bars+='<rect x="'+x+'" y="'+(base-ho-hw)+'" width="'+bw+'" height="'+hw+'" rx="3" fill="'+WG_C_WAIT+'"/>';
+      labs+='<text x="'+(x+bw/2)+'" y="'+(base+16)+'" text-anchor="middle" font-size="10.5" fill="#7E8CA3">'+names[i]+'</text>';
+    }
+    return '<div class="wg-card"><div class="wg-h">📅 ภาษีที่ลงบัญชีรายเดือน '+
+      '<span class="wg-sub">(ตามวันที่ GL)</span></div>'+
+      '<div class="wg-lg"><span><i style="background:'+WG_C_OK+'"></i>มีใบแล้ว</span>'+
+      '<span><i style="background:'+WG_C_WAIT+'"></i>ยังไม่มีใบ</span></div>'+
+      '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="ภาษีที่ลงบัญชีรายเดือน">'+
+        '<line x1="'+x0+'" y1="'+base+'" x2="'+(W-10)+'" y2="'+base+'" stroke="#DCE3EE"/>'+
+        '<line x1="'+x0+'" y1="30" x2="'+(W-10)+'" y2="30" stroke="#EDF1F7"/>'+
+        '<line x1="'+x0+'" y1="90" x2="'+(W-10)+'" y2="90" stroke="#EDF1F7"/>'+
+        '<text x="'+(x0-6)+'" y="34" text-anchor="end" font-size="10" fill="#7E8CA3">'+money(max)+'</text>'+
+        '<text x="'+(x0-6)+'" y="'+(base+4)+'" text-anchor="end" font-size="10" fill="#7E8CA3">0</text>'+
+        bars+labs+
+      '</svg></div>';
+  }
+  window.wgBarsHtml=wgBarsHtml;
+
   function wgPaint(){
     var r=WG; if(!r) return;
     var s=r.sum||{};
@@ -6820,6 +6915,8 @@
           (s.tieOk?'':'background:#FBEAE7;color:#B23B3B;')+'">🔗 <b>Tie-out:</b> '+
           'มีใบ '+money((s.matched&&s.matched.amt)||0)+' + ยังไม่มีใบ '+money((s.nocert&&s.nocert.amt)||0)+
           ' = <b>'+money(s.debit||0)+'</b> (ยอด Dr รวม) '+(s.tieOk?'✓':'✗ ไม่ตรง — ตรวจไฟล์ GL ที่นำเข้า')+'</div>'+
+        /* กราฟภาพรวม — ซ้าย = ความคืบหน้า · ขวา = รายเดือน (พี่กี้เลือกตำแหน่งเอง) */
+        '<div class="wg-charts">'+wgDonutHtml(s)+wgBarsHtml(s)+'</div>'+
         '<div class="tax-acts">'+
           '<button class="btn btn-primary" onclick="wgImport()">📥 นำเข้าไฟล์ GL</button>'+
           '<button class="btn btn-ghost" onclick="wgRematch()">🔍 ตรวจสอบข้อมูลรายรับ</button>'+
@@ -20801,7 +20898,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260921-2033';
+  var APP_BUILD='20260921-2052';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
