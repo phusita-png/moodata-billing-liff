@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260921-1318">
+<link rel="stylesheet" href="user.css?v=20260921-1324">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -701,6 +701,15 @@
   .lst-tools .s-find{ min-width:190px; }
   .lst-tools .btn{ width:auto; flex:none; padding:9px 16px; font-size:14px; }
   @media (max-width:760px){ .lst-tools{ margin-left:0; width:100%; } .lst-tools .s-find{ flex:1; min-width:0; } }
+  /* ช่องติ๊ก "ออกใบแจ้งหนี้แล้ว" ในตารางใบเสนอราคา (พี่กี้วางเอง 21 ก.ย. 69)
+     อ่านอย่างเดียว — ระบบติ๊กให้เองเมื่อมีใบ IV ที่อ้างถึงใบนี้ · ติ๊กแล้วกดไปดูใบนั้นได้ */
+  .ta-c{ text-align:center; }
+  .tk-box{ width:18px; height:18px; border:1.8px solid #C3CCDA; border-radius:5px; display:inline-flex;
+    align-items:center; justify-content:center; background:#fff; }
+  .tk-box.on{ border-color:#1E9E5A; background:#1E9E5A; }
+  .tk-box svg{ width:12px; height:12px; stroke:#fff; stroke-width:2.6; fill:none; }
+  button.tk-box{ cursor:pointer; padding:0; }
+  button.tk-box:hover{ border-color:var(--red); }
   .qt-act{ font-size:12.5px; line-height:1.4; }
   .qt-act b{ font-weight:600; }
   .qt-act small{ display:block; color:#8A94A6; font-size:11.5px; }
@@ -12116,6 +12125,16 @@
     var cls={done:'b-done',doing:'b-doing',warn:'b-warn',reject:'b-reject',cancel:'b-cancel'}[t.tone]||'b-new';
     return '<span class="tk-badge '+cls+'">'+esc(t.label)+'</span>';
   }
+  /** ช่องติ๊ก "ดึงไปออกใบแจ้งหนี้แล้ว" — ระบบติ๊กให้เองจากใบ IV ที่อ้างถึงใบนี้
+   *  🔴 อ่านอย่างเดียว ไม่ให้คนติ๊กเอง — ความจริงคือมีใบ IV อยู่หรือไม่ ไม่ใช่คนจำ */
+  function qtIvCell(d){
+    var iv=salesRefBy(d,'IV')[0];
+    if(!iv) return '<td class="ta-c dt-nw"><span class="tk-box" title="ยังไม่ได้ออกใบแจ้งหนี้"></span></td>';
+    var q="'"+String(iv.no).replace(/'/g,"\'")+"'";
+    return '<td class="ta-c dt-nw"><button class="tk-box on" title="ออกใบแจ้งหนี้ '+esc(iv.no)+' แล้ว — กดเพื่อเปิดใบนั้น" '+
+      'onclick="salesEdit('+q+')"><svg viewBox="0 0 24 24"><path d="M5 13l4.5 4.5L19 7"/></svg></button></td>';
+  }
+
   /** ช่อง "กิจกรรม" — การกระทำล่าสุด + คนทำ + เวลา (แบบที่พี่กี้เห็นใน PEAK) */
   function qtActCell(d){
     var a=d.lastAct;
@@ -12124,29 +12143,39 @@
       '<small>'+esc([a.actor,a.at].filter(Boolean).join(' · '))+'</small></td>';
   }
 
-  function paintQtTable(docs){
-    var box=$('salesTbl'); if(!box) return;
-    var tabs=(SALES&&SALES.qtTabs)||[];
-    var shown=qtFilter(salesApplyFind(docs), QT_TAB);
-    var h=qtTabsHtml(salesApplyFind(docs), tabs, QT_TAB);
+  /** โครงตารางใบเสนอราคาทั้งก้อน — ฟังก์ชันบริสุทธิ์
+   *  🔴 ของจริงกับ tests/preview-salesqt.js เรียกตัวนี้ตัวเดียว
+   *     (21 ก.ย. 69: preview เคยประกอบแถวเอง แล้วหลุดจากของจริงทั้งคอลัมน์และคำ) */
+  function qtTableHtml(docs, tabs, tab){
+    var shown=qtFilter(salesApplyFind(docs), tab);
+    var h=qtTabsHtml(salesApplyFind(docs), tabs, tab);
+    /* ลำดับคอลัมน์ตามที่พี่กี้วางเอง 21 ก.ย. 69: ... ยอดรวม → IV (ช่องติ๊ก) → สถานะ → กิจกรรม */
     var cols=[{label:'เลขที่',cls:'dt-nw',w:'15%'},{label:'วันที่',cls:'dt-nw',w:'9%'},
-      {label:'ลูกค้า',w:'16%'},{label:'รายละเอียด'},{label:'ยอดรวม',cls:'ta-r',w:'11%'},
-      {label:'สถานะ',w:'12%'},{label:'กิจกรรม',w:'16%'},{label:'',w:'46px'}];
+      {label:'ลูกค้า',w:'15%'},{label:'รายละเอียด'},{label:'ยอดรวม',cls:'ta-r',w:'11%'},
+      {label:'IV',cls:'ta-c dt-nw',w:'52px'},{label:'สถานะ',w:'11%'},
+      {label:'กิจกรรม',w:'16%'},{label:'',w:'46px'}];
     var rows=shown.map(function(d){
       SALES_BYNO[d.no]=d;
-      var q="'"+String(d.no).replace(/'/g,"\\'")+"'";
+      var q="'"+String(d.no).replace(/'/g,"\'")+"'";
       return '<tr>'+
         '<td class="dt-nw"><button class="lnk" onclick="salesEdit('+q+')">'+esc(d.no)+'</button></td>'+
         '<td class="dt-nw">'+esc(d.docDate?fmtDate(d.docDate):'-')+'</td>'+
         '<td>'+esc(d.customer||'-')+'</td>'+
         '<td class="dt-detail">'+esc(d.title||'-')+'</td>'+
         '<td class="dt-amt">'+money(d.total)+'</td>'+
+        qtIvCell(d)+
         '<td>'+qtBadge(d)+'</td>'+
         qtActCell(d)+
         dtActCell('sl-'+d.no, salesRowActions(d))+'</tr>';
     });
-    box.innerHTML=h+dtTable(cols, rows, '',
-      docs.length?'ไม่มีใบในแท็บนี้':'ยังไม่มีใบเสนอราคา — กดปุ่ม "ออกใบเสนอราคา" มุมขวาบนได้เลยค่ะ');
+    return h+dtTable(cols, rows, '',
+      docs.length?'ไม่มีใบในแท็บนี้':'ยังไม่มีใบเสนอราคา — กดปุ่ม "สร้างใบเสนอราคา" มุมขวาบนได้เลยค่ะ');
+  }
+  window.qtTableHtml=qtTableHtml;
+
+  function paintQtTable(docs){
+    var box=$('salesTbl'); if(!box) return;
+    box.innerHTML=qtTableHtml(docs, (SALES&&SALES.qtTabs)||[], QT_TAB);
   }
 
   /** บันทึก/ยกเลิก "ลูกค้าปฏิเสธ" */
@@ -19727,7 +19756,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260921-1318';
+  var APP_BUILD='20260921-1324';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
