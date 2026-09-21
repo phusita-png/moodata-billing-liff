@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260921-1750">
+<link rel="stylesheet" href="user.css?v=20260921-1804">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -10819,8 +10819,10 @@
             fixed:true,
             /* ทะเบียนประเภทการรับเงินวางไว้ที่นี่ เพราะนี่คือหน้าที่คนเห็น "ประเภท" จริง
                (ชุดเดียวกับทะเบียนประเภทค่าใช้จ่ายที่อยู่ข้างหน้ารายจ่าย) */
-            acts:'<div class="m-hint" style="flex:1;margin:0">ใบเสร็จเกิดตอนบันทึกรับเงินจากใบแจ้งหนี้ — ไม่ออกเองที่หน้านี้</div>'+
-                 '<button class="btn btn-ghost" onclick="switchView(&quot;recvkind&quot;)">ประเภทการรับเงิน</button>' },
+            /* ใบเสร็จเกิดได้ 2 ทาง: จากการรับชำระใบแจ้งหนี้ · จากขายสด (พี่กี้เคาะ 21 ก.ย. 69)
+               ทั้งสองทางมีเงินเข้าคู่กันเสมอ — ไม่มีทางออกใบเสร็จเปล่าโดยไม่มีเงิน */
+            acts:'<button class="btn btn-ghost" onclick="switchView(&quot;recvkind&quot;)">ประเภทการรับเงิน</button>'+
+                 '<button class="btn btn-primary" onclick="cashSaleOpen()">+ ออกใบเสร็จ (ขายสด)</button>' },
     'CN': { icon:'↩️', title:'ใบลดหนี้ (CN)', plain:'ใบลดหนี้',
             desc:'ลดยอดใบเสร็จที่ออกไปแล้ว (ม.86/10) · ออกจากใบเสร็จเท่านั้น',
             fixed:true,
@@ -12542,6 +12544,27 @@
   }
   window.salesFormOpen=salesFormOpen;
 
+  /* ── 🧾 ขายสด: รับเงินแล้วออกใบเสร็จเลย (spec docs/spec-cash-sale.md) ──
+     ใช้ฟอร์มหน้าเดียวกับเอกสารอื่น + การ์ด "การรับเงิน" เพิ่มเข้ามา
+     ช่องทาง/บัญชีที่รับเข้า โหลดจากหลังบ้าน (ห้ามให้หน้าเว็บพิมพ์เอง — เพิ่มบัญชีใหม่แล้วจะตกรุ่น) */
+  var CASH=null;
+  function cashSaleOpen(){
+    if(!SALES){ toast('กำลังเตรียมข้อมูล…'); return; }
+    if(!SALES.customers.length){ toast('เพิ่มลูกค้าในทะเบียนก่อนค่ะ'); custManage(); return; }
+    SALES_KIND_F='RE';
+    SF_MODE='new'; EDIT_DOC=null; SALES_ITEMS=[{}];
+    sfLoadNextNo('RE');
+    switchView('salesform');
+    if(!CASH){
+      jsonp({action:'waSalesCashInit',uid:UID}).then(function(r){
+        if(!r||!r.ok) return;
+        CASH=r;
+        if(VIEW==='salesform') renderSalesForm();     /* ได้ลิสต์แล้วค่อยวาด dropdown ใหม่ */
+      }).catch(function(){});
+    }
+  }
+  window.cashSaleOpen=cashSaleOpen;
+
   /* ── ชื่อลูกค้า: สิ่งที่ "แสดง" กับสิ่งที่ "บันทึก" เป็นคนละค่า (พี่กี้สั่ง 21 ก.ย. 69) ──
      แสดง = ชื่อบริษัทจริงตามหนังสือรับรอง (legalName) — ชื่อในชีตกลุ่มลูกค้ามักเป็นชื่อกลุ่ม
             เช่น "กานต์ชุดา ADMIN ระบบ bot เก็บออเดอร์" ซึ่งไม่ใช่ชื่อที่ควรขึ้นให้คนออกใบเห็น
@@ -12713,6 +12736,8 @@
        เก็บเป็น hidden ไว้ให้ตัวบันทึกอ่าน · บริษัทผู้ออกโชว์เฉพาะห้องที่มีหลายนิติบุคคล
        (ห้องที่มีบริษัทเดียวไม่มีอะไรให้เลือก การถามซ้ำคือขั้นตอนเปล่า) */
     var manyEnt=((SALES.entities||[]).length>1);
+    /* ขายสด = ออกใบเสร็จใบใหม่ที่ไม่ได้มาจากใบแจ้งหนี้ (ใบเสร็จที่เปิดจากใบเก่าเป็นโหมดแก้ไข) */
+    var isCash=(!ed && kindNow==='RE');
     /* ใบเก่าเก็บชื่อในทะเบียน → หาชื่อบริษัทจริงมาแสดงแทน (หาไม่เจอก็ใช้ของเดิม) */
     var edCustShow=ed?(sfCustShow(sfCustFind(ed.customer))||ed.customer||''):'';
     h+='<input type="hidden" id="slKind" value="'+esc(kindNow)+'">'+
@@ -12741,8 +12766,10 @@
       '<div class="sf-f c2"><label>วันที่เอกสาร</label>'+
         '<input id="slDate" type="date" value="'+esc(ed?(ed.docDate||''):todayISO())+'"'+(lockAll?' readonly':'')+
         ' onchange="sfDueSync()"></div>'+
-      '<div class="sf-f c2"><label>'+(kindNow==='QT'?'วันที่ใช้ได้ถึง':'วันครบกำหนด')+'</label>'+
-        '<input id="slDue" type="date" value="'+esc(ed?(ed.dueDate||''):'')+'"'+(lockAll?' readonly':'')+'></div>'+
+      /* ใบเสร็จไม่มีวันครบกำหนด — เก็บเงินไปแล้ว (ช่องว่างไว้ให้แถวยังเรียงตรง) */
+      (isCash ? '<div class="sf-f c2"></div>'
+        : ('<div class="sf-f c2"><label>'+(kindNow==='QT'?'วันที่ใช้ได้ถึง':'วันครบกำหนด')+'</label>'+
+           '<input id="slDue" type="date" value="'+esc(ed?(ed.dueDate||''):'')+'"'+(lockAll?' readonly':'')+'></div>'))+
       /* แถว 2: ข้อมูลติดต่อของลูกค้า — อ่านอย่างเดียว ดึงจากทะเบียนตอนเลือกลูกค้า
          🔴 ไม่ให้พิมพ์ทับที่นี่ เพราะที่อยู่บนใบกำกับภาษีต้องมาจากทะเบียนที่เดียว
             (แก้ที่นี่ทีละใบ = ลูกค้าคนเดียวกันมีที่อยู่คนละแบบในแต่ละใบ) */
@@ -12771,6 +12798,27 @@
          (ตารางหน้ารายการยังมีคอลัมน์ "รายละเอียด" ใช้ค่านี้เหมือนเดิม) */
       '<input type="hidden" id="slTitle" value="'+esc(ed?ed.title||'':'')+'">'+
       '</div></div>';
+
+    /* ②′ การรับเงิน — เฉพาะใบเสร็จขายสด (เงินเข้าแล้วตอนออกใบ)
+       🔴 ต้องบันทึกคู่กับใบเสมอ ไม่งั้นใบเสร็จออกแล้วแต่เงินไม่อยู่ในระบบ
+          (ไม่โผล่ในรายงานเงินสด/ธนาคาร และกระทบยอด statement ไม่ได้) */
+    if(isCash){
+      var mOpts=((CASH&&CASH.methods)||['เงินสด']).map(function(m){
+        return '<option value="'+esc(m)+'">'+esc(m)+'</option>'; }).join('');
+      var aOpts='<option value="">— ไม่ระบุบัญชี —</option>'+
+        ((CASH&&CASH.payAccounts)||[]).map(function(a){
+          return '<option value="'+esc(a.id)+'"'+(a.isDefault?' selected':'')+'>'+esc(a.label)+'</option>';
+        }).join('');
+      h+='<div class="sf-card"><div class="sf-h">💵 การรับเงิน</div><div class="sf-grid">'+
+        '<div class="sf-f c3"><label>ช่องทางรับเงิน</label>'+
+          '<select id="csMethod">'+mOpts+'</select></div>'+
+        '<div class="sf-f c4"><label>บัญชีที่เงินเข้า</label>'+
+          '<select id="csAcct">'+aOpts+'</select></div>'+
+        '<div class="sf-f c3"><label>ภาษีที่ลูกค้าหักไว้ (บาท)</label>'+
+          '<input id="csWht" inputmode="decimal" value="0" oninput="salesPreview()"></div>'+
+        '<div class="sf-f wide"><div class="sf-note" id="csNote"></div></div>'+
+        '</div></div>';
+    }
 
     /* ② รายการ */
     h+='<div class="sf-card"><div class="sf-h">📋 รายการ</div>'+
@@ -13016,7 +13064,18 @@
         '</span><b>'+(rate>0?money(vat)
           :'<span style="color:#8A94A6;font-weight:400">'+
             (!(ent&&ent.vatReg)?'บริษัทไม่ได้จด VAT':'ใบนี้ไม่คิดภาษี')+'</span>')+'</b></div>'+
-      '<div class="r grand"><span>จำนวนเงินทั้งสิ้น</span><b>'+money(base+vat)+' บาท</b></div>';
+      '<div class="r grand"><span>จำนวนเงินทั้งสิ้น</span><b>'+money(base+vat)+' บาท</b></div>'+
+      /* ขายสด: บอกเงินที่เข้าบัญชีจริงหลังถูกหักภาษี — ตัวเลขที่ต้องตรงกับสลิป */
+      (function(){
+        if(!$('csWht')) return '';
+        var w=Number((($('csWht')||{}).value||'0').replace(/,/g,''))||0;
+        var tot=Math.round((base+vat)*100)/100;
+        var net=Math.round((tot-w)*100)/100;
+        return w>0
+          ? '<div class="r"><span>หักภาษี ณ ที่จ่าย</span><b>-'+money(w)+'</b></div>'+
+            '<div class="r"><span>เงินเข้าบัญชีจริง</span><b>'+money(net)+'</b></div>'
+          : '';
+      })();
   }
   function salesSave(){
     salesReadItems();
@@ -13028,6 +13087,24 @@
     var t=$('slTitle');
     if(t && !t.value.trim()){
       t.value=(items[0].detail||'').trim()+(items.length>1?(' และอื่น ๆ ('+items.length+' รายการ)'):'');
+    }
+    /* ขายสด = ใบเสร็จ + เงินเข้า ในคำขอเดียว (หลังบ้านบันทึกเงินก่อนแล้วค่อยออกใบ) */
+    if(($('slKind')||{}).value==='RE' && $('csMethod')){
+      var cp={action:'waSalesCash',uid:UID,
+        entity:($('slEnt')||{}).value, customer:sfCustKey(),
+        docDate:($('slDate')||{}).value,
+        priceMode:($('slPriceMode')||{}).value||'excl',
+        title:(($('slTitle')||{}).value||'').trim(),
+        note:(($('slNote')||{}).value||'').trim(), discount:($('slDisc')||{}).value||'0',
+        wht:($('csWht')||{}).value||'0',
+        method:($('csMethod')||{}).value||'', account:($('csAcct')||{}).value||'',
+        items:JSON.stringify(items)};
+      callBusy('กำลังออกใบเสร็จและบันทึกเงินเข้า…', jsonpPost(cp), 'ออกใบเสร็จแล้ว').then(function(r){
+        if(!r||!r.ok){ sfErr((r&&r.error)||'ออกใบไม่สำเร็จ'); return; }
+        toast('✅ '+r.no+' · เงินเข้า '+money(r.cashIn)+' บาท'+(r.warn?(' · '+r.warn):''));
+        SALES_KIND_F='RE'; switchView('salesre');
+      }).catch(function(e){ sfErr(e.message); });
+      return;
     }
     var p={action:'waSalesCreate',uid:UID,
       kind:($('slKind')||{}).value, entity:($('slEnt')||{}).value, customer:sfCustKey(),
@@ -20211,7 +20288,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260921-1750';
+  var APP_BUILD='20260921-1804';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
