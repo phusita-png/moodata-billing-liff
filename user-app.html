@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260921-1257">
+<link rel="stylesheet" href="user.css?v=20260921-1300">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -5752,7 +5752,7 @@
       if(!r.reimb.rows.length){ h+='<div class="emptybox">เดือนนี้ไม่มีใบตั้งเบิกที่ส่งแล้ว</div>'; }
       else {
         h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
-          '<th>#</th><th>เลขที่</th><th>วันที่ส่ง</th><th>ลูกค้า</th><th>เรื่อง</th><th>ยอด</th><th>สถานะ</th></tr></thead><tbody>'+
+          '<th>#</th><th>เลขที่</th><th>วันที่ส่ง</th><th>ลูกค้า</th><th>รายละเอียด</th><th>ยอด</th><th>สถานะ</th></tr></thead><tbody>'+
           r.reimb.rows.map(function(x){
             return '<tr><td>'+x.seq+'</td><td>'+esc(x.no||'-')+'</td><td>'+esc(x.sentText)+'</td><td>'+esc(x.customer)+'</td>'+
               '<td>'+esc(x.title)+'</td><td class="ta-r">'+money(x.amount)+'</td><td>'+esc(x.stage)+'</td></tr>'; }).join('')+
@@ -12125,7 +12125,7 @@
     var shown=qtFilter(salesApplyFind(docs), QT_TAB);
     var h=qtTabsHtml(salesApplyFind(docs), tabs, QT_TAB);
     var cols=[{label:'เลขที่',cls:'dt-nw',w:'15%'},{label:'วันที่',cls:'dt-nw',w:'9%'},
-      {label:'ลูกค้า',w:'16%'},{label:'เรื่อง'},{label:'ยอดรวม',cls:'ta-r',w:'11%'},
+      {label:'ลูกค้า',w:'16%'},{label:'รายละเอียด'},{label:'ยอดรวม',cls:'ta-r',w:'11%'},
       {label:'สถานะ',w:'12%'},{label:'กิจกรรม',w:'16%'},{label:'',w:'46px'}];
     var rows=shown.map(function(d){
       SALES_BYNO[d.no]=d;
@@ -12187,7 +12187,7 @@
   }
 
   function soneDocHtml(d){
-    var rowsInfo=[['ลูกค้า',d.customer],['เรื่อง',d.title],
+    var rowsInfo=[['ลูกค้า',d.customer],['รายละเอียด',d.title],
       ['วันที่เอกสาร',d.docDate?fmtDate(d.docDate):'-'],
       ['ยืนราคาถึง',d.dueDate?fmtDate(d.dueDate):'-'],
       ['ออกในนาม',d.entityName||d.entity||'-'],
@@ -12263,7 +12263,7 @@
     // (ผสม px กับ % แล้วจอกลาง ๆ คอลัมน์ "เรื่อง" จะโดนบีบจนตัวอักษรเรียงลงแนวตั้ง)
     // ⚠️ ปล่อย "เรื่อง" ไม่ระบุความกว้าง — ให้กินที่ที่เหลือ ผลรวมจะไม่มีทางเกิน 100% (ไม่เกิดแถบเลื่อนแนวนอน)
     var cols=[{label:'เลขที่',cls:'dt-nw',w:'14%'},{label:'วันที่',cls:'dt-nw',w:'9%'},{label:'ลูกค้า',w:'16%'},
-      {label:'เรื่อง'},{label:'ยอดรวม',cls:'ta-r',w:'10%'},{label:'คงค้าง',cls:'ta-r',w:'9%'},
+      {label:'รายละเอียด'},{label:'ยอดรวม',cls:'ta-r',w:'10%'},{label:'คงค้าง',cls:'ta-r',w:'9%'},
       {label:'สถานะ',w:'10%'},{label:'ครบกำหนด',cls:'dt-nw',w:'9%'},{label:'',w:'46px'}];
     var rows=docs.map(function(d){
       SALES_BYNO[d.no]=d;
@@ -12380,7 +12380,7 @@
         '<div class="sf-note" id="sfCustInfo"></div></div>'+
       '<div class="sf-f"><label>วันที่เอกสาร</label>'+
         '<input id="slDate" type="date" value="'+esc(ed&&ed.docDateISO?ed.docDateISO:todayISO())+'"></div>'+
-      '<div class="sf-f wide"><label>เรื่อง (ขึ้นบนหัวเอกสาร)</label>'+
+      '<div class="sf-f wide"><label>รายละเอียด (ขึ้นบนหัวเอกสาร)</label>'+
         '<input id="slTitle" placeholder="เช่น ค่าบริการบัญชี ก.ย. 2569" value="'+esc(ed?ed.title||'':'')+'"></div>'+
       '</div></div>';
 
@@ -12565,7 +12565,7 @@
         (full?'':'<br><span style="color:#C8730B">⚠️ '+esc(r.why)+'</span>')+'</div>'+
         (full?('<div class="fld"><label>ลูกค้า</label><select id="edCust">'+custs+'</select></div>'+
           '<div class="fld"><label>วันที่เอกสาร</label><input id="edDate" type="date" value="'+esc(d.docDate||'')+'"></div>'):'')+
-        '<div class="fld"><label>เรื่อง</label><input id="edTitle" value="'+esc(d.title||'')+'"></div>'+
+        '<div class="fld"><label>รายละเอียด</label><input id="edTitle" value="'+esc(d.title||'')+'"></div>'+
         (full?('<div class="fld"><label>รายการ</label><div id="slItems"></div>'+
           '<button class="btn btn-ghost" style="width:100%;margin-top:6px" onclick="salesAddItem()">➕ เพิ่มบรรทัด</button></div>'+
           '<div class="fld"><label>ส่วนลดท้ายบิล (บาท)</label>'+
@@ -19659,7 +19659,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260921-1257';
+  var APP_BUILD='20260921-1300';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
