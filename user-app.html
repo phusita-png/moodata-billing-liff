@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260921-1706">
+<link rel="stylesheet" href="user.css?v=20260921-1710">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -698,8 +698,14 @@
   .bc{ font-size:12.5px; color:#8A94A6; margin:0 0 6px; }
   .bc .lnk{ font-size:12.5px; font-weight:500; }
   .pg-title{ display:flex; align-items:center; gap:10px; margin:0 0 14px; }
-  /* ป้ายสถานะของใบ อยู่มุมขวาของหัวการ์ดข้อมูลเอกสาร (พี่กี้ชี้ตำแหน่ง 21 ก.ย. 69) */
-  .sf-h .tk-badge{ margin-left:auto; font-size:13px; padding:5px 14px; }
+  /* ป้ายสถานะของใบ อยู่มุมขวาของหัวการ์ดข้อมูลเอกสาร (พี่กี้ชี้ตำแหน่ง 21 ก.ย. 69)
+     ตัวใหญ่ + มีขอบ + จุดสีนำหน้า — พื้นป้ายของสถานะ "ร่าง" เป็นเทาอ่อน
+     ถ้าไม่มีขอบจะกลืนกับพื้นการ์ดสีขาวจนมองไม่เห็น (พี่กี้ทัก 21 ก.ย. 69) */
+  .sf-h .tk-badge{ margin-left:auto; display:inline-flex; align-items:center; gap:8px;
+    font-size:15px; font-weight:700; padding:7px 18px; border:1.5px solid currentColor;
+    letter-spacing:.2px; }
+  .sf-h .tk-badge::before{ content:''; width:9px; height:9px; border-radius:50%;
+    background:currentColor; flex:none; }
   .pg-title h2{ margin:0; font-size:21px; }
   /* ป้ายรหัสเอกสาร (QT · IV · RE …) — ตัวเดียวกับที่ติดท้ายเมนูซ้าย */
   /* สีต้องมาจากตัวแปรธีมเสมอ — ห้องลูกค้าเป็นโทนม่วง ฮาร์ดโค้ดสีฟ้าแล้วป้ายจะหลุดธีม
@@ -20070,7 +20076,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260921-1706';
+  var APP_BUILD='20260921-1710';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
