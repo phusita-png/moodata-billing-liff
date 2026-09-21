@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260921-1518">
+<link rel="stylesheet" href="user.css?v=20260921-1528">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -680,6 +680,10 @@
     background:rgba(255,255,255,.96); border-top:1px solid var(--line); padding:10px 16px;
     margin:4px -16px 0; backdrop-filter:blur(6px); }
   .sf-bar .btn{ width:auto; flex:none; padding:12px 26px; }
+  /* คำสั่งของใบอยู่ซ้ายของแถบ · ยกเลิก/บันทึก ชิดขวาเหมือนเดิม */
+  .sf-bar-acts{ display:flex; flex-wrap:wrap; gap:8px; margin-right:auto; }
+  .sf-bar .sf-act{ padding:9px 14px; font-size:13.5px; }
+  @media (max-width:860px){ .sf-bar{ flex-wrap:wrap; } .sf-bar-acts{ width:100%; margin:0 0 8px; } }
   /* จอแคบลง: ยุบเป็น 2 ช่อง แล้ว 1 ช่อง — ความกว้างรายช่องไม่มีความหมายแล้ว */
   @media (max-width:1180px){
     .sf-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); }
@@ -694,6 +698,8 @@
   .bc{ font-size:12.5px; color:#8A94A6; margin:0 0 6px; }
   .bc .lnk{ font-size:12.5px; font-weight:500; }
   .pg-title{ display:flex; align-items:center; gap:10px; margin:0 0 14px; }
+  /* ป้ายสถานะของใบ ชิดขวาสุดในบรรทัดหัวเรื่อง (พี่กี้ชี้ตำแหน่ง 21 ก.ย. 69) */
+  .pg-title .tk-badge{ margin-left:auto; font-size:13px; padding:5px 14px; }
   .pg-title h2{ margin:0; font-size:21px; }
   /* ป้ายรหัสเอกสาร (QT · IV · RE …) — ตัวเดียวกับที่ติดท้ายเมนูซ้าย */
   /* สีต้องมาจากตัวแปรธีมเสมอ — ห้องลูกค้าเป็นโทนม่วง ฮาร์ดโค้ดสีฟ้าแล้วป้ายจะหลุดธีม
@@ -2307,13 +2313,13 @@
       <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>ภาพรวมธุรกิจ</span></button>
     <!-- รายรับแยกตามชนิดเอกสาร ตามผังพี่กี้ §2.6 — แถบซ้าย = เมนูหลัก · รายการย่อยเป็นแท็บในหน้า -->
     <button class="nav-btn" data-view="salesqt" aria-label="ใบเสนอราคา" id="navSalesQt" style="display:none">
-      <svg viewBox="0 0 24 24"><path d="M5 4.5h11l3 3V19.5H5z"/><path d="M8 10h8M8 13.5h8M8 17h5"/></svg><span>ใบเสนอราคา<span class="doc-code">QT</span></span></button>
+      <svg viewBox="0 0 24 24"><path d="M5 4.5h10l4 4V19.5H5z"/><path d="M15 4.5v4h4"/><path d="M8 12h8M8 15.5h5"/></svg><span>ใบเสนอราคา<span class="doc-code">QT</span></span></button>
     <button class="nav-btn" data-view="salesiv" aria-label="ใบแจ้งหนี้" id="navSalesIv" style="display:none">
-      <svg viewBox="0 0 24 24"><path d="M4.5 5.5h15v13h-15z"/><path d="M8 9.5h8M8 13h8M8 16h4"/></svg><span>ใบแจ้งหนี้<span class="doc-code">IV</span></span></button>
+      <svg viewBox="0 0 24 24"><path d="M5 4.5h10l4 4V19.5H5z"/><path d="M15 4.5v4h4"/><path d="M8 12h8M8 15.5h8"/></svg><span>ใบแจ้งหนี้<span class="doc-code">IV</span></span></button>
     <button class="nav-btn" data-view="salesre" aria-label="ใบเสร็จรับเงิน" id="navSalesRe" style="display:none">
-      <svg viewBox="0 0 24 24"><path d="M5 3.5v17l2-1.4 2 1.4 2-1.4 2 1.4 2-1.4 2 1.4v-17z"/><path d="M8.5 9h7M8.5 13h5"/></svg><span>ใบเสร็จรับเงิน<span class="doc-code">RE</span></span></button>
+      <svg viewBox="0 0 24 24"><path d="M5 4.5h10l4 4V19.5H5z"/><path d="M15 4.5v4h4"/><path d="M8.5 14.5l2 2 4-4"/></svg><span>ใบเสร็จรับเงิน<span class="doc-code">RE</span></span></button>
     <button class="nav-btn" data-view="salescn" aria-label="ใบลดหนี้" id="navSalesCn" style="display:none">
-      <svg viewBox="0 0 24 24"><path d="M4.5 5.5h15v13h-15z"/><path d="M8 12h8"/></svg><span>ใบลดหนี้<span class="doc-code">CN</span></span></button>
+      <svg viewBox="0 0 24 24"><path d="M5 4.5h10l4 4V19.5H5z"/><path d="M15 4.5v4h4"/><path d="M8.5 14h7"/></svg><span>ใบลดหนี้<span class="doc-code">CN</span></span></button>
     <button class="nav-btn" data-view="ar" aria-label="ทะเบียนลูกหนี้" id="navAr" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M3 20h18"/><path d="M6.5 17V10M11.5 17V6M16.5 17v-4"/></svg><span>ทะเบียนลูกหนี้</span></button>
     <!-- ยังไม่มีของจริง (เฟส 6) — โชว์ในเมนูเพื่อให้เห็นแผนทั้งหมด กดเข้าไปบอกว่ากำลังทำ -->
@@ -2364,7 +2370,7 @@
     <button class="nav-btn" data-view="taxhub" aria-label="รายงานภาษี" id="navTaxHub" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M3 20h18M5 20V10M9.5 20V10M14.5 20V10M19 20V10"/><path d="M12 3.5 21 9H3z"/></svg><span>รายงานภาษี</span></button>
     <button class="nav-btn" data-view="whtin" aria-label="50 ทวิ ที่ถูกหัก" id="navWhtIn" style="display:none">
-      <svg viewBox="0 0 24 24"><path d="M6 3.5h12v17l-3-1.6-3 1.6-3-1.6-3 1.6z"/><path d="M9 9h6M9 13h4"/></svg><span>50 ทวิ ที่ถูกหัก<span class="doc-code">WI</span></span></button>
+      <svg viewBox="0 0 24 24"><path d="M5 4.5h10l4 4V19.5H5z"/><path d="M15 4.5v4h4"/><path d="M12 11.5v5M9.5 14l2.5 2.5 2.5-2.5"/></svg><span>50 ทวิ ที่ถูกหัก<span class="doc-code">WI</span></span></button>
     <button class="nav-btn" data-view="expreport" aria-label="รายงานรายจ่าย" id="navExpReport" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M4 19.5h16"/><path d="M7 16V9M12 16V6M17 16v-4"/><path d="M3 4.5h6"/></svg><span>รายงานรายจ่าย</span></button>
     <button class="nav-btn" data-view="vatbuy" aria-label="ภาษีซื้อ" id="navVatBuy" style="display:none">
@@ -12453,6 +12459,7 @@
     /* ช่องแถว 2 (ที่อยู่ · อีเมล · เบอร์) เติมจากทะเบียนทุกครั้งที่เปลี่ยนลูกค้า */
     var put=function(id,v){ var el=$(id); if(el) el.value=v||''; };
     put('slCustAddr', c&&c.address); put('slCustEmail', c&&c.email); put('slCustPhone', c&&c.phone);
+    put('slCustTax', c&&c.taxId);
     var codeEl=$('slCustCode');
     if(codeEl && c && c.code && codeEl.value.trim()!==c.code) codeEl.value=c.code;
     if(codeEl && !name) codeEl.value='';
@@ -12548,7 +12555,8 @@
       /* โหมดแก้ไข = หน้าเดียวกับ PEAK: เลขที่ + สถานะ + แถบขั้นเอกสาร + 2 แท็บ */
       var dRow=SALES_BYNO[ed.no]||{kind:ed.kind,status:ed.status,refBy:ed.refBy||[],no:ed.no};
       h+='<div class="pg-title"><h2>'+esc(ed.no)+'</h2>'+
-        (dRow.tag?qtBadge(dRow):'<span class="tk-badge b-new">'+esc(ed.status||'')+'</span>')+'</div>'+
+        /* เข้าหน้านี้จากลิงก์ตรง ๆ ตาราง SALES_BYNO ยังว่าง → ยังต้องได้สีตามสถานะจริง ไม่ใช่เทาหมด */
+        (dRow.tag?qtBadge(dRow):'<span class="tk-badge '+salesBadge(ed.status)+'">'+esc(ed.status||'')+'</span>')+'</div>'+
         /* 🔴 ไม่มีแถบขั้น QT→IV→RE แล้ว (พี่กี้เคาะ 21 ก.ย. 69: "ไม่เอาละค่ะ")
            ความเชื่อมโยงกับใบถัดไปดูได้จากคอลัมน์ IV ในหน้ารายการ และปุ่มออกใบแจ้งหนี้ */
         pageTabs(SONE_TAB, [['doc','ข้อมูลเอกสาร',"sfTab('doc')"],
@@ -12588,10 +12596,13 @@
              'value="'+esc(ed?(ed.customer||''):'')+'" oninput="sfCustHint()" autocomplete="off">'+
             '<datalist id="sfCustList">'+custOpts+'</datalist>')+
         '<div class="sf-note" id="sfCustInfo"></div></div>'+
-      '<div class="sf-f c3"><label>วันที่เอกสาร</label>'+
+      /* เลขผู้เสียภาษีต่อจากช่องลูกค้า (พี่กี้ขอ 21 ก.ย. 69) — ดึงจากทะเบียน ตรวจก่อนออกใบกำกับ */
+      '<div class="sf-f c2"><label>เลขผู้เสียภาษี</label>'+
+        '<input id="slCustTax" readonly placeholder="—"></div>'+
+      '<div class="sf-f c2"><label>วันที่เอกสาร</label>'+
         '<input id="slDate" type="date" value="'+esc(ed?(ed.docDate||''):todayISO())+'"'+(lockAll?' readonly':'')+
         ' onchange="sfDueSync()"></div>'+
-      '<div class="sf-f c3"><label>'+(kindNow==='QT'?'วันที่ใช้ได้ถึง (ยืนราคา)':'วันครบกำหนดชำระ')+'</label>'+
+      '<div class="sf-f c2"><label>'+(kindNow==='QT'?'วันที่ใช้ได้ถึง':'วันครบกำหนด')+'</label>'+
         '<input id="slDue" type="date" value="'+esc(ed?(ed.dueDate||''):'')+'"'+(lockAll?' readonly':'')+'>'+
         '<div class="sf-note" id="sfDueNote"></div></div>'+
       /* แถว 2: ข้อมูลติดต่อของลูกค้า — อ่านอย่างเดียว ดึงจากทะเบียนตอนเลือกลูกค้า
@@ -12636,27 +12647,24 @@
         '<div class="sf-tot" id="slSum"></div></div>'+
       '</div></div>';
 
-    /* ④ คำสั่งอื่นของใบนี้ (พิมพ์ · ส่ง · ออกใบถัดไป · ยกเลิก) — ชุดเดียวกับเมนู ⋮ ในตาราง */
+    /* ④ แถบปุ่มท้ายฟอร์ม — คำสั่งของใบอยู่แถบเดียวกับ ยกเลิก/บันทึก
+       (พี่กี้ขอ 21 ก.ย. 69 "ย้ายมารวมกัน" — เดิมแยกเป็นการ์ดอีกใบ ต้องเลื่อนผ่านกว่าจะถึงปุ่มบันทึก)
+       ซ้าย = คำสั่งของใบ (พิมพ์ · ส่ง · ออกใบถัดไป · ยกเลิกเอกสาร) · ขวา = ยกเลิก/บันทึก
+       🔴 ไม่มีปุ่มสร้าง PDF ใหม่ (พี่กี้ขีดฆ่า) — แก้ไขแล้วระบบออกไฟล์ใหม่ให้เองทุกครั้ง */
+    var actHtml='';
     if(ed){
       var dRow2=SALES_BYNO[ed.no];
       if(dRow2){
-        var acts=salesRowActions(dRow2).filter(function(a){ return !a.sep && a.key!=='edit'; });
-        if(acts.length){
-          h+='<div class="sf-card"><div class="sf-h">⚙️ คำสั่งอื่นของใบนี้</div>'+
-            '<div class="tax-acts" style="margin:0">'+acts.map(function(a){
-              return a.href
-                ? '<a class="btn btn-ghost" style="flex:none;width:auto;padding:9px 16px" target="_blank" rel="noopener" href="'+esc(a.href)+'">'+esc(a.label)+'</a>'
-                : '<button class="btn btn-ghost" style="flex:none;width:auto;padding:9px 16px" onclick="'+esc(a.call)+'">'+esc(a.label)+'</button>';
-            }).join('')+
-            /* 🔴 ไม่มีปุ่มสร้าง PDF ใหม่ที่นี่แล้ว (พี่กี้ขีดฆ่า 21 ก.ย. 69)
-               แก้ไขแล้วระบบออกไฟล์ใหม่ให้เองทุกครั้ง · ใบที่ยังไม่มีไฟล์จะมีปุ่มในเมนู ⋮ ให้อยู่แล้ว */
-            '</div></div>';
-        }
+        actHtml=salesRowActions(dRow2).filter(function(a){ return !a.sep && a.key!=='edit'; })
+          .map(function(a){
+            return a.href
+              ? '<a class="btn btn-ghost sf-act" target="_blank" rel="noopener" href="'+esc(a.href)+'">'+esc(a.label)+'</a>'
+              : '<button class="btn btn-ghost sf-act" onclick="'+esc(a.call)+'">'+esc(a.label)+'</button>';
+          }).join('');
       }
     }
-
-    /* ⑤ แถบปุ่ม — ใช้คำว่า "บันทึก" ทั้งสร้างใหม่และแก้ไข (พี่กี้เคาะ 21 ก.ย. 69) */
     h+='<div class="sf-bar">'+
+      '<div class="sf-bar-acts">'+actHtml+'</div>'+
       '<button class="btn btn-ghost" onclick="salesFormCancel()">ยกเลิก</button>'+
       '<button class="btn btn-primary" onclick="'+(SF_MODE==='edit'?'salesEditSave()':'salesSave()')+'">บันทึก</button></div>';
 
@@ -20058,7 +20066,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260921-1518';
+  var APP_BUILD='20260921-1528';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
