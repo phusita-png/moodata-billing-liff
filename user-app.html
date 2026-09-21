@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260921-1306">
+<link rel="stylesheet" href="user.css?v=20260921-1315">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -12133,7 +12133,7 @@
       SALES_BYNO[d.no]=d;
       var q="'"+String(d.no).replace(/'/g,"\\'")+"'";
       return '<tr>'+
-        '<td class="dt-nw"><button class="lnk" onclick="salesOne('+q+')">'+esc(d.no)+'</button></td>'+
+        '<td class="dt-nw"><button class="lnk" onclick="salesEdit('+q+')">'+esc(d.no)+'</button></td>'+
         '<td class="dt-nw">'+esc(d.docDate?fmtDate(d.docDate):'-')+'</td>'+
         '<td>'+esc(d.customer||'-')+'</td>'+
         '<td class="dt-detail">'+esc(d.title||'-')+'</td>'+
@@ -12339,8 +12339,7 @@
       return;
     }
     $('main').innerHTML=salesFormHtml();
-    paintSalesItems();
-    sfCustHint();
+    if(SF_MODE!=='edit' || SONE_TAB==='doc'){ paintSalesItems(); sfCustHint(); }
   }
   window.renderSalesForm=renderSalesForm;
 
@@ -12350,8 +12349,11 @@
     var kindNow=ed?ed.kind:(SALES_KIND_F||'QT');
     var kindLabel=(SALES.allKinds||[]).filter(function(k){ return k.key===kindNow; })[0];
     kindLabel=kindLabel?kindLabel.label:kindNow;
-    var scope=(SF_MODE==='edit'&&EDIT_DOC)?(EDIT_DOC.scope||{}):{};
-    var lockAll=(SF_MODE==='edit' && scope.itemsLocked);
+    /* 🔴 ขอบเขตการแก้มาจากหลังบ้าน (waSalesGet → canAmount) — หน้าเว็บห้ามเดาเอง
+       ใบที่รับเงินแล้ว / ใบเสร็จ / ใบวางบิล แก้ได้แค่รายละเอียดกับหมายเหตุ (salesEditScope_) */
+    var canAmt=(SF_MODE!=='edit') || !!(EDIT_DOC && EDIT_DOC.canAmount);
+    var scope={ custLocked: !canAmt, itemsLocked: !canAmt };
+    var lockAll=(SF_MODE==='edit' && !canAmt);
 
     var kinds=(SALES.kinds||[]).map(function(k){
       return '<option value="'+esc(k.key)+'"'+(k.key===kindNow?' selected':'')+'>'+esc(k.label)+'</option>'; }).join('');
@@ -12361,11 +12363,20 @@
     var custs=(SALES.customers||[]).map(function(c){
       return '<option value="'+esc(c.name)+'"'+(ed&&ed.customer===c.name?' selected':'')+'>'+esc(c.name)+'</option>'; }).join('');
 
-    var h='<div class="m-hint" style="margin:0 0 10px">'+
+    var h='<div class="bc">'+
       '<button class="lnk" onclick="salesGo(&quot;'+esc(kindNow)+'&quot;)">'+esc(kindLabel)+'</button> › '+
-      (ed?esc(ed.no):'ออกใบใหม่')+'</div>'+
-      '<div class="section-h">'+(ed?'✏️ แก้ไข '+esc(ed.no):'➕ ออก'+esc(kindLabel))+'</div>'+
-      '<div id="sfErr" class="m-err hidden" style="margin-bottom:12px"></div>';
+      (ed?esc(ed.no):'ออกใบใหม่')+'</div>';
+    if(ed){
+      /* โหมดแก้ไข = หน้าเดียวกับ PEAK: เลขที่ + สถานะ + แถบขั้นเอกสาร + 2 แท็บ */
+      var dRow=SALES_BYNO[ed.no]||{kind:ed.kind,status:ed.status,refBy:ed.refBy||[],no:ed.no};
+      h+='<div class="pg-title"><h2>'+esc(ed.no)+'</h2>'+
+        (dRow.tag?qtBadge(dRow):'<span class="tk-badge b-new">'+esc(ed.status||'')+'</span>')+'</div>'+
+        soneStepsHtml(dRow)+
+        pageTabs(SONE_TAB, [['doc','ข้อมูลเอกสาร',"sfTab('doc')"],
+                            ['log','ประวัติการใช้งาน',"sfTab('log')"]]);
+      if(SONE_TAB==='log') return h+soneLogHtml();
+    }
+    h+='<div id="sfErr" class="m-err hidden" style="margin-bottom:12px"></div>';
 
     /* ① ข้อมูลเอกสาร */
     h+='<div class="sf-card"><div class="sf-h">🧾 ข้อมูลเอกสาร</div><div class="sf-grid">'+
@@ -12381,14 +12392,15 @@
            :'<select id="slCust" onchange="sfCustHint()">'+custs+'</select>')+
         '<div class="sf-note" id="sfCustInfo"></div></div>'+
       '<div class="sf-f"><label>วันที่เอกสาร</label>'+
-        '<input id="slDate" type="date" value="'+esc(ed&&ed.docDateISO?ed.docDateISO:todayISO())+'"></div>'+
+        '<input id="slDate" type="date" value="'+esc(ed?(ed.docDate||''):todayISO())+'"'+(lockAll?' readonly':'')+'></div>'+
       '<div class="sf-f wide"><label>รายละเอียด (ขึ้นบนหัวเอกสาร)</label>'+
         '<input id="slTitle" placeholder="เช่น ค่าบริการบัญชี ก.ย. 2569" value="'+esc(ed?ed.title||'':'')+'"></div>'+
       '</div></div>';
 
     /* ② รายการ */
     h+='<div class="sf-card"><div class="sf-h">📋 รายการ</div>'+
-      (lockAll?'<div class="m-hint" style="margin:0 0 10px">ใบนี้รับเงินไปแล้ว แก้ได้เฉพาะเรื่องและหมายเหตุ</div>':'')+
+      (lockAll?'<div class="m-hint" style="margin:0 0 10px">'+
+        esc((EDIT_DOC&&EDIT_DOC.why)||'ใบนี้แก้ได้เฉพาะรายละเอียดและหมายเหตุ')+'</div>':'')+
       '<div id="slItems"></div>'+
       (lockAll?'':'<div class="tax-acts" style="margin:12px 0 0">'+
         '<button class="btn btn-ghost" style="flex:none;width:auto;padding:9px 16px" onclick="salesAddItem()">+ เพิ่มรายการ</button></div>')+
@@ -12404,15 +12416,43 @@
         '<div class="sf-tot" id="slSum"></div></div>'+
       '</div></div>';
 
-    /* ④ แถบปุ่ม */
+    /* ④ คำสั่งอื่นของใบนี้ (พิมพ์ · ส่ง · ออกใบถัดไป · ยกเลิก) — ชุดเดียวกับเมนู ⋮ ในตาราง */
+    if(ed){
+      var dRow2=SALES_BYNO[ed.no];
+      if(dRow2){
+        var acts=salesRowActions(dRow2).filter(function(a){ return !a.sep && a.key!=='edit'; });
+        if(acts.length){
+          h+='<div class="sf-card"><div class="sf-h">⚙️ คำสั่งอื่นของใบนี้</div>'+
+            '<div class="tax-acts" style="margin:0">'+acts.map(function(a){
+              return a.href
+                ? '<a class="btn btn-ghost" style="flex:none;width:auto;padding:9px 16px" target="_blank" rel="noopener" href="'+esc(a.href)+'">'+esc(a.label)+'</a>'
+                : '<button class="btn btn-ghost" style="flex:none;width:auto;padding:9px 16px" onclick="'+esc(a.call)+'">'+esc(a.label)+'</button>';
+            }).join('')+'</div></div>';
+        }
+      }
+    }
+
+    /* ⑤ แถบปุ่ม — ใช้คำว่า "บันทึก" ทั้งสร้างใหม่และแก้ไข (พี่กี้เคาะ 21 ก.ย. 69) */
     h+='<div class="sf-bar">'+
       '<button class="btn btn-ghost" onclick="salesFormCancel()">ยกเลิก</button>'+
-      '<button class="btn btn-primary" onclick="'+(SF_MODE==='edit'?'salesEditSave()':'salesSave()')+'">'+
-        (SF_MODE==='edit'?'บันทึกการแก้ไข':'ออกเอกสาร')+'</button></div>';
+      '<button class="btn btn-primary" onclick="'+(SF_MODE==='edit'?'salesEditSave()':'salesSave()')+'">บันทึก</button></div>';
 
     return h;
   }
   window.salesFormHtml=salesFormHtml;
+
+  function sfTab(t){
+    SONE_TAB=(t==='log'?'log':'doc');
+    renderSalesForm();
+    if(SONE_TAB==='log' && !SONE_LOG && SONE_NO){
+      jsonp({action:'waSalesLog',uid:UID,no:SONE_NO}).then(function(r){
+        if(!r||!r.ok) return;
+        SONE_LOG=r;
+        if(VIEW==='salesform' && SONE_TAB==='log') renderSalesForm();
+      }).catch(function(){});
+    }
+  }
+  window.sfTab=sfTab;
 
   function salesFormCancel(){
     if(SF_MODE==='edit'&&EDIT_DOC&&EDIT_DOC.doc){ salesOne(EDIT_DOC.doc.no); return; }
@@ -12546,13 +12586,30 @@
   /** ✏️ แก้เอกสารที่ออกไปแล้ว — โหลดค่าเดิมมาให้ แล้วออกไฟล์ใหม่ทับตอนบันทึก
    *  ใบที่รับเงินแล้ว/ใบเสร็จ/ใบวางบิล จะแก้ได้แค่เรื่องกับหมายเหตุ (backend เป็นคนตัดสิน) */
   var EDIT_DOC=null;
+  /** เปิดใบที่มีอยู่ในหน้าฟอร์มเดียวกับตอนสร้างใหม่ (พี่กี้เคาะ 21 ก.ย. 69)
+   *  ใบที่แก้ไม่ได้ (ยกเลิก / รับเงินแล้ว) → เปิดหน้ารายละเอียดอ่านอย่างเดียวแทน */
   function salesEdit(no){
     busy('กำลังโหลดเอกสาร…');
     jsonp({action:'waSalesGet',uid:UID,no:no}).then(function(r){
       unbusy();
       if(!r||!r.ok){ toast((r&&r.error)||'โหลดไม่สำเร็จ'); return; }
-      if(!r.canEdit){ toast(r.why||'ใบนี้แก้ไขไม่ได้ค่ะ'); return; }
+      if(!r.canEdit){ toast(r.why||'ใบนี้แก้ไขไม่ได้ — เปิดดูอย่างเดียวค่ะ'); salesOne(no); return; }
       EDIT_DOC=r;
+      var d=r.doc;
+      /* VAT ของใบนี้ = ของบริษัทที่ออกใบ (ฟอร์มโหมดแก้ไขไม่มี dropdown บริษัทให้เลือก) */
+      var ent0=null; (SALES&&SALES.entities||[]).forEach(function(x){ if(x.code===d.entity) ent0=x; });
+      EDIT_DOC.vatReg=ent0?ent0.vatReg:false;
+      SALES_ITEMS=(r.items||[]).map(function(it){
+        return { service:it.service||'', detail:it.detail||'', qty:it.qty, price:it.price };
+      });
+      if(!SALES_ITEMS.length) SALES_ITEMS=[{}];
+      SF_MODE='edit'; SONE_NO=no; SONE_TAB='doc'; SONE_LOG=null;
+      switchView('salesform');
+    }).catch(function(e){ unbusy(); toast(e.message); });
+  }
+
+  function salesEditOld_(no){
+    jsonp({action:'waSalesGet',uid:UID,no:no}).then(function(r){
       var d=r.doc;
       SALES_ITEMS=(r.items||[]).map(function(it){
         return { service:it.service||'', detail:it.detail||'', qty:it.qty, price:it.price };
@@ -12584,21 +12641,23 @@
       }
     }).catch(function(e){ unbusy(); toast(e.message); });
   }
+  /** บันทึกการแก้ไข — อ่านช่องชุดเดียวกับฟอร์มสร้างใหม่ (slTitle/slNote/slCust/slDate)
+   *  🔴 มีชุด id เดียวทั้งสร้างและแก้ ไม่งั้นวันหนึ่งจะแก้ฟอร์มที่เดียวแล้วอีกโหมดพังเงียบ */
   function salesEditSave(no){
+    no = no || SONE_NO;
     var p={action:'waSalesEdit',uid:UID,no:no,
-      title:((($('edTitle')||{}).value)||'').trim(), note:((($('edNote')||{}).value)||'').trim()};
+      title:((($('slTitle')||{}).value)||'').trim(), note:((($('slNote')||{}).value)||'').trim()};
     if(EDIT_DOC && EDIT_DOC.canAmount){
       salesReadItems();
       var items=SALES_ITEMS.filter(function(it){ return (it.detail||'').trim() || it.service; });
-      if(!items.length){ mErr('ใส่รายการอย่างน้อย 1 บรรทัดค่ะ'); return; }
+      if(!items.length){ sfErr('ใส่รายการอย่างน้อย 1 บรรทัดค่ะ'); return; }
       p.items=JSON.stringify(items);
-      p.customer=($('edCust')||{}).value||'';
-      p.docDate=($('edDate')||{}).value||'';
+      p.customer=($('slCust')||{}).value||'';
+      p.docDate=($('slDate')||{}).value||'';
       p.discount=($('slDisc')||{}).value||'0';
     }
     callBusy('กำลังบันทึก…', jsonpPost(p), 'บันทึกแล้ว').then(function(r){
-      if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
-      closeModal();
+      if(!r||!r.ok){ sfErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
       if(!(r.changed||[]).length){ toast('ไม่มีอะไรเปลี่ยนค่ะ'); return; }
       toast('✏️ แก้ '+(r.changed||[]).join(', ')+' แล้ว · ออกไฟล์ใหม่ให้'+
         (r.resent?' — อย่าลืมกดส่งเข้ากลุ่มใหม่':'')+(r.warn?' ⚠️ '+r.warn:''));
@@ -19661,7 +19720,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260921-1306';
+  var APP_BUILD='20260921-1315';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
