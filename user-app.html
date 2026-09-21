@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260921-1039">
+<link rel="stylesheet" href="user.css?v=20260921-1058">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -636,6 +636,69 @@
   .lnk{ border:none; background:none; padding:0; font:inherit; color:var(--red); font-weight:600;
     cursor:pointer; text-align:left; }
   .lnk:hover{ text-decoration:underline; }
+  /* แถวว่างในตาราง — เห็นหัวคอลัมน์ครบ แล้วบอกตรงกลางว่าทำไมถึงว่าง */
+  .dt-empty td{ text-align:center; color:#8A94A6; padding:26px 12px !important; font-size:13.5px; }
+  /* แถวหัวเรื่องของหน้า: ชื่อหน้าอยู่ซ้าย ปุ่มสร้างชิดขวา (ไม่กินเต็มแถว) */
+  .pg-head{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:0 0 14px; }
+  .pg-head .section-h{ margin:0; }
+  .pg-head .pg-act{ margin-left:auto; display:flex; gap:8px; flex-wrap:wrap; }
+  .pg-head .pg-act .btn{ width:auto; flex:none; padding:10px 18px; font-size:14.5px; }
+  /* ── ฟอร์มออกเอกสารขาย: หน้าเต็ม (21 ก.ย. 69) ──
+     🔴 ฟอร์มที่มี "ตารางรายการ" ห้ามทำเป็นป็อบอัป — ป็อบอัปบังคับให้ตารางแคบลงจนกรอกยาก
+        และมองไม่เห็นยอดรวมพร้อมกับรายการ (พี่กี้ทัก 21 ก.ย.) */
+  .sf-card{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:18px 20px; margin-bottom:14px; }
+  .sf-h{ font-weight:700; font-size:15px; margin:0 0 14px; display:flex; align-items:center; gap:8px; }
+  .sf-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px 18px; }
+  .sf-grid .sf-f{ display:flex; flex-direction:column; gap:6px; }
+  .sf-grid .sf-f.wide{ grid-column:1 / -1; }
+  .sf-f label{ font-size:13px; color:#5B6472; font-weight:600; }
+  .sf-f input,.sf-f select,.sf-f textarea{ width:100%; box-sizing:border-box; padding:10px 12px;
+    border:1px solid var(--line); border-radius:10px; font-family:inherit; font-size:14.5px; background:#fff; }
+  .sf-f textarea{ min-height:76px; resize:vertical; }
+  .sf-note{ font-size:12.5px; color:#8A94A6; line-height:1.5; }
+  /* ตารางรายการ — ช่องกรอกอยู่ในเซลล์จริง ไม่ใช่กล่องซ้อนกล่อง */
+  .sf-items td{ vertical-align:middle; }
+  .sf-items input,.sf-items select{ width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid var(--line);
+    border-radius:8px; font-family:inherit; font-size:14px; background:#fff; }
+  .sf-items .sf-del{ width:auto; border:none; background:none; color:#C0490F; font-size:16px; cursor:pointer; padding:4px 8px; }
+  .sf-sum{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,360px); gap:18px; align-items:start; }
+  .sf-tot{ border:1px solid var(--line); border-radius:14px; overflow:hidden; }
+  .sf-tot .r{ display:flex; justify-content:space-between; gap:12px; padding:10px 16px; font-size:14px; }
+  .sf-tot .r+.r{ border-top:1px solid #F1F4F9; }
+  .sf-tot .r b{ font-variant-numeric:tabular-nums; }
+  .sf-tot .grand{ background:#1E293B; color:#fff; font-size:16px; font-weight:700; padding:14px 16px; }
+  /* แถบปุ่มท้ายฟอร์ม — ติดขอบล่างจอ กดบันทึกได้โดยไม่ต้องเลื่อนกลับขึ้น */
+  .sf-bar{ position:sticky; bottom:0; z-index:12; display:flex; gap:10px; justify-content:flex-end;
+    background:rgba(255,255,255,.96); border-top:1px solid var(--line); padding:12px 16px;
+    margin:16px -16px 0; backdrop-filter:blur(6px); }
+  .sf-bar .btn{ width:auto; flex:none; padding:12px 26px; }
+  @media (max-width:860px){
+    .sf-grid{ grid-template-columns:1fr; }
+    .sf-sum{ grid-template-columns:1fr; }
+  }
+  /* ── โครงหน้าเอกสารขายตาม mockup ของพี่กี้ (19 ก.ย. 69) ── */
+  .bc{ font-size:12.5px; color:#8A94A6; margin:0 0 6px; }
+  .bc .lnk{ font-size:12.5px; font-weight:500; }
+  .pg-title{ display:flex; align-items:center; gap:10px; margin:0 0 14px; }
+  .pg-title h2{ margin:0; font-size:21px; }
+  /* ป้ายรหัสเอกสาร (QT · IV · RE …) — ตัวเดียวกับที่ติดท้ายเมนูซ้าย */
+  /* สีต้องมาจากตัวแปรธีมเสมอ — ห้องลูกค้าเป็นโทนม่วง ฮาร์ดโค้ดสีฟ้าแล้วป้ายจะหลุดธีม
+     (เทส test-theme.js จับได้ทันทีตอนเขียนครั้งแรก 21 ก.ย. 69) */
+  .doc-code{ font-size:11px; font-weight:700; letter-spacing:.6px; padding:2px 8px; border-radius:6px;
+    background:var(--red-tint); color:var(--red-deep); }
+  .nav-btn .doc-code{ margin-left:auto; background:#EEF3FA; color:#7A879B; }
+  .nav-btn.on .doc-code,.nav-btn[aria-current="page"] .doc-code{ background:#fff; color:var(--red); }
+  /* การ์ดครอบตาราง: หัวการ์ด = ชื่อ+คำอธิบาย ซ้าย · เครื่องมือขวา */
+  .lst-card{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:18px 20px 6px; }
+  .lst-head{ display:flex; align-items:flex-start; gap:14px; flex-wrap:wrap; margin:0 0 16px; }
+  .lst-head .t b{ font-size:16px; }
+  .lst-head .t div{ color:#8A94A6; font-size:12.5px; margin-top:3px; }
+  .lst-tools{ margin-left:auto; display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .lst-tools input,.lst-tools select{ padding:9px 12px; border:1px solid var(--line); border-radius:10px;
+    font-family:inherit; font-size:13.5px; background:#fff; width:auto; }
+  .lst-tools .s-find{ min-width:190px; }
+  .lst-tools .btn{ width:auto; flex:none; padding:9px 16px; font-size:14px; }
+  @media (max-width:760px){ .lst-tools{ margin-left:0; width:100%; } .lst-tools .s-find{ flex:1; min-width:0; } }
   .qt-act{ font-size:12.5px; line-height:1.4; }
   .qt-act b{ font-weight:600; }
   .qt-act small{ display:block; color:#8A94A6; font-size:11.5px; }
@@ -2209,13 +2272,13 @@
       <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>ภาพรวมธุรกิจ</span></button>
     <!-- รายรับแยกตามชนิดเอกสาร ตามผังพี่กี้ §2.6 — แถบซ้าย = เมนูหลัก · รายการย่อยเป็นแท็บในหน้า -->
     <button class="nav-btn" data-view="salesqt" aria-label="ใบเสนอราคา" id="navSalesQt" style="display:none">
-      <svg viewBox="0 0 24 24"><path d="M5 4.5h11l3 3V19.5H5z"/><path d="M8 10h8M8 13.5h8M8 17h5"/></svg><span>ใบเสนอราคา (QT)</span></button>
+      <svg viewBox="0 0 24 24"><path d="M5 4.5h11l3 3V19.5H5z"/><path d="M8 10h8M8 13.5h8M8 17h5"/></svg><span>ใบเสนอราคา (QT)</span><span class="doc-code">QT</span></button>
     <button class="nav-btn" data-view="salesiv" aria-label="ใบแจ้งหนี้" id="navSalesIv" style="display:none">
-      <svg viewBox="0 0 24 24"><path d="M4.5 5.5h15v13h-15z"/><path d="M8 9.5h8M8 13h8M8 16h4"/></svg><span>ใบแจ้งหนี้ (IV)</span></button>
+      <svg viewBox="0 0 24 24"><path d="M4.5 5.5h15v13h-15z"/><path d="M8 9.5h8M8 13h8M8 16h4"/></svg><span>ใบแจ้งหนี้ (IV)</span><span class="doc-code">IV</span></button>
     <button class="nav-btn" data-view="salesre" aria-label="ใบเสร็จรับเงิน" id="navSalesRe" style="display:none">
-      <svg viewBox="0 0 24 24"><path d="M5 3.5v17l2-1.4 2 1.4 2-1.4 2 1.4 2-1.4 2 1.4v-17z"/><path d="M8.5 9h7M8.5 13h5"/></svg><span>ใบเสร็จรับเงิน (RE)</span></button>
+      <svg viewBox="0 0 24 24"><path d="M5 3.5v17l2-1.4 2 1.4 2-1.4 2 1.4 2-1.4 2 1.4v-17z"/><path d="M8.5 9h7M8.5 13h5"/></svg><span>ใบเสร็จรับเงิน (RE)</span><span class="doc-code">RE</span></button>
     <button class="nav-btn" data-view="salescn" aria-label="ใบลดหนี้" id="navSalesCn" style="display:none">
-      <svg viewBox="0 0 24 24"><path d="M4.5 5.5h15v13h-15z"/><path d="M8 12h8"/></svg><span>ใบลดหนี้ (CN)</span></button>
+      <svg viewBox="0 0 24 24"><path d="M4.5 5.5h15v13h-15z"/><path d="M8 12h8"/></svg><span>ใบลดหนี้ (CN)</span><span class="doc-code">CN</span></button>
     <button class="nav-btn" data-view="ar" aria-label="ทะเบียนลูกหนี้" id="navAr" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M3 20h18"/><path d="M6.5 17V10M11.5 17V6M16.5 17v-4"/></svg><span>ทะเบียนลูกหนี้</span></button>
     <!-- ยังไม่มีของจริง (เฟส 6) — โชว์ในเมนูเพื่อให้เห็นแผนทั้งหมด กดเข้าไปบอกว่ากำลังทำ -->
@@ -2224,7 +2287,7 @@
     <button class="nav-btn" data-view="datain" aria-label="นำเข้าข้อมูล" id="navDataIn" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M12 3.8v9.6"/><path d="M8.4 10.2L12 13.8l3.6-3.6"/><path d="M4.5 15.8v2.6a1.8 1.8 0 0 0 1.8 1.8h11.4a1.8 1.8 0 0 0 1.8-1.8v-2.6"/></svg><span>นำเข้าข้อมูล</span></button>
     <button class="nav-btn" data-view="wtreg" aria-label="ภาษีที่หัก 50 ทวิ" id="navWtReg" style="display:none">
-      <svg viewBox="0 0 24 24"><path d="M6 3.5h12v17l-3-1.6-3 1.6-3-1.6-3 1.6z"/><path d="M9 9h6M9 13h4"/><path d="M15.5 16.5l1.5 1.5 3-3"/></svg><span>ภาษีที่หัก 50 ทวิ (WT)</span></button>
+      <svg viewBox="0 0 24 24"><path d="M6 3.5h12v17l-3-1.6-3 1.6-3-1.6-3 1.6z"/><path d="M9 9h6M9 13h4"/><path d="M15.5 16.5l1.5 1.5 3-3"/></svg><span>ภาษีที่หัก 50 ทวิ (WT)</span><span class="doc-code">WT</span></button>
     <button class="nav-btn" data-view="statement" aria-label="กระทบยอด Statement" id="navStatement" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M3.5 6.5h17v11h-17z"/><path d="M7 10.5h4M7 14h6"/><path d="M15.5 13.5l2 2 3.5-4"/></svg><span>กระทบยอด Statement</span></button>
     <button class="nav-btn" data-view="cashreport" aria-label="รายงานเงินสด/ธนาคาร" id="navCashReport" style="display:none">
@@ -2232,9 +2295,9 @@
     <button class="nav-btn" data-view="salesreport" aria-label="รายงานรายรับ" id="navSalesReport" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M4 19.5h16"/><path d="M7 16V8.5M12 16V5M17 16v-5.5"/></svg><span>รายงานรายรับ</span></button>
     <button class="nav-btn" data-view="petty" aria-label="เงินสดย่อย" id="navPetty" style="display:none">
-      <svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="11" rx="2"/><path d="M7 7V5.5a1 1 0 0 1 1.3-.95L18 7"/><circle cx="16.5" cy="12.5" r="1.4"/></svg><span>เงินสดย่อย</span></button>
+      <svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="11" rx="2"/><path d="M7 7V5.5a1 1 0 0 1 1.3-.95L18 7"/><circle cx="16.5" cy="12.5" r="1.4"/></svg><span>เงินสดย่อย</span><span class="doc-code">PC</span></button>
     <button class="nav-btn" data-view="payout" aria-label="ทะเบียนการจ่าย" id="navPayout" style="display:none">
-      <svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6.5 12h.01M17.5 12h.01"/></svg><span>ใบสั่งจ่าย (PO)</span></button>
+      <svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6.5 12h.01M17.5 12h.01"/></svg><span>ใบสั่งจ่าย (PO)</span><span class="doc-code">PO</span></button>
     <button class="nav-btn" data-view="expcat" aria-label="ประเภทค่าใช้จ่าย" id="navExpCat" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M3 12.5 12.5 3H21v8.5L11.5 21z"/><circle cx="17" cy="7" r="1.4"/></svg><span>ประเภทค่าใช้จ่าย</span></button>
     <button class="nav-btn" data-view="bank" aria-label="บัญชีธนาคาร" id="navBank" style="display:none">
@@ -2262,11 +2325,11 @@
     <button class="nav-btn" data-view="hrreport" aria-label="รายงาน HR" id="navHrReport" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/><circle cx="10" cy="4" r="1.6"/></svg><span>รายงาน HR</span></button>
     <button class="nav-btn" data-view="poreport" aria-label="ทะเบียนใบสำคัญจ่าย" id="navPoReport" style="display:none">
-      <svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M7 9.5h10M7 13h7M7 16.5h4"/></svg><span>ใบสำคัญจ่าย (PV)</span></button>
+      <svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M7 9.5h10M7 13h7M7 16.5h4"/></svg><span>ใบสำคัญจ่าย (PV)</span><span class="doc-code">PV</span></button>
     <button class="nav-btn" data-view="taxhub" aria-label="รายงานภาษี" id="navTaxHub" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M3 20h18M5 20V10M9.5 20V10M14.5 20V10M19 20V10"/><path d="M12 3.5 21 9H3z"/></svg><span>รายงานภาษี</span></button>
     <button class="nav-btn" data-view="whtin" aria-label="50 ทวิ ที่ถูกหัก" id="navWhtIn" style="display:none">
-      <svg viewBox="0 0 24 24"><path d="M6 3.5h12v17l-3-1.6-3 1.6-3-1.6-3 1.6z"/><path d="M9 9h6M9 13h4"/></svg><span>50 ทวิ ที่ถูกหัก (WI)</span></button>
+      <svg viewBox="0 0 24 24"><path d="M6 3.5h12v17l-3-1.6-3 1.6-3-1.6-3 1.6z"/><path d="M9 9h6M9 13h4"/></svg><span>50 ทวิ ที่ถูกหัก (WI)</span><span class="doc-code">WI</span></button>
     <button class="nav-btn" data-view="expreport" aria-label="รายงานรายจ่าย" id="navExpReport" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M4 19.5h16"/><path d="M7 16V9M12 16V6M17 16v-4"/><path d="M3 4.5h6"/></svg><span>รายงานรายจ่าย</span></button>
     <button class="nav-btn" data-view="vatbuy" aria-label="ภาษีซื้อ" id="navVatBuy" style="display:none">
@@ -2342,7 +2405,7 @@
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
     expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติเบิกจ่าย'], expone:['🔎','ใบเบิก'],
     expdash:['📊','ใบเบิกพนักงาน'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ใบสั่งจ่าย (PO)'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','ภาษีซื้อ/ภ.พ.30'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก (WI)'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ใบสำคัญจ่าย (PV)'], sales:['💰','รายรับ'], salesqt:['📄','ใบเสนอราคา (QT)'], salesiv:['🧾','ใบแจ้งหนี้ (IV)'], salesre:['💵','ใบเสร็จรับเงิน (RE)'], salescn:['↩️','ใบลดหนี้ (CN)'], wtreg:['🧾','ภาษีที่หัก 50 ทวิ (WT)'], datain:['📥','นำเข้าข้อมูล'], airead:['🤖','อ่านเอกสารด้วย AI'], contract:['📑','สัญญาบริการ'], recvkind:['💰','ประเภทการรับเงิน'], statement:['🏦','กระทบยอด Statement'], cashreport:['📊','รายงานเงินสด/ธนาคาร'], ar:['📊','ทะเบียนลูกหนี้'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51'], finhist:['📈','เทียบย้อนหลัง'], docdash:['📊','ภาพรวม'], docreg:['🗂️','จัดการเอกสาร'], doccheck:['✅','ตรวจก่อนส่ง'], docbycat:['📑','รายงานตามประเภท'], docreport:['📦','รายงานประจำเดือน'], doccat:['🏷️','จัดการหมวด'], hubmods:['🧩','โมดูลของแต่ละห้อง'], teamperm:['🔐','สิทธิ์ทีม'], kpiemp:['👥','ทะเบียนพนักงาน'], kpiperson:['📈','ประวัติรายคน'], kpidash:['📊','ภาพรวม'], kpientry:['✍️','กรอกผลงาน'], kpiscore:['⭐','คะแนนคุณลักษณะ'], kpidoc:['📄','ใบประเมิน'], kpiround:['📋','รอบการประเมิน'], kpifill:['✍️','ประเมินผลงาน'], kpimanage:['📊','จัดการผลการประเมิน'], kpirule:['⚖️','เกณฑ์ทั้งองค์กร'], kpimetric:['🎯','ตัวชี้วัด (KPI)'], kpitrait:['🧭','คุณลักษณะรายบุคคล'], kpiimport:['📥','นำเข้าข้อมูลเดิม'], kpireport:['📄','รายงาน'], kpihelp:['📘','คู่มือการใช้งาน'], myset:['🙋','ตั้งค่าของฉัน'], bank:['🏦','บัญชีธนาคาร'], expcat:['🏷️','ประเภทค่าใช้จ่าย'],
-    svcreg:['🧰','ทะเบียนสินค้า/บริการ'], salesone:['📄','รายละเอียดเอกสาร']
+    svcreg:['🧰','ทะเบียนสินค้า/บริการ'], salesone:['📄','รายละเอียดเอกสาร'], salesform:['✏️','ออกเอกสารขาย']
   };
   var PROJECTS=[], COMPANIES=[], TEAM_ALL=[], CUR_PID='';   // Project (บริหารโครงการ) · COMPANIES=บริษัท auto (หน้าจัดการ)
   var ALL_TASKS=[], PJ_SEL='', MB_STATUSES=[];   // มุมมอง Project (dropdown เลือก · แยก 6 สถานะ + %) · MB_STATUSES=รายการสถานะ (ฟอร์มแก้งานมือถือ)
@@ -2556,7 +2619,7 @@
     if(gi) $('tbIcon').innerHTML=gi.replace('stroke-width="1.9"','stroke-width="2"'); else $('tbIcon').textContent=meta[0];
     $('tbTitle').textContent=meta[1];
     mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
-    ({ bank:renderBank, expcat:renderExpCat, svcreg:renderSvcReg, salesone:renderSalesOne, portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, perf:renderPerf, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expone:renderExpOne, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, salesqt:renderSalesQt, salesiv:renderSalesIv, salesre:renderSalesRe, salescn:renderSalesCn, datain:renderDataIn, contract:renderContract, recvkind:renderRecvKind, wtreg:renderSoonPage, statement:renderStatement, cashreport:renderCashReport, airead:renderAiRead, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51, finhist:renderFinHist, docreg:renderDocReg, doccheck:renderDocCheck, docdash:renderDocDash, docbycat:renderDocByCat, docreport:renderDocReport, doccat:renderDocCat, kpiemp:renderKpiEmp, kpiperson:renderKpiPerson, kpidash:renderKpiDash, kpientry:renderKpiEntry, kpiscore:renderKpiScore, kpidoc:renderKpiDoc, kpiround:renderKpiRound, kpifill:renderKpiFill, kpimanage:renderKpiManage, kpirule:renderKpiRule, kpimetric:renderKpiMetric, kpitrait:renderKpiTrait, kpiimport:renderKpiImport, kpireport:renderKpiReport, kpihelp:renderKpiHelp, myset:renderMyset }[v] || soon)();
+    ({ bank:renderBank, expcat:renderExpCat, svcreg:renderSvcReg, salesone:renderSalesOne, salesform:renderSalesForm, portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, perf:renderPerf, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expone:renderExpOne, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, petty:renderPetty, vatbuy:renderVatBuy, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, salesqt:renderSalesQt, salesiv:renderSalesIv, salesre:renderSalesRe, salescn:renderSalesCn, datain:renderDataIn, contract:renderContract, recvkind:renderRecvKind, wtreg:renderSoonPage, statement:renderStatement, cashreport:renderCashReport, airead:renderAiRead, ar:renderAr, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51, finhist:renderFinHist, docreg:renderDocReg, doccheck:renderDocCheck, docdash:renderDocDash, docbycat:renderDocByCat, docreport:renderDocReport, doccat:renderDocCat, kpiemp:renderKpiEmp, kpiperson:renderKpiPerson, kpidash:renderKpiDash, kpientry:renderKpiEntry, kpiscore:renderKpiScore, kpidoc:renderKpiDoc, kpiround:renderKpiRound, kpifill:renderKpiFill, kpimanage:renderKpiManage, kpirule:renderKpiRule, kpimetric:renderKpiMetric, kpitrait:renderKpiTrait, kpiimport:renderKpiImport, kpireport:renderKpiReport, kpihelp:renderKpiHelp, myset:renderMyset }[v] || soon)();
   }
 
   // ───── มือถือ: เมนูกลุ่ม (ล่าง) + แท็บย่อย (บน) · คอมใช้ sidebar เดิม ไม่เกี่ยว ─────
@@ -2571,7 +2634,7 @@
     /* ⬇️ ลำดับตามโครงเมนูที่พี่กี้วางไว้ (HANDOFF §2.6) — ภาพรวม · รายรับ · รายจ่าย · ธนาคาร · รายงาน
        หลักของผัง: **แถบซ้ายมีแต่เมนูหลัก · รายการย่อยเป็นแท็บในหน้า** · หน้ากรอก/รายละเอียด
        เปิดจากปุ่ม "+ สร้าง" หรือกดแถว ไม่ทำเป็นเมนู · ตัดเมนู "สรุปรายงาน" ในรายรับ/รายจ่าย */
-    { key:'fin',  icon:'💰', label:'การเงิน', views:['bizdash','salesqt','salesiv','salesre','salescn','whtin','ar','payout','petty','poreport','wtreg','bank','statement','salesreport','expreport','cashreport','svcreg','salesone','datain','airead','contract','recvkind','sales','reimb','expdash','expcat','taxhub','vatbuy','pnd51','finhist','finreport','taxdoc'] },
+    { key:'fin',  icon:'💰', label:'การเงิน', views:['bizdash','salesqt','salesiv','salesre','salescn','whtin','ar','payout','petty','poreport','wtreg','bank','statement','salesreport','expreport','cashreport','svcreg','salesone','salesform','datain','airead','contract','recvkind','sales','reimb','expdash','expcat','taxhub','vatbuy','pnd51','finhist','finreport','taxdoc'] },
     { key:'me',   icon:'🙋', label:'ส่วนตัว', views:['clock','leave','ot','expense','docs','myset'] }
   ];
   // ไอคอนหัวกลุ่มบน sidebar คอม = SVG เส้นสีเดียว (พี่กี้ขอ 30 ก.ค.: เรียบ ๆ ไม่สีสัน)
@@ -2650,7 +2713,7 @@
       views:['bizdash','salesqt','salesiv','salesre','salescn','whtin','ar','payout','petty','poreport','wtreg','bank','statement','salesreport','expreport','cashreport','svcreg','datain'],
       /* หน้าที่ยังเข้าได้จากลิงก์เก่า/ปุ่มในหน้า แต่ไม่อยู่ในแถบเมนูแล้ว (ผัง §2.6 ตัดออก)
          ⚠️ ต้องคงไว้ใน extra ไม่งั้นเข้าจากลิงก์ตรงแล้วแถบซ้ายหาย ออกไม่ได้ (บทเรียน 5 ก.ย.) */
-      extra:['expapprove','sales','reimb','expcat','contract','recvkind','airead','expdash','salesone'],
+      extra:['expapprove','sales','reimb','expcat','contract','recvkind','airead','expdash','salesone','salesform'],
       /* 📐 โครงเมนูตามที่พี่กี้วางไว้ (HANDOFF §2.6) — รายการย่อยของแต่ละหัวข้อเป็น "แท็บในหน้า"
          ไม่ใช่เมนูย่อย · หน้ากรอก/รายละเอียดเปิดจากปุ่ม "+ สร้าง" หรือกดแถว */
       sec:[ ['', ['bizdash']],
@@ -4273,7 +4336,7 @@
     expdash:'รายจ่าย', reimb:'ตั้งเบิกลูกค้า', petty:'เงินสดย่อย', payout:'ทะเบียนการจ่าย', expreport:'รายงานรายจ่าย', taxhub:'รายงานภาษี', whtin:'50 ทวิ ที่ถูกหัก', vatbuy:'ภาษีซื้อ',
     ot:'OT ของฉัน', otapprove:'อนุมัติ OT', docs:'เอกสาร',
     hrreport:'รายงาน HR', finreport:'รายงานการเงิน', taxdoc:'ภาษี/เอกสาร',
-    bank:'บัญชีธนาคาร', expcat:'ประเภทค่าใช้จ่าย', svcreg:'สินค้า/บริการ', salesone:'รายละเอียดเอกสาร', datain:'นำเข้าข้อมูล', contract:'สัญญาบริการ', recvkind:'ประเภทการรับเงิน', bizdash:'ภาพรวม', sales:'รายรับ', ar:'ลูกหนี้', salesreport:'รายงานรายรับ', poreport:'ทะเบียนใบสำคัญจ่าย', pnd51:'ภ.ง.ด.51', finhist:'เทียบย้อนหลัง', docdash:'ภาพรวมเอกสาร', docreg:'จัดการเอกสาร', doccheck:'ตรวจความครบก่อนส่งนักบัญชี', docbycat:'รายงานตามประเภทเอกสาร', docreport:'รายงานประจำเดือน (ปิดรอบ)', doccat:'จัดการหมวด', kpiemp:'ทะเบียนพนักงาน', kpiperson:'ประวัติรายคน', kpidash:'ภาพรวม', kpientry:'กรอกผลงาน', kpiscore:'คุณลักษณะ', kpidoc:'ใบประเมิน', kpiround:'รอบการประเมิน', kpifill:'ประเมินผลงาน', kpimanage:'จัดการผลการประเมิน', kpirule:'เกณฑ์ทั้งองค์กร', kpimetric:'ตัวชี้วัด (KPI)', kpitrait:'คุณลักษณะรายบุคคล', kpiimport:'นำเข้าข้อมูลเดิม', kpireport:'รายงาน', kpihelp:'คู่มือ' };
+    bank:'บัญชีธนาคาร', expcat:'ประเภทค่าใช้จ่าย', svcreg:'สินค้า/บริการ', salesone:'รายละเอียดเอกสาร', salesform:'ออกเอกสาร', datain:'นำเข้าข้อมูล', contract:'สัญญาบริการ', recvkind:'ประเภทการรับเงิน', bizdash:'ภาพรวม', sales:'รายรับ', ar:'ลูกหนี้', salesreport:'รายงานรายรับ', poreport:'ทะเบียนใบสำคัญจ่าย', pnd51:'ภ.ง.ด.51', finhist:'เทียบย้อนหลัง', docdash:'ภาพรวมเอกสาร', docreg:'จัดการเอกสาร', doccheck:'ตรวจความครบก่อนส่งนักบัญชี', docbycat:'รายงานตามประเภทเอกสาร', docreport:'รายงานประจำเดือน (ปิดรอบ)', doccat:'จัดการหมวด', kpiemp:'ทะเบียนพนักงาน', kpiperson:'ประวัติรายคน', kpidash:'ภาพรวม', kpientry:'กรอกผลงาน', kpiscore:'คุณลักษณะ', kpidoc:'ใบประเมิน', kpiround:'รอบการประเมิน', kpifill:'ประเมินผลงาน', kpimanage:'จัดการผลการประเมิน', kpirule:'เกณฑ์ทั้งองค์กร', kpimetric:'ตัวชี้วัด (KPI)', kpitrait:'คุณลักษณะรายบุคคล', kpiimport:'นำเข้าข้อมูลเดิม', kpireport:'รายงาน', kpihelp:'คู่มือ' };
   // แท็บที่เห็นเฉพาะพี่/ผู้ดูแล · reimb = ตั้งเบิกลูกค้า (ชีตไม่มีเจ้าของรายคน + เป็นข้อมูลรายได้)
   // ⚠️ ซ่อนแท็บ ≠ กันข้อมูล — backend กรองสิทธิ์เองอีกชั้นเสมอ
   var OWNER_VIEWS={ bank:1, expcat:1, airead:1, perf:1, salesqt:1, salesiv:1, salesre:1, salescn:1, wtreg:1, statement:1, cashreport:1, datain:1, contract:1, recvkind:1, review:1, approve:1, expapprove:1, otapprove:1, reimb:1, taxdoc:1, petty:1, payout:1, vatbuy:1, expreport:1, taxhub:1, whtin:1, hrreport:1, finreport:1, ar:1, pnd51:1, finhist:1, salesreport:1, hubmods:1, teamperm:1 };
@@ -5979,8 +6042,19 @@
   window.dtMenu = dtMenu; window.dtCloseMenu = dtCloseMenu;
 
   /** ตารางมาตรฐาน: cols = [{k,label,cls}] · rows = [[html,...]] · คืน '' ถ้าไม่มีแถว (ผู้เรียกใส่ empty เอง) */
-  function dtTable(cols, rows, totalRow){
-    if(!rows.length) return '';
+  /**
+   * ตารางมาตรฐานของระบบ
+   * 🔴 กฎ "โครงมาก่อนข้อมูล" (พี่กี้ย้ำ 18 ก.ย. และ 21 ก.ย. 69):
+   *    ไม่มีข้อมูล = ยังต้องเห็น "หัวคอลัมน์" เสมอ แล้วบอกในตารางว่าว่างเพราะอะไร
+   *    ห้ามเอากล่องเปล่า (emptybox) มาแทนทั้งตาราง — คนอ่านต้องรู้ว่าตารางนี้มีคอลัมน์อะไรบ้าง
+   * @param {string} empty ข้อความเมื่อไม่มีแถว (ไม่ส่ง = ใช้ข้อความกลาง)
+   */
+  function dtTable(cols, rows, totalRow, empty){
+    if(!rows.length){
+      rows = ['<tr class="dt-empty"><td colspan="'+cols.length+'">'+
+        esc(empty||'ยังไม่มีรายการ')+'</td></tr>'];
+      totalRow = '';
+    }
     return '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl">' +
       '<colgroup>' + cols.map(function(c){ return '<col' + (c.w ? ' style="width:' + c.w + '"' : '') + '>'; }).join('') + '</colgroup>' +
       '<thead><tr>' +
@@ -10565,32 +10639,27 @@
 
   function renderSales(){
     skel();
-    jsonp({action:'waSalesInit',uid:UID,kind:SALES_KIND_F}).then(function(r){
+    jsonp({action:'waSalesInit',uid:UID,kind:SALES_KIND_F,ym:SALES_YM}).then(function(r){
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
       SALES=r;
       var pg=SALES_PAGE[SALES_KIND_F]||SALES_PAGE[''];
-      var h='<div class="section-h">'+pg.icon+' '+esc(pg.title)+'</div>';
+      /* 🔴 โครงหน้านี้ยึดตาม mockup ที่พี่กี้ทำไว้ 19 ก.ย. 69 (Claude Design "เมนูระบบการเงินยินดี")
+         breadcrumb → หัวเรื่อง+ป้ายรหัส → การ์ดเดียว (ชื่อ+คำอธิบาย ซ้าย · ค้นหา/เดือน/ปุ่มสร้าง ขวา) → ตาราง
+         แถบเตือนเรื่องทะเบียนถูกตัดออกจากหน้านี้ — ไปเตือนที่หน้าทะเบียนของมันเอง */
+      var h='<div class="bc"><button class="lnk" onclick="switchView(&quot;bizdash&quot;)">รายรับ</button> › '+
+        esc(pg.plain||pg.title)+'</div>'+
+        '<div class="pg-title"><h2>'+esc(pg.plain||pg.title)+'</h2>'+
+        (SALES_KIND_F?'<span class="doc-code">'+esc(SALES_KIND_F)+'</span>':'')+'</div>';
       // แท็บในหน้า (ผัง §2.6) — ใบแจ้งหนี้มีแท็บ "ใบวางบิล" อยู่ข้างใน ไม่แยกเป็นเมนู
       if(pg.tabs) h+=pageTabs(SALES_KIND_F, pg.tabs);
-      // ยังไม่มีทะเบียน = ทำอะไรไม่ได้ → บอกทางออกให้ชัดก่อนเลย
-      if(!r.customers.length || !r.services.length){
-        h+='<div class="m-hint" style="color:#C8730B">⚠️ ยังตั้งทะเบียนไม่ครบ: '+
-          (!r.customers.length?'<b>ทะเบียนลูกค้า</b>ว่าง ':'')+(!r.services.length?'<b>ทะเบียนบริการ</b>ว่าง':'')+
-          '<br>เพิ่มได้ที่ปุ่มด้านล่าง หรือกดเมนูในชีต ⚙️ → 👥 ดึงลูกค้าจากกลุ่ม LINE เข้าทะเบียน</div>';
-      }
-      if(r.missingCustomers && r.missingCustomers.length){
-        h+='<div class="m-hint">👥 ลูกค้าที่มีกลุ่ม LINE แต่ยังไม่อยู่ในทะเบียน '+r.missingCustomers.length+' ราย: '+
-          esc(r.missingCustomers.slice(0,5).join(', '))+(r.missingCustomers.length>5?' …':'')+'</div>';
-      }
-      /* ปุ่มบนหน้า = งานที่ทำกับ "ชนิดที่เปิดอยู่" เท่านั้น (ผัง §2.6: หน้ากรอกเปิดจากปุ่ม + สร้าง)
-         ทะเบียนลูกค้า/บริการ/นิติบุคคล เป็นของตั้งค่า → ต่อท้ายแถว ไม่ใช่ปุ่มหลัก */
-      h+='<div class="tax-acts" style="margin:0 0 12px">'+pg.acts+
-        /* ทะเบียนลูกค้า/บริการ/นิติบุคคล ใช้ตอน "ออกเอกสาร" เท่านั้น
-           โชว์ทุกหน้า = 5 ปุ่มเรียงกันจนตกบรรทัด (เห็นจากภาพตัวอย่าง 20 ก.ย.) */
-        /* 🔴 21 ก.ย. 69 พี่กี้สั่งถอดปุ่มทะเบียนออกจากหน้าเอกสาร:
-           ลูกค้า → แท็บในหน้าทะเบียนลูกหนี้ · สินค้า/บริการ → เมนูของตัวเอง
-           นิติบุคคล → ⚙️ ตั้งค่าห้อง ▸ ตั้งค่าบริษัท (ที่เดียวกับที่ตั้งค่าอย่างอื่นของบริษัท) */
-        '</div>';
+      h+='<div class="lst-card"><div class="lst-head">'+
+        '<div class="t"><b>'+esc(pg.plain||pg.title)+'</b><div>'+esc(pg.desc||'')+'</div></div>'+
+        '<div class="lst-tools">'+
+          '<input class="s-find" id="sFind" placeholder="ค้นหาเลขที่ / ชื่อลูกค้า" '+
+            'value="'+esc(SALES_FIND)+'" oninput="salesFind(this.value)">'+
+          '<select id="sYm" onchange="salesSetYm(this.value)">'+salesYmOpts(r.months||[], SALES_YM)+'</select>'+
+          pg.acts+
+        '</div></div>';
       /* เปิดจากเมนูชนิดไหน = ล็อกชนิดนั้น ไม่มี dropdown ให้สับสนซ้ำ (เมนูคือตัวกรองอยู่แล้ว)
          เข้าจากลิงก์เก่า (view 'sales') ยังมีตัวกรองเหมือนเดิม */
       if(!pg.fixed){
@@ -10599,12 +10668,46 @@
           (r.allKinds||r.kinds).map(function(k){ return '<option value="'+esc(k.key)+'"'+(k.key===SALES_KIND_F?' selected':'')+'>'+esc(k.label)+'</option>'; }).join('')+
           '</select></div>';
       }
-      h+='<div id="salesTbl"></div>';
+      h+='<div id="salesTbl"></div></div>';
       $('main').innerHTML=h;
-      if(SALES_KIND_F==='QT') paintQtTable(r.docs||[]); else paintSalesTable(r.docs||[]);
+      if(SALES_KIND_F==='QT') paintQtTable(r.docs||[]); else paintSalesTable(salesApplyFind(r.docs||[]));
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
   }
   function salesFilter(v){ SALES_KIND_F=v; renderSales(); }
+
+  /* ── ค้นหา + ตัวกรองเดือน (mockup ของพี่กี้ 19 ก.ย. 69) ──
+     🔴 ค้นหาเป็นการกรอง "ในชุดที่โหลดมาแล้ว" — ไม่ยิงคำขอใหม่ทุกตัวอักษร
+        (Apps Script มีค่าเริ่มต้น ~5 วิต่อคำขอ พิมพ์ทีละตัวแล้วยิงทุกครั้ง = ใช้ไม่ได้จริง) */
+  var SALES_FIND='', SALES_YM='';
+  function salesFind(v){
+    SALES_FIND=String(v||'');
+    var docs=(SALES&&SALES.docs)||[];
+    if(SALES_KIND_F==='QT') paintQtTable(docs); else paintSalesTable(salesApplyFind(docs));
+    var el=$('sFind'); if(el && document.activeElement!==el){ el.value=SALES_FIND; }
+  }
+  function salesSetYm(v){ SALES_YM=String(v||''); renderSales(); }
+  window.salesFind=salesFind; window.salesSetYm=salesSetYm;
+
+  /** กรองตามคำค้น — เลขที่ / ลูกค้า / เรื่อง (ฟังก์ชันบริสุทธิ์ · เทสเรียกตัวเดียวกับของจริง) */
+  function salesApplyFind(docs, q){
+    q=String(q===undefined?SALES_FIND:q).trim().toLowerCase();
+    if(!q) return docs||[];
+    return (docs||[]).filter(function(d){
+      return [d.no,d.customer,d.title].some(function(x){
+        return String(x||'').toLowerCase().indexOf(q)>=0; });
+    });
+  }
+  window.salesApplyFind=salesApplyFind;
+
+  /** ตัวเลือกเดือน — 'ทุกเดือน' + เดือนที่มีเอกสารจริง (ไม่ปลอมเดือนที่ไม่มีของ) */
+  function salesYmOpts(months, cur){
+    var list=(months&&months.length)?months.slice():[];
+    var now=thisYmBE();
+    if(list.indexOf(now)<0) list.unshift(now);
+    return '<option value="">ทุกเดือน</option>'+list.map(function(m){
+      return '<option value="'+esc(m)+'"'+(m===cur?' selected':'')+'>'+esc(ymThai(m))+'</option>'; }).join('');
+  }
+  function thisYmBE(){ var d=new Date(), m=d.getMonth()+1; return (d.getFullYear()+543)+'-'+(m<10?'0'+m:m); }
 
   /* ── แท็บในหน้า: ตัวเดียวของทั้งระบบ (ผัง §2.6 "หลักเดียวทั้งระบบ") ──
      list = [[key, label, onclick]] · active = key ที่เลือกอยู่ */
@@ -10623,25 +10726,38 @@
   var CONTRACT_TABS=[['IV','ใบแจ้งหนี้ (IV)',"salesGo('IV')"],
                      ['BN','ใบวางบิล (BN)',"salesGo('BN')"],
                      ['CT','สัญญาบริการ',"switchView('contract')"]];
+  /* plain = ชื่อที่ขึ้นหัวหน้า (รหัสไปอยู่ในป้ายข้าง ๆ แทนวงเล็บ) · desc = คำอธิบายใต้ชื่อในการ์ด
+     ข้อความชุดนี้มาจาก mockup ที่พี่กี้ทำไว้ 19 ก.ย. 69 */
   var SALES_PAGE={
-    '':   { icon:'💰', title:'รายรับ (ทุกชนิดเอกสาร)', fixed:false, reg:true,
+    '':   { icon:'💰', title:'รายรับ (ทุกชนิดเอกสาร)', plain:'รายรับ',
+            desc:'เอกสารขายทุกชนิดในที่เดียว · กรองตามชนิดได้จากช่องด้านล่าง',
+            fixed:false, reg:true,
             /* "ย้ายตั้งเบิกเดิม" = เครื่องมือครั้งเดียว วางที่หน้ารวม ไม่ให้เบียดแถวปุ่มของหน้าชนิด */
             acts:'<button class="btn btn-primary" onclick="salesNew()">ออกเอกสารใหม่</button>'+
                  '<button class="btn btn-ghost" onclick="reimbMigrate()">ย้ายตั้งเบิกเดิม</button>' },
-    'QT': { icon:'📄', title:'ใบเสนอราคา (QT)', fixed:true, reg:true,
-            acts:'<button class="btn btn-primary" onclick="salesNew()">+ ออกใบเสนอราคา</button>' },
-    'IV': { icon:'🧾', title:'ใบแจ้งหนี้ (IV)', fixed:true, reg:true,
-            tabs:CONTRACT_TABS,
-            acts:'<button class="btn btn-primary" onclick="salesNew()">+ ออกใบแจ้งหนี้</button>' },
-    'BN': { icon:'🧾', title:'ใบวางบิล (BN)', fixed:true, reg:true,
-            tabs:CONTRACT_TABS,
+    'QT': { icon:'📄', title:'ใบเสนอราคา (QT)', plain:'ใบเสนอราคา',
+            desc:'ยืนราคา 7 วัน · ลูกค้าตอบรับแล้วสร้างใบแจ้งหนี้ต่อได้',
+            fixed:true, reg:true,
+            acts:'<button class="btn btn-primary" onclick="salesNew()">+ สร้างใบเสนอราคา</button>' },
+    'IV': { icon:'🧾', title:'ใบแจ้งหนี้ (IV)', plain:'ใบแจ้งหนี้',
+            desc:'สร้างจากใบเสนอราคา · ตั้งลูกหนี้ทันทีที่ออกใบ',
+            fixed:true, reg:true, tabs:CONTRACT_TABS,
+            acts:'<button class="btn btn-primary" onclick="salesNew()">+ สร้างใบแจ้งหนี้</button>' },
+    'BN': { icon:'🧾', title:'ใบวางบิล (BN)', plain:'ใบวางบิล',
+            desc:'รวมใบแจ้งหนี้หลายใบของลูกค้ารายเดียวกัน · ไม่คิด VAT ใหม่ ไม่ตั้งลูกหนี้ซ้ำ',
+            fixed:true, reg:true, tabs:CONTRACT_TABS,
             acts:'<button class="btn btn-primary" onclick="salesBnOpen(\'\')">+ ออกใบวางบิล</button>' },
-    'RE': { icon:'💵', title:'ใบเสร็จรับเงิน (RE)', fixed:true,
+    'RE': { icon:'💵', title:'ใบเสร็จรับเงิน (RE)', plain:'ใบเสร็จรับเงิน',
+            desc:'ออกตอนรับเงิน = หลักฐานเงินเข้าตัวเดียว · รับบางส่วน / หลายใบแจ้งหนี้ / '+
+                 'ลูกค้าหักภาษี · เลือกบัญชีที่เงินเข้า',
+            fixed:true,
             /* ทะเบียนประเภทการรับเงินวางไว้ที่นี่ เพราะนี่คือหน้าที่คนเห็น "ประเภท" จริง
                (ชุดเดียวกับทะเบียนประเภทค่าใช้จ่ายที่อยู่ข้างหน้ารายจ่าย) */
             acts:'<div class="m-hint" style="flex:1;margin:0">ใบเสร็จเกิดตอนบันทึกรับเงินจากใบแจ้งหนี้ — ไม่ออกเองที่หน้านี้</div>'+
                  '<button class="btn btn-ghost" onclick="switchView(&quot;recvkind&quot;)">ประเภทการรับเงิน</button>' },
-    'CN': { icon:'↩️', title:'ใบลดหนี้ (CN)', fixed:true,
+    'CN': { icon:'↩️', title:'ใบลดหนี้ (CN)', plain:'ใบลดหนี้',
+            desc:'ลดยอดใบเสร็จที่ออกไปแล้ว (ม.86/10) · ออกจากใบเสร็จเท่านั้น',
+            fixed:true,
             acts:'<div class="m-hint" style="flex:1;margin:0">ใบลดหนี้ออกจากปุ่มบนใบเสร็จที่ต้องการลด</div>' }
   };
   /** เปิดหน้ารายรับโดยล็อกชนิด (ใช้ทั้งจากเมนูและจากแท็บ) */
@@ -12004,13 +12120,8 @@
   function paintQtTable(docs){
     var box=$('salesTbl'); if(!box) return;
     var tabs=(SALES&&SALES.qtTabs)||[];
-    var shown=qtFilter(docs, QT_TAB);
-    var h=qtTabsHtml(docs, tabs, QT_TAB);
-    if(!shown.length){
-      box.innerHTML=h+'<div class="card"><div class="emptybox">'+
-        (docs.length?'ไม่มีใบในแท็บนี้':'ยังไม่มีใบเสนอราคา 😊')+'</div></div>';
-      return;
-    }
+    var shown=qtFilter(salesApplyFind(docs), QT_TAB);
+    var h=qtTabsHtml(salesApplyFind(docs), tabs, QT_TAB);
     var cols=[{label:'เลขที่',cls:'dt-nw',w:'15%'},{label:'วันที่',cls:'dt-nw',w:'9%'},
       {label:'ลูกค้า',w:'16%'},{label:'เรื่อง'},{label:'ยอดรวม',cls:'ta-r',w:'11%'},
       {label:'สถานะ',w:'12%'},{label:'กิจกรรม',w:'16%'},{label:'',w:'46px'}];
@@ -12027,7 +12138,8 @@
         qtActCell(d)+
         dtActCell('sl-'+d.no, salesRowActions(d))+'</tr>';
     });
-    box.innerHTML=h+dtTable(cols, rows, '');
+    box.innerHTML=h+dtTable(cols, rows, '',
+      docs.length?'ไม่มีใบในแท็บนี้':'ยังไม่มีใบเสนอราคา — กดปุ่ม "ออกใบเสนอราคา" มุมขวาบนได้เลยค่ะ');
   }
 
   /** บันทึก/ยกเลิก "ลูกค้าปฏิเสธ" */
@@ -12145,7 +12257,6 @@
 
   function paintSalesTable(docs){
     var box=$('salesTbl'); if(!box) return;
-    if(!docs.length){ box.innerHTML='<div class="card"><div class="emptybox">ยังไม่มีเอกสารขาย 😊</div></div>'; return; }
     // ทุกคอลัมน์เป็น % (รวม 100) → ตารางพอดีจอทุกขนาด · จอแคบกว่า min-width ค่อยเลื่อนแนวนอน
     // (ผสม px กับ % แล้วจอกลาง ๆ คอลัมน์ "เรื่อง" จะโดนบีบจนตัวอักษรเรียงลงแนวตั้ง)
     // ⚠️ ปล่อย "เรื่อง" ไม่ระบุความกว้าง — ให้กินที่ที่เหลือ ผลรวมจะไม่มีทางเกิน 100% (ไม่เกิดแถบเลื่อนแนวนอน)
@@ -12174,7 +12285,7 @@
     var sum=docs.reduce(function(a,d){ var v=Number(d.total)||0; return a+(d.kind==='CN'?-v:v); },0);
     var total=docs.length>1?'<tr class="tax-total"><td colspan="4" style="text-align:right">รวม '+docs.length+' ใบ</td>'+
       '<td class="dt-amt">'+money(sum)+'</td><td colspan="4"></td></tr>':'';
-    box.innerHTML=dtTable(cols, rows, total);
+    box.innerHTML=dtTable(cols, rows, total, 'ยังไม่มีเอกสารในหมวดนี้');
   }
   var SALES_BYNO={};
   function salesBadge(s){ s=String(s||'');
@@ -12185,7 +12296,136 @@
   function fmtDate(d){ try{ var x=new Date(d); return ('0'+x.getDate()).slice(-2)+'/'+('0'+(x.getMonth()+1)).slice(-2)+'/'+x.getFullYear(); }catch(e){ return ''; } }
 
   /** ฟอร์มออกเอกสารใหม่ */
-  function salesNew(){
+  /* ═══════════ ✏️ ฟอร์มออกเอกสารขาย — หน้าเต็ม (view salesform) ═══════════
+     พี่กี้เคาะ 21 ก.ย. 69: เลิกใช้ป็อบอัป ทำแบบที่เห็นใน PEAK
+     โครง: ข้อมูลลูกค้า → ตารางรายการ → สรุปยอด (+หมายเหตุ) → แถบปุ่มติดขอบล่าง
+     🔴 ใช้ id ช่องกรอกชุดเดิม (slKind/slEnt/slCust/... · si/sd/sq/sp) เพื่อให้
+        salesReadItems / salesPreview / salesSave ตัวเดิมทำงานต่อได้ ไม่ต้องมีตรรกะคำนวณ 2 ชุด */
+  var SF_MODE='new';     /* new | edit */
+  function salesFormOpen(){
+    if(!SALES){ toast('กำลังเตรียมข้อมูล…'); return; }
+    if(!SALES.customers.length){ toast('เพิ่มลูกค้าในทะเบียนก่อนค่ะ'); custManage(); return; }
+    SF_MODE='new'; EDIT_DOC=null; SALES_ITEMS=[{}];
+    switchView('salesform');
+  }
+  window.salesFormOpen=salesFormOpen;
+
+  function sfCustHint(){
+    var box=$('sfCustInfo'); if(!box||!SALES) return;
+    var name=($('slCust')||{}).value, c=null;
+    (SALES.customers||[]).forEach(function(x){ if(x.name===name) c=x; });
+    if(!c){ box.innerHTML=''; return; }
+    var miss=[];
+    if(!c.taxId) miss.push('เลขผู้เสียภาษี');
+    if(!c.address) miss.push('ที่อยู่');
+    box.innerHTML=[c.legalName||c.name, c.taxId?('เลขภาษี '+esc(c.taxId)):'', esc(c.branch||'สำนักงานใหญ่'),
+        'เครดิต '+(c.creditDays||0)+' วัน'].filter(Boolean).join(' · ')+
+      (miss.length?'<br><span style="color:#C0490F">ยังไม่มี '+esc(miss.join(' / '))+
+        ' — ใบกำกับภาษีต้องมีข้อมูลนี้ แก้ได้ที่ทะเบียนลูกค้า</span>':'');
+  }
+  window.sfCustHint=sfCustHint;
+
+  function renderSalesForm(){
+    if(!SALES){
+      skel();
+      jsonp({action:'waSalesInit',uid:UID,kind:SALES_KIND_F||'QT'}).then(function(r){
+        if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+        SALES=r; if(VIEW==='salesform') renderSalesForm();
+      }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
+      return;
+    }
+    $('main').innerHTML=salesFormHtml();
+    paintSalesItems();
+    sfCustHint();
+  }
+  window.renderSalesForm=renderSalesForm;
+
+  /** โครงฟอร์มทั้งหน้า — ฟังก์ชันบริสุทธิ์ (หน้าจริงกับ tests/preview-salesform.js เรียกตัวนี้ตัวเดียว) */
+  function salesFormHtml(){
+    var ed=(SF_MODE==='edit'&&EDIT_DOC)?EDIT_DOC.doc:null;
+    var kindNow=ed?ed.kind:(SALES_KIND_F||'QT');
+    var kindLabel=(SALES.allKinds||[]).filter(function(k){ return k.key===kindNow; })[0];
+    kindLabel=kindLabel?kindLabel.label:kindNow;
+    var scope=(SF_MODE==='edit'&&EDIT_DOC)?(EDIT_DOC.scope||{}):{};
+    var lockAll=(SF_MODE==='edit' && scope.itemsLocked);
+
+    var kinds=(SALES.kinds||[]).map(function(k){
+      return '<option value="'+esc(k.key)+'"'+(k.key===kindNow?' selected':'')+'>'+esc(k.label)+'</option>'; }).join('');
+    var ents=(SALES.entities||[]).map(function(e){
+      return '<option value="'+esc(e.code)+'"'+(ed&&ed.entity===e.code?' selected':'')+'>'+
+        esc(e.name)+(e.vatReg?' (จด VAT)':'')+'</option>'; }).join('');
+    var custs=(SALES.customers||[]).map(function(c){
+      return '<option value="'+esc(c.name)+'"'+(ed&&ed.customer===c.name?' selected':'')+'>'+esc(c.name)+'</option>'; }).join('');
+
+    var h='<div class="m-hint" style="margin:0 0 10px">'+
+      '<button class="lnk" onclick="salesGo(&quot;'+esc(kindNow)+'&quot;)">'+esc(kindLabel)+'</button> › '+
+      (ed?esc(ed.no):'ออกใบใหม่')+'</div>'+
+      '<div class="section-h">'+(ed?'✏️ แก้ไข '+esc(ed.no):'➕ ออก'+esc(kindLabel))+'</div>'+
+      '<div id="sfErr" class="m-err hidden" style="margin-bottom:12px"></div>';
+
+    /* ① ข้อมูลเอกสาร */
+    h+='<div class="sf-card"><div class="sf-h">🧾 ข้อมูลเอกสาร</div><div class="sf-grid">'+
+      '<div class="sf-f"><label>ชนิดเอกสาร</label>'+
+        (ed?'<input value="'+esc(kindLabel)+'" readonly><input type="hidden" id="slKind" value="'+esc(kindNow)+'">'
+           :'<select id="slKind" onchange="salesPreview()">'+kinds+'</select>')+'</div>'+
+      '<div class="sf-f"><label>ออกในนามบริษัท</label>'+
+        (ed?'<input value="'+esc(ed.entityName||ed.entity||'')+'" readonly>'
+           :'<select id="slEnt" onchange="salesPreview()">'+ents+'</select>')+
+        (ed?'':'<div class="sf-note">บริษัทที่เลือกเป็นตัวตัดสินว่ามี VAT 7% ไหม (ไม่ใช่ตามลูกค้า)</div>')+'</div>'+
+      '<div class="sf-f"><label>ลูกค้า</label>'+
+        (ed&&scope.custLocked?'<input value="'+esc(ed.customer||'')+'" readonly>'
+           :'<select id="slCust" onchange="sfCustHint()">'+custs+'</select>')+
+        '<div class="sf-note" id="sfCustInfo"></div></div>'+
+      '<div class="sf-f"><label>วันที่เอกสาร</label>'+
+        '<input id="slDate" type="date" value="'+esc(ed&&ed.docDateISO?ed.docDateISO:todayISO())+'"></div>'+
+      '<div class="sf-f wide"><label>เรื่อง (ขึ้นบนหัวเอกสาร)</label>'+
+        '<input id="slTitle" placeholder="เช่น ค่าบริการบัญชี ก.ย. 2569" value="'+esc(ed?ed.title||'':'')+'"></div>'+
+      '</div></div>';
+
+    /* ② รายการ */
+    h+='<div class="sf-card"><div class="sf-h">📋 รายการ</div>'+
+      (lockAll?'<div class="m-hint" style="margin:0 0 10px">ใบนี้รับเงินไปแล้ว แก้ได้เฉพาะเรื่องและหมายเหตุ</div>':'')+
+      '<div id="slItems"></div>'+
+      (lockAll?'':'<div class="tax-acts" style="margin:12px 0 0">'+
+        '<button class="btn btn-ghost" style="flex:none;width:auto;padding:9px 16px" onclick="salesAddItem()">+ เพิ่มรายการ</button></div>')+
+      '</div>';
+
+    /* ③ สรุป + หมายเหตุ */
+    h+='<div class="sf-card"><div class="sf-h">💰 สรุปยอด</div><div class="sf-sum">'+
+      '<div class="sf-f"><label>หมายเหตุ / เงื่อนไข (พิมพ์บนเอกสาร)</label>'+
+        '<textarea id="slNote" placeholder="เช่น ยืนราคา 7 วัน · ชำระภายใน 15 วัน">'+esc(ed?ed.note||'':'')+'</textarea></div>'+
+      '<div><div class="sf-f" style="margin-bottom:12px"><label>ส่วนลดท้ายบิล (บาท)</label>'+
+        '<input id="slDisc" inputmode="decimal" value="'+esc(ed?String(ed.discount||0):'0')+'" oninput="salesPreview()"'+
+        (lockAll?' readonly':'')+'></div>'+
+        '<div class="sf-tot" id="slSum"></div></div>'+
+      '</div></div>';
+
+    /* ④ แถบปุ่ม */
+    h+='<div class="sf-bar">'+
+      '<button class="btn btn-ghost" onclick="salesFormCancel()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" onclick="'+(SF_MODE==='edit'?'salesEditSave()':'salesSave()')+'">'+
+        (SF_MODE==='edit'?'บันทึกการแก้ไข':'ออกเอกสาร')+'</button></div>';
+
+    return h;
+  }
+  window.salesFormHtml=salesFormHtml;
+
+  function salesFormCancel(){
+    if(SF_MODE==='edit'&&EDIT_DOC&&EDIT_DOC.doc){ salesOne(EDIT_DOC.doc.no); return; }
+    salesGo(SALES_KIND_F||'QT');
+  }
+  window.salesFormCancel=salesFormCancel;
+
+  /** ข้อความผิดพลาดของฟอร์มหน้าเต็ม (โมดัลใช้ mErr — หน้านี้มีกล่องของตัวเอง) */
+  function sfErr(msg){
+    var el=$('sfErr');
+    if(!el){ toast(msg); return; }
+    el.textContent=msg; el.classList.remove('hidden');
+    try{ el.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){}
+  }
+
+  function salesNew(){ salesFormOpen(); }
+  function salesNewOld_(){
     if(!SALES) return;
     if(!SALES.customers.length){ toast('เพิ่มลูกค้าในทะเบียนก่อนค่ะ'); custManage(); return; }
     SALES_ITEMS=[{}];
@@ -12220,22 +12460,28 @@
       };
     });
   }
+  /** ตารางรายการของฟอร์ม — ช่องกรอกอยู่ใน "เซลล์ของตารางจริง"
+   *  🔴 กฎโครงมาก่อนข้อมูล: หัวคอลัมน์ต้องเห็นเสมอแม้ยังไม่มีรายการ */
   function paintSalesItems(){
     var box=$('slItems'); if(!box) return;
-    var opts='<option value="">— พิมพ์เอง —</option>'+SALES.services.map(function(s){
+    var opts='<option value="">— พิมพ์เอง —</option>'+(SALES.services||[]).map(function(s){
       return '<option value="'+esc(s.code)+'">'+esc(s.name)+' ('+money(s.price)+')</option>'; }).join('');
-    box.innerHTML=SALES_ITEMS.map(function(it,i){
-      return '<div style="border:1px solid var(--line);border-radius:10px;padding:8px;margin-bottom:6px">'+
-        '<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">'+
-          '<select id="si'+i+'" style="flex:1" onchange="salesPickService('+i+')">'+opts+'</select>'+
-          (SALES_ITEMS.length>1?'<button class="btn btn-ghost" style="width:auto;padding:6px 10px" onclick="salesDelItem('+i+')">✕</button>':'')+
-        '</div>'+
-        '<input id="sd'+i+'" placeholder="รายละเอียด" value="'+esc(it.detail||'')+'" style="margin-bottom:6px">'+
-        '<div style="display:flex;gap:6px">'+
-          '<input id="sq'+i+'" inputmode="decimal" placeholder="จำนวน" value="'+esc(it.qty||'1')+'" oninput="salesPreview()" style="flex:1">'+
-          '<input id="sp'+i+'" inputmode="decimal" placeholder="ราคา/หน่วย" value="'+esc(it.price||'')+'" oninput="salesPreview()" style="flex:1">'+
-        '</div></div>';
-    }).join('');
+    var many=SALES_ITEMS.length>1;
+    var rows=SALES_ITEMS.map(function(it,i){
+      return '<tr>'+
+        '<td class="dt-nw" style="color:#8A94A6">'+(i+1)+'</td>'+
+        '<td><select id="si'+i+'" onchange="salesPickService('+i+')">'+opts+'</select></td>'+
+        '<td><input id="sd'+i+'" placeholder="รายละเอียดที่จะพิมพ์บนเอกสาร" value="'+esc(it.detail||'')+'"></td>'+
+        '<td><input id="sq'+i+'" inputmode="decimal" value="'+esc(it.qty||'1')+'" oninput="salesPreview()"></td>'+
+        '<td><input id="sp'+i+'" inputmode="decimal" placeholder="0.00" value="'+esc(it.price||'')+'" oninput="salesPreview()"></td>'+
+        '<td class="dt-amt" id="sa'+i+'">—</td>'+
+        '<td class="dt-nw">'+(many?'<button class="sf-del" title="ลบบรรทัดนี้" onclick="salesDelItem('+i+')">✕</button>':'')+'</td>'+
+        '</tr>';
+    });
+    box.innerHTML='<div class="sf-items">'+dtTable([
+      {label:'#',cls:'dt-nw',w:'44px'},{label:'สินค้า/บริการ',w:'22%'},{label:'รายละเอียด'},
+      {label:'จำนวน',w:'10%'},{label:'ราคา/หน่วย',w:'14%'},{label:'จำนวนเงิน',cls:'ta-r',w:'13%'},
+      {label:'',w:'46px'}], rows, '', 'ยังไม่มีรายการ — กด "เพิ่มรายการ" ด้านล่าง')+'</div>';
     SALES_ITEMS.forEach(function(it,i){ var el=$('si'+i); if(el&&it.service) el.value=it.service; });
     salesPreview();
   }
@@ -12249,6 +12495,13 @@
   /** พรีวิวยอด — คิดแบบเดียวกับ backend (VAT ตามบริษัทที่เลือก) */
   function salesPreview(){
     var box=$('slSum'); if(!box||!SALES) return;
+    /* อัปเดตช่อง "จำนวนเงิน" รายบรรทัดด้วย — ของเดิมคิดแต่ยอดรวม คนกรอกเลยตรวจทีละบรรทัดไม่ได้ */
+    SALES_ITEMS.forEach(function(it,i){
+      var cell=$('sa'+i); if(!cell) return;
+      var q=Number(((($('sq'+i)||{}).value)||'0').replace(/,/g,''))||0;
+      var p=Number(((($('sp'+i)||{}).value)||'0').replace(/,/g,''))||0;
+      cell.innerHTML=(q&&p)?money(q*p):'<span style="color:#C2CAD6">—</span>';
+    });
     var ent=null, code=($('slEnt')||{}).value;
     if(!$('slEnt') && EDIT_DOC){ ent={ vatReg: !!EDIT_DOC.vatReg }; }   // ฟอร์มแก้ไข = บริษัทเดิมของใบนั้น
     else SALES.entities.forEach(function(e){ if(e.code===code) ent=e; });
@@ -12262,25 +12515,29 @@
     if(disc>sub) disc=sub;
     var base=sub-disc;
     var vat=(ent&&ent.vatReg)?Math.round(base*SALES.vatRate)/100:0;
-    box.innerHTML='รวมรายการ <b>'+money(sub)+'</b>'+(disc>0?' · ส่วนลด '+money(disc):'')+
-      (ent&&ent.vatReg?' · VAT '+SALES.vatRate+'% '+money(vat):' · ไม่มี VAT (บริษัทไม่ได้จด)')+
-      '<br>ยอดรวมทั้งสิ้น <b style="font-size:15px">'+money(base+vat)+'</b> บาท';
+    box.innerHTML=
+      '<div class="r"><span>รวมรายการ</span><b>'+money(sub)+'</b></div>'+
+      (disc>0?'<div class="r"><span>ส่วนลดท้ายบิล</span><b>-'+money(disc)+'</b></div>':'')+
+      '<div class="r"><span>มูลค่าที่คำนวณภาษี</span><b>'+money(base)+'</b></div>'+
+      '<div class="r"><span>'+(ent&&ent.vatReg?('ภาษีมูลค่าเพิ่ม '+SALES.vatRate+'%'):'ภาษีมูลค่าเพิ่ม')+'</span><b>'+
+        (ent&&ent.vatReg?money(vat):'<span style="color:#8A94A6;font-weight:400">บริษัทไม่ได้จด VAT</span>')+'</b></div>'+
+      '<div class="r grand"><span>จำนวนเงินทั้งสิ้น</span><b>'+money(base+vat)+' บาท</b></div>';
   }
   function salesSave(){
     salesReadItems();
     var items=SALES_ITEMS.filter(function(it){ return (it.detail||'').trim() || it.service; });
-    if(!items.length){ mErr('ใส่รายการอย่างน้อย 1 บรรทัดค่ะ'); return; }
+    if(!items.length){ sfErr('ใส่รายการอย่างน้อย 1 บรรทัดค่ะ'); return; }
     var p={action:'waSalesCreate',uid:UID,
       kind:($('slKind')||{}).value, entity:($('slEnt')||{}).value, customer:($('slCust')||{}).value,
       docDate:($('slDate')||{}).value, title:(($('slTitle')||{}).value||'').trim(),
       note:(($('slNote')||{}).value||'').trim(), discount:($('slDisc')||{}).value||'0',
       items:JSON.stringify(items)};
     callBusy('กำลังออกเอกสาร…', jsonpPost(p), 'ออกเอกสารแล้ว').then(function(r){
-      if(!r||!r.ok){ mErr((r&&r.error)||'ออกเอกสารไม่สำเร็จ'); return; }
-      closeModal();
+      if(!r||!r.ok){ sfErr((r&&r.error)||'ออกเอกสารไม่สำเร็จ'); return; }
       toast('✅ '+r.no+' · '+money(r.total)+' บาท'+(r.warn?' (⚠️ '+r.warn+')':''));
-      renderSales();
-    }).catch(function(e){ mErr(e.message); });
+      /* ออกเสร็จพาไปหน้าใบนั้นเลย — คนออกเอกสารมักอยากส่งต่อ/พิมพ์ทันที */
+      SALES=null; SALES_BYNO[r.no]=null; salesOne(r.no);
+    }).catch(function(e){ sfErr(e.message); });
   }
   /** ✏️ แก้เอกสารที่ออกไปแล้ว — โหลดค่าเดิมมาให้ แล้วออกไฟล์ใหม่ทับตอนบันทึก
    *  ใบที่รับเงินแล้ว/ใบเสร็จ/ใบวางบิล จะแก้ได้แค่เรื่องกับหมายเหตุ (backend เป็นคนตัดสิน) */
@@ -14074,10 +14331,9 @@
         'และใบที่ออกไปแล้วคงราคาตามที่ออกจริงเสมอ</div>'+
         '<div class="tax-acts" style="margin:0 0 12px">'+
         '<button class="btn btn-primary" style="flex:none;min-width:0" onclick="svcForm(-1)">+ เพิ่มสินค้า/บริการ</button></div>';
-      h+=rows.length
-        ? dtTable([{label:'รหัส',cls:'dt-nw',w:'12%'},{label:'ชื่อ'},{label:'หน่วย',cls:'dt-nw',w:'12%'},
-                   {label:'ราคาตั้งต้น',cls:'ta-r',w:'15%'},{label:'',w:'92px'}], rows, '')
-        : '<div class="card"><div class="emptybox">ยังไม่มีสินค้า/บริการในทะเบียน 😊</div></div>';
+      h+=dtTable([{label:'รหัส',cls:'dt-nw',w:'12%'},{label:'ชื่อ'},{label:'หน่วย',cls:'dt-nw',w:'12%'},
+                  {label:'ราคาตั้งต้น',cls:'ta-r',w:'15%'},{label:'',w:'92px'}], rows, '',
+                 'ยังไม่มีสินค้า/บริการ — กดปุ่ม "เพิ่มสินค้า/บริการ" ด้านบนได้เลยค่ะ');
       $('main').innerHTML=h;
     });
   }
@@ -14114,10 +14370,9 @@
       h+='<div class="m-hint">👥 มีกลุ่ม LINE แล้วแต่ยังไม่อยู่ในทะเบียน '+miss.length+' ราย: '+
         esc(miss.slice(0,6).join(', '))+(miss.length>6?' …':'')+'</div>';
     }
-    return h+(rows.length
-      ? dtTable([{label:'ลูกค้า'},{label:'เลขผู้เสียภาษี',cls:'dt-nw',w:'18%'},{label:'สาขา',w:'16%'},
-                 {label:'เครดิต',cls:'ta-r',w:'10%'},{label:'',w:'92px'}], rows, '')
-      : '<div class="card"><div class="emptybox">ยังไม่มีลูกค้าในทะเบียน 😊</div></div>');
+    return h+dtTable([{label:'ลูกค้า'},{label:'เลขผู้เสียภาษี',cls:'dt-nw',w:'18%'},{label:'สาขา',w:'16%'},
+                      {label:'เครดิต',cls:'ta-r',w:'10%'},{label:'',w:'92px'}], rows, '',
+                     'ยังไม่มีลูกค้าในทะเบียน — กดปุ่ม "เพิ่มลูกค้า" ด้านบนได้เลยค่ะ');
   }
 
   /** i = index ใน REG.customers · -1 = เพิ่มใหม่ */
@@ -19402,7 +19657,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260921-1039';
+  var APP_BUILD='20260921-1058';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
