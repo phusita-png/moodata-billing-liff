@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260921-1837">
+<link rel="stylesheet" href="user.css?v=20260921-1914">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -719,6 +719,11 @@
   .nav-btn .doc-code{ margin-left:5px; background:none; color:inherit; opacity:.6;
     padding:0; font-size:11px; letter-spacing:.4px; }
   /* การ์ดครอบตาราง: หัวการ์ด = ชื่อ+คำอธิบาย ซ้าย · เครื่องมือขวา */
+  /* 2 ช่องต่อแถวในฟอร์มใบ 50 ทวิ — จอแคบยุบเป็นช่องละแถวเอง */
+  .wf-row{ display:grid; grid-template-columns:1fr 1fr; gap:0 12px; }
+  @media (max-width:520px){ .wf-row{ grid-template-columns:1fr; } }
+  .wg-note{ width:100%; box-sizing:border-box; padding:6px 9px; border:1px solid var(--line);
+    border-radius:8px; font-family:inherit; font-size:13px; background:#fff; }
   .lst-card{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:18px 20px 6px; }
   .lst-head{ display:flex; align-items:flex-start; gap:14px; flex-wrap:wrap; margin:0 0 16px; }
   .lst-head .t b{ font-size:16px; }
@@ -6625,9 +6630,195 @@
     var t=function(k,label,fn){ return '<button class="btn '+(active===k?'btn-primary':'btn-ghost')+
       '" style="flex:1" onclick="'+fn+'">'+label+'</button>'; };
     return '<div class="tax-acts" style="margin-bottom:12px">'+
-      t('reg','📄 ทะเบียนใบ 50 ทวิ','renderWhtIn()')+
-      t('match','📊 กระทบยอดกับเงินที่รับ','renderWhtInMatch()')+'</div>';
+      t('gl','📊 กระทบยอด GL','renderWhtGl()')+
+      t('reg','📄 รายการ 50 ทวิ','renderWhtIn()')+
+      t('match','💵 กระทบกับเงินที่รับ','renderWhtInMatch()')+'</div>';
   }
+  /* ═══════════ 📊 กระทบยอด 50 ทวิ ↔ GL (spec docs/spec-wht-gl.md · 21 ก.ย. 69) ═══════════
+     ต้นแบบมาจากไฟล์ที่พี่กี้ทำมือไว้ก่อน — หน้านี้คือย้ายของนั้นเข้าระบบ
+     🔴 GL คือความจริงจากโปรแกรมบัญชี หน้านี้อ่านอย่างเดียว (แก้ได้แค่ช่องหมายเหตุ) */
+  var WG_YEAR='', WG_ENT='', WG_TAB='all', WG=null;
+  var WG_TABS=[['all','ทั้งหมด'],['matched','✅ มีใบ 50 ทวิ'],['nocert','⏳ ยังไม่มีใบ'],
+               ['reversal','↩ กลับรายการ'],['notgl','⚠️ ใบไม่อยู่ใน GL']];
+  function wgSetYear(v){ WG_YEAR=v; renderWhtGl(); }
+  function wgSetEnt(v){ WG_ENT=v||''; renderWhtGl(); }
+  function wgSetTab(t){ WG_TAB=t||'all'; wgPaint(); }
+  window.wgSetYear=wgSetYear; window.wgSetEnt=wgSetEnt; window.wgSetTab=wgSetTab;
+
+  /** แถวไหนอยู่แท็บไหน — ฟังก์ชันบริสุทธิ์ (เทสเรียกตัวนี้ตัวเดียวกับของจริง) */
+  function wgTagOf(r){
+    var st=String((r&&r.status)||'');
+    if(st.indexOf('กลับรายการ')>=0) return 'reversal';
+    if(st.indexOf('มีใบ')>=0) return 'matched';
+    return 'nocert';
+  }
+  function wgFilter(rows, tab){
+    if(!tab||tab==='all'||tab==='notgl') return rows||[];
+    return (rows||[]).filter(function(r){ return wgTagOf(r)===tab; });
+  }
+  window.wgTagOf=wgTagOf; window.wgFilter=wgFilter;
+
+  /** ตาราง GL — ฟังก์ชันบริสุทธิ์ */
+  function wgTableHtml(rows, tab){
+    var shown=wgFilter(rows, tab);
+    var cls={matched:'b-done',nocert:'b-review',reversal:'b-new'};
+    var body=shown.map(function(r,i){
+      var tg=wgTagOf(r);
+      return '<tr>'+
+        '<td class="dt-nw">'+esc(r.date||'')+'</td>'+
+        '<td class="dt-nw">'+esc(r.book||'-')+'</td>'+
+        '<td class="dt-nw">'+esc(r.docNo||'-')+'</td>'+
+        '<td style="white-space:normal">'+esc(r.desc||'-')+'</td>'+
+        '<td class="dt-amt">'+(r.debit?money(r.debit):'—')+'</td>'+
+        '<td class="dt-amt">'+(r.credit?money(r.credit):'—')+'</td>'+
+        '<td class="ta-c dt-nw"><span class="tk-badge '+(cls[tg]||'b-new')+'">'+esc(r.status||'')+'</span></td>'+
+        '<td class="dt-nw">'+esc(r.matchNo||'—')+'</td>'+
+        '<td><input class="wg-note" value="'+esc(r.note||'')+'" placeholder="บันทึก…" '+
+          'onchange="wgNote('+r.row+',this.value)"></td>'+
+        '</tr>';
+    }).join('');
+    return dtTable([{label:'วันที่ GL',cls:'dt-nw',w:'9%'},{label:'สมุด',cls:'dt-nw',w:'9%'},
+      {label:'เลขที่เอกสาร GL',cls:'dt-nw',w:'13%'},{label:'ผู้จ่าย / คำอธิบาย'},
+      {label:'เดบิต (Dr)',cls:'ta-r',w:'9%'},{label:'เครดิต (Cr)',cls:'ta-r',w:'9%'},
+      {label:'สถานะ',cls:'ta-c dt-nw',w:'13%'},{label:'เลขที่ใบ 50 ทวิ',cls:'dt-nw',w:'11%'},
+      {label:'หมายเหตุ',w:'12%'}],
+      body?[body]:[], '', 'ยังไม่มีรายการ GL ในปีนี้ — กด "นำเข้าไฟล์ GL" ด้านบนค่ะ');
+  }
+  window.wgTableHtml=wgTableHtml;
+
+  function wgPaint(){
+    var r=WG; if(!r) return;
+    var s=r.sum||{};
+    var counts={ all:(r.rows||[]).length,
+      matched:(s.matched&&s.matched.n)||0, nocert:(s.nocert&&s.nocert.n)||0,
+      reversal:(s.reversal&&s.reversal.n)||0, notgl:(s.notInGl&&s.notInGl.n)||0 };
+    var tabs=WG_TABS.map(function(t){
+      return '<button class="btn '+(WG_TAB===t[0]?'btn-primary':'btn-ghost')+'" style="flex:1" '+
+        'onclick="wgSetTab(&quot;'+t[0]+'&quot;)">'+esc(t[1])+
+        ' <span style="opacity:.75">'+(counts[t[0]]||0)+'</span></button>';
+    }).join('');
+    var box=$('wgBody'); if(!box) return;
+    box.innerHTML='<div class="tax-acts qt-tabs" style="margin:0 0 12px">'+tabs+'</div>'+
+      (WG_TAB==='notgl' ? wgNotGlHtml(r) : wgTableHtml(r.rows||[], WG_TAB));
+  }
+  /** ใบ 50 ทวิ ที่ไม่มีคู่ใน GL — เครดิตที่บัญชีอาจยังไม่ได้ลง */
+  function wgNotGlHtml(r){
+    var s=r.sum||{};
+    return '<div class="m-hint" style="margin:0 0 10px">ใบที่เก็บไว้แต่ยังไม่เจอใน GL '+
+      ((s.notInGl&&s.notInGl.n)||0)+' ฉบับ · ภาษี '+money((s.notInGl&&s.notInGl.amt)||0)+' บาท — '+
+      'แปลว่าบัญชีอาจยังไม่ได้ลงรายการนี้ หรือ GL ที่นำเข้ายังไม่ครบ</div>'+
+      '<div class="tax-acts" style="margin:0"><button class="btn btn-ghost" onclick="renderWhtIn()">'+
+      '→ ดูรายการ 50 ทวิ ทั้งหมด</button></div>';
+  }
+
+  function renderWhtGl(){
+    if(!IS_OWNER){ $('main').innerHTML='<div class="card"><div class="emptybox">เฉพาะผู้ดูแลค่ะ</div></div>'; return; }
+    skel();
+    jsonp({action:'waWhtGl',uid:UID,year:WG_YEAR,entity:WG_ENT}).then(function(r){
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      WG=r;
+      var s=r.sum||{}, nowBE=new Date().getFullYear()+543;
+      var years=[]; for(var y=nowBE;y>=nowBE-3;y--) years.push(y);
+      var h='<div class="bc"><button class="lnk" onclick="switchView(&quot;taxhub&quot;)">รายงานภาษี</button> › '+
+        'กระทบยอด 50 ทวิ ↔ GL</div>'+
+        wiTabs('gl')+
+        '<div class="ds-sel"><select id="wgYear" onchange="wgSetYear(this.value)">'+
+        '<option value="">ทุกปี</option>'+
+        years.map(function(y){ return '<option value="'+y+'"'+(String(y)===String(WG_YEAR)?' selected':'')+'>ปีภาษี '+y+'</option>'; }).join('')+
+        '</select><select id="wgEnt" onchange="wgSetEnt(this.value)"><option value="">ทุกบริษัท</option>'+
+        (r.entities||[]).map(function(e){ return '<option value="'+esc(e.code)+'"'+(e.code===WG_ENT?' selected':'')+'>'+esc(e.name)+'</option>'; }).join('')+
+        '</select></div>'+
+        '<div class="ds-grid">'+
+          statCard('ยอด GL (Dr) รวม',money(s.debit||0),(s.n||0)+' รายการ')+
+          statCard('มีใบ 50 ทวิ',String((s.matched&&s.matched.n)||0),money((s.matched&&s.matched.amt)||0)+' บาท')+
+          statCard('ยังไม่มีใบ (ตามเก็บ)',String((s.nocert&&s.nocert.n)||0),
+            money((s.nocert&&s.nocert.amt)||0)+' บาท',(s.nocert&&s.nocert.n)?'ds-warn':'')+
+          statCard('กลับรายการ',String((s.reversal&&s.reversal.n)||0),money((s.reversal&&s.reversal.amt)||0)+' บาท')+
+          statCard('ใบไม่อยู่ใน GL',String((s.notInGl&&s.notInGl.n)||0),
+            money((s.notInGl&&s.notInGl.amt)||0)+' บาท',(s.notInGl&&s.notInGl.n)?'ds-warn':'')+
+        '</div>'+
+        /* 🔴 Tie-out คือด่านตรวจว่าตัวเลขยังเชื่อถือได้ — ไม่เท่ากันต้องเห็นทันที ไม่ใช่ซ่อน */
+        '<div class="m-hint" style="margin:0 0 12px;'+
+          (s.tieOk?'':'background:#FBEAE7;color:#B23B3B;')+'">🔗 <b>Tie-out:</b> '+
+          'มีใบ '+money((s.matched&&s.matched.amt)||0)+' + ยังไม่มีใบ '+money((s.nocert&&s.nocert.amt)||0)+
+          ' = <b>'+money(s.debit||0)+'</b> (ยอด Dr รวม) '+(s.tieOk?'✓':'✗ ไม่ตรง — ตรวจไฟล์ GL ที่นำเข้า')+'</div>'+
+        '<div class="tax-acts">'+
+          '<button class="btn btn-primary" onclick="wgImport()">📥 นำเข้าไฟล์ GL</button>'+
+          '<button class="btn btn-ghost" onclick="wgRematch()">🔄 จับคู่ใหม่</button>'+
+          '<button class="btn btn-ghost" onclick="wgClear()">🗑️ ล้าง GL ปีนี้</button>'+
+        '</div>'+
+        '<div class="lst-card" style="margin-top:12px"><div id="wgBody"></div></div>';
+      $('main').innerHTML=h;
+      wgPaint();
+    }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
+  }
+  window.renderWhtGl=renderWhtGl;
+
+  /** นำเข้าไฟล์ GL — อัปไฟล์ CSV หรือวางข้อความจาก Excel (พี่กี้เลือก "ทั้ง 2 ทาง") */
+  function wgImport(){
+    modal('<h3>📥 นำเข้าไฟล์ GL</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">เอาสมุดบัญชี "ภาษีถูกหัก ณ ที่จ่าย" จากโปรแกรมบัญชีมาใส่ — '+
+      'ต้องมีคอลัมน์ <b>วันที่</b> กับ <b>เดบิต</b> อย่างน้อย · '+
+      'นำเข้าไฟล์เดิมซ้ำได้ ระบบข้ามแถวที่มีอยู่แล้วให้เอง</div>'+
+      '<div class="fld"><label>วิธีที่ 1 — เลือกไฟล์ CSV</label>'+
+        '<input type="file" id="wgFile" accept=".csv,text/csv"></div>'+
+      '<div class="fld"><label>วิธีที่ 2 — คัดลอกจาก Excel มาวาง</label>'+
+        '<textarea id="wgText" style="min-height:120px" placeholder="วางทั้งตารางรวมแถวหัวคอลัมน์ได้เลยค่ะ"></textarea></div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" id="wgImpBtn" onclick="wgDoImport()">นำเข้า</button></div>');
+  }
+  function wgDoImport(){
+    var txt=(($('wgText')||{}).value||'').trim();
+    var f=($('wgFile')||{}).files;
+    var go=function(payload){
+      var b=$('wgImpBtn'); if(b){ b.disabled=true; b.textContent='กำลังนำเข้า…'; }
+      callBusy('กำลังนำเข้า GL…', jsonpPost(payload), 'นำเข้าแล้ว').then(function(r){
+        if(!r||!r.ok){ if(b){b.disabled=false;b.textContent='นำเข้า';} mErr((r&&r.error)||'นำเข้าไม่สำเร็จ'); return; }
+        closeModal();
+        toast('✅ เพิ่ม '+r.added+' แถว'+(r.dup?(' · ซ้ำ '+r.dup+' (ข้ามให้)'):'')+
+          ' · จับคู่ได้ '+r.matched+' ใบ');
+        renderWhtGl();
+      }).catch(function(e){ if(b){b.disabled=false;b.textContent='นำเข้า';} mErr(e.message); });
+    };
+    if(f&&f.length){
+      var rd=new FileReader();
+      rd.onload=function(){
+        /* ส่งเป็น base64 เพื่อไม่ให้ข้อความไทยเพี้ยนระหว่างทาง */
+        var b64=String(rd.result||'').split(',')[1]||'';
+        if(!b64){ mErr('อ่านไฟล์ไม่ได้ค่ะ'); return; }
+        go({action:'waWhtGlImport',uid:UID,entity:WG_ENT,b64:b64});
+      };
+      rd.onerror=function(){ mErr('อ่านไฟล์ไม่ได้ค่ะ'); };
+      rd.readAsDataURL(f[0]);
+      return;
+    }
+    if(!txt){ mErr('เลือกไฟล์ หรือวางข้อมูลก่อนค่ะ'); return; }
+    go({action:'waWhtGlImport',uid:UID,entity:WG_ENT,text:txt});
+  }
+  function wgRematch(){
+    callBusy('กำลังจับคู่ใหม่…', jsonpPost({action:'waWhtGlRematch',uid:UID,year:WG_YEAR,entity:WG_ENT}), 'จับคู่แล้ว')
+      .then(function(r){
+        if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; }
+        toast('🔄 มีใบ '+r.matched+' · ตามเก็บ '+r.nocert+' · กลับรายการ '+r.reversal);
+        renderWhtGl();
+      }).catch(function(e){ toast(e.message); });
+  }
+  function wgClear(){
+    if(!WG_YEAR){ toast('เลือกปีภาษีก่อนค่ะ'); return; }
+    /* ลบทั้งปี = ของหายถาวร ต้องพิมพ์ยืนยัน ไม่ใช่กดปุ่มเดียวจบ */
+    if(!confirm('ลบรายการ GL ของปีภาษี '+WG_YEAR+' ทั้งหมด?\n\nใบ 50 ทวิ ในทะเบียนไม่ถูกลบ')) return;
+    callBusy('กำลังล้าง…', jsonpPost({action:'waWhtGlClear',uid:UID,year:WG_YEAR,entity:WG_ENT}), 'ล้างแล้ว')
+      .then(function(r){
+        if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; }
+        toast('🗑️ ลบ '+r.removed+' แถว'); renderWhtGl();
+      }).catch(function(e){ toast(e.message); });
+  }
+  function wgNote(row, v){
+    jsonpPost({action:'waWhtGlNote',uid:UID,row:row,note:v}).then(function(){}).catch(function(){});
+  }
+  window.wgImport=wgImport; window.wgDoImport=wgDoImport; window.wgRematch=wgRematch;
+  window.wgClear=wgClear; window.wgNote=wgNote;
+
   function wirSetYear(v){ WIR_YEAR=v; renderWhtIn(); }
   function wirSetEnt(v){ WIR_ENT=v||''; renderWhtIn(); }
   function renderWhtIn(){
@@ -6652,7 +6843,8 @@
           statCard('ไม่มีไฟล์แนบ',(s.noFile||0)+' ฉบับ',
             s.noFile?('ภาษี '+money(s.noFileTax)+' ที่ไม่มีหลักฐาน'):'มีไฟล์ครบ',s.noFile?'ds-warn':'')+
         '</div>'+
-        '<div class="tax-acts"><button class="btn btn-primary" onclick="wirScan()">📷 สแกนใบ 50 ทวิ (อัปโหลด + อ่านให้)</button>'+
+        '<div class="tax-acts"><button class="btn btn-primary" onclick="wirScanMulti()">📥 นำเข้าใบ 50 ทวิ (หลายใบ)</button>'+
+        '<button class="btn btn-ghost" onclick="wirScan()">📷 สแกนทีละใบ</button>'+
         '<button class="btn btn-ghost" onclick="wirManual()">✏️ กรอกเอง</button>'+
         '<button class="btn btn-ghost" onclick="wirRematch()">🔄 จับคู่ใหม่ทั้งเล่ม</button></div>';
 
@@ -6689,8 +6881,38 @@
   }
   var WIR_ROWS={}, WIR_TYPES=[];
   /** ฟอร์มใบ 50 ทวิ (ใช้ทั้งตอนสแกนเสร็จ · กรอกเอง · แก้ไข) */
+  /* ค่าที่ OCR อ่านมาของใบที่กำลังแก้ — ไว้ให้ปุ่ม "คืนค่าที่อ่านมา" (ต้นแบบพี่กี้ 21 ก.ย. 69) */
+  var WIR_OCRVAL=null;
+  /** วันที่ ISO → ข้อความไทย dd/mm/พ.ศ. (ยืนยันให้เห็นก่อนบันทึกว่าปีไม่เพี้ยน) */
+  function wirDateThai(iso){
+    var m=String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    return m ? (m[3]+'/'+m[2]+'/'+(Number(m[1])+543)) : '';
+  }
+  function wirDateHint(){
+    var box=$('wfDateHint'); if(!box) return;
+    var iso=($('wfDate')||{}).value||'';
+    var t=wirDateThai(iso);
+    var ocr=WIR_OCRVAL&&WIR_OCRVAL.payDateISO ? wirDateThai(WIR_OCRVAL.payDateISO) : '';
+    box.innerHTML=(t?'<span style="color:#1E9E5A">✓ จะบันทึกเป็น '+esc(t)+'</span>':
+      '<span style="color:#C0490F">ยังไม่ได้เลือกวันที่ — วันที่กำหนดว่าเครดิตภาษีเข้าปีไหน</span>')+
+      (ocr?'<br><span style="color:#8A94A6">ค่าที่อ่านมา: '+esc(ocr)+'</span>':'');
+  }
+  /** กลับไปใช้ค่าที่ OCR อ่านมาทั้งใบ (กดแก้ผิดแล้วอยากเริ่มใหม่) */
+  function wirRestoreOcr(){
+    var o=WIR_OCRVAL; if(!o) return;
+    var set=function(id,val){ var el=$(id); if(el) el.value=(val==null?'':val); };
+    set('wfPayer',o.payer); set('wfPid',o.payerId); set('wfDoc',o.docNo);
+    set('wfForm',o.form); set('wfType',o.incomeType); set('wfDate',o.payDateISO);
+    set('wfAmt',o.amount); set('wfTax',o.tax);
+    wirDateHint();
+    toast('↩ คืนค่าที่อ่านมาแล้ว');
+  }
+  window.wirDateHint=wirDateHint; window.wirRestoreOcr=wirRestoreOcr;
+
   function wirForm(title, v, onSave){
     v=v||{};
+    /* ใบที่เพิ่งสแกน = เก็บค่าที่อ่านมาไว้ · ใบเก่าที่กดแก้ = ไม่มีค่าอ่านมาให้คืน */
+    WIR_OCRVAL=v.ocrVal||null;
     var topts=(WIR_TYPES.length?WIR_TYPES:['ค่าบริการ','ค่าจ้างทำของ','ค่าเช่า','อื่น ๆ']).map(function(t){
       return '<option value="'+esc(t)+'"'+(t===v.incomeType?' selected':'')+'>'+esc(t)+'</option>'; }).join('');
     var fopts=['','ภ.ง.ด.3','ภ.ง.ด.53','ภ.ง.ด.1'].map(function(f){
@@ -6700,17 +6922,26 @@
       (v.fileLink?'<div class="m-hint">📎 <a class="ex-lk" href="'+esc(v.fileLink)+'" target="_blank">เปิดไฟล์ที่แนบไว้</a> — เทียบตัวเลขกับใบจริงก่อนบันทึกนะคะ</div>':'')+
       '<div class="fld"><label>ผู้จ่ายเงิน (ลูกค้าที่หักภาษีเรา)</label><input id="wfPayer" value="'+esc(v.payer||'')+'"></div>'+
       '<div class="fld"><label>เลขประจำตัวผู้เสียภาษีผู้จ่าย</label><input id="wfPid" inputmode="numeric" value="'+esc(v.payerId||'')+'"></div>'+
-      '<div class="fld"><label>เลขที่เอกสารบนใบ</label><input id="wfDoc" value="'+esc(v.docNo||'')+'"></div>'+
-      '<div class="fld"><label>แบบยื่นที่ผู้จ่ายใช้</label><select id="wfForm">'+fopts+'</select></div>'+
+      /* 2 ช่องต่อแถวตามต้นแบบ — เลขที่คู่กับแบบ · จำนวนเงินคู่กับภาษี (อ่านเทียบใบจริงง่ายกว่า) */
+      '<div class="wf-row">'+
+        '<div class="fld"><label>เลขที่เอกสารบนใบ</label><input id="wfDoc" value="'+esc(v.docNo||'')+'"></div>'+
+        '<div class="fld"><label>แบบ (ภ.ง.ด.)</label><select id="wfForm">'+fopts+'</select></div>'+
+      '</div>'+
       '<div class="fld"><label>ประเภทเงินได้</label><select id="wfType">'+topts+'</select></div>'+
-      '<div class="fld"><label>วันที่จ่ายเงิน (บนใบ)</label><input id="wfDate" type="date" value="'+esc(v.payDateISO||'')+'">'+
-        '<div class="m-hint" style="margin-top:4px">วันที่นี้กำหนดว่าเครดิตภาษีเข้าปีไหน</div></div>'+
-      '<div class="fld"><label>จำนวนเงินที่จ่าย (ก่อนภาษี)</label><input id="wfAmt" type="number" inputmode="decimal" value="'+esc(v.amount||'')+'"></div>'+
-      '<div class="fld"><label>ภาษีที่ถูกหัก</label><input id="wfTax" type="number" inputmode="decimal" value="'+esc(v.tax||'')+'"></div>'+
-      '<div class="fld"><label>หมายเหตุ</label><input id="wfNote" value="'+esc(v.note||'')+'"></div>'+
-      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<div class="fld"><label>วันที่จ่ายเงิน (บนใบ)</label>'+
+        '<input id="wfDate" type="date" value="'+esc(v.payDateISO||'')+'" onchange="wirDateHint()">'+
+        '<div class="m-hint" id="wfDateHint" style="margin-top:4px"></div></div>'+
+      '<div class="wf-row">'+
+        '<div class="fld"><label>จำนวนเงิน (บาท)</label><input id="wfAmt" type="number" inputmode="decimal" value="'+esc(v.amount||'')+'"></div>'+
+        '<div class="fld"><label>ภาษีหัก (บาท)</label><input id="wfTax" type="number" inputmode="decimal" value="'+esc(v.tax||'')+'"></div>'+
+      '</div>'+
+      '<div class="fld"><label>หมายเหตุ</label><input id="wfNote" value="'+esc(v.note||'')+'" placeholder="พิมพ์บันทึกเพิ่มเติม…"></div>'+
+      '<div class="m-act">'+
+      (WIR_OCRVAL?'<button class="btn btn-ghost" style="margin-right:auto" onclick="wirRestoreOcr()">↩ คืนค่าที่อ่านมา</button>':'')+
+      '<button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
       (v.no?'<button class="btn btn-danger" onclick="wirVoid(\''+esc(v.no)+'\')">🗑️ ยกเลิกใบ</button>':'')+
-      '<button class="btn btn-primary" onclick="'+onSave+'">บันทึก</button></div>');
+      '<button class="btn btn-primary" onclick="'+onSave+'">💾 บันทึก</button></div>');
+    wirDateHint();
   }
   function wirRead(){
     return { payer:(($('wfPayer')||{}).value||'').trim(), payerId:(($('wfPid')||{}).value||'').trim(),
@@ -6742,13 +6973,97 @@
       var iso='';
       var m=String(p.payDate||'').match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
       if(m) iso=(Number(m[3])-543)+'-'+m[2]+'-'+m[1];
+      var ocrVal={ payer:p.payer||'', payerId:p.payerId||'', docNo:p.docNo||'', form:p.form||'',
+        incomeType:p.incomeType||'', payDateISO:iso, amount:p.amount||'', tax:p.tax||'' };
       wirForm('✅ ตรวจค่าที่อ่านได้ก่อนบันทึก', {
         payer:p.payer, payerId:p.payerId, docNo:p.docNo, form:p.form, incomeType:p.incomeType,
-        payDateISO:iso, amount:p.amount||'', tax:p.tax||'', fileLink:r.fileLink,
+        payDateISO:iso, amount:p.amount||'', tax:p.tax||'', fileLink:r.fileLink, ocrVal:ocrVal,
         guessNote:(r.note||'')+((r.guess||[]).length?(' · '+r.guess.join(' · ')):'')
       }, 'wirSaveNew()');
     }).catch(function(e){ if(b){b.disabled=false;b.textContent='อัปโหลด + อ่านใบ';} mErr(e.message); });
   }
+  /* ── นำเข้าหลายใบ (พี่กี้เลือก 21 ก.ย. 69) ──
+     อ่านทุกใบแล้วขึ้นตารางให้ตรวจก่อนบันทึกทั้งชุด — OCR ไม่แม่น 100% ต้องผ่านตาก่อนเสมอ */
+  var WIR_BULK=[];
+  function wirScanMulti(){
+    modal('<h3>📥 นำเข้าใบ 50 ทวิ (หลายใบ)</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">เลือกไฟล์รูป/PDF ได้ทีละหลายใบ (ครั้งละไม่เกิน 5 ใบ — อ่านทีละใบใช้เวลา) '+
+      'ระบบเก็บไฟล์ลง Drive แล้วอ่านค่าให้ <b>ขึ้นตารางให้ตรวจก่อนบันทึกทั้งชุด</b></div>'+
+      imgsFldHtml('wiBulk','ไฟล์ใบ 50 ทวิ (เลือกได้หลายไฟล์)')+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" id="wiBulkBtn" onclick="wirDoScanMulti()">อัปโหลด + อ่านทุกใบ</button></div>');
+    imgsFldBind('wiBulk');
+  }
+  function wirDoScanMulti(){
+    var imgs=IMGS['wiBulk']||[];
+    if(!imgs.length){ mErr('แนบไฟล์ก่อนค่ะ'); return; }
+    if(imgs.length>5){ mErr('ครั้งละไม่เกิน 5 ใบค่ะ (เลือกมา '+imgs.length+' ใบ)'); return; }
+    var b=$('wiBulkBtn'); if(b){ b.disabled=true; b.textContent='กำลังอ่าน '+imgs.length+' ใบ…'; }
+    callBusy('กำลังเก็บไฟล์ + อ่าน '+imgs.length+' ใบ…',
+      jsonpPost({action:'waWhtInScanMulti',uid:UID,imgs:JSON.stringify(imgs)}), 'อ่านเสร็จ').then(function(r){
+      if(!r||!r.ok){ if(b){b.disabled=false;b.textContent='อัปโหลด + อ่านทุกใบ';} mErr((r&&r.error)||'อ่านไม่สำเร็จ'); return; }
+      IMGS['wiBulk']=[];
+      WIR_BULK=(r.items||[]).filter(function(x){ return x.ok; }).map(function(x){
+        var p=x.parsed||{}, iso='';
+        var m=String(p.payDate||'').match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        if(m) iso=(Number(m[3])-543)+'-'+m[2]+'-'+m[1];
+        return { payer:p.payer||'', payerId:p.payerId||'', docNo:p.docNo||'', form:p.form||'',
+          incomeType:p.incomeType||'', payDate:iso, amount:p.amount||'', tax:p.tax||'',
+          fileLink:x.fileLink||'', ocrRaw:x.ocrRaw||'', note:x.note||'' };
+      });
+      closeModal();
+      wirBulkReview();
+    }).catch(function(e){ if(b){b.disabled=false;b.textContent='อัปโหลด + อ่านทุกใบ';} mErr(e.message); });
+  }
+  /** ตารางตรวจก่อนบันทึก — แก้ในช่องได้เลย */
+  function wirBulkReview(){
+    if(!WIR_BULK.length){ toast('ไม่มีใบที่อ่านได้ค่ะ'); return; }
+    var rows=WIR_BULK.map(function(d,i){
+      return '<tr>'+
+        '<td class="dt-nw">'+(i+1)+(d.fileLink?' <a class="ex-lk" href="'+esc(d.fileLink)+'" target="_blank">📎</a>':'')+'</td>'+
+        '<td><input id="wb_payer'+i+'" value="'+esc(d.payer)+'" placeholder="ผู้จ่ายเงิน"></td>'+
+        '<td><input id="wb_doc'+i+'" value="'+esc(d.docNo)+'" placeholder="เลขที่เอกสาร"></td>'+
+        '<td><input id="wb_date'+i+'" type="date" value="'+esc(d.payDate)+'"></td>'+
+        '<td><input id="wb_amt'+i+'" inputmode="decimal" value="'+esc(String(d.amount))+'" placeholder="0.00"></td>'+
+        '<td><input id="wb_tax'+i+'" inputmode="decimal" value="'+esc(String(d.tax))+'" placeholder="0.00"></td>'+
+        '</tr>';
+    }).join('');
+    modal('<h3>✅ ตรวจก่อนบันทึก '+WIR_BULK.length+' ใบ</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">ค่าที่อ่านได้อาจเพี้ยน — แก้ในช่องได้เลยค่ะ ใบไหนไม่เอาให้ลบยอดภาษีเป็น 0</div>'+
+      '<div class="sf-items" style="max-height:340px;overflow:auto">'+
+      '<table class="tax-tbl dt-tbl"><thead><tr><th>#</th><th>ผู้จ่ายเงิน</th><th>เลขที่เอกสาร</th>'+
+      '<th>วันที่จ่าย</th><th>จำนวนเงิน</th><th>ภาษีหัก</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" id="wbSaveBtn" onclick="wirBulkSave()">บันทึกทั้งชุด</button></div>');
+  }
+  function wirBulkSave(){
+    var out=[];
+    WIR_BULK.forEach(function(d,i){
+      var v=function(id){ return ((($(id)||{}).value)||'').trim(); };
+      var tax=Number(v('wb_tax'+i).replace(/,/g,''))||0;
+      if(!(tax>0)) return;                       /* ภาษี 0 = ใบที่พี่ไม่เอา */
+      out.push({ payer:v('wb_payer'+i), payerId:d.payerId, docNo:v('wb_doc'+i),
+        form:d.form, incomeType:d.incomeType, payDate:v('wb_date'+i),
+        amount:v('wb_amt'+i), tax:String(tax), fileLink:d.fileLink, ocrRaw:d.ocrRaw, entity:WIR_ENT });
+    });
+    if(!out.length){ mErr('ไม่มีใบที่จะบันทึก (ภาษีต้องมากกว่า 0)'); return; }
+    var b=$('wbSaveBtn'); if(b){ b.disabled=true; b.textContent='กำลังบันทึก…'; }
+    callBusy('กำลังบันทึก '+out.length+' ใบ…',
+      jsonpPost({action:'waWhtInSaveBulk',uid:UID,items:JSON.stringify(out)}), 'บันทึกแล้ว').then(function(r){
+      if(!r||!r.ok){ if(b){b.disabled=false;b.textContent='บันทึกทั้งชุด';} mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+      closeModal();
+      WIR_BULK=[];
+      toast('✅ บันทึก '+r.saved+' ใบ'+((r.failed||[]).length?(' · ไม่เข้า '+r.failed.length+' ใบ'):''));
+      if((r.failed||[]).length){
+        alert('ใบที่บันทึกไม่ได้:\n\n'+r.failed.map(function(f){
+          return 'ใบที่ '+f.i+' '+(f.payer||'')+' — '+f.error; }).join('\n'));
+      }
+      renderWhtIn();
+    }).catch(function(e){ if(b){b.disabled=false;b.textContent='บันทึกทั้งชุด';} mErr(e.message); });
+  }
+  window.wirScanMulti=wirScanMulti; window.wirDoScanMulti=wirDoScanMulti;
+  window.wirBulkReview=wirBulkReview; window.wirBulkSave=wirBulkSave;
+
   function wirManual(){ WIR_SCAN=null; wirForm('✏️ เพิ่มใบ 50 ทวิ ด้วยตัวเอง', {}, 'wirSaveNew()'); }
   function wirSaveNew(){
     var v=wirRead();
@@ -20310,7 +20625,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260921-1837';
+  var APP_BUILD='20260921-1914';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
