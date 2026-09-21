@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260921-2136">
+<link rel="stylesheet" href="user.css?v=20260921-2147">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -7054,6 +7054,7 @@
         '</div>'+
         '<div class="tax-acts"><button class="btn btn-primary" onclick="wirScanMulti()">📥 นำเข้าใบ 50 ทวิ (หลายใบ)</button>'+
         '<button class="btn btn-ghost" onclick="wirScan()">📷 สแกนทีละใบ</button>'+
+        '<button class="btn btn-ghost" onclick="wirCsvImport()">📄 นำเข้าจากไฟล์ CSV</button>'+
         '<button class="btn btn-ghost" onclick="wirManual()">✏️ กรอกเอง</button>'+
         '<button class="btn btn-ghost" onclick="wirRematch()">🔍 ตรวจสอบข้อมูลรายรับ</button></div>';
 
@@ -7375,6 +7376,51 @@
   }
   window.wirScanMulti=wirScanMulti; window.wirDoScanMulti=wirDoScanMulti;
   window.wirBulkReview=wirBulkReview; window.wirBulkSave=wirBulkSave;
+
+  /** นำเข้าทะเบียนที่ทำไว้ก่อนแล้ว — อัปไฟล์ CSV หรือวางจาก Excel (พี่กี้ขอ 21 ก.ย. 69) */
+  function wirCsvImport(){
+    modal('<h3>📄 นำเข้าทะเบียน 50 ทวิ จากไฟล์</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">ใช้กับทะเบียนที่ทำไว้ก่อนแล้ว — ต้องมีคอลัมน์ <b>ผู้จ่ายเงิน</b> กับ <b>ภาษี</b> '+
+      'อย่างน้อย (มี เลขที่เอกสาร · แบบ · ประเภทเงินได้ · วันที่จ่าย · จำนวนเงิน ด้วยยิ่งดี) · '+
+      'นำเข้าไฟล์เดิมซ้ำได้ ระบบข้ามใบที่มีอยู่แล้วให้เอง</div>'+
+      '<div class="fld"><label>วิธีที่ 1 — เลือกไฟล์ CSV</label>'+
+        '<input type="file" id="wiCsvFile" accept=".csv,text/csv"></div>'+
+      '<div class="fld"><label>วิธีที่ 2 — คัดลอกจาก Excel มาวาง</label>'+
+        '<textarea id="wiCsvText" style="min-height:110px" placeholder="วางทั้งตารางรวมแถวหัวคอลัมน์ได้เลยค่ะ"></textarea></div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" id="wiCsvBtn" onclick="wirDoCsvImport()">นำเข้า</button></div>');
+  }
+  function wirDoCsvImport(){
+    var txt=(($('wiCsvText')||{}).value||'').trim();
+    var f=($('wiCsvFile')||{}).files;
+    var go=function(payload){
+      var b=$('wiCsvBtn'); if(b){ b.disabled=true; b.textContent='กำลังนำเข้า…'; }
+      callBusy('กำลังนำเข้าทะเบียน…', jsonpPost(payload), 'นำเข้าแล้ว').then(function(r){
+        if(!r||!r.ok){ if(b){b.disabled=false;b.textContent='นำเข้า';} mErr((r&&r.error)||'นำเข้าไม่สำเร็จ'); return; }
+        closeModal();
+        toast('✅ เพิ่ม '+r.added+' ใบ'+(r.dup?(' · ซ้ำ '+r.dup+' (ข้ามให้)'):''));
+        if((r.failed||[]).length){
+          alert('ใบที่นำเข้าไม่ได้:\n\n'+r.failed.map(function(x){
+            return 'แถวที่ '+x.i+' '+(x.payer||'')+' — '+x.error; }).join('\n'));
+        }
+        renderWhtIn();
+      }).catch(function(e){ if(b){b.disabled=false;b.textContent='นำเข้า';} mErr(e.message); });
+    };
+    if(f&&f.length){
+      var rd=new FileReader();
+      rd.onload=function(){
+        var b64=String(rd.result||'').split(',')[1]||'';
+        if(!b64){ mErr('อ่านไฟล์ไม่ได้ค่ะ'); return; }
+        go({action:'waWhtInImport',uid:UID,entity:WIR_ENT,b64:b64});
+      };
+      rd.onerror=function(){ mErr('อ่านไฟล์ไม่ได้ค่ะ'); };
+      rd.readAsDataURL(f[0]);
+      return;
+    }
+    if(!txt){ mErr('เลือกไฟล์ หรือวางข้อมูลก่อนค่ะ'); return; }
+    go({action:'waWhtInImport',uid:UID,entity:WIR_ENT,text:txt});
+  }
+  window.wirCsvImport=wirCsvImport; window.wirDoCsvImport=wirDoCsvImport;
 
   function wirManual(){ WIR_SCAN=null; wirForm('✏️ เพิ่มใบ 50 ทวิ ด้วยตัวเอง', {}, 'wirSaveNew()'); }
   function wirSaveNew(){
@@ -20937,7 +20983,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260921-2136';
+  var APP_BUILD='20260921-2147';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
