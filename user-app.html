@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260921-1324">
+<link rel="stylesheet" href="user.css?v=20260921-1334">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -704,6 +704,16 @@
   /* ช่องติ๊ก "ออกใบแจ้งหนี้แล้ว" ในตารางใบเสนอราคา (พี่กี้วางเอง 21 ก.ย. 69)
      อ่านอย่างเดียว — ระบบติ๊กให้เองเมื่อมีใบ IV ที่อ้างถึงใบนี้ · ติ๊กแล้วกดไปดูใบนั้นได้ */
   .ta-c{ text-align:center; }
+  /* ป้าย IV — สีบอกว่าออกใบแจ้งหนี้ครบยอดไหม (พี่กี้เคาะ 21 ก.ย. 69)
+     เขียว = เต็มจำนวน · เหลือง = ไม่เต็ม · ม่วง = เกิน · ว่าง = ยังไม่ออก */
+  .iv-dot{ display:inline-block; min-width:30px; padding:3px 8px; border-radius:7px; font-size:11.5px;
+    font-weight:700; letter-spacing:.3px; border:none; font-family:inherit; }
+  .iv-full{ background:#E4F5EA; color:#127A43; }
+  .iv-part{ background:#FEF3E2; color:#A15F08; }
+  .iv-over{ background:#F3E8FF; color:#6D28D9; }
+  .iv-none{ background:#F1F4F9; color:#B6BECC; }
+  button.iv-dot{ cursor:pointer; }
+  button.iv-dot:hover{ filter:brightness(.95); }
   .tk-box{ width:18px; height:18px; border:1.8px solid #C3CCDA; border-radius:5px; display:inline-flex;
     align-items:center; justify-content:center; background:#fff; }
   .tk-box.on{ border-color:#1E9E5A; background:#1E9E5A; }
@@ -12043,7 +12053,8 @@
       a.push({key:'edit',label:'✏️ แก้ไขเอกสาร',call:'salesEdit('+q+')'});
       // ── ต่อยอดเป็นใบถัดไปในสายเอกสาร ──
       if(d.kind==='QT' && !salesRefBy(d,'IV').length)
-        a.push({key:'toiv',label:'➡️ ออกใบแจ้งหนี้จากใบนี้',call:'salesToInvoice('+q+')'});
+        /* ใช้คำเดียวกับชื่อเมนูจริง ไม่เติมคำเกิน (พี่กี้เคาะ 21 ก.ย. 69) */
+        a.push({key:'toiv',label:'➡️ ออกใบแจ้งหนี้ IV',call:'salesToInvoice('+q+')'});
       if(d.kind==='IV' && d.balance>0)
         a.push({key:'recv',label:'💵 บันทึกรับชำระ',call:'recvOpen('+q+')'});
       if(d.kind==='IV' && d.balance>0 && !salesRefBy(d,'BN').length)
@@ -12125,14 +12136,29 @@
     var cls={done:'b-done',doing:'b-doing',warn:'b-warn',reject:'b-reject',cancel:'b-cancel'}[t.tone]||'b-new';
     return '<span class="tk-badge '+cls+'">'+esc(t.label)+'</span>';
   }
-  /** ช่องติ๊ก "ดึงไปออกใบแจ้งหนี้แล้ว" — ระบบติ๊กให้เองจากใบ IV ที่อ้างถึงใบนี้
-   *  🔴 อ่านอย่างเดียว ไม่ให้คนติ๊กเอง — ความจริงคือมีใบ IV อยู่หรือไม่ ไม่ใช่คนจำ */
+  /** สถานะการออกใบแจ้งหนี้ของใบเสนอราคา — เทียบยอดใบ IV กับยอดใบนี้
+   *  🔴 ฟังก์ชันบริสุทธิ์ (เทสเรียกตัวนี้) · เกณฑ์สี: เต็มจำนวน=เขียว · ไม่เต็ม=เหลือง · เกิน=ม่วง
+   *  เทียบด้วย eps 0.005 บาท — ยอดจากชีตเป็นทศนิยม เทียบ === ตรง ๆ จะเพี้ยนเพราะเศษสตางค์ */
+  function qtIvState(d){
+    var ivs=salesRefBy(d,'IV');
+    if(!ivs.length) return { key:'none', cls:'iv-none', label:'–', title:'ยังไม่ได้ออกใบแจ้งหนี้' };
+    var sum=0, nos=[];
+    ivs.forEach(function(x){ sum+=Number(x.total)||0; nos.push(x.no); });
+    var mine=Number(d.total)||0, diff=sum-mine;
+    var money2=function(n){ return (Number(n)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2}); };
+    var base='ใบแจ้งหนี้ '+nos.join(', ')+' · ยอด '+money2(sum)+' / ใบเสนอราคา '+money2(mine);
+    if(Math.abs(diff)<0.005) return { key:'full', cls:'iv-full', label:'เต็ม', title:base+' — ออกเต็มจำนวน', no:nos[0] };
+    if(diff<0) return { key:'part', cls:'iv-part', label:'ไม่เต็ม', title:base+' — ยังขาด '+money2(-diff)+' บาท', no:nos[0] };
+    return { key:'over', cls:'iv-over', label:'เกิน', title:base+' — เกิน '+money2(diff)+' บาท', no:nos[0] };
+  }
+  window.qtIvState=qtIvState;
+
   function qtIvCell(d){
-    var iv=salesRefBy(d,'IV')[0];
-    if(!iv) return '<td class="ta-c dt-nw"><span class="tk-box" title="ยังไม่ได้ออกใบแจ้งหนี้"></span></td>';
-    var q="'"+String(iv.no).replace(/'/g,"\'")+"'";
-    return '<td class="ta-c dt-nw"><button class="tk-box on" title="ออกใบแจ้งหนี้ '+esc(iv.no)+' แล้ว — กดเพื่อเปิดใบนั้น" '+
-      'onclick="salesEdit('+q+')"><svg viewBox="0 0 24 24"><path d="M5 13l4.5 4.5L19 7"/></svg></button></td>';
+    var st=qtIvState(d);
+    if(st.key==='none') return '<td class="ta-c dt-nw"><span class="iv-dot iv-none" title="'+esc(st.title)+'">'+st.label+'</span></td>';
+    var q="'"+String(st.no).replace(/'/g,"\'")+"'";
+    return '<td class="ta-c dt-nw"><button class="iv-dot '+st.cls+'" title="'+esc(st.title)+' — กดเพื่อเปิดใบแจ้งหนี้" '+
+      'onclick="salesEdit('+q+')">'+st.label+'</button></td>';
   }
 
   /** ช่อง "กิจกรรม" — การกระทำล่าสุด + คนทำ + เวลา (แบบที่พี่กี้เห็นใน PEAK) */
@@ -12150,9 +12176,9 @@
     var shown=qtFilter(salesApplyFind(docs), tab);
     var h=qtTabsHtml(salesApplyFind(docs), tabs, tab);
     /* ลำดับคอลัมน์ตามที่พี่กี้วางเอง 21 ก.ย. 69: ... ยอดรวม → IV (ช่องติ๊ก) → สถานะ → กิจกรรม */
-    var cols=[{label:'เลขที่',cls:'dt-nw',w:'15%'},{label:'วันที่',cls:'dt-nw',w:'9%'},
-      {label:'ลูกค้า',w:'15%'},{label:'รายละเอียด'},{label:'ยอดรวม',cls:'ta-r',w:'11%'},
-      {label:'IV',cls:'ta-c dt-nw',w:'52px'},{label:'สถานะ',w:'11%'},
+    var cols=[{label:'เลขที่',cls:'dt-nw',w:'14%'},{label:'วันที่',cls:'dt-nw',w:'8%'},
+      {label:'ลูกค้า',w:'14%'},{label:'รายละเอียด'},{label:'ยอดรวม',cls:'ta-r',w:'10%'},
+      {label:'IV',cls:'ta-c dt-nw',w:'8%'},{label:'สถานะ',cls:'ta-c',w:'10%'},
       {label:'กิจกรรม',w:'16%'},{label:'',w:'46px'}];
     var rows=shown.map(function(d){
       SALES_BYNO[d.no]=d;
@@ -12164,7 +12190,7 @@
         '<td class="dt-detail">'+esc(d.title||'-')+'</td>'+
         '<td class="dt-amt">'+money(d.total)+'</td>'+
         qtIvCell(d)+
-        '<td>'+qtBadge(d)+'</td>'+
+        '<td class="ta-c">'+qtBadge(d)+'</td>'+
         qtActCell(d)+
         dtActCell('sl-'+d.no, salesRowActions(d))+'</tr>';
     });
@@ -19756,7 +19782,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260921-1324';
+  var APP_BUILD='20260921-1334';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
