@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260921-2211">
+<link rel="stylesheet" href="user.css?v=20260921-2224">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -7407,7 +7407,8 @@
       callBusy('กำลังนำเข้าทะเบียน…', jsonpPost(payload), 'นำเข้าแล้ว').then(function(r){
         if(!r||!r.ok){ if(b){b.disabled=false;b.textContent='นำเข้า';} mErr((r&&r.error)||'นำเข้าไม่สำเร็จ'); return; }
         closeModal();
-        toast('✅ เพิ่ม '+r.added+' ใบ'+(r.dup?(' · ซ้ำ '+r.dup+' (ข้ามให้)'):''));
+        toast('✅ เพิ่ม '+r.added+' ใบ'+(r.dup?(' · ซ้ำ '+r.dup+' (ข้ามให้)'):'')+
+          ((r.matched||0)?(' · จับคู่ GL ได้ '+r.matched+' ใบ'):''));
         if((r.failed||[]).length){
           alert('ใบที่นำเข้าไม่ได้:\n\n'+r.failed.map(function(x){
             return 'แถวที่ '+x.i+' '+(x.payer||'')+' — '+x.error; }).join('\n'));
@@ -20998,7 +20999,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260921-2211';
+  var APP_BUILD='20260921-2224';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
