@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260921-2147">
+<link rel="stylesheet" href="user.css?v=20260921-2211">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1183,6 +1183,8 @@
   @media(min-width:860px){ .mask{ align-items:center; } .sheet{ border-radius:18px; } }
   .sheet h3{ margin:0 0 14px; font-size:18px; }
   .fld{ margin-bottom:12px; } .fld label{ display:block; font-size:13px; font-weight:600; margin-bottom:6px; }
+  /* คำใบ้ตัวเล็กต่อท้ายชื่อช่อง (ไม่ใช่ตัวหนา) */
+  .fld label .lbl-note{ font-weight:500; font-size:12px; color:#7E8CA3; }
   .fld input,.fld textarea,.fld select{ width:100%; padding:11px 12px; border:1.5px solid var(--line);
     border-radius:12px; font-family:inherit; font-size:15px; background:#fff; color:var(--ink); }
   .fld textarea{ min-height:76px; resize:vertical; }
@@ -6976,7 +6978,8 @@
       'นำเข้าไฟล์เดิมซ้ำได้ ระบบข้ามแถวที่มีอยู่แล้วให้เอง</div>'+
       '<div class="fld"><label>วิธีที่ 1 — เลือกไฟล์ CSV</label>'+
         '<input type="file" id="wgFile" accept=".csv,text/csv"></div>'+
-      '<div class="fld"><label>วิธีที่ 2 — คัดลอกจาก Excel มาวาง</label>'+
+      '<div class="fld"><label>วิธีที่ 2 — คัดลอกจาก Excel มาวาง '+
+        '<span class="lbl-note">(ไฟล์ .xlsx ใช้ทางนี้ค่ะ)</span></label>'+
         '<textarea id="wgText" style="min-height:120px" placeholder="วางทั้งตารางรวมแถวหัวคอลัมน์ได้เลยค่ะ"></textarea></div>'+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
       '<button class="btn btn-primary" id="wgImpBtn" onclick="wgDoImport()">นำเข้า</button></div>');
@@ -6995,6 +6998,12 @@
       }).catch(function(e){ if(b){b.disabled=false;b.textContent='นำเข้า';} mErr(e.message); });
     };
     if(f&&f.length){
+      /* ไฟล์ Excel เป็นไฟล์บีบอัด อ่านเป็นข้อความไม่ได้ — บอกทางที่ทำได้เลย */
+      if(/\.xlsx?$/i.test(String(f[0].name||''))){
+        mErr('ไฟล์ Excel (.xlsx) ยังนำเข้าตรงไม่ได้ค่ะ — เปิดไฟล์ใน Excel '+
+          'กด Ctrl+A แล้ว Ctrl+C เอามาวางที่ช่องล่างได้เลย (ข้อมูลไทยไม่เพี้ยน)');
+        return;
+      }
       var rd=new FileReader();
       rd.onload=function(){
         /* ส่งเป็น base64 เพื่อไม่ให้ข้อความไทยเพี้ยนระหว่างทาง */
@@ -7407,6 +7416,12 @@
       }).catch(function(e){ if(b){b.disabled=false;b.textContent='นำเข้า';} mErr(e.message); });
     };
     if(f&&f.length){
+      /* ไฟล์ Excel เป็นไฟล์บีบอัด อ่านเป็นข้อความไม่ได้ — บอกทางที่ทำได้เลย */
+      if(/\.xlsx?$/i.test(String(f[0].name||''))){
+        mErr('ไฟล์ Excel (.xlsx) ยังนำเข้าตรงไม่ได้ค่ะ — เปิดไฟล์ใน Excel '+
+          'กด Ctrl+A แล้ว Ctrl+C เอามาวางที่ช่องล่างได้เลย (ข้อมูลไทยไม่เพี้ยน)');
+        return;
+      }
       var rd=new FileReader();
       rd.onload=function(){
         var b64=String(rd.result||'').split(',')[1]||'';
@@ -20983,7 +20998,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260921-2147';
+  var APP_BUILD='20260921-2211';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
