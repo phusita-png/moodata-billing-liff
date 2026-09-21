@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260921-1315">
+<link rel="stylesheet" href="user.css?v=20260921-1318">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -12048,8 +12048,11 @@
       if(d.kind==='CN' && d.refundSlip)
         a.push({key:'cnslip',label:'📎 สลิปคืนเงิน',href:d.refundSlip});
       a.push({key:'send',label:'📤 ส่งเข้ากลุ่มลูกค้า',call:'salesSend('+q+')'});
-      /* คำเดิม "ออกไฟล์ใหม่" ไม่สื่อว่าทำอะไร (พี่กี้ถาม 21 ก.ย. 69) */
-      a.push({key:'repdf',label:(d.pdfLink?'🔄 สร้าง PDF ใหม่ (ทับไฟล์เดิม)':'📄 สร้างไฟล์ PDF'),call:'salesPdf('+q+')'});
+      /* 🔴 ไม่มีปุ่ม "สร้าง PDF ใหม่" ในเมนูปกติแล้ว (พี่กี้ 21 ก.ย. 69)
+         แก้ไขเอกสารแล้ว editSalesDoc_ ออกไฟล์ใหม่ทับให้เองทุกครั้ง → ปุ่มนี้ซ้ำซ้อน
+         เหลือไว้เฉพาะ "ใบที่ยังไม่มีไฟล์" = ครั้งก่อนออกไฟล์ไม่สำเร็จ ไม่งั้นใบนั้นจะตัน
+         (ใบที่มีไฟล์แต่ไฟล์เสีย/ถูกลบ กดออกใหม่ได้จากหน้าเต็มของใบ) */
+      if(!d.pdfLink) a.push({key:'repdf',label:'📄 สร้างไฟล์ PDF',call:'salesPdf('+q+')'});
       /* 🙅 ลูกค้าปฏิเสธ — เงื่อนไขต้องตรงกับด่าน setSalesRejected_ ฝั่งหลังบ้านเป๊ะ
          (ใบเสนอราคา · ยังไม่ออกใบแจ้งหนี้) ไม่งั้นปุ่มโผล่แล้วกดไม่ผ่าน */
       if(d.kind==='QT' && !salesRefBy(d,'IV').length){
@@ -12427,7 +12430,11 @@
               return a.href
                 ? '<a class="btn btn-ghost" style="flex:none;width:auto;padding:9px 16px" target="_blank" rel="noopener" href="'+esc(a.href)+'">'+esc(a.label)+'</a>'
                 : '<button class="btn btn-ghost" style="flex:none;width:auto;padding:9px 16px" onclick="'+esc(a.call)+'">'+esc(a.label)+'</button>';
-            }).join('')+'</div></div>';
+            }).join('')+
+            /* ทางออกเวลาไฟล์ใน Drive หาย/เสีย — ไม่ได้อยู่ในเมนูปกติเพราะแก้ไขแล้วออกไฟล์ใหม่ให้เอง */
+            (dRow2.pdfLink?'<button class="btn btn-ghost" style="flex:none;width:auto;padding:9px 16px" '+
+              'onclick="salesPdf(&quot;'+esc(ed.no)+'&quot;)">🔄 สร้าง PDF ใหม่ (กรณีไฟล์หาย)</button>':'')+
+            '</div></div>';
         }
       }
     }
@@ -19720,7 +19727,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260921-1315';
+  var APP_BUILD='20260921-1318';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
