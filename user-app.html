@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260921-1441">
+<link rel="stylesheet" href="user.css?v=20260921-1505">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -648,9 +648,11 @@
         และมองไม่เห็นยอดรวมพร้อมกับรายการ (พี่กี้ทัก 21 ก.ย.) */
   .sf-card{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:18px 20px; margin-bottom:14px; }
   .sf-h{ font-weight:700; font-size:15px; margin:0 0 14px; display:flex; align-items:center; gap:8px; }
-  .sf-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px 18px; }
+  /* 4 ช่องต่อแถว = วางได้ตามที่พี่กี้ร่าง (รหัสลูกค้า · ลูกค้า · วันที่ · วันที่ใช้ได้ถึง) */
+  .sf-grid{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px 18px; }
   .sf-grid .sf-f{ display:flex; flex-direction:column; gap:6px; }
   .sf-grid .sf-f.wide{ grid-column:1 / -1; }
+  .sf-grid .sf-f.w2{ grid-column:span 2; }
   .sf-f label{ font-size:13px; color:#5B6472; font-weight:600; }
   .sf-f input,.sf-f select,.sf-f textarea{ width:100%; box-sizing:border-box; padding:10px 12px;
     border:1px solid var(--line); border-radius:10px; font-family:inherit; font-size:14.5px; background:#fff; }
@@ -673,8 +675,10 @@
     background:rgba(255,255,255,.96); border-top:1px solid var(--line); padding:10px 16px;
     margin:4px -16px 0; backdrop-filter:blur(6px); }
   .sf-bar .btn{ width:auto; flex:none; padding:12px 26px; }
+  @media (max-width:1180px){ .sf-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
   @media (max-width:860px){
     .sf-grid{ grid-template-columns:1fr; }
+    .sf-grid .sf-f.w2{ grid-column:auto; }
     .sf-sum{ grid-template-columns:1fr; }
   }
   /* ── โครงหน้าเอกสารขายตาม mockup ของพี่กี้ (19 ก.ย. 69) ── */
@@ -12423,10 +12427,26 @@
   }
   window.salesFormOpen=salesFormOpen;
 
+  /** พิมพ์/เลือก "รหัสลูกค้า" → เติมชื่อลูกค้าให้ แล้ววาดข้อมูลติดต่อใหม่ */
+  function sfPickCustByCode(){
+    var code=((($('slCustCode')||{}).value)||'').trim();
+    var c=null;
+    (SALES&&SALES.customers||[]).forEach(function(x){ if(x.code&&x.code===code) c=x; });
+    if(c && $('slCust')) $('slCust').value=c.name;
+    sfCustHint();
+  }
+  window.sfPickCustByCode=sfPickCustByCode;
+
   function sfCustHint(){
     var box=$('sfCustInfo'); if(!box||!SALES) return;
     var name=($('slCust')||{}).value, c=null;
     (SALES.customers||[]).forEach(function(x){ if(x.name===name) c=x; });
+    /* ช่องแถว 2 (ที่อยู่ · อีเมล · เบอร์) เติมจากทะเบียนทุกครั้งที่เปลี่ยนลูกค้า */
+    var put=function(id,v){ var el=$(id); if(el) el.value=v||''; };
+    put('slCustAddr', c&&c.address); put('slCustEmail', c&&c.email); put('slCustPhone', c&&c.phone);
+    var codeEl=$('slCustCode');
+    if(codeEl && c && c.code && codeEl.value.trim()!==c.code) codeEl.value=c.code;
+    if(codeEl && !name) codeEl.value='';
     if(!c){
       /* พิมพ์ชื่อที่ยังไม่มีในทะเบียน — ให้เพิ่มเข้าทะเบียนได้จากที่นี่เลย (พี่กี้ขอ 21 ก.ย. 69)
          🔴 ไม่เพิ่มให้เงียบ ๆ ตอนกดบันทึก เพราะทะเบียนลูกค้าต้องมีเลขภาษี/ที่อยู่ให้ครบก่อนออกใบกำกับ */
@@ -12441,13 +12461,10 @@
     if(!c.address) miss.push('ที่อยู่');
     /* บรรทัดที่ 1 = ตัวตนบนเอกสาร · บรรทัดที่ 2 = ที่อยู่ · บรรทัดที่ 3 = ช่องทางติดต่อ
        (พี่กี้ขอให้เห็นที่อยู่/อีเมล/เบอร์โทรตรงนี้ 21 ก.ย. 69) */
-    var line1=[c.legalName||c.name, c.taxId?('เลขภาษี '+esc(c.taxId)):'', esc(c.branch||'สำนักงานใหญ่'),
-      'เครดิต '+(c.creditDays||0)+' วัน'].filter(Boolean).join(' · ');
-    var line3=[c.contact?('ผู้ติดต่อ '+esc(c.contact)):'', c.phone?('โทร '+esc(c.phone)):'',
-      c.email?esc(c.email):''].filter(Boolean).join(' · ');
-    box.innerHTML=line1+
-      (c.address?('<br>'+esc(c.address)):'')+
-      (line3?('<br>'+line3):'')+
+    /* ที่อยู่/อีเมล/เบอร์ ขึ้นเป็นช่องจริงในแถว 2 แล้ว — บรรทัดนี้เหลือ "ตัวตนบนเอกสาร" */
+    box.innerHTML=[c.legalName||c.name, c.taxId?('เลขภาษี '+esc(c.taxId)):'',
+      esc(c.branch||'สำนักงานใหญ่'), 'เครดิต '+(c.creditDays||0)+' วัน',
+      c.contact?('ผู้ติดต่อ '+esc(c.contact)):''].filter(Boolean).join(' · ')+
       (miss.length?'<br><span style="color:#C0490F">ยังไม่มี '+esc(miss.join(' / '))+
         ' — ใบกำกับภาษีต้องมีข้อมูลนี้ แก้ได้ที่ทะเบียนลูกค้า</span>':'');
   }
@@ -12510,7 +12527,10 @@
     /* ช่องลูกค้าเป็นช่องพิมพ์ + datalist → ค้นหาได้ และพิมพ์ชื่อใหม่ได้ (พี่กี้ขอ 21 ก.ย. 69)
        ชื่อที่ไม่มีในทะเบียน = ปุ่ม "เพิ่มเข้าทะเบียน" ขึ้นใต้ช่อง ไม่บันทึกเงียบ ๆ */
     var custOpts=(SALES.customers||[]).map(function(c){
-      return '<option value="'+esc(c.name)+'"></option>'; }).join('');
+      return '<option value="'+esc(c.name)+'">'+esc(c.code||'')+'</option>'; }).join('');
+    /* ช่องรหัสลูกค้า: เลือกจากทะเบียนได้ พิมพ์รหัสแล้วชื่อ/ที่อยู่เติมให้เอง (พี่กี้ขอ 21 ก.ย. 69) */
+    var custCodeOpts=(SALES.customers||[]).filter(function(c){ return c.code; }).map(function(c){
+      return '<option value="'+esc(c.code)+'">'+esc(c.name)+'</option>'; }).join('');
 
     var h='<div class="bc">'+
       '<button class="lnk" onclick="salesGo(&quot;'+esc(kindNow)+'&quot;)">'+esc(kindLabel)+'</button> › '+
@@ -12548,8 +12568,12 @@
                :'<select id="slEnt" onchange="salesPreview()">'+ents+'</select>')+
             '<div class="sf-note">บริษัทที่เลือกเป็นตัวตัดสินว่ามี VAT 7% ไหม (ไม่ใช่ตามลูกค้า)</div></div>')
         : ('<input type="hidden" id="slEnt" value="'+esc((SALES.entities&&SALES.entities[0]&&SALES.entities[0].code)||'')+'">'))+
-      /* ลูกค้ากินเต็มแถว — ใต้ช่องแสดงที่อยู่ · โทร · อีเมล ให้ตรวจก่อนออกใบ (พี่กี้ขอ 21 ก.ย. 69) */
-      '<div class="sf-f wide"><label>ลูกค้า</label>'+
+      /* แถว 1 ตามที่พี่กี้วาง 21 ก.ย. 69: รหัสลูกค้า · ลูกค้า · วันที่เอกสาร · วันที่ใช้ได้ถึง */
+      '<div class="sf-f"><label>รหัสลูกค้า</label>'+
+        '<input id="slCustCode" list="sfCustCodeList" placeholder="เช่น CU-001"'+
+          ((ed&&scope.custLocked)?' readonly':' oninput="sfPickCustByCode()"')+' autocomplete="off">'+
+        '<datalist id="sfCustCodeList">'+custCodeOpts+'</datalist></div>'+
+      '<div class="sf-f"><label>ลูกค้า</label>'+
         (ed&&scope.custLocked?'<input value="'+esc(ed.customer||'')+'" readonly>'
            :'<input id="slCust" list="sfCustList" placeholder="พิมพ์เพื่อค้นหา หรือพิมพ์ชื่อใหม่" '+
              'value="'+esc(ed?(ed.customer||''):'')+'" oninput="sfCustHint()" autocomplete="off">'+
@@ -12558,10 +12582,18 @@
       '<div class="sf-f"><label>วันที่เอกสาร</label>'+
         '<input id="slDate" type="date" value="'+esc(ed?(ed.docDate||''):todayISO())+'"'+(lockAll?' readonly':'')+
         ' onchange="sfDueSync()"></div>'+
-      /* วันที่ใช้ได้ถึง อยู่ขวาของวันที่เอกสาร (ตามที่พี่กี้ย้ายกรอบให้) */
       '<div class="sf-f"><label>'+(kindNow==='QT'?'วันที่ใช้ได้ถึง (ยืนราคา)':'วันครบกำหนดชำระ')+'</label>'+
         '<input id="slDue" type="date" value="'+esc(ed?(ed.dueDate||''):'')+'"'+(lockAll?' readonly':'')+'>'+
         '<div class="sf-note" id="sfDueNote"></div></div>'+
+      /* แถว 2: ข้อมูลติดต่อของลูกค้า — อ่านอย่างเดียว ดึงจากทะเบียนตอนเลือกลูกค้า
+         🔴 ไม่ให้พิมพ์ทับที่นี่ เพราะที่อยู่บนใบกำกับภาษีต้องมาจากทะเบียนที่เดียว
+            (แก้ที่นี่ทีละใบ = ลูกค้าคนเดียวกันมีที่อยู่คนละแบบในแต่ละใบ) */
+      '<div class="sf-f w2"><label>ที่อยู่ (ใบกำกับภาษี)</label>'+
+        '<input id="slCustAddr" readonly placeholder="— เลือกลูกค้าก่อน —"></div>'+
+      '<div class="sf-f"><label>อีเมล</label>'+
+        '<input id="slCustEmail" readonly placeholder="—"></div>'+
+      '<div class="sf-f"><label>เบอร์โทร</label>'+
+        '<input id="slCustPhone" readonly placeholder="—"></div>'+
       '<div class="sf-f"><label>ประเภทราคา</label>'+
         '<select id="slPriceMode" onchange="salesPreview()"'+(lockAll?' disabled':'')+'>'+
         ((SALES.priceModes||[{key:'excl',label:'แยกภาษี'},{key:'incl',label:'รวมภาษี'},{key:'none',label:'ไม่มีภาษี'}])
@@ -12678,12 +12710,15 @@
   /** อ่านค่าที่พิมพ์ไว้ก่อน re-render (ไม่งั้นพิมพ์แล้วหายตอนเพิ่มบรรทัด) */
   function salesReadItems(){
     SALES_ITEMS=SALES_ITEMS.map(function(it,i){
-      var detail=(($('sd'+i)||{}).value)||'';
-      var code='';
-      /* ข้อความตรงกับชื่อในทะเบียน = ผูกรหัสให้ (ไว้ทำรายงานตามบริการ) · ไม่ตรง = ของที่พิมพ์เอง */
-      (SALES&&SALES.services||[]).forEach(function(x){ if(x.name===detail) code=x.code; });
+      var code=((($('sc'+i)||{}).value)||'').trim();
+      var name=((($('si'+i)||{}).value)||'').trim();
+      var detail=((($('sd'+i)||{}).value)||'').trim();
+      /* ชื่อตรงกับทะเบียนแต่ยังไม่ได้ใส่รหัส = ผูกรหัสให้ (ไว้ทำรายงานตามบริการ) */
+      if(!code) (SALES&&SALES.services||[]).forEach(function(x){ if(x.name===name) code=x.code; });
       return {
-        service:code, serviceName:detail, detail:detail,
+        service:code, serviceName:name,
+        /* รายละเอียดว่าง = ใช้ชื่อสินค้าเป็นข้อความบนเอกสาร (ใบที่ไม่ต้องอธิบายเพิ่ม) */
+        detail:(detail||name),
         qty:(($('sq'+i)||{}).value)||'',
         price:(($('sp'+i)||{}).value)||''
       };
@@ -12697,26 +12732,37 @@
        เลือกจากทะเบียน = เติมชื่อ/ราคาให้ · พิมพ์ของใหม่ = มีปุ่มเพิ่มเข้าทะเบียนใต้บรรทัด */
     var opts=(SALES.services||[]).map(function(s){
       return '<option value="'+esc(s.name)+'">'+esc(s.code)+' · '+money(s.price)+'</option>'; }).join('');
+    var codeOpts=(SALES.services||[]).map(function(s){
+      return '<option value="'+esc(s.code)+'">'+esc(s.name)+'</option>'; }).join('');
     var many=SALES_ITEMS.length>1;
     var rows=SALES_ITEMS.map(function(it,i){
+      /* ใบเก่าเก็บแต่รหัส ยังไม่มีช่องชื่อ → เติมชื่อจากทะเบียนให้อ่านออก (ไม่ใช่ข้อมูลใหม่) */
+      var nm=it.serviceName||'';
+      if(!nm && it.service) (SALES&&SALES.services||[]).forEach(function(x){ if(x.code===it.service) nm=x.name; });
       return '<tr>'+
         '<td class="dt-nw" style="color:#8A94A6">'+(i+1)+'</td>'+
-        '<td><input id="sd'+i+'" list="sfSvcList" placeholder="ค้นหาจากทะเบียน หรือพิมพ์รายละเอียดเอง" '+
-          'value="'+esc(it.detail||it.serviceName||'')+'" onchange="salesPickService('+i+')" '+
+        '<td><input id="sc'+i+'" list="sfSvcCodeList" placeholder="รหัส" '+
+          'value="'+esc(it.service||'')+'" oninput="salesPickByCode('+i+')" autocomplete="off"></td>'+
+        '<td><input id="si'+i+'" list="sfSvcList" placeholder="ค้นหาหรือพิมพ์ของใหม่" '+
+          'value="'+esc(nm)+'" onchange="salesPickService('+i+')" '+
           'oninput="sfSvcNote('+i+')" autocomplete="off">'+
           '<div class="sf-note" id="sn'+i+'"></div></td>'+
+        '<td><input id="sd'+i+'" placeholder="รายละเอียดที่พิมพ์บนเอกสาร" '+
+          'value="'+esc(it.detail||'')+'"></td>'+
         '<td><input id="sq'+i+'" inputmode="decimal" value="'+esc(it.qty||'1')+'" oninput="salesPreview()"></td>'+
         '<td><input id="sp'+i+'" inputmode="decimal" placeholder="0.00" value="'+esc(it.price||'')+'" oninput="salesPreview()"></td>'+
         '<td class="dt-amt" id="sa'+i+'">—</td>'+
         '<td class="dt-nw">'+(many?'<button class="sf-del" title="ลบบรรทัดนี้" onclick="salesDelItem('+i+')">✕</button>':'')+'</td>'+
         '</tr>';
     });
-    /* 🔴 ช่องเดียว: พิมพ์/ค้นหาสินค้า-บริการ แล้วข้อความนั้นคือรายละเอียดที่ขึ้นบนเอกสาร
-       (พี่กี้ 21 ก.ย. 69: "เอาตรงนี้ไปขึ้นรายละเอียดแทน" — เดิมมี 2 ช่องที่พิมพ์ของซ้ำกัน) */
-    box.innerHTML='<datalist id="sfSvcList">'+opts+'</datalist><div class="sf-items">'+dtTable([
-      {label:'#',cls:'dt-nw',w:'44px'},{label:'รายละเอียด'},
-      {label:'จำนวน',w:'10%'},{label:'ราคา/หน่วย',w:'14%'},{label:'จำนวนเงิน',cls:'ta-r',w:'13%'},
-      {label:'',w:'46px'}], rows, '', 'ยังไม่มีรายการ — กด "เพิ่มรายการ" ด้านล่าง')+'</div>';
+    /* คอลัมน์ตามที่พี่กี้วาง 21 ก.ย. 69: ลำดับ · รหัส · สินค้า/บริการ · รายละเอียด · จำนวน · ราคา · เงิน
+       รายละเอียดเว้นว่างได้ — ใบที่ไม่ต้องอธิบายเพิ่ม จะพิมพ์ชื่อสินค้าลงเอกสารแทน */
+    box.innerHTML='<datalist id="sfSvcList">'+opts+'</datalist>'+
+      '<datalist id="sfSvcCodeList">'+codeOpts+'</datalist><div class="sf-items">'+dtTable([
+      {label:'#',cls:'dt-nw',w:'38px'},{label:'รหัส',cls:'dt-nw',w:'11%'},{label:'สินค้า/บริการ',w:'23%'},
+      {label:'รายละเอียด'},{label:'จำนวน',cls:'dt-nw',w:'8%'},{label:'ราคา/หน่วย',cls:'dt-nw',w:'12%'},
+      {label:'จำนวนเงิน',cls:'ta-r',w:'12%'},
+      {label:'',w:'44px'}], rows, '', 'ยังไม่มีรายการ — กด "เพิ่มรายการ" ด้านล่าง')+'</div>';
     /* ช่องบริการเก็บ "ชื่อ" ไม่ใช่รหัส — ของที่เลือกจากทะเบียนจะ map กลับเป็นรหัสตอนบันทึก */
     SALES_ITEMS.forEach(function(it,i){ sfSvcNote(i); });
     salesPreview();
@@ -12724,7 +12770,7 @@
   /** บอกใต้ช่องว่าของชิ้นนี้อยู่ในทะเบียนหรือยัง + ปุ่มเพิ่มเข้าทะเบียน */
   function sfSvcNote(i){
     var box=$('sn'+i); if(!box) return;
-    var name=(($('sd'+i)||{}).value||'').trim();
+    var name=(($('si'+i)||{}).value||'').trim();
     if(!name){ box.innerHTML=''; return; }
     var found=null;
     (SALES&&SALES.services||[]).forEach(function(x){ if(x.name===name) found=x; });
@@ -12735,14 +12781,29 @@
   window.sfSvcNote=sfSvcNote;
 
   /** เลือกบริการ → เติมชื่อ/ราคาให้ (ยังแก้ได้ · ค่าที่บันทึกคือค่าที่เห็นตอนนี้ = snapshot) */
-  /** เลือกของจากทะเบียน → เติมราคาตั้งต้นให้ (ข้อความในช่องคือรายละเอียดบนเอกสารเลย) */
+  /** เลือกของจาก "ชื่อ" → เติมรหัสและราคาตั้งต้นให้ (ราคาที่พิมพ์เองไม่ถูกทับ) */
   function salesPickService(i){
-    var name=(($('sd'+i)||{}).value||'').trim();
+    var name=(($('si'+i)||{}).value||'').trim();
     var s=null; (SALES.services||[]).forEach(function(x){ if(x.name===name) s=x; });
-    if(s && $('sp'+i) && !Number($('sp'+i).value)) $('sp'+i).value=s.price;
+    if(s){
+      if($('sc'+i) && !$('sc'+i).value.trim()) $('sc'+i).value=s.code;
+      if($('sp'+i) && !Number($('sp'+i).value)) $('sp'+i).value=s.price;
+    }
     sfSvcNote(i);
     salesPreview();
   }
+  /** พิมพ์ "รหัส" → เติมชื่อและราคาให้ */
+  function salesPickByCode(i){
+    var code=(($('sc'+i)||{}).value||'').trim();
+    var s=null; (SALES.services||[]).forEach(function(x){ if(x.code===code) s=x; });
+    if(s){
+      if($('si'+i)) $('si'+i).value=s.name;
+      if($('sp'+i) && !Number($('sp'+i).value)) $('sp'+i).value=s.price;
+    }
+    sfSvcNote(i);
+    salesPreview();
+  }
+  window.salesPickByCode=salesPickByCode;
   /** พรีวิวยอด — คิดแบบเดียวกับ backend (VAT ตามบริษัทที่เลือก) */
   function salesPreview(){
     var box=$('slSum'); if(!box||!SALES) return;
@@ -12798,7 +12859,8 @@
   }
   function salesSave(){
     salesReadItems();
-    var items=SALES_ITEMS.filter(function(it){ return (it.detail||'').trim() || it.service; });
+    var items=SALES_ITEMS.filter(function(it){
+        return (it.serviceName||'').trim() || (it.detail||'').trim() || it.service; });
     if(!items.length){ sfErr('ใส่รายการอย่างน้อย 1 บรรทัดค่ะ'); return; }
     /* ไม่มีช่อง "เรื่อง" แล้ว → ใช้รายละเอียดบรรทัดแรกเป็นชื่อเรื่องของใบ
        (มีหลายบรรทัดต่อท้ายว่า "และอื่น ๆ" ให้รู้ว่ายังมีรายการอื่น) */
@@ -12886,7 +12948,8 @@
       title:((($('slTitle')||{}).value)||'').trim(), note:((($('slNote')||{}).value)||'').trim()};
     if(EDIT_DOC && EDIT_DOC.canAmount){
       salesReadItems();
-      var items=SALES_ITEMS.filter(function(it){ return (it.detail||'').trim() || it.service; });
+      var items=SALES_ITEMS.filter(function(it){
+        return (it.serviceName||'').trim() || (it.detail||'').trim() || it.service; });
       if(!items.length){ sfErr('ใส่รายการอย่างน้อย 1 บรรทัดค่ะ'); return; }
       p.items=JSON.stringify(items);
       p.customer=($('slCust')||{}).value||'';
@@ -14664,7 +14727,8 @@
   function custRegHtml(r){
     var cs=(r&&r.customers)||[], miss=(r&&r.missingCustomers)||[];
     var rows=cs.map(function(c,i){
-      return '<tr><td><b>'+esc(c.name)+'</b>'+
+      return '<tr><td class="dt-nw" style="color:#6B7688">'+esc(c.code||'—')+'</td>'+
+        '<td><b>'+esc(c.name)+'</b>'+
         (c.legalName&&c.legalName!==c.name?'<br><span style="color:#8A94A6;font-size:11.5px">'+esc(c.legalName)+'</span>':'')+'</td>'+
         '<td class="dt-nw">'+esc(c.taxId||'—')+'</td>'+
         '<td>'+esc(c.branch||'สำนักงานใหญ่')+'</td>'+
@@ -14679,8 +14743,9 @@
       h+='<div class="m-hint">👥 มีกลุ่ม LINE แล้วแต่ยังไม่อยู่ในทะเบียน '+miss.length+' ราย: '+
         esc(miss.slice(0,6).join(', '))+(miss.length>6?' …':'')+'</div>';
     }
-    return h+dtTable([{label:'ลูกค้า'},{label:'เลขผู้เสียภาษี',cls:'dt-nw',w:'18%'},{label:'สาขา',w:'16%'},
-                      {label:'เครดิต',cls:'ta-r',w:'10%'},{label:'',w:'92px'}], rows, '',
+    return h+dtTable([{label:'รหัส',cls:'dt-nw',w:'10%'},{label:'ลูกค้า'},
+                      {label:'เลขผู้เสียภาษี',cls:'dt-nw',w:'16%'},{label:'สาขา',w:'14%'},
+                      {label:'เครดิต',cls:'ta-r',w:'9%'},{label:'',w:'92px'}], rows, '',
                      'ยังไม่มีลูกค้าในทะเบียน — กดปุ่ม "เพิ่มลูกค้า" ด้านบนได้เลยค่ะ');
   }
 
@@ -14698,6 +14763,8 @@
       '<input id="cuName" value="'+esc(c.name||'')+'"'+(i<0?'':' readonly')+'>'+
       (i<0?'':'<div class="m-hint" style="margin:6px 0 0">ชื่อเป็นตัวจับคู่กับเอกสารเดิม จึงแก้ไม่ได้ '+
             'ถ้าต้องเปลี่ยนชื่อ ให้เพิ่มรายใหม่แล้วเลิกใช้รายเดิม</div>')+'</div>'+
+      '<div class="fld"><label>รหัสลูกค้า</label>'+
+      '<input id="cuCode" value="'+esc(c.code||'')+'" placeholder="เว้นว่าง = ระบบออกให้ (CU-001)"></div>'+
       '<div class="fld"><label>ชื่อเต็มตามหนังสือรับรอง (ขึ้นบนเอกสาร)</label><input id="cuLegal" value="'+esc(c.legalName||'')+'"></div>'+
       '<div class="fld"><label>เลขประจำตัวผู้เสียภาษี (13 หลัก)</label><input id="cuTax" inputmode="numeric" value="'+esc(c.taxId||'')+'"></div>'+
       '<div class="fld"><label>ที่อยู่ (สำหรับใบกำกับภาษี)</label><textarea id="cuAddr">'+esc(c.address||'')+'</textarea></div>'+
@@ -14739,6 +14806,7 @@
     var n=(($('cuName')||{}).value||'').trim();
     if(!n){ mErr('กรอกชื่อลูกค้าก่อนค่ะ'); return; }
     callBusy('กำลังบันทึก…', jsonpPost({action:'waCustomerSave',uid:UID,name:n,
+      code:($('cuCode')||{}).value||'',
       legalName:($('cuLegal')||{}).value||'', taxId:($('cuTax')||{}).value||'',
       address:($('cuAddr')||{}).value||'', branch:branchValue('cu'),
       contact:($('cuContact')||{}).value||'', phone:($('cuPhone')||{}).value||'',
@@ -19981,7 +20049,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260921-1441';
+  var APP_BUILD='20260921-1505';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
