@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260921-0932">
+<link rel="stylesheet" href="user.css?v=20260921-0936">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1271,9 +1271,9 @@
   /* แถวล่าง: เงินสด/เงินฝาก คู่กับ ใบรออนุมัติ (พี่กี้ขอ 20 ก.ย. 69)
      จอแคบซ้อนลงเป็นแถวเดียว */
   /* แถวนี้อยู่เหนืองบกำไรขาดทุน แต่ต้องดู "แยกก้อน" ไม่ใช่ต่อเนื่องกัน (พี่กี้ 21 ก.ย. 69)
-     → เว้นระยะใต้แถวให้ชัด + เส้นคั่นจาง ๆ */
+     → เว้นระยะใต้แถวพอให้เห็นว่าคนละก้อน · ไม่ต้องมีเส้นคั่น (พี่กี้เคาะรอบสอง) */
   .bz-row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:stretch;
-    margin-bottom:26px;padding-bottom:22px;border-bottom:1px solid #DDE6F2}
+    margin-bottom:24px}
   .bz-row2 .pnl{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:16px;height:100%}
   /* บัญชีที่ยอด 0 หรือติดลบ — ไม่มีชิ้นในวง แต่ต้องเห็นในรายการ */
   .bz-lg .am.zero{color:var(--muted);font-weight:400}
@@ -19031,7 +19031,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260921-0932';
+  var APP_BUILD='20260921-0936';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
