@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260921-1300">
+<link rel="stylesheet" href="user.css?v=20260921-1306">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -10649,13 +10649,14 @@
          breadcrumb → หัวเรื่อง+ป้ายรหัส → การ์ดเดียว (ชื่อ+คำอธิบาย ซ้าย · ค้นหา/เดือน/ปุ่มสร้าง ขวา) → ตาราง
          แถบเตือนเรื่องทะเบียนถูกตัดออกจากหน้านี้ — ไปเตือนที่หน้าทะเบียนของมันเอง */
       var h='<div class="bc"><button class="lnk" onclick="switchView(&quot;bizdash&quot;)">รายรับ</button> › '+
-        esc(pg.plain||pg.title)+'</div>'+
-        '<div class="pg-title"><h2>'+esc(pg.plain||pg.title)+'</h2>'+
-        (SALES_KIND_F?'<span class="doc-code">'+esc(SALES_KIND_F)+'</span>':'')+'</div>';
+        esc(pg.plain||pg.title)+'</div>';
+      /* 🔴 ไม่มีหัวเรื่องซ้ำ — ชื่อหน้าอยู่ในหัวการ์ดอยู่แล้ว (พี่กี้ 21 ก.ย. 69) */
       // แท็บในหน้า (ผัง §2.6) — ใบแจ้งหนี้มีแท็บ "ใบวางบิล" อยู่ข้างใน ไม่แยกเป็นเมนู
       if(pg.tabs) h+=pageTabs(SALES_KIND_F, pg.tabs);
       h+='<div class="lst-card"><div class="lst-head">'+
-        '<div class="t"><b>'+esc(pg.plain||pg.title)+'</b><div>'+esc(pg.desc||'')+'</div></div>'+
+        '<div class="t"><b>'+esc(pg.plain||pg.title)+
+          (SALES_KIND_F?' <span class="doc-code">'+esc(SALES_KIND_F)+'</span>':'')+
+          '</b><div>'+esc(pg.desc||'')+'</div></div>'+
         '<div class="lst-tools">'+
           '<input class="s-find" id="sFind" placeholder="ค้นหาเลขที่ / ชื่อลูกค้า" '+
             'value="'+esc(SALES_FIND)+'" oninput="salesFind(this.value)">'+
@@ -12026,7 +12027,7 @@
   function salesRowActions(d){
     var q="'"+String(d.no).replace(/'/g,"\\'")+"'";
     var a=[], canceled=String(d.status).indexOf('ยกเลิก')>=0;
-    if(d.pdfLink) a.push({key:'pdf',label:'📄 เปิดเอกสาร',href:d.pdfLink});
+    if(d.pdfLink) a.push({key:'pdf',label:'🖨️ พิมพ์ PDF',href:d.pdfLink});
     if(a.length) a.push({sep:true});
     if(!canceled){
       // แก้ไขได้ทุกใบที่ยังไม่ยกเลิก — แก้ได้แค่ไหน backend ตัดสิน (salesEditScope_) แล้วฟอร์มปรับตาม
@@ -12047,7 +12048,8 @@
       if(d.kind==='CN' && d.refundSlip)
         a.push({key:'cnslip',label:'📎 สลิปคืนเงิน',href:d.refundSlip});
       a.push({key:'send',label:'📤 ส่งเข้ากลุ่มลูกค้า',call:'salesSend('+q+')'});
-      a.push({key:'repdf',label:(d.pdfLink?'🔄 ออกไฟล์ใหม่':'📄 ออกไฟล์ PDF'),call:'salesPdf('+q+')'});
+      /* คำเดิม "ออกไฟล์ใหม่" ไม่สื่อว่าทำอะไร (พี่กี้ถาม 21 ก.ย. 69) */
+      a.push({key:'repdf',label:(d.pdfLink?'🔄 สร้าง PDF ใหม่ (ทับไฟล์เดิม)':'📄 สร้างไฟล์ PDF'),call:'salesPdf('+q+')'});
       /* 🙅 ลูกค้าปฏิเสธ — เงื่อนไขต้องตรงกับด่าน setSalesRejected_ ฝั่งหลังบ้านเป๊ะ
          (ใบเสนอราคา · ยังไม่ออกใบแจ้งหนี้) ไม่งั้นปุ่มโผล่แล้วกดไม่ผ่าน */
       if(d.kind==='QT' && !salesRefBy(d,'IV').length){
@@ -19659,7 +19661,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260921-1300';
+  var APP_BUILD='20260921-1306';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
