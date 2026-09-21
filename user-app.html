@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260921-1346">
+<link rel="stylesheet" href="user.css?v=20260921-1356">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -12546,6 +12546,14 @@
       '<div class="sf-f"><label>'+(kindNow==='QT'?'วันที่ใช้ได้ถึง (ยืนราคา)':'วันครบกำหนดชำระ')+'</label>'+
         '<input id="slDue" type="date" value="'+esc(ed?(ed.dueDate||''):'')+'"'+(lockAll?' readonly':'')+'>'+
         '<div class="sf-note" id="sfDueNote"></div></div>'+
+      '<div class="sf-f"><label>ประเภทราคา</label>'+
+        '<select id="slPriceMode" onchange="salesPreview()"'+(lockAll?' disabled':'')+'>'+
+        ((SALES.priceModes||[{key:'excl',label:'แยกภาษี'},{key:'incl',label:'รวมภาษี'},{key:'none',label:'ไม่มีภาษี'}])
+          .map(function(m){
+            var cur=ed?(ed.priceMode||'excl'):'excl';
+            return '<option value="'+esc(m.key)+'"'+(m.key===cur?' selected':'')+'>'+esc(m.label)+'</option>';
+          }).join(''))+'</select>'+
+        '<div class="sf-note" id="sfPmNote"></div></div>'+
       '<div class="sf-f wide"><label>รายละเอียด (ขึ้นบนหัวเอกสาร)</label>'+
         '<input id="slTitle" placeholder="เช่น ค่าบริการบัญชี ก.ย. 2569" value="'+esc(ed?ed.title||'':'')+'"></div>'+
       '</div></div>';
@@ -12746,14 +12754,36 @@
     });
     var disc=Number((($('slDisc')||{}).value||'0').replace(/,/g,''))||0;
     if(disc>sub) disc=sub;
-    var base=sub-disc;
-    var vat=(ent&&ent.vatReg)?Math.round(base*SALES.vatRate)/100:0;
+    var after=Math.round((sub-disc)*100)/100;
+    /* 🔴 สูตรต้องตรงกับ calcSalesTotals_ ฝั่งหลังบ้านทุกบรรทัด
+       รวมภาษี: ฐาน = ยอด×100/107 · VAT = ยอด − ฐาน (บวกกลับเท่ายอดที่กรอกเป๊ะ)
+       บริษัทไม่จด VAT = ไม่มีภาษีเสมอ ไม่ว่าเลือกอะไรในช่อง */
+    var pm=(($('slPriceMode')||{}).value)||'excl';
+    if(!(ent&&ent.vatReg)) pm='none';
+    var rate=(ent&&ent.vatReg&&pm!=='none')?SALES.vatRate:0;
+    var base, vat;
+    if(pm==='incl' && rate>0){
+      base=Math.round(after*100/(100+rate)*100)/100;
+      vat=Math.round((after-base)*100)/100;
+    } else {
+      base=after;
+      vat=Math.round(base*rate)/100;
+    }
+    var pmNote=$('sfPmNote');
+    if(pmNote){
+      pmNote.textContent=(!(ent&&ent.vatReg))
+        ? 'บริษัทนี้ไม่ได้จด VAT — ออกใบแบบไม่มีภาษีเท่านั้น'
+        : (pm==='incl' ? 'ราคาที่กรอกรวม VAT แล้ว ระบบถอดฐาน/ภาษีให้'
+          : (pm==='none' ? 'ใบนี้ไม่คิด VAT' : 'ราคาที่กรอกยังไม่รวม VAT ระบบบวกให้'));
+    }
     box.innerHTML=
       '<div class="r"><span>รวมรายการ</span><b>'+money(sub)+'</b></div>'+
       (disc>0?'<div class="r"><span>ส่วนลดท้ายบิล</span><b>-'+money(disc)+'</b></div>':'')+
       '<div class="r"><span>มูลค่าที่คำนวณภาษี</span><b>'+money(base)+'</b></div>'+
-      '<div class="r"><span>'+(ent&&ent.vatReg?('ภาษีมูลค่าเพิ่ม '+SALES.vatRate+'%'):'ภาษีมูลค่าเพิ่ม')+'</span><b>'+
-        (ent&&ent.vatReg?money(vat):'<span style="color:#8A94A6;font-weight:400">บริษัทไม่ได้จด VAT</span>')+'</b></div>'+
+      '<div class="r"><span>'+(rate>0?('ภาษีมูลค่าเพิ่ม '+rate+'%'+(pm==='incl'?' (ถอดจากราคา)':'')):'ภาษีมูลค่าเพิ่ม')+
+        '</span><b>'+(rate>0?money(vat)
+          :'<span style="color:#8A94A6;font-weight:400">'+
+            (!(ent&&ent.vatReg)?'บริษัทไม่ได้จด VAT':'ใบนี้ไม่คิดภาษี')+'</span>')+'</b></div>'+
       '<div class="r grand"><span>จำนวนเงินทั้งสิ้น</span><b>'+money(base+vat)+' บาท</b></div>';
   }
   function salesSave(){
@@ -12763,6 +12793,7 @@
     var p={action:'waSalesCreate',uid:UID,
       kind:($('slKind')||{}).value, entity:($('slEnt')||{}).value, customer:($('slCust')||{}).value,
       docDate:($('slDate')||{}).value, dueDate:($('slDue')||{}).value||'',
+      priceMode:($('slPriceMode')||{}).value||'excl',
       title:(($('slTitle')||{}).value||'').trim(),
       note:(($('slNote')||{}).value||'').trim(), discount:($('slDisc')||{}).value||'0',
       items:JSON.stringify(items)};
@@ -12844,6 +12875,7 @@
       p.items=JSON.stringify(items);
       p.customer=($('slCust')||{}).value||'';
       p.docDate=($('slDate')||{}).value||'';
+      p.priceMode=($('slPriceMode')||{}).value||'';
       p.discount=($('slDisc')||{}).value||'0';
     }
     callBusy('กำลังบันทึก…', jsonpPost(p), 'บันทึกแล้ว').then(function(r){
@@ -19928,7 +19960,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260921-1346';
+  var APP_BUILD='20260921-1356';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
