@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260921-1528">
+<link rel="stylesheet" href="user.css?v=20260921-1706">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -698,8 +698,8 @@
   .bc{ font-size:12.5px; color:#8A94A6; margin:0 0 6px; }
   .bc .lnk{ font-size:12.5px; font-weight:500; }
   .pg-title{ display:flex; align-items:center; gap:10px; margin:0 0 14px; }
-  /* ป้ายสถานะของใบ ชิดขวาสุดในบรรทัดหัวเรื่อง (พี่กี้ชี้ตำแหน่ง 21 ก.ย. 69) */
-  .pg-title .tk-badge{ margin-left:auto; font-size:13px; padding:5px 14px; }
+  /* ป้ายสถานะของใบ อยู่มุมขวาของหัวการ์ดข้อมูลเอกสาร (พี่กี้ชี้ตำแหน่ง 21 ก.ย. 69) */
+  .sf-h .tk-badge{ margin-left:auto; font-size:13px; padding:5px 14px; }
   .pg-title h2{ margin:0; font-size:21px; }
   /* ป้ายรหัสเอกสาร (QT · IV · RE …) — ตัวเดียวกับที่ติดท้ายเมนูซ้าย */
   /* สีต้องมาจากตัวแปรธีมเสมอ — ห้องลูกค้าเป็นโทนม่วง ฮาร์ดโค้ดสีฟ้าแล้วป้ายจะหลุดธีม
@@ -12551,12 +12551,16 @@
     var h='<div class="bc">'+
       '<button class="lnk" onclick="salesGo(&quot;'+esc(kindNow)+'&quot;)">'+esc(kindLabel)+'</button> › '+
       (ed?esc(ed.no):'ออกใบใหม่')+'</div>';
+    /* ป้ายสถานะอยู่มุมขวาของหัวการ์ด "ข้อมูลเอกสาร" (พี่กี้ชี้ตำแหน่ง 21 ก.ย. 69)
+       ไม่ลอยอยู่บรรทัดหัวเรื่องแล้ว — ไกลจากเนื้อหาจนมองไม่เห็น */
+    var stBadge='';
     if(ed){
-      /* โหมดแก้ไข = หน้าเดียวกับ PEAK: เลขที่ + สถานะ + แถบขั้นเอกสาร + 2 แท็บ */
+      /* โหมดแก้ไข = หน้าเดียวกับ PEAK: เลขที่ + สถานะ + 2 แท็บ */
       var dRow=SALES_BYNO[ed.no]||{kind:ed.kind,status:ed.status,refBy:ed.refBy||[],no:ed.no};
-      h+='<div class="pg-title"><h2>'+esc(ed.no)+'</h2>'+
-        /* เข้าหน้านี้จากลิงก์ตรง ๆ ตาราง SALES_BYNO ยังว่าง → ยังต้องได้สีตามสถานะจริง ไม่ใช่เทาหมด */
-        (dRow.tag?qtBadge(dRow):'<span class="tk-badge '+salesBadge(ed.status)+'">'+esc(ed.status||'')+'</span>')+'</div>'+
+      /* เข้าหน้านี้จากลิงก์ตรง ๆ ตาราง SALES_BYNO ยังว่าง → ยังต้องได้สีตามสถานะจริง ไม่ใช่เทาหมด */
+      stBadge=dRow.tag?qtBadge(dRow)
+        :'<span class="tk-badge '+salesBadge(ed.status)+'">'+esc(ed.status||'')+'</span>';
+      h+='<div class="pg-title"><h2>'+esc(ed.no)+'</h2></div>'+
         /* 🔴 ไม่มีแถบขั้น QT→IV→RE แล้ว (พี่กี้เคาะ 21 ก.ย. 69: "ไม่เอาละค่ะ")
            ความเชื่อมโยงกับใบถัดไปดูได้จากคอลัมน์ IV ในหน้ารายการ และปุ่มออกใบแจ้งหนี้ */
         pageTabs(SONE_TAB, [['doc','ข้อมูลเอกสาร',"sfTab('doc')"],
@@ -12578,7 +12582,7 @@
        (ห้องที่มีบริษัทเดียวไม่มีอะไรให้เลือก การถามซ้ำคือขั้นตอนเปล่า) */
     var manyEnt=((SALES.entities||[]).length>1);
     h+='<input type="hidden" id="slKind" value="'+esc(kindNow)+'">'+
-      '<div class="sf-card"><div class="sf-h">🧾 ข้อมูลเอกสาร</div><div class="sf-grid">'+
+      '<div class="sf-card"><div class="sf-h">🧾 ข้อมูลเอกสาร'+stBadge+'</div><div class="sf-grid">'+
       (manyEnt
         ? ('<div class="sf-f wide"><label>ออกในนามบริษัท</label>'+
             (ed?'<input value="'+esc(ed.entityName||ed.entity||'')+'" readonly>'
@@ -20066,7 +20070,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260921-1528';
+  var APP_BUILD='20260921-1706';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
