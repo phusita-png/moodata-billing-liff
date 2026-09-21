@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260921-1914">
+<link rel="stylesheet" href="user.css?v=20260921-1929">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -6643,6 +6643,41 @@
   function wgSetYear(v){ WG_YEAR=v; renderWhtGl(); }
   function wgSetEnt(v){ WG_ENT=v||''; renderWhtGl(); }
   function wgSetTab(t){ WG_TAB=t||'all'; wgPaint(); }
+  var WG_FIND='', WG_SORT='old';
+  function wgSetFind(v){ WG_FIND=v; wgPaint(); }
+  function wgSetSort(){ WG_SORT=(WG_SORT==='old'?'new':'old'); wgPaint(); }
+  window.wgSetFind=wgSetFind; window.wgSetSort=wgSetSort;
+  /** ค้นหา + เรียงในแถว GL ที่โหลดมาแล้ว — ฟังก์ชันบริสุทธิ์ */
+  function wgApply(rows, find, sort){
+    var q=String(find||'').trim().toLowerCase();
+    var out=(rows||[]).filter(function(x){
+      if(!q) return true;
+      return [x.desc,x.docNo,x.date,x.book,x.matchNo].join(' ').toLowerCase().indexOf(q)>=0;
+    });
+    out.sort(function(a,b){
+      var da=wgDateKey(a), db=wgDateKey(b);
+      return sort==='new' ? (db-da) : (da-db);
+    });
+    return out;
+  }
+  function wgDateKey(x){
+    var m=String((x&&x.date)||'').match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    return m ? ((Number(m[3])-543)*10000 + Number(m[2])*100 + Number(m[1])) : 0;
+  }
+  window.wgApply=wgApply; window.wgDateKey=wgDateKey;
+  /** ดาวน์โหลด GL ที่กรองอยู่ */
+  function wgCsv(){
+    var rows=wgApply(wgFilter((WG&&WG.rows)||[], WG_TAB), WG_FIND, WG_SORT);
+    if(!rows.length){ toast('ไม่มีรายการให้ดาวน์โหลดค่ะ'); return; }
+    var head=['วันที่ GL','สมุด','เลขที่เอกสาร GL','ผู้จ่าย / คำอธิบาย','เดบิต (Dr)','เครดิต (Cr)',
+              'สถานะ','เลขที่ใบ 50 ทวิ','หมายเหตุ'];
+    var q=function(v){ return '"'+String(v==null?'':v).replace(/"/g,'""')+'"'; };
+    var lines=[head.map(q).join(',')].concat(rows.map(function(x){
+      return [x.date,x.book,x.docNo,x.desc,x.debit,x.credit,x.status,x.matchNo,x.note].map(q).join(',');
+    }));
+    dlText('gl-wht-'+(WG_YEAR||'all')+'.csv', '\ufeff'+lines.join('\n'));
+  }
+  window.wgCsv=wgCsv;
   window.wgSetYear=wgSetYear; window.wgSetEnt=wgSetEnt; window.wgSetTab=wgSetTab;
 
   /** แถวไหนอยู่แท็บไหน — ฟังก์ชันบริสุทธิ์ (เทสเรียกตัวนี้ตัวเดียวกับของจริง) */
@@ -6698,8 +6733,15 @@
         ' <span style="opacity:.75">'+(counts[t[0]]||0)+'</span></button>';
     }).join('');
     var box=$('wgBody'); if(!box) return;
-    box.innerHTML='<div class="tax-acts qt-tabs" style="margin:0 0 12px">'+tabs+'</div>'+
-      (WG_TAB==='notgl' ? wgNotGlHtml(r) : wgTableHtml(r.rows||[], WG_TAB));
+    /* แถบเครื่องมืออยู่ใต้แท็บ เหมือนต้นแบบ — ค้นหา · เรียง · CSV (พี่กี้ 21 ก.ย. 69) */
+    var tools='<div class="lst-tools" style="margin:0 0 12px;width:100%">'+
+      '<input class="s-find" style="flex:1" id="wgFind" placeholder="🔍 ค้นหา ผู้จ่าย / เลขที่เอกสาร / วันที่ …" '+
+        'value="'+esc(WG_FIND)+'" oninput="wgSetFind(this.value)">'+
+      '<button class="btn btn-ghost" onclick="wgSetSort()">'+(WG_SORT==='new'?'🗓️ ใหม่→เก่า':'🗓️ เก่า→ใหม่')+'</button>'+
+      '<button class="btn btn-ghost" onclick="wgCsv()">↓ CSV (ตามที่กรอง)</button>'+
+      '</div>';
+    box.innerHTML='<div class="tax-acts qt-tabs" style="margin:0 0 12px">'+tabs+'</div>'+tools+
+      (WG_TAB==='notgl' ? wgNotGlHtml(r) : wgTableHtml(wgApply(r.rows||[], WG_FIND, WG_SORT), WG_TAB));
   }
   /** ใบ 50 ทวิ ที่ไม่มีคู่ใน GL — เครดิตที่บัญชีอาจยังไม่ได้ลง */
   function wgNotGlHtml(r){
@@ -6848,38 +6890,125 @@
         '<button class="btn btn-ghost" onclick="wirManual()">✏️ กรอกเอง</button>'+
         '<button class="btn btn-ghost" onclick="wirRematch()">🔄 จับคู่ใหม่ทั้งเล่ม</button></div>';
 
-      h+='<div class="card"><div class="ds-h">📄 ทะเบียนใบที่ได้รับ</div>';
-      if(!(r.rows||[]).length){
-        h+='<div class="emptybox">ยังไม่มีใบในทะเบียน<br>'+
-          '<span class="m-hint">กด 📷 สแกนใบ แล้วอัปรูป/PDF ได้เลย — ระบบเก็บไฟล์ลง Drive + อ่านค่าให้</span></div>';
-      } else {
-        h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
-          '<th>วันที่จ่าย</th><th>ผู้จ่ายเงิน</th><th>เอกสาร</th><th>ประเภท</th>'+
-          '<th>จำนวนเงิน</th><th>ภาษีหัก</th><th>กระทบยอด</th><th>ไฟล์</th><th></th></tr></thead><tbody>'+
-          r.rows.map(function(x){
-            var q="'"+String(x.no).replace(/'/g,"\\'")+"'";
-            return '<tr><td class="dt-nw">'+esc(x.date)+'</td>'+
-              '<td style="white-space:normal">'+esc(x.payer||'-')+
-                (x.payerId?'<br><span style="font-size:12px;color:#8A94A6">'+esc(x.payerId)+'</span>':'')+'</td>'+
-              '<td><span style="font-size:12px">'+esc(x.docNo||'-')+'</span>'+
-                (x.form?'<br><span style="font-size:12px;color:#8A94A6">'+esc(x.form)+'</span>':'')+'</td>'+
-              '<td>'+esc(x.incomeType||'-')+'</td>'+
-              '<td class="ta-r dt-nw">'+money(x.amount)+'</td><td class="ta-r dt-nw">'+money(x.tax)+'</td>'+
-              '<td>'+(x.matchNo?'<span style="color:#1B7F4B">✅ '+esc(x.matchNo)+'</span>'
-                :'<span style="color:#C8730B">⚠️ ยังไม่พบ</span>')+'</td>'+
-              '<td>'+(x.file?'<a class="ex-lk" href="'+esc(x.file)+'" target="_blank">📎 ดูใบ</a>':'—')+'</td>'+
-              '<td><a class="ex-lk" href="#" onclick="wirEdit('+q+');return false">✏️</a></td></tr>';
-          }).join('')+
-          '<tr class="tax-total"><td colspan="4">รวม '+s.n+' ฉบับ</td><td class="ta-r">'+money(s.amount)+'</td>'+
-          '<td class="ta-r">'+money(s.tax)+'</td><td colspan="3"></td></tr></tbody></table></div>';
-      }
-      h+='</div>';
+      /* การ์ดเดียวครอบตาราง + แถบเครื่องมือ — โครงเดียวกับหน้าอื่นในระบบ (พี่กี้ 21 ก.ย. 69) */
+      h+='<div class="lst-card"><div class="lst-head">'+
+        '<div class="t"><b>ทะเบียนใบที่ได้รับ <span class="doc-code">WI</span></b>'+
+        '<div>ใบที่ลูกค้าออกให้เรา = หลักฐานเครดิตภาษีตอนยื่น ภ.ง.ด.50/51</div></div>'+
+        '<div class="lst-tools">'+
+          '<input class="s-find" id="wirFind" placeholder="ค้นหาผู้จ่าย / เลขที่เอกสาร" '+
+            'value="'+esc(WIR_FIND)+'" oninput="wirSetFind(this.value)">'+
+          '<select id="wirGl" onchange="wirSetGl(this.value)">'+
+            ['','in','out'].map(function(k){
+              var lb={ '':'สถานะ GL: ทั้งหมด', 'in':'✅ มีใน GL', 'out':'⚠️ ไม่อยู่ใน GL' }[k];
+              return '<option value="'+k+'"'+(k===WIR_GL?' selected':'')+'>'+esc(lb)+'</option>'; }).join('')+
+          '</select>'+
+          '<button class="btn btn-ghost" onclick="wirSetSort()">'+(WIR_SORT==='new'?'🗓️ ใหม่→เก่า':'🗓️ เก่า→ใหม่')+'</button>'+
+          '<button class="btn btn-ghost" onclick="wirCsv()">↓ CSV (ตามที่กรอง)</button>'+
+        '</div></div><div id="wirTbl"></div></div>';
       WIR_ROWS={}; (r.rows||[]).forEach(function(x){ WIR_ROWS[x.no]=x; });
+      WIR_ALL=r.rows||[];
       WIR_TYPES=r.incomeTypes||[];
       $('main').innerHTML=wiTabs('reg')+h;
+      wirPaintTbl();
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
   }
-  var WIR_ROWS={}, WIR_TYPES=[];
+  /** ดาวน์โหลดข้อความเป็นไฟล์ (CSV) — ใช้ได้บนเบราว์เซอร์คอม
+      ⚠️ ใน LINE webview บางรุ่นดาวน์โหลดไม่ขึ้น ถ้าไม่ขึ้นให้เปิดหน้านี้บนคอม */
+  function dlText(name, text){
+    try{
+      var b=new Blob([text], {type:'text/csv;charset=utf-8;'});
+      var a=document.createElement('a');
+      a.href=URL.createObjectURL(b); a.download=name;
+      document.body.appendChild(a); a.click();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+      toast('⬇️ ดาวน์โหลด '+name);
+    }catch(e){ toast('ดาวน์โหลดไม่ได้ในหน้าต่างนี้ ลองเปิดบนคอมนะคะ'); }
+  }
+  window.dlText=dlText;
+
+  var WIR_ROWS={}, WIR_TYPES=[], WIR_ALL=[], WIR_FIND='', WIR_GL='', WIR_SORT='old';
+  function wirSetFind(v){ WIR_FIND=v; wirPaintTbl(); }
+  function wirSetGl(v){ WIR_GL=v||''; wirPaintTbl(); }
+  function wirSetSort(){ WIR_SORT=(WIR_SORT==='old'?'new':'old'); renderWhtIn(); }
+  window.wirSetFind=wirSetFind; window.wirSetGl=wirSetGl; window.wirSetSort=wirSetSort;
+
+  /** กรอง + เรียง — ฟังก์ชันบริสุทธิ์ (เทสเรียกตัวนี้ตัวเดียวกับของจริง) */
+  function wirApply(rows, find, gl, sort){
+    var q=String(find||'').trim().toLowerCase();
+    var out=(rows||[]).filter(function(x){
+      if(gl==='in' && !x.matchNo) return false;
+      if(gl==='out' && x.matchNo) return false;
+      if(!q) return true;
+      return [x.payer,x.docNo,x.payerId,x.incomeType,x.date].join(' ').toLowerCase().indexOf(q)>=0;
+    });
+    /* เรียงตามวันที่จ่ายบนใบ — ไม่ใช่ลำดับที่บันทึกเข้าระบบ */
+    out.sort(function(a,b){
+      var da=wirDateKey(a), db=wirDateKey(b);
+      return sort==='new' ? (db-da) : (da-db);
+    });
+    return out;
+  }
+  /** วันที่บนใบ (dd/mm/พ.ศ.) → ตัวเลขไว้เรียง */
+  function wirDateKey(x){
+    var m=String((x&&x.date)||'').match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    return m ? ((Number(m[3])-543)*10000 + Number(m[2])*100 + Number(m[1])) : 0;
+  }
+  window.wirApply=wirApply; window.wirDateKey=wirDateKey;
+
+  /** ตารางทะเบียน — 🔴 หัวคอลัมน์ต้องเห็นเสมอแม้ยังไม่มีรายการ (กติกาเดียวกับทั้งระบบ) */
+  function wirTableHtml(rows){
+    var body=rows.map(function(x,i){
+      var q="'"+String(x.no).replace(/'/g,"\\'")+"'";
+      return '<tr>'+
+        '<td class="ta-c dt-nw" style="color:#8A94A6">'+(i+1)+'</td>'+
+        '<td class="dt-nw">'+esc(x.date||'-')+'</td>'+
+        '<td style="white-space:normal">'+esc(x.payer||'-')+
+          (x.payerId?'<br><span style="font-size:12px;color:#8A94A6">'+esc(x.payerId)+'</span>':'')+'</td>'+
+        '<td><span style="font-size:12.5px">'+esc(x.docNo||'-')+'</span></td>'+
+        '<td class="dt-nw">'+(x.form?'<span class="tk-badge b-review">'+esc(x.form)+'</span>':'—')+'</td>'+
+        '<td>'+esc(x.incomeType||'-')+'</td>'+
+        '<td class="dt-amt">'+money(x.amount)+'</td>'+
+        '<td class="dt-amt">'+money(x.tax)+'</td>'+
+        '<td class="ta-c dt-nw">'+(x.matchNo
+          ? '<span class="tk-badge b-done">✅ มีใน GL</span>'
+          : '<span class="tk-badge b-review">⚠️ ไม่อยู่ใน GL</span>')+'</td>'+
+        '<td class="ta-c dt-nw">'+(x.file?'<a class="ex-lk" href="'+esc(x.file)+'" target="_blank">📎</a>':'—')+'</td>'+
+        '<td class="ta-c dt-nw"><a class="ex-lk" href="#" onclick="wirEdit('+q+');return false">✏️</a></td>'+
+        '</tr>';
+    });
+    var sumAmt=rows.reduce(function(a,x){ return a+(Number(x.amount)||0); },0);
+    var sumTax=rows.reduce(function(a,x){ return a+(Number(x.tax)||0); },0);
+    var total=rows.length>1?('<tr class="tax-total"><td colspan="6" style="text-align:right">รวม '+rows.length+' ฉบับ</td>'+
+      '<td class="dt-amt">'+money(sumAmt)+'</td><td class="dt-amt">'+money(sumTax)+'</td><td colspan="3"></td></tr>'):'';
+    return dtTable([{label:'#',cls:'ta-c dt-nw',w:'34px'},{label:'วันที่จ่าย',cls:'dt-nw',w:'9%'},
+      {label:'ผู้จ่ายเงิน',w:'20%'},{label:'เลขที่เอกสาร',cls:'dt-nw',w:'13%'},
+      {label:'แบบ',cls:'ta-c dt-nw',w:'8%'},{label:'ประเภทเงินได้'},
+      {label:'จำนวนเงิน',cls:'ta-r',w:'10%'},{label:'ภาษีหัก',cls:'ta-r',w:'9%'},
+      {label:'กระทบ GL',cls:'ta-c dt-nw',w:'11%'},{label:'ไฟล์',cls:'ta-c dt-nw',w:'44px'},
+      {label:'แก้ไข',cls:'ta-c dt-nw',w:'44px'}],
+      body, total, 'ยังไม่มีใบในทะเบียน — กด "นำเข้าใบ 50 ทวิ" ด้านบนได้เลยค่ะ');
+  }
+  window.wirTableHtml=wirTableHtml;
+
+  function wirPaintTbl(){
+    var box=$('wirTbl'); if(!box) return;
+    box.innerHTML=wirTableHtml(wirApply(WIR_ALL, WIR_FIND, WIR_GL, WIR_SORT));
+  }
+  /** ดาวน์โหลดเฉพาะที่กรองอยู่ — เอาไปทำงานต่อใน Excel */
+  function wirCsv(){
+    var rows=wirApply(WIR_ALL, WIR_FIND, WIR_GL, WIR_SORT);
+    if(!rows.length){ toast('ไม่มีรายการให้ดาวน์โหลดค่ะ'); return; }
+    var head=['ลำดับ','วันที่จ่าย','ผู้จ่ายเงิน','เลขผู้เสียภาษี','เลขที่เอกสาร','แบบ',
+              'ประเภทเงินได้','จำนวนเงิน','ภาษีหัก','กระทบ GL','เลขที่ในทะเบียน'];
+    var q=function(v){ return '"'+String(v==null?'':v).replace(/"/g,'""')+'"'; };
+    var lines=[head.map(q).join(',')].concat(rows.map(function(x,i){
+      return [i+1,x.date,x.payer,x.payerId,x.docNo,x.form,x.incomeType,
+        x.amount,x.tax,(x.matchNo?'มีใน GL':'ไม่อยู่ใน GL'),x.no].map(q).join(',');
+    }));
+    /* ใส่ BOM ให้ Excel อ่านภาษาไทยไม่เป็นขยะ */
+    dlText('50thawi-'+(WIR_YEAR||'all')+'.csv', '\ufeff'+lines.join('\n'));
+  }
+  window.wirCsv=wirCsv; window.wirPaintTbl=wirPaintTbl;
   /** ฟอร์มใบ 50 ทวิ (ใช้ทั้งตอนสแกนเสร็จ · กรอกเอง · แก้ไข) */
   /* ค่าที่ OCR อ่านมาของใบที่กำลังแก้ — ไว้ให้ปุ่ม "คืนค่าที่อ่านมา" (ต้นแบบพี่กี้ 21 ก.ย. 69) */
   var WIR_OCRVAL=null;
@@ -20625,7 +20754,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260921-1914';
+  var APP_BUILD='20260921-1929';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
