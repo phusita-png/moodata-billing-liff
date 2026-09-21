@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260921-1821">
+<link rel="stylesheet" href="user.css?v=20260921-1837">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -10736,7 +10736,9 @@
       }
       h+='<div id="salesTbl"></div></div>';
       $('main').innerHTML=h;
-      if(SALES_KIND_F==='QT') paintQtTable(r.docs||[]); else paintSalesTable(salesApplyFind(r.docs||[]));
+      /* ชุดแท็บมาจากหลังบ้านตามชนิดที่เปิด — ชนิดที่ไม่มีแท็บได้ null แล้วตารางวาดเหมือนเดิม */
+      if(SALES_KIND_F==='QT') paintQtTable(r.docs||[]);
+      else paintSalesTable(salesApplyFind(r.docs||[]), r.kindTabs, QT_TAB);
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
   }
   function salesFilter(v){ SALES_KIND_F=v; renderSales(); }
@@ -10830,7 +10832,11 @@
             acts:'<div class="m-hint" style="flex:1;margin:0">ใบลดหนี้ออกจากปุ่มบนใบเสร็จที่ต้องการลด</div>' }
   };
   /** เปิดหน้ารายรับโดยล็อกชนิด (ใช้ทั้งจากเมนูและจากแท็บ) */
-  function salesGo(kind){ SALES_KIND_F=kind||''; renderSales(); }
+  function salesGo(kind){
+    /* เปลี่ยนชนิด = เริ่มที่แท็บ "ทั้งหมด" เสมอ — แท็บของชนิดเก่าค้างไว้ = ตารางว่างทั้งที่มีใบ */
+    if(SALES_KIND_F!==(kind||'')) QT_TAB='all';
+    SALES_KIND_F=kind||''; renderSales();
+  }
   window.salesGo = salesGo;
   function renderSalesQt(){ salesGo('QT'); }
   function renderSalesIv(){ salesGo('IV'); }
@@ -12219,6 +12225,13 @@
   function qtSetTab(t){ QT_TAB=t||'all'; renderSales(); }
   window.qtSetTab=qtSetTab;
 
+  /* แท็บไหนรับป้ายอะไร — มากับชุดแท็บจากหลังบ้าน (SALES_KIND_TABS)
+     🔴 ไม่มีตารางซ้ำในหน้าเว็บแล้ว เพิ่มแท็บที่หลังบ้านที่เดียวจบ */
+  function qtTabMatch(tabs, key){
+    var m=null;
+    (tabs||[]).forEach(function(t){ if(t.key===key) m=t.match||null; });
+    return m;
+  }
   /** นับใบต่อแท็บ — ฟังก์ชันบริสุทธิ์ (เทสเรียกตัวนี้ตัวเดียวกับของจริง) */
   function qtTabCounts(docs, tabs){
     var out={};
@@ -12227,20 +12240,18 @@
       var k=(d.tag&&d.tag.key)||'other';
       (tabs||[]).forEach(function(t){
         if(t.key==='all'){ out.all++; return; }
-        if(QT_TAB_MATCH[t.key] && QT_TAB_MATCH[t.key].indexOf(k)>=0) out[t.key]++;
+        var m=t.match||[];
+        if(m.indexOf(k)>=0) out[t.key]++;
       });
     });
     return out;
   }
-  /* ต้องตรงกับ SALES_QT_TABS ฝั่งหลังบ้าน — มีเทสล็อกไว้ว่าชุดเดียวกัน */
-  var QT_TAB_MATCH={ draft:['draft'], sent:['sent','expired'],
-                     done:['accepted','invoiced'], rejected:['rejected'] };
-  function qtFilter(docs, tab){
+  function qtFilter(docs, tab, tabs){
     if(!tab||tab==='all') return docs||[];
-    var m=QT_TAB_MATCH[tab]||[];
+    var m=qtTabMatch(tabs, tab)||[];
     return (docs||[]).filter(function(d){ return m.indexOf((d.tag&&d.tag.key)||'other')>=0; });
   }
-  window.qtTabCounts=qtTabCounts; window.qtFilter=qtFilter;
+  window.qtTabCounts=qtTabCounts; window.qtFilter=qtFilter; window.qtTabMatch=qtTabMatch;
 
   function qtTabsHtml(docs, tabs, cur){
     var n=qtTabCounts(docs, tabs);
@@ -12294,7 +12305,7 @@
    *  🔴 ของจริงกับ tests/preview-salesqt.js เรียกตัวนี้ตัวเดียว
    *     (21 ก.ย. 69: preview เคยประกอบแถวเอง แล้วหลุดจากของจริงทั้งคอลัมน์และคำ) */
   function qtTableHtml(docs, tabs, tab){
-    var shown=qtFilter(salesApplyFind(docs), tab);
+    var shown=qtFilter(salesApplyFind(docs), tab, tabs);
     var h=qtTabsHtml(salesApplyFind(docs), tabs, tab);
     /* ลำดับคอลัมน์ตามที่พี่กี้วางเอง 21 ก.ย. 69: ... ยอดรวม → IV (ช่องติ๊ก) → สถานะ → กิจกรรม */
     /* ลำดับคอลัมน์ที่พี่กี้วางเอง 21 ก.ย. 69: # → เลขที่ → วันที่ → ลูกค้า → รายละเอียด
@@ -12444,16 +12455,23 @@
   }
   window.renderSalesOne=renderSalesOne;
 
-  function paintSalesTable(docs){
+  function paintSalesTable(docs, tabs, tab){
     var box=$('salesTbl'); if(!box) return;
+    /* แท็บสถานะ + คอลัมน์กิจกรรม — ชุดเดียวกับหน้าใบเสนอราคา (พี่กี้สั่ง 21 ก.ย. 69)
+       ชนิดที่หลังบ้านไม่ได้ส่งชุดแท็บมา (หน้ารวมทุกชนิด) ก็ไม่มีแถบแท็บ ตารางเหมือนเดิม */
+    var head=(tabs&&tabs.length)?qtTabsHtml(salesApplyFind(docs), tabs, tab):'';
+    if(tabs&&tabs.length) docs=qtFilter(docs, tab, tabs);
     // ทุกคอลัมน์เป็น % (รวม 100) → ตารางพอดีจอทุกขนาด · จอแคบกว่า min-width ค่อยเลื่อนแนวนอน
     // (ผสม px กับ % แล้วจอกลาง ๆ คอลัมน์ "เรื่อง" จะโดนบีบจนตัวอักษรเรียงลงแนวตั้ง)
     // ⚠️ ปล่อย "เรื่อง" ไม่ระบุความกว้าง — ให้กินที่ที่เหลือ ผลรวมจะไม่มีทางเกิน 100% (ไม่เกิดแถบเลื่อนแนวนอน)
     /* คอลัมน์ลำดับ — พี่กี้ขอให้ทุกหน้ามี จะได้เห็นจำนวนใบ (21 ก.ย. 69) */
-    var cols=[{label:'#',cls:'dt-nw',w:'34px'},
-      {label:'เลขที่',cls:'dt-nw',w:'13%'},{label:'วันที่',cls:'dt-nw',w:'9%'},{label:'ลูกค้า',w:'16%'},
-      {label:'รายละเอียด'},{label:'ยอดรวม',cls:'ta-r',w:'10%'},{label:'คงค้าง',cls:'ta-r',w:'9%'},
-      {label:'สถานะ',w:'10%'},{label:'ครบกำหนด',cls:'dt-nw',w:'9%'},{label:'',w:'46px'}];
+    var hasAct=(docs||[]).some(function(d){ return d.lastAct; });
+    var cols=[{label:'#',cls:'ta-c dt-nw',w:'34px'},
+      {label:'เลขที่',cls:'dt-nw',w:'12%'},{label:'วันที่',cls:'dt-nw',w:'8%'},{label:'ลูกค้า',w:'15%'},
+      {label:'รายละเอียด'},{label:'ยอดรวม',cls:'ta-r',w:'9%'},{label:'คงค้าง',cls:'ta-r',w:'8%'},
+      {label:'สถานะ',cls:'ta-c dt-nw',w:'10%'},{label:'ครบกำหนด',cls:'dt-nw',w:'8%'}]
+      .concat(hasAct?[{label:'กิจกรรม',cls:'dt-nw',w:'14%'}]:[])
+      .concat([{label:'',w:'46px'}]);
     var rows=docs.map(function(d,i){
       SALES_BYNO[d.no]=d;
       var due=d.dueDate?fmtDate(d.dueDate):'—';
@@ -12469,15 +12487,18 @@
         '<td class="dt-amt"'+(d.kind==='CN'?' style="color:#DC2626"':'')+'>'+
           (d.kind==='CN'?'-':'')+money(d.total)+'</td>'+
         '<td class="dt-amt">'+(d.balance>0?money(d.balance):'—')+'</td>'+
-        '<td><span class="tk-badge '+salesBadge(d.status)+'">'+esc(d.status)+'</span></td>'+
+        /* ป้ายสถานะใช้ตัวเดียวกับหน้าใบเสนอราคาเมื่อหลังบ้านส่ง tag มา (สีตรงกับแท็บ) */
+        '<td class="ta-c dt-nw">'+(d.tag?qtBadge(d):'<span class="tk-badge '+salesBadge(d.status)+'">'+esc(d.status)+'</span>')+'</td>'+
         '<td class="dt-nw"'+(overdue?' style="color:#DC2626;font-weight:600"':'')+'>'+esc(due)+(overdue?' ⚠️':'')+'</td>'+
+        (hasAct?qtActCell(d):'')+
         dtActCell('sl-'+d.no, salesRowActions(d))+'</tr>';
     });
     // ยอดรวมท้ายตาราง: ใบลดหนี้หักออก (ไม่งั้นยอดที่พี่เห็นบวมกว่าที่ออกบิลจริง)
     var sum=docs.reduce(function(a,d){ var v=Number(d.total)||0; return a+(d.kind==='CN'?-v:v); },0);
+    var tailCols=cols.length-6;     /* ช่องที่เหลือหลังคอลัมน์ยอดรวม (เปลี่ยนตามว่ามีกิจกรรมไหม) */
     var total=docs.length>1?'<tr class="tax-total"><td colspan="5" style="text-align:right">รวม '+docs.length+' ใบ</td>'+
-      '<td class="dt-amt">'+money(sum)+'</td><td colspan="4"></td></tr>':'';
-    box.innerHTML=dtTable(cols, rows, total, 'ยังไม่มีเอกสารในหมวดนี้');
+      '<td class="dt-amt">'+money(sum)+'</td><td colspan="'+tailCols+'"></td></tr>':'';
+    box.innerHTML=head+dtTable(cols, rows, total, 'ยังไม่มีเอกสารในหมวดนี้');
   }
   var SALES_BYNO={};
   function salesBadge(s){ s=String(s||'');
@@ -20289,7 +20310,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260921-1821';
+  var APP_BUILD='20260921-1837';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
