@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260921-1729">
+<link rel="stylesheet" href="user.css?v=20260921-1736">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -658,6 +658,8 @@
   .sf-grid .sf-f.c3{ grid-column:span 3; }
   .sf-grid .sf-f.c4{ grid-column:span 4; }
   .sf-grid .sf-f.c6{ grid-column:span 6; }
+  /* ชิดขวาสุดของแถว (กว้าง 3 ช่อง) — ใช้กับช่องอ้างอิงที่พี่กี้ตีกรอบไว้ขวาสุด */
+  .sf-grid .sf-f.end3{ grid-column:10 / -1; }
   .sf-f label{ font-size:13px; color:#5B6472; font-weight:600; }
   .sf-f input,.sf-f select,.sf-f textarea{ width:100%; box-sizing:border-box; padding:10px 12px;
     border:1px solid var(--line); border-radius:10px; font-family:inherit; font-size:14.5px; background:#fff; }
@@ -688,7 +690,7 @@
   @media (max-width:1180px){
     .sf-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); }
     .sf-grid .sf-f,.sf-grid .sf-f.c2,.sf-grid .sf-f.c3,
-    .sf-grid .sf-f.c4,.sf-grid .sf-f.c6{ grid-column:auto; }
+    .sf-grid .sf-f.c4,.sf-grid .sf-f.c6,.sf-grid .sf-f.end3{ grid-column:auto; }
   }
   @media (max-width:860px){
     .sf-grid{ grid-template-columns:1fr; }
@@ -12733,6 +12735,13 @@
             var cur=ed?(ed.priceMode||'excl'):'excl';
             return '<option value="'+esc(m.key)+'"'+(m.key===cur?' selected':'')+'>'+esc(m.label)+'</option>';
           }).join(''))+'</select></div>'+
+      /* อ้างอิง = เลขใบต้นทางที่ดึงมาออกใบนี้ (IV←QT · RE←IV · BN←IV หลายใบ)
+         🔴 อ่านอย่างเดียว — เลขนี้คือตัวเชื่อมใบเข้าด้วยกันทั้งระบบ
+            (คอลัมน์ IV ในหน้ารายการ · ยอดที่ตัดกันระหว่างใบ) พิมพ์ทับเมื่อไหร่ ความเชื่อมโยงพัง
+         โมดูลที่ออกใบขึ้นมาเองโดยไม่ได้ดึงจากใบไหน = เว้นว่าง (พี่กี้สั่ง 21 ก.ย. 69) */
+      '<div class="sf-f end3"><label>อ้างอิง</label>'+
+        '<input id="slRefNo" readonly value="'+esc((ed&&ed.refNo)||'')+'" '+
+        'placeholder="— ไม่ได้ดึงจากเอกสารอื่น —" title="เลขที่เอกสารต้นทางที่ดึงมาออกใบนี้"></div>'+
       /* 🔴 ไม่มีช่อง "รายละเอียด (หัวเอกสาร)" แล้ว (พี่กี้ขีดฆ่า 21 ก.ย. 69)
          ชื่อเรื่องของใบ = รายละเอียดบรรทัดแรกในตารางรายการ — เก็บเป็น hidden ให้ตัวบันทึกอ่าน
          (ตารางหน้ารายการยังมีคอลัมน์ "รายละเอียด" ใช้ค่านี้เหมือนเดิม) */
@@ -20178,7 +20187,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260921-1729';
+  var APP_BUILD='20260921-1736';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
