@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260921-1954">
+<link rel="stylesheet" href="user.css?v=20260921-2024">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -6629,17 +6629,18 @@
   function wiTabs(active){
     var t=function(k,label,fn){ return '<button class="btn '+(active===k?'btn-primary':'btn-ghost')+
       '" style="flex:1" onclick="'+fn+'">'+label+'</button>'; };
+    /* 🔴 ไม่มีแท็บ "กระทบกับเงินที่รับ" แล้ว (พี่กี้เคาะ 21 ก.ย. 69)
+       ข้อมูลฝั่งระบบย้ายมาอยู่ในคอลัมน์ "ในระบบ" + ผลเทียบมูลค่าของหน้ากระทบยอด GL แทน */
     return '<div class="tax-acts" style="margin-bottom:12px">'+
       t('gl','📊 กระทบยอด GL','renderWhtGl()')+
-      t('reg','📄 รายการ 50 ทวิ','renderWhtIn()')+
-      t('match','💵 กระทบกับเงินที่รับ','renderWhtInMatch()')+'</div>';
+      t('reg','📄 รายการ 50 ทวิ','renderWhtIn()')+'</div>';
   }
   /* ═══════════ 📊 กระทบยอด 50 ทวิ ↔ GL (spec docs/spec-wht-gl.md · 21 ก.ย. 69) ═══════════
      ต้นแบบมาจากไฟล์ที่พี่กี้ทำมือไว้ก่อน — หน้านี้คือย้ายของนั้นเข้าระบบ
      🔴 GL คือความจริงจากโปรแกรมบัญชี หน้านี้อ่านอย่างเดียว (แก้ได้แค่ช่องหมายเหตุ) */
   var WG_YEAR='', WG_ENT='', WG_TAB='all', WG=null;
   var WG_TABS=[['all','ทั้งหมด'],['matched','✅ มีใบ 50 ทวิ'],['nocert','⏳ ยังไม่มีใบ'],
-               ['reversal','↩ กลับรายการ'],['notgl','⚠️ ใบไม่อยู่ใน GL']];
+               ['valdiff','⚠️ มูลค่าต่าง'],['reversal','↩ กลับรายการ'],['notgl','⚠️ ใบไม่อยู่ใน GL']];
   function wgSetYear(v){ WG_YEAR=v; renderWhtGl(); }
   function wgSetEnt(v){ WG_ENT=v||''; renderWhtGl(); }
   function wgSetTab(t){ WG_TAB=t||'all'; wgPaint(); }
@@ -6670,11 +6671,11 @@
     var rows=wgApply(wgFilter((WG&&WG.rows)||[], WG_TAB), WG_FIND, WG_SORT);
     if(!rows.length){ toast('ไม่มีรายการให้ดาวน์โหลดค่ะ'); return; }
     var head=['ลำดับ','วันที่ GL','สมุด','เลขที่เอกสาร GL','ผู้จ่าย / คำอธิบาย','เดบิต (Dr)','เครดิต (Cr)',
-              'สถานะ','ในระบบ','เลขที่ใบ 50 ทวิ','หมายเหตุ'];
+              'สถานะ','ในระบบ','ผลเทียบมูลค่า','เลขที่ใบ 50 ทวิ','หมายเหตุ'];
     var q=function(v){ return '"'+String(v==null?'':v).replace(/"/g,'""')+'"'; };
     var lines=[head.map(q).join(',')].concat(rows.map(function(x,i){
       return [i+1,x.date,x.book,x.docNo,x.desc,x.debit,x.credit,x.status,
-        (x.sysMatch?'มี':'ไม่มี'),x.matchNo,x.note].map(q).join(',');
+        (x.sysMatch?'มี':'ไม่มี'),x.valueNote,x.matchNo,x.note].map(q).join(',');
     }));
     dlText('gl-wht-'+(WG_YEAR||'all')+'.csv', '\ufeff'+lines.join('\n'));
   }
@@ -6690,11 +6691,25 @@
   }
   function wgFilter(rows, tab){
     if(!tab||tab==='all'||tab==='notgl') return rows||[];
+    /* มูลค่าต่างเป็นคนละมิติกับสถานะใบ — ใบที่มีคู่แล้วก็ยังมูลค่าต่างได้ */
+    if(tab==='valdiff') return (rows||[]).filter(function(r){
+      return String(r.valueNote||'').indexOf('ต่าง')>=0; });
     return (rows||[]).filter(function(r){ return wgTagOf(r)===tab; });
   }
   window.wgTagOf=wgTagOf; window.wgFilter=wgFilter;
 
   /** ตาราง GL — ฟังก์ชันบริสุทธิ์ */
+  /** ช่องมูลค่า — ✅ ตรง · ⚠️ ต่าง (บอกส่วนต่าง) · — เทียบไม่ได้ (ขาดฝั่งใดฝั่งหนึ่ง) */
+  function wgValueCell(r){
+    var v=String((r&&r.valueNote)||'');
+    if(v.indexOf('ต่าง')>=0){
+      return '<span class="tk-badge b-reject" title="'+esc(v)+'">⚠️ ต่าง</span>';
+    }
+    if(v.indexOf('ตรง')>=0) return '<span class="tk-badge b-done">✅ ตรง</span>';
+    return '<span style="color:#B6BECC">—</span>';
+  }
+  window.wgValueCell=wgValueCell;
+
   function wgTableHtml(rows, tab){
     var shown=wgFilter(rows, tab);
     var cls={matched:'b-done',nocert:'b-review',reversal:'b-new'};
@@ -6715,6 +6730,9 @@
         '<td class="ta-c dt-nw">'+(r.sysMatch
           ? '<span class="tk-badge b-done">✅ มี</span>'
           : '<span class="tk-badge b-review">— ไม่มี</span>')+'</td>'+
+        /* มูลค่าตรงไหม — ภาษีตรงอย่างเดียวไม่พอ ฐานเงินได้ต้องตรงด้วย
+           ต่าง = เอกสารฝั่งใดฝั่งหนึ่งผิด ต้องตามให้ลูกค้าแก้ใบ */
+        '<td class="ta-c dt-nw">'+wgValueCell(r)+'</td>'+
         '<td class="dt-nw">'+esc(r.matchNo||'—')+'</td>'+
         '<td><input class="wg-note" value="'+esc(r.note||'')+'" placeholder="บันทึก…" '+
           'onchange="wgNote('+r.row+',this.value)"></td>'+
@@ -6724,8 +6742,9 @@
       {label:'วันที่ GL',cls:'dt-nw',w:'8%'},{label:'สมุด',cls:'dt-nw',w:'8%'},
       {label:'เลขที่เอกสาร GL',cls:'dt-nw',w:'12%'},{label:'ผู้จ่าย / คำอธิบาย'},
       {label:'เดบิต (Dr)',cls:'ta-r',w:'8%'},{label:'เครดิต (Cr)',cls:'ta-r',w:'8%'},
-      {label:'สถานะ',cls:'ta-c dt-nw',w:'12%'},{label:'ในระบบ',cls:'ta-c dt-nw',w:'8%'},
-      {label:'เลขที่ใบ 50 ทวิ',cls:'dt-nw',w:'10%'},{label:'หมายเหตุ',w:'11%'}],
+      {label:'สถานะ',cls:'ta-c dt-nw',w:'11%'},{label:'ในระบบ',cls:'ta-c dt-nw',w:'7%'},
+      {label:'มูลค่า',cls:'ta-c dt-nw',w:'10%'},
+      {label:'เลขที่ใบ 50 ทวิ',cls:'dt-nw',w:'9%'},{label:'หมายเหตุ',w:'10%'}],
       body?[body]:[], '', 'ยังไม่มีรายการ GL ในปีนี้ — กด "นำเข้าไฟล์ GL" ด้านบนค่ะ');
   }
   window.wgTableHtml=wgTableHtml;
@@ -6735,6 +6754,7 @@
     var s=r.sum||{};
     var counts={ all:(r.rows||[]).length,
       matched:(s.matched&&s.matched.n)||0, nocert:(s.nocert&&s.nocert.n)||0,
+      valdiff:s.valueDiff||0,
       reversal:(s.reversal&&s.reversal.n)||0, notgl:(s.notInGl&&s.notInGl.n)||0 };
     var tabs=WG_TABS.map(function(t){
       return '<button class="btn '+(WG_TAB===t[0]?'btn-primary':'btn-ghost')+'" style="flex:1" '+
@@ -6791,6 +6811,9 @@
           statCard('กลับรายการ',String((s.reversal&&s.reversal.n)||0),money((s.reversal&&s.reversal.amt)||0)+' บาท')+
           statCard('ใบไม่อยู่ใน GL',String((s.notInGl&&s.notInGl.n)||0),
             money((s.notInGl&&s.notInGl.amt)||0)+' บาท',(s.notInGl&&s.notInGl.n)?'ds-warn':'')+
+          statCard('มูลค่าไม่ตรง',String(s.valueDiff||0),
+            (s.valueDiff?'ต้องตรวจเอกสารและให้ลูกค้าแก้ใบ':'ตรงทุกใบที่เทียบได้'),
+            s.valueDiff?'ds-warn':'')+
         '</div>'+
         /* 🔴 Tie-out คือด่านตรวจว่าตัวเลขยังเชื่อถือได้ — ไม่เท่ากันต้องเห็นทันที ไม่ใช่ซ่อน */
         '<div class="m-hint" style="margin:0 0 12px;'+
@@ -6854,7 +6877,8 @@
     callBusy('กำลังจับคู่ใหม่…', jsonpPost({action:'waWhtGlRematch',uid:UID,year:WG_YEAR,entity:WG_ENT}), 'จับคู่แล้ว')
       .then(function(r){
         if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; }
-        toast('🔍 มีใบ '+r.matched+' · ตามเก็บ '+r.nocert+' · มีในระบบ '+(r.inSys||0));
+        toast('🔍 มีใบ '+r.matched+' · ตามเก็บ '+r.nocert+' · มีในระบบ '+(r.inSys||0)+
+          ((r.valueDiff||0)?(' · ⚠️ มูลค่าต่าง '+r.valueDiff):''));
         renderWhtGl();
       }).catch(function(e){ toast(e.message); });
   }
@@ -20776,7 +20800,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260921-1954';
+  var APP_BUILD='20260921-2024';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
