@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260921-1736">
+<link rel="stylesheet" href="user.css?v=20260921-1738">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -10876,7 +10876,7 @@
   }
   /** ตารางสัญญา — ฟังก์ชันบริสุทธิ์ (ของจริงกับเทสเรียกตัวเดียวกัน) */
   function ctTableHtml(list){
-    var rows=(list||[]).map(function(c){
+    var rows=(list||[]).map(function(c,i){
       var q="'"+String(c.no).replace(/'/g,"\\'")+"'";
       var s=c.sum||{};
       var off=(c.status==='ยกเลิก');
@@ -10885,6 +10885,7 @@
       /* บรรทัดรองในเซลล์ใช้ตัวเทาเล็ก ไม่ใช่ .m-hint (ซึ่งมีพื้นเทา = กลายเป็นกล่องซ้อนในตาราง) */
       var sub='color:#8A94A6;font-size:12px;margin-top:2px';
       return '<tr'+(off?' style="opacity:.55"':'')+' class="ct-row" onclick="ctOpen('+q+')">'+
+        '<td class="dt-nw" style="color:#8A94A6">'+(i+1)+'</td>'+
         '<td><b>'+esc(c.no)+'</b>'+(off?' <span style="color:#8A94A6;font-size:12px">(ยกเลิก)</span>':'')+
           '<div style="'+sub+'">'+esc(c.title||'')+'</div></td>'+
         '<td>'+esc(custShowName(c.customer)||'')+'</td>'+
@@ -10895,10 +10896,10 @@
         '</tr>';
     }).join('');
     return '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl ct-tbl">'+
-      '<colgroup><col style="width:26%"><col style="width:22%"><col style="width:20%">'+
-      '<col style="width:14%"><col style="width:18%"></colgroup>'+
-      '<thead><tr><th>เลขที่ / เรื่อง</th><th>ลูกค้า</th><th>งวด × ยอด</th><th>งวดแรก</th><th>สถานะ</th></tr></thead>'+
-      '<tbody>'+(rows || stEmptyRow(5,'ยังไม่มีสัญญา — กดปุ่มด้านบนเพื่อสร้างใบแรกค่ะ'))+'</tbody></table></div>';
+      '<colgroup><col style="width:34px"><col style="width:25%"><col style="width:21%"><col style="width:19%">'+
+      '<col style="width:13%"><col style="width:17%"></colgroup>'+
+      '<thead><tr><th>#</th><th>เลขที่ / เรื่อง</th><th>ลูกค้า</th><th>งวด × ยอด</th><th>งวดแรก</th><th>สถานะ</th></tr></thead>'+
+      '<tbody>'+(rows || stEmptyRow(6,'ยังไม่มีสัญญา — กดปุ่มด้านบนเพื่อสร้างใบแรกค่ะ'))+'</tbody></table></div>';
   }
   /** ค้นหาในสัญญาที่โหลดมาแล้ว (ไม่ยิงคำขอใหม่ทุกตัวอักษร — เหมือนหน้ารายรับ) */
   var CT_FIND='';
@@ -12425,14 +12426,17 @@
     // ทุกคอลัมน์เป็น % (รวม 100) → ตารางพอดีจอทุกขนาด · จอแคบกว่า min-width ค่อยเลื่อนแนวนอน
     // (ผสม px กับ % แล้วจอกลาง ๆ คอลัมน์ "เรื่อง" จะโดนบีบจนตัวอักษรเรียงลงแนวตั้ง)
     // ⚠️ ปล่อย "เรื่อง" ไม่ระบุความกว้าง — ให้กินที่ที่เหลือ ผลรวมจะไม่มีทางเกิน 100% (ไม่เกิดแถบเลื่อนแนวนอน)
-    var cols=[{label:'เลขที่',cls:'dt-nw',w:'14%'},{label:'วันที่',cls:'dt-nw',w:'9%'},{label:'ลูกค้า',w:'16%'},
+    /* คอลัมน์ลำดับ — พี่กี้ขอให้ทุกหน้ามี จะได้เห็นจำนวนใบ (21 ก.ย. 69) */
+    var cols=[{label:'#',cls:'dt-nw',w:'34px'},
+      {label:'เลขที่',cls:'dt-nw',w:'13%'},{label:'วันที่',cls:'dt-nw',w:'9%'},{label:'ลูกค้า',w:'16%'},
       {label:'รายละเอียด'},{label:'ยอดรวม',cls:'ta-r',w:'10%'},{label:'คงค้าง',cls:'ta-r',w:'9%'},
       {label:'สถานะ',w:'10%'},{label:'ครบกำหนด',cls:'dt-nw',w:'9%'},{label:'',w:'46px'}];
-    var rows=docs.map(function(d){
+    var rows=docs.map(function(d,i){
       SALES_BYNO[d.no]=d;
       var due=d.dueDate?fmtDate(d.dueDate):'—';
       var overdue=(d.balance>0 && d.dueDate && new Date(d.dueDate)<new Date());
       return '<tr>'+
+        '<td class="dt-nw" style="color:#8A94A6">'+(i+1)+'</td>'+
         '<td class="dt-nw">'+esc(d.no)+(d.refNo?'<br><span style="color:#8A94A6;font-size:11px">↩ '+esc(d.refNo)+'</span>':'')+'</td>'+
         '<td class="dt-nw">'+esc(d.docDate?fmtDate(d.docDate):'-')+'</td>'+
         '<td>'+esc(custShowName(d.customer)||'-')+'</td>'+
@@ -12448,7 +12452,7 @@
     });
     // ยอดรวมท้ายตาราง: ใบลดหนี้หักออก (ไม่งั้นยอดที่พี่เห็นบวมกว่าที่ออกบิลจริง)
     var sum=docs.reduce(function(a,d){ var v=Number(d.total)||0; return a+(d.kind==='CN'?-v:v); },0);
-    var total=docs.length>1?'<tr class="tax-total"><td colspan="4" style="text-align:right">รวม '+docs.length+' ใบ</td>'+
+    var total=docs.length>1?'<tr class="tax-total"><td colspan="5" style="text-align:right">รวม '+docs.length+' ใบ</td>'+
       '<td class="dt-amt">'+money(sum)+'</td><td colspan="4"></td></tr>':'';
     box.innerHTML=dtTable(cols, rows, total, 'ยังไม่มีเอกสารในหมวดนี้');
   }
@@ -20187,7 +20191,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260921-1736';
+  var APP_BUILD='20260921-1738';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
