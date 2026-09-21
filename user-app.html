@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260921-0915">
+<link rel="stylesheet" href="user.css?v=20260921-0932">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1270,7 +1270,10 @@
   /* ใบรออนุมัติ — กดแถวแล้วไปหน้าที่อนุมัติได้เลย */
   /* แถวล่าง: เงินสด/เงินฝาก คู่กับ ใบรออนุมัติ (พี่กี้ขอ 20 ก.ย. 69)
      จอแคบซ้อนลงเป็นแถวเดียว */
-  .bz-row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:stretch}
+  /* แถวนี้อยู่เหนืองบกำไรขาดทุน แต่ต้องดู "แยกก้อน" ไม่ใช่ต่อเนื่องกัน (พี่กี้ 21 ก.ย. 69)
+     → เว้นระยะใต้แถวให้ชัด + เส้นคั่นจาง ๆ */
+  .bz-row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:stretch;
+    margin-bottom:26px;padding-bottom:22px;border-bottom:1px solid #DDE6F2}
   .bz-row2 .pnl{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:16px;height:100%}
   /* บัญชีที่ยอด 0 หรือติดลบ — ไม่มีชิ้นในวง แต่ต้องเห็นในรายการ */
   .bz-lg .am.zero{color:var(--muted);font-weight:400}
@@ -14099,6 +14102,13 @@
   var BIZ_YEAR = 0, BIZ_MODE = 'year';
 
   /** ย่อจำนวนเงินให้พอใส่แกนกราฟ (1,250,000 → 1.3ล. · 45,000 → 45พ.) */
+  /* 🔴 21 ก.ย. 69 พี่กี้เคาะ: กราฟและวงเงินสดเขียนตัวเลข "เต็ม" ทุกที่
+     (เดิมย่อเป็น 14พ. / 1.2ล. แล้วพี่ต้องแปลในหัวทุกครั้งว่าหน่วยคืออะไร)
+     bzShort ยังอยู่เพราะที่อื่นเรียกใช้ — แต่กราฟในหน้านี้ใช้ bzFull แล้ว */
+  function bzFull(n){ return Math.round(Number(n)||0).toLocaleString('th-TH'); }
+  /** ความกว้างโดยประมาณของข้อความในภาพ SVG (ตัวเลข+จุลภาค) — ใช้กะช่องไฟของแกน */
+  function bzTxtW(txt, fs){ return String(txt).length * fs * 0.58; }
+
   function bzShort(n){
     n = Number(n) || 0;
     var a = Math.abs(n);
@@ -14126,16 +14136,17 @@
        = เหลือขอบว่างซ้าย-ขวา และตัวหนังสือหดตามสัดส่วน (พี่กี้เห็นจากหน้าจริง 21 ก.ย. 69)
        ขนาดจริงส่งมาจาก bizFitCharts() ที่วัดกล่องหลังวาดเสร็จ · ค่าตั้งต้นไว้ใช้ก่อนวัด */
     W = W || 440; H = H || 210;
-    var PL=50,PR=8,PT=14,PB=28;
     var mx=1; rows.forEach(function(r){ mx=Math.max(mx,r.income,r.outgo); });
     var top=Math.max(1,Math.ceil(mx/50000)*50000);
+    /* ช่องซ้ายต้องกว้างพอสำหรับเลขเต็มที่ยาวที่สุดบนแกน (เช่น 1,500,000) */
+    var PL=Math.ceil(bzTxtW(bzFull(top),11.5))+14,PR=8,PT=14,PB=28;
     function x(i){ return PL+(W-PL-PR)*(rows.length>1?i/(rows.length-1):0.5); }
     function y(v){ return PT+(H-PT-PB)*(1-v/top); }
     function pts(k){ return rows.map(function(r,i){ return x(i)+','+y(r[k]); }).join(' '); }
     var grid=[0,0.25,0.5,0.75,1].map(function(f){
       var v=top*f;
       return '<line x1="'+PL+'" x2="'+(W-PR)+'" y1="'+y(v)+'" y2="'+y(v)+'" stroke="#E8EDF4"/>'+
-        '<text x="'+(PL-8)+'" y="'+(y(v)+4)+'" text-anchor="end" font-size="11.5" fill="#8A93A5">'+bzShort(v)+'</text>';
+        '<text x="'+(PL-8)+'" y="'+(y(v)+4)+'" text-anchor="end" font-size="11.5" fill="#8A93A5">'+bzFull(v)+'</text>';
     }).join('');
     function dots(k,c){ return rows.map(function(r,i){
       return '<circle cx="'+x(i)+'" cy="'+y(r[k])+'" r="3.2" fill="#fff" stroke="'+c+'" stroke-width="2"/>'; }).join(''); }
@@ -14150,22 +14161,27 @@
   /** กราฟแท่ง กำไร/(ขาดทุน) รายเดือน — เดือนที่ขาดทุนแท่งชี้ลง */
   function bzBars(rows, W, H){
     W = W || 440; H = H || 190;
-    var PL=50,PR=8,PT=16,PB=28;
     var mx=1; rows.forEach(function(r){ mx=Math.max(mx,Math.abs(r.profit)); });
     var top=Math.max(1,Math.ceil(mx/20000)*20000);
+    var PL=Math.ceil(bzTxtW('-'+bzFull(top),11.5))+14,PR=8,PT=16,PB=28;
     var zone=H-PT-PB, zero=PT+zone/2;
     var bw=(W-PL-PR)/rows.length*0.52;
     function x(i){ return PL+(W-PL-PR)*((i+0.5)/rows.length); }
     function y(v){ return zero-(zone/2)*(v/top); }
     var grid=[top,top/2,0,-top/2,-top].map(function(v){
       return '<line x1="'+PL+'" x2="'+(W-PR)+'" y1="'+y(v)+'" y2="'+y(v)+'" stroke="'+(v===0?'#C9D3E0':'#E8EDF4')+'"/>'+
-        '<text x="'+(PL-8)+'" y="'+(y(v)+4)+'" text-anchor="end" font-size="11.5" fill="#8A93A5">'+bzShort(v)+'</text>';
+        '<text x="'+(PL-8)+'" y="'+(y(v)+4)+'" text-anchor="end" font-size="11.5" fill="#8A93A5">'+bzFull(v)+'</text>';
     }).join('');
+    /* ป้ายบนแท่งเป็นตัวเลขเต็ม — ช่องต่อเดือนแคบ จึงย่อขนาดตัวอักษรให้พอดีช่อง
+       (ไม่ย่อตัวเลขเป็น 44พ. อีกแล้ว ตามที่พี่กี้เคาะ) */
+    var slot=(W-PL-PR)/rows.length;
     var bars=rows.map(function(r,i){
       if(!r.has) return '';
       var up=r.profit>=0, hh=Math.max(1.5,Math.abs(y(r.profit)-zero));
+      var lb=bzFull(r.profit), fs=11;
+      while(fs>7 && bzTxtW(lb,fs)>slot-2) fs-=0.5;
       return '<rect x="'+(x(i)-bw/2)+'" y="'+(up?zero-hh:zero)+'" width="'+bw+'" height="'+hh+'" rx="3" fill="'+(up?'#1B9E5A':'#E0514B')+'"/>'+
-        '<text x="'+x(i)+'" y="'+(up?zero-hh-5:zero+hh+12)+'" text-anchor="middle" font-size="11" fill="'+(up?'#0F7B3E':'#B23B3B')+'" font-weight="700">'+bzShort(r.profit)+'</text>';
+        '<text x="'+x(i)+'" y="'+(up?zero-hh-5:zero+hh+12)+'" text-anchor="middle" font-size="'+fs+'" fill="'+(up?'#0F7B3E':'#B23B3B')+'" font-weight="700">'+lb+'</text>';
     }).join('');
     return '<svg viewBox="0 0 '+W+' '+H+'" width="100%" height="'+H+'" role="img" aria-label="กราฟกำไรรายเดือน">'+grid+bars+
       rows.map(function(r,i){ return '<text x="'+x(i)+'" y="'+(H-8)+'" text-anchor="middle" font-size="11.5" fill="#8A93A5">'+esc(bzMon(r.ym))+'</text>'; }).join('')+
@@ -14208,8 +14224,12 @@
     var ci = 0, color = {};
     pos.forEach(function(it){ color[it.name] = BZ_PIE[ci++ % BZ_PIE.length]; });
     return '<div class="bz-donut"><svg viewBox="0 0 180 180" width="180" height="180" role="img" aria-label="สัดส่วนเงินแต่ละบัญชี">'+svg+
-      '<text x="90" y="84" text-anchor="middle" font-size="11" fill="#8A93A5">เงินทั้งหมด</text>'+
-      '<text x="90" y="104" text-anchor="middle" font-size="16" font-weight="800" fill="#1b2130">'+esc(bzShort(total))+'</text></svg>'+
+      '<text x="90" y="80" text-anchor="middle" font-size="11" fill="#8A93A5">เงินทั้งหมด</text>'+
+      /* ยอดเต็มมีจุลภาค — ย่อขนาดเองถ้ายาวเกินวงใน (ยอดหลักล้านก็ยังอยู่ในวง) */
+      '<text x="90" y="101" text-anchor="middle" font-size="'+
+        Math.min(17, Math.max(10, 84/Math.max(1,bzTxtW(bzFull(total),1))))+
+        '" font-weight="800" fill="#1b2130">'+esc(bzFull(total))+'</text>'+
+      '<text x="90" y="117" text-anchor="middle" font-size="10.5" fill="#8A93A5">บาท</text></svg>'+
       '<div class="bz-leg">'+items.map(function(it){
         var neg = (Number(it.amt)||0) <= 0;
         return '<div class="bz-lg"><span class="dot" style="background:'+(neg?'#C2CAD6':color[it.name])+'"></span>'+
@@ -19011,7 +19031,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260921-0915';
+  var APP_BUILD='20260921-0932';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
