@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260921-2108">
+<link rel="stylesheet" href="user.css?v=20260921-2136">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -722,18 +722,6 @@
   /* 2 ช่องต่อแถวในฟอร์มใบ 50 ทวิ — จอแคบยุบเป็นช่องละแถวเอง */
   .wf-row{ display:grid; grid-template-columns:1fr 1fr; gap:0 12px; }
   @media (max-width:520px){ .wf-row{ grid-template-columns:1fr; } }
-  /* การ์ดตัวเลขหน้ากระทบยอด GL — 🔴 สีตาม "ความหมาย" ไม่ใช่ตามลำดับการ์ด
-     ของเดิมสีมาจาก nth-child ทำให้การ์ด "มูลค่าไม่ตรง" ได้สีเขียวซึ่งอ่านว่าดี
-     และต้องเป็นสีชุดเดียวกับกราฟ ไม่งั้นคนอ่านต้องแปลสองรอบ (พี่กี้ทัก 21 ก.ย. 69) */
-  .ds-grid.wg-stats > .ds-stat{ background:#F1F4F9; }
-  .ds-grid.wg-stats > .ds-stat .ds-vl{ color:#41506B; }
-  .ds-grid.wg-stats > .ds-stat.s-ok{ background:#E3F5EA; }
-  .ds-grid.wg-stats > .ds-stat.s-ok .ds-vl{ color:#1E9E5A; }
-  .ds-grid.wg-stats > .ds-stat.s-wait{ background:#FCF1DF; }
-  .ds-grid.wg-stats > .ds-stat.s-wait .ds-vl{ color:#C8730B; }
-  .ds-grid.wg-stats > .ds-stat.s-bad{ background:#FBEAE7; }
-  .ds-grid.wg-stats > .ds-stat.s-bad .ds-vl{ color:#C0392B; }
-
   /* กราฟภาพรวมหน้ากระทบยอด GL — ซ้ายแคบ ขวากว้าง (แท่ง 12 เดือนต้องการที่) */
   .wg-charts{ display:grid; gap:14px; grid-template-columns:minmax(0,340px) minmax(0,1fr); margin:0 0 14px; }
   .wg-card{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:16px 18px;
@@ -745,12 +733,23 @@
   .wg-donut{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
   .wg-donut svg{ width:150px; height:150px; flex:none; }
   .wg-side{ flex:1; min-width:150px; display:flex; flex-direction:column; gap:7px; }
+  /* กล่องรายละเอียดใต้/ข้างโดนัท — ตัวเลขใหญ่อ่านจากระยะไกลได้ */
+  .wg-box{ border-radius:12px; padding:10px 13px; display:flex; flex-direction:column; gap:2px; }
+  .wg-box span{ font-size:12.5px; color:#5B6472; }
+  .wg-box b{ font-size:17px; font-variant-numeric:tabular-nums; }
+  .wg-box.ok{ background:#E6F5EC; } .wg-box.ok b{ color:#159A5B; }
+  .wg-box.wait{ background:#EFEAFC; } .wg-box.wait b{ color:#7A55D6; }
+  .wg-box.tot{ border:1px solid var(--line); }
+  .wg-box.tot b{ color:#0F1826; font-size:19px; }
+  .wg-box em{ font-style:normal; font-size:12px; color:#B23B3B; line-height:1.5; margin-top:3px; }
+  .wg-box em u{ text-decoration:none; font-weight:700; }
+  .wg-box em.fine{ color:#159A5B; }
   .wg-row{ display:flex; justify-content:space-between; gap:8px; font-size:12.5px; color:#5B6472;
     padding:7px 10px; border-radius:9px; }
   .wg-row b{ font-variant-numeric:tabular-nums; }
-  .wg-row.ok{ background:#E3F5EA; color:#146B3D; }
-  .wg-row.wait{ background:#FCF1DF; color:#8A5710; }
-  .wg-card .wg-row.ok b{ color:#1E9E5A; } .wg-card .wg-row.wait b{ color:#C8730B; }
+  .wg-row.ok{ background:#E6F5EC; color:#146B3D; }
+  .wg-row.wait{ background:#EFEAFC; color:#5B3EA8; }
+  .wg-card .wg-row.ok b{ color:#159A5B; } .wg-card .wg-row.wait b{ color:#7A55D6; }
   .wg-warn{ font-size:12px; color:#B23B3B; background:#FBEAE7; border-radius:9px; padding:8px 10px; line-height:1.5; }
   .wg-okmsg{ font-size:12px; color:#1E9E5A; padding:4px 2px; }
   .wg-lg{ display:flex; gap:14px; font-size:12px; color:#5B6472; margin:0 0 6px; }
@@ -6786,8 +6785,9 @@
   /* ═══ กราฟภาพรวม (พี่กี้เลือก 21 ก.ย. 69: ซ้าย=ความคืบหน้า · ขวา=รายเดือน) ═══
      🔴 ฟังก์ชันบริสุทธิ์ — ของจริงกับเทส/พรีวิวเรียกตัวเดียวกัน
      สีมาจากตัวแปรธีม (ห้องลูกค้าเป็นโทนม่วง ฮาร์ดโค้ดแล้วกราฟหลุดธีม) */
-  /* สีชุดเดียวกับการ์ดตัวเลขด้านบน — เขียว = ได้ใบแล้ว · ส้ม = ยังต้องตาม */
-  var WG_C_OK='#1E9E5A', WG_C_WAIT='#C8730B';
+  /* 🔴 สีในกราฟสื่อความหมายตรง ๆ (พี่กี้เคาะ 21 ก.ย. 69): เขียว = ได้ใบแล้ว · ม่วง = ยังไม่ได้
+     ใช้โทนเดียวกับการ์ด "ยังไม่มีใบ" ของระบบ (--t-purple-i) ไม่ใช่ส้มซึ่งซ้ำกับกลับรายการ */
+  var WG_C_OK='#159A5B', WG_C_WAIT='#7A55D6';
 
   /** วงแหวนความคืบหน้า — ตามใบไปได้กี่ % ของยอดที่บัญชีลงไว้ */
   function wgDonutHtml(s){
@@ -6810,20 +6810,25 @@
           '<text x="80" y="97" text-anchor="middle" font-size="11" fill="#7E8CA3">ของยอดที่ลงบัญชี</text>'+
         '</svg>'+
         '<div class="wg-side">'+
-          '<div class="wg-row ok"><span>ได้ใบแล้ว · '+((s.matched&&s.matched.n)||0)+' รายการ</span>'+
-            '<b>'+money(okAmt)+'</b></div>'+
-          '<div class="wg-row wait"><span>ยังไม่มีใบ · '+((s.nocert&&s.nocert.n)||0)+' รายการ</span>'+
-            '<b>'+money(waitAmt)+'</b></div>'+
-          /* 🔴 ตัวเลขที่ทำให้คนลงมือตาม: ไม่ได้ใบ = เครดิตภาษีหายจริง ๆ */
-          (waitAmt>0
-            ? '<div class="wg-warn">ถ้าตามใบไม่ทันก่อนยื่น ภ.ง.ด.50 <b>เครดิตภาษีหาย '+money(waitAmt)+' บาท</b></div>'
-            : '<div class="wg-okmsg">ได้ใบครบทุกรายการแล้ว 🎉</div>')+
+          /* กล่องรายละเอียด — ตัวเลขใหญ่อ่านได้จากระยะไกล (แบบที่พี่กี้ดูจากต้นแบบ) */
+          '<div class="wg-box ok"><span>ได้ใบแล้ว · '+((s.matched&&s.matched.n)||0)+' ฉบับ</span>'+
+            '<b>'+money(okAmt)+' บาท</b></div>'+
+          '<div class="wg-box wait"><span>ยังไม่มีใบ · '+((s.nocert&&s.nocert.n)||0)+' รายการ</span>'+
+            '<b>'+money(waitAmt)+' บาท</b></div>'+
+          '<div class="wg-box tot"><span>ยอดที่บัญชีลงไว้ทั้งปี (Dr)</span>'+
+            '<b>'+money(tot)+'</b>'+
+            /* 🔴 ตัวเลขที่ทำให้คนลงมือตาม: ไม่ได้ใบ = เครดิตภาษีหายจริง ๆ */
+            (waitAmt>0
+              ? '<em>ถ้าตามใบไม่ทันก่อนยื่น ภ.ง.ด.50<br><u>เครดิตภาษีหาย '+money(waitAmt)+' บาท</u></em>'
+              : '<em class="fine">ได้ใบครบทุกรายการแล้ว 🎉</em>')+
+          '</div>'+
         '</div>'+
       '</div></div>';
   }
   window.wgDonutHtml=wgDonutHtml;
 
   /** แท่งรายเดือน — เดือนไหนใบยังมาไม่ครบ */
+  function round2(n){ return Math.round((Number(n)||0)*100)/100; }
   function wgBarsHtml(s){
     s=s||{};
     var mm=s.byMonth||[];
@@ -6838,14 +6843,18 @@
     /* viewBox กว้างขึ้น = ทุกอย่างถูกย่อตอนวาดจริง (พี่กี้ว่าเดือนใหญ่ไป 21 ก.ย. 69)
        ความสูงคุมด้วย CSS อีกชั้น ไม่ให้การ์ดยืดตามความกว้างจอ */
     var W=900, H=196, base=152, x0=104, bw=44, gap=22;
-    var bars='', labs='';
+    var bars='', labs='', tops='';
     for(var i=0;i<12;i++){
       var m=mm[i]||{matched:0,nocert:0};
       var x=x0+i*(bw+gap);
-      var ho=Math.round((m.matched||0)/max*120);
-      var hw=Math.round((m.nocert||0)/max*120);
+      var ho=Math.round((m.matched||0)/max*112);
+      var hw=Math.round((m.nocert||0)/max*112);
       if(ho>0) bars+='<rect x="'+x+'" y="'+(base-ho)+'" width="'+bw+'" height="'+ho+'" rx="3" fill="'+WG_C_OK+'"/>';
       if(hw>0) bars+='<rect x="'+x+'" y="'+(base-ho-hw)+'" width="'+bw+'" height="'+hw+'" rx="3" fill="'+WG_C_WAIT+'"/>';
+      /* ยอดรวมของเดือนบนหัวแท่ง — อ่านตัวเลขได้เลยไม่ต้องกะจากความสูง */
+      var tv=round2(m.matched||0)+round2(m.nocert||0);
+      if(tv>0) tops+='<text x="'+(x+bw/2)+'" y="'+(base-ho-hw-7)+'" text-anchor="middle" '+
+        'font-size="12" font-weight="600" fill="#41506B">'+money(tv)+'</text>';
       labs+='<text x="'+(x+bw/2)+'" y="'+(base+18)+'" text-anchor="middle" font-size="13" fill="#7E8CA3">'+names[i]+'</text>';
     }
     return '<div class="wg-card"><div class="wg-h">📅 ภาษีที่ลงบัญชีรายเดือน '+
@@ -6853,12 +6862,19 @@
       '<div class="wg-lg"><span><i style="background:'+WG_C_OK+'"></i>มีใบแล้ว</span>'+
       '<span><i style="background:'+WG_C_WAIT+'"></i>ยังไม่มีใบ</span></div>'+
       '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="ภาษีที่ลงบัญชีรายเดือน">'+
-        '<line x1="'+x0+'" y1="'+base+'" x2="'+(W-10)+'" y2="'+base+'" stroke="#DCE3EE"/>'+
-        '<line x1="'+x0+'" y1="30" x2="'+(W-10)+'" y2="30" stroke="#EDF1F7"/>'+
-        '<line x1="'+x0+'" y1="90" x2="'+(W-10)+'" y2="90" stroke="#EDF1F7"/>'+
-        '<text x="'+(x0-8)+'" y="34" text-anchor="end" font-size="12.5" fill="#7E8CA3">'+money(max)+'</text>'+
-        '<text x="'+(x0-8)+'" y="'+(base+4)+'" text-anchor="end" font-size="12.5" fill="#7E8CA3">0</text>'+
-        bars+labs+
+        /* เส้นกริด 4 ขั้น + ป้ายยอดข้างแกน — ยังไม่มีข้อมูลก็ไม่ต้องโชว์เพดานปลอม
+           (เคยขึ้น "1.00" ซึ่งไม่ใช่ยอดจริง พี่กี้ถามว่าคืออะไร 21 ก.ย. 69) */
+        (function(){
+          var g='';
+          for(var k=0;k<=4;k++){
+            var yy=base-Math.round(112*k/4);
+            g+='<line x1="'+x0+'" y1="'+yy+'" x2="'+(W-10)+'" y2="'+yy+'" stroke="'+(k?'#EDF1F7':'#DCE3EE')+'"/>';
+            if(!empty||k===0) g+='<text x="'+(x0-8)+'" y="'+(yy+4)+'" text-anchor="end" '+
+              'font-size="12" fill="#7E8CA3">'+(k?money(max*k/4):'0')+'</text>';
+          }
+          return g;
+        })()+
+        bars+tops+labs+
       '</svg>'+
       (empty?'<div class="m-hint" style="margin:8px 0 0">ยังไม่มีรายการ GL ในช่วงนี้ — '+
         'กด "นำเข้าไฟล์ GL" แล้วแท่งจะขึ้นให้เองค่ะ</div>':'')+
@@ -6920,20 +6936,18 @@
       var h='<div class="bc"><button class="lnk" onclick="switchView(&quot;taxhub&quot;)">รายงานภาษี</button> › '+
         'กระทบยอด 50 ทวิ ↔ GL</div>'+
         wiTabs('gl')+
-        /* สีการ์ดสื่อความหมาย: เขียว=เรียบร้อย · ส้ม=ต้องตาม · แดง=ต้องแก้ · เทา=ข้อมูลเฉย ๆ */
-        '<div class="ds-grid wg-stats">'+
+        /* การ์ดตัวเลขใช้ชุดสีมาตรฐานของระบบ (ตามลำดับ) เหมือนหน้าอื่นทุกหน้า */
+        '<div class="ds-grid">'+
           statCard('ยอด GL (Dr) รวม',money(s.debit||0),(s.n||0)+' รายการ')+
-          statCard('มีใบ 50 ทวิ',String((s.matched&&s.matched.n)||0),
-            money((s.matched&&s.matched.amt)||0)+' บาท','s-ok')+
+          statCard('มีใบ 50 ทวิ',String((s.matched&&s.matched.n)||0),money((s.matched&&s.matched.amt)||0)+' บาท')+
           statCard('ยังไม่มีใบ (ตามเก็บ)',String((s.nocert&&s.nocert.n)||0),
-            money((s.nocert&&s.nocert.amt)||0)+' บาท',(s.nocert&&s.nocert.n)?'s-wait':'s-ok')+
-          statCard('กลับรายการ',String((s.reversal&&s.reversal.n)||0),
-            money((s.reversal&&s.reversal.amt)||0)+' บาท')+
+            money((s.nocert&&s.nocert.amt)||0)+' บาท')+
+          statCard('กลับรายการ',String((s.reversal&&s.reversal.n)||0),money((s.reversal&&s.reversal.amt)||0)+' บาท')+
           statCard('ใบไม่อยู่ใน GL',String((s.notInGl&&s.notInGl.n)||0),
-            money((s.notInGl&&s.notInGl.amt)||0)+' บาท',(s.notInGl&&s.notInGl.n)?'s-wait':'s-ok')+
+            money((s.notInGl&&s.notInGl.amt)||0)+' บาท',(s.notInGl&&s.notInGl.n)?'ds-warn':'')+
           statCard('มูลค่าไม่ตรง',String(s.valueDiff||0),
             (s.valueDiff?'ต้องตรวจเอกสารและให้ลูกค้าแก้ใบ':'ตรงทุกใบที่เทียบได้'),
-            s.valueDiff?'s-bad':'s-ok')+
+            s.valueDiff?'ds-warn':'')+
         '</div>'+
         /* 🔴 Tie-out คือด่านตรวจว่าตัวเลขยังเชื่อถือได้ — ไม่เท่ากันต้องเห็นทันที ไม่ใช่ซ่อน */
         '<div class="m-hint" style="margin:0 0 12px;'+
@@ -20923,7 +20937,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260921-2108';
+  var APP_BUILD='20260921-2136';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
