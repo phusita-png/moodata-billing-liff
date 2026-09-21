@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260921-1929">
+<link rel="stylesheet" href="user.css?v=20260921-1942">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -6734,9 +6734,19 @@
     }).join('');
     var box=$('wgBody'); if(!box) return;
     /* แถบเครื่องมืออยู่ใต้แท็บ เหมือนต้นแบบ — ค้นหา · เรียง · CSV (พี่กี้ 21 ก.ย. 69) */
+    /* ปี/บริษัทย้ายมาอยู่ในแถบเครื่องมือ — แถบเต็มความกว้างด้านบนเอาออกแล้ว (พี่กี้ 21 ก.ย. 69) */
+    var yrs=[], nb=new Date().getFullYear()+543;
+    for(var yy=nb; yy>=nb-3; yy--) yrs.push(yy);
     var tools='<div class="lst-tools" style="margin:0 0 12px;width:100%">'+
       '<input class="s-find" style="flex:1" id="wgFind" placeholder="🔍 ค้นหา ผู้จ่าย / เลขที่เอกสาร / วันที่ …" '+
         'value="'+esc(WG_FIND)+'" oninput="wgSetFind(this.value)">'+
+      '<select id="wgYear" onchange="wgSetYear(this.value)"><option value="">ทุกปี</option>'+
+        yrs.map(function(y){ return '<option value="'+y+'"'+(String(y)===String(WG_YEAR)?' selected':'')+'>ปีภาษี '+y+'</option>'; }).join('')+
+      '</select>'+
+      (((r.entities||[]).length>1)
+        ? ('<select id="wgEnt" onchange="wgSetEnt(this.value)"><option value="">ทุกบริษัท</option>'+
+           (r.entities||[]).map(function(e){ return '<option value="'+esc(e.code)+'"'+(e.code===WG_ENT?' selected':'')+'>'+esc(e.name)+'</option>'; }).join('')+
+           '</select>') : '')+
       '<button class="btn btn-ghost" onclick="wgSetSort()">'+(WG_SORT==='new'?'🗓️ ใหม่→เก่า':'🗓️ เก่า→ใหม่')+'</button>'+
       '<button class="btn btn-ghost" onclick="wgCsv()">↓ CSV (ตามที่กรอง)</button>'+
       '</div>';
@@ -6764,12 +6774,6 @@
       var h='<div class="bc"><button class="lnk" onclick="switchView(&quot;taxhub&quot;)">รายงานภาษี</button> › '+
         'กระทบยอด 50 ทวิ ↔ GL</div>'+
         wiTabs('gl')+
-        '<div class="ds-sel"><select id="wgYear" onchange="wgSetYear(this.value)">'+
-        '<option value="">ทุกปี</option>'+
-        years.map(function(y){ return '<option value="'+y+'"'+(String(y)===String(WG_YEAR)?' selected':'')+'>ปีภาษี '+y+'</option>'; }).join('')+
-        '</select><select id="wgEnt" onchange="wgSetEnt(this.value)"><option value="">ทุกบริษัท</option>'+
-        (r.entities||[]).map(function(e){ return '<option value="'+esc(e.code)+'"'+(e.code===WG_ENT?' selected':'')+'>'+esc(e.name)+'</option>'; }).join('')+
-        '</select></div>'+
         '<div class="ds-grid">'+
           statCard('ยอด GL (Dr) รวม',money(s.debit||0),(s.n||0)+' รายการ')+
           statCard('มีใบ 50 ทวิ',String((s.matched&&s.matched.n)||0),money((s.matched&&s.matched.amt)||0)+' บาท')+
@@ -6872,12 +6876,6 @@
       var nowBE=new Date().getFullYear()+543;
       var years=[]; for(var y=nowBE;y>=nowBE-3;y--) years.push(y);
       var h='<div class="section-h">🧾 50 ทวิ ที่ลูกค้าหักเรา</div>'+
-        '<div class="ds-sel"><select id="wirYear" onchange="wirSetYear(this.value)">'+
-        '<option value="">ทุกปี</option>'+
-        years.map(function(y){ return '<option value="'+y+'"'+(String(y)===String(WIR_YEAR)?' selected':'')+'>ปีภาษี '+y+'</option>'; }).join('')+
-        '</select><select id="wirEnt" onchange="wirSetEnt(this.value)"><option value="">ทุกบริษัท</option>'+
-        (r.entities||[]).map(function(e){ return '<option value="'+esc(e.code)+'"'+(e.code===WIR_ENT?' selected':'')+'>'+esc(e.name)+'</option>'; }).join('')+
-        '</select></div>'+
         '<div class="ds-grid">'+
           statCard('ใบที่เก็บไว้',s.n+' ฉบับ','เงินได้รวม '+money(s.amount))+
           statCard('ภาษีที่เครดิตได้',money(s.tax),'ยอดนี้ใช้ตอนยื่น ภ.ง.ด.50/51')+
@@ -6897,6 +6895,14 @@
         '<div class="lst-tools">'+
           '<input class="s-find" id="wirFind" placeholder="ค้นหาผู้จ่าย / เลขที่เอกสาร" '+
             'value="'+esc(WIR_FIND)+'" oninput="wirSetFind(this.value)">'+
+          /* ปี/บริษัทอยู่ในแถบเครื่องมือเดียวกับตัวกรองอื่น (พี่กี้ 21 ก.ย. 69) */
+          '<select id="wirYear" onchange="wirSetYear(this.value)"><option value="">ทุกปี</option>'+
+            years.map(function(y){ return '<option value="'+y+'"'+(String(y)===String(WIR_YEAR)?' selected':'')+'>ปีภาษี '+y+'</option>'; }).join('')+
+          '</select>'+
+          (((r.entities||[]).length>1)
+            ? ('<select id="wirEnt" onchange="wirSetEnt(this.value)"><option value="">ทุกบริษัท</option>'+
+               (r.entities||[]).map(function(e){ return '<option value="'+esc(e.code)+'"'+(e.code===WIR_ENT?' selected':'')+'>'+esc(e.name)+'</option>'; }).join('')+
+               '</select>') : '')+
           '<select id="wirGl" onchange="wirSetGl(this.value)">'+
             ['','in','out'].map(function(k){
               var lb={ '':'สถานะ GL: ทั้งหมด', 'in':'✅ มีใน GL', 'out':'⚠️ ไม่อยู่ใน GL' }[k];
@@ -20754,7 +20760,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260921-1929';
+  var APP_BUILD='20260921-1942';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
