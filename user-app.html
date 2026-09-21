@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260921-0902">
+<link rel="stylesheet" href="user.css?v=20260921-0915">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1231,7 +1231,10 @@
   /* ขาดทุน = เปลี่ยนสีการ์ดทั้งใบ ไม่ใช่แค่ตัวเลขติดลบ — เห็นแต่ไกลว่าเดือนนี้ไม่ปกติ */
   .bz-loss{background:linear-gradient(140deg,#fbbf24,#b45309)}
   /* ซ้ายตาราง · ขวากราฟ */
-  .bz-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+  /* ขอบล่างซ้าย-ขวาต้องตรงกัน (พี่กี้ทัก 21 ก.ย. 69: "ตารางไม่สมดุล")
+     stretch = คอลัมน์สูงเท่ากัน · กล่องสุดท้ายไม่เว้นใต้ · ความสูงกราฟคำนวณใน bizFitCharts() */
+  .bz-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:stretch}
+  .bz-grid>div>.pnl:last-child{margin-bottom:0}
   .bz-grid .pnl{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:16px}
   .pnl-h{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:700;margin-bottom:12px}
   .pnl-h .sp{margin-left:auto;font-size:12px;font-weight:400;color:var(--muted)}
@@ -1239,11 +1242,11 @@
   .bz-lgd i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
   /* ตารางงบกำไรขาดทุน — จอแคบให้เลื่อนในกล่องตัวเอง ไม่ดันทั้งหน้า */
   .bz-tw{overflow-x:auto}
-  .bz-tbl{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}
-  .bz-tbl th{background:#F4F8FD;color:#44506A;font-weight:700;padding:8px 7px;
+  .bz-tbl{width:100%;border-collapse:collapse;font-size:11.5px;font-variant-numeric:tabular-nums}
+  .bz-tbl th{background:#F4F8FD;color:#44506A;font-weight:700;padding:7px 5px;
     border-bottom:1px solid #E3EAF3;font-size:11.5px;white-space:nowrap}
   .bz-tbl th.vat{background:#FFF7EC;color:#8A5A12}
-  .bz-tbl td{padding:7px 7px;border-bottom:1px solid #F1F4F9;white-space:nowrap}
+  .bz-tbl td{padding:6px 5px;border-bottom:1px solid #F1F4F9;white-space:nowrap}
   .bz-tbl td.num,.bz-tbl th.num{text-align:right}
   .bz-tbl td.mo,.bz-tbl th.mo{text-align:left;font-weight:600;color:#44506A}
   .bz-tbl td.vat{background:#FFFCF6}
@@ -1253,7 +1256,7 @@
   .bz-tbl tr.on td{background:var(--red-tint)}   /* โทนแบรนด์ของห้อง — ห้องลูกค้าเป็นม่วง */
   .bz-tbl tr.on td.vat{background:#FDF3E3}
   .bz-tbl .z{color:#C2CAD6}
-  .bz-tbl tfoot td{border-top:2px solid #D7E0EC;font-weight:800;background:#FAFCFF;padding:10px 7px}
+  .bz-tbl tfoot td{border-top:2px solid #D7E0EC;font-weight:800;background:#FAFCFF;padding:9px 5px}
   /* วงกลมเงินคงเหลือ */
   .bz-donut{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
   .bz-leg{flex:1;min-width:210px;display:flex;flex-direction:column;gap:7px}
@@ -14118,10 +14121,12 @@
   }
 
   /** กราฟเส้น รายได้ vs รายจ่าย (12 เดือน) */
-  function bzLine(rows){
-    /* 🔴 W ต้องใกล้ความกว้างจริงของกล่อง (~440px) — viewBox กว้างกว่านั้นจะถูกย่อลง
-       แล้ว font-size ในภาพหดตามสัดส่วน (เดิม 560 → ตัวเลขเดือนเหลือ ~7.5px อ่านไม่ออก) */
-    var W=440,H=210,PL=50,PR=8,PT=14,PB=28;
+  function bzLine(rows, W, H){
+    /* 🔴 viewBox ต้องเท่ากับขนาดจริงของกล่องเสมอ ไม่งั้น SVG ถูกย่อแล้วจัดกลาง
+       = เหลือขอบว่างซ้าย-ขวา และตัวหนังสือหดตามสัดส่วน (พี่กี้เห็นจากหน้าจริง 21 ก.ย. 69)
+       ขนาดจริงส่งมาจาก bizFitCharts() ที่วัดกล่องหลังวาดเสร็จ · ค่าตั้งต้นไว้ใช้ก่อนวัด */
+    W = W || 440; H = H || 210;
+    var PL=50,PR=8,PT=14,PB=28;
     var mx=1; rows.forEach(function(r){ mx=Math.max(mx,r.income,r.outgo); });
     var top=Math.max(1,Math.ceil(mx/50000)*50000);
     function x(i){ return PL+(W-PL-PR)*(rows.length>1?i/(rows.length-1):0.5); }
@@ -14143,8 +14148,9 @@
   }
 
   /** กราฟแท่ง กำไร/(ขาดทุน) รายเดือน — เดือนที่ขาดทุนแท่งชี้ลง */
-  function bzBars(rows){
-    var W=440,H=190,PL=50,PR=8,PT=16,PB=28;
+  function bzBars(rows, W, H){
+    W = W || 440; H = H || 190;
+    var PL=50,PR=8,PT=16,PB=28;
     var mx=1; rows.forEach(function(r){ mx=Math.max(mx,Math.abs(r.profit)); });
     var top=Math.max(1,Math.ceil(mx/20000)*20000);
     var zone=H-PT-PB, zero=PT+zone/2;
@@ -14215,11 +14221,10 @@
 
   /** ตารางงบกำไรขาดทุน — เดือนละแถว + แถวรวมทั้งปี */
   function bzTable(r){
-    /* 🔴 ตารางนี้กว้างเท่าการ์ด 2 ใบด้านบน (พี่กี้เคาะ 21 ก.ย. 69) และตัวหนังสือต้องใหญ่พออ่านสบาย
-       → เลขในตารางแสดง "จำนวนเต็มบาท" ไม่งั้นเนื้อล้นกรอบ 62px แล้วต้องเลื่อนแนวนอน
-       ตัวเลขเต็มสตางค์ดูได้ที่รายงานรายรับ/รายจ่าย/ภาษี ซึ่งเป็นเล่มที่ใช้ยื่นจริง */
-    function money0(v){ return (Number(v)||0).toLocaleString('th-TH',{maximumFractionDigits:0}); }
-    function neg0(v){ return (Number(v)||0) < 0 ? '('+money0(-v)+')' : money0(v); }
+    /* 🔴 ตารางกว้างเท่าการ์ด 2 ใบด้านบน และต้องแสดง "ทศนิยม 2 ตำแหน่ง" (พี่กี้เคาะ 21 ก.ย. 69
+       — ยอมลดขนาดตัวอักษรแทนการตัดสตางค์ทิ้ง) ขนาดตัวอักษรคุมที่ .bz-tbl ใน CSS */
+    function money0(v){ return money(v); }
+    function neg0(v){ return bzNeg(v); }
     function cell(v,cls){
       return '<td class="num '+(cls||'')+'">'+((Number(v)||0)===0?'<span class="z">–</span>':money0(v))+'</td>';
     }
@@ -14305,9 +14310,17 @@
         value:bzNeg(cur.profit), sub:'รายได้ − รายจ่าย'+(cur.income?(' · อัตรากำไร '+rate.toFixed(1)+'%'):'')})+
       '</div>';
 
+    /* ── เงินสด/เงินฝาก คู่กับ ใบรออนุมัติ (อยู่ข้างกัน 20 ก.ย. · ย้ายขึ้นเหนืองบกำไรขาดทุน 21 ก.ย. 69) ──
+       2 ก้อนนี้คือ "เงินที่มี" กับ "เงินที่กำลังจะออก" — อ่านคู่กันได้ความมากกว่าแยกกันอยู่ */
+    h+='<div class="bz-row2">'+
+      '<div class="pnl"><div class="pnl-h">🏦 เงินสด / เงินฝากธนาคาร<span class="sp">ณ '+esc(r.cashMonthThai)+'</span></div>'+
+      bzDonut(cash.items, cash.total)+'</div>'+
+      bzPending(r)+
+      '</div>';
+
     /* ── ซ้าย: ตารางงบ · ขวา: กราฟ 2 อัน ── */
     h+='<div class="bz-grid"><div>'+
-      '<div class="pnl"><div class="pnl-h">📑 งบกำไรขาดทุน<span class="sp">หน่วย: บาท (ปัดเศษ)</span></div>'+
+      '<div class="pnl"><div class="pnl-h">📑 งบกำไรขาดทุน<span class="sp">หน่วย: บาท</span></div>'+
       '<div class="bz-tw">'+bzTable(r)+'</div>'+
       (r.multiEntity?'<div class="m-hint" style="margin-top:10px">ห้องนี้มีหลายนิติบุคคล — คอลัมน์ภาษีเป็นยอดรวมทุกบริษัท ยื่นจริงดูที่เมนูรายงานภาษี</div>':'')+
       '</div></div><div>'+
@@ -14317,19 +14330,51 @@
       '<div class="pnl"><div class="pnl-h">📊 กำไร/(ขาดทุน) รายเดือน</div>'+bzBars(r.rows)+'</div>'+
       '</div></div>';
 
-    /* ── เงินสด/เงินฝาก คู่กับ ใบรออนุมัติ (พี่กี้ขอให้อยู่ข้างกัน 20 ก.ย. 69) ──
-       2 ก้อนนี้คือ "เงินที่มี" กับ "เงินที่กำลังจะออก" — อ่านคู่กันได้ความมากกว่าแยกกันอยู่ */
-    h+='<div class="bz-row2">'+
-      '<div class="pnl"><div class="pnl-h">🏦 เงินสด / เงินฝากธนาคาร<span class="sp">ณ '+esc(r.cashMonthThai)+'</span></div>'+
-      bzDonut(cash.items, cash.total)+'</div>'+
-      bzPending(r)+
-      '</div>';
-
     /* 🔴 21 ก.ย. 69 พี่กี้สั่งเอา 3 กล่องท้ายหน้าออก (ค้างรับ · เกินกำหนดชำระ · อนุมัติแล้วยังไม่โอน)
        ตัวเลขชุดนี้ยังอ่านได้ที่หน้า 📊 ทะเบียนลูกหนี้ และ 📊 รายงานรายจ่าย (เจ้าหนี้)
        payload ยังส่ง outstanding/overdue/todo มาเหมือนเดิม — ไม่ต้องแก้หลังบ้าน */
     return h;
   }
+
+  /* 🔴 กราฟต้องวาดด้วย "ขนาดจริงของกล่อง" — SVG ที่ viewBox ไม่ตรงขนาดจริงจะถูกย่อแล้วจัดกลาง
+     เหลือขอบว่างซ้าย-ขวา (พี่กี้เห็นจากหน้าจริง 21 ก.ย. 69) · เรียกหลังใส่ DOM แล้วเท่านั้น
+     และเป็นที่เดียวที่ทำให้ขอบล่างของคอลัมน์ขวาไปจบพร้อมตารางฝั่งซ้าย */
+  var BIZ_LAST=null, BIZ_FIT_T=null, BIZ_FIT_BOUND=false;
+  function bizFitCharts(root, r){
+    r = r || BIZ_LAST; root = root || document;
+    if(!r || !r.rows) return;
+    var g=root.querySelector('.bz-grid'); if(!g || g.children.length<2) return;
+    var left=g.children[0], right=g.children[1];
+    var pnls=right.querySelectorAll('.pnl'); if(pnls.length<2) return;
+    var s1=pnls[0].querySelector('svg'), s2=pnls[1].querySelector('svg');
+    if(!s1 || !s2) return;
+    var w=Math.max(300, Math.round(pnls[0].clientWidth-36));   /* 36 = padding ซ้าย+ขวาของ .pnl */
+    var lb=left.getBoundingClientRect(), rb=right.getBoundingClientRect();
+    var h1=210, h2=190;
+    /* 🔴 ต้องวัด "ความสูงของตาราง" ไม่ใช่ความสูงคอลัมน์ — คอลัมน์ตั้ง align-items:stretch
+       จึงสูงเท่าฝั่งที่สูงกว่าเสมอ ถ้าวัดจากคอลัมน์ กราฟจะดันตัวเองสูงขึ้นทุกรอบที่วาด
+       จอแคบ (bz-grid ยุบเป็นคอลัมน์เดียว) = ไม่ต้องยืดตามตาราง */
+    var lps=left.querySelectorAll('.pnl');
+    var target=lps.length ? (lps[lps.length-1].getBoundingClientRect().bottom - lb.top) : 0;
+    if(Math.abs(lb.top-rb.top)<4 && target>320){
+      var over=(pnls[0].offsetHeight - s1.getBoundingClientRect().height)+
+               (pnls[1].offsetHeight - s2.getBoundingClientRect().height)+14;
+      var avail=Math.round(target-over);
+      if(avail<300) avail=300;
+      h1=Math.round(avail*0.54); h2=avail-h1;
+    }
+    s1.outerHTML=bzLine(r.rows, w, h1);
+    s2.outerHTML=bzBars(r.rows, w, h2);
+    /* เก็บเศษที่เหลือ (เส้นขอบ 1px + การปัดของเบราว์เซอร์) ด้วยการวัดซ้ำรอบเดียว
+       — ชดเชยด้วยตัวเลขตายตัวจะเพี้ยนเมื่อธีม/ความละเอียดจอเปลี่ยน */
+    if(target>320){
+      var np=right.querySelectorAll('.pnl');
+      var ns=np[np.length-1].querySelector('svg');
+      var d=Math.round(np[np.length-1].getBoundingClientRect().bottom-(lb.top+target));
+      if(ns && d && Math.abs(d)<60) ns.outerHTML=bzBars(r.rows, w, Math.max(120, h2-d));
+    }
+  }
+  window.bizFitCharts=bizFitCharts;
 
   function renderBizDash(){
     skel();
@@ -14338,8 +14383,16 @@
     if(BIZ_YM) q.ym=BIZ_YM;
     jsonp(q).then(function(r){
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
-      BIZ_YEAR=r.year; BIZ_YM=r.ym; BIZ_MODE=r.mode;
+      BIZ_YEAR=r.year; BIZ_YM=r.ym; BIZ_MODE=r.mode; BIZ_LAST=r;
       $('main').innerHTML=bizHtml(r);
+      bizFitCharts(document, r);
+      if(!BIZ_FIT_BOUND){
+        BIZ_FIT_BOUND=true;
+        window.addEventListener('resize', function(){
+          clearTimeout(BIZ_FIT_T);
+          BIZ_FIT_T=setTimeout(function(){ if(VIEW==='bizdash') bizFitCharts(); }, 150);
+        });
+      }
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
   }
   function round2(n){ return Math.round((Number(n)||0)*100)/100; }
@@ -18958,7 +19011,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260921-0902';
+  var APP_BUILD='20260921-0915';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
