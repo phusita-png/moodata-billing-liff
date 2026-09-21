@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260921-2024">
+<link rel="stylesheet" href="user.css?v=20260921-2033">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -6908,7 +6908,7 @@
       var s=r.sum||{n:0,amount:0,tax:0,matched:0,unmatched:0,noFile:0,noFileTax:0};
       var nowBE=new Date().getFullYear()+543;
       var years=[]; for(var y=nowBE;y>=nowBE-3;y--) years.push(y);
-      var h='<div class="section-h">🧾 50 ทวิ ที่ลูกค้าหักเรา</div>'+
+      var h='<div class="section-h">🧾 50 ทวิที่ถูกหัก</div>'+
         '<div class="ds-grid">'+
           statCard('ใบที่เก็บไว้',s.n+' ฉบับ','เงินได้รวม '+money(s.amount))+
           statCard('ภาษีที่เครดิตได้',money(s.tax),'ยอดนี้ใช้ตอนยื่น ภ.ง.ด.50/51')+
@@ -6923,7 +6923,8 @@
 
       /* การ์ดเดียวครอบตาราง + แถบเครื่องมือ — โครงเดียวกับหน้าอื่นในระบบ (พี่กี้ 21 ก.ย. 69) */
       h+='<div class="lst-card"><div class="lst-head">'+
-        '<div class="t"><b>ทะเบียนใบที่ได้รับ <span class="doc-code">WI</span></b>'+
+        '<div class="t"><b>ทะเบียนหนังสือรับรองหัก ณ ที่จ่าย (50 ทวิที่ถูกหัก) '+
+        '<span class="doc-code">WI</span></b>'+
         '<div>ใบที่ลูกค้าออกให้เรา = หลักฐานเครดิตภาษีตอนยื่น ภ.ง.ด.50/51</div></div>'+
         '<div class="lst-tools">'+
           '<input class="s-find" id="wirFind" placeholder="ค้นหาผู้จ่าย / เลขที่เอกสาร" '+
@@ -7028,7 +7029,7 @@
     return dtTable([{label:'#',cls:'ta-c dt-nw',w:'34px'},{label:'วันที่จ่าย',cls:'dt-nw',w:'9%'},
       {label:'ผู้จ่ายเงิน',w:'20%'},{label:'เลขที่เอกสาร',cls:'dt-nw',w:'13%'},
       {label:'ประเภทเงินได้'},
-      {label:'จำนวนเงิน',cls:'ta-r',w:'10%'},{label:'ภาษีหัก',cls:'ta-r',w:'9%'},
+      {label:'จำนวนเงิน',cls:'ta-r',w:'10%'},{label:'ภาษี',cls:'ta-r',w:'9%'},
       {label:'ในระบบ',cls:'ta-c dt-nw',w:'9%'},{label:'ใน GL',cls:'ta-c dt-nw',w:'9%'},
       {label:'ไฟล์',cls:'ta-c dt-nw',w:'44px'},
       {label:'แก้ไข',cls:'ta-c dt-nw',w:'44px'}],
@@ -7045,7 +7046,7 @@
     var rows=wirApply(WIR_ALL, WIR_FIND, WIR_GL, WIR_SORT);
     if(!rows.length){ toast('ไม่มีรายการให้ดาวน์โหลดค่ะ'); return; }
     var head=['ลำดับ','วันที่จ่าย','ผู้จ่ายเงิน','เลขผู้เสียภาษี','เลขที่เอกสาร',
-              'ประเภทเงินได้','จำนวนเงิน','ภาษีหัก','ในระบบ','ใน GL','เลขที่ในทะเบียน'];
+              'ประเภทเงินได้','จำนวนเงิน','ภาษี','ในระบบ','ใน GL','เลขที่ในทะเบียน'];
     var q=function(v){ return '"'+String(v==null?'':v).replace(/"/g,'""')+'"'; };
     var lines=[head.map(q).join(',')].concat(rows.map(function(x,i){
       return [i+1,x.date,x.payer,x.payerId,x.docNo,x.incomeType,
@@ -11339,7 +11340,7 @@
         (ทำตัวที่สองเมื่อไหร่ = ข้อมูลเข้าได้ 2 ทางที่กติกาไม่ตรงกัน แล้วไล่ไม่ถูกว่าใบมาจากไหน)
      ready:false = ยังไม่มีของ → การ์ดจาง บอกว่าจะมาเฟสไหน ไม่ปล่อยให้กดแล้วเงียบ */
   var DATA_IN=[
-    { icon:'🧾', title:'ใบ 50 ทวิ ที่ลูกค้าหักเรา',
+    { icon:'🧾', title:'50 ทวิที่ถูกหัก',
       desc:'อัปไฟล์ทีละใบหรือหลายใบ ระบบอ่านให้แล้วให้ตรวจก่อนบันทึก · หรือนำเข้า CSV ทั้งชุด',
       go:"switchView('whtin')", btn:'ไปหน้า 50 ทวิ ที่ถูกหัก', ready:true },
     { icon:'📈', title:'ผลประกอบการรายปี',
@@ -20800,7 +20801,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260921-2024';
+  var APP_BUILD='20260921-2033';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
