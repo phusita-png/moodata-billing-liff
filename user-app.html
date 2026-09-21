@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260921-1505">
+<link rel="stylesheet" href="user.css?v=20260921-1518">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -648,11 +648,16 @@
         และมองไม่เห็นยอดรวมพร้อมกับรายการ (พี่กี้ทัก 21 ก.ย.) */
   .sf-card{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:18px 20px; margin-bottom:14px; }
   .sf-h{ font-weight:700; font-size:15px; margin:0 0 14px; display:flex; align-items:center; gap:8px; }
-  /* 4 ช่องต่อแถว = วางได้ตามที่พี่กี้ร่าง (รหัสลูกค้า · ลูกค้า · วันที่ · วันที่ใช้ได้ถึง) */
-  .sf-grid{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px 18px; }
-  .sf-grid .sf-f{ display:flex; flex-direction:column; gap:6px; }
+  /* กริด 12 ช่อง — ความกว้างแต่ละช่องตามที่พี่กี้ตีกรอบมา 21 ก.ย. 69
+     แถว 1: รหัสลูกค้า 2 · ลูกค้า 4 · วันที่เอกสาร 3 · วันที่ใช้ได้ถึง 3
+     แถว 2: ที่อยู่ 6 · อีเมล 4 · เบอร์โทร 2 */
+  .sf-grid{ display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:14px 18px; }
+  .sf-grid .sf-f{ display:flex; flex-direction:column; gap:6px; grid-column:span 3; }
   .sf-grid .sf-f.wide{ grid-column:1 / -1; }
-  .sf-grid .sf-f.w2{ grid-column:span 2; }
+  .sf-grid .sf-f.c2{ grid-column:span 2; }
+  .sf-grid .sf-f.c3{ grid-column:span 3; }
+  .sf-grid .sf-f.c4{ grid-column:span 4; }
+  .sf-grid .sf-f.c6{ grid-column:span 6; }
   .sf-f label{ font-size:13px; color:#5B6472; font-weight:600; }
   .sf-f input,.sf-f select,.sf-f textarea{ width:100%; box-sizing:border-box; padding:10px 12px;
     border:1px solid var(--line); border-radius:10px; font-family:inherit; font-size:14.5px; background:#fff; }
@@ -675,10 +680,14 @@
     background:rgba(255,255,255,.96); border-top:1px solid var(--line); padding:10px 16px;
     margin:4px -16px 0; backdrop-filter:blur(6px); }
   .sf-bar .btn{ width:auto; flex:none; padding:12px 26px; }
-  @media (max-width:1180px){ .sf-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
+  /* จอแคบลง: ยุบเป็น 2 ช่อง แล้ว 1 ช่อง — ความกว้างรายช่องไม่มีความหมายแล้ว */
+  @media (max-width:1180px){
+    .sf-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .sf-grid .sf-f,.sf-grid .sf-f.c2,.sf-grid .sf-f.c3,
+    .sf-grid .sf-f.c4,.sf-grid .sf-f.c6{ grid-column:auto; }
+  }
   @media (max-width:860px){
     .sf-grid{ grid-template-columns:1fr; }
-    .sf-grid .sf-f.w2{ grid-column:auto; }
     .sf-sum{ grid-template-columns:1fr; }
   }
   /* ── โครงหน้าเอกสารขายตาม mockup ของพี่กี้ (19 ก.ย. 69) ── */
@@ -12569,32 +12578,32 @@
             '<div class="sf-note">บริษัทที่เลือกเป็นตัวตัดสินว่ามี VAT 7% ไหม (ไม่ใช่ตามลูกค้า)</div></div>')
         : ('<input type="hidden" id="slEnt" value="'+esc((SALES.entities&&SALES.entities[0]&&SALES.entities[0].code)||'')+'">'))+
       /* แถว 1 ตามที่พี่กี้วาง 21 ก.ย. 69: รหัสลูกค้า · ลูกค้า · วันที่เอกสาร · วันที่ใช้ได้ถึง */
-      '<div class="sf-f"><label>รหัสลูกค้า</label>'+
+      '<div class="sf-f c2"><label>รหัสลูกค้า</label>'+
         '<input id="slCustCode" list="sfCustCodeList" placeholder="เช่น CU-001"'+
           ((ed&&scope.custLocked)?' readonly':' oninput="sfPickCustByCode()"')+' autocomplete="off">'+
         '<datalist id="sfCustCodeList">'+custCodeOpts+'</datalist></div>'+
-      '<div class="sf-f"><label>ลูกค้า</label>'+
+      '<div class="sf-f c4"><label>ลูกค้า</label>'+
         (ed&&scope.custLocked?'<input value="'+esc(ed.customer||'')+'" readonly>'
            :'<input id="slCust" list="sfCustList" placeholder="พิมพ์เพื่อค้นหา หรือพิมพ์ชื่อใหม่" '+
              'value="'+esc(ed?(ed.customer||''):'')+'" oninput="sfCustHint()" autocomplete="off">'+
             '<datalist id="sfCustList">'+custOpts+'</datalist>')+
         '<div class="sf-note" id="sfCustInfo"></div></div>'+
-      '<div class="sf-f"><label>วันที่เอกสาร</label>'+
+      '<div class="sf-f c3"><label>วันที่เอกสาร</label>'+
         '<input id="slDate" type="date" value="'+esc(ed?(ed.docDate||''):todayISO())+'"'+(lockAll?' readonly':'')+
         ' onchange="sfDueSync()"></div>'+
-      '<div class="sf-f"><label>'+(kindNow==='QT'?'วันที่ใช้ได้ถึง (ยืนราคา)':'วันครบกำหนดชำระ')+'</label>'+
+      '<div class="sf-f c3"><label>'+(kindNow==='QT'?'วันที่ใช้ได้ถึง (ยืนราคา)':'วันครบกำหนดชำระ')+'</label>'+
         '<input id="slDue" type="date" value="'+esc(ed?(ed.dueDate||''):'')+'"'+(lockAll?' readonly':'')+'>'+
         '<div class="sf-note" id="sfDueNote"></div></div>'+
       /* แถว 2: ข้อมูลติดต่อของลูกค้า — อ่านอย่างเดียว ดึงจากทะเบียนตอนเลือกลูกค้า
          🔴 ไม่ให้พิมพ์ทับที่นี่ เพราะที่อยู่บนใบกำกับภาษีต้องมาจากทะเบียนที่เดียว
             (แก้ที่นี่ทีละใบ = ลูกค้าคนเดียวกันมีที่อยู่คนละแบบในแต่ละใบ) */
-      '<div class="sf-f w2"><label>ที่อยู่ (ใบกำกับภาษี)</label>'+
+      '<div class="sf-f c6"><label>ที่อยู่ (ใบกำกับภาษี)</label>'+
         '<input id="slCustAddr" readonly placeholder="— เลือกลูกค้าก่อน —"></div>'+
-      '<div class="sf-f"><label>อีเมล</label>'+
+      '<div class="sf-f c4"><label>อีเมล</label>'+
         '<input id="slCustEmail" readonly placeholder="—"></div>'+
-      '<div class="sf-f"><label>เบอร์โทร</label>'+
+      '<div class="sf-f c2"><label>เบอร์โทร</label>'+
         '<input id="slCustPhone" readonly placeholder="—"></div>'+
-      '<div class="sf-f"><label>ประเภทราคา</label>'+
+      '<div class="sf-f c3"><label>ประเภทราคา</label>'+
         '<select id="slPriceMode" onchange="salesPreview()"'+(lockAll?' disabled':'')+'>'+
         ((SALES.priceModes||[{key:'excl',label:'แยกภาษี'},{key:'incl',label:'รวมภาษี'},{key:'none',label:'ไม่มีภาษี'}])
           .map(function(m){
@@ -20049,7 +20058,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260921-1505';
+  var APP_BUILD='20260921-1518';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
