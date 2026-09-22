@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260922-0955">
+<link rel="stylesheet" href="user.css?v=20260922-1004">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -15872,6 +15872,7 @@
         ((r.missingFromRegistry||[]).length
           ? '<button class="btn btn-ghost" onclick="custSyncAsk()">👥 ดึงจากกลุ่ม LINE ('+r.missingFromRegistry.length+')</button>'
           : '')+
+        '<button class="btn btn-ghost" onclick="custImportForm()">📥 นำเข้า</button>'+
         '<button class="btn btn-primary" onclick="custForm(\'\')">+ เพิ่มลูกค้า</button>'+
       '</div></div>'+
       dtTable([{label:'#',cls:'dt-nw',w:'44px'},{label:'รหัส',cls:'dt-nw',w:'9%'},{label:'ลูกค้า'},
@@ -15899,6 +15900,81 @@
     a.push({label:'🗑️ ลบลูกค้า', call:"custDeleteAsk('"+n+"')", danger:true});
     return a;
   }
+
+  /* ───────── 📥 นำเข้าทะเบียนลูกค้าทีเดียวหลายราย (22 ก.ย. 69) ─────────
+     พี่กี้: ยกทะเบียนมาจากอีกระบบ เพื่อส่งเมลทวง 50 ทวิ
+     🔴 ดูตัวอย่างก่อนเสมอ — ปุ่มแรกคือ "ดูตัวอย่าง" ไม่ใช่ "นำเข้า" (ยังไม่เขียนอะไรทั้งนั้น) */
+  function custImportForm(){
+    modal('<h3>📥 นำเข้าทะเบียนลูกค้า</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint" style="margin:0 0 10px">'+
+      'คัดลอกจาก Excel/Google Sheet มาวางได้เลย (บรรทัดแรก = หัวตาราง) หรือวางเป็น CSV/JSON ก็ได้<br>'+
+      'คอลัมน์ที่ระบบรู้จัก: <b>ชื่อลูกค้า</b> (บังคับ) · ชื่อเต็ม · เลขผู้เสียภาษี · สาขา · ที่อยู่ · '+
+      'ผู้ติดต่อ · โทร · <b>อีเมล</b> · เครดิตเทอม · รหัสลูกค้า · ชื่ออื่นที่ใช้เรียก · หมายเหตุ · Group ID<br>'+
+      'คอลัมน์อื่นที่ไม่รู้จักจะข้ามให้เอง · <b>ชื่อซ้ำกับที่มีอยู่ = อัปเดตรายเดิม ไม่สร้างซ้ำ</b></div>'+
+      '<div class="fld"><label>วางข้อมูลตรงนี้</label>'+
+        '<textarea id="cuImpText" rows="8" placeholder="ชื่อลูกค้า	เลขผู้เสียภาษี	อีเมล	ที่อยู่&#10;'+
+        'บริษัท เอ จำกัด	0105561164871	acc@a.co.th	เชียงใหม่"></textarea></div>'+
+      '<div id="cuImpOut"></div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button>'+
+      '<button class="btn btn-primary" id="cuImpBtn" onclick="custImportPreview()">ดูตัวอย่างก่อน</button></div>');
+  }
+  window.custImportForm=custImportForm;
+
+  function custImportPreview(){
+    var t=(($('cuImpText')||{}).value||'').trim();
+    if(!t){ mErr('วางข้อมูลก่อนค่ะ'); return; }
+    var btn=$('cuImpBtn'); if(btn){ btn.disabled=true; btn.textContent='กำลังอ่าน…'; }
+    jsonpPost({action:'waCustomerImport',uid:UID,text:t}).then(function(r){
+      if(btn){ btn.disabled=false; btn.textContent='ดูตัวอย่างก่อน'; }
+      if(!r||!r.ok){ mErr((r&&r.error)||'อ่านข้อมูลไม่สำเร็จ'); return; }
+      var s=r.sum||{}, box=$('cuImpOut'); if(!box) return;
+      var h='<div class="m-hint" style="margin:10px 0 0">อ่านได้ '+s.total+' แถว → '+
+        '<b>เพิ่มใหม่ '+s.add+'</b> · อัปเดตรายเดิม '+s.update+
+        (s.skip?' · <span style="color:#B45309">ข้าม '+s.skip+'</span>':'')+
+        (s.warn?' · <span style="color:#B45309">มีข้อควรดู '+s.warn+'</span>':'')+'</div>';
+      if((r.unknown||[]).length){
+        h+='<div class="m-hint" style="margin:6px 0 0">คอลัมน์ที่ระบบไม่รู้จัก (ข้ามให้): '+
+          esc(r.unknown.join(' · '))+'</div>';
+      }
+      h+=dtTable([{label:'#',cls:'dt-nw',w:'42px'},{label:'ลูกค้า'},{label:'สิ่งที่จะทำ',cls:'dt-nw',w:'26%'},
+                  {label:'ข้อควรดู',w:'30%'}],
+        (r.rows||[]).map(function(x,i){
+          var act=x.skip?('<span style="color:#B45309">ข้าม</span>')
+                        :(x.exists?'อัปเดตรายเดิม':'<b>เพิ่มใหม่</b>');
+          return '<tr><td class="dt-nw" style="color:#8A94A6">'+(i+1)+'</td>'+
+            '<td>'+esc(x.name||'—')+'</td><td class="dt-nw">'+act+'</td>'+
+            '<td style="color:#B45309;font-size:12px">'+esc(x.skip||x.warn||'')+'</td></tr>'; }),
+        '', 'ไม่มีแถวข้อมูล');
+      box.innerHTML=h;
+      if(s.ready>0 && btn){
+        btn.textContent='นำเข้า '+s.ready+' ราย';
+        btn.setAttribute('onclick','custImportGo()');
+      }
+    }).catch(function(e){ if(btn){ btn.disabled=false; btn.textContent='ดูตัวอย่างก่อน'; } mErr(e.message); });
+  }
+  window.custImportPreview=custImportPreview;
+
+  function custImportGo(){
+    var t=(($('cuImpText')||{}).value||'').trim();
+    if(!t){ mErr('วางข้อมูลก่อนค่ะ'); return; }
+    callBusy('กำลังนำเข้า…', jsonpPost({action:'waCustomerImport',uid:UID,text:t,commit:'1'}), 'นำเข้าแล้ว')
+      .then(function(r){
+        if(!r||!r.ok){ mErr((r&&r.error)||'นำเข้าไม่สำเร็จ'); return; }
+        var f=(r.failed||[]).length;
+        closeModal();
+        toast('✅ เพิ่ม '+(r.added||[]).length+' · อัปเดต '+(r.updated||[]).length+(f?(' · ไม่สำเร็จ '+f):''));
+        if(f){
+          /* ไม่กลืนแถวที่พัง — บอกให้เห็นว่าแถวไหนไม่เข้า จะได้ตามแก้ */
+          modal('<h3>📥 ผลการนำเข้า</h3>'+
+            '<div class="m-hint">เพิ่ม '+(r.added||[]).length+' · อัปเดต '+(r.updated||[]).length+'</div>'+
+            '<div class="m-err" style="margin:10px 0 0">ไม่สำเร็จ '+f+' แถว:<br>'+
+            (r.failed||[]).map(function(x){ return '• บรรทัด '+x.line+' '+esc(x.name||'')+' — '+esc(x.error||''); }).join('<br>')+
+            '</div><div class="m-act"><button class="btn btn-primary" onclick="closeModal()">ปิด</button></div>');
+        }
+        renderCustomers();
+      }).catch(function(e){ mErr(e.message); });
+  }
+  window.custImportGo=custImportGo;
 
   /* ───────── 🔍 ค้นนิติบุคคลจากกรมพัฒนาธุรกิจการค้า (22 ก.ย. 69) ─────────
      พี่กี้เห็นใน TRCloud: พิมพ์เลขผู้เสียภาษี → กดค้น → ได้ข้อมูลจาก DBD → กด "ใช้ข้อมูลนี้"
@@ -21773,7 +21849,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260922-0955';
+  var APP_BUILD='20260922-1004';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
