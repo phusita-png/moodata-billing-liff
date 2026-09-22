@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260922-1417">
+<link rel="stylesheet" href="user.css?v=20260922-1445">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -1511,6 +1511,40 @@
   /* ปุ่มในเซลล์ตารางมาตรฐาน — ปลด width:100% ของ .btn ไม่งั้นปุ่มกินเต็มคอลัมน์
      (เคยแก้เฉพาะหน้าไปแล้วหลายที่: .us-tbl · .sm-tbl · .ec-tbl → รวมมาที่ .dt-tbl ทีเดียว) */
   .dt-tbl .btn-sm{ width:auto; white-space:nowrap; }
+  /* 🐞 22 ก.ย. 69 — ปุ่มเล็กในโมดัลก็โดนกับดักเดียวกัน (พี่กี้เจอในหน้า "ผลตรวจกับ GL"):
+     ปุ่ม "จับคู่" กิน 100% ของแถว → ข้อความข้าง ๆ เหลือความกว้างเกือบศูนย์
+     จึงตกบรรทัดทีละตัวอักษร ("บริ / ษัท / จำกัด")
+     แถบปุ่มใหญ่ล่างโมดัล (.m-act) ยังเต็มบรรทัดเหมือนเดิม — ตรงนั้นตั้งใจให้กดง่ายบนมือถือ */
+  .sheet .btn-sm{ width:auto; white-space:nowrap; }
+
+  /* ── แถบ "เลือกไว้ N ใบ" เหนือตาราง 50 ทวิ ── ข้อความซ้าย · ปุ่มขวา (พี่กี้ทัก 22 ก.ย. 69) */
+  .wir-bar{ display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    padding:9px 14px; margin:0 0 10px; border-radius:12px;
+    background:var(--slate-tint); border:1px solid var(--line);
+    font-size:13px; color:var(--muted); }
+  .wir-bar.on{ background:var(--red-tint); border-color:var(--red-soft); color:var(--ink); }
+  .wir-bar .sp{ flex:1 1 auto; }                     /* ดันปุ่มไปชิดขวา */
+  .wir-bar .btn-sm{ width:auto; white-space:nowrap; }
+
+  /* ── โมดัล "ผลตรวจกับ GL" ── */
+  .wgc-item{ padding:12px 0; border-bottom:1px solid var(--line); }
+  .wgc-item:last-child{ border-bottom:none; }
+  .wgc-h{ font-weight:700; font-size:14px; line-height:1.45; }
+  .wgc-h .amt{ color:var(--muted); font-weight:400; white-space:nowrap; }
+  .wgc-why{ font-size:12.5px; margin:3px 0 8px; line-height:1.5; }
+  .wgc-box{ background:var(--red-tint); border-radius:10px; padding:8px 11px; }
+  .wgc-cap{ font-size:12px; color:var(--muted); margin-bottom:2px; }
+  .wgc-row{ display:flex; align-items:center; gap:10px; padding:7px 0;
+    border-top:1px solid rgba(20,26,40,.07); }
+  .wgc-row:first-of-type{ border-top:none; }
+  .wgc-info{ flex:1 1 auto; min-width:0; font-size:12.5px; line-height:1.5; }
+  .wgc-l1{ font-weight:600; }
+  .wgc-l1 .dim{ color:var(--muted); font-weight:400; }
+  .wgc-tag{ font-size:12px; }
+  /* ปุ่มจับคู่ — ต้องเห็นว่าเป็นปุ่มบนพื้นการ์ดสีอ่อน (ghost เฉย ๆ จางจนดูเหมือนข้อความ) */
+  .wgc-row .btn-sm{ background:var(--card); border:1px solid var(--red-soft);
+    color:var(--red); font-weight:600; }
+  .wgc-ok{ color:var(--green); } .wgc-warn{ color:#B45309; } .wgc-taken{ color:#DC2626; }
   .pjc{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow);
     padding:16px 17px; margin-bottom:12px; cursor:pointer; transition:box-shadow .15s, transform .05s; }
   .pjc:hover{ box-shadow:0 6px 20px rgba(120,150,200,.22); } .pjc:active{ transform:scale(.995); }
@@ -7159,7 +7193,7 @@
           '<button class="btn btn-ghost" onclick="wirSetSort()">'+(WIR_SORT==='new'?'🗓️ ใหม่→เก่า':'🗓️ เก่า→ใหม่')+'</button>'+
           '<button class="btn btn-ghost" onclick="wirCsv()">↓ CSV (ตามที่กรอง)</button>'+
         '</div></div>'+
-        '<div class="m-hint" id="wirSelBar" style="margin:0 0 10px"></div>'+
+        '<div class="wir-bar" id="wirSelBar"></div>'+
         '<div id="wirTbl"></div></div>';
       WIR_ROWS={}; (r.rows||[]).forEach(function(x){ WIR_ROWS[x.no]=x; });
       WIR_ALL=r.rows||[];
@@ -7250,11 +7284,12 @@
   function wirSelBar(){
     var b=$('wirSelBar'); if(!b) return;
     var n=wirSelCount();
+    b.className = 'wir-bar' + (n ? ' on' : '');
     b.innerHTML = n
-      ? ('เลือกไว้ <b>'+n+'</b> ใบ '+
-         '<button class="btn btn-primary btn-sm" onclick="wirCheckSel()">🔍 ตรวจกับ GL</button> '+
-         '<button class="btn btn-ghost btn-sm" onclick="wirSelAll(false)">ล้างที่เลือก</button>')
-      : 'ติ๊กเลือกใบที่อยากตรวจกับ GL แล้วกดปุ่มตรวจ · หรือติ๊กช่องบนหัวคอลัมน์เพื่อเลือกทั้งหมด';
+      ? ('<span>เลือกไว้ <b>'+n+'</b> ใบ</span><span class="sp"></span>'+
+         '<button class="btn btn-ghost btn-sm" onclick="wirSelAll(false)">ล้างที่เลือก</button>'+
+         '<button class="btn btn-primary btn-sm" onclick="wirCheckSel()">🔍 ตรวจกับ GL</button>')
+      : '<span>ติ๊กเลือกใบที่อยากตรวจ แล้วกด “ตรวจกับ GL” · ติ๊กช่องบนหัวคอลัมน์ = เลือกทั้งหมด</span>';
   }
   window.wirToggle=wirToggle; window.wirSelAll=wirSelAll; window.wirSelHead=wirSelHead;
 
@@ -7274,30 +7309,42 @@
   window.wirCheckSel=wirCheckSel;
 
   var WIR_CHK=[];
+  /** หนึ่งบรรทัดของแถว GL ที่เสนอให้จับคู่ — ฟังก์ชันบริสุทธิ์ (เทส/พรีวิวเรียกตัวเดียวกัน) */
+  function wirCandHtml(certNo, c){
+    var dp=wgDescParts(c);                      /* เลขกับชื่อบริษัทอยู่ติดกันในคำอธิบาย GL */
+    var exact=Math.abs(Number(c.diff)||0)<0.005;
+    var tags=[];
+    tags.push(exact ? '<span class="wgc-ok">✅ ยอดตรง</span>'
+                    : '<span class="wgc-warn">ยอดต่าง '+money(Math.abs(c.diff))+'</span>');
+    if(c.nameHit) tags.push('<span class="wgc-ok">ชื่อตรง</span>');
+    if(c.takenBy) tags.push('<span class="wgc-taken">ถูกจับกับ '+esc(c.takenBy)+'</span>');
+    return '<div class="wgc-row">'+
+      '<div class="wgc-info">'+
+        '<div class="wgc-l1">'+(c.date?(esc(c.date)+' <span class="dim">·</span> '):'')+
+          esc(dp.no)+' <span class="dim">·</span> '+money(c.debit)+'</div>'+
+        '<div class="dim" style="color:var(--muted)">'+esc(dp.name)+'</div>'+
+        '<div class="wgc-tag">'+tags.join(' <span style="color:var(--muted)">·</span> ')+'</div>'+
+      '</div>'+
+      (c.takenBy ? ''
+        : '<button class="btn btn-ghost btn-sm" onclick="wirLink(\''+jss(certNo)+'\','+c.row+')">จับคู่</button>')+
+      '</div>';
+  }
+  window.wirCandHtml=wirCandHtml;
+
   function wirCheckModal(){
     var rows=WIR_CHK.map(function(x,i){
       if(!x.ok) return '<div class="m-err" style="margin:0 0 8px">'+esc(x.certNo||'')+' — '+esc(x.error||'')+'</div>';
-      var head='<div style="font-weight:700">'+(i+1)+'. '+esc(x.certNo)+' · '+esc(x.payer||'')+
-        ' <span style="color:#8A94A6;font-weight:400">ภาษี '+money(x.tax)+'</span></div>'+
-        '<div style="font-size:12.5px;color:'+(x.matched?'#168a52':'#B45309')+';margin:2px 0 6px">'+
-        (x.matched?'✅ ':'⏳ ')+esc(x.reason||'')+'</div>';
-      if(x.matched) return '<div style="padding:10px 0;border-bottom:1px solid var(--line)">'+head+'</div>';
-      var cands=(x.candidates||[]).map(function(c){
-        var tag = Math.abs(c.diff)<0.005 ? '<span style="color:#168a52">ยอดตรง</span>'
-                : ('<span style="color:#B45309">ต่าง '+money(Math.abs(c.diff))+'</span>');
-        var busyTag = c.takenBy ? (' <span style="color:#DC2626">· ถูกจับกับ '+esc(c.takenBy)+'</span>') : '';
-        return '<div style="display:flex;gap:8px;align-items:center;padding:5px 0;font-size:12.5px">'+
-          '<div style="flex:1;min-width:0">'+esc(c.date)+' · '+esc(c.docNo||'-')+' · '+money(c.debit)+
-          ' <span style="color:#8A94A6">'+esc(String(c.desc||'').slice(0,60))+'</span><br>'+tag+
-          (c.nameHit?' <span style="color:#168a52">· ชื่อตรง</span>':'')+busyTag+'</div>'+
-          (c.takenBy?'':'<button class="btn btn-ghost btn-sm" onclick="wirLink(\''+jss(x.certNo)+'\','+c.row+')">จับคู่</button>')+
-          '</div>';
-      }).join('');
-      return '<div style="padding:10px 0;border-bottom:1px solid var(--line)">'+head+
-        (cands ? ('<div style="background:#F7FAFF;border-radius:8px;padding:6px 10px">'+
-                  '<div style="font-size:12px;color:#8A94A6;margin-bottom:2px">แถว GL ที่น่าจะใช่ — กด "จับคู่" ถ้าตรวจแล้วว่าถูกใบ</div>'+
+      var head='<div class="wgc-h">'+(i+1)+'. '+esc(x.certNo)+' · '+esc(x.payer||'')+
+          ' <span class="amt">ภาษี '+money(x.tax)+'</span></div>'+
+        '<div class="wgc-why '+(x.matched?'wgc-ok':'wgc-warn')+'">'+
+          (x.matched?'✅ ':'⏳ ')+esc(x.reason||'')+'</div>';
+      if(x.matched) return '<div class="wgc-item">'+head+'</div>';
+      var cands=(x.candidates||[]).map(function(c){ return wirCandHtml(x.certNo, c); }).join('');
+      return '<div class="wgc-item">'+head+
+        (cands ? ('<div class="wgc-box">'+
+                  '<div class="wgc-cap">แถว GL ที่น่าจะใช่ — กด “จับคู่” เมื่อตรวจแล้วว่าถูกใบ</div>'+
                   cands+'</div>')
-                : '<div class="m-hint" style="margin:0">ไม่มีแถว GL ที่พอจะเป็นไปได้</div>')+
+               : '<div class="m-hint" style="margin:0">ไม่มีแถว GL ที่พอจะเป็นไปได้</div>')+
         '</div>';
     }).join('');
     var okN=WIR_CHK.filter(function(x){ return x.ok&&x.matched; }).length;
@@ -22286,7 +22333,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260922-1417';
+  var APP_BUILD='20260922-1445';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
