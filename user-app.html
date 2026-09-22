@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260922-1544">
+<link rel="stylesheet" href="user.css?v=20260922-1554">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -7928,7 +7928,11 @@
           (r.entities||[]).map(function(e){ return '<option value="'+esc(e.code)+'"'+(e.code===ER_ENT?' selected':'')+'>'+esc(e.name)+'</option>'; }).join('')+
           '</select></div>':'')+
         '<div class="tax-acts"><button class="btn btn-primary" onclick="erApply()">ดูรายงาน</button>'+
-        '<button class="btn btn-ghost" onclick="erPdf()">📄 ออกไฟล์ (แท็บ + PDF)</button></div></div>';
+        '<button class="btn btn-ghost" onclick="erPdf()">📄 ออกไฟล์ (แท็บ + PDF)</button>'+
+        /* สรุปค่าใช้จ่ายของใบเบิกพนักงาน (กราฟ + แยกตามประเภท/คน) — หน้าลูกของรายงานนี้
+           🔴 ทางเข้าเดียวของหน้านั้นแล้ว (22 ก.ย. 69 ถอดปุ่มออกจากหน้าทะเบียนการจ่าย)
+              ปุ่มนี้หายเมื่อไหร่ = หน้าสรุปเข้าไม่ได้เลย */
+        '<button class="btn btn-ghost" onclick="switchView(&quot;expdash&quot;)">📊 สรุปค่าใช้จ่ายใบเบิก</button></div></div>';
 
       h+='<div class="ds-grid">'+
         statCard('รายจ่ายรวม',money(s.amount),s.n+' รายการ')+
@@ -9698,6 +9702,24 @@
   }
   window.prPaintTbl=prPaintTbl;
 
+  /** ดาวน์โหลดเฉพาะที่กรองอยู่ — ท่าเดียวกับหน้า 50 ทวิ (พี่กี้ขอ 22 ก.ย. 69) */
+  function prCsv(){
+    var rows=prFilter(PO.reg||[], PR_TAB, PR_MONTH, PR_KIND, PR_Q);
+    if(!rows.length){ toast('ไม่มีรายการให้ดาวน์โหลดค่ะ'); return; }
+    var head=['ลำดับ','เลขที่','ประเภทใบ','สถานะ','ผู้รับเงิน/ผู้เบิก','ประเภทค่าใช้จ่าย',
+              'รายละเอียด','ยอด (บาท)','เดือน','เลขที่เอกสาร'];
+    var q=function(v){ return '"'+String(v==null?'':v).replace(/"/g,'""')+'"'; };
+    var lines=[head.map(q).join(',')].concat(rows.map(function(x,i){
+      return [i+1, x.no, (x.kind==='staff'?'ใบเบิกพนักงาน':'ใบของบริษัท'), x.status,
+        x.who, x.type, x.detail, x.amount, x.month, x.docNo].map(q).join(',');
+    }));
+    /* ใส่ BOM ให้ Excel อ่านภาษาไทยไม่เป็นขยะ (บทเรียนเดียวกับ CSV ทุกหน้าในระบบ) */
+    dlText('ทะเบียนการจ่าย-'+(PR_MONTH||'ทั้งหมด')+'.csv', '﻿'+lines.join('\n'));
+  }
+  window.prCsv=prCsv;
+
+  /* โครงหน้ายึดตามหน้าใบเสนอราคา (พี่กี้ 22 ก.ย. 69):
+     breadcrumb → การ์ดเดียว (ชื่อ+คำอธิบายซ้าย · ค้นหา/ตัวกรอง/CSV/ปุ่มสร้าง ขวา) → แท็บ → ตาราง */
   function paintPayout(){
     var reg=PO.reg||[];
     var cnt={all:reg.length};
@@ -9711,29 +9733,27 @@
     reg.forEach(function(x){ if(x.month && months.indexOf(x.month)<0) months.push(x.month); });
     months.sort().reverse();
 
-    var html='<div class="section-h">💵 ทะเบียนการจ่าย</div>'+
-      '<div class="tax-acts" style="margin:0 0 12px">'+
-      '<button class="btn btn-primary" onclick="openPayout()">+ ตั้งเรื่องจ่ายเงิน</button>'+
-      /* ทะเบียนประเภทค่าใช้จ่าย = ของตั้งค่า → ปุ่มในหน้า ไม่ใช่เมนูหลัก (ผัง §2.6)
-         ⚠️ ถอดออกจากเมนูแล้วต้องมีทางเข้าที่นี่เสมอ ไม่งั้นพี่หาไม่เจอ */
-      '<button class="btn btn-ghost" onclick="switchView(&quot;expcat&quot;)">ทะเบียนประเภทค่าใช้จ่าย</button>'+
-      '<button class="btn btn-ghost" onclick="switchView(&quot;expdash&quot;)">📊 สรุปค่าใช้จ่ายใบเบิก</button></div>'+
-      '<div class="m-hint" style="margin:0 0 12px">ใบที่บริษัทตั้งเอง กับใบเบิกที่พนักงานสำรองจ่าย '+
-      'อยู่ในทะเบียนเดียวกัน (เลขที่ PO ชุดเดียว) — แยกกันตอนจ่าย: ใบบริษัทโอนให้ผู้รับเงิน · '+
-      'ใบเบิกโอนคืนพนักงาน · เห็นเฉพาะผู้ดูแลค่ะ</div>'+
-      '<div class="tax-acts" style="margin:0 0 10px">'+tabs+'</div>'+
-      '<div class="lst-tools" style="margin:0 0 12px;width:100%">'+
-        '<select onchange="prSetMonth(this.value)"><option value="">ทุกเดือน</option>'+
-          months.map(function(m){ return '<option value="'+esc(m)+'"'+(PR_MONTH===m?' selected':'')+'>'+esc(ymThai(m))+'</option>'; }).join('')+
-        '</select>'+
-        '<select onchange="prSetKind(this.value)">'+
-          '<option value="">ทุกประเภทใบ</option>'+
-          '<option value="company"'+(PR_KIND==='company'?' selected':'')+'>🏢 ใบของบริษัท</option>'+
-          '<option value="staff"'+(PR_KIND==='staff'?' selected':'')+'>🧾 ใบเบิกพนักงาน</option>'+
-        '</select>'+
-        '<input class="s-find" placeholder="🔍 ค้นหา เลขที่ / ชื่อ / รายละเอียด" value="'+esc(PR_Q)+'" oninput="prSetQ(this.value)">'+
-      '</div>'+
-      '<div id="prTbl"></div>';
+    var html='<div class="bc"><button class="lnk" onclick="switchView(&quot;bizdash&quot;)">รายจ่าย</button> › ทะเบียนการจ่าย</div>'+
+      '<div class="lst-card"><div class="lst-head">'+
+        '<div class="t"><b>ทะเบียนการจ่าย <span class="doc-code">PO</span></b>'+
+          '<div>ใบที่บริษัทตั้งเอง กับใบเบิกที่พนักงานสำรองจ่าย อยู่ในทะเบียนเดียวกัน (เลขที่ PO ชุดเดียว) '+
+          '— แยกกันตอนจ่าย: ใบบริษัทโอนให้ผู้รับเงิน · ใบเบิกโอนคืนพนักงาน</div></div>'+
+        '<div class="lst-tools">'+
+          '<input class="s-find" placeholder="ค้นหาเลขที่ / ชื่อ / รายละเอียด" '+
+            'value="'+esc(PR_Q)+'" oninput="prSetQ(this.value)">'+
+          '<select onchange="prSetMonth(this.value)"><option value="">ทุกเดือน</option>'+
+            months.map(function(m){ return '<option value="'+esc(m)+'"'+(PR_MONTH===m?' selected':'')+'>'+esc(ymThai(m))+'</option>'; }).join('')+
+          '</select>'+
+          '<select onchange="prSetKind(this.value)">'+
+            '<option value="">ทุกประเภทใบ</option>'+
+            '<option value="company"'+(PR_KIND==='company'?' selected':'')+'>🏢 ใบของบริษัท</option>'+
+            '<option value="staff"'+(PR_KIND==='staff'?' selected':'')+'>🧾 ใบเบิกพนักงาน</option>'+
+          '</select>'+
+          '<button class="btn btn-ghost" onclick="prCsv()">↓ CSV (ตามที่กรอง)</button>'+
+          '<button class="btn btn-primary" onclick="openPayout()">+ ตั้งเรื่องจ่ายเงิน</button>'+
+        '</div></div>'+
+      '<div class="tax-acts" style="margin:0 0 12px">'+tabs+'</div>'+
+      '<div id="prTbl"></div></div>';
     $('main').innerHTML=html;
     prPaintTbl();
   }
@@ -22380,7 +22400,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260922-1544';
+  var APP_BUILD='20260922-1554';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
