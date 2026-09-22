@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260922-0911">
+<link rel="stylesheet" href="user.css?v=20260922-0928">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -15888,55 +15888,55 @@
     }).join('');
   }
 
+  /* 📂 แฟ้มลูกค้า — โครงเดียวกับหน้าใบเสนอราคา (พี่กี้เคาะ 22 ก.ย. เย็น)
+     breadcrumb → ชื่อใหญ่ → แท็บ → การ์ด sf-card/sf-grid → แถบปุ่มล่างติดขอบจอ (sf-bar)
+     🔴 เลิกมีหัวการ์ดสรุปซ้ำด้านบน — ข้อมูลชุดเดียวกันเคยโผล่ 3 ที่ในหน้าเดียว
+        (หัวสรุป + แท็บติดต่อ + แท็บข้อมูล) · เหลือที่เดียวคือแท็บ ⚙️ ข้อมูล
+     🔴 แท็บ 6 → 4: งาน+ประวัติติดต่อ ยุบเข้าภาพรวม · ติดต่อยุบเข้าข้อมูล */
   function custFilePaint(){
     var f=CUSTF, c=f.customer;
     var nm=String(c.name).replace(/'/g,"\\'");
-    var h='<div class="tax-acts" style="margin:0 0 10px">'+
-      '<button class="btn btn-ghost" style="flex:none;min-width:0" onclick="switchView(\'customers\')">← ทะเบียนลูกค้า</button></div>'+
-      '<div class="section-h">📂 '+esc(c.name)+
-      (c.code?' <span style="font-weight:400;color:#8A94A6;font-size:12px">'+esc(c.code)+'</span>':'')+
-      (c.status==='ปิด'?' <span style="font-weight:400;color:#B45309;font-size:12px">· ปิดการใช้งาน</span>':'')+'</div>';
+    var h='<div class="bc"><button class="lnk" onclick="switchView(&quot;customers&quot;)">ทะเบียนลูกค้า</button> › '+
+      esc(c.name)+'</div>'+
+      '<div class="pg-title" style="margin:0 0 12px"><h2>'+esc(c.legalName||c.name)+
+      (c.code?' <span style="font-weight:400;color:#8A94A6;font-size:14px">'+esc(c.code)+'</span>':'')+
+      (c.status==='ปิด'?' <span style="font-weight:400;color:#B45309;font-size:13px">· ปิดการใช้งาน</span>':'')+
+      '</h2></div>';
 
-    /* หัวการ์ด — ข้อมูลที่ต้องใช้ตอนออกเอกสาร อยู่บนสุดเสมอ (อ่านอย่างเดียว · แก้ที่แท็บข้อมูล) */
-    h+='<div class="card" style="margin:0 0 12px"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px 16px;font-size:13px">'+
-      custKv('ชื่อบนเอกสาร', c.legalName||c.name)+
-      custKv('เลขผู้เสียภาษี', c.taxId||'—')+
-      custKv('สนญ./สาขา', c.branch||'สำนักงานใหญ่')+
-      custKv('ที่อยู่', c.address||'—')+
-      custKv('ผู้ติดต่อ', (c.contact||'—')+(c.phone?(' · '+c.phone):''))+
-      custKv('อีเมล', c.email||'—')+
-      custKv('เครดิตเทอม', (c.creditDays||0)+' วัน')+
-      custKv('ผู้ดูแล', c.ownerName||'—')+
-      custKv('ประเภท', c.kind||'—')+
-      custKv('เริ่มเป็นลูกค้า', c.since||'—')+
-      '</div>'+
-      '<div class="tax-acts" style="margin:10px 0 0">'+
-      '<button class="btn btn-ghost btn-sm" onclick="custFileTab(\'info\')">✏️ แก้ไขข้อมูล</button>'+
-      (f.contact.groupId?'<button class="btn btn-ghost btn-sm" onclick="custSendForm(\''+nm+'\',\'text\')">💬 ส่ง LINE</button>':'')+
-      (c.email?'<button class="btn btn-ghost btn-sm" onclick="custSendForm(\''+nm+'\',\'text\',\'mail\')">📧 ส่งอีเมล</button>':'')+
-      '</div></div>';
+    var tabs=[['sum','📊 ภาพรวม'],['docs','📄 เอกสาร ('+(f.docs||[]).length+')'],
+              ['money','💰 เงิน'],['info','⚙️ ข้อมูล']];
+    h+='<div class="tax-acts" style="margin:0 0 12px">'+tabs.map(function(x){
+        return '<button class="btn '+(CUST_TAB===x[0]?'btn-primary':'btn-ghost')+'" style="flex:1" '+
+          'onclick="custFileTab(\''+x[0]+'\')">'+esc(x[1])+'</button>'; }).join('')+'</div>';
 
     h+=custSigHtml(f.signals);
     if(f.unread&&f.unread.length){
       h+='<div class="m-err" style="margin:0 0 12px">อ่านข้อมูลบางส่วนไม่ได้: '+esc(f.unread.join(' · '))+'</div>';
     }
 
-    var tabs=[['sum','📊 ภาพรวม'],['docs','📄 เอกสาร ('+(f.docs||[]).length+')'],
-              ['money','💰 เงิน'],['work','🗂️ งาน'],['contact','📞 ติดต่อ'],['info','⚙️ ข้อมูล']];
-    h+='<div class="tax-acts" style="margin:0 0 12px">'+tabs.map(function(x){
-        return '<button class="btn '+(CUST_TAB===x[0]?'btn-primary':'btn-ghost')+'" style="flex:1" '+
-          'onclick="custFileTab(\''+x[0]+'\')">'+esc(x[1])+'</button>'; }).join('')+'</div>';
+    h+=({sum:custTabSum, docs:custTabDocs, money:custTabMoney, info:custTabInfo}[CUST_TAB]||custTabSum)(f);
 
-    h+=({sum:custTabSum, docs:custTabDocs, money:custTabMoney, work:custTabWork,
-         contact:custTabContact, info:custTabInfo}[CUST_TAB]||custTabSum)(f);
+    /* แถบปุ่มล่าง — คำสั่งที่ใช้บ่อยอยู่ซ้าย · บันทึกอยู่ขวา (โผล่เฉพาะตอนแก้ไขอยู่) */
+    var acts=[];
+    if(f.contact.groupId) acts.push('<button class="btn btn-ghost sf-act" onclick="custSendForm(\''+nm+'\',\'text\')">💬 ส่ง LINE</button>');
+    if(c.email) acts.push('<button class="btn btn-ghost sf-act" onclick="custSendForm(\''+nm+'\',\'text\',\'mail\')">📧 ส่งอีเมล</button>');
+    if(f.ar&&f.ar.total>0&&f.contact.groupId) acts.push('<button class="btn btn-ghost sf-act" onclick="custSendForm(\''+nm+'\',\'dun\')">📣 ทวงหนี้</button>');
+    if((f.wht||{}).missing>0&&f.contact.groupId) acts.push('<button class="btn btn-ghost sf-act" onclick="custSendForm(\''+nm+'\',\'wht\')">🧾 ทวง 50 ทวิ</button>');
+    h+='<div class="sf-bar"><div class="sf-bar-acts">'+acts.join('')+'</div>'+
+      (CUST_TAB==='info'&&CUST_EDIT
+        ? '<button class="btn btn-ghost" onclick="custInfoEdit()">ยกเลิก</button>'+
+          '<button class="btn btn-primary" onclick="custSave()">บันทึก</button>'
+        : '<button class="btn btn-ghost" onclick="switchView(\'customers\')">← ทะเบียนลูกค้า</button>')+
+      '</div>';
+
     $('main').innerHTML=h;
     if(CUST_TAB==='info') custInfoLock();
   }
 
-  /* ───────── ⚙️ แท็บข้อมูล — ล็อกไว้ก่อน กด "แก้ไข" ถึงพิมพ์ได้ (22 ก.ย. 69) ─────────
+  /* ───────── ⚙️ แท็บข้อมูล — ล็อกไว้ก่อน กด "แก้ไข" ถึงพิมพ์ได้ ─────────
      พี่กี้: "กดเข้าไป กดแก้ไข บันทึก เหมือนในระบบมีมาตรฐานอยู่"
-     ใช้กติกาเดียวกับหน้าตั้งค่าห้อง: การ์ดติด .st-ro · ปุ่มแก้ไขมุมขวา · ปุ่มบันทึกอยู่ใน .st-act
-     🔴 ชื่อลูกค้าแก้ที่นี่ไม่ได้ (เป็นคีย์จับคู่เอกสาร) — ต้องใช้ปุ่มเปลี่ยนชื่อที่ไล่แก้ทุกเล่ม */
+     กติกา st-ro/.st-act เดียวกับหน้าตั้งค่าห้อง · ฟอร์มเป็นกริดแบบฟอร์มออกเอกสาร (sf-grid)
+     🔴 ชื่อลูกค้าแก้ที่นี่ไม่ได้ (เป็นคีย์จับคู่เอกสาร) — ใช้ปุ่มเปลี่ยนชื่อที่ไล่แก้ทุกเล่ม */
   var CUST_EDIT=false;
   function custInfoLock(){
     var box=$('cuInfoBox'); if(!box) return;
@@ -15949,65 +15949,75 @@
   }
   function custInfoEdit(){
     CUST_EDIT=!CUST_EDIT;
-    if(!CUST_EDIT){ custFilePaint(); return; }   /* กดยกเลิก = วาดใหม่จากค่าจริง ทิ้งที่พิมพ์ค้าง */
-    custInfoLock();
+    custFilePaint();      /* วาดใหม่เพื่อสลับปุ่มแถบล่างด้วย (ยกเลิก = ทิ้งที่พิมพ์ค้าง) */
   }
   window.custInfoEdit=custInfoEdit;
 
   function custTabInfo(f){
     var c=f.customer, ct=f.contact, nm=String(c.name).replace(/'/g,"\\'");
     /* 🔴 รายชื่อทีมต้องมาจากแฟ้มก่อน (waCustomerFile ส่งมาด้วย) — CUSTL มีเฉพาะตอนผ่านหน้ารายชื่อ
-       เปิดแฟ้มตรง ๆ (รีเฟรช/ลิงก์) แล้ว dropdown ว่าง = กดบันทึกทีเดียวผู้ดูแลหายทั้งที่ไม่ได้ตั้งใจแก้
-       กันอีกชั้น: ถ้าไม่มีในรายชื่อ ก็ยังใส่ตัวเองเป็นตัวเลือกไว้ (ค่าเดิมต้องไม่หลุด) */
+       เปิดแฟ้มตรง ๆ (รีเฟรช/ลิงก์) แล้ว dropdown ว่าง = กดบันทึกทีเดียวผู้ดูแลหายทั้งที่ไม่ได้ตั้งใจแก้ */
     var team=(f.team||(CUSTL&&CUSTL.team)||[]).slice();
     if(c.ownerUid && !team.some(function(m){ return (m.uid||m.id)===c.ownerUid; })){
       team.unshift({ uid:c.ownerUid, name:c.ownerName||c.ownerUid });
     }
-    return '<div class="card" id="cuInfoBox" data-lock="cust">'+
-      '<div class="st-head" style="display:flex;align-items:flex-start;gap:12px;margin:0 0 14px">'+
-        '<div class="st-hx"><b style="font-size:15px">ข้อมูลลูกค้า</b>'+
-        '<div class="rs-sub" style="color:#8A94A6;font-size:12.5px;margin-top:3px">'+
-        'ข้อมูลชุดนี้ถูกคัดลอกลงเอกสารตอนออกใบ — ใบที่ออกไปแล้วคงข้อมูลเดิมเสมอ</div></div>'+
-        '<button class="btn btn-ghost" id="cuEditBtn" data-nolock onclick="custInfoEdit()">แก้ไข</button>'+
-      '</div>'+
-      '<div class="fld"><label>ชื่อลูกค้า (คีย์จับคู่เอกสาร)</label>'+
-        '<input id="cuName" value="'+esc(c.name)+'" readonly data-nolock>'+
-        '<div class="m-hint" style="margin:6px 0 0">ชื่อเป็นตัวจับคู่กับเอกสารเดิม จึงแก้ตรงนี้ไม่ได้ '+
-        '<button class="btn btn-ghost btn-sm" data-nolock onclick="custRenameForm(\''+nm+'\')">🔤 เปลี่ยนชื่อให้ครบทุกเล่ม</button></div></div>'+
-      '<div class="fld"><label>รหัสลูกค้า</label><input id="cuCode" value="'+esc(c.code||'')+'" placeholder="เว้นว่าง = ระบบออกให้ (CU-001)"></div>'+
-      '<div class="fld"><label>ชื่อเต็มตามหนังสือรับรอง (ขึ้นบนเอกสาร)</label>'+
-        '<input id="cuLegal" value="'+esc(c.legalName&&c.legalName!==c.name?c.legalName:'')+'"></div>'+
-      '<div class="fld"><label>เลขประจำตัวผู้เสียภาษี (13 หลัก)</label>'+
-        '<input id="cuTax" inputmode="numeric" value="'+esc(c.taxId||'')+'"></div>'+
-      '<div class="fld"><label>ที่อยู่ (สำหรับใบกำกับภาษี)</label><textarea id="cuAddr">'+esc(c.address||'')+'</textarea></div>'+
-      branchFieldHtml('cu', c.branch||'')+
-      '<div class="fld"><label>ผู้ติดต่อ</label><input id="cuContact" value="'+esc(c.contact||'')+'"></div>'+
-      '<div class="fld"><label>โทร</label><input id="cuPhone" inputmode="tel" value="'+esc(c.phone||'')+'"></div>'+
-      '<div class="fld"><label>อีเมล (ใช้ส่งเอกสารทางเมล)</label><input id="cuEmail" inputmode="email" value="'+esc(c.email||'')+'"></div>'+
-      '<div class="fld"><label>เครดิตเทอม (วัน)</label><input id="cuCredit" inputmode="numeric" value="'+esc(String(c.creditDays||15))+'"></div>'+
-      '<div class="fld"><label>ชื่ออื่นที่ใช้เรียก (คั่นด้วย , — ไว้ค้นหาชื่อบนใบเก่า)</label>'+
-        '<input id="cuAlias" value="'+esc(c.alias||'')+'"></div>'+
-      '<div class="fld"><label>ผู้ดูแลลูกค้า</label><select id="cuOwner"><option value="">— ไม่ระบุ —</option>'+
-        team.map(function(m){ var u=m.uid||m.id||'', n=m.name||m.label||u;
-          return '<option value="'+esc(u)+'"'+(c.ownerUid===u?' selected':'')+'>'+esc(n)+'</option>'; }).join('')+
-      '</select></div>'+
-      '<div class="fld"><label>เริ่มเป็นลูกค้า (วว/ดด/ปปปป)</label>'+
-        '<input id="cuSince" value="'+esc(c.since||'')+'" placeholder="เช่น 1/2/2569"></div>'+
-      '<div class="fld"><label>สถานะ</label><select id="cuStatus">'+
-        ['ใช้งาน','ปิด'].map(function(x){ return '<option value="'+x+'"'+((c.status||'ใช้งาน')===x?' selected':'')+'>'+
-          (x==='ปิด'?'ปิดการใช้งาน (เลิกใช้ลูกค้ารายนี้)':'ใช้งาน')+'</option>'; }).join('')+
-      '</select></div>'+
-      '<div class="section-h" style="font-size:13.5px;margin:14px 0 6px">ช่องทางติดต่อ (ชีตกลุ่มลูกค้า)</div>'+
-      '<div class="fld"><label>Group ID ของกลุ่ม LINE</label>'+
-        '<input id="cuGid" value="'+esc(ct.groupId||'')+'" placeholder="ขึ้นต้นด้วย C…"></div>'+
-      '<div class="fld"><label>โฟลเดอร์ Drive ของลูกค้า</label>'+
-        '<input id="cuFolder" value="'+esc(ct.folder||'')+'" placeholder="วางลิงก์โฟลเดอร์"></div>'+
-      '<div class="fld"><label>อีเมลกลุ่ม (หลายคนคั่นด้วย ,)</label>'+
-        '<input id="cuGmail" value="'+esc(ct.groupEmail||'')+'"></div>'+
-      '<div class="st-act">'+
-        '<button class="btn btn-primary" onclick="custSave()">บันทึก</button>'+
-        '<button class="btn btn-ghost" onclick="custInfoEdit()">ยกเลิก</button>'+
+    var st=(c.status||'ใช้งาน');
+    return '<div class="sf-card" id="cuInfoBox" data-lock="cust">'+
+      '<div class="sf-h" style="display:flex;align-items:center;gap:10px">📄 ข้อมูลลูกค้า'+
+        '<span style="margin-left:auto;display:flex;align-items:center;gap:10px;font-weight:400;white-space:nowrap">'+
+        '<span style="font-size:12.5px;white-space:nowrap;color:'+(st==='ปิด'?'#B45309':'#168a52')+'">● '+esc(st==='ปิด'?'ปิดการใช้งาน':'ใช้งาน')+'</span>'+
+        '<button class="btn btn-ghost btn-sm" id="cuEditBtn" data-nolock onclick="custInfoEdit()">แก้ไข</button>'+
+        '</span></div>'+
+      '<div class="sf-grid">'+
+        '<div class="sf-f c3"><label>รหัสลูกค้า</label>'+
+          '<input id="cuCode" value="'+esc(c.code||'')+'" placeholder="ว่าง = ระบบออกให้"></div>'+
+        '<div class="sf-f c6"><label>ชื่อเต็มตามหนังสือรับรอง (ขึ้นบนเอกสาร)</label>'+
+          '<input id="cuLegal" value="'+esc(c.legalName&&c.legalName!==c.name?c.legalName:'')+'"></div>'+
+        '<div class="sf-f c3"><label>เลขประจำตัวผู้เสียภาษี</label>'+
+          '<input id="cuTax" inputmode="numeric" value="'+esc(c.taxId||'')+'"></div>'+
+
+        '<div class="sf-f c6"><label>ที่อยู่ (สำหรับใบกำกับภาษี)</label>'+
+          '<textarea id="cuAddr" rows="2">'+esc(c.address||'')+'</textarea></div>'+
+        '<div class="sf-f c3">'+branchFieldInner_('cu', c.branch||'')+'</div>'+
+        '<div class="sf-f c3"><label>เครดิตเทอม (วัน)</label>'+
+          '<input id="cuCredit" inputmode="numeric" value="'+esc(String(c.creditDays||15))+'"></div>'+
+
+        '<div class="sf-f c3"><label>ผู้ติดต่อ</label><input id="cuContact" value="'+esc(c.contact||'')+'"></div>'+
+        '<div class="sf-f c3"><label>โทร</label><input id="cuPhone" inputmode="tel" value="'+esc(c.phone||'')+'"></div>'+
+        '<div class="sf-f c3"><label>อีเมล (ใช้ส่งเอกสาร)</label>'+
+          '<input id="cuEmail" inputmode="email" value="'+esc(c.email||'')+'"></div>'+
+        '<div class="sf-f c3"><label>ผู้ดูแลลูกค้า</label><select id="cuOwner"><option value="">— ไม่ระบุ —</option>'+
+          team.map(function(m){ var u=m.uid||m.id||'', n=m.name||m.label||u;
+            return '<option value="'+esc(u)+'"'+(c.ownerUid===u?' selected':'')+'>'+esc(n)+'</option>'; }).join('')+
+        '</select></div>'+
+
+        /* ช่องติดต่อ (ชีตกลุ่มลูกค้า) อยู่ในการ์ดเดียวกัน — เดิมแยกเป็นแท็บทำให้ต้องกรอก 2 ที่ */
+        '<div class="sf-f c4"><label>Group ID ของกลุ่ม LINE</label>'+
+          '<input id="cuGid" value="'+esc(ct.groupId||'')+'" placeholder="ขึ้นต้นด้วย C…">'+
+          (ct.groupName?'<div class="sf-note">'+esc(ct.groupName)+'</div>':'')+'</div>'+
+        '<div class="sf-f c4"><label>โฟลเดอร์ Drive ของลูกค้า</label>'+
+          '<input id="cuFolder" value="'+esc(ct.folder||'')+'" placeholder="วางลิงก์โฟลเดอร์"></div>'+
+        '<div class="sf-f c4"><label>อีเมลกลุ่ม (หลายคนคั่นด้วย ,)</label>'+
+          '<input id="cuGmail" value="'+esc(ct.groupEmail||'')+'"></div>'+
+
+        '<div class="sf-f c3"><label>ชื่ออื่นที่ใช้เรียก (คั่นด้วย ,)</label>'+
+          '<input id="cuAlias" value="'+esc(c.alias||'')+'" placeholder="ไว้ค้นหาชื่อบนใบเก่า"></div>'+
+        '<div class="sf-f c3"><label>เริ่มเป็นลูกค้า</label>'+
+          '<input id="cuSince" value="'+esc(c.since||'')+'" placeholder="เช่น 1/2/2569"></div>'+
+        '<div class="sf-f c3"><label>สถานะ</label><select id="cuStatus">'+
+          ['ใช้งาน','ปิด'].map(function(x){ return '<option value="'+x+'"'+(st===x?' selected':'')+'>'+
+            (x==='ปิด'?'ปิดการใช้งาน':'ใช้งาน')+'</option>'; }).join('')+
+        '</select></div>'+
+        '<div class="sf-f c3"><label>ชื่อในระบบ (คีย์จับคู่เอกสาร)</label>'+
+          '<input id="cuName" value="'+esc(c.name)+'" readonly data-nolock>'+
+          '<div class="sf-note"><button class="lnk" data-nolock onclick="custRenameForm(\''+nm+'\')">เปลี่ยนชื่อให้ครบทุกเล่ม</button></div></div>'+
       '</div></div>';
+  }
+
+  /** ช่องสาขาแบบไม่มีกล่อง .fld ครอบ (ใช้ในกริด sf-grid) — ตัวเดียวกับ branchFieldHtml แต่เอาเปลือกออก */
+  function branchFieldInner_(k, val){
+    var full=branchFieldHtml(k, val);
+    return full.replace(/^<div class="fld">/, '').replace(/<\/div>\s*$/, '');
   }
 
   function custKv(k,v){
@@ -16042,6 +16052,10 @@
               '<td class="dt-amt">'+(x.periods||0)+'</td><td class="dt-amt">'+money(x.amount)+'</td>'+
               '<td class="dt-nw">'+esc(x.status||'')+'</td></tr>'; }), '', '');
     }
+    /* 22 ก.ย. เย็น — ยุบแท็บ "งาน" กับ "ติดต่อ" เข้ามาที่นี่ (พี่กี้เคาะเหลือ 4 แท็บ)
+       โชว์เฉพาะก้อนที่มีข้อมูลจริง — ลูกค้าที่ไม่มีงาน/ยังไม่เคยส่งข้อความ จะไม่เจอตารางว่างเปล่า */
+    if((f.tasks||[]).length||(f.reimb||[]).length) h+=custTabWork(f);
+    if((f.contacts||[]).length) h+=custContactLog_(f);
     return h;
   }
 
@@ -16152,32 +16166,11 @@
     return h;
   }
 
-  function custTabContact(f){
-    var c=f.customer, ct=f.contact, nm=String(c.name).replace(/'/g,"\\'");
-    var h='<div class="card" style="margin:0 0 12px"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px 16px;font-size:13px">'+
-      custKv('กลุ่ม LINE', ct.groupName||(ct.groupId?'(ผูกแล้ว)':'ยังไม่ได้ผูก'))+
-      custKv('Group ID', ct.groupId||'—')+
-      custKv('อีเมลในทะเบียน', c.email||'—')+
-      custKv('อีเมลกลุ่ม', ct.groupEmail||'—')+
-      '</div>'+
-      '<div class="tax-acts" style="margin:10px 0 0">'+
-      '<button class="btn btn-ghost btn-sm" onclick="custForm(\''+nm+'\')">✏️ แก้ข้อมูลติดต่อ</button>'+
-      (ct.folder?'<a class="btn btn-ghost btn-sm" href="'+esc(ct.folder.indexOf('http')===0?ct.folder:('https://drive.google.com/drive/folders/'+ct.folder))+'" target="_blank" rel="noopener">📁 โฟลเดอร์ Drive</a>':'')+
-      '</div></div>';
-
-    /* ปุ่มส่ง — โชว์เฉพาะที่ backend ยอมรับจริง (ไม่มีกลุ่ม/ไม่มีอีเมล = ไม่มีปุ่ม) */
-    h+='<div class="section-h" style="font-size:14px">ส่งข้อความหาลูกค้า</div>'+
-      '<div class="tax-acts" style="margin:0 0 12px;flex-wrap:wrap">'+
-      (ct.groupId?'<button class="btn btn-primary" style="flex:none;min-width:0" onclick="custSendForm(\''+nm+'\',\'text\')">💬 ข้อความทั่วไป</button>':'')+
-      (c.email?'<button class="btn btn-ghost" style="flex:none;min-width:0" onclick="custSendForm(\''+nm+'\',\'text\',\'mail\')">📧 อีเมล</button>':'')+
-      ((f.ar&&f.ar.total>0&&ct.groupId)?'<button class="btn btn-ghost" style="flex:none;min-width:0" onclick="custSendForm(\''+nm+'\',\'dun\')">📣 ทวงหนี้</button>':'')+
-      (((f.wht||{}).missing>0&&ct.groupId)?'<button class="btn btn-ghost" style="flex:none;min-width:0" onclick="custSendForm(\''+nm+'\',\'wht\')">🧾 ทวง 50 ทวิ</button>':'')+
-      '</div>';
-    if(!ct.groupId&&!c.email){
-      h+='<div class="m-hint" style="margin:0 0 12px">ยังส่งข้อความไม่ได้ — ต้องผูกกลุ่ม LINE หรือกรอกอีเมลก่อนค่ะ (กด "แก้ข้อมูลติดต่อ")</div>';
-    }
-
-    h+='<div class="section-h" style="font-size:14px">ประวัติการติดต่อ</div>'+
+  /** ประวัติการติดต่อ — ยุบมาอยู่ท้ายแท็บภาพรวม (22 ก.ย. เย็น · เดิมเป็นแท็บของตัวเอง)
+   *  ข้อมูลกลุ่ม LINE/อีเมล ย้ายไปอยู่ในแท็บ ⚙️ ข้อมูล การ์ดเดียวกับที่อื่น (เลิกกรอก 2 ที่)
+   *  ปุ่มส่งข้อความย้ายไปแถบล่างติดขอบจอ (เห็นจากทุกแท็บ ไม่ต้องกลับมาหน้านี้) */
+  function custContactLog_(f){
+    return '<div class="section-h" style="font-size:14px;margin-top:14px">ประวัติการติดต่อ</div>'+
       dtTable([{label:'เมื่อ',cls:'dt-nw',w:'16%'},{label:'ช่องทาง',cls:'dt-nw',w:'10%'},
                {label:'เรื่อง',cls:'dt-nw',w:'16%'},{label:'สิ่งที่ส่ง'},
                {label:'ผู้ส่ง',cls:'dt-nw',w:'12%'},{label:'ผล',cls:'dt-nw',w:'14%'}],
@@ -16188,7 +16181,6 @@
             '<td class="dt-nw">'+esc(x.sender||'—')+'</td>'+
             '<td class="dt-nw"'+(bad?' style="color:#DC2626"':'')+'>'+esc(x.result||'')+'</td></tr>'; }),
         '', 'ยังไม่เคยส่งข้อความหาลูกค้ารายนี้จากระบบ');
-    return h;
   }
 
   /* ───────── ✉️ ส่งข้อความ (C4) — เห็นก่อนส่งเสมอ ───────── */
@@ -21617,7 +21609,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260922-0911';
+  var APP_BUILD='20260922-0928';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
