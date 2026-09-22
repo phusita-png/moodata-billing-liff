@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260922-0935">
+<link rel="stylesheet" href="user.css?v=20260922-0937">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -16040,16 +16040,17 @@
       '</div>';
     if(yrs.length){
       h+='<div class="section-h" style="font-size:14px">รายได้รายปี</div>'+
-        dtTable([{label:'ปี',cls:'dt-nw',w:'30%'},{label:'ยอดออกบิล',cls:'ta-r'}],
-          yrs.map(function(y){ return '<tr><td class="dt-nw">'+esc(y)+'</td><td class="dt-amt">'+money(f.revenueByYear[y])+'</td></tr>'; }),
+        dtTable([{label:'#',cls:'dt-nw',w:'42px'},{label:'ปี',cls:'dt-nw',w:'26%'},{label:'ยอดออกบิล',cls:'ta-r'}],
+          yrs.map(function(y,i){ return '<tr><td class="dt-nw" style="color:#8A94A6">'+(i+1)+'</td><td class="dt-nw">'+esc(y)+'</td><td class="dt-amt">'+money(f.revenueByYear[y])+'</td></tr>'; }),
           '', 'ยังไม่มีรายได้จากลูกค้ารายนี้');
     }
     if((f.contracts||[]).length){
       h+='<div class="section-h" style="font-size:14px;margin-top:14px">สัญญาบริการ</div>'+
-        dtTable([{label:'เลขที่',cls:'dt-nw',w:'20%'},{label:'เรื่อง'},{label:'งวด',cls:'ta-r',w:'10%'},
+        dtTable([{label:'#',cls:'dt-nw',w:'42px'},{label:'เลขที่',cls:'dt-nw',w:'18%'},{label:'เรื่อง'},{label:'งวด',cls:'ta-r',w:'10%'},
                  {label:'ยอด/งวด',cls:'ta-r',w:'16%'},{label:'สถานะ',cls:'dt-nw',w:'16%'}],
-          f.contracts.map(function(x){
-            return '<tr><td class="dt-nw">'+esc(x.no)+'</td><td>'+esc(x.title||'—')+'</td>'+
+          f.contracts.map(function(x,i){
+            return '<tr><td class="dt-nw" style="color:#8A94A6">'+(i+1)+'</td>'+
+              '<td class="dt-nw">'+esc(x.no)+'</td><td>'+esc(x.title||'—')+'</td>'+
               '<td class="dt-amt">'+(x.periods||0)+'</td><td class="dt-amt">'+money(x.amount)+'</td>'+
               '<td class="dt-nw">'+esc(x.status||'')+'</td></tr>'; }), '', '');
     }
@@ -16074,7 +16075,8 @@
       if(d.pdfLink&&f.contact.groupId) a.push({label:'💬 ส่งเข้ากลุ่มอีกครั้ง', call:"custSendForm('"+nm+"','doc','line','"+d.no+"')"});
       if(d.pdfLink&&f.customer.email) a.push({label:'📧 ส่งทางอีเมล', call:"custSendForm('"+nm+"','doc','mail','"+d.no+"')"});
       a.push({label:'🔎 เปิดรายละเอียด', call:"salesOne('"+d.no+"')"});
-      return '<tr><td class="dt-nw">'+esc(d.no)+'</td>'+
+      return '<tr><td class="dt-nw" style="color:#8A94A6">'+(i+1)+'</td>'+
+        '<td class="dt-nw">'+esc(d.no)+'</td>'+
         '<td class="dt-nw">'+esc(d.kindLabel||d.kind)+'</td>'+
         '<td class="dt-nw">'+esc(d.docDate||'—')+'</td>'+
         '<td>'+esc(d.title||'—')+'</td>'+
@@ -16082,7 +16084,7 @@
         '<td class="dt-amt">'+(d.balance>0?('<b style="color:#DC2626">'+money(d.balance)+'</b>'):'—')+'</td>'+
         '<td class="dt-nw">'+esc(d.status||'')+'</td>'+dtActCell(id, a)+'</tr>';
     });
-    return dtTable([{label:'เลขที่',cls:'dt-nw',w:'15%'},{label:'ชนิด',cls:'dt-nw',w:'12%'},
+    return dtTable([{label:'#',cls:'dt-nw',w:'42px'},{label:'เลขที่',cls:'dt-nw',w:'14%'},{label:'ชนิด',cls:'dt-nw',w:'11%'},
                     {label:'วันที่',cls:'dt-nw',w:'11%'},{label:'เรื่อง'},
                     {label:'ยอดรวม',cls:'ta-r',w:'12%'},{label:'คงค้าง',cls:'ta-r',w:'12%'},
                     {label:'สถานะ',cls:'dt-nw',w:'12%'},{label:'',w:'44px'}], trs, '',
@@ -16099,21 +16101,22 @@
         (f.contact.groupId?'<button class="btn btn-primary" style="flex:none;min-width:0" onclick="custSendForm(\''+nm+'\',\'dun\')">📣 ส่งใบแจ้งยอดค้างเข้ากลุ่ม</button>':'')+
         (f.customer.email?'<button class="btn btn-ghost" style="flex:none;min-width:0" onclick="custSendForm(\''+nm+'\',\'dun\',\'mail\')">📧 ส่งทางอีเมล</button>':'')+
         '</div>'+
-        dtTable([{label:'เลขที่',cls:'dt-nw',w:'18%'},{label:'เรื่อง'},{label:'ครบกำหนด',cls:'dt-nw',w:'14%'},
+        dtTable([{label:'#',cls:'dt-nw',w:'42px'},{label:'เลขที่',cls:'dt-nw',w:'16%'},{label:'เรื่อง'},{label:'ครบกำหนด',cls:'dt-nw',w:'14%'},
                  {label:'คงค้าง',cls:'ta-r',w:'15%'},{label:'อายุหนี้',cls:'dt-nw',w:'14%'}],
-          ar.docs.map(function(d){
-            return '<tr><td class="dt-nw">'+esc(d.no)+'</td><td>'+esc(d.title||'—')+'</td>'+
+          ar.docs.map(function(d,i){
+            return '<tr><td class="dt-nw" style="color:#8A94A6">'+(i+1)+'</td>'+
+              '<td class="dt-nw">'+esc(d.no)+'</td><td>'+esc(d.title||'—')+'</td>'+
               '<td class="dt-nw">'+esc(d.dueDate||'—')+'</td>'+
               '<td class="dt-amt"><b>'+money(d.balance)+'</b></td>'+
               '<td class="dt-nw">'+(d.overdue?'<span style="color:#DC2626">เกินกำหนด</span>':'ยังไม่ถึงกำหนด')+'</td></tr>'; }),
           '', '');
     }
     h+='<div class="section-h" style="font-size:14px;margin-top:'+(h?'14px':'0')+'">เงินเข้า</div>'+
-      dtTable([{label:'วันที่',cls:'dt-nw',w:'12%'},{label:'อ้างใบ',cls:'dt-nw',w:'16%'},
+      dtTable([{label:'#',cls:'dt-nw',w:'42px'},{label:'วันที่',cls:'dt-nw',w:'11%'},{label:'อ้างใบ',cls:'dt-nw',w:'15%'},
                {label:'ใบเสร็จ',cls:'dt-nw',w:'16%'},{label:'ยอดรับ',cls:'ta-r',w:'14%'},
                {label:'ภาษีที่ลูกค้าหัก',cls:'ta-r',w:'14%'},{label:'50 ทวิ',cls:'dt-nw',w:'12%'}],
-        (f.pays||[]).map(function(p){
-          return '<tr><td class="dt-nw">'+esc(p.date||'—')+'</td><td class="dt-nw">'+esc(p.ivNo||'—')+'</td>'+
+        (f.pays||[]).map(function(p,i){
+          return '<tr><td class="dt-nw" style="color:#8A94A6">'+(i+1)+'</td><td class="dt-nw">'+esc(p.date||'—')+'</td><td class="dt-nw">'+esc(p.ivNo||'—')+'</td>'+
             '<td class="dt-nw">'+esc(p.reNo||'—')+'</td><td class="dt-amt">'+money(p.amount)+'</td>'+
             '<td class="dt-amt">'+(p.wht>0?money(p.wht):'—')+'</td>'+
             '<td class="dt-nw">'+(p.wht>0?(p.cert?'<a href="'+esc(p.cert)+'" target="_blank" rel="noopener">✅ มีใบ</a>':'<span style="color:#DC2626">ยังไม่ได้</span>'):'—')+'</td></tr>'; }),
@@ -16128,11 +16131,11 @@
     }
     if((w.certs||[]).length){
       h+='<div class="section-h" style="font-size:14px;margin-top:14px">ใบ 50 ทวิ ที่ได้รับแล้ว (ทะเบียน)</div>'+
-        dtTable([{label:'เลขทะเบียน',cls:'dt-nw',w:'16%'},{label:'เลขที่บนใบ',cls:'dt-nw',w:'18%'},
+        dtTable([{label:'#',cls:'dt-nw',w:'42px'},{label:'เลขทะเบียน',cls:'dt-nw',w:'15%'},{label:'เลขที่บนใบ',cls:'dt-nw',w:'16%'},
                  {label:'วันที่จ่าย',cls:'dt-nw',w:'14%'},{label:'ฐาน',cls:'ta-r',w:'14%'},
                  {label:'ภาษี',cls:'ta-r',w:'13%'},{label:'ไฟล์',cls:'dt-nw',w:'10%'}],
-          w.certs.map(function(x){
-            return '<tr><td class="dt-nw">'+esc(x.no)+'</td><td class="dt-nw">'+esc(x.docNo||'—')+'</td>'+
+          w.certs.map(function(x,i){
+            return '<tr><td class="dt-nw" style="color:#8A94A6">'+(i+1)+'</td><td class="dt-nw">'+esc(x.no)+'</td><td class="dt-nw">'+esc(x.docNo||'—')+'</td>'+
               '<td class="dt-nw">'+esc(x.payDate||'—')+'</td><td class="dt-amt">'+money(x.amount)+'</td>'+
               '<td class="dt-amt">'+money(x.tax)+'</td>'+
               '<td class="dt-nw">'+(x.file?'<a href="'+esc(x.file)+'" target="_blank" rel="noopener">เปิด</a>':'—')+'</td></tr>'; }),
@@ -16144,22 +16147,23 @@
   function custTabWork(f){
     var nm=String(f.customer.name).replace(/'/g,"\\'");
     var h='<div class="section-h" style="font-size:14px">งานของลูกค้ารายนี้</div>'+
-      dtTable([{label:'รหัส',cls:'dt-nw',w:'12%'},{label:'งาน'},{label:'สถานะ',cls:'dt-nw',w:'14%'},
+      dtTable([{label:'#',cls:'dt-nw',w:'42px'},{label:'รหัส',cls:'dt-nw',w:'11%'},{label:'งาน'},{label:'สถานะ',cls:'dt-nw',w:'14%'},
                {label:'ผู้รับผิดชอบ',cls:'dt-nw',w:'16%'},{label:'กำหนด',cls:'dt-nw',w:'12%'}],
-        (f.tasks||[]).map(function(x){
-          return '<tr><td class="dt-nw">'+esc(x.no)+'</td><td>'+esc(x.title||'—')+'</td>'+
+        (f.tasks||[]).map(function(x,i){
+          return '<tr><td class="dt-nw" style="color:#8A94A6">'+(i+1)+'</td><td class="dt-nw">'+esc(x.no)+'</td><td>'+esc(x.title||'—')+'</td>'+
             '<td class="dt-nw">'+esc(x.status||'')+'</td><td class="dt-nw">'+esc(x.assignee||'—')+'</td>'+
             '<td class="dt-nw">'+esc(x.due||'—')+'</td></tr>'; }),
         '', 'ยังไม่มีงานของลูกค้ารายนี้');
     if((f.reimb||[]).length){
       h+='<div class="section-h" style="font-size:14px;margin-top:14px">ใบตั้งเบิก</div>'+
-        dtTable([{label:'เลขที่',cls:'dt-nw',w:'16%'},{label:'เรื่อง'},{label:'ยอด',cls:'ta-r',w:'14%'},
+        dtTable([{label:'#',cls:'dt-nw',w:'42px'},{label:'เลขที่',cls:'dt-nw',w:'15%'},{label:'เรื่อง'},{label:'ยอด',cls:'ta-r',w:'14%'},
                  {label:'ส่งเมื่อ',cls:'dt-nw',w:'13%'},{label:'',w:'44px'}],
           f.reimb.map(function(x,i){
             var id='cr'+i;
             var ra=[].concat(x.link?[{label:'📄 เปิดไฟล์',href:x.link}]:[],
               (x.link&&f.contact.groupId)?[{label:'💬 ส่งเข้ากลุ่มอีกครั้ง',call:"custSendForm('"+nm+"','reimb','line','"+x.no+"')"}]:[]);
-            return '<tr><td class="dt-nw">'+esc(x.no)+'</td><td>'+esc(x.title||'—')+'</td>'+
+            return '<tr><td class="dt-nw" style="color:#8A94A6">'+(i+1)+'</td>'+
+              '<td class="dt-nw">'+esc(x.no)+'</td><td>'+esc(x.title||'—')+'</td>'+
               '<td class="dt-amt">'+money(x.amount)+'</td><td class="dt-nw">'+esc(x.sentAt||'—')+'</td>'+
               dtActCell(id, ra)+'</tr>'; }),
           '', '');
@@ -16172,12 +16176,13 @@
    *  ปุ่มส่งข้อความย้ายไปแถบล่างติดขอบจอ (เห็นจากทุกแท็บ ไม่ต้องกลับมาหน้านี้) */
   function custContactLog_(f){
     return '<div class="section-h" style="font-size:14px;margin-top:14px">ประวัติการติดต่อ</div>'+
-      dtTable([{label:'เมื่อ',cls:'dt-nw',w:'16%'},{label:'ช่องทาง',cls:'dt-nw',w:'10%'},
+      dtTable([{label:'#',cls:'dt-nw',w:'42px'},{label:'เมื่อ',cls:'dt-nw',w:'15%'},{label:'ช่องทาง',cls:'dt-nw',w:'10%'},
                {label:'เรื่อง',cls:'dt-nw',w:'16%'},{label:'สิ่งที่ส่ง'},
                {label:'ผู้ส่ง',cls:'dt-nw',w:'12%'},{label:'ผล',cls:'dt-nw',w:'14%'}],
-        (f.contacts||[]).map(function(x){
+        (f.contacts||[]).map(function(x,i){
           var bad=x.result&&x.result!=='สำเร็จ'&&x.result.indexOf('สำเร็จ')<0;
-          return '<tr><td class="dt-nw">'+esc(x.at)+'</td><td class="dt-nw">'+esc(x.channel)+'</td>'+
+          return '<tr><td class="dt-nw" style="color:#8A94A6">'+(i+1)+'</td>'+
+            '<td class="dt-nw">'+esc(x.at)+'</td><td class="dt-nw">'+esc(x.channel)+'</td>'+
             '<td class="dt-nw">'+esc(x.kind)+'</td><td>'+esc(x.summary||'—')+'</td>'+
             '<td class="dt-nw">'+esc(x.sender||'—')+'</td>'+
             '<td class="dt-nw"'+(bad?' style="color:#DC2626"':'')+'>'+esc(x.result||'')+'</td></tr>'; }),
@@ -21610,7 +21615,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260922-0935';
+  var APP_BUILD='20260922-0937';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
