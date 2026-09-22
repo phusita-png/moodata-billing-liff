@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260922-1825">
+<link rel="stylesheet" href="user.css?v=20260922-1842">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -6231,6 +6231,43 @@
    *  แต่ปุ่มที่กดแล้วโดนปฏิเสธเสมอไม่ควรมีให้กด)
    * @return {Array} [{key,label,call|href,danger,sep}]
    */
+  /** ใบนี้ยังรอใบเสร็จตัวจริงไหม — ต้องตรงกับ expAwaitingReceipt_ ฝั่งหลังบ้าน */
+  function expAwaitReceipt(x){
+    return String((x&&x.docType)||'').indexOf('จ่ายก่อน')>=0 && !(x&&x.realReceipt)
+      && String((x&&x.status)||'').indexOf('ไม่อนุมัติ')<0
+      && String((x&&x.status)||'').indexOf('ยกเลิก')<0;
+  }
+  window.expAwaitReceipt=expAwaitReceipt;
+
+  /** พี่แนบใบเสร็จ/ใบกำกับตัวจริงที่ตามมาทีหลัง (ไม่ทับหลักฐานตอนขอเบิก) */
+  function expOpenReceipt(no){
+    modal('<h3>📎 แนบใบเสร็จตัวจริง · ' + esc(no) + '</h3>' +
+      '<div id="mErr" class="m-err hidden"></div>' +
+      '<div class="m-hint" style="margin:0 0 8px">ใบเสร็จ/ใบกำกับภาษีที่ได้รับมาทีหลัง — ' +
+        'หลักฐานตอนขอเบิก (ใบวางบิล) ยังอยู่ที่เดิมค่ะ</div>' +
+      imgsFldHtml('eRealRcp','ใบเสร็จ / ใบกำกับภาษี (รูป หรือ PDF · แนบได้หลายไฟล์)') +
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>' +
+      '<button class="btn btn-primary" onclick="expSendReceipt(&quot;' + jss(no) + '&quot;)">บันทึก</button></div>');
+    imgsFldBind('eRealRcp');
+  }
+  window.expOpenReceipt=expOpenReceipt;
+
+  function expSendReceipt(no){
+    var arr=IMGS['eRealRcp']||[];
+    if(!arr.length){ mErr('แนบไฟล์ก่อนค่ะ'); return; }
+    callBusy('กำลังบันทึก…', jsonpPost({action:'waExpReceipt',uid:UID,no:no,imgs:JSON.stringify(arr)}))
+      .then(function(r){
+        if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+        closeModal(); IMGS['eRealRcp']=[];
+        toast('🧾 บันทึกใบเสร็จตัวจริงของ ' + no + ' แล้ว');
+        if(VIEW==='payout') renderPayout();
+        else if(VIEW==='expdash') renderExpDash();
+        else if(VIEW==='expone') renderExpOne();
+        else renderExpense();
+      }).catch(function(e){ mErr(e.message); });
+  }
+  window.expSendReceipt=expSendReceipt;
+
   function expRowActions(x, isOwner, hasManyEnt){
     var st = String(x.status || '');
     var paid = st.indexOf('จ่ายแล้ว') >= 0;
@@ -6249,7 +6286,11 @@
     if(x.whtLink)    a.push({ key:'wht',   label:'🧾 50 ทวิ ' + (x.whtNo || ''), href:x.whtLink });
     if(x.dossier)    a.push({ key:'dossier', label:'🗂️ แฟ้มครบชุด', href:x.dossier });
     if(x.paidSlip)   a.push({ key:'slip',  label:'💸 สลิปโอนคืน', href:x.paidSlip });
+    /* ⏳ ใบที่ขอเงินไปจ่ายก่อน — ใบเสร็จตัวจริงตามมาทีหลัง (22 ก.ย. 69 · พี่กี้แนบเอง) */
+    if(x.realReceipt) a.push({ key:'realrcp', label:'🧾 ใบเสร็จตัวจริง', href:x.realReceipt });
     if(!isOwner) return a;   // พนักงานเห็นแค่ลิงก์เอกสารของใบตัวเอง
+    if(expAwaitReceipt(x)) a.push({ key:'addrcp', label:'📎 แนบใบเสร็จตัวจริง (ยังไม่ได้รับ)',
+      call:'expOpenReceipt(' + q + ')', danger:true });
 
     if(a.length) a.push({ sep:true });
     /* 🔎 เปิดดู = ทางเข้าหลักของทุกใบ (พี่กี้ 7 ก.ย.) — เห็นทุกช่อง + แก้ได้ทีเดียวจบ
@@ -6379,8 +6420,16 @@
           '<button type="button" id="epRcp" class="btn btn-sm" onclick="expSetProof(\'rcp\')" style="flex:1">🧾 มีใบเสร็จ</button>'+
           '<button type="button" id="epSr" class="btn btn-sm" onclick="expSetProof(\'sr\')" style="flex:1">📄 ไม่มีใบเสร็จ</button>'+
           '<button type="button" id="epRv" class="btn btn-sm" onclick="expSetProof(\'rv\')" style="flex:1">💵 จ่ายค่าจ้าง</button>'+
+          /* ⏳ ขอเงินไปจ่ายก่อน (22 ก.ย. 69 · พี่กี้) — มัดจำ/จองล่วงหน้า ใบเสร็จตัวจริงมาทีหลัง
+             เดิมไม่มีทางนี้ พนักงานเลยต้องกด "ไม่มีใบเสร็จ" แล้วระบบออก SR ให้ ซึ่งไม่ควรออก */
+          '<button type="button" id="epAdv" class="btn btn-sm" onclick="expSetProof(\'adv\')" style="flex:1">⏳ จ่ายก่อน</button>'+
         '</div></div>'+
       '<div id="epBankBox">'+expMyBankHtml()+'</div>'+
+      '<div id="epAdvBox" class="hidden">'+
+        imgsFldHtml('eAdvImg','📎 ใบวางบิล / ใบเสนอราคา / สัญญา — หลักฐานว่าต้องจ่ายเท่าไหร่')+
+        '<div class="m-hint" style="margin:6px 0 0">⏳ ใบนี้จะ<b>ไม่ออกใบรับรองแทนใบเสร็จ</b> '+
+        'เพราะใบเสร็จ/ใบกำกับตัวจริงจะตามมาทีหลัง — ได้มาเมื่อไหร่ส่งให้พี่แนบเข้าใบนี้ได้เลยค่ะ</div>'+
+      '</div>'+
       '<div id="epRcpBox">'+imgsFldHtml('eImg','📎 ใบเสร็จ — รูป หรือ PDF (แนบได้หลายไฟล์ → รวมเป็น PDF เดียวให้)')+
         // จ่ายผู้รับจ้าง/บริษัท ที่ต้องหักภาษี ณ ที่จ่าย — ติ๊กแล้วระบบออก 50 ทวิ ให้ตอนจ่าย
         '<div class="fld" style="margin-top:4px">'+
@@ -6431,7 +6480,7 @@
       '</div>'+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
       '<button class="btn btn-primary" id="eSend" onclick="doExpense()">แจ้งเบิก</button></div>');
-    imgsFldBind('eImg'); imgsFldBind('eSrImg'); imgsFldBind('eRvCard'); imgsFldBind('eRvImg');
+    imgsFldBind('eImg'); imgsFldBind('eSrImg'); imgsFldBind('eRvCard'); imgsFldBind('eRvImg'); imgsFldBind('eAdvImg');
     expSetProof('rcp');
   }
   /** ติ๊ก "หักภาษี ณ ที่จ่าย" บนใบแนบใบเสร็จ → เปิดช่องข้อมูลผู้ถูกหัก (ไปโผล่บน 50 ทวิ) */
@@ -6465,7 +6514,7 @@
     if(mode===true) mode='sr'; if(mode===false) mode='rcp';   // เผื่อ frontend เก่าที่ LINE แคชไว้เรียกแบบ boolean
     EXP_PROOF=mode;
     var on='background:var(--red);color:#fff;border-color:var(--red)', off='background:#fff;color:var(--red);border:1.5px solid var(--red)';
-    [['epRcp','rcp'],['epSr','sr'],['epRv','rv']].forEach(function(t){
+    [['epRcp','rcp'],['epSr','sr'],['epRv','rv'],['epAdv','adv']].forEach(function(t){
       var el=$(t[0]); if(el) el.style.cssText='flex:1;font-size:13px;padding:9px 4px;'+(mode===t[1]?on:off);
     });
     var rb=$('epRcpBox'), sb=$('epSrBox'), vb=$('epRvBox'), bb=$('epBankBox');
@@ -6474,6 +6523,7 @@
     if(rb) rb.classList.toggle('hidden', mode!=='rcp');
     if(sb) sb.classList.toggle('hidden', mode!=='sr');
     if(vb) vb.classList.toggle('hidden', mode!=='rv');
+    var ab=$('epAdvBox'); if(ab) ab.classList.toggle('hidden', mode!=='adv');
     if(mode==='sr'){
       var el=$('epSign'); if(el) el.textContent='กำลังตรวจลายเซ็น…';
       jsonp({action:'waSignGet',uid:UID}).then(function(r){
@@ -6536,6 +6586,11 @@
         if(!arr.length){ mErr('แนบหลักฐานเท่าที่มีก่อนค่ะ (สลิปโอน/บิลเงินสด) — ถ้าไม่มีจริงๆ ติ๊กช่องด้านล่าง'); return; }
         p.imgs=JSON.stringify(arr);
       }
+    } else if(EXP_PROOF==='adv'){
+      /* ขอเงินไปจ่ายก่อน — บังคับแนบหลักฐานว่าต้องจ่ายเท่าไหร่ (ใบวางบิล/ใบเสนอราคา/สัญญา) */
+      var adv=IMGS['eAdvImg']||[];
+      if(!adv.length){ mErr('แนบใบวางบิล/ใบเสนอราคาก่อนค่ะ (หลักฐานว่าต้องจ่ายเท่าไหร่)'); return; }
+      p.proof='adv'; p.imgs=JSON.stringify(adv);
     } else {
       var rcp=IMGS['eImg']||[];
       if(!rcp.length){ mErr('แนบรูปใบเสร็จก่อนค่ะ (หรือเลือก "ไม่มีใบเสร็จ")'); return; }
@@ -9676,6 +9731,8 @@
       var flag='';
       if(x.selfApprove) flag+='<br><span style="color:#C8730B">'+esc(x.selfApprove)+'</span>';
       if(x.stage==='done' && !x.paidSlip) flag+='<br><span style="color:#DC2626;font-weight:600">📎 ยังไม่มีสลิปโอน</span>';
+      /* ⏳ ใบที่ขอเงินไปจ่ายก่อน ยังตามใบเสร็จตัวจริงไม่ได้ (22 ก.ย. 69) */
+      if(expAwaitReceipt(x)) flag+='<br><span style="color:#B45309;font-weight:600">⏳ รอใบเสร็จตัวจริง</span>';
       /* 22 ก.ย. 69 เย็น — เดิมติ๊กได้เฉพาะใบบริษัท (คิดว่าใบเบิกไม่มีเอกสารให้แนบ)
          พี่กี้ติดตอนจะเสนอใบเบิกค่ามัดจำห้องประชุม ซึ่งมีทั้ง SR และแฟ้มครบชุด → ติ๊กได้ทุกใบ */
       var pick = '<input type="checkbox" id="psel_'+esc(x.no)+'"'+(PS_SEL[String(x.no)]?' checked':'')+
@@ -22734,7 +22791,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260922-1825';
+  var APP_BUILD='20260922-1842';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
