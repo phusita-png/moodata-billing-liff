@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260922-0937">
+<link rel="stylesheet" href="user.css?v=20260922-0943">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -15825,6 +15825,76 @@
     return a;
   }
 
+  /* ───────── 🔍 ค้นนิติบุคคลจากกรมพัฒนาธุรกิจการค้า (22 ก.ย. 69) ─────────
+     พี่กี้เห็นใน TRCloud: พิมพ์เลขผู้เสียภาษี → กดค้น → ได้ข้อมูลจาก DBD → กด "ใช้ข้อมูลนี้"
+     🔴 เป็นตัวช่วยกรอกเท่านั้น — ต้องให้คนเห็นก่อนแล้วกดใช้เอง ห้ามเติมลงช่องเงียบ ๆ
+        (ที่อยู่จดทะเบียนกับที่อยู่ที่ลูกค้าให้ออกใบกำกับ มักคนละที่)
+     🔴 ต้องกด "แก้ไข" ก่อน ไม่งั้นช่องล็อกอยู่ เติมไปก็บันทึกไม่ได้ */
+  var DBD_HIT=null;
+  function custDbdLookup(){
+    var tax=(($('cuTax')||{}).value||'').replace(/\D/g,'');
+    if(tax.length!==13){ toast('กรอกเลขผู้เสียภาษี 13 หลักก่อนค่ะ'); return; }
+    busy('กำลังค้นจากกรมพัฒน์…');
+    jsonp({action:'waCustomerDbd',uid:UID,taxId:tax}).then(function(r){
+      unbusy();
+      if(!r||!r.ok){ toast((r&&r.error)||'ค้นไม่สำเร็จ'); return; }
+      DBD_HIT=r.data;
+      var d=r.data;
+      var closed=d.status&&d.status.indexOf('ยังดำเนินกิจการ')<0;
+      modal('<h3>🔍 ข้อมูลจากกรมพัฒนาธุรกิจการค้า</h3><div id="mErr" class="m-err hidden"></div>'+
+        (closed?'<div class="m-err">สถานะนิติบุคคล: '+esc(d.status)+' — ตรวจก่อนออกเอกสารนะคะ</div>':'')+
+        '<div class="tax-tbl-wrap"><table class="tax-tbl"><tbody>'+
+        dbdRow_('ชื่อนิติบุคคล', d.nameTH)+
+        (d.nameEN?dbdRow_('ชื่อภาษาอังกฤษ', d.nameEN):'')+
+        dbdRow_('ประเภท', d.type)+
+        dbdRow_('สถานะ', d.status)+
+        dbdRow_('สาขา', d.branch)+
+        dbdRow_('ที่อยู่จดทะเบียน', d.address)+
+        dbdRow_('เลขผู้เสียภาษี', d.taxId)+
+        (d.capital?dbdRow_('ทุนจดทะเบียน', money(d.capital)+' บาท'):'')+
+        '</tbody></table></div>'+
+        '<div class="m-hint" style="margin:10px 0 0">กด "ใช้ข้อมูลนี้" แล้วระบบจะเติม <b>ชื่อเต็ม · สาขา · ที่อยู่</b> '+
+        'ลงในฟอร์ม (ยังไม่บันทึกจนกว่าจะกดบันทึก) — ถ้าลูกค้าให้ออกใบกำกับตามที่อยู่อื่น แก้ทับได้เลยค่ะ</div>'+
+        '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button>'+
+        '<button class="btn btn-primary" onclick="custDbdUse()">ใช้ข้อมูลนี้</button></div>');
+    }).catch(function(e){ unbusy(); toast(e.message); });
+  }
+  window.custDbdLookup=custDbdLookup;
+  function dbdRow_(k,v){
+    return '<tr><td style="color:#8A94A6;white-space:nowrap;width:150px">'+esc(k)+'</td><td>'+esc(v||'—')+'</td></tr>';
+  }
+
+  /** เติมค่าลงฟอร์ม — ช่องที่คนกรอกไว้แล้วไม่ทับ ถามก่อน (กันข้อมูลที่พิมพ์เองหาย) */
+  function custDbdUse(){
+    var d=DBD_HIT; if(!d) return;
+    if(!CUST_EDIT && VIEW==='custfile'){
+      closeModal();
+      toast('กด "แก้ไข" ก่อนนะคะ แล้วค่อยกด 🔍 ใช้ข้อมูลอีกครั้ง');
+      return;
+    }
+    function put(id,val){
+      var el=$(id); if(!el||!val) return;
+      var cur=String(el.value||'').trim();
+      if(cur && cur!==val && !confirm('ช่องนี้มีข้อมูลอยู่แล้ว:\n'+cur+'\n\nแทนที่ด้วยข้อมูลจากกรมพัฒน์ไหมคะ?\n'+val)) return;
+      el.value=val;
+    }
+    put('cuLegal', d.nameTH);
+    put('cuAddr', d.address);
+    put('cuTax', d.taxId);
+    /* สาขา: DBD คืน "สำนักงานใหญ่" หรือชื่อสาขา — ตัวเลือกในฟอร์มรับ สนญ./เลขสาขา */
+    var kind=$('cuBrKind');
+    if(kind){
+      var isHq=(d.branch||'').indexOf('สำนักงานใหญ่')>=0;
+      kind.value=isHq?'hq':'br';
+      if(typeof branchToggle==='function') branchToggle('cu');
+      var noEl=$('cuBrNo');
+      if(!isHq&&noEl){ var m=String(d.branch).match(/\d+/); if(m) noEl.value=m[0]; }
+    }
+    closeModal();
+    toast('✅ เติมข้อมูลจากกรมพัฒน์แล้ว — ตรวจแล้วกดบันทึกนะคะ');
+  }
+  window.custDbdUse=custDbdUse;
+
   /* ───────── 🗑️ ลบลูกค้า ─────────
      🔴 พี่กี้เคาะ 22 ก.ย.: ลูกค้าที่มีรายการผูกแล้ว (เอกสาร/เงิน/งาน/50 ทวิ/สัญญา) ห้ามลบ
         เงื่อนไขบนจอต้องตรงกับด่านหลังบ้านเสมอ → จอไม่ตัดสินเอง แต่ถามหลังบ้านก่อนทุกครั้ง */
@@ -15974,8 +16044,14 @@
           '<input id="cuCode" value="'+esc(c.code||'')+'" placeholder="ว่าง = ระบบออกให้"></div>'+
         '<div class="sf-f c6"><label>ชื่อเต็มตามหนังสือรับรอง (ขึ้นบนเอกสาร)</label>'+
           '<input id="cuLegal" value="'+esc(c.legalName&&c.legalName!==c.name?c.legalName:'')+'"></div>'+
+        /* 🔍 ค้นจากกรมพัฒน์ (พี่กี้เห็นใน TRCloud) — กรอกเลข 13 หลักแล้วกด ระบบเติมชื่อ/สาขา/ที่อยู่ให้
+           ปุ่มไม่ล็อกตามโหมดอ่านอย่างเดียว ไม่ได้ (ต้องกดแก้ไขก่อนถึงจะเติมค่าลงช่องได้) */
         '<div class="sf-f c3"><label>เลขประจำตัวผู้เสียภาษี</label>'+
-          '<input id="cuTax" inputmode="numeric" value="'+esc(c.taxId||'')+'"></div>'+
+          '<div style="display:flex;gap:6px">'+
+          '<input id="cuTax" inputmode="numeric" value="'+esc(c.taxId||'')+'" style="flex:1;min-width:0">'+
+          '<button class="btn btn-ghost" onclick="custDbdLookup()" title="ค้นข้อมูลจากกรมพัฒนาธุรกิจการค้า" '+
+            'style="flex:none;width:auto;padding:0 12px">🔍</button></div>'+
+          '<div class="sf-note">กด 🔍 ดึงชื่อ/สาขา/ที่อยู่จากกรมพัฒน์</div></div>'+
 
         '<div class="sf-f c6"><label>ที่อยู่ (สำหรับใบกำกับภาษี)</label>'+
           '<textarea id="cuAddr" rows="2">'+esc(c.address||'')+'</textarea></div>'+
@@ -21615,7 +21691,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260922-0937';
+  var APP_BUILD='20260922-0943';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
