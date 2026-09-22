@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260922-1851">
+<link rel="stylesheet" href="user.css?v=20260922-1910">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -9717,6 +9717,21 @@
   }
   window.prKindTag=prKindTag;
 
+  /** 🔗 สายเอกสารของใบ — มาจากใบไหน (←) · ถูกดึงไปออกใบอะไร (→)
+      แบบเดียวกับหน้าใบเสนอราคาที่บอกว่าใบนี้ออกใบแจ้งหนี้ไปแล้ว (พี่กี้ 22 ก.ย. 69) */
+  function prRefHtml(x){
+    var r=(x&&x.ref)||{}, out=[];
+    (r.from||[]).forEach(function(f){
+      out.push('<div style="color:#8A94A6" title="'+esc(f.label||'')+'">← '+esc(f.no)+'</div>');
+    });
+    (r.to||[]).forEach(function(d){
+      var txt='→ '+esc(d.no);
+      out.push('<div style="color:#168a52">'+(d.link?('<a href="'+esc(d.link)+'" target="_blank">'+txt+'</a>'):txt)+'</div>');
+    });
+    return out.length?out.join(''):'<span style="color:#B6BECC">—</span>';
+  }
+  window.prRefHtml=prRefHtml;
+
   function prTableHtml(rows){
     var body=rows.map(function(x,i){
       /* เก็บใบไว้ให้เมนู ⋮ และโมดัลทุกตัวใช้ — ชุดเดียวกับหน้าเดิมของแต่ละฝั่ง */
@@ -9753,22 +9768,27 @@
         '<td class="dt-amt">'+poMoney(x.amount)+'</td>'+
         '<td class="dt-nw"><span class="tk-badge '+(x.kind==='staff'?expBadge(x.status):poBadge(x.status))+'">'+esc(x.status)+'</span></td>'+
         '<td class="dt-doc">'+(docs||'—')+'</td>'+
+        '<td class="dt-nw" style="font-size:12px">'+prRefHtml(x)+'</td>'+
         dtActCell('pr-'+x.no, acts)+
         '</tr>';
     });
     var sum=rows.reduce(function(a,x){ return a+(Number(x.amount)||0); },0);
     var total=rows.length>1
       ? '<tr class="tax-total"><td colspan="7" style="text-align:right">รวม '+rows.length+' ใบ</td>'+
-        '<td class="dt-amt">'+poMoney(sum)+'</td><td colspan="3"></td></tr>' : '';
+        '<td class="dt-amt">'+poMoney(sum)+'</td><td colspan="4"></td></tr>' : '';
     return dtTable([{label:'#',cls:'ta-c dt-nw',w:'40px'},
       {label:'☑',cls:'ta-c dt-nw',w:'36px',
        html:'<input type="checkbox" id="pselAll" title="เลือก/ล้างใบของบริษัทที่เห็นอยู่" '+
             'onchange="psSelAll(this.checked)">'},
-      {label:'เลขที่',cls:'dt-nw',w:'140px'},
-      {label:'ประเภทใบ',cls:'ta-c dt-nw',w:'104px'},{label:'ผู้รับเงิน / ผู้เบิก',w:'15%'},
-      {label:'ประเภทค่าใช้จ่าย',w:'12%'},{label:'รายละเอียด'},
-      {label:'ยอด (บาท)',cls:'ta-r',w:'112px'},{label:'สถานะ',cls:'dt-nw',w:'104px'},
-      {label:'เอกสาร',w:'140px'},{label:'',w:'46px'}],
+      /* 🔴 กำหนดความกว้างทุกคอลัมน์ให้รวม ~100% (ตารางเป็น table-layout:fixed)
+         ผสม px หลายช่องแล้วปล่อย "รายละเอียด" ว่างไว้ = ช่องนั้นเหลือไม่กี่พิกเซล ตกบรรทัดทีละคำ */
+      {label:'เลขที่',cls:'dt-nw',w:'9%'},
+      {label:'ประเภทใบ',cls:'ta-c dt-nw',w:'7%'},{label:'ผู้รับเงิน / ผู้เบิก',w:'13%'},
+      {label:'ประเภทค่าใช้จ่าย',w:'10%'},{label:'รายละเอียด',w:'21%'},
+      {label:'ยอด (บาท)',cls:'ta-r',w:'8%'},{label:'สถานะ',cls:'dt-nw',w:'8%'},
+      {label:'เอกสาร',w:'12%'},
+      /* 🔗 สายเอกสาร — มาจากใบไหน / ถูกดึงไปออกใบอะไร (พี่กี้ 22 ก.ย. 69) */
+      {label:'อ้างอิง',cls:'dt-nw',w:'10%'},{label:'',w:'40px'}],
       body, total, 'ไม่พบใบตามเงื่อนไขที่เลือกค่ะ');
   }
   window.prTableHtml=prTableHtml;
@@ -22804,7 +22824,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260922-1851';
+  var APP_BUILD='20260922-1910';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
