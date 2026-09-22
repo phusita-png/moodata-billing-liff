@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260922-1023">
+<link rel="stylesheet" href="user.css?v=20260922-1038">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -11552,34 +11552,6 @@
      🔴 หน้านี้เป็น "ทางเข้า" อย่างเดียว — ไม่ทำตัวนำเข้าเอง ต้องพาไปเครื่องมือตัวจริงเสมอ
         (ทำตัวที่สองเมื่อไหร่ = ข้อมูลเข้าได้ 2 ทางที่กติกาไม่ตรงกัน แล้วไล่ไม่ถูกว่าใบมาจากไหน)
      ready:false = ยังไม่มีของ → การ์ดจาง บอกว่าจะมาเฟสไหน ไม่ปล่อยให้กดแล้วเงียบ */
-  var DATA_IN=[
-    /* 📥 นำเข้าแบบตาราง (22 ก.ย. 69) — พี่กี้ขอหน้าตารางไฮไลต์ช่องบังคับแบบระบบประเมินผล
-       ⏭️ ใบเสร็จรับเงิน · ใบสำคัญจ่าย จะมาต่อในชุดเดียวกัน (เพิ่มชนิดที่ Import.gs ที่เดียว) */
-    { icon:'👥', title:'ทะเบียนลูกค้า',
-      desc:'ยกทะเบียนลูกค้าจากระบบเดิมเข้ามาทีเดียวหลายราย · กรอกในตารางหรือก๊อปจาก Excel มาวาง · ชื่อซ้ำ = อัปเดตรายเดิม',
-      go:"impOpen('customer')", btn:'เปิดตารางนำเข้าลูกค้า', ready:true },
-    { icon:'🧰', title:'สินค้า/บริการ',
-      desc:'ยกรายการสินค้า/บริการพร้อมราคาตั้งต้นเข้ามาทีเดียว · รหัสซ้ำ = อัปเดตรายเดิม',
-      go:"impOpen('service')", btn:'เปิดตารางนำเข้าสินค้า/บริการ', ready:true },
-    { icon:'🧾', title:'50 ทวิที่ถูกหัก',
-      desc:'อัปไฟล์ทีละใบหรือหลายใบ ระบบอ่านให้แล้วให้ตรวจก่อนบันทึก · หรือนำเข้า CSV ทั้งชุด',
-      go:"switchView('whtin')", btn:'ไปหน้า 50 ทวิ ที่ถูกหัก', ready:true },
-    { icon:'📈', title:'ผลประกอบการรายปี',
-      desc:'วางผลที่ให้ Claude อ่านจาก ภ.ง.ด.50 / งบการเงิน แล้วระบบแกะให้ตรวจก่อนบันทึก',
-      go:"switchView('pnd51')", btn:'ไปหน้า ภ.ง.ด.51', ready:true },
-    { icon:'🔁', title:'ย้ายตั้งเบิกลูกค้าเดิมเข้าระบบรายรับ',
-      desc:'ใบตั้งเบิกที่ทำไว้ก่อนมีระบบเอกสารขาย · ลองดูก่อนได้ ไม่เขียนทับของเดิม',
-      go:'reimbMigrate()', btn:'เปิดตัวย้าย', ready:true },
-    { icon:'🏦', title:'Statement ธนาคาร',
-      desc:'วางรายการเดินบัญชีจากไฟล์ธนาคาร แล้วจับคู่กับใบเสร็จ/ใบสำคัญจ่ายที่บันทึกไว้ · กันนำเข้าซ้ำให้เอง',
-      go:"switchView('statement')", btn:'ไปหน้ากระทบยอด Statement', ready:true },
-    { icon:'📗', title:'ข้อมูลจากระบบบัญชี (GL)',
-      desc:'นำเข้า GL บัญชีภาษีถูกหัก ณ ที่จ่าย หรือรายงานจากโปรแกรมบัญชี เพื่อใช้ตั้งหลักกระทบยอด',
-      go:"switchView('whtin')", btn:'ดูหน้าที่เกี่ยวข้อง', ready:false, when:'เฟส 6' },
-    { icon:'🤖', title:'ให้ AI อ่านเอกสารให้',
-      desc:'50 ทวิ · ใบกำกับภาษีซื้อ · สลิปโอน · Statement — ระบบอ่านแล้วเติมฟอร์มให้ตรวจ ไม่บันทึกเอง',
-      go:"switchView('airead')", btn:'เปิดหน้าอ่านเอกสารด้วย AI', ready:true }
-  ];
   /* ═══════════ 📥 นำเข้าข้อมูลแบบตาราง (view `dataimp` · 22 ก.ย. 2569) ═══════════
      พี่กี้: "ทำหน้าที่มีตาราง + ไฮไลต์สีข้อมูลที่ต้องใส่ แบบระบบประเมินผล"
      ใช้ CSS ชุดเดียวกับตารางนำเข้า KPI (.kp-impgrid / th.need / td.need) — ไม่สร้างสไตล์ใหม่
@@ -11801,18 +11773,45 @@
   function impOpen(kind){ IMP_KIND=kind||'customer'; IMP_MODE='grid'; switchView('dataimp'); }
   window.impOpen=impOpen;
 
+  /* 📥 ทางนำเข้าข้อมูลทั้งหมด — **ตารางเดียวจบ** (พี่กี้เคาะ 22 ก.ย. เย็น)
+     เดิมเป็นการ์ดใหญ่เรียงยาวลงมา 8 ใบ ต้องเลื่อนหา พี่กี้บอก "ดูงง ใช้งานงง"
+     🔴 ภ.ง.ด.51 / ผลประกอบการรายปี **ไม่อยู่ที่นี่** — ย้ายไปโมดูลภาษี (พี่กี้เคาะ)
+        หน้านี้เก็บเฉพาะทางเข้าข้อมูลของโมดูลการเงิน
+     `how` = วิธีนำเข้าแบบสั้น ๆ (คนเลือกจากตรงนี้ว่าจะไปทางไหน) */
+  var DATA_IN=[
+    { icon:'👥', title:'ทะเบียนลูกค้า', how:'กรอกในตาราง หรือก๊อปจาก Excel มาวาง',
+      note:'ชื่อซ้ำ = อัปเดตรายเดิม ไม่สร้างซ้ำ', go:"impOpen('customer')", ready:true },
+    { icon:'🧰', title:'สินค้า/บริการ', how:'กรอกในตาราง หรือก๊อปจาก Excel มาวาง',
+      note:'รหัส/ชื่อซ้ำ = อัปเดตรายเดิม', go:"impOpen('service')", ready:true },
+    { icon:'🧾', title:'50 ทวิ ที่ถูกหัก (WI)', how:'อัปไฟล์ทีละใบ/หลายใบ · ไฟล์ CSV · ให้ AI อ่าน',
+      note:'ทุกใบผ่านตาก่อนบันทึก', go:"switchView('whtin')", ready:true },
+    { icon:'📗', title:'GL จากโปรแกรมบัญชี', how:'ไฟล์ CSV บัญชีภาษีถูกหัก ณ ที่จ่าย',
+      note:'ใช้ตั้งหลักกระทบยอดกับใบ 50 ทวิ', go:'renderWhtGl()', ready:true },
+    { icon:'🏦', title:'Statement ธนาคาร', how:'วางรายการเดินบัญชีจากไฟล์ธนาคาร',
+      note:'จับคู่กับใบเสร็จ/ใบสำคัญจ่าย · กันนำเข้าซ้ำให้เอง', go:"switchView('statement')", ready:true },
+    { icon:'🔁', title:'ตั้งเบิกลูกค้าเดิม', how:'ย้ายใบตั้งเบิกก่อนมีระบบเอกสารขาย',
+      note:'ลองดูก่อนได้ ไม่เขียนทับของเดิม', go:'reimbMigrate()', ready:true },
+    { icon:'🤖', title:'ให้ AI อ่านเอกสารให้', how:'50 ทวิ · ใบกำกับภาษีซื้อ · สลิปโอน · Statement',
+      note:'อ่านแล้วเติมฟอร์มให้ตรวจ ไม่บันทึกเอง', go:"switchView('airead')", ready:true },
+    { icon:'🧾', title:'ใบเสร็จรับเงิน · ใบสำคัญจ่าย', how:'ยกเอกสารเดิมจากระบบอื่นเข้ามา',
+      note:'ยังไม่เปิดใช้ — ต้องเคาะเรื่องเลขที่เดิม/เดือนที่นับ/VAT ก่อน', go:'', ready:false, when:'กำลังเตรียม' }
+  ];
   function renderDataIn(){
     var h='<div class="section-h">📥 นำเข้าข้อมูล</div>'+
       '<div class="m-hint" style="margin:0 0 12px">ทางนำเข้าข้อมูลการเงินทั้งหมดรวมไว้ที่นี่ '+
       'แต่ละอย่างจะพาไปที่เครื่องมือตัวจริง — ข้อมูลเข้าทางเดียวเสมอ</div>';
-    h+=DATA_IN.map(function(x){
-      return '<div class="card" style="margin-bottom:10px'+(x.ready?'':';opacity:.62')+'">'+
-        '<div class="ds-h">'+x.icon+' '+esc(x.title)+
-        (x.ready?'':' <span style="font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:99px;background:var(--line);color:var(--muted)">'+esc(x.when||'เร็ว ๆ นี้')+'</span>')+'</div>'+
-        '<div style="color:var(--muted);font-size:13.5px;margin:4px 0 10px">'+esc(x.desc)+'</div>'+
-        '<button class="btn '+(x.ready?'btn-primary':'btn-ghost')+'" onclick="'+x.go+'">'+
-        esc(x.btn)+'</button></div>';
-    }).join('');
+    h+=dtTable([{label:'#',cls:'dt-nw',w:'42px'},{label:'ข้อมูล',w:'26%'},{label:'วิธีนำเข้า'},
+                {label:'',cls:'dt-nw',w:'120px'}],
+      DATA_IN.map(function(x,i){
+        var act=x.ready
+          ? '<button class="btn btn-primary btn-sm" onclick="'+x.go+'">เปิด</button>'
+          : '<span style="color:#8A94A6;font-size:12px">'+esc(x.when||'เร็ว ๆ นี้')+'</span>';
+        return '<tr'+(x.ready?'':' style="opacity:.6"')+'>'+
+          '<td class="dt-nw" style="color:#8A94A6">'+(i+1)+'</td>'+
+          '<td><b>'+x.icon+' '+esc(x.title)+'</b></td>'+
+          '<td>'+esc(x.how)+(x.note?'<br><span style="color:#8A94A6;font-size:11.5px">'+esc(x.note)+'</span>':'')+'</td>'+
+          '<td class="dt-nw">'+act+'</td></tr>';
+      }), '', '');
     $('main').innerHTML=h;
   }
 
@@ -22079,7 +22078,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260922-1023';
+  var APP_BUILD='20260922-1038';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
