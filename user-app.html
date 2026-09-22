@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260922-1910">
+<link rel="stylesheet" href="user.css?v=20260922-1915">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -11543,7 +11543,7 @@
           /* ผลของการเปลี่ยนเป็น "ไม่มีใบเสร็จ" ต้องบอกให้ชัดว่าเอกสารออกให้แล้วหรือยัง
              (ไม่งั้นพี่ไม่รู้ว่าต้องตามให้พนักงานเซ็นลายเซ็นก่อน) */
           if(j.req.action==='waExpSetProof' && r.toAdvance){
-            if(r.voidedDoc) toast('🚫 ยกเลิก '+r.voidedDoc+' แล้ว · ใบนี้รอใบเสร็จตัวจริง');
+            if(r.voidedDoc) toast('🚫 ยกเลิก '+r.voidedDoc+' แล้ว'+(r.dossier?' · สร้างแฟ้มใหม่ให้แล้ว':'')+' · ใบนี้รอใบเสร็จตัวจริง');
             if(r.filedWarn) mErr(r.filedWarn);
           }
           if(j.req.action==='waExpSetProof'){
@@ -22824,7 +22824,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260922-1910';
+  var APP_BUILD='20260922-1915';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
