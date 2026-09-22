@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260922-1934">
+<link rel="stylesheet" href="user.css?v=20260922-1947">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -13968,19 +13968,58 @@
   /** สถานะการออกใบแจ้งหนี้ของใบเสนอราคา — เทียบยอดใบ IV กับยอดใบนี้
    *  🔴 ฟังก์ชันบริสุทธิ์ (เทสเรียกตัวนี้) · เกณฑ์สี: เต็มจำนวน=เขียว · ไม่เต็ม=เหลือง · เกิน=ม่วง
    *  เทียบด้วย eps 0.005 บาท — ยอดจากชีตเป็นทศนิยม เทียบ === ตรง ๆ จะเพี้ยนเพราะเศษสตางค์ */
+  /* 22 ก.ย. 69 — ยกตรรกะไปไว้ที่ salesNextState (ใช้ร่วมกับ IV/BN/RE)
+     คงชื่อเดิมไว้เพราะเทส/ที่อื่นเรียกอยู่ · ใบเสนอราคา ใบถัดไปคือใบแจ้งหนี้อยู่แล้ว */
   function qtIvState(d){
-    var ivs=salesRefBy(d,'IV');
-    if(!ivs.length) return { key:'none', cls:'iv-none', label:'–', title:'ยังไม่ได้ออกใบแจ้งหนี้' };
-    var sum=0, nos=[];
-    ivs.forEach(function(x){ sum+=Number(x.total)||0; nos.push(x.no); });
-    var mine=Number(d.total)||0, diff=sum-mine;
-    var money2=function(n){ return (Number(n)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2}); };
-    var base='ใบแจ้งหนี้ '+nos.join(', ')+' · ยอด '+money2(sum)+' / ใบเสนอราคา '+money2(mine);
-    if(Math.abs(diff)<0.005) return { key:'full', cls:'iv-full', label:'เต็ม', title:base+' — ออกเต็มจำนวน', no:nos[0] };
-    if(diff<0) return { key:'part', cls:'iv-part', label:'ไม่เต็ม', title:base+' — ยังขาด '+money2(-diff)+' บาท', no:nos[0] };
-    return { key:'over', cls:'iv-over', label:'เกิน', title:base+' — เกิน '+money2(diff)+' บาท', no:nos[0] };
+    /* หน้าใบเสนอราคาเรียกตัวนี้เสมอ — ใบที่ไม่มีช่อง kind (เช่นข้อมูลเทส) ถือเป็น QT */
+    if(d && !d.kind){ var c={}; for(var k in d) c[k]=d[k]; c.kind='QT'; return salesNextState(c); }
+    return salesNextState(d);
   }
   window.qtIvState=qtIvState;
+
+  /* ═══════ 🔗 "ถูกดึงไปทำเอกสารอะไรต่อ" — ใช้ร่วมทุกหน้าเอกสารขาย (พี่กี้ 22 ก.ย. 69) ═══════
+     ต้นแบบคือคอลัมน์ IV ของหน้าใบเสนอราคาที่พี่กี้จัดเอง 21 ก.ย. — ขยายให้ IV/BN/RE ใช้ชุดเดียวกัน
+     🔴 ใบถัดไปของแต่ละชนิดกำหนดที่เดียว ห้ามเขียนกระจาย (เพิ่มชนิดใหม่ = เติมที่นี่ที่เดียว)
+     🔴 ใบเสร็จ→ใบลดหนี้ ไม่เทียบยอด (ใบลดหนี้ "ลด" ยอด เทียบเต็ม/ไม่เต็มไม่มีความหมาย) */
+  var SALES_NEXT = {
+    QT: { kind:'IV', label:'ใบแจ้งหนี้',    amountAware:true  },
+    BN: { kind:'RE', label:'ใบเสร็จรับเงิน', amountAware:true  },
+    IV: { kind:'RE', label:'ใบเสร็จรับเงิน', amountAware:true  },
+    RE: { kind:'CN', label:'ใบลดหนี้',      amountAware:false }
+  };
+  function salesNextOf(kind){ return SALES_NEXT[String(kind||'')] || null; }
+  window.salesNextOf=salesNextOf;
+
+  /** สถานะของช่อง "ใบถัดไป" — คืนรูปเดียวกับ qtIvState เพื่อให้ใช้ CSS .iv-dot ชุดเดิม */
+  function salesNextState(d){
+    var nx=salesNextOf(d&&d.kind);
+    if(!nx) return { key:'none', cls:'iv-none', label:'–', title:'' };
+    var list=salesRefBy(d, nx.kind);
+    if(!list.length) return { key:'none', cls:'iv-none', label:'–', title:'ยังไม่ได้ออก'+nx.label };
+    var sum=0, nos=[];
+    list.forEach(function(x){ sum+=Number(x.total)||0; nos.push(x.no); });
+    var base=nx.label+' '+nos.join(', ');
+    if(!nx.amountAware) return { key:'full', cls:'iv-full', label:'มี', title:base, no:nos[0] };
+    var mine=Number(d.total)||0, diff=sum-mine;
+    var m=function(n){ return (Number(n)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2}); };
+    base += ' · ยอด '+m(sum)+' / ใบนี้ '+m(mine);
+    if(Math.abs(diff)<0.005) return { key:'full', cls:'iv-full', label:'เต็ม', title:base+' — ออกเต็มจำนวน', no:nos[0] };
+    if(diff<0) return { key:'part', cls:'iv-part', label:'ไม่เต็ม', title:base+' — ยังขาด '+m(-diff)+' บาท', no:nos[0] };
+    return { key:'over', cls:'iv-over', label:'เกิน', title:base+' — เกิน '+m(diff)+' บาท', no:nos[0] };
+  }
+  window.salesNextState=salesNextState;
+
+  /** ช่องในตาราง — กดแล้วเปิดใบปลายทาง (เหมือนช่อง IV ของหน้าใบเสนอราคา) */
+  function salesNextCell(d){
+    var nx=salesNextOf(d&&d.kind);
+    if(!nx) return '<td class="ta-c dt-nw"><span style="color:#B6BECC">—</span></td>';
+    var st=salesNextState(d);
+    if(st.key==='none') return '<td class="ta-c dt-nw"><span class="iv-dot iv-none" title="'+esc(st.title)+'">'+st.label+'</span></td>';
+    var q="'"+String(st.no).replace(/'/g,"\'")+"'";
+    return '<td class="ta-c dt-nw"><button class="iv-dot '+st.cls+'" title="'+esc(st.title)+' — กดเพื่อเปิด'+esc(nx.label)+'" '+
+      'onclick="salesEdit('+q+')">'+st.label+'</button></td>';
+  }
+  window.salesNextCell=salesNextCell;
 
   function qtIvCell(d){
     var st=qtIvState(d);
@@ -14163,11 +14202,18 @@
     // ⚠️ ปล่อย "เรื่อง" ไม่ระบุความกว้าง — ให้กินที่ที่เหลือ ผลรวมจะไม่มีทางเกิน 100% (ไม่เกิดแถบเลื่อนแนวนอน)
     /* คอลัมน์ลำดับ — พี่กี้ขอให้ทุกหน้ามี จะได้เห็นจำนวนใบ (21 ก.ย. 69) */
     var hasAct=(docs||[]).some(function(d){ return d.lastAct; });
+    /* 🔗 คอลัมน์ "ใบถัดไป" แบบเดียวกับช่อง IV ของหน้าใบเสนอราคา (พี่กี้ 22 ก.ย. 69: เอาทุกจุด)
+       โชว์เฉพาะหน้าที่เปิดชนิดเดียว — หน้ารวมทุกชนิดใบถัดไปไม่เหมือนกัน หัวคอลัมน์จะโกหก */
+    var nx=(docs&&docs.length&&docs.every(function(d){ return d.kind===docs[0].kind; }))
+      ? salesNextOf(docs[0].kind) : null;
+    /* 🔴 เพิ่มคอลัมน์ "ใบถัดไป" แล้วต้องเกลี่ยที่คืนให้ "รายละเอียด" ด้วย
+       (ช่องที่ไม่ระบุความกว้างได้แค่ที่เหลือ — เหลือน้อยเมื่อไหร่จะตกบรรทัดทีละคำ) */
     var cols=[{label:'#',cls:'ta-c dt-nw',w:'34px'},
-      {label:'เลขที่',cls:'dt-nw',w:'12%'},{label:'วันที่',cls:'dt-nw',w:'8%'},{label:'ลูกค้า',w:'15%'},
-      {label:'รายละเอียด'},{label:'ยอดรวม',cls:'ta-r',w:'9%'},{label:'คงค้าง',cls:'ta-r',w:'8%'},
-      {label:'สถานะ',cls:'ta-c dt-nw',w:'10%'},{label:'ครบกำหนด',cls:'dt-nw',w:'8%'}]
-      .concat(hasAct?[{label:'กิจกรรม',cls:'dt-nw',w:'14%'}]:[])
+      {label:'เลขที่',cls:'dt-nw',w:'11%'},{label:'วันที่',cls:'dt-nw',w:'7%'},{label:'ลูกค้า',w:'13%'},
+      {label:'รายละเอียด'},{label:'ยอดรวม',cls:'ta-r',w:'8%'},{label:'คงค้าง',cls:'ta-r',w:'7%'}]
+      .concat(nx?[{label:nx.kind,cls:'ta-c dt-nw',w:'5%'}]:[])
+      .concat([{label:'สถานะ',cls:'ta-c dt-nw',w:'9%'},{label:'ครบกำหนด',cls:'dt-nw',w:'7%'}])
+      .concat(hasAct?[{label:'กิจกรรม',cls:'dt-nw',w:'12%'}]:[])
       .concat([{label:'',w:'46px'}]);
     var rows=docs.map(function(d,i){
       SALES_BYNO[d.no]=d;
@@ -14184,6 +14230,7 @@
         '<td class="dt-amt"'+(d.kind==='CN'?' style="color:#DC2626"':'')+'>'+
           (d.kind==='CN'?'-':'')+money(d.total)+'</td>'+
         '<td class="dt-amt">'+(d.balance>0?money(d.balance):'—')+'</td>'+
+        (nx?salesNextCell(d):'')+
         /* ป้ายสถานะใช้ตัวเดียวกับหน้าใบเสนอราคาเมื่อหลังบ้านส่ง tag มา (สีตรงกับแท็บ) */
         '<td class="ta-c dt-nw">'+(d.tag?qtBadge(d):'<span class="tk-badge '+salesBadge(d.status)+'">'+esc(d.status)+'</span>')+'</td>'+
         '<td class="dt-nw"'+(overdue?' style="color:#DC2626;font-weight:600"':'')+'>'+esc(due)+(overdue?' ⚠️':'')+'</td>'+
@@ -22850,7 +22897,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260922-1934';
+  var APP_BUILD='20260922-1947';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
