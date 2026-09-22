@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260922-1052">
+<link rel="stylesheet" href="user.css?v=20260922-1118">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -11563,7 +11563,8 @@
   var IMP_ALT={
     whtin:[['📤 อัปไฟล์ใบ 50 ทวิ (สแกน/หลายใบ)',"switchView('whtin')"],
            ['🤖 ให้ AI อ่านให้',"switchView('airead')"]],
-    whtgl:[['📄 ไปหน้ากระทบยอด GL',"switchView('whtin');setTimeout(renderWhtGl,50)"]]
+    whtgl:[['📄 ไปหน้ากระทบยอด GL',"switchView('whtin');setTimeout(renderWhtGl,50)"]],
+    stmt:[['🏦 ไปหน้ากระทบยอด Statement',"switchView('statement')"]]
   };
 
   function renderDataImp(){
@@ -11597,6 +11598,20 @@
       '<div class="lst-tools">'+
         '<button class="btn btn-ghost" onclick="impMode()">'+(IMP_MODE==='grid'?'สลับเป็นวางข้อความ':'สลับเป็นตาราง')+'</button>'+
       '</div></div>'+
+      /* 🔴 statement ต้องรู้ว่าเป็นของบัญชีไหน — ไม่มีในไฟล์ธนาคาร ถ้าเดาให้ = ลงผิดบัญชี
+         หลังบ้านปฏิเสธถ้าไม่ส่งมา (ไม่ใช่แค่ซ่อนช่องบนจอ) */
+      (k.needAccount
+        ? ('<div class="tax-acts" style="margin:0 0 10px;align-items:center">'+
+           '<span style="font-size:13px;color:#4A5262">statement นี้เป็นของบัญชี</span>'+
+           '<select id="impAcct" style="flex:none;min-width:240px">'+
+             ((k.accounts||[]).length
+               ? (k.accounts||[]).map(function(a){ return '<option value="'+esc(a.code)+'">'+esc(a.label)+'</option>'; }).join('')
+               : '<option value="">— ยังไม่มีบัญชีในทะเบียน —</option>')+
+           '</select>'+
+           ((k.accounts||[]).length ? '' :
+             '<button class="btn btn-ghost btn-sm" onclick="switchView(&quot;bank&quot;)">ไปเพิ่มบัญชีธนาคาร</button>')+
+           '</div>')
+        : '')+
       '<div class="m-hint" id="impNote" style="margin:0 0 10px">'+impNoteText()+'</div>'+
       /* ทางลัดไปเครื่องมือเฉพาะทางของชนิดนั้น — ตารางเหมาะกับคีย์มือ/วาง Excel
          แต่ถ้ามีไฟล์สแกนหรือ CSV จากโปรแกรมบัญชีอยู่แล้ว ไปทางนั้นเร็วกว่า */
@@ -11727,7 +11742,9 @@
     var t=impText();
     if(!t){ toast(IMP_MODE==='grid'?'ยังไม่ได้กรอกข้อมูลในตารางค่ะ':'วางข้อมูลก่อนค่ะ'); return; }
     var b=$('impPrevBtn'); if(b){ b.disabled=true; b.textContent='กำลังอ่าน…'; }
-    jsonpPost({action:'waImport',uid:UID,kind:IMP_KIND,text:t}).then(function(r){
+    var q={action:'waImport',uid:UID,kind:IMP_KIND,text:t};
+    if($('impAcct')) q.account=$('impAcct').value||'';
+    jsonpPost(q).then(function(r){
       if(b){ b.disabled=false; b.textContent='ดูตัวอย่างก่อน'; }
       var box=$('impOut'); if(!box) return;
       if(!r||!r.ok){ box.innerHTML='<div class="m-err" style="margin-top:10px">'+esc((r&&r.error)||'อ่านข้อมูลไม่สำเร็จ')+'</div>'; return; }
@@ -11739,6 +11756,7 @@
       if((r.unknown||[]).length){
         h+='<div class="m-hint" style="margin:6px 0 0">คอลัมน์ที่ระบบไม่รู้จัก (ข้ามให้): '+esc(r.unknown.join(' · '))+'</div>';
       }
+      if(r.note) h+='<div class="m-hint" style="margin:6px 0 0">'+esc(r.note)+'</div>';
       h+=dtTable([{label:'#',cls:'dt-nw',w:'42px'},{label:'รายการ'},
                   {label:'สิ่งที่จะทำ',cls:'dt-nw',w:'22%'},{label:'ข้อควรดู',w:'34%'}],
         (r.rows||[]).map(function(x,i){
@@ -11758,7 +11776,9 @@
   function impGo(){
     var t=impText();
     if(!t){ toast('ยังไม่มีข้อมูลค่ะ'); return; }
-    callBusy('กำลังนำเข้า…', jsonpPost({action:'waImport',uid:UID,kind:IMP_KIND,text:t,commit:'1'}), 'นำเข้าแล้ว')
+    var q={action:'waImport',uid:UID,kind:IMP_KIND,text:t,commit:'1'};
+    if($('impAcct')) q.account=$('impAcct').value||'';
+    callBusy('กำลังนำเข้า…', jsonpPost(q), 'นำเข้าแล้ว')
       .then(function(r){
         if(!r||!r.ok){ toast((r&&r.error)||'นำเข้าไม่สำเร็จ'); return; }
         var f=(r.failed||[]).length;
@@ -11801,8 +11821,9 @@
     { icon:'📗', title:'GL จากโปรแกรมบัญชี', how:'กรอกในตาราง หรือก๊อปจาก Excel มาวาง',
       note:'ใช้ตั้งหลักกระทบยอดกับใบ 50 ทวิ · กันนำเข้าซ้ำให้เอง',
       go:"impOpen('whtgl')", ready:true },
-    { icon:'🏦', title:'Statement ธนาคาร', how:'วางรายการเดินบัญชีจากไฟล์ธนาคาร',
-      note:'จับคู่กับใบเสร็จ/ใบสำคัญจ่าย · กันนำเข้าซ้ำให้เอง', go:"switchView('statement')", ready:true },
+    { icon:'🏦', title:'Statement ธนาคาร', how:'กรอกในตาราง หรือก๊อปจากไฟล์ธนาคารมาวาง',
+      note:'ต้องเลือกบัญชีก่อน · จับคู่กับใบเสร็จ/ใบสำคัญจ่าย · กันนำเข้าซ้ำให้เอง',
+      go:"impOpen('stmt')", ready:true },
     { icon:'🔁', title:'ตั้งเบิกลูกค้าเดิม', how:'ย้ายใบตั้งเบิกก่อนมีระบบเอกสารขาย',
       note:'ลองดูก่อนได้ ไม่เขียนทับของเดิม', go:'reimbMigrate()', ready:true },
     { icon:'🤖', title:'ให้ AI อ่านเอกสารให้', how:'50 ทวิ · ใบกำกับภาษีซื้อ · สลิปโอน · Statement',
@@ -22092,7 +22113,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260922-1052';
+  var APP_BUILD='20260922-1118';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
