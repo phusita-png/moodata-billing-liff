@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260922-1603">
+<link rel="stylesheet" href="user.css?v=20260922-1645">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -9703,6 +9703,151 @@
   }
   window.prPaintTbl=prPaintTbl;
 
+  /** แท็บบนสุดของหน้าใบสั่งจ่าย — เอกสาร 3 ชนิดของฝั่งจ่าย (แบบเดียวกับหน้าใบแจ้งหนี้) */
+  function poDocTabs(){
+    return pageTabs(PR_DOC, [['PO','ใบสั่งจ่าย (PO)',"prDocTab('PO')"],
+                             ['RV','ใบสำคัญรับเงิน (RV)',"prDocTab('RV')"],
+                             ['SR','ใบรับรองแทนใบเสร็จ (SR)',"prDocTab('SR')"]]);
+  }
+  window.poDocTabs=poDocTabs;
+  function poBc(){
+    var nm={PO:'ใบสั่งจ่าย',RV:'ใบสำคัญรับเงิน',SR:'ใบรับรองแทนใบเสร็จ'}[PR_DOC]||'ใบสั่งจ่าย';
+    return '<div class="bc"><button class="lnk" onclick="switchView(&quot;bizdash&quot;)">รายจ่าย</button> › '+esc(nm)+'</div>';
+  }
+  /** จากทะเบียนเอกสาร → ไปดูใบเบิกต้นทางในแท็บใบสั่งจ่าย (ค้นด้วยเลขใบให้เลย) */
+  function prGoSrc(no){
+    PR_DOC='PO'; PR_TAB='all'; PR_MONTH=''; PR_KIND=''; PR_Q=String(no||'');
+    paintPayout();
+  }
+  window.prGoSrc=prGoSrc;
+
+  /* ═══════════ 📑 แท็บทะเบียนเอกสารฝั่งจ่าย (พี่กี้ 22 ก.ย. 69) ═══════════
+     "มีเอกสารใบสำคัญรับเงิน ใบรับรองแทนใบเสร็จ อยากได้แท็บแยก เพื่อทำทะเบียนเอกสาร
+      คล้าย ๆ เมนูใบแจ้งหนี้"
+     โครงเดียวกับหน้าใบแจ้งหนี้: แท็บบนสุดของหน้า → การ์ดเดียว → ตาราง
+     🔴 RV/SR ไม่มีเล่มของตัวเอง — เป็นมุมมองของเล่มใบเบิก (หลังบ้าน payDocRegister_)
+        เลขที่/ลิงก์ที่เห็นคือของจริงบนใบเบิกใบนั้น ไม่ได้ก๊อปเก็บไว้ที่ไหนอีก */
+  var PR_DOC='PO', PD_Q='', PD_MONTH='';
+  function prDocTab(k){ PR_DOC=k||'PO'; PD_Q=''; PD_MONTH=''; paintPayout(); }
+  function pdSetQ(v){ PD_Q=String(v||''); pdPaintTbl(); }
+  function pdSetMonth(v){ PD_MONTH=v||''; pdPaintTbl(); }
+  window.prDocTab=prDocTab; window.pdSetQ=pdSetQ; window.pdSetMonth=pdSetMonth;
+
+  function pdRows(){ return (PR_DOC==='RV' ? (PO.docRv||[]) : (PO.docSr||[])); }
+
+  /** กรองทะเบียนเอกสาร — ฟังก์ชันบริสุทธิ์ */
+  function pdFilter(rows, month, q){
+    q=String(q||'').trim().toLowerCase();
+    return (rows||[]).filter(function(x){
+      if(month && x.month!==month) return false;
+      if(q && ((x.no||'')+' '+(x.who||'')+' '+(x.detail||'')+' '+(x.srcNo||''))
+              .toLowerCase().indexOf(q)<0) return false;
+      return true;
+    });
+  }
+  window.pdFilter=pdFilter;
+
+  function pdTableHtml(rows, kind){
+    var isRv=(kind==='RV');
+    var body=rows.map(function(x,i){
+      var docs='';
+      if(x.link)    docs+='<a href="'+esc(x.link)+'" target="_blank">📄 '+esc(x.kind)+'</a>';
+      if(x.whtLink) docs+='<a href="'+esc(x.whtLink)+'" target="_blank">🧾 50 ทวิ'+(x.whtNo?(' '+esc(x.whtNo)):'')+'</a>';
+      if(x.dossier) docs+='<a href="'+esc(x.dossier)+'" target="_blank">📚 แฟ้ม</a>';
+      return '<tr>'+
+        '<td class="ta-c dt-nw" style="color:#8A94A6">'+(i+1)+'</td>'+
+        '<td class="dt-nw">'+esc(x.no)+'</td>'+
+        '<td class="dt-nw">'+esc(x.date||'-')+'</td>'+
+        '<td>'+esc(x.who||'-')+'</td>'+
+        '<td class="dt-detail">'+esc(x.detail||'-')+'</td>'+
+        '<td class="dt-amt">'+poMoney(x.amount)+'</td>'+
+        (isRv?'<td class="dt-amt">'+(x.wht>0?poMoney(x.wht):'—')+'</td>':'')+
+        (isRv?('<td class="dt-nw">'+(x.signStatus
+                ? '<span class="tk-badge '+(String(x.signStatus).indexOf('รอ')>=0?'b-review':'b-done')+'">'+esc(x.signStatus)+'</span>'
+                : '<span style="color:#B6BECC">—</span>')+'</td>'):'')+
+        '<td class="dt-nw"><span class="tk-badge '+expBadge(x.status)+'">'+esc(x.status)+'</span></td>'+
+        '<td class="dt-doc">'+(docs||'—')+'</td>'+
+        /* ใบเบิกต้นทาง — พาไปแท็บใบสั่งจ่ายแล้วค้นด้วยเลขใบให้เลย (ใบเต็มกับเมนู ⋮ อยู่ที่นั่น) */
+        '<td class="dt-nw"><a class="ex-lk" href="#" onclick="prGoSrc(&quot;'+esc(x.srcNo)+'&quot;);return false">'+esc(x.srcNo||'-')+'</a></td>'+
+        '</tr>';
+    });
+    var sum=rows.reduce(function(a,x){ return a+(Number(x.amount)||0); },0);
+    var span=isRv?7:5;
+    var total=rows.length>1
+      ? '<tr class="tax-total"><td colspan="'+span+'" style="text-align:right">รวม '+rows.length+' ฉบับ</td>'+
+        '<td class="dt-amt">'+poMoney(sum)+'</td><td colspan="'+(isRv?4:3)+'"></td></tr>' : '';
+    /* 🔴 ความกว้างเป็น % ทั้งแถว — ใส่ px หลายคอลัมน์แล้วรวมเกินตาราง
+       ช่อง "รายละเอียด" (ตัวที่ไม่กำหนดกว้าง) จะเหลือที่ไม่กี่พิกเซล แล้วตัดบรรทัดทีละตัวอักษร */
+    var cols=[{label:'#',cls:'ta-c dt-nw',w:'40px'},
+      {label:'เลขที่',cls:'dt-nw',w:'10%'},{label:'วันที่',cls:'dt-nw',w:'7%'},
+      {label:isRv?'ผู้รับเงิน':'ผู้เบิก',w:'13%'},{label:'รายละเอียด'},
+      {label:'ยอด (บาท)',cls:'ta-r',w:'8%'}];
+    if(isRv){ cols.push({label:'หัก ณ ที่จ่าย',cls:'ta-r',w:'8%'});
+              cols.push({label:'ลายเซ็นผู้รับเงิน',cls:'dt-nw',w:'11%'}); }
+    cols.push({label:'สถานะใบเบิก',cls:'dt-nw',w:'9%'});
+    cols.push({label:'เอกสาร',w:'11%'});
+    cols.push({label:'ใบเบิกต้นทาง',cls:'dt-nw',w:'10%'});
+    return dtTable(cols, body, total,
+      'ยังไม่มี'+(isRv?'ใบสำคัญรับเงิน':'ใบรับรองแทนใบเสร็จ')+'ในทะเบียนค่ะ');
+  }
+  window.pdTableHtml=pdTableHtml;
+
+  function pdPaintTbl(){
+    var box=$('pdTbl'); if(!box) return;
+    box.innerHTML=pdTableHtml(pdFilter(pdRows(), PD_MONTH, PD_Q), PR_DOC);
+  }
+  window.pdPaintTbl=pdPaintTbl;
+
+  /** ดาวน์โหลดทะเบียนเอกสารเฉพาะที่กรองอยู่ */
+  function pdCsv(){
+    var rows=pdFilter(pdRows(), PD_MONTH, PD_Q);
+    if(!rows.length){ toast('ไม่มีรายการให้ดาวน์โหลดค่ะ'); return; }
+    var isRv=(PR_DOC==='RV');
+    var head=['ลำดับ','เลขที่','วันที่',(isRv?'ผู้รับเงิน':'ผู้เบิก'),'รายละเอียด','ยอด (บาท)']
+      .concat(isRv?['หัก ณ ที่จ่าย','ลายเซ็นผู้รับเงิน']:[])
+      .concat(['สถานะใบเบิก','ใบเบิกต้นทาง']);
+    var q=function(v){ return '"'+String(v==null?'':v).replace(/"/g,'""')+'"'; };
+    var lines=[head.map(q).join(',')].concat(rows.map(function(x,i){
+      var r=[i+1,x.no,x.date,x.who,x.detail,x.amount];
+      if(isRv) r=r.concat([x.wht,x.signStatus]);
+      return r.concat([x.status,x.srcNo]).map(q).join(',');
+    }));
+    /* BOM ให้ Excel อ่านไทยได้ — กติกาเดียวกับ CSV ทุกหน้าในระบบ */
+    dlText((isRv?'ใบสำคัญรับเงิน':'ใบรับรองแทนใบเสร็จ')+'-'+(PD_MONTH||'ทั้งหมด')+'.csv',
+      '﻿'+lines.join('\n'));
+  }
+  window.pdCsv=pdCsv;
+
+  /** หน้าแท็บ RV/SR — โครงเดียวกับแท็บ PO (การ์ดเดียว · ค้นหา/เดือน/CSV มุมขวา) */
+  function paintPayDocs(){
+    var rows=pdRows(), isRv=(PR_DOC==='RV');
+    var months=[];
+    rows.forEach(function(x){ if(x.month && months.indexOf(x.month)<0) months.push(x.month); });
+    months.sort().reverse();
+    var name=isRv?'ใบสำคัญรับเงิน':'ใบรับรองแทนใบเสร็จ';
+    var code=isRv?'RV':'SR';
+    var desc=isRv
+      ? 'ออกให้ผู้รับเงินคนนอกที่ออกใบเสร็จไม่ได้ — เกิดหลังผู้รับเงินเซ็นออนไลน์ · มี 50 ทวิ แนบเมื่อหักภาษี'
+      : 'ออกแทนใบเสร็จที่ไม่มี — "ไม่มีใบเสร็จ ≠ ไม่มีหลักฐาน" ต้องแนบสลิป/บิลไว้ด้วยเสมอ';
+    var html=poDocTabs()+
+      '<div class="lst-card"><div class="lst-head">'+
+        '<div class="t"><b>'+esc(name)+' <span class="doc-code">'+code+'</span></b>'+
+          '<div>'+esc(desc)+'</div></div>'+
+        '<div class="lst-tools">'+
+          '<input class="s-find" placeholder="ค้นหาเลขที่ / ชื่อ / รายละเอียด" '+
+            'value="'+esc(PD_Q)+'" oninput="pdSetQ(this.value)">'+
+          '<select onchange="pdSetMonth(this.value)"><option value="">ทุกเดือน</option>'+
+            months.map(function(m){ return '<option value="'+esc(m)+'"'+(PD_MONTH===m?' selected':'')+'>'+esc(ymThai(m))+'</option>'; }).join('')+
+          '</select>'+
+          '<button class="btn btn-ghost" onclick="pdCsv()">↓ CSV (ตามที่กรอง)</button>'+
+        '</div></div>'+
+      '<div class="m-hint" style="margin:0 0 10px">📌 เอกสารพวกนี้ออกจาก "ใบเบิก" — '+
+        'ถ้าต้องแก้หรือยกเลิก ให้เข้าไปที่ใบเบิกต้นทางค่ะ</div>'+
+      '<div id="pdTbl"></div></div>';
+    $('main').innerHTML=poBc()+html;
+    pdPaintTbl();
+  }
+
   /** ดาวน์โหลดเฉพาะที่กรองอยู่ — ท่าเดียวกับหน้า 50 ทวิ (พี่กี้ขอ 22 ก.ย. 69) */
   function prCsv(){
     var rows=prFilter(PO.reg||[], PR_TAB, PR_MONTH, PR_KIND, PR_Q);
@@ -9722,6 +9867,7 @@
   /* โครงหน้ายึดตามหน้าใบเสนอราคา (พี่กี้ 22 ก.ย. 69):
      breadcrumb → การ์ดเดียว (ชื่อ+คำอธิบายซ้าย · ค้นหา/ตัวกรอง/CSV/ปุ่มสร้าง ขวา) → แท็บ → ตาราง */
   function paintPayout(){
+    if(PR_DOC!=='PO'){ paintPayDocs(); return; }   /* แท็บเอกสาร RV/SR = อีกทะเบียนในหน้าเดียวกัน */
     var reg=PO.reg||[];
     var cnt={all:reg.length};
     reg.forEach(function(x){ cnt[x.stage]=(cnt[x.stage]||0)+1; });
@@ -9734,7 +9880,7 @@
     reg.forEach(function(x){ if(x.month && months.indexOf(x.month)<0) months.push(x.month); });
     months.sort().reverse();
 
-    var html='<div class="bc"><button class="lnk" onclick="switchView(&quot;bizdash&quot;)">รายจ่าย</button> › ใบสั่งจ่าย</div>'+
+    var html=poBc()+poDocTabs()+
       '<div class="lst-card"><div class="lst-head">'+
         '<div class="t"><b>ใบสั่งจ่าย <span class="doc-code">PO</span></b>'+
           '<div>ใบที่บริษัทตั้งเอง กับใบเบิกที่พนักงานสำรองจ่าย อยู่ในทะเบียนเดียวกัน (เลขที่ PO ชุดเดียว) '+
@@ -22459,7 +22605,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260922-1603';
+  var APP_BUILD='20260922-1645';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
