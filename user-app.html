@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260922-1915">
+<link rel="stylesheet" href="user.css?v=20260922-1927">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -9717,20 +9717,21 @@
   }
   window.prKindTag=prKindTag;
 
-  /** 🔗 สายเอกสารของใบ — มาจากใบไหน (←) · ถูกดึงไปออกใบอะไร (→)
-      แบบเดียวกับหน้าใบเสนอราคาที่บอกว่าใบนี้ออกใบแจ้งหนี้ไปแล้ว (พี่กี้ 22 ก.ย. 69) */
-  function prRefHtml(x){
-    var r=(x&&x.ref)||{}, out=[];
-    (r.from||[]).forEach(function(f){
-      out.push('<div style="color:#8A94A6" title="'+esc(f.label||'')+'">← '+esc(f.no)+'</div>');
-    });
-    (r.to||[]).forEach(function(d){
-      var txt='→ '+esc(d.no);
-      out.push('<div style="color:#168a52">'+(d.link?('<a href="'+esc(d.link)+'" target="_blank">'+txt+'</a>'):txt)+'</div>');
-    });
-    return out.length?out.join(''):'<span style="color:#B6BECC">—</span>';
+  /** 🔗 เลขเอกสารต้นทาง (อ้างอิง) — ใบนี้ถูกดึงมาจากใบไหน
+      แบบเดียวกับช่อง "อ้างอิง" ในฟอร์มเอกสารขาย (พี่กี้ 22 ก.ย. 69) */
+  function prRefFrom(x){
+    var f=((x&&x.ref&&x.ref.from)||[])[0];
+    return f?f.no:'';
   }
-  window.prRefHtml=prRefHtml;
+  /** 🔗 เอกสารที่ออกจากใบนี้ (PV · หรือ SR/RV ของใบเบิก) — แบบคอลัมน์ IV ของใบเสนอราคา */
+  function prRefTo(x){
+    return ((x&&x.ref&&x.ref.to)||[])[0]||null;
+  }
+  function prRefCell(v, link){
+    if(!v) return '<span style="color:#B6BECC">—</span>';
+    return link ? ('<a href="'+esc(link)+'" target="_blank">'+esc(v)+'</a>') : esc(v);
+  }
+  window.prRefFrom=prRefFrom; window.prRefTo=prRefTo; window.prRefCell=prRefCell;
 
   function prTableHtml(rows){
     var body=rows.map(function(x,i){
@@ -9768,14 +9769,16 @@
         '<td class="dt-amt">'+poMoney(x.amount)+'</td>'+
         '<td class="dt-nw"><span class="tk-badge '+(x.kind==='staff'?expBadge(x.status):poBadge(x.status))+'">'+esc(x.status)+'</span></td>'+
         '<td class="dt-doc">'+(docs||'—')+'</td>'+
-        '<td class="dt-nw" style="font-size:12px">'+prRefHtml(x)+'</td>'+
+        '<td class="dt-nw" style="font-size:12px">'+prRefCell(prRefFrom(x))+'</td>'+
+        '<td class="dt-nw" style="font-size:12px">'+
+          (function(){ var d=prRefTo(x); return prRefCell(d&&d.no, d&&d.link); })()+'</td>'+
         dtActCell('pr-'+x.no, acts)+
         '</tr>';
     });
     var sum=rows.reduce(function(a,x){ return a+(Number(x.amount)||0); },0);
     var total=rows.length>1
       ? '<tr class="tax-total"><td colspan="7" style="text-align:right">รวม '+rows.length+' ใบ</td>'+
-        '<td class="dt-amt">'+poMoney(sum)+'</td><td colspan="4"></td></tr>' : '';
+        '<td class="dt-amt">'+poMoney(sum)+'</td><td colspan="5"></td></tr>' : '';
     return dtTable([{label:'#',cls:'ta-c dt-nw',w:'40px'},
       {label:'☑',cls:'ta-c dt-nw',w:'36px',
        html:'<input type="checkbox" id="pselAll" title="เลือก/ล้างใบของบริษัทที่เห็นอยู่" '+
@@ -9784,11 +9787,14 @@
          ผสม px หลายช่องแล้วปล่อย "รายละเอียด" ว่างไว้ = ช่องนั้นเหลือไม่กี่พิกเซล ตกบรรทัดทีละคำ */
       {label:'เลขที่',cls:'dt-nw',w:'9%'},
       {label:'ประเภทใบ',cls:'ta-c dt-nw',w:'7%'},{label:'ผู้รับเงิน / ผู้เบิก',w:'13%'},
-      {label:'ประเภทค่าใช้จ่าย',w:'10%'},{label:'รายละเอียด',w:'21%'},
+      {label:'ประเภทค่าใช้จ่าย',w:'9%'},{label:'รายละเอียด',w:'18%'},
       {label:'ยอด (บาท)',cls:'ta-r',w:'8%'},{label:'สถานะ',cls:'dt-nw',w:'8%'},
-      {label:'เอกสาร',w:'12%'},
-      /* 🔗 สายเอกสาร — มาจากใบไหน / ถูกดึงไปออกใบอะไร (พี่กี้ 22 ก.ย. 69) */
-      {label:'อ้างอิง',cls:'dt-nw',w:'10%'},{label:'',w:'40px'}],
+      {label:'เอกสาร',w:'11%'},
+      /* 🔗 คอลัมน์เฉพาะแบบ "IV" ของหน้าใบเสนอราคา (พี่กี้ 22 ก.ย. 69)
+         อ้างอิง = ใบต้นทางที่ดึงมา (PC ใบสรุปเบิกเงินสดย่อย · EX ใบเบิกเดิม)
+         PV/เอกสาร = ใบที่ออกจากใบนี้ (ใบบริษัท = PV · ใบเบิกพนักงาน = SR/RV) */
+      {label:'อ้างอิง',cls:'dt-nw',w:'9%'},{label:'PV / เอกสาร',cls:'dt-nw',w:'9%'},
+      {label:'',w:'40px'}],
       body, total, 'ไม่พบใบตามเงื่อนไขที่เลือกค่ะ');
   }
   window.prTableHtml=prTableHtml;
@@ -10129,6 +10135,14 @@
   }
   window.openPayout=openPayout;
 
+  /** เลขเอกสารต้นทางของใบ (หาในทะเบียนที่โหลดมาแล้ว) — ว่าง = ตั้งเรื่องเอง ไม่ได้ดึงจากใบอื่น */
+  function poRefOf(no){
+    if(!no) return '';
+    var row=(PO&&PO.reg||[]).filter(function(x){ return x.no===no; })[0];
+    return row?prRefFrom(row):'';
+  }
+  window.poRefOf=poRefOf;
+
   function renderPoForm(){
     /* เข้าหน้านี้ตรง ๆ (รีเฟรช/ลิงก์) = ยังไม่มีข้อมูลตั้งต้น → โหลดก่อนแล้ววาดใหม่ */
     if(!PO){
@@ -10170,6 +10184,11 @@
             '<select id="poType" onchange="poTypeChange()">'+typeOpts+'</select></div>'+
           '<div class="sf-f c4"><label>งวด / เดือนที่เกี่ยวข้อง</label>'+
             '<input id="poPeriod" placeholder="เช่น ส.ค. 2569 (ไม่บังคับ)" value="'+esc(cur?cur.period:'')+'"></div>'+
+          /* 🔗 อ้างอิง — ใบนี้ถูกดึงมาจากเอกสารไหน (แบบช่องอ้างอิงของฟอร์มเอกสารขาย · พี่กี้ 22 ก.ย. 69)
+             อ่านอย่างเดียว: ความสัมพันธ์เกิดจากตอนตั้งเบิก ไม่ใช่ค่าที่พิมพ์เองได้ */
+          '<div class="sf-f c4"><label>อ้างอิง</label>'+
+            '<input value="'+esc(poRefOf(PO_EDIT)||'')+'" placeholder="— ไม่ได้ดึงจากเอกสารอื่น —" readonly>'+
+            '<div class="sf-note">ใบสรุปเบิกเงินสดย่อย (PC) หรือใบเบิกเดิมที่ย้ายมา</div></div>'+
           '<div class="sf-f wide"><label>รายละเอียด (จ่ายค่าอะไร)</label>'+
             '<textarea id="poDetail" rows="2" placeholder="เช่น ค่าเช่าออฟฟิศชั้น 2">'+esc(cur?cur.detail:'')+'</textarea></div>'+
         '</div></div>'+
@@ -22824,7 +22843,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260922-1915';
+  var APP_BUILD='20260922-1927';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
