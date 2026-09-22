@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260922-1038">
+<link rel="stylesheet" href="user.css?v=20260922-1052">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -11559,6 +11559,12 @@
         (ไม่งั้นเพิ่มคอลัมน์แล้วตารางกับตัวอ่านพูดคนละเรื่อง — บทเรียน preview-kpi ที่ drift)
      🔴 ปุ่มแรกคือ "ดูตัวอย่างก่อน" ไม่ใช่ "นำเข้า" */
   var IMP=null, IMP_KIND='customer', IMP_MODE='grid', IMP_ROWS=10;
+  /** ทางอื่นของแต่ละชนิด (ไฟล์/สแกน/AI) — ตารางไม่ได้แทนที่ของเดิม แค่เพิ่มทางเลือก */
+  var IMP_ALT={
+    whtin:[['📤 อัปไฟล์ใบ 50 ทวิ (สแกน/หลายใบ)',"switchView('whtin')"],
+           ['🤖 ให้ AI อ่านให้',"switchView('airead')"]],
+    whtgl:[['📄 ไปหน้ากระทบยอด GL',"switchView('whtin');setTimeout(renderWhtGl,50)"]]
+  };
 
   function renderDataImp(){
     if(!IS_OWNER){ $('main').innerHTML='<div class="card"><div class="emptybox">เฉพาะผู้ดูแล (พี่/HR) ค่ะ</div></div>'; return; }
@@ -11592,6 +11598,12 @@
         '<button class="btn btn-ghost" onclick="impMode()">'+(IMP_MODE==='grid'?'สลับเป็นวางข้อความ':'สลับเป็นตาราง')+'</button>'+
       '</div></div>'+
       '<div class="m-hint" id="impNote" style="margin:0 0 10px">'+impNoteText()+'</div>'+
+      /* ทางลัดไปเครื่องมือเฉพาะทางของชนิดนั้น — ตารางเหมาะกับคีย์มือ/วาง Excel
+         แต่ถ้ามีไฟล์สแกนหรือ CSV จากโปรแกรมบัญชีอยู่แล้ว ไปทางนั้นเร็วกว่า */
+      (IMP_ALT[IMP_KIND]
+        ? ('<div class="tax-acts" style="margin:0 0 10px">'+IMP_ALT[IMP_KIND].map(function(a){
+            return '<button class="btn btn-ghost btn-sm" onclick="'+a[1]+'">'+esc(a[0])+'</button>'; }).join('')+'</div>')
+        : '')+
       '<details style="margin:0 0 10px"><summary style="cursor:pointer;color:var(--brand);font-size:13px">'+
         '📖 คำอธิบายแต่ละคอลัมน์ — กดดูก่อนเตรียมไฟล์</summary>'+
         '<div style="margin-top:8px">'+impHelpTable(k)+'</div></details>'+
@@ -11783,10 +11795,12 @@
       note:'ชื่อซ้ำ = อัปเดตรายเดิม ไม่สร้างซ้ำ', go:"impOpen('customer')", ready:true },
     { icon:'🧰', title:'สินค้า/บริการ', how:'กรอกในตาราง หรือก๊อปจาก Excel มาวาง',
       note:'รหัส/ชื่อซ้ำ = อัปเดตรายเดิม', go:"impOpen('service')", ready:true },
-    { icon:'🧾', title:'50 ทวิ ที่ถูกหัก (WI)', how:'อัปไฟล์ทีละใบ/หลายใบ · ไฟล์ CSV · ให้ AI อ่าน',
-      note:'ทุกใบผ่านตาก่อนบันทึก', go:"switchView('whtin')", ready:true },
-    { icon:'📗', title:'GL จากโปรแกรมบัญชี', how:'ไฟล์ CSV บัญชีภาษีถูกหัก ณ ที่จ่าย',
-      note:'ใช้ตั้งหลักกระทบยอดกับใบ 50 ทวิ', go:'renderWhtGl()', ready:true },
+    { icon:'🧾', title:'50 ทวิ ที่ถูกหัก (WI)', how:'กรอกในตาราง หรือก๊อปจาก Excel มาวาง',
+      note:'อยากอัปไฟล์/สแกนทีละใบ หรือให้ AI อ่าน — กดเข้าไปแล้วมีทางลัดให้',
+      go:"impOpen('whtin')", ready:true },
+    { icon:'📗', title:'GL จากโปรแกรมบัญชี', how:'กรอกในตาราง หรือก๊อปจาก Excel มาวาง',
+      note:'ใช้ตั้งหลักกระทบยอดกับใบ 50 ทวิ · กันนำเข้าซ้ำให้เอง',
+      go:"impOpen('whtgl')", ready:true },
     { icon:'🏦', title:'Statement ธนาคาร', how:'วางรายการเดินบัญชีจากไฟล์ธนาคาร',
       note:'จับคู่กับใบเสร็จ/ใบสำคัญจ่าย · กันนำเข้าซ้ำให้เอง', go:"switchView('statement')", ready:true },
     { icon:'🔁', title:'ตั้งเบิกลูกค้าเดิม', how:'ย้ายใบตั้งเบิกก่อนมีระบบเอกสารขาย',
@@ -22078,7 +22092,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260922-1038';
+  var APP_BUILD='20260922-1052';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
