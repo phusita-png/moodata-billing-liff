@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260922-1927">
+<link rel="stylesheet" href="user.css?v=20260922-1934">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -9727,11 +9727,18 @@
   function prRefTo(x){
     return ((x&&x.ref&&x.ref.to)||[])[0]||null;
   }
-  function prRefCell(v, link){
-    if(!v) return '<span style="color:#B6BECC">—</span>';
-    return link ? ('<a href="'+esc(link)+'" target="_blank">'+esc(v)+'</a>') : esc(v);
+  /** จุดสัญลักษณ์บอกว่า "ใบนี้ถูกดึงไปทำเอกสารนั้นแล้วหรือยัง" (ต้นแบบคอลัมน์ PR/SO ของ TRCloud)
+      มีแล้ว = จุดเขียว (ชี้เมาส์เห็นเลขที่ · กดเปิดไฟล์ได้) · ยังไม่มี = วงกลมจาง */
+  function prDot(no, link, tip){
+    if(!no) return '<span title="ยังไม่ได้ดึงไปทำเอกสารนี้" style="display:inline-block;width:11px;height:11px;'+
+      'border-radius:50%;border:1.5px solid #D3D9E3"></span>';
+    var dot='<span style="display:inline-block;width:11px;height:11px;border-radius:50%;'+
+      'background:var(--green)"></span>';
+    var title=(tip?tip+' ':'')+no;
+    return link ? ('<a href="'+esc(link)+'" target="_blank" title="'+esc(title)+'">'+dot+'</a>')
+                : ('<span title="'+esc(title)+'">'+dot+'</span>');
   }
-  window.prRefFrom=prRefFrom; window.prRefTo=prRefTo; window.prRefCell=prRefCell;
+  window.prRefFrom=prRefFrom; window.prRefTo=prRefTo; window.prDot=prDot;
 
   function prTableHtml(rows){
     var body=rows.map(function(x,i){
@@ -9769,9 +9776,9 @@
         '<td class="dt-amt">'+poMoney(x.amount)+'</td>'+
         '<td class="dt-nw"><span class="tk-badge '+(x.kind==='staff'?expBadge(x.status):poBadge(x.status))+'">'+esc(x.status)+'</span></td>'+
         '<td class="dt-doc">'+(docs||'—')+'</td>'+
-        '<td class="dt-nw" style="font-size:12px">'+prRefCell(prRefFrom(x))+'</td>'+
-        '<td class="dt-nw" style="font-size:12px">'+
-          (function(){ var d=prRefTo(x); return prRefCell(d&&d.no, d&&d.link); })()+'</td>'+
+        '<td class="ta-c dt-nw">'+prDot(prRefFrom(x), '', 'มาจาก')+'</td>'+
+        '<td class="ta-c dt-nw">'+
+          (function(){ var d=prRefTo(x); return prDot(d&&d.no, d&&d.link, 'ออกเป็น'); })()+'</td>'+
         dtActCell('pr-'+x.no, acts)+
         '</tr>';
     });
@@ -9787,13 +9794,13 @@
          ผสม px หลายช่องแล้วปล่อย "รายละเอียด" ว่างไว้ = ช่องนั้นเหลือไม่กี่พิกเซล ตกบรรทัดทีละคำ */
       {label:'เลขที่',cls:'dt-nw',w:'9%'},
       {label:'ประเภทใบ',cls:'ta-c dt-nw',w:'7%'},{label:'ผู้รับเงิน / ผู้เบิก',w:'13%'},
-      {label:'ประเภทค่าใช้จ่าย',w:'9%'},{label:'รายละเอียด',w:'18%'},
+      {label:'ประเภทค่าใช้จ่าย',w:'10%'},{label:'รายละเอียด',w:'24%'},
       {label:'ยอด (บาท)',cls:'ta-r',w:'8%'},{label:'สถานะ',cls:'dt-nw',w:'8%'},
-      {label:'เอกสาร',w:'11%'},
+      {label:'เอกสาร',w:'12%'},
       /* 🔗 คอลัมน์เฉพาะแบบ "IV" ของหน้าใบเสนอราคา (พี่กี้ 22 ก.ย. 69)
          อ้างอิง = ใบต้นทางที่ดึงมา (PC ใบสรุปเบิกเงินสดย่อย · EX ใบเบิกเดิม)
          PV/เอกสาร = ใบที่ออกจากใบนี้ (ใบบริษัท = PV · ใบเบิกพนักงาน = SR/RV) */
-      {label:'อ้างอิง',cls:'dt-nw',w:'9%'},{label:'PV / เอกสาร',cls:'dt-nw',w:'9%'},
+      {label:'PC',cls:'ta-c dt-nw',w:'46px'},{label:'PV',cls:'ta-c dt-nw',w:'46px'},
       {label:'',w:'40px'}],
       body, total, 'ไม่พบใบตามเงื่อนไขที่เลือกค่ะ');
   }
@@ -22843,7 +22850,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260922-1927';
+  var APP_BUILD='20260922-1934';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
