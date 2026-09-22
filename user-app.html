@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260922-1118">
+<link rel="stylesheet" href="user.css?v=20260922-1139">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -6735,7 +6735,13 @@
   /** แถวไหนอยู่แท็บไหน — ฟังก์ชันบริสุทธิ์ (เทสเรียกตัวนี้ตัวเดียวกับของจริง) */
   function wgTagOf(r){
     var st=String((r&&r.status)||'');
+    /* 🐞 22 ก.ย. 69 — บั๊กที่พี่กี้เจอ: "⏳ ยังไม่มีใบ (ตามเก็บ)" **มีคำว่า "มีใบ" อยู่ข้างใน**
+       ของเดิมเช็ค indexOf('มีใบ') เฉย ๆ → ทุกแถวถูกตีเป็น "มีใบ 50 ทวิ"
+       แท็บจึงกรองไม่ตรงกับตัวเลข และสถานะเป็นสีเขียวหมดทั้งตาราง
+       (กับดักเดียวกับ "รออนุมัติ/ไม่อนุมัติ มีคำว่า อนุมัติ" ที่เคยเจอในหน้าการเงิน)
+       → ต้องคัด "ยังไม่มี" ออกก่อนเสมอ */
     if(st.indexOf('กลับรายการ')>=0) return 'reversal';
+    if(st.indexOf('ยังไม่มีใบ')>=0 || st.indexOf('ตามเก็บ')>=0) return 'nocert';
     if(st.indexOf('มีใบ')>=0) return 'matched';
     return 'nocert';
   }
@@ -6769,7 +6775,6 @@
         /* ลำดับ — พี่กี้ขอไว้หาบรรทัดง่าย (21 ก.ย. 69) */
         '<td class="ta-c dt-nw" style="color:#8A94A6">'+(i+1)+'</td>'+
         '<td class="dt-nw">'+esc(r.date||'')+'</td>'+
-        '<td class="dt-nw">'+esc(r.book||'-')+'</td>'+
         '<td class="dt-nw">'+esc(r.docNo||'-')+'</td>'+
         '<td style="white-space:normal">'+esc(r.desc||'-')+'</td>'+
         '<td class="dt-amt">'+(r.debit?money(r.debit):'—')+'</td>'+
@@ -6788,13 +6793,15 @@
           'onchange="wgNote('+r.row+',this.value)"></td>'+
         '</tr>';
     }).join('');
-    return dtTable([{label:'#',cls:'ta-c dt-nw',w:'34px'},
-      {label:'วันที่ GL',cls:'dt-nw',w:'8%'},{label:'สมุด',cls:'dt-nw',w:'8%'},
-      {label:'เลขที่เอกสาร GL',cls:'dt-nw',w:'12%'},{label:'ผู้จ่าย / คำอธิบาย'},
-      {label:'เดบิต (Dr)',cls:'ta-r',w:'8%'},{label:'เครดิต (Cr)',cls:'ta-r',w:'8%'},
-      {label:'สถานะ',cls:'ta-c dt-nw',w:'11%'},{label:'ในระบบ',cls:'ta-c dt-nw',w:'7%'},
-      {label:'มูลค่า',cls:'ta-c dt-nw',w:'10%'},
-      {label:'เลขที่ใบ 50 ทวิ',cls:'dt-nw',w:'9%'},{label:'หมายเหตุ',w:'10%'}],
+    /* 22 ก.ย. 69 — ตัดคอลัมน์ "สมุด" ออก (พี่กี้: ไม่ได้ใช้) แล้วเกลี่ยความกว้างใหม่
+       ให้คำอธิบาย (ยาวสุด) ได้ที่มากขึ้น ตัวเลขชิดขวาเท่ากัน สถานะไม่ตัดบรรทัด */
+    return dtTable([{label:'#',cls:'ta-c dt-nw',w:'40px'},
+      {label:'วันที่ GL',cls:'dt-nw',w:'9%'},
+      {label:'เลขที่เอกสาร GL',cls:'dt-nw',w:'13%'},{label:'ผู้จ่าย / คำอธิบาย'},
+      {label:'เดบิต (Dr)',cls:'ta-r',w:'9%'},{label:'เครดิต (Cr)',cls:'ta-r',w:'9%'},
+      {label:'สถานะ',cls:'ta-c dt-nw',w:'13%'},{label:'ในระบบ',cls:'ta-c dt-nw',w:'7%'},
+      {label:'มูลค่า',cls:'ta-c dt-nw',w:'8%'},
+      {label:'เลขที่ใบ 50 ทวิ',cls:'dt-nw',w:'10%'},{label:'หมายเหตุ',w:'11%'}],
       body?[body]:[], '', 'ยังไม่มีรายการ GL ในปีนี้ — กด "นำเข้าไฟล์ GL" ด้านบนค่ะ');
   }
   window.wgTableHtml=wgTableHtml;
@@ -6846,12 +6853,32 @@
 
   /** แท่งรายเดือน — เดือนไหนใบยังมาไม่ครบ */
   function round2(n){ return Math.round((Number(n)||0)*100)/100; }
+  /** ขั้นแกนกราฟที่ "อ่านง่าย" — 1 / 2 / 2.5 / 5 คูณเลขยกกำลังสิบ (22 ก.ย. 69) */
+  function wgNiceStep(raw){
+    if(!(raw>0)) return 0;
+    var p=Math.pow(10,Math.floor(Math.log(raw)/Math.LN10)), n=raw/p;
+    var mult = n<=1?1 : n<=2?2 : n<=2.5?2.5 : n<=5?5 : 10;
+    return mult*p;
+  }
+  /** ป้ายแกน — ไม่เอาทศนิยม (แกนเป็นเลขกลมอยู่แล้ว) */
+  function fmtInt(n){ return Math.round(Number(n)||0).toLocaleString('en-US'); }
+  window.wgNiceStep=wgNiceStep;
+
   function wgBarsHtml(s){
     s=s||{};
     var mm=s.byMonth||[];
     var names=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
     var max=0;
     mm.forEach(function(m){ var t=(m.matched||0)+(m.nocert||0); if(t>max) max=t; });
+    /* 22 ก.ย. 69 (พี่กี้ขอ) — แกนซ้ายเป็น "เลขกลม" เช่น 5,000 / 10,000 / 15,000
+       ของเดิมหารยอดสูงสุดเป็น 4 ขั้น เลยได้ 5,472.06 / 10,944.13 ซึ่งอ่านเทียบยาก
+       วิธี: ปัดขั้นขึ้นเป็น 1/2/2.5/5 × 10^n แล้วขยายเพดานให้ครอบยอดจริง */
+    var step=wgNiceStep(max/4);
+    var nStep=4;
+    if(step>0){
+      nStep=Math.max(1,Math.ceil(max/step));
+      max=step*nStep;
+    }
     /* 🔴 โครงมาก่อนข้อมูล — ชื่อเดือนต้องเห็นครบ 12 เดือนเสมอแม้ยังไม่มีรายการ
        (กติกาเดียวกับตารางที่ต้องเห็นหัวคอลัมน์เสมอ · พี่กี้ย้ำ 21 ก.ย. 69) */
     var empty=!(max>0);
@@ -6882,12 +6909,14 @@
         /* เส้นกริด 4 ขั้น + ป้ายยอดข้างแกน — ยังไม่มีข้อมูลก็ไม่ต้องโชว์เพดานปลอม
            (เคยขึ้น "1.00" ซึ่งไม่ใช่ยอดจริง พี่กี้ถามว่าคืออะไร 21 ก.ย. 69) */
         (function(){
-          var g='';
-          for(var k=0;k<=4;k++){
-            var yy=base-Math.round(112*k/4);
+          /* 22 ก.ย. 69 — จำนวนขั้นตาม "ค่าขั้นจริง" ไม่ใช่หาร 4 เสมอ
+             ของเดิมหาร 4 ทำให้ได้ 3,750 / 7,500 ทั้งที่ขั้นควรเป็น 5,000 (พี่กี้ขอเลขกลม) */
+          var g='', kn=Math.max(1,Math.min(6,nStep));
+          for(var k=0;k<=kn;k++){
+            var yy=base-Math.round(112*k/kn);
             g+='<line x1="'+x0+'" y1="'+yy+'" x2="'+(W-10)+'" y2="'+yy+'" stroke="'+(k?'#EDF1F7':'#DCE3EE')+'"/>';
             if(!empty||k===0) g+='<text x="'+(x0-8)+'" y="'+(yy+4)+'" text-anchor="end" '+
-              'font-size="12" fill="#7E8CA3">'+(k?money(max*k/4):'0')+'</text>';
+              'font-size="12" fill="#7E8CA3">'+(k?fmtInt(max*k/kn):'0')+'</text>';
           }
           return g;
         })()+
@@ -7106,7 +7135,9 @@
           '</select>'+
           '<button class="btn btn-ghost" onclick="wirSetSort()">'+(WIR_SORT==='new'?'🗓️ ใหม่→เก่า':'🗓️ เก่า→ใหม่')+'</button>'+
           '<button class="btn btn-ghost" onclick="wirCsv()">↓ CSV (ตามที่กรอง)</button>'+
-        '</div></div><div id="wirTbl"></div></div>';
+        '</div></div>'+
+        '<div class="m-hint" id="wirSelBar" style="margin:0 0 10px"></div>'+
+        '<div id="wirTbl"></div></div>';
       WIR_ROWS={}; (r.rows||[]).forEach(function(x){ WIR_ROWS[x.no]=x; });
       WIR_ALL=r.rows||[];
       WIR_TYPES=r.incomeTypes||[];
@@ -7159,11 +7190,108 @@
   window.wirApply=wirApply; window.wirDateKey=wirDateKey;
 
   /** ตารางทะเบียน — 🔴 หัวคอลัมน์ต้องเห็นเสมอแม้ยังไม่มีรายการ (กติกาเดียวกับทั้งระบบ) */
+  /* ───────── ☑️ เลือกใบ แล้วตรวจกับ GL / จับคู่เอง (22 ก.ย. 69 · พี่กี้ขอ) ─────────
+     ที่มา: "มีรายการที่มีใน GL แต่บอกตรวจไม่มีใน GL ไม่รู้เพราะอะไร · อยากจับคู่เอง"
+     🔴 ตัวจับคู่อัตโนมัติตั้งใจไม่เดา (ยอดต้องตรง · ยอดซ้ำต้องมีชื่อช่วย) — ตรงนี้คือ
+        ทางที่บอก "เพราะอะไร" แล้วให้คนตัดสินเอง ไม่ใช่ปรับให้ระบบเดามั่ว */
+  var WIR_SEL={};
+  function wirSelKey(no){ return String(no||''); }
+  function wirToggle(no, on){
+    var k=wirSelKey(no);
+    if(on) WIR_SEL[k]=1; else delete WIR_SEL[k];
+    wirSelBar();
+  }
+  function wirSelAll(on){
+    (WIR_ALL||[]).forEach(function(x){
+      var el=document.getElementById('wsel_'+wirSelKey(x.no));
+      if(el){ el.checked=!!on; }
+      if(on) WIR_SEL[wirSelKey(x.no)]=1; else delete WIR_SEL[wirSelKey(x.no)];
+    });
+    wirSelBar();
+  }
+  function wirSelCount(){ var n=0; for(var k in WIR_SEL) if(WIR_SEL[k]) n++; return n; }
+  function wirSelBar(){
+    var b=$('wirSelBar'); if(!b) return;
+    var n=wirSelCount();
+    b.innerHTML = n
+      ? ('เลือกไว้ <b>'+n+'</b> ใบ '+
+         '<button class="btn btn-primary btn-sm" onclick="wirCheckSel()">🔍 ตรวจกับ GL</button> '+
+         '<button class="btn btn-ghost btn-sm" onclick="wirSelAll(false)">ล้างที่เลือก</button>')
+      : 'ติ๊กเลือกใบที่อยากตรวจกับ GL แล้วกดปุ่มตรวจ · หรือ <button class="btn btn-ghost btn-sm" onclick="wirSelAll(true)">เลือกทั้งหน้า</button>';
+  }
+  window.wirToggle=wirToggle; window.wirSelAll=wirSelAll;
+
+  /** ตรวจใบที่เลือก — บอกเหตุผลรายใบ + เสนอแถว GL ที่น่าจะใช่ */
+  function wirCheckSel(){
+    var nos=[]; for(var k in WIR_SEL) if(WIR_SEL[k]) nos.push(k);
+    if(!nos.length){ toast('ยังไม่ได้เลือกใบค่ะ'); return; }
+    if(nos.length>50){ toast('เลือกได้ครั้งละไม่เกิน 50 ใบค่ะ'); return; }
+    busy('กำลังตรวจกับ GL…');
+    jsonpPost({action:'waWhtGlCheck',uid:UID,nos:nos.join(',')}).then(function(r){
+      unbusy();
+      if(!r||!r.ok){ toast((r&&r.error)||'ตรวจไม่สำเร็จ'); return; }
+      WIR_CHK=r.results||[];
+      wirCheckModal();
+    }).catch(function(e){ unbusy(); toast(e.message); });
+  }
+  window.wirCheckSel=wirCheckSel;
+
+  var WIR_CHK=[];
+  function wirCheckModal(){
+    var rows=WIR_CHK.map(function(x,i){
+      if(!x.ok) return '<div class="m-err" style="margin:0 0 8px">'+esc(x.certNo||'')+' — '+esc(x.error||'')+'</div>';
+      var head='<div style="font-weight:700">'+(i+1)+'. '+esc(x.certNo)+' · '+esc(x.payer||'')+
+        ' <span style="color:#8A94A6;font-weight:400">ภาษี '+money(x.tax)+'</span></div>'+
+        '<div style="font-size:12.5px;color:'+(x.matched?'#168a52':'#B45309')+';margin:2px 0 6px">'+
+        (x.matched?'✅ ':'⏳ ')+esc(x.reason||'')+'</div>';
+      if(x.matched) return '<div style="padding:10px 0;border-bottom:1px solid var(--line)">'+head+'</div>';
+      var cands=(x.candidates||[]).map(function(c){
+        var tag = Math.abs(c.diff)<0.005 ? '<span style="color:#168a52">ยอดตรง</span>'
+                : ('<span style="color:#B45309">ต่าง '+money(Math.abs(c.diff))+'</span>');
+        var busyTag = c.takenBy ? (' <span style="color:#DC2626">· ถูกจับกับ '+esc(c.takenBy)+'</span>') : '';
+        return '<div style="display:flex;gap:8px;align-items:center;padding:5px 0;font-size:12.5px">'+
+          '<div style="flex:1;min-width:0">'+esc(c.date)+' · '+esc(c.docNo||'-')+' · '+money(c.debit)+
+          ' <span style="color:#8A94A6">'+esc(String(c.desc||'').slice(0,60))+'</span><br>'+tag+
+          (c.nameHit?' <span style="color:#168a52">· ชื่อตรง</span>':'')+busyTag+'</div>'+
+          (c.takenBy?'':'<button class="btn btn-ghost btn-sm" onclick="wirLink(\''+jss(x.certNo)+'\','+c.row+')">จับคู่</button>')+
+          '</div>';
+      }).join('');
+      return '<div style="padding:10px 0;border-bottom:1px solid var(--line)">'+head+
+        (cands ? ('<div style="background:#F7FAFF;border-radius:8px;padding:6px 10px">'+
+                  '<div style="font-size:12px;color:#8A94A6;margin-bottom:2px">แถว GL ที่น่าจะใช่ — กด "จับคู่" ถ้าตรวจแล้วว่าถูกใบ</div>'+
+                  cands+'</div>')
+                : '<div class="m-hint" style="margin:0">ไม่มีแถว GL ที่พอจะเป็นไปได้</div>')+
+        '</div>';
+    }).join('');
+    var okN=WIR_CHK.filter(function(x){ return x.ok&&x.matched; }).length;
+    modal('<h3>🔍 ผลตรวจกับ GL</h3>'+
+      '<div class="m-hint" style="margin:0 0 8px">ตรวจ '+WIR_CHK.length+' ใบ · จับคู่แล้ว '+okN+
+      ' · ยังไม่จับคู่ '+(WIR_CHK.length-okN)+'</div>'+
+      '<div style="max-height:56vh;overflow:auto">'+rows+'</div>'+
+      '<div class="m-act"><button class="btn btn-primary" onclick="closeModal();renderWhtIn()">ปิด</button></div>');
+  }
+
+  /** จับคู่เอง — หลังบ้านเขียนทั้ง 2 เล่มให้ (GL + ทะเบียนใบ) */
+  function wirLink(no, row){
+    callBusy('กำลังจับคู่…', jsonpPost({action:'waWhtGlLink',uid:UID,no:no,row:row}), 'จับคู่แล้ว')
+      .then(function(r){
+        if(!r||!r.ok){ toast((r&&r.error)||'จับคู่ไม่สำเร็จ'); return; }
+        toast('🔗 จับคู่ '+no+' กับ '+(r.glDoc||'GL')+' แล้ว'+(r.unlinked?(' (ปลดจาก '+r.unlinked+')'):''));
+        closeModal();
+        renderWhtIn();
+      }).catch(function(e){ toast(e.message); });
+  }
+  window.wirLink=wirLink;
+
   function wirTableHtml(rows){
     var body=rows.map(function(x,i){
       var q="'"+String(x.no).replace(/'/g,"\\'")+"'";
       return '<tr>'+
         '<td class="ta-c dt-nw" style="color:#8A94A6">'+(i+1)+'</td>'+
+        /* ☑️ เลือกใบเพื่อสั่งตรวจกับ GL (22 ก.ย. 69) */
+        '<td class="ta-c dt-nw"><input type="checkbox" id="wsel_'+esc(x.no)+'"'+
+          (WIR_SEL[String(x.no)]?' checked':'')+
+          ' onchange="wirToggle(&quot;'+esc(x.no)+'&quot;,this.checked)"></td>'+
         '<td class="dt-nw">'+esc(x.date||'-')+'</td>'+
         '<td style="white-space:normal">'+esc(x.payer||'-')+
           (x.payerId?'<br><span style="font-size:12px;color:#8A94A6">'+esc(x.payerId)+'</span>':'')+'</td>'+
@@ -7185,9 +7313,10 @@
     });
     var sumAmt=rows.reduce(function(a,x){ return a+(Number(x.amount)||0); },0);
     var sumTax=rows.reduce(function(a,x){ return a+(Number(x.tax)||0); },0);
-    var total=rows.length>1?('<tr class="tax-total"><td colspan="5" style="text-align:right">รวม '+rows.length+' ฉบับ</td>'+
+    var total=rows.length>1?('<tr class="tax-total"><td colspan="6" style="text-align:right">รวม '+rows.length+' ฉบับ</td>'+
       '<td class="dt-amt">'+money(sumAmt)+'</td><td class="dt-amt">'+money(sumTax)+'</td><td colspan="4"></td></tr>'):'';
-    return dtTable([{label:'#',cls:'ta-c dt-nw',w:'34px'},{label:'วันที่จ่าย',cls:'dt-nw',w:'9%'},
+    return dtTable([{label:'#',cls:'ta-c dt-nw',w:'34px'},{label:'☑',cls:'ta-c dt-nw',w:'34px'},
+      {label:'วันที่จ่าย',cls:'dt-nw',w:'9%'},
       {label:'ผู้จ่ายเงิน',w:'20%'},{label:'เลขที่เอกสาร',cls:'dt-nw',w:'13%'},
       {label:'ประเภทเงินได้'},
       {label:'จำนวนเงิน',cls:'ta-r',w:'10%'},{label:'ภาษี',cls:'ta-r',w:'9%'},
@@ -22113,7 +22242,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260922-1118';
+  var APP_BUILD='20260922-1139';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
