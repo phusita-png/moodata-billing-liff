@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260922-1947">
+<link rel="stylesheet" href="user.css?v=20260922-2137">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -772,6 +772,19 @@
   .ta-c{ text-align:center; }
   /* ป้าย IV — สีบอกว่าออกใบแจ้งหนี้ครบยอดไหม (พี่กี้เคาะ 21 ก.ย. 69)
      เขียว = เต็มจำนวน · เหลือง = ไม่เต็ม · ม่วง = เกิน · ว่าง = ยังไม่ออก */
+  /* 🔵 วงกลมสัญลักษณ์ "ถูกดึงไปทำเอกสารต่อแล้วหรือยัง" (ต้นแบบคอลัมน์ PR/SO ของ TRCloud)
+     พี่กี้ 22 ก.ย. 69: อยากได้สัญลักษณ์เฉย ๆ ไม่ใช่ตัวเลข/ข้อความ
+     🔴 สีบอกสถานะแทนข้อความ — เขียว=ครบ · ส้ม=ไม่เต็ม · ม่วง=เกิน · วงจาง=ยังไม่มี
+        รายละเอียด (เลขที่ + ยอด) อยู่ใน tooltip จะได้ไม่เสียข้อมูลที่ป้ายข้อความเคยบอก */
+  .rf-dot{ display:inline-block; width:11px; height:11px; border-radius:50%; vertical-align:middle; }
+  .rf-none{ border:1.5px solid #D3D9E3; }
+  .rf-full{ background:var(--green); }
+  .rf-part{ background:#D97A16; }
+  .rf-over{ background:#7A55D6; }
+  button.rf-dot{ border:none; padding:0; cursor:pointer; }
+  button.rf-dot.rf-none{ border:1.5px solid #D3D9E3; background:none; }
+  a.rf-dot{ text-decoration:none; }
+
   .iv-dot{ display:inline-block; min-width:30px; padding:3px 8px; border-radius:7px; font-size:11.5px;
     font-weight:700; letter-spacing:.3px; border:none; font-family:inherit; }
   .iv-full{ background:#E4F5EA; color:#127A43; }
@@ -9730,13 +9743,10 @@
   /** จุดสัญลักษณ์บอกว่า "ใบนี้ถูกดึงไปทำเอกสารนั้นแล้วหรือยัง" (ต้นแบบคอลัมน์ PR/SO ของ TRCloud)
       มีแล้ว = จุดเขียว (ชี้เมาส์เห็นเลขที่ · กดเปิดไฟล์ได้) · ยังไม่มี = วงกลมจาง */
   function prDot(no, link, tip){
-    if(!no) return '<span title="ยังไม่ได้ดึงไปทำเอกสารนี้" style="display:inline-block;width:11px;height:11px;'+
-      'border-radius:50%;border:1.5px solid #D3D9E3"></span>';
-    var dot='<span style="display:inline-block;width:11px;height:11px;border-radius:50%;'+
-      'background:var(--green)"></span>';
+    if(!no) return '<span class="rf-dot rf-none" title="ยังไม่ได้ดึงไปทำเอกสารนี้"></span>';
     var title=(tip?tip+' ':'')+no;
-    return link ? ('<a href="'+esc(link)+'" target="_blank" title="'+esc(title)+'">'+dot+'</a>')
-                : ('<span title="'+esc(title)+'">'+dot+'</span>');
+    return link ? ('<a class="rf-dot rf-full" href="'+esc(link)+'" target="_blank" title="'+esc(title)+'"></a>')
+                : ('<span class="rf-dot rf-full" title="'+esc(title)+'"></span>');
   }
   window.prRefFrom=prRefFrom; window.prRefTo=prRefTo; window.prDot=prDot;
 
@@ -14014,19 +14024,18 @@
     var nx=salesNextOf(d&&d.kind);
     if(!nx) return '<td class="ta-c dt-nw"><span style="color:#B6BECC">—</span></td>';
     var st=salesNextState(d);
-    if(st.key==='none') return '<td class="ta-c dt-nw"><span class="iv-dot iv-none" title="'+esc(st.title)+'">'+st.label+'</span></td>';
+    /* วงกลมสัญลักษณ์ (พี่กี้ 22 ก.ย. 69) — สถานะอยู่ที่สีกับ tooltip ไม่ใช่ข้อความในช่อง */
+    var cls='rf-dot rf-'+(st.key==='none'?'none':st.key);
+    if(st.key==='none') return '<td class="ta-c dt-nw"><span class="'+cls+'" title="'+esc(st.title)+'"></span></td>';
     var q="'"+String(st.no).replace(/'/g,"\'")+"'";
-    return '<td class="ta-c dt-nw"><button class="iv-dot '+st.cls+'" title="'+esc(st.title)+' — กดเพื่อเปิด'+esc(nx.label)+'" '+
-      'onclick="salesEdit('+q+')">'+st.label+'</button></td>';
+    return '<td class="ta-c dt-nw"><button class="'+cls+'" title="'+esc(st.label)+' · '+esc(st.title)+
+      ' — กดเพื่อเปิด'+esc(nx.label)+'" onclick="salesEdit('+q+')"></button></td>';
   }
   window.salesNextCell=salesNextCell;
 
+  /* 22 ก.ย. 69 — ใช้ช่องเดียวกับหน้าอื่น (วงกลมสัญลักษณ์) · ใบเสนอราคาชนิดคือ QT อยู่แล้ว */
   function qtIvCell(d){
-    var st=qtIvState(d);
-    if(st.key==='none') return '<td class="ta-c dt-nw"><span class="iv-dot iv-none" title="'+esc(st.title)+'">'+st.label+'</span></td>';
-    var q="'"+String(st.no).replace(/'/g,"\'")+"'";
-    return '<td class="ta-c dt-nw"><button class="iv-dot '+st.cls+'" title="'+esc(st.title)+' — กดเพื่อเปิดใบแจ้งหนี้" '+
-      'onclick="salesEdit('+q+')">'+st.label+'</button></td>';
+    return salesNextCell((d && d.kind) ? d : (function(){ var c={}; for(var k in d) c[k]=d[k]; c.kind='QT'; return c; })());
   }
 
   /** ช่อง "กิจกรรม" — การกระทำล่าสุด + คนทำ + เวลา (แบบที่พี่กี้เห็นใน PEAK) */
@@ -22897,7 +22906,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260922-1947';
+  var APP_BUILD='20260922-2137';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
