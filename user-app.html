@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260922-0844">
+<link rel="stylesheet" href="user.css?v=20260922-0852">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -2801,10 +2801,13 @@
      g = สีไล่ระดับของไอคอน (2 สี) — การ์ดเป็นกระจกฝ้า สีจึงมาจากไอคอนเป็นหลัก */
   var MODULES=[
     { key:'fin',     th:'ระบบการเงิน',  en:'FINANCE',     color:'#1E8FE1', g:['#38bdf8','#1d4ed8'], own:true,
-      views:['bizdash','salesqt','salesiv','salesre','salescn','whtin','ar','customers','payout','petty','poreport','wtreg','bank','statement','salesreport','expreport','cashreport','svcreg','datain'],
+      views:['bizdash','salesqt','salesiv','salesre','salescn','whtin','customers','payout','petty','poreport','wtreg','bank','statement','salesreport','expreport','cashreport','svcreg','datain'],
       /* หน้าที่ยังเข้าได้จากลิงก์เก่า/ปุ่มในหน้า แต่ไม่อยู่ในแถบเมนูแล้ว (ผัง §2.6 ตัดออก)
          ⚠️ ต้องคงไว้ใน extra ไม่งั้นเข้าจากลิงก์ตรงแล้วแถบซ้ายหาย ออกไม่ได้ (บทเรียน 5 ก.ย.) */
-      extra:['expapprove','sales','reimb','expcat','contract','recvkind','airead','expdash','salesone','salesform','ctform','custfile'],
+      /* 🔴 22 ก.ย. 69 — ถอด 'ar' (ทะเบียนลูกหนี้) ออกจากแถบเมนู ตามที่พี่กี้ทัก: เมนูซ้อนกัน 2 อัน
+         ลูกหนี้ค้างรับ = แท็บแรกในหน้าทะเบียนลูกค้าอยู่แล้ว · ต้องคงไว้ใน extra เสมอ
+         ไม่งั้นกดแท็บเข้าไปแล้วแถบซ้ายหาย ออกไม่ได้ (บทเรียน 5 ก.ย.) */
+      extra:['expapprove','sales','reimb','expcat','contract','recvkind','airead','expdash','salesone','salesform','ctform','custfile','ar'],
       /* 📐 โครงเมนูตามที่พี่กี้วางไว้ (HANDOFF §2.6) — รายการย่อยของแต่ละหัวข้อเป็น "แท็บในหน้า"
          ไม่ใช่เมนูย่อย · หน้ากรอก/รายละเอียดเปิดจากปุ่ม "+ สร้าง" หรือกดแถว */
       sec:[ ['', ['bizdash']],
@@ -2812,7 +2815,7 @@
                (พี่กี้เคาะ 21 ก.ย. 69 — ของสองอย่างนี้ใช้ตอนออกเอกสาร ไม่ใช่ค่าตั้งระบบ) */
             /* 👥 ทะเบียนลูกค้า — พี่กี้เคาะ 22 ก.ย. 69 ให้เป็นเมนูจริง (เดิมเป็นแท็บในหน้าลูกหนี้)
                เพราะโตขึ้นเป็นแฟ้มลูกค้ารายราย + อยู่ในโมดูลงานด้วย · แท็บเดิมยังพามาที่นี่ */
-            ['รายรับ', ['salesqt','salesiv','salesre','salescn','whtin','ar','customers','svcreg']],
+            ['รายรับ', ['salesqt','salesiv','salesre','salescn','whtin','customers','svcreg']],
             /* ผัง §2.6 มี PO · เงินสดย่อย · PV · WT
                🔴 expdash (ใบเบิกพนักงาน) ถอดออกจากเมนูแล้ว 20 ก.ย. 69 — กลายเป็นแท็บในหน้า payout
                   (พี่กี้: "มันคืออันเดียวกัน") · ต้องคงใน extra ไม่งั้นลิงก์เก่า/ปุ่มในหน้าเข้าไม่ได้ */
@@ -4637,7 +4640,9 @@
     var fix={ expdash:'payout',        /* ใบเบิก = แท็บในทะเบียนการจ่าย */
               recvkind:'salesre',      /* ประเภทการรับเงิน = ทะเบียนของหน้าใบเสร็จ */
               contract:'salesiv',      /* สัญญาบริการ = แท็บในหน้าใบแจ้งหนี้ */
-              ctform:'salesiv' };
+              ctform:'salesiv',
+              ar:'customers',          /* ลูกหนี้ค้างรับ = แท็บแรกในหน้าทะเบียนลูกค้า (22 ก.ย. 69) */
+              custfile:'customers' };  /* แฟ้มลูกค้า = หน้าลูกของทะเบียนลูกค้า */
     if(fix[v]) return fix[v];
     /* หน้าเอกสารขาย (ดู/ออก/แก้) — แม่คือเมนูของชนิดเอกสารที่กำลังทำอยู่ */
     if(v==='salesone' || v==='salesform'){
@@ -15547,8 +15552,8 @@
   function arTab(t){ if(t==='cust'){ switchView('customers'); return; } AR_TAB='ar'; renderAr(); }
   window.arTab=arTab;
   function arTabsHtml(){
-    return pageTabs(AR_TAB, [['ar','📊 ลูกหนี้ค้างรับ',"arTab('ar')"],
-                             ['cust','👥 ทะเบียนลูกค้า',"arTab('cust')"]]);
+    return pageTabs(AR_TAB, [['cust','👥 ทะเบียนลูกค้า',"arTab('cust')"],
+                             ['ar','📊 ลูกหนี้ค้างรับ',"arTab('ar')"]]);
   }
   function renderAr(){
     if(!IS_OWNER){ $('main').innerHTML='<div class="card"><div class="emptybox">เฉพาะผู้ดูแล (พี่/HR) ค่ะ</div></div>'; return; }
@@ -15739,8 +15744,8 @@
   function custPaint(){
     var r=CUSTL, s=r.sum||{};
     var h='<div class="section-h">👥 ทะเบียนลูกค้า</div>'+
-      pageTabs('cust',[['ar','📊 ลูกหนี้ค้างรับ',"switchView('ar')"],
-                       ['cust','👥 ทะเบียนลูกค้า',"switchView('customers')"]]);
+      pageTabs('cust',[['cust','👥 ทะเบียนลูกค้า',"switchView('customers')"],
+                       ['ar','📊 ลูกหนี้ค้างรับ',"switchView('ar')"]]);
     if(r.unread&&r.unread.length){
       /* 🔴 อ่านบางเล่มไม่ได้ ต้องบอก — ไม่ใช่โชว์ 0 เฉย ๆ แล้วให้เข้าใจว่าไม่มียอดค้าง */
       h+='<div class="m-err" style="margin:0 0 12px">อ่านข้อมูลบางส่วนไม่ได้: '+esc(r.unread.join(' · '))+
@@ -21475,7 +21480,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260922-0844';
+  var APP_BUILD='20260922-0852';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
