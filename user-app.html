@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260922-1701">
+<link rel="stylesheet" href="user.css?v=20260922-1728">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -9576,6 +9576,13 @@
     if(x.paidSlip)     a.push({ key:'slip',     label:'📎 สลิปโอน', href:x.paidSlip });
     if(a.length) a.push({ sep:true });
 
+    /* 📤 เสนอเรื่องเข้ากลุ่มการเงิน (22 ก.ย. 69) — ใบของบริษัทเท่านั้น
+       ส่งได้ทุกสถานะ เพราะบางทีต้องส่งซ้ำให้เจ้านายดูย้อนหลัง */
+    if(x.kind!=='staff'){
+      a.push({ key:'send', label: (x.sentAt ? '📤 ส่งเข้ากลุ่มการเงินอีกครั้ง' : '📤 ส่งเข้ากลุ่มการเงิน'),
+        call:'poSendOne(' + q + ')' });
+      a.push({ sep:true });
+    }
     if(mode === 'pending'){
       a.push({ key:'approve', label:'✅ อนุมัติ', call:'poDecide(' + q + ",'approve')" });
       a.push({ key:'reject',  label:'❌ ไม่อนุมัติ', call:'poDecide(' + q + ",'reject')" });
@@ -9671,9 +9678,15 @@
       var flag='';
       if(x.selfApprove) flag+='<br><span style="color:#C8730B">'+esc(x.selfApprove)+'</span>';
       if(x.stage==='done' && !x.paidSlip) flag+='<br><span style="color:#DC2626;font-weight:600">📎 ยังไม่มีสลิปโอน</span>';
+      /* ติ๊กได้เฉพาะใบของบริษัท — ใบเบิกพนักงานไม่มีใบขออนุมัติจ่ายให้เสนอ */
+      var pick = x.kind==='company'
+        ? '<input type="checkbox" id="psel_'+esc(x.no)+'"'+(PS_SEL[String(x.no)]?' checked':'')+
+          ' onchange="psToggle(&quot;'+esc(x.no)+'&quot;,this.checked)">'
+        : '<span style="color:#D3D9E3">—</span>';
       return '<tr>'+
         '<td class="ta-c dt-nw" style="color:#8A94A6">'+(i+1)+'</td>'+
-        '<td class="dt-nw">'+esc(x.no)+'</td>'+
+        '<td class="ta-c dt-nw">'+pick+'</td>'+
+        '<td class="dt-nw">'+esc(x.no)+(x.sentAt?'<br><span style="font-size:11px;color:#168a52">📤 ส่งแล้ว</span>':'')+'</td>'+
         '<td class="ta-c dt-nw">'+prKindTag(x.kind)+'</td>'+
         '<td>'+esc(x.who||'-')+'</td>'+
         '<td>'+esc(x.type||'-')+'</td>'+
@@ -9686,9 +9699,13 @@
     });
     var sum=rows.reduce(function(a,x){ return a+(Number(x.amount)||0); },0);
     var total=rows.length>1
-      ? '<tr class="tax-total"><td colspan="6" style="text-align:right">รวม '+rows.length+' ใบ</td>'+
+      ? '<tr class="tax-total"><td colspan="7" style="text-align:right">รวม '+rows.length+' ใบ</td>'+
         '<td class="dt-amt">'+poMoney(sum)+'</td><td colspan="3"></td></tr>' : '';
-    return dtTable([{label:'#',cls:'ta-c dt-nw',w:'40px'},{label:'เลขที่',cls:'dt-nw',w:'140px'},
+    return dtTable([{label:'#',cls:'ta-c dt-nw',w:'40px'},
+      {label:'☑',cls:'ta-c dt-nw',w:'36px',
+       html:'<input type="checkbox" id="pselAll" title="เลือก/ล้างใบของบริษัทที่เห็นอยู่" '+
+            'onchange="psSelAll(this.checked)">'},
+      {label:'เลขที่',cls:'dt-nw',w:'140px'},
       {label:'ประเภทใบ',cls:'ta-c dt-nw',w:'104px'},{label:'ผู้รับเงิน / ผู้เบิก',w:'15%'},
       {label:'ประเภทค่าใช้จ่าย',w:'12%'},{label:'รายละเอียด'},
       {label:'ยอด (บาท)',cls:'ta-r',w:'112px'},{label:'สถานะ',cls:'dt-nw',w:'104px'},
@@ -9700,8 +9717,106 @@
   function prPaintTbl(){
     var box=$('prTbl'); if(!box) return;
     box.innerHTML=prTableHtml(prFilter(PO.reg||[], PR_TAB, PR_MONTH, PR_KIND, PR_Q));
+    psHead(); psBar();   /* วาดตารางใหม่ = ช่องติ๊กเกิดใหม่ ต้องคืนสถานะที่เลือกไว้ */
   }
   window.prPaintTbl=prPaintTbl;
+
+  /* ═══════════ 📤 ส่งใบขออนุมัติจ่ายเข้ากลุ่มการเงิน (พี่กี้ขอ 22 ก.ย. 69) ═══════════
+     "เวลาพี่ตั้งเบิกเข้ากลุ่มการเงินบริษัท พี่ต้องไปทำใน sheet — ทำทางส่งให้หน่อย
+      พี่จะส่ง LINE ให้เจ้านาย พร้อมลิงก์เอกสารตั้งเบิก"
+     🔴 พรีวิวก่อนส่งเสมอ — หลังบ้านส่งจริงเมื่อ commit=1 เท่านั้น
+     🔴 ส่งได้เฉพาะใบของบริษัท (ใบเบิกพนักงานไม่มีใบขออนุมัติจ่าย ใช้คนละ flow) */
+  var PS_SEL={};
+  function psKey(no){ return String(no||''); }
+  function psToggle(no,on){
+    var k=psKey(no); if(on) PS_SEL[k]=1; else delete PS_SEL[k];
+    psHead(); psBar();
+  }
+  function psSelAll(on){
+    prSendable().forEach(function(x){
+      var el=document.getElementById('psel_'+psKey(x.no));
+      if(el) el.checked=!!on;
+      if(on) PS_SEL[psKey(x.no)]=1; else delete PS_SEL[psKey(x.no)];
+    });
+    psHead(); psBar();
+  }
+  /** ใบที่ติ๊กส่งได้ = ใบของบริษัทที่เห็นอยู่บนตารางตอนนี้ */
+  function prSendable(){
+    return prFilter(PO.reg||[], PR_TAB, PR_MONTH, PR_KIND, PR_Q)
+      .filter(function(x){ return x.kind==='company'; });
+  }
+  function psCount(){ var n=0; for(var k in PS_SEL) if(PS_SEL[k]) n++; return n; }
+  function psHead(){
+    var h=document.getElementById('pselAll'); if(!h) return;
+    var rows=prSendable(), n=0;
+    rows.forEach(function(x){ if(PS_SEL[psKey(x.no)]) n++; });
+    h.checked=!!rows.length && n===rows.length;
+    h.indeterminate=n>0 && n<rows.length;
+  }
+  function psBar(){
+    var b=$('prSendBar'); if(!b) return;
+    var n=psCount();
+    b.className='wir-bar'+(n?' on':'');
+    b.innerHTML = n
+      ? ('<span>เลือกไว้ <b>'+n+'</b> ใบ</span><span class="sp"></span>'+
+         '<button class="btn btn-ghost btn-sm" onclick="psSelAll(false)">ล้างที่เลือก</button>'+
+         '<button class="btn btn-primary btn-sm" onclick="psSend()">📤 ส่งเข้ากลุ่มการเงิน</button>')
+      : '<span>ติ๊กใบที่จะเสนอเจ้านาย แล้วกด “ส่งเข้ากลุ่มการเงิน” · ใบเบิกพนักงานส่งทางนี้ไม่ได้</span>';
+  }
+  window.psToggle=psToggle; window.psSelAll=psSelAll; window.psBar=psBar; window.psHead=psHead;
+
+  /** ส่งใบเดียวจากเมนู ⋮ */
+  function poSendOne(no){ PS_SEL={}; PS_SEL[psKey(no)]=1; psSend(); }
+  window.poSendOne=poSendOne;
+
+  function psSend(){
+    var nos=[]; for(var k in PS_SEL) if(PS_SEL[k]) nos.push(k);
+    if(!nos.length){ toast('ยังไม่ได้เลือกใบค่ะ'); return; }
+    if(nos.length>30){ toast('ส่งได้ครั้งละไม่เกิน 30 ใบค่ะ'); return; }
+    busy('กำลังเตรียมข้อความ…');
+    jsonpPost({action:'waPoSend',uid:UID,nos:nos.join(',')}).then(function(r){
+      unbusy();
+      if(!r||!r.ok){ toast((r&&r.error)||'เตรียมข้อความไม่สำเร็จ'); return; }
+      psPreview(r.preview||[], nos);
+    }).catch(function(e){ unbusy(); toast(e.message); });
+  }
+  window.psSend=psSend;
+
+  /** พรีวิว — บอกให้ชัดว่าจะไปโผล่ที่กลุ่มไหน กี่ใบ ยอดเท่าไหร่ ก่อนกดส่งจริง */
+  function psPreview(groups, nos){
+    var total=0, n=0;
+    var blocks=groups.map(function(g){
+      total+=Number(g.amount)||0; n+=g.n;
+      var rows=g.rows.map(function(x){
+        var warn = x.hasDoc ? '' : ' <span style="color:#B45309">· ยังไม่มีใบขออนุมัติจ่าย</span>';
+        var again = x.sentAt ? ' <span style="color:#DC2626">· เคยส่งแล้ว</span>' : '';
+        return '<div style="display:flex;gap:8px;font-size:12.5px;padding:3px 0">'+
+          '<div style="flex:1;min-width:0">'+esc(x.no)+' · '+esc(x.payeeName||'-')+warn+again+
+            '<br><span style="color:#8A94A6">'+esc(String(x.detail||'').slice(0,70))+'</span></div>'+
+          '<div style="white-space:nowrap">'+poMoney(x.amount)+'</div></div>';
+      }).join('');
+      return '<div class="wgc-item"><div class="wgc-h">🏢 '+esc(g.entityName||'บริษัท')+
+        ' <span class="amt">'+g.n+' ใบ · '+poMoney(g.amount)+' บาท</span></div>'+
+        '<div class="wgc-box">'+rows+'</div></div>';
+    }).join('');
+    modal('<h3>📤 ส่งเข้ากลุ่มการเงิน</h3>'+
+      '<div class="m-hint" style="margin:0 0 8px">การ์ดจะไปโผล่ที่กลุ่ม LINE การเงินของแต่ละบริษัท '+
+        '(ตั้งไว้ที่ ⚙️ ตั้งค่าห้อง ▸ ตั้งค่าบริษัท) · '+n+' ใบ รวม '+poMoney(total)+' บาท</div>'+
+      '<div style="max-height:52vh;overflow:auto">'+blocks+'</div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" onclick="psGo(\''+jss(nos.join(','))+'\')">ส่งเลย</button></div>');
+  }
+
+  function psGo(nos){
+    callBusy('กำลังส่ง…', jsonpPost({action:'waPoSend',uid:UID,nos:nos,commit:'1'}))
+      .then(function(r){
+        if(!r||!r.ok){ toast((r&&r.error)||'ส่งไม่สำเร็จ'); return; }
+        closeModal(); PS_SEL={};
+        toast('📤 ส่งเข้ากลุ่มการเงินแล้ว '+(r.sent||0)+' ใบ');
+        renderPayout();
+      }).catch(function(e){ toast(e.message); });
+  }
+  window.psGo=psGo;
 
   /** แท็บบนสุดของหน้าใบสั่งจ่าย — เอกสาร 3 ชนิดของฝั่งจ่าย (แบบเดียวกับหน้าใบแจ้งหนี้) */
   function poDocTabs(){
@@ -9909,9 +10024,11 @@
           '<button class="btn btn-primary" onclick="openPayout()">+ สร้างใบสั่งจ่าย</button>'+
         '</div></div>'+
       '<div class="tax-acts" style="margin:0 0 12px">'+tabs+'</div>'+
+      '<div id="prSendBar" class="wir-bar"></div>'+
       '<div id="prTbl"></div></div>';
     $('main').innerHTML=html;
     prPaintTbl();
+    psHead(); psBar();
   }
 
   // ───── ฟอร์มตั้งเรื่อง / แก้ไข ─────
@@ -17553,6 +17670,12 @@
       '<div class="fld"><label>โทรศัพท์ (แสดงบนเอกสาร)</label><input id="enPhone" value="'+esc(e.phone||'')+'"></div>'+
       '<div class="fld"><label>อีเมล (แสดงบนเอกสาร)</label><input id="enEmail" value="'+esc(e.email||'')+'"></div>'+
       '<div class="fld"><label>เว็บไซต์ (แสดงบนเอกสาร)</label><input id="enWeb" value="'+esc(e.website||'')+'"></div>'+
+      /* 📤 กลุ่ม LINE ที่ใช้เสนอเรื่องเบิกจ่ายของบริษัทนี้ (22 ก.ย. 69 · พี่กี้)
+         คนละกลุ่มกับกลุ่มทีม · ว่าง = ปุ่ม "ส่งเข้ากลุ่มการเงิน" จะบอกให้มาตั้งค่าตรงนี้ก่อน */
+      '<div style="margin:16px 0 8px;font-weight:600;color:var(--brand)">กลุ่ม LINE การเงิน</div>'+
+      '<div class="fld"><label>Group ID กลุ่มการเงิน (ใช้ส่งใบขออนุมัติจ่าย)</label>'+
+        '<input id="enFinGroup" value="'+esc(e.finGroupId||'')+'" placeholder="Cxxxxxxxx… (ได้จากการแอดบอทเข้ากลุ่ม)">'+
+        '<div class="m-hint" style="margin:6px 0 0">แอดบอทเข้ากลุ่มการเงินแล้วพิมพ์ "id" ในกลุ่ม บอทจะบอก Group ID ค่ะ</div></div>'+
       /* inline (หน้าตั้งค่าห้อง) แยกโลโก้/ตราประทับไปเป็นการ์ดของตัวเอง → coImgHtml
          ป๊อบอัพหน้าจัดการนิติบุคคลยังใช้ช่องอัปโหลดในฟอร์มเหมือนเดิม */
       (inline ? ''
@@ -17656,7 +17779,8 @@
       phone:((($('enPhone')||{}).value)||'').trim(),
       email:((($('enEmail')||{}).value)||'').trim(),
       website:((($('enWeb')||{}).value)||'').trim(),
-      nameEn:((($('enNameEn')||{}).value)||'').trim()}), 'บันทึกแล้ว').then(function(r){
+      nameEn:((($('enNameEn')||{}).value)||'').trim(),
+      finGroupId:((($('enFinGroup')||{}).value)||'').trim()}), 'บันทึกแล้ว').then(function(r){
       if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
       toast('🏢 บันทึก '+r.code+' แล้ว'+(r.isNew?' (บริษัทใหม่)':''));
       ST_EDIT.co=false;                  // บันทึกแล้วล็อกกลับ กันพิมพ์ทับต่อโดยไม่ตั้งใจ
@@ -22614,7 +22738,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260922-1701';
+  var APP_BUILD='20260922-1728';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
