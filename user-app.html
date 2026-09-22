@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260922-0852">
+<link rel="stylesheet" href="user.css?v=20260922-0911">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -15741,6 +15741,9 @@
     custLoad(function(){ if(VIEW==='customers') custPaint(); });
   }
 
+  /* 🎨 22 ก.ย. 69 (พี่กี้ทัก) — จัดหน้าให้เป็นชุดเดียวกับหน้า 50 ทวิ (WI):
+     ตารางอยู่ใน `lst-card` · ชื่อเรื่อง+คำอธิบายซ้าย · ช่องค้นหา/ตัวกรองอยู่ในหัวการ์ด (`lst-tools`)
+     + คอลัมน์ "#" ลำดับ (ทุกตารางในระบบมีลำดับ) */
   function custPaint(){
     var r=CUSTL, s=r.sum||{};
     var h='<div class="section-h">👥 ทะเบียนลูกค้า</div>'+
@@ -15754,26 +15757,6 @@
     if(!r.finOpen){
       h+='<div class="m-hint" style="margin:0 0 12px">ห้องนี้ยังไม่ได้เปิดระบบการเงิน จึงไม่มีตัวเลขค้างรับ/เอกสารในหน้านี้ค่ะ</div>';
     }
-    /* แถบตัวกรอง — ตัวเลขบนปุ่มคือ "จำนวนที่ต้องจัดการ" ไม่ใช่ป้ายเฉย ๆ */
-    var tabs=[['all','ทั้งหมด '+(s.active||0)],
-              ['ar','ค้างเงิน '+(s.arCount||0)],
-              ['quiet','เงียบ '+(s.quiet||0)],
-              ['miss','ข้อมูลไม่ครบ '+(s.incomplete||0)],
-              ['closed','ปิดแล้ว']];
-    h+='<div class="tax-acts" style="margin:0 0 10px">'+tabs.map(function(x){
-        return '<button class="btn '+(CUST_F===x[0]?'btn-primary':'btn-ghost')+'" style="flex:1" '+
-          'onclick="custFilter(\''+x[0]+'\')">'+esc(x[1])+'</button>'; }).join('')+'</div>';
-    h+='<div class="tax-acts" style="margin:0 0 12px">'+
-      '<input id="cuQ" placeholder="ค้นหา ชื่อ · ชื่อเดิม · รหัส · เลขภาษี · เบอร์" value="'+esc(CUST_Q)+'" '+
-      'oninput="custSearch(this.value)" style="flex:1;min-width:0">'+
-      '<button class="btn btn-primary" style="flex:none;min-width:0" onclick="custForm(\'\')">+ เพิ่มลูกค้า</button>'+
-      ((r.missingFromRegistry||[]).length
-        ? '<button class="btn btn-ghost" style="flex:none;min-width:0" onclick="custSyncAsk()">👥 ดึงจากกลุ่ม LINE ('+r.missingFromRegistry.length+')</button>'
-        : '')+'</div>';
-    if(s.ar>0){
-      h+='<div class="m-hint" style="margin:0 0 12px">ค้างรับรวมทุกราย <b style="font-size:16px">'+money(s.ar)+'</b> บาท · '+
-        (s.arCount||0)+' ราย</div>';
-    }
 
     var rows=custRows();
     var trs=rows.map(function(c,i){
@@ -15781,37 +15764,102 @@
       var sub=[];
       if(c.legalName&&c.legalName!==c.name) sub.push(esc(c.legalName));
       if(c.alias) sub.push('เคยเรียก: '+esc(c.alias));
-      return '<tr><td class="dt-nw" style="color:#6B7688">'+esc(c.code||'—')+'</td>'+
-        '<td><b style="cursor:pointer" onclick="custOpen(\''+esc(c.name).replace(/'/g,"\\'")+'\')">'+esc(c.name)+'</b>'+
+      return '<tr><td class="dt-nw" style="color:#8A94A6">'+(i+1)+'</td>'+
+        '<td class="dt-nw" style="color:#6B7688">'+esc(c.code||'—')+'</td>'+
+        '<td><b style="cursor:pointer" onclick="custOpen(\''+jss(c.name)+'\')">'+esc(c.name)+'</b>'+
         (sub.length?'<br><span style="color:#8A94A6;font-size:11.5px">'+sub.join(' · ')+'</span>':'')+
         ((c.missing||[]).length?'<br><span style="color:#B45309;font-size:11.5px">ขาด'+esc(c.missing.join(' · '))+'</span>':'')+'</td>'+
         '<td class="dt-nw">'+esc(c.taxId||'—')+'</td>'+
-        '<td class="dt-nw">'+(c.hasGroup?'✅':'<span style="color:#B45309">ยังไม่ผูก</span>')+'</td>'+
+        '<td class="dt-nw">'+(c.hasGroup?'✅ ผูกแล้ว':'<span style="color:#B45309">ยังไม่ผูก</span>')+'</td>'+
         '<td class="dt-amt">'+(c.ar>0?('<b style="color:'+(c.arOverdue>0?'#DC2626':'inherit')+'">'+money(c.ar)+'</b>'):'—')+'</td>'+
         '<td class="dt-nw">'+(c.lastDocAt?esc(c.lastDocAt):'—')+
         (custQuietTag(c)?'<br>'+custQuietTag(c):'')+'</td>'+
         dtActCell(id, custRowActions(c))+'</tr>';
     });
-    h+=dtTable([{label:'รหัส',cls:'dt-nw',w:'9%'},{label:'ลูกค้า'},
-                {label:'เลขผู้เสียภาษี',cls:'dt-nw',w:'14%'},{label:'กลุ่ม LINE',cls:'dt-nw',w:'10%'},
-                {label:'ค้างรับ',cls:'ta-r',w:'12%'},{label:'เอกสารล่าสุด',cls:'dt-nw',w:'13%'},
-                {label:'',w:'44px'}], trs, '',
-               CUST_Q?'ไม่พบลูกค้าที่ตรงกับคำค้นค่ะ':'ยังไม่มีลูกค้าในทะเบียน — กดปุ่ม "เพิ่มลูกค้า" ด้านบนได้เลยค่ะ');
+
+    /* ตัวกรองเป็น dropdown ในแถบเครื่องมือ (เหมือนหน้า 50 ทวิ) — ไม่ใช่แถวปุ่มเต็มความกว้าง
+       ตัวเลขในวงเล็บ = จำนวนที่ต้องจัดการ ให้เห็นตั้งแต่ยังไม่เลือก */
+    var fopts=[['all','ทั้งหมด ('+(s.active||0)+')'],
+               ['ar','ค้างเงิน ('+(s.arCount||0)+')'],
+               ['quiet','เงียบเกิน 90 วัน ('+(s.quiet||0)+')'],
+               ['miss','ข้อมูลไม่ครบ ('+(s.incomplete||0)+')'],
+               ['closed','ปิดการใช้งานแล้ว']];
+    h+='<div class="lst-card"><div class="lst-head">'+
+      '<div class="t"><b>ทะเบียนลูกค้า <span class="doc-code">CU</span></b>'+
+      '<div>ข้อมูลชุดนี้ถูกคัดลอกลงเอกสารตอนออกใบ — แก้ที่นี่มีผลกับใบที่ออก<b>หลังจากนี้</b>เท่านั้น'+
+      (s.ar>0?(' · ค้างรับรวม <b>'+money(s.ar)+'</b> บาท '+(s.arCount||0)+' ราย'):'')+'</div></div>'+
+      '<div class="lst-tools">'+
+        '<input class="s-find" id="cuQ" placeholder="ค้นหา ชื่อ · ชื่อเดิม · รหัส · เลขภาษี · เบอร์" '+
+          'value="'+esc(CUST_Q)+'" oninput="custSearch(this.value)">'+
+        '<select id="cuFilter" onchange="custFilter(this.value)">'+
+          fopts.map(function(x){ return '<option value="'+x[0]+'"'+(CUST_F===x[0]?' selected':'')+'>'+esc(x[1])+'</option>'; }).join('')+
+        '</select>'+
+        ((r.missingFromRegistry||[]).length
+          ? '<button class="btn btn-ghost" onclick="custSyncAsk()">👥 ดึงจากกลุ่ม LINE ('+r.missingFromRegistry.length+')</button>'
+          : '')+
+        '<button class="btn btn-primary" onclick="custForm(\'\')">+ เพิ่มลูกค้า</button>'+
+      '</div></div>'+
+      dtTable([{label:'#',cls:'dt-nw',w:'44px'},{label:'รหัส',cls:'dt-nw',w:'9%'},{label:'ลูกค้า'},
+               {label:'เลขผู้เสียภาษี',cls:'dt-nw',w:'14%'},{label:'กลุ่ม LINE',cls:'dt-nw',w:'11%'},
+               {label:'ค้างรับ',cls:'ta-r',w:'12%'},{label:'เอกสารล่าสุด',cls:'dt-nw',w:'13%'},
+               {label:'',w:'44px'}], trs, '',
+              CUST_Q?'ไม่พบลูกค้าที่ตรงกับคำค้นค่ะ':'ยังไม่มีลูกค้าในทะเบียน — กดปุ่ม "เพิ่มลูกค้า" ด้านบนได้เลยค่ะ')+
+      '</div>';
     $('main').innerHTML=h;
   }
 
   /** เมนู ⋮ ต่อแถว — เงื่อนไขต้องตรงกับด่านหลังบ้าน (ไม่มีกลุ่ม = ไม่โชว์ปุ่มส่ง LINE) */
   function custRowActions(c){
     var n=String(c.name).replace(/'/g,"\\'");
-    var a=[{label:'📂 เปิดแฟ้มลูกค้า', call:"custOpen('"+n+"')"},
-           {label:'✏️ แก้ไขข้อมูล', call:"custForm('"+n+"')"}];
+    /* 🔴 22 ก.ย. 69 (พี่กี้ทัก): "เปิดแฟ้ม" กับ "แก้ไขข้อมูล" รวมเป็นทางเดียว —
+       กดชื่อลูกค้า = เข้าแฟ้ม → แท็บ "ข้อมูล" → กดแก้ไข → บันทึก
+       (มาตรฐานเดียวกับหน้าตั้งค่าห้อง · ดู feedback "หน้าตั้งค่าต้องกดแก้ไขก่อนพิมพ์")
+       เมนูนี้เหลือเฉพาะคำสั่งที่ทำจากตารางได้เลย ไม่ต้องเข้าแฟ้ม */
+    var a=[{label:'📂 เปิดแฟ้มลูกค้า', call:"custOpen('"+n+"')"}];
     if(c.hasGroup) a.push({label:'💬 ส่งข้อความ LINE', call:"custSendForm('"+n+"','text')"});
     if(c.email)    a.push({label:'📧 ส่งอีเมล', call:"custSendForm('"+n+"','text','mail')"});
     if(c.ar>0)     a.push({label:'📣 ทวงหนี้ '+money(c.ar), call:"custSendForm('"+n+"','dun')"});
     a.push({sep:true});
     a.push({label:'🔤 เปลี่ยนชื่อลูกค้า', call:"custRenameForm('"+n+"')"});
+    a.push({label:'🗑️ ลบลูกค้า', call:"custDeleteAsk('"+n+"')", danger:true});
     return a;
   }
+
+  /* ───────── 🗑️ ลบลูกค้า ─────────
+     🔴 พี่กี้เคาะ 22 ก.ย.: ลูกค้าที่มีรายการผูกแล้ว (เอกสาร/เงิน/งาน/50 ทวิ/สัญญา) ห้ามลบ
+        เงื่อนไขบนจอต้องตรงกับด่านหลังบ้านเสมอ → จอไม่ตัดสินเอง แต่ถามหลังบ้านก่อนทุกครั้ง */
+  function custDeleteAsk(name){
+    jsonp({action:'waCustomerDelete',uid:UID,name:name}).then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'ตรวจไม่สำเร็จ'); return; }
+      if(r.total>0){
+        modal('<h3>🗑️ ลบลูกค้า</h3>'+
+          '<div class="m-err">ลบ "'+esc(name)+'" ไม่ได้ค่ะ — มีรายการผูกอยู่แล้ว '+r.total+' รายการ</div>'+
+          '<div class="m-hint" style="margin:10px 0 0">'+
+          (r.used||[]).map(function(u){ return '• '+esc(u.label)+' '+u.n+' รายการ'; }).join('<br>')+
+          '<br><br>ถ้าเลิกใช้ลูกค้ารายนี้แล้ว ให้เปลี่ยน<b>สถานะเป็น "ปิด"</b> แทน '+
+          '(เปิดแฟ้มลูกค้า → แท็บข้อมูล → แก้ไข) เอกสารเก่าจะยังอ้างชื่อได้เหมือนเดิม</div>'+
+          '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button>'+
+          '<button class="btn btn-primary" onclick="closeModal();custOpen(\''+String(name).replace(/'/g,"\\'")+'\')">เปิดแฟ้มลูกค้า</button></div>');
+        return;
+      }
+      modal('<h3>🗑️ ลบลูกค้า</h3><div id="mErr" class="m-err hidden"></div>'+
+        '<div class="m-hint" style="margin:0 0 10px">ลบ "<b>'+esc(name)+'</b>" ออกจากทะเบียนเลยไหมคะ<br>'+
+        'ลูกค้ารายนี้ยังไม่มีเอกสาร/เงิน/งานผูกอยู่ จึงลบได้ · <b>ลบแล้วเอาคืนไม่ได้</b></div>'+
+        '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+        '<button class="btn btn-primary" onclick="custDeleteGo(\''+String(name).replace(/'/g,"\\'")+'\')">ลบออกจากทะเบียน</button></div>');
+    }).catch(function(e){ toast(e.message); });
+  }
+  window.custDeleteAsk=custDeleteAsk;
+
+  function custDeleteGo(name){
+    callBusy('กำลังลบ…', jsonpPost({action:'waCustomerDelete',uid:UID,name:name,commit:'1'}), 'ลบแล้ว')
+      .then(function(r){
+        if(!r||!r.ok){ mErr((r&&r.error)||'ลบไม่สำเร็จ'); return; }
+        closeModal(); toast('🗑️ ลบ '+name+' แล้ว'+(r.warn?(' ⚠️ '+r.warn):''));
+        CUST_NAME=''; switchView('customers');
+      }).catch(function(e){ mErr(e.message); });
+  }
+  window.custDeleteGo=custDeleteGo;
 
   /* ───────── 📂 แฟ้มลูกค้า (C3) ───────── */
   function custOpen(name){ CUST_NAME=name; CUST_TAB='sum'; switchView('custfile'); }
@@ -15842,13 +15890,14 @@
 
   function custFilePaint(){
     var f=CUSTF, c=f.customer;
+    var nm=String(c.name).replace(/'/g,"\\'");
     var h='<div class="tax-acts" style="margin:0 0 10px">'+
       '<button class="btn btn-ghost" style="flex:none;min-width:0" onclick="switchView(\'customers\')">← ทะเบียนลูกค้า</button></div>'+
       '<div class="section-h">📂 '+esc(c.name)+
-      (c.code?' <span style="font-weight:400;color:#8A94A6;font-size:12px">'+esc(c.code)+'</span>':'')+'</div>';
+      (c.code?' <span style="font-weight:400;color:#8A94A6;font-size:12px">'+esc(c.code)+'</span>':'')+
+      (c.status==='ปิด'?' <span style="font-weight:400;color:#B45309;font-size:12px">· ปิดการใช้งาน</span>':'')+'</div>';
 
-    /* หัวการ์ด — ข้อมูลที่ต้องใช้ตอนออกเอกสาร อยู่บนสุดเสมอ */
-    var nm=String(c.name).replace(/'/g,"\\'");
+    /* หัวการ์ด — ข้อมูลที่ต้องใช้ตอนออกเอกสาร อยู่บนสุดเสมอ (อ่านอย่างเดียว · แก้ที่แท็บข้อมูล) */
     h+='<div class="card" style="margin:0 0 12px"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px 16px;font-size:13px">'+
       custKv('ชื่อบนเอกสาร', c.legalName||c.name)+
       custKv('เลขผู้เสียภาษี', c.taxId||'—')+
@@ -15862,7 +15911,7 @@
       custKv('เริ่มเป็นลูกค้า', c.since||'—')+
       '</div>'+
       '<div class="tax-acts" style="margin:10px 0 0">'+
-      '<button class="btn btn-ghost btn-sm" onclick="custForm(\''+nm+'\')">✏️ แก้ไขข้อมูล</button>'+
+      '<button class="btn btn-ghost btn-sm" onclick="custFileTab(\'info\')">✏️ แก้ไขข้อมูล</button>'+
       (f.contact.groupId?'<button class="btn btn-ghost btn-sm" onclick="custSendForm(\''+nm+'\',\'text\')">💬 ส่ง LINE</button>':'')+
       (c.email?'<button class="btn btn-ghost btn-sm" onclick="custSendForm(\''+nm+'\',\'text\',\'mail\')">📧 ส่งอีเมล</button>':'')+
       '</div></div>';
@@ -15873,13 +15922,92 @@
     }
 
     var tabs=[['sum','📊 ภาพรวม'],['docs','📄 เอกสาร ('+(f.docs||[]).length+')'],
-              ['money','💰 เงิน'],['work','🗂️ งาน'],['contact','📞 ติดต่อ']];
+              ['money','💰 เงิน'],['work','🗂️ งาน'],['contact','📞 ติดต่อ'],['info','⚙️ ข้อมูล']];
     h+='<div class="tax-acts" style="margin:0 0 12px">'+tabs.map(function(x){
         return '<button class="btn '+(CUST_TAB===x[0]?'btn-primary':'btn-ghost')+'" style="flex:1" '+
           'onclick="custFileTab(\''+x[0]+'\')">'+esc(x[1])+'</button>'; }).join('')+'</div>';
 
-    h+=({sum:custTabSum, docs:custTabDocs, money:custTabMoney, work:custTabWork, contact:custTabContact}[CUST_TAB]||custTabSum)(f);
+    h+=({sum:custTabSum, docs:custTabDocs, money:custTabMoney, work:custTabWork,
+         contact:custTabContact, info:custTabInfo}[CUST_TAB]||custTabSum)(f);
     $('main').innerHTML=h;
+    if(CUST_TAB==='info') custInfoLock();
+  }
+
+  /* ───────── ⚙️ แท็บข้อมูล — ล็อกไว้ก่อน กด "แก้ไข" ถึงพิมพ์ได้ (22 ก.ย. 69) ─────────
+     พี่กี้: "กดเข้าไป กดแก้ไข บันทึก เหมือนในระบบมีมาตรฐานอยู่"
+     ใช้กติกาเดียวกับหน้าตั้งค่าห้อง: การ์ดติด .st-ro · ปุ่มแก้ไขมุมขวา · ปุ่มบันทึกอยู่ใน .st-act
+     🔴 ชื่อลูกค้าแก้ที่นี่ไม่ได้ (เป็นคีย์จับคู่เอกสาร) — ต้องใช้ปุ่มเปลี่ยนชื่อที่ไล่แก้ทุกเล่ม */
+  var CUST_EDIT=false;
+  function custInfoLock(){
+    var box=$('cuInfoBox'); if(!box) return;
+    box.classList.toggle('st-ro', !CUST_EDIT);
+    Array.prototype.forEach.call(box.querySelectorAll('input,select,textarea,button'), function(el){
+      if(el.hasAttribute('data-nolock')) return;
+      el.disabled=!CUST_EDIT;
+    });
+    var eb=$('cuEditBtn'); if(eb) eb.textContent=CUST_EDIT?'ยกเลิก':'แก้ไข';
+  }
+  function custInfoEdit(){
+    CUST_EDIT=!CUST_EDIT;
+    if(!CUST_EDIT){ custFilePaint(); return; }   /* กดยกเลิก = วาดใหม่จากค่าจริง ทิ้งที่พิมพ์ค้าง */
+    custInfoLock();
+  }
+  window.custInfoEdit=custInfoEdit;
+
+  function custTabInfo(f){
+    var c=f.customer, ct=f.contact, nm=String(c.name).replace(/'/g,"\\'");
+    /* 🔴 รายชื่อทีมต้องมาจากแฟ้มก่อน (waCustomerFile ส่งมาด้วย) — CUSTL มีเฉพาะตอนผ่านหน้ารายชื่อ
+       เปิดแฟ้มตรง ๆ (รีเฟรช/ลิงก์) แล้ว dropdown ว่าง = กดบันทึกทีเดียวผู้ดูแลหายทั้งที่ไม่ได้ตั้งใจแก้
+       กันอีกชั้น: ถ้าไม่มีในรายชื่อ ก็ยังใส่ตัวเองเป็นตัวเลือกไว้ (ค่าเดิมต้องไม่หลุด) */
+    var team=(f.team||(CUSTL&&CUSTL.team)||[]).slice();
+    if(c.ownerUid && !team.some(function(m){ return (m.uid||m.id)===c.ownerUid; })){
+      team.unshift({ uid:c.ownerUid, name:c.ownerName||c.ownerUid });
+    }
+    return '<div class="card" id="cuInfoBox" data-lock="cust">'+
+      '<div class="st-head" style="display:flex;align-items:flex-start;gap:12px;margin:0 0 14px">'+
+        '<div class="st-hx"><b style="font-size:15px">ข้อมูลลูกค้า</b>'+
+        '<div class="rs-sub" style="color:#8A94A6;font-size:12.5px;margin-top:3px">'+
+        'ข้อมูลชุดนี้ถูกคัดลอกลงเอกสารตอนออกใบ — ใบที่ออกไปแล้วคงข้อมูลเดิมเสมอ</div></div>'+
+        '<button class="btn btn-ghost" id="cuEditBtn" data-nolock onclick="custInfoEdit()">แก้ไข</button>'+
+      '</div>'+
+      '<div class="fld"><label>ชื่อลูกค้า (คีย์จับคู่เอกสาร)</label>'+
+        '<input id="cuName" value="'+esc(c.name)+'" readonly data-nolock>'+
+        '<div class="m-hint" style="margin:6px 0 0">ชื่อเป็นตัวจับคู่กับเอกสารเดิม จึงแก้ตรงนี้ไม่ได้ '+
+        '<button class="btn btn-ghost btn-sm" data-nolock onclick="custRenameForm(\''+nm+'\')">🔤 เปลี่ยนชื่อให้ครบทุกเล่ม</button></div></div>'+
+      '<div class="fld"><label>รหัสลูกค้า</label><input id="cuCode" value="'+esc(c.code||'')+'" placeholder="เว้นว่าง = ระบบออกให้ (CU-001)"></div>'+
+      '<div class="fld"><label>ชื่อเต็มตามหนังสือรับรอง (ขึ้นบนเอกสาร)</label>'+
+        '<input id="cuLegal" value="'+esc(c.legalName&&c.legalName!==c.name?c.legalName:'')+'"></div>'+
+      '<div class="fld"><label>เลขประจำตัวผู้เสียภาษี (13 หลัก)</label>'+
+        '<input id="cuTax" inputmode="numeric" value="'+esc(c.taxId||'')+'"></div>'+
+      '<div class="fld"><label>ที่อยู่ (สำหรับใบกำกับภาษี)</label><textarea id="cuAddr">'+esc(c.address||'')+'</textarea></div>'+
+      branchFieldHtml('cu', c.branch||'')+
+      '<div class="fld"><label>ผู้ติดต่อ</label><input id="cuContact" value="'+esc(c.contact||'')+'"></div>'+
+      '<div class="fld"><label>โทร</label><input id="cuPhone" inputmode="tel" value="'+esc(c.phone||'')+'"></div>'+
+      '<div class="fld"><label>อีเมล (ใช้ส่งเอกสารทางเมล)</label><input id="cuEmail" inputmode="email" value="'+esc(c.email||'')+'"></div>'+
+      '<div class="fld"><label>เครดิตเทอม (วัน)</label><input id="cuCredit" inputmode="numeric" value="'+esc(String(c.creditDays||15))+'"></div>'+
+      '<div class="fld"><label>ชื่ออื่นที่ใช้เรียก (คั่นด้วย , — ไว้ค้นหาชื่อบนใบเก่า)</label>'+
+        '<input id="cuAlias" value="'+esc(c.alias||'')+'"></div>'+
+      '<div class="fld"><label>ผู้ดูแลลูกค้า</label><select id="cuOwner"><option value="">— ไม่ระบุ —</option>'+
+        team.map(function(m){ var u=m.uid||m.id||'', n=m.name||m.label||u;
+          return '<option value="'+esc(u)+'"'+(c.ownerUid===u?' selected':'')+'>'+esc(n)+'</option>'; }).join('')+
+      '</select></div>'+
+      '<div class="fld"><label>เริ่มเป็นลูกค้า (วว/ดด/ปปปป)</label>'+
+        '<input id="cuSince" value="'+esc(c.since||'')+'" placeholder="เช่น 1/2/2569"></div>'+
+      '<div class="fld"><label>สถานะ</label><select id="cuStatus">'+
+        ['ใช้งาน','ปิด'].map(function(x){ return '<option value="'+x+'"'+((c.status||'ใช้งาน')===x?' selected':'')+'>'+
+          (x==='ปิด'?'ปิดการใช้งาน (เลิกใช้ลูกค้ารายนี้)':'ใช้งาน')+'</option>'; }).join('')+
+      '</select></div>'+
+      '<div class="section-h" style="font-size:13.5px;margin:14px 0 6px">ช่องทางติดต่อ (ชีตกลุ่มลูกค้า)</div>'+
+      '<div class="fld"><label>Group ID ของกลุ่ม LINE</label>'+
+        '<input id="cuGid" value="'+esc(ct.groupId||'')+'" placeholder="ขึ้นต้นด้วย C…"></div>'+
+      '<div class="fld"><label>โฟลเดอร์ Drive ของลูกค้า</label>'+
+        '<input id="cuFolder" value="'+esc(ct.folder||'')+'" placeholder="วางลิงก์โฟลเดอร์"></div>'+
+      '<div class="fld"><label>อีเมลกลุ่ม (หลายคนคั่นด้วย ,)</label>'+
+        '<input id="cuGmail" value="'+esc(ct.groupEmail||'')+'"></div>'+
+      '<div class="st-act">'+
+        '<button class="btn btn-primary" onclick="custSave()">บันทึก</button>'+
+        '<button class="btn btn-ghost" onclick="custInfoEdit()">ยกเลิก</button>'+
+      '</div></div>';
   }
 
   function custKv(k,v){
@@ -16232,18 +16360,25 @@
   window.renderSvcReg=renderSvcReg; window.svcForm=svcForm; window.custForm=custForm;
   window.renderCustomers=renderCustomers; window.renderCustFile=renderCustFile;
   window.custManage=custManage;
+  /** บันทึกลูกค้า — ใช้ร่วมกัน 2 ทาง: โมดัล "เพิ่มลูกค้า" กับแท็บ ⚙️ ข้อมูล ในแฟ้ม
+   *  🔴 ส่งเฉพาะช่องที่มีอยู่จริงบนจอ — หลังบ้านถือว่า "ไม่ส่งมา = คงค่าเดิม"
+   *     ถ้าส่งช่องที่หน้านั้นไม่มีเป็นค่าว่าง จะกลายเป็นล้างข้อมูลทิ้ง */
   function custSave(){
     var n=(($('cuName')||{}).value||'').trim();
     if(!n){ mErr('กรอกชื่อลูกค้าก่อนค่ะ'); return; }
-    callBusy('กำลังบันทึก…', jsonpPost({action:'waCustomerSave',uid:UID,name:n,
-      code:($('cuCode')||{}).value||'',
-      legalName:($('cuLegal')||{}).value||'', taxId:($('cuTax')||{}).value||'',
-      address:($('cuAddr')||{}).value||'', branch:branchValue('cu'),
-      contact:($('cuContact')||{}).value||'', phone:($('cuPhone')||{}).value||'',
-      email:($('cuEmail')||{}).value||'',
-      creditDays:($('cuCredit')||{}).value||''}), 'บันทึกแล้ว').then(function(r){
+    var p={action:'waCustomerSave',uid:UID,name:n};
+    function put(k,id){ var el=$(id); if(el) p[k]=el.value||''; }
+    put('code','cuCode'); put('legalName','cuLegal'); put('taxId','cuTax');
+    put('address','cuAddr'); put('contact','cuContact'); put('phone','cuPhone');
+    put('email','cuEmail'); put('creditDays','cuCredit');
+    put('alias','cuAlias'); put('ownerUid','cuOwner'); put('since','cuSince');
+    put('status','cuStatus');
+    put('groupId','cuGid'); put('folder','cuFolder'); put('groupEmail','cuGmail');
+    if($('cuBrKind')) p.branch=branchValue('cu');
+
+    callBusy('กำลังบันทึก…', jsonpPost(p), 'บันทึกแล้ว').then(function(r){
       if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
-      closeModal(); toast('✅ บันทึก '+r.name+' แล้ว');
+      closeModal(); toast('✅ บันทึก '+r.name+' แล้ว'+(r.warn?(' ⚠️ '+r.warn):''));
       if(SF_RETURN && VIEW==='salesform'){
         /* เพิ่มจากฟอร์มเอกสาร → โหลดทะเบียนใหม่แล้วกลับมาที่ฟอร์ม พร้อมเลือกชื่อนั้นไว้ให้ */
         SF_RETURN=false;
@@ -16255,6 +16390,8 @@
         }).catch(function(){ renderSalesForm(); });
         return;
       }
+      if(VIEW==='custfile'){ CUST_EDIT=false; renderCustFile(); return; }
+      if(VIEW==='customers'){ renderCustomers(); return; }
       if(VIEW==='ar') renderAr(); else renderSales();
     }).catch(function(e){ mErr(e.message); });
   }
@@ -21480,7 +21617,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260922-0852';
+  var APP_BUILD='20260922-0911';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
