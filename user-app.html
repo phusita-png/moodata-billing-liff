@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260922-1139">
+<link rel="stylesheet" href="user.css?v=20260922-1417">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -6178,7 +6178,9 @@
     return '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl">' +
       '<colgroup>' + cols.map(function(c){ return '<col' + (c.w ? ' style="width:' + c.w + '"' : '') + '>'; }).join('') + '</colgroup>' +
       '<thead><tr>' +
-      cols.map(function(c){ return '<th' + (c.cls ? ' class="' + c.cls + '"' : '') + '>' + esc(c.label) + '</th>'; }).join('') +
+      /* c.html = หัวคอลัมน์ที่เป็นตัวควบคุม (เช่นช่องติ๊กเลือกทั้งหมด) — ผู้เรียกรับผิดชอบ escape เอง
+         ปกติให้ใช้ c.label ซึ่ง escape ให้เสมอ */
+      cols.map(function(c){ return '<th' + (c.cls ? ' class="' + c.cls + '"' : '') + '>' + (c.html || esc(c.label)) + '</th>'; }).join('') +
       '</tr></thead><tbody>' + rows.join('') + '</tbody>' +
       (totalRow || '') + '</table></div>';
   }
@@ -6766,17 +6768,38 @@
   }
   window.wgValueCell=wgValueCell;
 
+  /**
+   * แยกคำอธิบาย GL เป็น 2 บรรทัด (พี่กี้ขอ 22 ก.ย. 69)
+   * ไฟล์จริงเขียนติดกันแบบ "IV#IV2601060001 บริษัท เดอะ บลู เนเชอรัล จำกัด"
+   * → บรรทัดแรก = เลขอ้างอิง · บรรทัดสอง = ชื่อบริษัท (อ่านง่ายกว่า และไม่ตัดคำกลางชื่อ)
+   * 🔴 คำแรกที่ "มีตัวเลขปน" เท่านั้นที่นับเป็นเลข — คำอธิบายที่เป็นข้อความล้วน
+   *    (เช่น "ปรับปรุงรายการหัก ณ ที่จ่าย") ต้องไม่ถูกหั่นคำแรกไปเป็นเลข
+   */
+  function wgDescParts(r){
+    var d=String((r&&r.desc)||'').trim();
+    var no='', name=d;
+    var m=d.match(/^(\S*[0-9]\S*)\s+(.+)$/);
+    if(m){ no=m[1]; name=m[2]; }
+    if(!no) no=String((r&&r.docNo)||'');
+    return {no:no||'-', name:name||'-'};
+  }
+  window.wgDescParts=wgDescParts;
+
   function wgTableHtml(rows, tab){
     var shown=wgFilter(rows, tab);
     var cls={matched:'b-done',nocert:'b-review',reversal:'b-new'};
     var body=shown.map(function(r,i){
       var tg=wgTagOf(r);
+      var dp=wgDescParts(r);
       return '<tr>'+
         /* ลำดับ — พี่กี้ขอไว้หาบรรทัดง่าย (21 ก.ย. 69) */
         '<td class="ta-c dt-nw" style="color:#8A94A6">'+(i+1)+'</td>'+
         '<td class="dt-nw">'+esc(r.date||'')+'</td>'+
-        '<td class="dt-nw">'+esc(r.docNo||'-')+'</td>'+
-        '<td style="white-space:normal">'+esc(r.desc||'-')+'</td>'+
+        /* 22 ก.ย. 69 — ย้ายมาชิดซ้าย + กว้างขึ้น + แยก 2 บรรทัด (เลข / ชื่อบริษัท)
+           คอลัมน์ "เลขที่เอกสาร GL" เดิมยุบมารวมที่บรรทัดแรกนี้ (เป็นเลขตัวเดียวกัน) */
+        '<td style="white-space:normal">'+
+          '<div style="font-size:12px;color:#8A94A6">'+esc(dp.no)+'</div>'+
+          '<div>'+esc(dp.name)+'</div></td>'+
         '<td class="dt-amt">'+(r.debit?money(r.debit):'—')+'</td>'+
         '<td class="dt-amt">'+(r.credit?money(r.credit):'—')+'</td>'+
         '<td class="ta-c dt-nw"><span class="tk-badge '+(cls[tg]||'b-new')+'">'+esc(r.status||'')+'</span></td>'+
@@ -6796,12 +6819,12 @@
     /* 22 ก.ย. 69 — ตัดคอลัมน์ "สมุด" ออก (พี่กี้: ไม่ได้ใช้) แล้วเกลี่ยความกว้างใหม่
        ให้คำอธิบาย (ยาวสุด) ได้ที่มากขึ้น ตัวเลขชิดขวาเท่ากัน สถานะไม่ตัดบรรทัด */
     return dtTable([{label:'#',cls:'ta-c dt-nw',w:'40px'},
-      {label:'วันที่ GL',cls:'dt-nw',w:'9%'},
-      {label:'เลขที่เอกสาร GL',cls:'dt-nw',w:'13%'},{label:'ผู้จ่าย / คำอธิบาย'},
+      {label:'วันที่ GL',cls:'dt-nw',w:'8%'},
+      {label:'เลขที่ / ผู้จ่าย',w:'26%'},
       {label:'เดบิต (Dr)',cls:'ta-r',w:'9%'},{label:'เครดิต (Cr)',cls:'ta-r',w:'9%'},
-      {label:'สถานะ',cls:'ta-c dt-nw',w:'13%'},{label:'ในระบบ',cls:'ta-c dt-nw',w:'7%'},
-      {label:'มูลค่า',cls:'ta-c dt-nw',w:'8%'},
-      {label:'เลขที่ใบ 50 ทวิ',cls:'dt-nw',w:'10%'},{label:'หมายเหตุ',w:'11%'}],
+      {label:'สถานะ',cls:'ta-c dt-nw',w:'12%'},{label:'ในระบบ',cls:'ta-c dt-nw',w:'7%'},
+      {label:'มูลค่า',cls:'ta-c dt-nw',w:'7%'},
+      {label:'เลขที่ใบ 50 ทวิ',cls:'dt-nw',w:'10%'},{label:'หมายเหตุ',w:'10%'}],
       body?[body]:[], '', 'ยังไม่มีรายการ GL ในปีนี้ — กด "นำเข้าไฟล์ GL" ด้านบนค่ะ');
   }
   window.wgTableHtml=wgTableHtml;
@@ -7199,15 +7222,29 @@
   function wirToggle(no, on){
     var k=wirSelKey(no);
     if(on) WIR_SEL[k]=1; else delete WIR_SEL[k];
+    wirSelHead();
     wirSelBar();
   }
+  /* 🔴 เลือกทั้งหมด = เฉพาะใบ "ที่เห็นอยู่บนตาราง" (หลังกรอง/ค้นหา) ไม่ใช่ทั้งทะเบียน
+     ไม่งั้นกรองเหลือ 3 ใบ กดเลือกทั้งหมด แล้วส่งตรวจ 200 ใบที่มองไม่เห็น */
+  var WIR_SHOWN=[];
   function wirSelAll(on){
-    (WIR_ALL||[]).forEach(function(x){
+    (WIR_SHOWN.length?WIR_SHOWN:(WIR_ALL||[])).forEach(function(x){
       var el=document.getElementById('wsel_'+wirSelKey(x.no));
       if(el){ el.checked=!!on; }
       if(on) WIR_SEL[wirSelKey(x.no)]=1; else delete WIR_SEL[wirSelKey(x.no)];
     });
+    wirSelHead();
     wirSelBar();
+  }
+  /** ช่องติ๊กบนหัวคอลัมน์ — ติ๊กครบทุกใบที่เห็น = ติ๊ก · ติ๊กบางส่วน = ขีดกลาง */
+  function wirSelHead(){
+    var h=document.getElementById('wselAll'); if(!h) return;
+    var rows=WIR_SHOWN.length?WIR_SHOWN:(WIR_ALL||[]);
+    var n=0;
+    rows.forEach(function(x){ if(WIR_SEL[wirSelKey(x.no)]) n++; });
+    h.checked=!!rows.length && n===rows.length;
+    h.indeterminate=n>0 && n<rows.length;
   }
   function wirSelCount(){ var n=0; for(var k in WIR_SEL) if(WIR_SEL[k]) n++; return n; }
   function wirSelBar(){
@@ -7217,9 +7254,9 @@
       ? ('เลือกไว้ <b>'+n+'</b> ใบ '+
          '<button class="btn btn-primary btn-sm" onclick="wirCheckSel()">🔍 ตรวจกับ GL</button> '+
          '<button class="btn btn-ghost btn-sm" onclick="wirSelAll(false)">ล้างที่เลือก</button>')
-      : 'ติ๊กเลือกใบที่อยากตรวจกับ GL แล้วกดปุ่มตรวจ · หรือ <button class="btn btn-ghost btn-sm" onclick="wirSelAll(true)">เลือกทั้งหน้า</button>';
+      : 'ติ๊กเลือกใบที่อยากตรวจกับ GL แล้วกดปุ่มตรวจ · หรือติ๊กช่องบนหัวคอลัมน์เพื่อเลือกทั้งหมด';
   }
-  window.wirToggle=wirToggle; window.wirSelAll=wirSelAll;
+  window.wirToggle=wirToggle; window.wirSelAll=wirSelAll; window.wirSelHead=wirSelHead;
 
   /** ตรวจใบที่เลือก — บอกเหตุผลรายใบ + เสนอแถว GL ที่น่าจะใช่ */
   function wirCheckSel(){
@@ -7284,6 +7321,7 @@
   window.wirLink=wirLink;
 
   function wirTableHtml(rows){
+    WIR_SHOWN=rows||[];
     var body=rows.map(function(x,i){
       var q="'"+String(x.no).replace(/'/g,"\\'")+"'";
       return '<tr>'+
@@ -7315,7 +7353,11 @@
     var sumTax=rows.reduce(function(a,x){ return a+(Number(x.tax)||0); },0);
     var total=rows.length>1?('<tr class="tax-total"><td colspan="6" style="text-align:right">รวม '+rows.length+' ฉบับ</td>'+
       '<td class="dt-amt">'+money(sumAmt)+'</td><td class="dt-amt">'+money(sumTax)+'</td><td colspan="4"></td></tr>'):'';
-    return dtTable([{label:'#',cls:'ta-c dt-nw',w:'34px'},{label:'☑',cls:'ta-c dt-nw',w:'34px'},
+    /* หัวคอลัมน์ติ๊ก = เลือก/ล้างทั้งหมดที่เห็นอยู่ (พี่กี้ขอ 22 ก.ย. 69) */
+    return dtTable([{label:'#',cls:'ta-c dt-nw',w:'34px'},
+      {label:'☑',cls:'ta-c dt-nw',w:'34px',
+       html:'<input type="checkbox" id="wselAll" title="เลือก/ล้างทั้งหมดที่เห็นอยู่" '+
+            'onchange="wirSelAll(this.checked)">'},
       {label:'วันที่จ่าย',cls:'dt-nw',w:'9%'},
       {label:'ผู้จ่ายเงิน',w:'20%'},{label:'เลขที่เอกสาร',cls:'dt-nw',w:'13%'},
       {label:'ประเภทเงินได้'},
@@ -7330,6 +7372,8 @@
   function wirPaintTbl(){
     var box=$('wirTbl'); if(!box) return;
     box.innerHTML=wirTableHtml(wirApply(WIR_ALL, WIR_FIND, WIR_GL, WIR_SORT));
+    wirSelHead();          /* วาดตารางใหม่ = ช่องหัวคอลัมน์เกิดใหม่ ต้องคืนสถานะให้ตรงกับที่เลือกไว้ */
+    wirSelBar();
   }
   /** ดาวน์โหลดเฉพาะที่กรองอยู่ — เอาไปทำงานต่อใน Excel */
   function wirCsv(){
@@ -22242,7 +22286,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260922-1139';
+  var APP_BUILD='20260922-1417';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
