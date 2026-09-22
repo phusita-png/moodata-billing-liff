@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260922-0949">
+<link rel="stylesheet" href="user.css?v=20260922-0955">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -13368,6 +13368,77 @@
   }
   window.sfCustHint=sfCustHint;
 
+  /* ───────── 🔍 ค้นกรมพัฒน์จากฟอร์มออกเอกสาร (22 ก.ย. 69 · พี่กี้ขอ QT/IV/RE/CN) ─────────
+     🔴 ช่องเลขภาษี/ที่อยู่บนใบเป็น readonly โดยตั้งใจ — ที่อยู่บนใบกำกับต้องมาจากทะเบียนที่เดียว
+        (แก้ทีละใบ = ลูกค้าคนเดียวกันมีที่อยู่คนละแบบในแต่ละใบ)
+        ตัวนี้จึง **บันทึกลงทะเบียนลูกค้า** แล้วค่อยรีเฟรชช่องบนใบจากทะเบียน ไม่เขียนลงใบตรง ๆ */
+  function sfDbdLookup(){
+    var key=sfCustKey();
+    if(!key){ toast('เลือกหรือพิมพ์ชื่อลูกค้าก่อนค่ะ'); return; }
+    var c=sfCustFind((($('slCust')||{}).value)||'');
+    if(!c){
+      toast('ยังไม่มีลูกค้ารายนี้ในทะเบียน — กด "+ เพิ่มเข้าทะเบียน" ก่อนค่ะ (ในฟอร์มนั้นมีปุ่มค้นให้)');
+      return;
+    }
+    var pre=(c.taxId||'').replace(/\D/g,'');
+    modal('<h3>🔍 ค้นข้อมูลจากกรมพัฒนาธุรกิจการค้า</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint" style="margin:0 0 10px">ลูกค้า: <b>'+esc(c.legalName||c.name)+'</b><br>'+
+      'ค้นแล้วระบบจะ<b>บันทึกลงทะเบียนลูกค้าให้</b> แล้วข้อมูลบนใบนี้จะอัปเดตตาม '+
+      '(ที่อยู่บนใบกำกับมาจากทะเบียนที่เดียวเสมอ)</div>'+
+      '<div class="fld"><label>เลขประจำตัวผู้เสียภาษี (13 หลัก)</label>'+
+        '<input id="sfDbdTax" inputmode="numeric" value="'+esc(pre)+'" placeholder="เช่น 0505560002963"></div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button>'+
+      '<button class="btn btn-primary" onclick="sfDbdGo(\''+jss(c.name)+'\')">ค้นหา</button></div>');
+  }
+  window.sfDbdLookup=sfDbdLookup;
+
+  function sfDbdGo(custName){
+    var tax=((($('sfDbdTax')||{}).value)||'').replace(/\D/g,'');
+    if(tax.length!==13){ mErr('กรอกเลขผู้เสียภาษี 13 หลักค่ะ'); return; }
+    busy('กำลังค้นจากกรมพัฒน์…');
+    jsonp({action:'waCustomerDbd',uid:UID,taxId:tax}).then(function(r){
+      unbusy();
+      if(!r||!r.ok){ mErr((r&&r.error)||'ค้นไม่สำเร็จ'); return; }
+      var d=r.data;
+      var closed=d.status&&d.status.indexOf('ยังดำเนินกิจการ')<0;
+      modal('<h3>🔍 ข้อมูลจากกรมพัฒนาธุรกิจการค้า</h3><div id="mErr" class="m-err hidden"></div>'+
+        (closed?'<div class="m-err">สถานะนิติบุคคล: '+esc(d.status)+' — ตรวจก่อนออกเอกสารนะคะ</div>':'')+
+        '<div class="tax-tbl-wrap"><table class="tax-tbl"><tbody>'+
+        dbdRow_('ชื่อนิติบุคคล', d.nameTH)+
+        dbdRow_('สาขา', d.branch)+
+        dbdRow_('ที่อยู่จดทะเบียน', d.address)+
+        dbdRow_('เลขผู้เสียภาษี', d.taxId)+
+        dbdRow_('สถานะ', d.status)+
+        '</tbody></table></div>'+
+        '<div class="m-hint" style="margin:10px 0 0">จะบันทึกลงทะเบียนของ <b>'+esc(custName)+'</b> '+
+        '(ชื่อเต็ม · เลขภาษี · สาขา · ที่อยู่) แล้วใบนี้จะใช้ข้อมูลใหม่ทันที</div>'+
+        '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button>'+
+        '<button class="btn btn-primary" onclick="sfDbdSave(\''+jss(custName)+'\',\''+jss(d.nameTH)+'\',\''+
+          jss(d.taxId)+'\',\''+jss(d.branch)+'\',\''+jss(d.address)+'\')">บันทึกลงทะเบียน</button></div>');
+    }).catch(function(e){ unbusy(); mErr(e.message); });
+  }
+  window.sfDbdGo=sfDbdGo;
+
+  function sfDbdSave(name, legal, tax, branch, addr){
+    /* สาขา: ทะเบียนเก็บ "สำนักงานใหญ่" หรือเลขสาขา — backend เติมคำว่า "สาขาที่" ให้เอง */
+    var br='สำนักงานใหญ่';
+    if(String(branch||'').indexOf('สำนักงานใหญ่')<0){
+      var m=String(branch||'').match(/\d+/); br=m?m[0]:branch;
+    }
+    callBusy('กำลังบันทึก…', jsonpPost({action:'waCustomerSave',uid:UID,name:name,
+      legalName:legal, taxId:tax, branch:br, address:addr}), 'บันทึกแล้ว').then(function(r){
+      if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+      closeModal();
+      /* โหลดทะเบียนใหม่แล้ววาดช้อมูลติดต่อบนใบใหม่ — ไม่ต้องออกจากฟอร์ม งานที่กรอกค้างไม่หาย */
+      jsonp({action:'waSalesInit',uid:UID,light:'1'}).then(function(x){
+        if(x&&x.ok&&SALES){ SALES.customers=x.customers; SALES.services=x.services; }
+        if(typeof sfCustHint==='function') sfCustHint();
+        toast('✅ อัปเดตทะเบียนลูกค้าแล้ว — ข้อมูลบนใบนี้ใช้ของใหม่แล้วค่ะ');
+      }).catch(function(){ toast('✅ บันทึกแล้ว — กดเลือกลูกค้าใหม่อีกครั้งเพื่อดึงข้อมูลล่าสุด'); });
+    }).catch(function(e){ mErr(e.message); });
+  }
+  window.sfDbdSave=sfDbdSave;
+
   /** เพิ่มลูกค้าใหม่จากชื่อที่พิมพ์ในฟอร์ม → เปิดฟอร์มทะเบียนลูกค้าให้กรอกให้ครบ */
   function sfNewCustomer(){
     var name=(($('slCust')||{}).value||'').trim();
@@ -13489,7 +13560,11 @@
         '<div class="sf-note" id="sfCustInfo"></div></div>'+
       /* เลขผู้เสียภาษีต่อจากช่องลูกค้า (พี่กี้ขอ 21 ก.ย. 69) — ดึงจากทะเบียน ตรวจก่อนออกใบกำกับ */
       '<div class="sf-f c2"><label>เลขผู้เสียภาษี</label>'+
-        '<input id="slCustTax" readonly placeholder="—"></div>'+
+        '<div style="display:flex;gap:6px">'+
+        '<input id="slCustTax" readonly placeholder="—" style="flex:1;min-width:0">'+
+        (lockAll?'':'<button class="btn btn-ghost" onclick="sfDbdLookup()" '+
+          'title="ค้นข้อมูลจากกรมพัฒนาธุรกิจการค้า แล้วบันทึกลงทะเบียนลูกค้า" '+
+          'style="flex:none;width:auto;padding:0 12px">🔍</button>')+'</div></div>'+
       '<div class="sf-f c2"><label>วันที่เอกสาร</label>'+
         '<input id="slDate" type="date" value="'+esc(ed?(ed.docDate||''):todayISO())+'"'+(lockAll?' readonly':'')+
         ' onchange="sfDueSync()"></div>'+
@@ -21698,7 +21773,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260922-0949';
+  var APP_BUILD='20260922-0955';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
