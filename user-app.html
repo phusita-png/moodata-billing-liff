@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260923-0953">
+<link rel="stylesheet" href="user.css?v=20260923-1025">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -6302,6 +6302,41 @@
   }
   window.expSendReceipt=expSendReceipt;
 
+  /* ═══════ ลำดับเมนู ⋮ ของ "ใบสั่งจ่าย" — ชุดเดียวกันทั้งใบบริษัทและใบเบิกพนักงาน ═══════
+     พี่กี้เคาะ 23 ก.ย. 2569: *"การสร้างเอกสาร ไม่ว่าจะเป็นพนักงาน หรือสร้างในระบบ มันคืออันเดียวกัน
+     คือใบสั่งจ่าย · เมนูควรเป็นอันเดียวกัน"*
+     🔴 เรียงตามที่พี่เลือก: ① งานที่ต้องทำก่อน → ② เอกสาร → ③ แก้ไข/อื่น ๆ
+     🔴 ป้ายชื่อคำสั่งอยู่ในตารางนี้ที่เดียว — ตัวสร้างเมนูแต่ละชนิดใบแค่บอกว่า "มีคำสั่งไหน"
+        (เดิมเขียนป้ายแยกกัน 2 ที่ แล้วคำเรียกเพี้ยนกัน: จ่ายคืน/จ่ายเงิน · ยกเลิก/ยกเลิกใบ)
+     🔴 คำสั่งที่ใบนั้นทำไม่ได้ = ไม่ต้องใส่มา (ไม่ใช่ใส่แล้วซ่อน) เงื่อนไขยังตรงกับด่าน backend เหมือนเดิม */
+  var PAY_MENU_ORDER = [
+    /* ① งานที่ต้องทำก่อน */ 'approve', 'reject', 'pay', 'slipadd', 'send', 'addrcp', 'relink',
+    '|',
+    /* ② เอกสาร */          'req', 'proof', 'contract', 'doc', 'pv', 'wht', 'whtpayee',
+                            'realrcp', 'summary', 'dossier', 'slip',
+    '|',
+    /* ③ แก้ไข/อื่น ๆ */     'detail', 'items', 'redoc', 'mksummary', 'vat', 'copy', 'cancel'
+  ];
+  /** เรียงคำสั่งตามตารางกลาง + ใส่เส้นคั่นเฉพาะกลุ่มที่มีของจริง (คำสั่งนอกตาราง = ต่อท้าย) */
+  function payMenuSort(list){
+    var rest = (list || []).filter(function(a){ return a && !a.sep; });
+    var out = [], group = [];
+    function flush(){
+      if(!group.length) return;
+      if(out.length) out.push({ sep:true });
+      out = out.concat(group); group = [];
+    }
+    PAY_MENU_ORDER.forEach(function(k){
+      if(k === '|'){ flush(); return; }
+      for(var i = 0; i < rest.length; i++){
+        if(rest[i].key === k){ group.push(rest.splice(i, 1)[0]); break; }
+      }
+    });
+    flush();
+    if(rest.length){ if(out.length) out.push({ sep:true }); out = out.concat(rest); }
+    return out;
+  }
+
   function expRowActions(x, isOwner, hasManyEnt){
     var st = String(x.status || '');
     var paid = st.indexOf('จ่ายแล้ว') >= 0;
@@ -6315,21 +6350,20 @@
     var q = "'" + String(x.no).replace(/'/g, "\\'") + "'";
     var a = [];
 
-    if(x.receiptUrl) a.push({ key:'proof', label:'🔍 ดูหลักฐานที่แนบ', href:x.receiptUrl });
-    /* 📝 ใบขออนุมัติจ่ายของใบเบิก (23 ก.ย. 69) — ชุดเดียวกับใบที่บริษัทตั้งเอง
+    if(x.receiptUrl) a.push({ key:'proof', label:'📎 หลักฐาน/ใบแจ้งหนี้', href:x.receiptUrl });
+    /* 📝 ใบสั่งจ่าย (PDF) ของใบเบิก (23 ก.ย. 69) — ชุดเดียวกับใบที่บริษัทตั้งเอง
        พี่กี้: "ไม่เห็นฟอร์ม PO เลย" — ใบเบิกอยู่ทะเบียนเดียวกันแล้ว ต้องมีเอกสารให้เปิด/พิมพ์เหมือนกัน */
-    if(x.reqLink)    a.push({ key:'req',   label:'📝 ใบขออนุมัติจ่าย', href:x.reqLink });
+    if(x.reqLink)    a.push({ key:'req',   label:'📝 ใบสั่งจ่าย (PDF)', href:x.reqLink });
     if(x.docLink)    a.push({ key:'doc',   label:'📄 ' + (x.docNo || 'เอกสาร'), href:x.docLink });
     if(x.whtLink)    a.push({ key:'wht',   label:'🧾 50 ทวิ ' + (x.whtNo || ''), href:x.whtLink });
     if(x.dossier)    a.push({ key:'dossier', label:'🗂️ แฟ้มครบชุด', href:x.dossier });
-    if(x.paidSlip)   a.push({ key:'slip',  label:'💸 สลิปโอนคืน', href:x.paidSlip });
+    if(x.paidSlip)   a.push({ key:'slip',  label:'💸 สลิปโอน', href:x.paidSlip });
     /* ⏳ ใบที่ขอเงินไปจ่ายก่อน — ใบเสร็จตัวจริงตามมาทีหลัง (22 ก.ย. 69 · พี่กี้แนบเอง) */
     if(x.realReceipt) a.push({ key:'realrcp', label:'🧾 ใบเสร็จตัวจริง', href:x.realReceipt });
     if(!isOwner) return a;   // พนักงานเห็นแค่ลิงก์เอกสารของใบตัวเอง
     if(expAwaitReceipt(x)) a.push({ key:'addrcp', label:'📎 แนบใบเสร็จตัวจริง (ยังไม่ได้รับ)',
       call:'expOpenReceipt(' + q + ')', danger:true });
 
-    if(a.length) a.push({ sep:true });
     /* 🔎 เปิดดู = ทางเข้าหลักของทุกใบ (พี่กี้ 7 ก.ย.) — เห็นทุกช่อง + แก้ได้ทีเดียวจบ
        ⚠️ ต้องอยู่หลังด่าน isOwner — หน้านี้มีฟอร์มแก้ + ปุ่มอนุมัติ พนักงานเห็นแล้วสับสน
           (เขาเห็นเฉพาะลิงก์เอกสารของใบตัวเองเหมือนเดิม)
@@ -6337,7 +6371,7 @@
     a.push({ key:'detail', label:'🔎 เปิดดู / แก้ไข', call:'exDetail(' + q + ')' });
     /* ใบที่ยกเลิกแล้ว (เลขเอกสารออกไปแล้ว) — ดูได้ แต่แก้/อนุมัติ/จ่าย/ยกเลิกซ้ำไม่ได้
        เงื่อนไขตรงกับด่าน backend (expenseDead_) */
-    if(expVoided(x)) return a;
+    if(expVoided(x)) return payMenuSort(a);
     // ── งานหลักตามสถานะ (อยู่บนสุดของกลุ่มคำสั่ง) ──
     if(pending){
       // ใบธรรมดาผ่าน exApprove — มีหลายนิติบุคคลถึงจะถามบริษัทก่อน (บริษัทเดียว = อนุมัติทันทีเหมือนเดิม)
@@ -6346,10 +6380,17 @@
     }
     /* ออกใบขออนุมัติใหม่ — ใบเก่าที่ตั้งก่อน 23 ก.ย. ยังไม่มีเอกสารนี้ · ใช้ปุ่มนี้ออกย้อนหลัง
        เส้นเดียวกับใบบริษัท (waPoDocs) · ใบที่จ่ายแล้วออกทับได้ เลขใบเดิม ไฟล์เดิม */
-    a.push({ key:'redoc', label:(x.reqLink ? '🔄 ออกใบขออนุมัติใหม่' : '📝 ออกใบขออนุมัติจ่าย'),
+    a.push({ key:'redoc', label:(x.reqLink ? '🔄 ออกใบสั่งจ่ายใหม่' : '📝 ออกใบสั่งจ่าย'),
       call:'poDocs(' + q + ')' });
+    /* 📤 เสนอเรื่องเข้ากลุ่มการเงิน — ใบเบิกก็ส่งได้ (payoutFindForSend_ อ่าน 2 เล่ม)
+       เดิมมีเฉพาะใบบริษัท ทั้งที่หลังบ้านรองรับทั้งคู่ */
+    a.push({ key:'send', label:(x.sentAt ? '📤 ส่งเข้ากลุ่มการเงินอีกครั้ง' : '📤 ส่งเข้ากลุ่มการเงิน'),
+      call:'poSendOne(' + q + ')' });
+    /* 🧾 ใบกำกับภาษีซื้อของใบเบิก **ไม่อยู่ในเมนูแถว** — พี่กี้เคาะ 7 ก.ย. 69 ว่างานแก้ทุกอย่าง
+       ย้ายเข้าหน้า 🔎 เปิดดู/แก้ไข แล้ว (มีเทสล็อกไว้) · ใบบริษัทยังมีในเมนูเพราะไม่มีหน้านั้น
+       → ชุดคำสั่งเป็นชุดเดียวกัน ต่างแค่ "ใบไหนทำอะไรได้" ตามที่ตกลงกันไว้ */
     if(approved && !paid){
-      a.push({ key:'pay', label:'💰 บันทึกจ่ายคืน',
+      a.push({ key:'pay', label:'💰 บันทึกจ่ายเงิน',
         call:'exOpenPay(' + q + ",'" + String(x.nick || '').replace(/'/g, "\\'") + "'," + (Number(x.amount) || 0) + ',' + (rv && !x.docLink ? 1 : 0) + ')' });
     }
     /* ด่านเดียวกับหลังบ้าน: "ยังไม่มีไฟล์เอกสาร" ไม่ใช่ "ยังไม่มีเลข" (เฟส 2d ขั้น ③)
@@ -6362,9 +6403,8 @@
         คัดลอกเลขที่บัญชี · ใบกำกับภาษีซื้อ · สร้างแฟ้ม · ย้อนสถานะ)
        เมนูนี้เหลือเฉพาะ "งานที่ทำบ่อยจนต้องกดตรง" — อนุมัติ/จ่ายคืน/ยกเลิก
        ⚠️ ฟังก์ชันเดิม (exEditType/exEditAmount/…) ยังอยู่ครบ — หน้ารายละเอียดและที่อื่นยังเรียกใช้ */
-    a.push({ sep:true });
-    a.push({ key:'trash', label:'🗑️ ยกเลิก', call:'exTrash(' + q + ')', danger:true });
-    return a;
+    a.push({ key:'cancel', label:'🗑️ ยกเลิกใบ', call:'exTrash(' + q + ')', danger:true });
+    return payMenuSort(a);
   }
   window.expRowActions = expRowActions;
 
@@ -9662,27 +9702,25 @@
   function poRowActions(x, mode){
     var q = "'" + String(x.no).replace(/'/g, "\\'") + "'";
     var a = [];
-    if(x.proofLink)    a.push({ key:'proof',    label:'📎 ใบแจ้งหนี้/ใบกำกับ', href:x.proofLink });
+    if(x.proofLink)    a.push({ key:'proof',    label:'📎 หลักฐาน/ใบแจ้งหนี้', href:x.proofLink });
     if(x.contractLink) a.push({ key:'contract', label:'📄 สัญญา', href:x.contractLink });
-    if(x.reqLink)      a.push({ key:'req',      label:'📝 ใบขออนุมัติจ่าย', href:x.reqLink });
+    if(x.reqLink)      a.push({ key:'req',      label:'📝 ใบสั่งจ่าย (PDF)', href:x.reqLink });
     if(x.docLink)      a.push({ key:'pv',       label:'📄 ใบสำคัญจ่าย ' + (x.docNo || ''), href:x.docLink });
     if(x.whtLink)      a.push({ key:'wht',      label:'🧾 50 ทวิ ' + (x.whtNo || ''), href:x.whtLink });
     if(x.whtPayeeLink) a.push({ key:'whtpayee', label:'🧾 50 ทวิ (ฉบับผู้รับเงิน)', href:x.whtPayeeLink });
-    if(x.dossier)      a.push({ key:'dossier',  label:'📚 แฟ้มครบชุด', href:x.dossier });
+    if(x.dossier)      a.push({ key:'dossier',  label:'🗂️ แฟ้มครบชุด', href:x.dossier });
     if(x.paidSlip)     a.push({ key:'slip',     label:'📎 สลิปโอน', href:x.paidSlip });
-    if(a.length) a.push({ sep:true });
 
     /* 📤 เสนอเรื่องเข้ากลุ่มการเงิน (22 ก.ย. 69) — ส่งได้ทุกสถานะ
        เพราะบางทีต้องส่งซ้ำให้เจ้านายดูย้อนหลัง */
     a.push({ key:'send', label: (x.sentAt ? '📤 ส่งเข้ากลุ่มการเงินอีกครั้ง' : '📤 ส่งเข้ากลุ่มการเงิน'),
       call:'poSendOne(' + q + ')' });
-    a.push({ sep:true });
     if(mode === 'pending'){
       a.push({ key:'approve', label:'✅ อนุมัติ', call:'poDecide(' + q + ",'approve')" });
       a.push({ key:'reject',  label:'❌ ไม่อนุมัติ', call:'poDecide(' + q + ",'reject')" });
-      a.push({ sep:true });
-      a.push({ key:'edit',    label:'✏️ แก้ใบจ่าย', call:'openPayout(' + q + ')' });   // แก้ได้เฉพาะรออนุมัติ (ด่าน backend)
-      a.push({ key:'redoc',   label:'🔄 ออกใบขออนุมัติใหม่', call:'poDocs(' + q + ')' });
+      /* ชื่อคำสั่งเดียวกับฝั่งใบเบิก — ทางเข้าแก้ใบของทั้ง 2 ชนิดคือ "เปิดดู / แก้ไข" */
+      a.push({ key:'detail',  label:'🔎 เปิดดู / แก้ไข', call:'openPayout(' + q + ')' });   // แก้ได้เฉพาะรออนุมัติ (ด่าน backend)
+      a.push({ key:'redoc',   label:'🔄 ออกใบสั่งจ่ายใหม่', call:'poDocs(' + q + ')' });
     }
     if(mode === 'topay'){
       a.push({ key:'pay', label:'💰 บันทึกจ่ายเงิน', call:'poOpenPay(' + q + ')' });
@@ -9702,10 +9740,9 @@
     if(x.bank && x.bank.acct)
       a.push({ key:'copy', label:'📋 คัดลอกเลขที่บัญชี ' + x.bank.acct, call:"copyTxt('" + String(x.bank.acct).replace(/'/g, "\\'") + "')" });
     if(mode !== 'done'){
-      a.push({ sep:true });
-      a.push({ key:'cancel', label:'🗑️ ยกเลิก', call:'poCancel(' + q + ')', danger:true });
+      a.push({ key:'cancel', label:'🗑️ ยกเลิกใบ', call:'poCancel(' + q + ')', danger:true });
     }
-    return a;
+    return payMenuSort(a);
   }
   window.poRowActions = poRowActions;
 
@@ -9855,7 +9892,7 @@
      "เวลาพี่ตั้งเบิกเข้ากลุ่มการเงินบริษัท พี่ต้องไปทำใน sheet — ทำทางส่งให้หน่อย
       พี่จะส่ง LINE ให้เจ้านาย พร้อมลิงก์เอกสารตั้งเบิก"
      🔴 พรีวิวก่อนส่งเสมอ — หลังบ้านส่งจริงเมื่อ commit=1 เท่านั้น
-     🔴 ส่งได้เฉพาะใบของบริษัท (ใบเบิกพนักงานไม่มีใบขออนุมัติจ่าย ใช้คนละ flow) */
+     🔴 ส่งได้ทั้ง 2 ชนิดใบ — ใบเบิกพนักงานก็มีใบสั่งจ่ายแล้ว (23 ก.ย. 69) */
   var PS_SEL={};
   function psKey(no){ return String(no||''); }
   function psToggle(no,on){
@@ -9917,7 +9954,7 @@
     var blocks=groups.map(function(g){
       total+=Number(g.amount)||0; n+=g.n;
       var rows=g.rows.map(function(x){
-        var warn = x.hasDoc ? '' : ' <span style="color:#B45309">· ยังไม่มีใบขออนุมัติจ่าย</span>';
+        var warn = x.hasDoc ? '' : ' <span style="color:#B45309">· ยังไม่มีใบสั่งจ่าย (PDF)</span>';
         var again = x.sentAt ? ' <span style="color:#DC2626">· เคยส่งแล้ว</span>' : '';
         return '<div style="display:flex;gap:8px;font-size:12.5px;padding:3px 0">'+
           '<div style="flex:1;min-width:0">'+esc(x.no)+' · '+esc(x.payeeName||'-')+warn+again+
@@ -10479,7 +10516,7 @@
       .then(function(r){
         if(!r||!r.ok){ toast((r&&r.error)||'ออกเอกสารไม่สำเร็จ'); return; }
         var d=r.docs||{};
-        var made=[]; if(d.reqLink) made.push('ใบขออนุมัติจ่าย');
+        var made=[]; if(d.reqLink) made.push('ใบสั่งจ่าย');
         if(d.docNo) made.push('ใบสำคัญจ่าย '+d.docNo); if(d.whtNo) made.push('50 ทวิ '+d.whtNo);
         if(d.dossier) made.push('แฟ้มครบชุด');
         toast((made.length?'📄 ออก '+made.join(' · '):'ไม่มีเอกสารที่ออกได้')+
@@ -17869,7 +17906,7 @@
       /* 📤 กลุ่ม LINE ที่ใช้เสนอเรื่องเบิกจ่ายของบริษัทนี้ (22 ก.ย. 69 · พี่กี้)
          คนละกลุ่มกับกลุ่มทีม · ว่าง = ปุ่ม "ส่งเข้ากลุ่มการเงิน" จะบอกให้มาตั้งค่าตรงนี้ก่อน */
       '<div style="margin:16px 0 8px;font-weight:600;color:var(--brand)">กลุ่ม LINE การเงิน</div>'+
-      '<div class="fld"><label>Group ID กลุ่มการเงิน (ใช้ส่งใบขออนุมัติจ่าย)</label>'+
+      '<div class="fld"><label>Group ID กลุ่มการเงิน (ใช้ส่งใบสั่งจ่ายให้อนุมัติ)</label>'+
         '<input id="enFinGroup" value="'+esc(e.finGroupId||'')+'" placeholder="Cxxxxxxxx… (ได้จากการแอดบอทเข้ากลุ่ม)">'+
         '<div class="m-hint" style="margin:6px 0 0">แอดบอทเข้ากลุ่มการเงินแล้วพิมพ์ "id" ในกลุ่ม บอทจะบอก Group ID ค่ะ</div></div>'+
       /* 🔐 ใครกดปุ่มอนุมัติบนการ์ดในกลุ่มได้ (23 ก.ย. 69 · พี่กี้เคาะ)
@@ -22973,7 +23010,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260923-0953';
+  var APP_BUILD='20260923-1025';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
