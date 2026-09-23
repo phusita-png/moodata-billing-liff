@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260923-2007">
+<link rel="stylesheet" href="user.css?v=20260923-2026">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -6420,7 +6420,7 @@
         คัดลอกเลขที่บัญชี · ใบกำกับภาษีซื้อ · สร้างแฟ้ม · ย้อนสถานะ)
        เมนูนี้เหลือเฉพาะ "งานที่ทำบ่อยจนต้องกดตรง" — อนุมัติ/จ่ายคืน/ยกเลิก
        ⚠️ ฟังก์ชันเดิม (exEditType/exEditAmount/…) ยังอยู่ครบ — หน้ารายละเอียดและที่อื่นยังเรียกใช้ */
-    a.push({ key:'cancel', label:'🗑️ ยกเลิกใบ', call:'exTrash(' + q + ')', danger:true });
+    a.push({ key:'cancel', label:'🚫 ยกเลิกเอกสาร', call:'exTrash(' + q + ')', danger:true });
     return payMenuSort(a);
   }
   window.expRowActions = expRowActions;
@@ -7660,7 +7660,7 @@
       '<div class="m-act">'+
       (WIR_OCRVAL?'<button class="btn btn-ghost" style="margin-right:auto" onclick="wirRestoreOcr()">↩ คืนค่าที่อ่านมา</button>':'')+
       '<button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
-      (v.no?'<button class="btn btn-danger" onclick="wirVoid(\''+esc(v.no)+'\')">🗑️ ยกเลิกใบ</button>':'')+
+      (v.no?'<button class="btn btn-danger" onclick="wirVoid(\''+esc(v.no)+'\')">🚫 ยกเลิกเอกสาร</button>':'')+
       '<button class="btn btn-primary" onclick="'+onSave+'">💾 บันทึก</button></div>');
     wirDateHint();
   }
@@ -7871,10 +7871,10 @@
     }).catch(function(e){ mErr(e.message); });
   }
   function wirVoid(no){
-    if(!confirm('ยกเลิกใบ '+no+' ?\nใบที่ยกเลิกจะไม่ถูกนับเป็นเครดิตภาษี')) return;
+    if(!confirm('ยกเลิกเอกสาร '+no+' ?\nใบที่ยกเลิกจะไม่ถูกนับเป็นเครดิตภาษี')) return;
     callBusy('กำลังยกเลิก…', jsonp({action:'waWhtInEdit',uid:UID,no:no,status:'🗑️ ยกเลิก'}), 'ยกเลิกแล้ว').then(function(r){
       if(!r||!r.ok){ mErr((r&&r.error)||'ยกเลิกไม่สำเร็จ'); return; }
-      closeModal(); toast('🗑️ ยกเลิกใบแล้ว'); renderWhtIn();
+      closeModal(); toast('🚫 ยกเลิกเอกสารแล้ว'); renderWhtIn();
     }).catch(function(e){ mErr(e.message); });
   }
   function wirRematch(){
@@ -9723,10 +9723,10 @@
     }).catch(function(e){ toast(e.message); });
   }
   function ptCancelClaim(no){
-    if(!confirm('ยกเลิกใบสรุปเบิก '+no+' ?\nรายการในใบจะกลับมาติ๊กใหม่ได้')) return;
+    if(!confirm('ยกเลิกเอกสาร '+no+' ?\nรายการในใบจะกลับมาติ๊กใหม่ได้')) return;
     callBusy('กำลังยกเลิก…', jsonp({action:'waPettyClaimCancel',uid:UID,no:no}), 'ยกเลิกแล้ว').then(function(r){
       if(!r||!r.ok){ toast((r&&r.error)||'ยกเลิกไม่สำเร็จ'); return; }
-      toast('ยกเลิกใบสรุปแล้ว · ปลดล็อก '+(r.freed||0)+' รายการ'); renderPetty();
+      toast('🚫 ยกเลิกเอกสารแล้ว · ปลดล็อก '+(r.freed||0)+' รายการ'); renderPetty();
     }).catch(function(e){ toast(e.message); });
   }
   /** ออกใบรับรองแทนใบเสร็จให้รายการจ่ายสดที่ไม่มีบิล */
@@ -9825,7 +9825,7 @@
       a.push({ key:'copy', label:'📋 คัดลอกเลขที่บัญชี ' + x.bank.acct, call:"copyTxt('" + String(x.bank.acct).replace(/'/g, "\\'") + "')" });
     /* ยกเลิกได้ทุกสถานะ รวมใบที่จ่ายเงินแล้ว (พี่กี้เคาะ 23 ก.ย. 69 — "แบบเดียวกับใบเบิก")
        เลขคงอยู่ในทะเบียน + ระบบยกเลิก PV/50 ทวิ ที่ออกไปแล้วให้ด้วย */
-    a.push({ key:'cancel', label:'🗑️ ยกเลิกใบ',
+    a.push({ key:'cancel', label:'🚫 ยกเลิกเอกสาร',
       call:'poCancel(' + q + ',' + (mode === 'done' ? 1 : 0) + ')', danger:true });
     return payMenuSort(a);
   }
@@ -10447,7 +10447,7 @@
         '</div></div>'+
 
       (PO_EDIT
-        ? '<div class="sf-card"><div class="m-hint" style="margin:0">💡 ไฟล์แนบแก้ที่ใบเดิมไม่ได้ในเฟสนี้ — ถ้าแนบผิดให้ยกเลิกใบแล้วตั้งใหม่ค่ะ</div></div>'
+        ? '<div class="sf-card"><div class="m-hint" style="margin:0">💡 ไฟล์แนบแก้ที่ใบเดิมไม่ได้ในเฟสนี้ — ถ้าแนบผิดให้ยกเลิกเอกสารแล้วตั้งใหม่ค่ะ</div></div>'
         : '<div class="sf-card"><div class="sf-h">📎 เอกสารแนบ</div>'+
             imgsFldHtml('poImg','ใบแจ้งหนี้ / ใบกำกับภาษี (รูป หรือ PDF · แนบได้หลายไฟล์)')+
             imgsFldHtml('poCon','สัญญา (ถ้ามี · ไม่บังคับ)')+'</div>')+
@@ -10854,7 +10854,7 @@
         'ยกเลิกแล้วยอดจะหลุดจากรายงานรายจ่าย และใบสำคัญจ่าย/50 ทวิ ที่ออกไปจะถูกยกเลิกตามด้วย<br>' +
         'ถ้าเงินโอนออกไปจริง ให้บันทึกเหตุผลไว้ด้วยค่ะ</div>'
       : '<div class="m-hint">ใบจะหายจากรายการ (แถวยังอยู่ในชีต ตรวจย้อนหลังได้) — ใช้กับใบที่ตั้งผิด/ซ้ำค่ะ</div>';
-    modal('<h3>🗑️ ยกเลิกใบสั่งจ่าย '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+    modal('<h3>🚫 ยกเลิกเอกสาร '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
       warn+
       '<div class="fld"><label>เหตุผล (ไม่บังคับ)</label><input id="poCanNote" placeholder="เช่น ตั้งซ้ำกับใบก่อน"></div>'+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ไม่ยกเลิก</button>'+
@@ -10869,7 +10869,7 @@
         closeModal();
         var ex=[]; if(r.voidedDocs && r.voidedDocs.length) ex.push('ยกเลิก '+r.voidedDocs.join(' · '));
         if(r.filedWarn) ex.push(r.filedWarn);
-        toast('🗑️ ยกเลิกใบ '+no+' แล้ว'+(ex.length?' · '+ex.join(' · '):'')); renderPayout();
+        toast('🚫 ยกเลิกเอกสาร '+no+' แล้ว'+(ex.length?' · '+ex.join(' · '):'')); renderPayout();
       }).catch(function(e){ if(btn){btn.disabled=false;btn.textContent='ยืนยันยกเลิก';} mErr(e.message); });
   }
   window.openPayout=openPayout; window.poPayeeMode=poPayeeMode; window.poStaffPick=poStaffPick;
@@ -11928,7 +11928,7 @@
         '<button class="btn btn-ghost btn-sm" onclick="vatOpen(\'expense\',\''+esc(no)+'\','+(Number(x.amount)||0)+')">🧾 ใบกำกับภาษีซื้อ</button>'+
         ((approved||paid)?'<button class="btn btn-ghost btn-sm" onclick="exRebuild(\''+esc(no)+'\')">🗂️ สร้างแฟ้มใหม่</button>':'')+
         (!paid&&(approved||rejected)&&!hasDoc?'<button class="btn btn-ghost btn-sm" onclick="exUndo(\''+esc(no)+'\')">↩️ ย้อนเป็นรออนุมัติ</button>':'')+
-        '<button class="btn btn-ghost btn-sm" style="color:#B4242A" onclick="exTrash(\''+esc(no)+'\')">🗑️ ยกเลิกใบ</button>'+
+        '<button class="btn btn-ghost btn-sm" style="color:#B4242A" onclick="exTrash(\''+esc(no)+'\')">🚫 ยกเลิกเอกสาร</button>'+
         '<span style="flex:1"></span>'+
         '<button class="btn btn-ghost" onclick="exdBack()">'+(EXD_EDIT?'ยกเลิก':'กลับ')+'</button>'+
         (EXD_EDIT?'<button class="btn btn-primary" onclick="exdSave()">บันทึก</button>':'')+
@@ -12183,15 +12183,15 @@
     var x=exFind(no)||{};
     var docs=[x.docNo, x.whtNo].filter(Boolean);
     if(docs.length){
-      modal('<h3>🚫 ยกเลิกใบเบิก</h3>'+
+      modal('<h3>🚫 ยกเลิกเอกสาร</h3>'+
         '<div class="m-hint" style="margin:0 0 14px">ใบ <b>'+esc(no)+'</b> ออกเอกสารไปแล้ว: <b>'+esc(docs.join(' · '))+'</b>'+
         '<br>ยกเลิกแล้ว <b>เลขที่ยังอยู่ในทะเบียน</b> พร้อมสถานะ "ยกเลิก" เป็นหลักฐานว่าเลขไม่ได้ข้าม'+
         '<br><span style="color:var(--red)">⚠️ ยกเลิกแล้วแก้ไขใบนี้ไม่ได้อีก และลบถาวรไม่ได้</span></div>'+
         '<div style="display:flex;gap:8px"><button class="btn btn-ghost" style="flex:1" onclick="closeModal()">ปิด</button>'+
-        '<button class="btn btn-danger" style="flex:1" onclick="exTrashDo(\''+esc(no)+'\')">ยกเลิกใบนี้</button></div>');
+        '<button class="btn btn-danger" style="flex:1" onclick="exTrashDo(\''+esc(no)+'\')">ยกเลิกเอกสารนี้</button></div>');
       return;
     }
-    modal('<h3>🗑️ ยกเลิกใบเบิก</h3>'+
+    modal('<h3>🗑️ ยกเลิกเอกสาร</h3>'+
       '<div class="m-hint" style="margin:0 0 14px">ใบนี้ยังไม่ได้ออกเอกสาร → ย้าย <b>'+esc(no)+'</b> ไปถังขยะ'+
       ' — จะไม่แสดงในรายการ/สรุป'+
       '<br><span style="color:var(--red)">♻️ กู้คืนได้ที่เมนู "🗑️ ถังขยะ" (ลบถาวรทำที่นั่น)</span></div>'+
@@ -23396,7 +23396,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260923-2007';
+  var APP_BUILD='20260923-2026';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
