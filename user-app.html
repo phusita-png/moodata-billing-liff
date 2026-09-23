@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260923-1533">
+<link rel="stylesheet" href="user.css?v=20260923-1947">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -10526,12 +10526,15 @@
   }
 
   /** 🔍 ค้นร้านค้าจากกรมพัฒนาธุรกิจการค้า — ใช้ตัวเดียวกับฝั่งลูกค้า (waCustomerDbd) */
-  function poVendorLookup(){
-    var tax=((($('poVendorTax')||{}).value)||'').replace(/\D/g,'');
+  /* รับชื่อช่องมาเป็นพารามิเตอร์ — หน้าใบสั่งจ่ายกับหน้าใบเบิกใช้ตัวเดียวกัน
+     (เดิมผูกกับ id ของหน้าใบสั่งจ่ายอย่างเดียว) */
+  function poVendorLookup(idName, idTax){
+    idName=idName||'poVendor'; idTax=idTax||'poVendorTax';
+    var tax=((($(idTax)||{}).value)||'').replace(/\D/g,'');
     if(tax.length!==13){ toast('ใส่เลขผู้เสียภาษี 13 หลักก่อนค่ะ'); return; }
     callBusy('กำลังค้น…', jsonp({action:'waCustomerDbd', uid:UID, taxId:tax})).then(function(r){
       if(!r||!r.ok||!r.data){ toast((r&&r.error)||'ไม่พบข้อมูลจากกรมพัฒน์'); return; }
-      if($('poVendor')) $('poVendor').value=r.data.name||'';
+      if($(idName)) $(idName).value=r.data.name||'';
       toast('🔍 ได้ชื่อจากกรมพัฒน์แล้ว ตรวจก่อนบันทึกนะคะ');
     }).catch(function(e){ toast(e.message); });
   }
@@ -11836,6 +11839,19 @@
                 ? '⚠️ ใบนี้ออกเอกสาร '+esc(x.docNo)+' ไปแล้ว — เปลี่ยนประเภทได้ แต่เอกสารเดิมยังอยู่ ต้องตรวจให้ตรงกันเอง'
                 : 'เลือก "ไม่มีใบเสร็จ" แล้วบันทึก ระบบจะออกใบรับรองแทนใบเสร็จให้ทันทีถ้าใบนี้อนุมัติ/จ่ายแล้ว')+
             '</div></div>')+
+        /* 🏪 ร้านค้า/ผู้ขาย — ชื่อที่ขึ้นเป็นคู่ค้าบนใบสั่งจ่าย (spec-po-form §1 ข้อ 3)
+           คนละช่องกับผู้รับเงิน: ใบเบิกจ่ายให้ร้าน แต่โอนคืนเข้าบัญชีพนักงานที่สำรองจ่าย
+           เดิมไม่มีช่องนี้ พี่กี้จึงแก้ชื่อผู้ขายบนเอกสารไม่ได้เลย (23 ก.ย. 69) */
+        '<div class="fld"><label>ร้านค้า / ผู้ขาย</label>'+
+          '<input id="exdVendor" placeholder="ชื่อร้าน/บริษัทที่จ่ายให้" value="'+esc(x.vendor||'')+'">'+
+          '<div class="m-hint" style="margin-top:4px">ขึ้นเป็นคู่ค้าบนใบสั่งจ่าย · เว้นว่าง = ใช้ชื่อผู้รับเงิน</div></div>'+
+        '<div class="fld"><label>เลขผู้เสียภาษีร้านค้า</label>'+
+          '<div style="display:flex;gap:6px">'+
+          '<input id="exdVendorTax" type="tel" inputmode="numeric" maxlength="17" placeholder="13 หลัก (ถ้ามี)" '+
+            'value="'+esc(x.vendorTaxId||'')+'" style="flex:1;min-width:0">'+
+          '<button class="btn btn-ghost" style="flex:none;width:auto;padding:0 12px" '+
+            'onclick="poVendorLookup(\'exdVendor\',\'exdVendorTax\')" title="ค้นจากกรมพัฒนาธุรกิจการค้า">🔍</button>'+
+          '</div></div>'+
         '<div class="fld"><label>ยอดเงิน (บาท)'+(canAmt?'':' — จ่ายแล้ว แก้ไม่ได้')+'</label>'+
           '<input id="exdAmt" inputmode="decimal" value="'+esc(String(x.amount||''))+'"'+(canAmt?'':' disabled')+'></div>'+
         '<div class="fld exd-wide"><label>รายละเอียด</label>'+
@@ -11895,6 +11911,13 @@
       if(!amt){ mErr('กรอกยอดเงินก่อนค่ะ'); return; }
       if(!dt){ mErr('กรอกรายละเอียดก่อนค่ะ'); return; }
       jobs.push({ name:'ยอด/รายละเอียด', req:{action:'waExpEditAmount',uid:UID,no:no,amount:amt,detail:dt} });
+    }
+
+    if($('exdVendor')){
+      var vd=val('exdVendor'), vt=val('exdVendorTax').replace(/[^0-9]/g,'');
+      if(vd!==String(x.vendor||'') || vt!==String(x.vendorTaxId||'').replace(/[^0-9]/g,'')){
+        jobs.push({ name:'ร้านค้า/ผู้ขาย', req:{action:'waExpSetVendor',uid:UID,no:no,vendor:vd,vendorTaxId:vt} });
+      }
     }
 
     if($('exdSect')){
@@ -23323,7 +23346,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260923-1533';
+  var APP_BUILD='20260923-1947';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
