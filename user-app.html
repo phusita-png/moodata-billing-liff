@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260923-1210">
+<link rel="stylesheet" href="user.css?v=20260923-1226">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -10263,6 +10263,12 @@
     var poTitle=!PO_EDIT ? 'สร้างใบสั่งจ่าย' : (PO_VIEW ? 'ใบสั่งจ่าย '+esc(PO_EDIT) : 'แก้ใบสั่งจ่าย '+esc(PO_EDIT));
     PO_PAYEE=(cur&&cur.payeeUid)?'staff':'out';
 
+    /* ตัวเลือกประเภทราคา — ดึงชุดเดียวกับฝั่งขายจากหลังบ้าน (ค่าในหน้าเป็นแค่ตัวสำรอง) */
+    var PM_LIST=(PO.priceModes||[{key:'excl',label:'แยกภาษี'},{key:'incl',label:'รวมภาษี'},{key:'none',label:'ไม่มีภาษี'}]);
+    var pmCur=cur?(cur.priceMode||'none'):'none';
+    var pmOpts=PM_LIST.map(function(m){
+      return '<option value="'+esc(m.key)+'"'+(m.key===pmCur?' selected':'')+'>'+esc(m.label)+'</option>';
+    }).join('');
     var entOpts=(PO.entities||[]).map(function(e){
       var sel=(cur?cur.entity:PO.defaultEntity)===e.code;
       return '<option value="'+esc(e.code)+'"'+(sel?' selected':'')+'>'+esc(e.name)+'</option>';
@@ -10325,8 +10331,12 @@
 
       '<div class="sf-card"><div class="sf-h">💰 จำนวนเงิน · ภาษีหัก ณ ที่จ่าย</div>'+
         '<div class="sf-grid">'+
-          '<div class="sf-f c4"><label>จำนวนเงิน ก่อนหักภาษี (บาท)</label>'+
-            '<input id="poAmt" type="number" inputmode="decimal" min="0" step="0.01" oninput="poCalc()" value="'+esc(cur?cur.amount:'')+'"></div>'+
+          /* ประเภทราคา — คำและตัวเลือกชุดเดียวกับฝั่งรายรับ (พี่กี้ 23 ก.ย. 69: "ใช้เหมือนกันทั้งระบบ")
+             บริษัทไม่ได้จด VAT = บังคับ "ไม่มีภาษี" (ด่านจริงอยู่ที่ backend เหมือนใบขาย) */
+          '<div class="sf-f c4"><label>ประเภทราคา</label>'+
+            '<select id="poPm" onchange="poCalc()">'+pmOpts+'</select></div>'+
+          '<div class="sf-f c4"><label>จำนวนเงิน (บาท)</label>'+
+            '<input id="poAmt" type="number" inputmode="decimal" min="0" step="0.01" oninput="poCalc()" value="'+esc(cur?poAmtInput(cur):'')+'"></div>'+
           '<div class="sf-f c4"><label>มาตราเงินได้ (หัก ณ ที่จ่าย)</label>'+
             '<select id="poSect" onchange="poSectChange()">'+sectOpts+'</select></div>'+
           '<div class="sf-f c4" id="poRateFld"><label>อัตราหัก %</label>'+
@@ -10405,18 +10415,46 @@
     poCalc();
   }
   /** บรรทัดสรุปใต้ฟอร์ม — ยอดหัก/สุทธิ/แบบยื่นที่จะเข้า (ให้เห็นก่อนกดตั้งเรื่อง) */
+  /** ยอดที่จะเติมกลับในช่องกรอก — โหมด "แยกภาษี" ช่องนั้นคือราคาก่อน VAT ไม่ใช่ยอดรวม */
+  function poAmtInput(x){
+    if(!x) return '';
+    var sp=poSplit(x.amount, x.priceMode, x.vatRate);
+    return (sp.mode==='excl') ? sp.base : sp.total;
+  }
+  /** แยกฐาน/ภาษีจากยอดรวม — ตรรกะเดียวกับ payoutPriceSplit_ ฝั่งหลังบ้าน (เทสเทียบกันไว้) */
+  function poSplit(total, mode, rate){
+    total=Math.round((parseFloat(total)||0)*100)/100;
+    var m=String(mode||'none');
+    if(['excl','incl','none'].indexOf(m)<0) m='none';
+    var r=parseFloat(rate)||0; if(!(r>0)) r=(m==='none')?0:7;
+    if(m==='none') return {mode:m, rate:0, base:total, vat:0, total:total};
+    var base=Math.round(total*100/(100+r)*100)/100;
+    return {mode:m, rate:r, base:base, vat:Math.round((total-base)*100)/100, total:total};
+  }
   function poCalc(){
-    var amt=parseFloat((($('poAmt')||{}).value)||'0')||0;
+    var input=parseFloat((($('poAmt')||{}).value)||'0')||0;
+    var pm=(($('poPm')||{}).value)||'none';
+    var ent=(PO.entities||[]).filter(function(e){ return e.code===((($('poEnt')||{}).value)||''); })[0];
+    /* บริษัทไม่ได้จด VAT = ไม่มีภาษีเสมอ (ด่านจริงอยู่ที่ backend · ตรงนี้กันกรอกไปแล้วงง) */
+    if(ent && ent.vatReg===false) pm='none';
+    var rate7=7;
+    /* "แยกภาษี" = ช่องที่กรอกคือราคาก่อน VAT → ยอดรวมต้องบวกภาษีเข้าไป */
+    var total=(pm==='excl') ? Math.round((input+Math.round(input*rate7)/100)*100)/100 : input;
+    var sp=poSplit(total, pm, rate7);
     var sect=(($('poSect')||{}).value)||'', kind=(($('poKind')||{}).value)||'';
     var rate=sect ? (parseFloat((($('poRate')||{}).value)||'0')||0) : 0;
     var rf=$('poRateFld'); if(rf) rf.classList.toggle('hidden', !sect);
-    var wht=Math.round(amt*rate)/100, net=Math.round((amt*100)-(wht*100))/100;
+    /* ⚖️ หักภาษีจากฐานก่อน VAT ตามกฎหมาย — ตรงกับที่หลังบ้านคิด */
+    var wht=Math.round(sp.base*rate)/100, net=Math.round((sp.total*100)-(wht*100))/100;
     var el=$('poSum'); if(!el) return;
-    if(!(amt>0)){ el.textContent='ใส่จำนวนเงินเพื่อดูยอดจ่ายสุทธิ'; return; }
-    if(!rate){ el.innerHTML='💰 จ่ายจริง <b>'+poMoney(amt)+'</b> บาท · ไม่หักภาษี ณ ที่จ่าย'; return; }
+    if(!(input>0)){ el.textContent='ใส่จำนวนเงินเพื่อดูยอดจ่ายสุทธิ'; return; }
+    var vatLine = (sp.rate>0)
+      ? ('🧾 ฐานก่อนภาษี '+poMoney(sp.base)+' + VAT '+sp.rate+'% '+poMoney(sp.vat)+          ' = รวม <b>'+poMoney(sp.total)+'</b> บาท')
+      : ('💰 ยอดรวม <b>'+poMoney(sp.total)+'</b> บาท · ไม่มีภาษีมูลค่าเพิ่ม');
+    if(!rate){ el.innerHTML=vatLine+'<br>ไม่หักภาษี ณ ที่จ่าย'; return; }
     var fl=poFormLabel(kind, sect);
-    el.innerHTML='💰 ยอด '+poMoney(amt)+' − หัก '+rate+'% ('+poMoney(wht)+') = จ่ายจริง <b>'+poMoney(net)+'</b> บาท'+
-      (fl?'<br>🧾 เข้าแบบ <b>'+esc(fl)+'</b> ของบริษัทผู้จ่าย · ออก 50 ทวิ ให้ตอนจ่ายเงิน (เฟสถัดไป)':'');
+    el.innerHTML=vatLine+'<br>− หัก ณ ที่จ่าย '+rate+'% ของฐาน ('+poMoney(wht)+') = จ่ายจริง <b>'+poMoney(net)+'</b> บาท'+
+      (fl?'<br>🧾 เข้าแบบ <b>'+esc(fl)+'</b> ของบริษัทผู้จ่าย · ออก 50 ทวิ ให้ตอนจ่ายเงิน':'');
   }
   function doPayout(){
     var p={action:(PO_EDIT?'waPoEdit':'waPoCreate'), uid:UID,
@@ -10425,7 +10463,8 @@
       payeeKind:(($('poKind')||{}).value)||'', payeeName:((($('poName')||{}).value)||'').trim(),
       payeeId:((($('poId')||{}).value)||'').replace(/\D/g,''), payeeAddr:((($('poAddr')||{}).value)||'').trim(),
       amount:(($('poAmt')||{}).value)||'', section:(($('poSect')||{}).value)||'',
-      rate:(($('poSect')||{}).value) ? ((($('poRate')||{}).value)||'0') : '0'};
+      rate:(($('poSect')||{}).value) ? ((($('poRate')||{}).value)||'0') : '0',
+      priceMode:(($('poPm')||{}).value)||'none', vatRate:'7'};
     if(PO_EDIT) p.no=PO_EDIT;
     if(PO_PAYEE==='staff'){
       p.payeeUid=(($('poStaff')||{}).value)||'';
@@ -23077,7 +23116,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260923-1210';
+  var APP_BUILD='20260923-1226';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
