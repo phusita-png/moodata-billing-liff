@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260922-2137">
+<link rel="stylesheet" href="user.css?v=20260923-0856">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -3886,6 +3886,7 @@
       if(VIEW!=='roomset') return;
       CO_ENTS=(r&&r.ok&&r.entities)||[];
       ENTS=CO_ENTS;            // entEdit อ่านจาก ENTS — ต้องเติมให้ก่อนกดปุ่มตั้งค่า
+      ENT_MEMBERS=(r&&r.members)||ENT_MEMBERS;
       ENT_DEF=(r&&r.defaultCode)||ENT_DEF;
       var box=$('rsCoList'); if(!box) return;
       if(!CO_ENTS.length){
@@ -6295,6 +6296,9 @@
     var a = [];
 
     if(x.receiptUrl) a.push({ key:'proof', label:'🔍 ดูหลักฐานที่แนบ', href:x.receiptUrl });
+    /* 📝 ใบขออนุมัติจ่ายของใบเบิก (23 ก.ย. 69) — ชุดเดียวกับใบที่บริษัทตั้งเอง
+       พี่กี้: "ไม่เห็นฟอร์ม PO เลย" — ใบเบิกอยู่ทะเบียนเดียวกันแล้ว ต้องมีเอกสารให้เปิด/พิมพ์เหมือนกัน */
+    if(x.reqLink)    a.push({ key:'req',   label:'📝 ใบขออนุมัติจ่าย', href:x.reqLink });
     if(x.docLink)    a.push({ key:'doc',   label:'📄 ' + (x.docNo || 'เอกสาร'), href:x.docLink });
     if(x.whtLink)    a.push({ key:'wht',   label:'🧾 50 ทวิ ' + (x.whtNo || ''), href:x.whtLink });
     if(x.dossier)    a.push({ key:'dossier', label:'🗂️ แฟ้มครบชุด', href:x.dossier });
@@ -6320,6 +6324,10 @@
       a.push({ key:'approve', label:'✅ อนุมัติ', call:(x.payeeName ? 'exOpenWht(' + q + ')' : 'exApprove(' + q + ')') });
       a.push({ key:'reject',  label:'❌ ไม่อนุมัติ', call:'exReject(' + q + ')' });
     }
+    /* ออกใบขออนุมัติใหม่ — ใบเก่าที่ตั้งก่อน 23 ก.ย. ยังไม่มีเอกสารนี้ · ใช้ปุ่มนี้ออกย้อนหลัง
+       เส้นเดียวกับใบบริษัท (waPoDocs) · ใบที่จ่ายแล้วออกทับได้ เลขใบเดิม ไฟล์เดิม */
+    a.push({ key:'redoc', label:(x.reqLink ? '🔄 ออกใบขออนุมัติใหม่' : '📝 ออกใบขออนุมัติจ่าย'),
+      call:'poDocs(' + q + ')' });
     if(approved && !paid){
       a.push({ key:'pay', label:'💰 บันทึกจ่ายคืน',
         call:'exOpenPay(' + q + ",'" + String(x.nick || '').replace(/'/g, "\\'") + "'," + (Number(x.amount) || 0) + ',' + (rv && !x.docLink ? 1 : 0) + ')' });
@@ -17703,7 +17711,7 @@
 
   /** 🏢 จัดการนิติบุคคล — ตั้งค่า "จด VAT" ได้จากที่นี่ ไม่ต้องพิมพ์ในชีต
    *  ⚠️ ค่าที่แก้มีผลกับใบที่ออก "หลังจากนี้" เท่านั้น (ใบเก่าเก็บ snapshot ของตัวเองไว้แล้ว) */
-  var ENTS=[], ENT_DEF='';
+  var ENTS=[], ENT_DEF='', ENT_MEMBERS=[];   /* ENT_MEMBERS = รายชื่อทีมสำหรับติ๊ก "ผู้มีอำนาจอนุมัติ" */
   /** กลับที่เดิมหลังแก้นิติบุคคล — เปิดจากตั้งค่าห้องต้องไม่เด้งไปหน้าจัดการนิติบุคคล */
   function entBack(){
     if(VIEW==='roomset'){ closeModal(); roomCoLoad('co'); return; }
@@ -17715,7 +17723,7 @@
     jsonp({action:'waEntities',uid:UID}).then(function(r){
       unbusy();
       if(!r||!r.ok){ toast((r&&r.error)||'โหลดไม่สำเร็จ'); return; }
-      ENTS=r.entities||[];
+      ENTS=r.entities||[]; ENT_MEMBERS=r.members||ENT_MEMBERS;
       var rows=ENTS.map(function(e,i){
         return '<tr style="cursor:pointer" onclick="entEdit('+i+')"><td><b>'+esc(e.code)+'</b></td>'+
           '<td>'+esc(e.name)+'</td>'+
@@ -17844,6 +17852,12 @@
       '<div class="fld"><label>Group ID กลุ่มการเงิน (ใช้ส่งใบขออนุมัติจ่าย)</label>'+
         '<input id="enFinGroup" value="'+esc(e.finGroupId||'')+'" placeholder="Cxxxxxxxx… (ได้จากการแอดบอทเข้ากลุ่ม)">'+
         '<div class="m-hint" style="margin:6px 0 0">แอดบอทเข้ากลุ่มการเงินแล้วพิมพ์ "id" ในกลุ่ม บอทจะบอก Group ID ค่ะ</div></div>'+
+      /* 🔐 ใครกดปุ่มอนุมัติบนการ์ดในกลุ่มได้ (23 ก.ย. 69 · พี่กี้เคาะ)
+         ว่าง = เฉพาะเจ้าของห้อง · เจ้าของห้องกดได้เสมอ ไม่ต้องติ๊กตัวเอง */
+      '<div style="margin:16px 0 8px;font-weight:600;color:var(--brand)">ผู้มีอำนาจอนุมัติ (ปุ่มบนการ์ดในกลุ่ม)</div>'+
+      '<div class="fld"><label>ติ๊กคนที่กดปุ่ม "อนุมัติ" บนการ์ดขออนุมัติจ่ายได้</label>'+
+        enApproverHtml(e.approverUids)+
+        '<div class="m-hint" style="margin:6px 0 0">ไม่ติ๊กใครเลย = เฉพาะเจ้าของห้องกดได้ · คนอื่นกดจะถูกปฏิเสธและไม่มีอะไรเปลี่ยน</div></div>'+
       /* inline (หน้าตั้งค่าห้อง) แยกโลโก้/ตราประทับไปเป็นการ์ดของตัวเอง → coImgHtml
          ป๊อบอัพหน้าจัดการนิติบุคคลยังใช้ช่องอัปโหลดในฟอร์มเหมือนเดิม */
       (inline ? ''
@@ -17928,12 +17942,36 @@
       });
   }
 
+  /** ช่องติ๊กผู้มีอำนาจอนุมัติ — ไม่มีรายชื่อทีม (ยังไม่มีใครลงทะเบียน) = บอกตรง ๆ ไม่ใช่กล่องเปล่า */
+  function enApproverHtml(csv){
+    var on={}; String(csv||'').split(',').forEach(function(x){ var t=String(x||'').trim(); if(t) on[t]=1; });
+    if(!ENT_MEMBERS.length) return '<div class="m-hint">ยังไม่มีรายชื่อทีมที่ลงทะเบียน LINE แล้วค่ะ</div>';
+    return '<div id="enApprBox" style="display:flex;flex-wrap:wrap;gap:8px">'+
+      ENT_MEMBERS.map(function(m){
+        return '<label style="display:flex;align-items:center;gap:6px;border:1px solid var(--line);'+
+          'border-radius:8px;padding:6px 10px">'+
+          '<input type="checkbox" class="enAppr" value="'+esc(m.uid)+'"'+(on[m.uid]?' checked':'')+'>'+
+          '<span>'+esc(m.name||m.uid)+(m.nick?' ('+esc(m.nick)+')':'')+'</span></label>';
+      }).join('')+'</div>';
+  }
+  /** อ่านค่าที่ติ๊ก → csv · ไม่มีกล่อง (บริษัทที่เปิดจากฟอร์มเก่า) = undefined เพื่อให้หลังบ้านคงค่าเดิม */
+  function enApproverValue(){
+    if(!$('enApprBox')) return undefined;
+    var out=[];
+    Array.prototype.forEach.call(document.querySelectorAll('#enApprBox .enAppr'), function(c){
+      if(c.checked) out.push(c.value);
+    });
+    return out.join(',');
+  }
+
   function entSave(){
     var code=((($('enCode')||{}).value)||'').trim();
     var name=((($('enName')||{}).value)||'').trim();
     if(!code){ mErr('ใส่รหัสบริษัทค่ะ'); return; }
     if(!name){ mErr('ใส่ชื่อนิติบุคคลค่ะ'); return; }
-    callBusy('กำลังบันทึก…', jsonpPost({action:'waEntitySave',uid:UID,
+    /* 🔴 jsonpPost แปลงทุกค่าด้วย encodeURIComponent — ส่ง undefined ไปจะกลายเป็นข้อความ "undefined"
+       ช่องที่ฟอร์มนี้ไม่มี (ป๊อบอัพรุ่นเก่า) จึงต้อง "ไม่ใส่ key" ไม่ใช่ใส่ค่าว่าง (ค่าว่าง = ตั้งใจล้าง) */
+    var pay = {action:'waEntitySave',uid:UID,
       code:code, name:name,
       taxId:((($('enTax')||{}).value)||'').trim(), address:((($('enAddr')||{}).value)||'').trim(),
       branch:branchValue('en'),
@@ -17948,7 +17986,10 @@
       email:((($('enEmail')||{}).value)||'').trim(),
       website:((($('enWeb')||{}).value)||'').trim(),
       nameEn:((($('enNameEn')||{}).value)||'').trim(),
-      finGroupId:((($('enFinGroup')||{}).value)||'').trim()}), 'บันทึกแล้ว').then(function(r){
+      finGroupId:((($('enFinGroup')||{}).value)||'').trim()};
+    var appr = enApproverValue();
+    if(appr !== undefined) pay.approverUids = appr;
+    callBusy('กำลังบันทึก…', jsonpPost(pay), 'บันทึกแล้ว').then(function(r){
       if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
       toast('🏢 บันทึก '+r.code+' แล้ว'+(r.isNew?' (บริษัทใหม่)':''));
       ST_EDIT.co=false;                  // บันทึกแล้วล็อกกลับ กันพิมพ์ทับต่อโดยไม่ตั้งใจ
@@ -22906,7 +22947,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260922-2137';
+  var APP_BUILD='20260923-0856';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
