@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260923-0856">
+<link rel="stylesheet" href="user.css?v=20260923-0953">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -311,6 +311,26 @@
   /* แถวใบที่ยกเลิก — ยังอยู่ในตารางเป็นหลักฐานว่าเลขไม่ได้ขาดช่วง แต่ต้องดูออกทันทีว่าไม่มีผลแล้ว */
   .ex-void td{color:#94A3B8;background:#FAFBFC}
   .ex-void td:first-child{text-decoration:line-through}
+  /* ผู้มีอำนาจอนุมัติ — การ์ดติ๊กชื่อ (23 ก.ย. 69)
+     ⚠️ ของเดิมใช้ flex ปล่อยกว้างตามเนื้อหา → ชื่อไทยยาวตกบรรทัดทีละคำ อ่านไม่ออก
+     grid + minmax(220px) = ชื่ออยู่บรรทัดเดียว และจอแคบยุบเหลือคอลัมน์เดียวเอง */
+  .appr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px;margin:2px 0}
+  /* ⚠️ ต้องไล่ specificity ให้ชนะ `.fld label{display:block}` และ `.fld input{width:100%}`
+     ไม่งั้น label กลายเป็นบล็อก + ช่องติ๊กยืดเต็มแถว → ช่องติ๊กหลุดไปมุมขวา ชื่อตกลงมาอีกบรรทัด
+     (เจอจากภาพจริงก่อน deploy · เทียบกับกับดัก .btn width:100% เมื่อ 22 ก.ย.) */
+  .appr-grid .appr-item{display:flex;align-items:center;gap:10px;border:1px solid var(--line);
+    border-radius:10px;padding:10px 12px;background:#fff;cursor:pointer;margin:0;font-weight:500;
+    transition:border-color .15s,background .15s}
+  .appr-grid .appr-item:hover{border-color:var(--brand);background:#F7FBFF}
+  .appr-grid .appr-item input{width:18px;height:18px;min-width:18px;flex:0 0 auto;margin:0;
+    accent-color:var(--brand);cursor:pointer}
+  .appr-grid .appr-name{font-size:13.5px;line-height:1.35;min-width:0;font-weight:600;color:var(--ink)}
+  /* nowrap = ชื่อเล่นตกไปทั้งก้อน ไม่ถูกตัดกลางคำ ("เจ้า/นาย") เวลาชื่อจริงยาว */
+  .appr-grid .appr-nick{color:var(--muted);font-size:12px;margin-left:5px;font-weight:500;
+    white-space:nowrap;display:inline-block}
+  .appr-grid .appr-nick:before{content:'('} .appr-grid .appr-nick:after{content:')'}
+  .st-ro .appr-grid .appr-item{cursor:default;background:#F8FAFC}
+  .st-ro .appr-grid .appr-item:hover{border-color:var(--line)}
   .us-perm-list{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;margin:4px 0 2px}
     @media (max-width:520px){ .us-perm-list{grid-template-columns:1fr} }
     .us-perm-it{display:flex;align-items:center;gap:9px;padding:9px 11px;border:1px solid var(--line);
@@ -17854,10 +17874,14 @@
         '<div class="m-hint" style="margin:6px 0 0">แอดบอทเข้ากลุ่มการเงินแล้วพิมพ์ "id" ในกลุ่ม บอทจะบอก Group ID ค่ะ</div></div>'+
       /* 🔐 ใครกดปุ่มอนุมัติบนการ์ดในกลุ่มได้ (23 ก.ย. 69 · พี่กี้เคาะ)
          ว่าง = เฉพาะเจ้าของห้อง · เจ้าของห้องกดได้เสมอ ไม่ต้องติ๊กตัวเอง */
-      '<div style="margin:16px 0 8px;font-weight:600;color:var(--brand)">ผู้มีอำนาจอนุมัติ (ปุ่มบนการ์ดในกลุ่ม)</div>'+
-      '<div class="fld"><label>ติ๊กคนที่กดปุ่ม "อนุมัติ" บนการ์ดขออนุมัติจ่ายได้</label>'+
+      '<div style="margin:16px 0 8px;font-weight:600;color:var(--brand)">ผู้มีอำนาจอนุมัติ</div>'+
+      '<div class="fld"><label>ส่งการ์ดขออนุมัติเข้าแชทส่วนตัวของคนเหล่านี้ด้วย</label>'+
         enApproverHtml(e.approverUids)+
-        '<div class="m-hint" style="margin:6px 0 0">ไม่ติ๊กใครเลย = เฉพาะเจ้าของห้องกดได้ · คนอื่นกดจะถูกปฏิเสธและไม่มีอะไรเปลี่ยน</div></div>'+
+        '<div class="m-hint" style="margin:6px 0 0">'+
+        'ในกลุ่มการเงิน <b>ใครกดปุ่มอนุมัติก็ได้</b> ระบบจดชื่อคนกดไว้บนเอกสารเสมอ<br>'+
+        'ติ๊กที่นี่ = คนที่ได้รับการ์ดเข้าแชทส่วนตัวด้วย และกดอนุมัติจากแชทส่วนตัวได้ '+
+        '(คนที่ยังไม่ได้ลงทะเบียนกับบอทจะไม่มีชื่อให้ติ๊ก — ใช้การ์ดในกลุ่มได้ตามปกติ)'+
+        '</div></div>'+
       /* inline (หน้าตั้งค่าห้อง) แยกโลโก้/ตราประทับไปเป็นการ์ดของตัวเอง → coImgHtml
          ป๊อบอัพหน้าจัดการนิติบุคคลยังใช้ช่องอัปโหลดในฟอร์มเหมือนเดิม */
       (inline ? ''
@@ -17946,12 +17970,14 @@
   function enApproverHtml(csv){
     var on={}; String(csv||'').split(',').forEach(function(x){ var t=String(x||'').trim(); if(t) on[t]=1; });
     if(!ENT_MEMBERS.length) return '<div class="m-hint">ยังไม่มีรายชื่อทีมที่ลงทะเบียน LINE แล้วค่ะ</div>';
-    return '<div id="enApprBox" style="display:flex;flex-wrap:wrap;gap:8px">'+
+    /* ⚠️ การ์ดชื่อต้องกว้างพอให้ชื่อไทยอยู่บรรทัดเดียว — ของเดิมกว้างตามเนื้อหาแล้วชื่อตกทีละคำ
+       ใช้ grid คอลัมน์ขั้นต่ำ 220px ยืดเต็มความกว้างที่เหลือ (จอแคบเหลือคอลัมน์เดียวเอง) */
+    return '<div id="enApprBox" class="appr-grid">'+
       ENT_MEMBERS.map(function(m){
-        return '<label style="display:flex;align-items:center;gap:6px;border:1px solid var(--line);'+
-          'border-radius:8px;padding:6px 10px">'+
+        return '<label class="appr-item">'+
           '<input type="checkbox" class="enAppr" value="'+esc(m.uid)+'"'+(on[m.uid]?' checked':'')+'>'+
-          '<span>'+esc(m.name||m.uid)+(m.nick?' ('+esc(m.nick)+')':'')+'</span></label>';
+          '<span class="appr-name">'+esc(m.name||m.uid)+
+            (m.nick?'<span class="appr-nick">'+esc(m.nick)+'</span>':'')+'</span></label>';
       }).join('')+'</div>';
   }
   /** อ่านค่าที่ติ๊ก → csv · ไม่มีกล่อง (บริษัทที่เปิดจากฟอร์มเก่า) = undefined เพื่อให้หลังบ้านคงค่าเดิม */
@@ -22947,7 +22973,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260923-0856';
+  var APP_BUILD='20260923-0953';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
