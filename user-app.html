@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260923-1504">
+<link rel="stylesheet" href="user.css?v=20260923-1518">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -6315,7 +6315,7 @@
     /* ② เอกสาร */          'req', 'proof', 'contract', 'doc', 'pv', 'wht', 'whtpayee',
                             'realrcp', 'summary', 'dossier', 'slip',
     '|',
-    /* ③ แก้ไข/อื่น ๆ */     'detail', 'items', 'redoc', 'mksummary', 'vat', 'copy', 'cancel'
+    /* ③ แก้ไข/อื่น ๆ */     'detail', 'redoc', 'mksummary', 'vat', 'copy', 'cancel'
   ];
   /** เรียงคำสั่งตามตารางกลาง + ใส่เส้นคั่นเฉพาะกลุ่มที่มีของจริง (คำสั่งนอกตาราง = ต่อท้าย) */
   function payMenuSort(list){
@@ -6792,6 +6792,7 @@
   // เฟสนี้: ตั้งเรื่อง → อนุมัติ → จ่าย + แนบสลิป (เอกสาร PV/50 ทวิ = เฟสถัดไป)
   var PO=null, PO_EDIT='', PO_VIEW=false;   // PO = ข้อมูลจาก waPoInit · PO_EDIT = เลขใบที่เปิดอยู่ ('' = ใบใหม่)
   var PO_TAB='doc', PO_LOG=null;   /* แท็บในหน้าใบ (doc|log) + ประวัติที่โหลดมาแล้ว */
+  var PI_LOADED=false;             /* โหลดรายการย่อยของใบที่เปิดอยู่มาแล้วหรือยัง */
   /* PO_VIEW = เปิดแบบ "ดูอย่างเดียว" (ใบที่ไม่ได้รออนุมัติแล้ว · พี่กี้เคาะ 23 ก.ย. 69:
      เปิดดูได้ทุกสถานะ แก้ได้เฉพาะรออนุมัติ — ให้ตรงกับใบเบิกที่เปิดดูได้ตลอด) */
   /* ═══════════ 🏛️ ศูนย์รวมภาษี + 50 ทวิ ที่ลูกค้าหักเรา (E6) ═══════════
@@ -7950,14 +7951,16 @@
   function piBlank(){ return { docNo:'', docDate:'', ref:'', detail:'', qty:'', unitPrice:'', base:'', vat:'' }; }
   function piCalc(x){
     var qty=Number(x.qty)||0, up=Number(x.unitPrice)||0;
-    var base=(String(x.base||'').trim()==='')?Math.round(qty*up*100)/100:(Number(x.base)||0);
-    var vat=(String(x.vat||'').trim()==='')?Math.round(base*PI_VAT)/100:(Number(x.vat)||0);
-    return { base:base, vat:vat, total:Math.round((base+vat)*100)/100 };
+    var base=(String(x.base||'').trim()==='')?r2(qty*up):(Number(x.base)||0);
+    var vat=(String(x.vat||'').trim()==='')?r2(base*PI_VAT/100):(Number(x.vat)||0);
+    return { base:base, vat:vat, total:r2(base+vat) };
   }
   function piSum(){
     var s={base:0,vat:0,total:0};
     PI_ROWS.forEach(function(x){ var c=piCalc(x); s.base+=c.base; s.vat+=c.vat; s.total+=c.total; });
-    var el=$('piSum'); if(el) el.innerHTML='<b>รวม '+PI_ROWS.length+' ฉบับ · มูลค่าก่อนภาษี '+money(s.base)+
+    var el=$('piSum'); if(!el) return;
+    if(!PI_ROWS.length){ el.innerHTML=''; return; }
+    el.innerHTML='<b>รวม '+PI_ROWS.length+' ฉบับ · มูลค่าก่อนภาษี '+money(s.base)+
       ' · VAT '+money(s.vat)+' · จำนวนเงินทั้งสิ้น '+money(s.total)+' บาท</b>';
   }
   /** อ่านค่าที่พิมพ์อยู่ในตารางกลับเข้า PI_ROWS (เรียกก่อนวาดใหม่/ก่อนบันทึก) */
@@ -7970,7 +7973,7 @@
   }
   function piAdd(){ piRead(); PI_ROWS.push(piBlank()); piPaint(); }
   function piDel(i){ piRead(); PI_ROWS.splice(i,1); if(!PI_ROWS.length) PI_ROWS.push(piBlank()); piPaint(); }
-  function piChange(){ piRead(); piSum(); }
+  function piChange(){ piRead(); piSum(); if(VIEW==='poform') poCalc(); }
   function piPaint(){
     var body=PI_ROWS.map(function(x,i){
       var c=piCalc(x);
@@ -7989,39 +7992,87 @@
     }).join('');
     var el=$('piBody'); if(el) el.innerHTML=body;
     piSum();
+    /* ตารางอยู่บนหน้าใบ = ยอดสรุปด้านล่างต้องขยับตามทันที */
+    if(VIEW==='poform') poCalc();
   }
-  /** เปิดตัวจัดการรายการย่อยของใบสั่งจ่าย 1 ใบ */
-  function poItems(no){
-    PI_NO=no;
-    callBusy('กำลังโหลด…', jsonp({action:'waPoItems',uid:UID,no:no}), '').then(function(r){
-      if(!r||!r.ok){ toast((r&&r.error)||'โหลดไม่สำเร็จ'); return; }
+  /** บรรทัดที่กรอกจริง (มีเลขที่เอกสารหรือรายละเอียด) — บรรทัดว่างไม่นับ */
+  function piFilled(){
+    piRead();
+    return PI_ROWS.filter(function(x){ return String(x.docNo||'').trim()||String(x.detail||'').trim(); });
+  }
+  /** ผลรวมของรายการที่กรอกจริง (ฐาน · VAT · รวมทั้งสิ้น) */
+  function piTotals(){
+    var s={base:0,vat:0,total:0};
+    piFilled().forEach(function(x){ var c=piCalc(x); s.base=r2(s.base+c.base); s.vat=r2(s.vat+c.vat); s.total=r2(s.total+c.total); });
+    return s;
+  }
+
+  /* 📋 การ์ด "รายการ" บนหน้าใบสั่งจ่าย (spec-po-form.md ขั้น 2)
+     เดิมอยู่ในเมนูแยก "รายการย่อย" ต้องเปิดอีกหน้า — พี่กี้สั่งให้รวมมาหน้าเดียวแบบใบเสนอราคา
+     🔴 ใช้ตาราง/สูตรตัวเดียวกับของเดิม (piPaint/piCalc) ไม่แตกตัวที่สอง */
+  function poItemsCardHtml(){
+    return '<div class="sf-card"><div class="sf-h">📋 รายการ</div>'+
+      '<div class="m-hint" style="margin:0 0 8px">ใบจ่าย 1 ใบที่รวมใบแจ้งหนี้ผู้ขายหลายฉบับ — กรอกที่นี่แล้ว'+
+        'ยอดในใบจะเท่ากับผลรวมเสมอ · จ่ายรายการเดียวไม่ต้องกรอก ใช้ช่องจำนวนเงินข้างล่างพอค่ะ</div>'+
+      '<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
+        '<th>#</th><th>เลขที่เอกสาร</th><th>วันที่</th><th>อ้างอิง</th><th>รายละเอียด</th>'+
+        '<th>จำนวน</th><th>ราคา/หน่วย</th><th>มูลค่าก่อนภาษี</th><th>VAT</th><th>รวม</th><th></th>'+
+        '</tr></thead><tbody id="piBody"></tbody></table></div>'+
+      '<div class="m-hint" id="piSum"></div>'+
+      (PO_VIEW?'':'<div class="tax-acts"><button class="btn btn-ghost" onclick="piAdd()">➕ เพิ่มรายการ</button></div>')+
+      '<div class="sf-grid" id="piOpts">'+
+        '<div class="sf-f c4"><label>ชื่อหัวคอลัมน์อ้างอิงบนเอกสาร</label>'+
+          '<input id="piRefLabel" placeholder="เช่น Domain / โครงการ / ทะเบียนรถ"></div>'+
+        '<div class="sf-f c4"><label>หน่วยของช่องจำนวน</label>'+
+          '<input id="piUnit" placeholder="เช่น คน / ชิ้น / เดือน"></div>'+
+        '<div class="sf-f wide"><label>หมายเหตุท้ายเอกสารสรุป</label>'+
+          '<textarea id="piNote" rows="2" placeholder="ระบบเติมให้อยู่แล้ว: จำนวนรวม · ภาษีหัก ณ ที่จ่าย · บัญชีที่ชำระ"></textarea></div>'+
+      '</div></div>';
+  }
+  /** โหลดรายการย่อยของใบที่เปิดอยู่ (ใบใหม่ = เริ่มจากตารางว่าง) */
+  function poItemsLoad(){
+    if(!PO_EDIT){ if(!PI_LOADED){ PI_NO=''; PI_ROWS=[]; PI_LOADED=true; } piPaint(); poItemsOpts(null); return; }
+    if(PI_LOADED && PI_NO===PO_EDIT){ piPaint(); return; }
+    PI_NO=PO_EDIT;
+    jsonp({action:'waPoItems',uid:UID,no:PO_EDIT}).then(function(r){
+      if(!r||!r.ok){ PI_ROWS=[]; PI_LOADED=true; piPaint(); return; }
       PI_VAT=Number(r.vatRate)||7;
       PI_ROWS=(r.items||[]).map(function(x){
         return { docNo:x.docNo, docDate:x.docDate, ref:x.ref, detail:x.detail,
           qty:x.qty||'', unitPrice:x.unitPrice||'', base:x.base||'', vat:x.vat||'' };
       });
-      if(!PI_ROWS.length) PI_ROWS=[piBlank(),piBlank()];
-      modal('<h3>📋 รายการย่อย + สรุปเอกสารเบิกจ่าย — '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
-        '<div class="m-hint">ใบจ่าย 1 ใบที่รวมใบแจ้งหนี้ผู้ขายหลายฉบับ — ระบบจะออก PDF สรุปให้ '+
-          'แล้วเขียนยอดในใบให้ตรงกับผลรวมอัตโนมัติ (ภาษีหัก ณ ที่จ่ายคิดจากมูลค่าก่อน VAT ตามกฎหมาย)</div>'+
-        '<div class="fld"><label>ชื่อหัวคอลัมน์อ้างอิงบนเอกสาร</label>'+
-          '<input id="piRefLabel" value="'+esc(r.refLabel||'')+'" placeholder="เช่น Domain / โครงการ / ทะเบียนรถ"></div>'+
-        '<div class="fld"><label>หน่วยของช่องจำนวน</label>'+
-          '<input id="piUnit" value="'+esc(r.unitLabel||'')+'" placeholder="เช่น คน / ชิ้น / เดือน"></div>'+
-        '<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
-          '<th>#</th><th>เลขที่เอกสาร</th><th>วันที่</th><th>อ้างอิง</th><th>รายละเอียด</th>'+
-          '<th>จำนวน</th><th>ราคา/หน่วย</th><th>มูลค่าก่อนภาษี</th><th>VAT</th><th>รวม</th><th></th>'+
-          '</tr></thead><tbody id="piBody"></tbody></table></div>'+
-        '<div class="m-hint" id="piSum"></div>'+
-        '<div class="tax-acts"><button class="btn btn-ghost" onclick="piAdd()">➕ เพิ่มบรรทัด</button></div>'+
-        '<div class="fld"><label>หมายเหตุท้ายเอกสาร (พิมพ์เพิ่มเอง)</label>'+
-          '<textarea id="piNote" placeholder="ระบบเติมให้อยู่แล้ว: จำนวนรวม · ภาษีหัก ณ ที่จ่าย · บัญชีที่ชำระ">'+esc(r.note||'')+'</textarea></div>'+
-        (r.summaryLink?'<div class="m-hint">📄 เอกสารล่าสุด: <a class="ex-lk" href="'+esc(r.summaryLink)+'" target="_blank">เปิดสรุปเอกสารเบิกจ่าย</a></div>':'')+
-        '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button>'+
-        '<button class="btn btn-primary" onclick="piSave()">บันทึก + ออกเอกสารสรุป</button></div>');
-      piPaint();
-    }).catch(function(e){ toast(e.message); });
+      PI_LOADED=true;
+      if(VIEW!=='poform'||PO_TAB!=='doc') return;
+      piPaint(); poItemsOpts(r); poCalc();
+      /* ใบที่มีเอกสารสรุปแล้ว ให้เปิดดูได้จากหน้าใบเลย ไม่ต้องย้อนไปหน้าทะเบียน */
+      if(r.summaryLink){
+        var el=$('piSum');
+        if(el) el.innerHTML+=' · <a class="ex-lk" href="'+esc(r.summaryLink)+'" target="_blank">📄 เปิดสรุปเอกสารเบิกจ่าย</a>';
+      }
+      if(PO_VIEW) Array.prototype.forEach.call(document.querySelectorAll('#piBody input,#piOpts input,#piOpts textarea'),
+        function(el){ el.disabled=true; });
+    }).catch(function(){ PI_LOADED=true; piPaint(); });
   }
+  function poItemsOpts(r){
+    [['piRefLabel',r?r.refLabel:''],['piUnit',r?r.unitLabel:''],['piNote',r?r.note:'']].forEach(function(f){
+      var el=$(f[0]); if(el) el.value=f[1]||'';
+    });
+  }
+  /** บันทึกรายการย่อย (เรียกต่อจากบันทึกใบ — ใบต้องมีเลขก่อน) */
+  function poItemsSave(no){
+    var items=piFilled();
+    callBusy('กำลังบันทึกรายการ…', jsonpPost({action:'waPoItemsSave',uid:UID,no:no,
+      items:JSON.stringify(items), refLabel:(($('piRefLabel')||{}).value||''),
+      unitLabel:(($('piUnit')||{}).value||''), note:(($('piNote')||{}).value||'')})).then(function(r){
+      if(!r||!r.ok){ toast('⚠️ บันทึกรายการไม่สำเร็จ: '+((r&&r.error)||'')); }
+      else toast('✅ บันทึก '+r.n+' รายการ · ยอดใบ '+money(r.total)+' บาท');
+      PO_EDIT=''; PI_LOADED=false; PI_ROWS=[]; renderPayout();
+    }).catch(function(e){ toast(e.message); PO_EDIT=''; PI_LOADED=false; renderPayout(); });
+  }
+  window.poItemsCardHtml=poItemsCardHtml;
+
+  /* โมดัล "รายการย่อย" ถูกยกเลิก — ตารางไปอยู่ในหน้าใบแล้ว (spec-po-form.md ขั้น 2)
+     เก็บไว้ 2 ที่ = วันหนึ่งจะแก้ที่เดียวแล้วอีกที่ค้าง */
   function piSave(){
     piRead();
     var items=PI_ROWS.filter(function(x){ return String(x.docNo||'').trim()||String(x.detail||'').trim(); });
@@ -8045,7 +8096,7 @@
       if(VIEW==='payout') renderPayout();
     }).catch(function(e){ toast(e.message); });
   }
-  window.poItems=poItems; window.piAdd=piAdd; window.piDel=piDel; window.piChange=piChange;
+  window.piAdd=piAdd; window.piDel=piDel; window.piChange=piChange;
   window.piSave=piSave; window.poSummary=poSummary;
 
   /* ═══════════ 📊 รายงานรายจ่าย + เจ้าหนี้ (E5 · spec-expense-side.md §6) ═══════════
@@ -9742,9 +9793,8 @@
     // ใบกำกับภาษีซื้อ (E4) — กรอกได้ทุกสถานะ (ใบกำกับมักมาถึงทีหลัง) · ไม่แตะยอด/เอกสารของใบ
     a.push({ key:'vat', label:'🧾 ใบกำกับภาษีซื้อ',
       call:"vatOpen('payout'," + q + ',' + (Number(x.amount) || 0) + ')' });
-    // รายการย่อย (เฟส F) — ใบจ่าย 1 ใบที่รวมใบแจ้งหนี้ผู้ขายหลายฉบับ
-    // แก้รายการได้เฉพาะ "รออนุมัติ" (ยอดต้องนิ่งหลังอนุมัติ · ตรงกับด่าน savePayoutItems_)
-    if(mode === 'pending') a.push({ key:'items', label:'📋 รายการย่อย / สรุปเบิกจ่าย', call:'poItems(' + q + ')' });
+    /* รายการย่อย (ใบจ่าย 1 ใบที่รวมใบแจ้งหนี้ผู้ขายหลายฉบับ) ย้ายเข้าไปอยู่ในหน้าใบแล้ว
+       (spec-po-form.md ขั้น 2 · พี่กี้ 23 ก.ย. 69) — เปิดใบก็เห็นตารางเลย ไม่ต้องมีเมนูแยก */
     if(x.summaryLink) a.push({ key:'summary', label:'📄 สรุปเอกสารเบิกจ่าย', href:x.summaryLink });
     else if(mode !== 'pending') a.push({ key:'mksummary', label:'📄 ออกสรุปเอกสารเบิกจ่าย', call:'poSummary(' + q + ')' });
     if(x.bank && x.bank.acct)
@@ -10231,6 +10281,7 @@
   function openPayout(no){
     if(!PO){ toast('กำลังโหลด…'); switchView('payout'); return; }
     PO_EDIT=String(no||''); PO_VIEW=false;
+    PI_NO=''; PI_ROWS=[]; PI_LOADED=false;    /* รายการย่อยของใบก่อนหน้าต้องไม่ติดมา */
     if(PO_EDIT){
       var hit=poFindAny(PO_EDIT);
       if(!hit){ toast('ไม่พบใบนี้ในทะเบียนค่ะ'); return; }
@@ -10328,6 +10379,8 @@
             '<textarea id="poDetail" rows="2" placeholder="เช่น ค่าเช่าออฟฟิศชั้น 2">'+esc(cur?cur.detail:'')+'</textarea></div>'+
         '</div></div>'+
 
+      poItemsCardHtml()+
+
       '<div class="sf-card"><div class="sf-h">👤 ผู้รับเงิน</div>'+
         '<div class="sf-grid">'+
           '<div class="sf-f c4"><label>จ่ายให้ใคร</label><div style="display:flex;gap:6px">'+
@@ -10357,7 +10410,8 @@
           '<div class="sf-f c4"><label>ประเภทราคา</label>'+
             '<select id="poPm" onchange="poCalc()">'+pmOpts+'</select></div>'+
           '<div class="sf-f c4"><label>จำนวนเงิน (บาท)</label>'+
-            '<input id="poAmt" type="number" inputmode="decimal" min="0" step="0.01" oninput="poCalc()" value="'+esc(cur?poAmtInput(cur):'')+'"></div>'+
+            '<input id="poAmt" type="number" inputmode="decimal" min="0" step="0.01" oninput="poCalc()" value="'+esc(cur?poAmtInput(cur):'')+'">'+
+            '<div class="sf-note" id="poAmtNote"></div></div>'+
           '<div class="sf-f c4"><label>มาตราเงินได้ (หัก ณ ที่จ่าย)</label>'+
             '<select id="poSect" onchange="poSectChange()">'+sectOpts+'</select></div>'+
           '<div class="sf-f c4" id="poRateFld"><label>อัตราหัก %</label>'+
@@ -10391,6 +10445,7 @@
     if(!PO_EDIT){ imgsFldBind('poImg'); imgsFldBind('poCon'); }
     poPayeeMode(PO_PAYEE);
     poFillRates(cur?cur.whtRate:null);
+    poItemsLoad();
     poCalc();
   }
   window.renderPoForm=renderPoForm;
@@ -10540,6 +10595,23 @@
     /* "แยกภาษี" = ช่องที่กรอกคือราคาก่อน VAT → ยอดรวมต้องบวกภาษีเข้าไป */
     var total=(pm==='excl') ? r2(input+r2(input*rate7/100)) : input;
     var sp=poSplit(total, pm, rate7);
+    /* 🔴 ใบที่กรอกตารางรายการ: ยอด/ฐาน/VAT มาจากผลรวมรายการเสมอ (หลังบ้าน savePayoutItems_
+       เขียนทับยอดในใบให้ตรงกับผลรวมอยู่แล้ว) — ช่องจำนวนเงินจึงเป็น "ผลลัพธ์" ไม่ใช่ที่กรอก */
+    var fi=piFilled();
+    if(fi.length){
+      var ps=piTotals();
+      sp={mode:(ps.vat>0?'incl':'none'), rate:(ps.vat>0?rate7:0), base:ps.base, vat:ps.vat, total:ps.total};
+      input=ps.total;
+      var ai=$('poAmt'); if(ai){ ai.value=ps.total?String(ps.total):''; if(!PO_VIEW) ai.disabled=true; }
+      var pmi=$('poPm'); if(pmi){ pmi.value=sp.mode; if(!PO_VIEW) pmi.disabled=true; }
+      var an=$('poAmtNote'); if(an) an.textContent='ยอดมาจากผลรวมรายการข้างบน (แก้ที่ตาราง)';
+      var op=$('piOpts'); if(op) op.classList.remove('hidden');
+    } else {
+      var op2=$('piOpts'); if(op2) op2.classList.add('hidden');
+      var ai2=$('poAmt'); if(ai2 && !PO_VIEW) ai2.disabled=false;
+      var pmi2=$('poPm'); if(pmi2 && !PO_VIEW) pmi2.disabled=false;
+      var an2=$('poAmtNote'); if(an2) an2.textContent='';
+    }
     var sect=(($('poSect')||{}).value)||'', kind=(($('poKind')||{}).value)||'';
     var rate=sect ? (parseFloat((($('poRate')||{}).value)||'0')||0) : 0;
     var rf=$('poRateFld'); if(rf) rf.classList.toggle('hidden', !sect);
@@ -10571,6 +10643,7 @@
       p.payeeUid=(($('poStaff')||{}).value)||'';
       if(!p.payeeUid){ mErr('เลือกพนักงานที่จะจ่ายก่อนค่ะ'); return; }
     }
+    if(piFilled().length) p.amount=String(piTotals().total);   /* ช่องถูก disable = ต้องอ่านยอดจากตาราง */
     if(!(parseFloat(p.amount)>0)){ mErr('กรอกจำนวนเงินก่อนค่ะ'); return; }
     if(!p.detail){ mErr('กรอกรายละเอียดก่อนค่ะ'); return; }
     if(PO_PAYEE!=='staff' && !p.payeeName){ mErr('กรอกชื่อผู้รับเงินก่อนค่ะ'); return; }
@@ -10595,6 +10668,10 @@
           mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
         closeModal(); IMGS['poImg']=[]; IMGS['poCon']=[];
         toast(PO_EDIT?('✅ แก้ใบ '+PO_EDIT+' แล้ว'):('✅ สร้างใบสั่งจ่าย '+(r.no||'')+' แล้ว'));
+        /* 🔴 รายการย่อยบันทึกหลังใบมีเลขแล้วเสมอ (savePayoutItems_ ผูกกับเลขที่ใบ)
+           ใบใหม่จึงต้องรอเลขจากหลังบ้านก่อน — บันทึกไม่สำเร็จต้องบอก ไม่ใช่เงียบ */
+        var poNo=PO_EDIT||String(r.no||'');
+        if(poNo && piFilled().length){ poItemsSave(poNo); return; }
         PO_EDIT=''; renderPayout();
       }).catch(function(e){ if(btn){btn.disabled=false;btn.textContent=PO_EDIT?'บันทึกการแก้ไข':'สร้างใบสั่งจ่าย';} mErr(e.message); });
   }
@@ -23221,7 +23298,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260923-1504';
+  var APP_BUILD='20260923-1518';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
