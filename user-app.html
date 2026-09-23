@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260923-2026">
+<link rel="stylesheet" href="user.css?v=20260923-2045">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -6324,13 +6324,19 @@
      🔴 ป้ายชื่อคำสั่งอยู่ในตารางนี้ที่เดียว — ตัวสร้างเมนูแต่ละชนิดใบแค่บอกว่า "มีคำสั่งไหน"
         (เดิมเขียนป้ายแยกกัน 2 ที่ แล้วคำเรียกเพี้ยนกัน: จ่ายคืน/จ่ายเงิน · ยกเลิก/ยกเลิกใบ)
      🔴 คำสั่งที่ใบนั้นทำไม่ได้ = ไม่ต้องใส่มา (ไม่ใช่ใส่แล้วซ่อน) เงื่อนไขยังตรงกับด่าน backend เหมือนเดิม */
+  /* 🔴 ลำดับเดียวกับเมนูของใบเสนอราคา (พี่กี้ 23 ก.ย. 69: "ลองดูการเรียงเมนูใบเสนอราคา")
+     ① พิมพ์ PDF ② แก้ไข + งานที่ต้องทำต่อ ③ เอกสารที่ออกแล้ว ④ อื่น ๆ ⑤ ยกเลิก */
   var PAY_MENU_ORDER = [
-    /* ① งานที่ต้องทำก่อน */ 'approve', 'reject', 'pay', 'slipadd', 'send', 'addrcp', 'relink',
+    /* ① ไฟล์ของใบ */       'pdf',
     '|',
-    /* ② เอกสาร */          'req', 'proof', 'contract', 'doc', 'pv', 'wht', 'whtpayee',
+    /* ② แก้ไข + งานถัดไป */ 'edit', 'approve', 'reject', 'pay', 'slipadd', 'send', 'addrcp', 'relink',
+    '|',
+    /* ③ เอกสารที่ออกแล้ว */ 'proof', 'contract', 'doc', 'pv', 'wht', 'whtpayee',
                             'realrcp', 'summary', 'dossier', 'slip',
     '|',
-    /* ③ แก้ไข/อื่น ๆ */     'detail', 'redoc', 'mksummary', 'vat', 'copy', 'cancel'
+    /* ④ อื่น ๆ */           'mksummary', 'vat', 'copy',
+    '|',
+    'cancel'
   ];
   /** เรียงคำสั่งตามตารางกลาง + ใส่เส้นคั่นเฉพาะกลุ่มที่มีของจริง (คำสั่งนอกตาราง = ต่อท้าย) */
   function payMenuSort(list){
@@ -6365,10 +6371,10 @@
     var q = "'" + String(x.no).replace(/'/g, "\\'") + "'";
     var a = [];
 
-    if(x.receiptUrl) a.push({ key:'proof', label:'📎 หลักฐาน/ใบแจ้งหนี้', href:x.receiptUrl });
+    if(x.receiptUrl) a.push({ key:'proof', label:'📎 เอกสารแนบ', href:x.receiptUrl });
     /* 📝 ใบสั่งจ่าย (PDF) — พนักงานเห็นเฉพาะไฟล์ที่มีแล้ว (ออกเอกสารเองไม่ได้ · waPoDocs เป็น owner only)
        ส่วนของผู้ดูแลอยู่ใต้ด่าน isOwner ข้างล่าง: กดครั้งเดียวได้ไฟล์เสมอ */
-    if(x.reqLink) a.push({ key:'req', label:'📝 ใบสั่งจ่าย (PDF)', href:x.reqLink });
+    if(x.reqLink) a.push({ key:'pdf', label:'🖨️ พิมพ์ PDF', href:x.reqLink });
     if(x.docLink)    a.push({ key:'doc',   label:'📄 ' + (x.docNo || 'เอกสาร'), href:x.docLink });
     if(x.whtLink)    a.push({ key:'wht',   label:'🧾 50 ทวิ ' + (x.whtNo || ''), href:x.whtLink });
     if(x.dossier)    a.push({ key:'dossier', label:'🗂️ แฟ้มครบชุด', href:x.dossier });
@@ -6378,7 +6384,7 @@
     if(!isOwner) return payMenuSort(a);   // พนักงานเห็นแค่ลิงก์เอกสารของใบตัวเอง
     /* ยังไม่มีไฟล์ (ใบที่ตั้งก่อนฟีเจอร์นี้ขึ้น) — กดแล้วระบบออกให้แล้วเปิดต่อเอง ไม่ต้องกด 2 จังหวะ
        (พี่กี้ 23 ก.ย. 69: "พี่ต้องกดออกใบสั่งจ่ายก่อนเหรอ") */
-    if(!x.reqLink) a.push({ key:'req', label:'📝 ใบสั่งจ่าย (PDF)', call:'poOpenReq(' + q + ',0)' });
+    if(!x.reqLink) a.push({ key:'pdf', label:'🖨️ พิมพ์ PDF', call:'poOpenReq(' + q + ',0)' });
     if(expAwaitReceipt(x)) a.push({ key:'addrcp', label:'📎 แนบใบเสร็จตัวจริง (ยังไม่ได้รับ)',
       call:'expOpenReceipt(' + q + ')', danger:true });
 
@@ -6386,7 +6392,7 @@
        ⚠️ ต้องอยู่หลังด่าน isOwner — หน้านี้มีฟอร์มแก้ + ปุ่มอนุมัติ พนักงานเห็นแล้วสับสน
           (เขาเห็นเฉพาะลิงก์เอกสารของใบตัวเองเหมือนเดิม)
        เมนูที่เหลือคงไว้เป็นทางลัด ไม่ต้องเปิดหน้ารายละเอียดก่อนก็ทำงานเดิมได้ */
-    a.push({ key:'detail', label:'🔎 เปิดดู / แก้ไข', call:'exDetail(' + q + ')' });
+    a.push({ key:'edit', label:'✏️ แก้ไขเอกสาร', call:'exDetail(' + q + ')' });
     /* ใบที่ยกเลิกแล้ว (เลขเอกสารออกไปแล้ว) — ดูได้ แต่แก้/อนุมัติ/จ่าย/ยกเลิกซ้ำไม่ได้
        เงื่อนไขตรงกับด่าน backend (expenseDead_) */
     if(expVoided(x)) return payMenuSort(a);
@@ -6398,7 +6404,8 @@
     }
     /* ออกใบขออนุมัติใหม่ — ใบเก่าที่ตั้งก่อน 23 ก.ย. ยังไม่มีเอกสารนี้ · ใช้ปุ่มนี้ออกย้อนหลัง
        เส้นเดียวกับใบบริษัท (waPoDocs) · ใบที่จ่ายแล้วออกทับได้ เลขใบเดิม ไฟล์เดิม */
-    a.push({ key:'redoc', label:'🔄 ออกใบสั่งจ่ายใหม่', call:'poDocs(' + q + ')' });
+    /* 🔴 ไม่มี "ออกใบสั่งจ่ายใหม่" แล้ว (พี่กี้ 23 ก.ย. 69) — แก้ไขแล้วกดบันทึก
+       ระบบออกไฟล์ใหม่ทับให้เองอยู่แล้ว กติกาเดียวกับฝั่งใบเสนอราคา */
     /* 📤 เสนอเรื่องเข้ากลุ่มการเงิน — ใบเบิกก็ส่งได้ (payoutFindForSend_ อ่าน 2 เล่ม)
        เดิมมีเฉพาะใบบริษัท ทั้งที่หลังบ้านรองรับทั้งคู่ */
     a.push({ key:'send', label:(x.sentAt ? '📤 ส่งเข้ากลุ่มการเงินอีกครั้ง' : '📤 ส่งเข้ากลุ่มการเงิน'),
@@ -6407,7 +6414,7 @@
        ย้ายเข้าหน้า 🔎 เปิดดู/แก้ไข แล้ว (มีเทสล็อกไว้) · ใบบริษัทยังมีในเมนูเพราะไม่มีหน้านั้น
        → ชุดคำสั่งเป็นชุดเดียวกัน ต่างแค่ "ใบไหนทำอะไรได้" ตามที่ตกลงกันไว้ */
     if(approved && !paid){
-      a.push({ key:'pay', label:'💰 บันทึกจ่ายเงิน',
+      a.push({ key:'pay', label:'📑 ออกใบสำคัญจ่าย PV',
         call:'exOpenPay(' + q + ",'" + String(x.nick || '').replace(/'/g, "\\'") + "'," + (Number(x.amount) || 0) + ',' + (rv && !x.docLink ? 1 : 0) + ')' });
     }
     /* ด่านเดียวกับหลังบ้าน: "ยังไม่มีไฟล์เอกสาร" ไม่ใช่ "ยังไม่มีเลข" (เฟส 2d ขั้น ③)
@@ -9782,10 +9789,10 @@
   function poRowActions(x, mode){
     var q = "'" + String(x.no).replace(/'/g, "\\'") + "'";
     var a = [];
-    if(x.proofLink)    a.push({ key:'proof',    label:'📎 หลักฐาน/ใบแจ้งหนี้', href:x.proofLink });
+    if(x.proofLink)    a.push({ key:'proof',    label:'📎 เอกสารแนบ', href:x.proofLink });
     if(x.contractLink) a.push({ key:'contract', label:'📄 สัญญา', href:x.contractLink });
     /* กดครั้งเดียวได้ไฟล์เสมอ — ชุดเดียวกับใบเบิก (23 ก.ย. 69) */
-    a.push({ key:'req', label:'📝 ใบสั่งจ่าย (PDF)', call:'poOpenReq(' + q + ',' + (x.reqLink ? 1 : 0) + ')' });
+    a.push({ key:'pdf', label:'🖨️ พิมพ์ PDF', call:'poOpenReq(' + q + ',' + (x.reqLink ? 1 : 0) + ')' });
     if(x.docLink)      a.push({ key:'pv',       label:'📄 ใบสำคัญจ่าย ' + (x.docNo || ''), href:x.docLink });
     if(x.whtLink)      a.push({ key:'wht',      label:'🧾 50 ทวิ ' + (x.whtNo || ''), href:x.whtLink });
     if(x.whtPayeeLink) a.push({ key:'whtpayee', label:'🧾 50 ทวิ (ฉบับผู้รับเงิน)', href:x.whtPayeeLink });
@@ -9802,18 +9809,18 @@
     }
     /* 🔎 เปิดดู/แก้ไข — ทุกสถานะ เหมือนใบเบิก (พี่กี้เคาะ 23 ก.ย. 69)
        ใบที่ไม่ใช่ "รออนุมัติ" เปิดเป็นโหมดดูอย่างเดียว (ด่านแก้จริงอยู่ที่ backend) */
-    a.push({ key:'detail', label:'🔎 เปิดดู / แก้ไข', call:'openPayout(' + q + ')' });
+    a.push({ key:'edit', label:'✏️ แก้ไขเอกสาร', call:'openPayout(' + q + ')' });
     if(mode === 'topay'){
-      a.push({ key:'pay', label:'💰 บันทึกจ่ายเงิน', call:'poOpenPay(' + q + ')' });
+      a.push({ key:'pay', label:'📑 ออกใบสำคัญจ่าย PV', call:'poOpenPay(' + q + ')' });
     }
     if(mode === 'done' && !x.paidSlip){
       a.push({ key:'slipadd', label:'📎 แนบสลิปโอน (ยังไม่มี)', call:'poOpenPay(' + q + ')', danger:true });
     }
     /* 🔄 ออกเอกสารใหม่ — ทุกสถานะ เหมือนใบเบิก (ก่อนจ่าย = ออกใบสั่งจ่ายทับ · จ่ายแล้ว = ออก PV/50 ทวิ/แฟ้มด้วย)
        ด่านว่าออกอะไรได้บ้างอยู่ที่ handleWaPoDocs_ ฝั่ง backend */
-    a.push({ key:'redoc',
-      label:(mode === 'done' ? (x.docNo ? '🔄 ออกเอกสารใหม่' : '📄 ออกเอกสาร') : '🔄 ออกใบสั่งจ่ายใหม่'),
-      call:'poDocs(' + q + ')' });
+    /* 🔴 ตัด "ออกใบสั่งจ่ายใหม่/ออกเอกสารใหม่" ออกจากเมนู (พี่กี้ 23 ก.ย. 69)
+       แก้ไขแล้วกดบันทึก = ออกไฟล์ใหม่ทับให้เองอยู่แล้ว · ใบที่จ่ายแล้วออก PV/50 ทวิ
+       ผ่านปุ่ม "ออกใบสำคัญจ่าย PV" ในแถบล่าง */
     // ใบกำกับภาษีซื้อ (E4) — กรอกได้ทุกสถานะ (ใบกำกับมักมาถึงทีหลัง) · ไม่แตะยอด/เอกสารของใบ
     a.push({ key:'vat', label:'🧾 ใบกำกับภาษีซื้อ',
       call:"vatOpen('payout'," + q + ',' + (Number(x.amount) || 0) + ')' });
@@ -10506,7 +10513,7 @@
 
   /* ปุ่มงานของใบบนแถบล่าง — ใช้ชุดคำสั่งเดียวกับเมนู ⋮ (poRowActions) เพื่อให้เงื่อนไขตรงกันเสมอ
      🔴 เอาเฉพาะคำสั่งที่ "ทำแล้วเปลี่ยนสถานะ/ได้ไฟล์" ไม่เอาลิงก์เอกสารที่ดูได้จากเมนูอยู่แล้ว */
-  var PO_BAR_KEYS=['req','send','approve','reject','pay','slipadd','redoc','cancel'];
+  var PO_BAR_KEYS=['pdf','send','approve','reject','pay','slipadd','cancel'];
   function poFormActionsHtml(cur){
     if(!cur) return '';
     var mode=poStageOf(cur.status);
@@ -11914,7 +11921,7 @@
       (hasDoc?'<div class="m-hint" style="color:#C8730B">⚠️ ใบนี้ออกเอกสารแล้ว — แก้เสร็จอย่าลืมสร้างเอกสาร/แฟ้มใหม่ให้ตรงกัน</div>':'')+
       '</div>'+
 
-      '<div class="sf-card"><div class="sf-h">📎 เอกสารของใบนี้'+(EXD_FILES.length?' ('+EXD_FILES.length+')':'')+
+      '<div class="sf-card"><div class="sf-h">📎 เอกสารแนบ'+(EXD_FILES.length?' ('+EXD_FILES.length+')':'')+
         '<span class="exd-hint">กดการ์ดเพื่อเปิดดูไฟล์เต็มหน้า</span></div>'+
       '<div class="exd-files">'+files+'</div></div>'+
 
@@ -23396,7 +23403,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260923-2026';
+  var APP_BUILD='20260923-2045';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
