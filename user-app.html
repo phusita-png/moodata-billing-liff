@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260923-1123">
+<link rel="stylesheet" href="user.css?v=20260923-1153">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -10551,11 +10551,13 @@
     var url=cur&&cur.reqLink;
     if(hasFile && url){ window.open(url,'_blank'); return; }
     var w=window.open('','_blank');
-    callBusy('กำลังออกใบสั่งจ่าย…', jsonpPost({ action:'waPoDocs', uid:UID, no:no }))
+    callBusy('ใบนี้ยังไม่มีไฟล์ · กำลังออกให้…', jsonpPost({ action:'waPoDocs', uid:UID, no:no }))
       .then(function(r){
         var link=r&&r.ok&&r.docs&&r.docs.reqLink;
         if(!link){ if(w) w.close(); toast((r&&r.error)||'ออกใบสั่งจ่ายไม่สำเร็จ'); return; }
         if(w) w.location=link; else toast('📝 ออกใบสั่งจ่ายแล้ว · เปิดจากเมนูได้เลยค่ะ');
+        /* บอกด้วยว่าออกด้วยฟอร์มไหน — ตกไปฟอร์มเดิมเมื่อไหร่จะได้รู้ทันที ไม่ต้องเปิดไฟล์เทียบ */
+        if(r.via && r.via!=='worker') toast('⚠️ ออกด้วย'+(r.via==='template'?'แม่แบบในชีต':'ฟอร์มเดิม')+' (ฟอร์มมาตรฐานใช้ไม่ได้)');
         renderPayout();
       }).catch(function(e){ if(w) w.close(); toast(e.message); });
   }
@@ -23068,7 +23070,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260923-1123';
+  var APP_BUILD='20260923-1153';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
