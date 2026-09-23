@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260923-1025">
+<link rel="stylesheet" href="user.css?v=20260923-1051">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -6788,7 +6788,9 @@
   // ต่างจาก "เบิกค่าใช้จ่าย": ใบเบิก = พนักงานสำรองจ่ายแล้วบริษัทคืนเงิน
   //                        จ่ายออก = บริษัทจ่ายเองให้ผู้รับเงิน (ค่าเช่า/ค่าจ้าง/ซัพพลาย/ค่าตอบแทนพนักงาน)
   // เฟสนี้: ตั้งเรื่อง → อนุมัติ → จ่าย + แนบสลิป (เอกสาร PV/50 ทวิ = เฟสถัดไป)
-  var PO=null, PO_EDIT='';   // PO = ข้อมูลจาก waPoInit · PO_EDIT = เลขใบที่กำลังแก้ ('' = ใบใหม่)
+  var PO=null, PO_EDIT='', PO_VIEW=false;   // PO = ข้อมูลจาก waPoInit · PO_EDIT = เลขใบที่เปิดอยู่ ('' = ใบใหม่)
+  /* PO_VIEW = เปิดแบบ "ดูอย่างเดียว" (ใบที่ไม่ได้รออนุมัติแล้ว · พี่กี้เคาะ 23 ก.ย. 69:
+     เปิดดูได้ทุกสถานะ แก้ได้เฉพาะรออนุมัติ — ให้ตรงกับใบเบิกที่เปิดดูได้ตลอด) */
   /* ═══════════ 🏛️ ศูนย์รวมภาษี + 50 ทวิ ที่ลูกค้าหักเรา (E6) ═══════════
      หน้านี้ไม่คิดเลขเอง — ดึงจากหน้ารายละเอียดของแต่ละแบบมาวางเรียง (ตัวเลขต้องตรงกันเสมอ) */
   var TH_MONTH='', TH_ENT='';
@@ -9718,17 +9720,21 @@
     if(mode === 'pending'){
       a.push({ key:'approve', label:'✅ อนุมัติ', call:'poDecide(' + q + ",'approve')" });
       a.push({ key:'reject',  label:'❌ ไม่อนุมัติ', call:'poDecide(' + q + ",'reject')" });
-      /* ชื่อคำสั่งเดียวกับฝั่งใบเบิก — ทางเข้าแก้ใบของทั้ง 2 ชนิดคือ "เปิดดู / แก้ไข" */
-      a.push({ key:'detail',  label:'🔎 เปิดดู / แก้ไข', call:'openPayout(' + q + ')' });   // แก้ได้เฉพาะรออนุมัติ (ด่าน backend)
-      a.push({ key:'redoc',   label:'🔄 ออกใบสั่งจ่ายใหม่', call:'poDocs(' + q + ')' });
     }
+    /* 🔎 เปิดดู/แก้ไข — ทุกสถานะ เหมือนใบเบิก (พี่กี้เคาะ 23 ก.ย. 69)
+       ใบที่ไม่ใช่ "รออนุมัติ" เปิดเป็นโหมดดูอย่างเดียว (ด่านแก้จริงอยู่ที่ backend) */
+    a.push({ key:'detail', label:'🔎 เปิดดู / แก้ไข', call:'openPayout(' + q + ')' });
     if(mode === 'topay'){
       a.push({ key:'pay', label:'💰 บันทึกจ่ายเงิน', call:'poOpenPay(' + q + ')' });
     }
-    if(mode === 'done'){
-      if(!x.paidSlip) a.push({ key:'slipadd', label:'📎 แนบสลิปโอน (ยังไม่มี)', call:'poOpenPay(' + q + ')', danger:true });
-      a.push({ key:'redoc', label:(x.docNo ? '🔄 ออกเอกสารใหม่' : '📄 ออกเอกสาร'), call:'poDocs(' + q + ')' });
+    if(mode === 'done' && !x.paidSlip){
+      a.push({ key:'slipadd', label:'📎 แนบสลิปโอน (ยังไม่มี)', call:'poOpenPay(' + q + ')', danger:true });
     }
+    /* 🔄 ออกเอกสารใหม่ — ทุกสถานะ เหมือนใบเบิก (ก่อนจ่าย = ออกใบสั่งจ่ายทับ · จ่ายแล้ว = ออก PV/50 ทวิ/แฟ้มด้วย)
+       ด่านว่าออกอะไรได้บ้างอยู่ที่ handleWaPoDocs_ ฝั่ง backend */
+    a.push({ key:'redoc',
+      label:(mode === 'done' ? (x.docNo ? '🔄 ออกเอกสารใหม่' : '📄 ออกเอกสาร') : '🔄 ออกใบสั่งจ่ายใหม่'),
+      call:'poDocs(' + q + ')' });
     // ใบกำกับภาษีซื้อ (E4) — กรอกได้ทุกสถานะ (ใบกำกับมักมาถึงทีหลัง) · ไม่แตะยอด/เอกสารของใบ
     a.push({ key:'vat', label:'🧾 ใบกำกับภาษีซื้อ',
       call:"vatOpen('payout'," + q + ',' + (Number(x.amount) || 0) + ')' });
@@ -9739,9 +9745,10 @@
     else if(mode !== 'pending') a.push({ key:'mksummary', label:'📄 ออกสรุปเอกสารเบิกจ่าย', call:'poSummary(' + q + ')' });
     if(x.bank && x.bank.acct)
       a.push({ key:'copy', label:'📋 คัดลอกเลขที่บัญชี ' + x.bank.acct, call:"copyTxt('" + String(x.bank.acct).replace(/'/g, "\\'") + "')" });
-    if(mode !== 'done'){
-      a.push({ key:'cancel', label:'🗑️ ยกเลิกใบ', call:'poCancel(' + q + ')', danger:true });
-    }
+    /* ยกเลิกได้ทุกสถานะ รวมใบที่จ่ายเงินแล้ว (พี่กี้เคาะ 23 ก.ย. 69 — "แบบเดียวกับใบเบิก")
+       เลขคงอยู่ในทะเบียน + ระบบยกเลิก PV/50 ทวิ ที่ออกไปแล้วให้ด้วย */
+    a.push({ key:'cancel', label:'🗑️ ยกเลิกใบ',
+      call:'poCancel(' + q + ',' + (mode === 'done' ? 1 : 0) + ')', danger:true });
     return payMenuSort(a);
   }
   window.poRowActions = poRowActions;
@@ -10206,12 +10213,22 @@
         (poPayeeMode · poStaffPick · poTypeChange · poSectChange · poCalc) จึงไม่ต้องแก้เลย
         ย้ายแต่ "กล่อง" จากโมดัลมาเป็นหน้า ตรรกะเดิมทั้งหมด
      🔴 มี #mErr ในหน้าเสมอ — mErr() เขียนลงช่องนี้ ไม่มี = กรอกผิดแล้วเงียบ */
+  /** หาใบจากทุกกองที่ waPoInit ส่งมา → { x, editable } · ไม่เจอ = null */
+  function poFindAny(no){
+    var box=[['pending',true],['topay',false],['paid',false],['rejected',false],['voided',false]];
+    for(var i=0;i<box.length;i++){
+      var hit=(PO[box[i][0]]||[]).filter(function(x){ return x.no===no; })[0];
+      if(hit) return { x:hit, editable:box[i][1] };
+    }
+    return null;
+  }
   function openPayout(no){
     if(!PO){ toast('กำลังโหลด…'); switchView('payout'); return; }
-    PO_EDIT=String(no||'');
+    PO_EDIT=String(no||''); PO_VIEW=false;
     if(PO_EDIT){
-      var c=(PO.pending||[]).filter(function(x){ return x.no===PO_EDIT; })[0];
-      if(!c){ toast('แก้ได้เฉพาะใบที่ยังรออนุมัติค่ะ'); return; }
+      var hit=poFindAny(PO_EDIT);
+      if(!hit){ toast('ไม่พบใบนี้ในทะเบียนค่ะ'); return; }
+      PO_VIEW=!hit.editable;        // ไม่ใช่ใบรออนุมัติ = เปิดดูอย่างเดียว (ด่านแก้ไขอยู่ที่ backend อยู่แล้ว)
     }
     switchView('poform');
   }
@@ -10235,7 +10252,10 @@
       }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
       return;
     }
-    var cur=PO_EDIT ? (PO.pending||[]).filter(function(x){ return x.no===PO_EDIT; })[0] : null;
+    var found=PO_EDIT ? poFindAny(PO_EDIT) : null;
+    var cur=found ? found.x : null;
+    if(PO_EDIT && !found){ $('main').innerHTML='<div class="card"><div class="empty">ไม่พบใบ '+esc(PO_EDIT)+'</div></div>'; return; }
+    var poTitle=!PO_EDIT ? 'สร้างใบสั่งจ่าย' : (PO_VIEW ? 'ใบสั่งจ่าย '+esc(PO_EDIT) : 'แก้ใบสั่งจ่าย '+esc(PO_EDIT));
     PO_PAYEE=(cur&&cur.payeeUid)?'staff':'out';
 
     var entOpts=(PO.entities||[]).map(function(e){
@@ -10256,10 +10276,11 @@
     }).join('');
 
     var h='<div class="bc"><button class="lnk" onclick="switchView(&quot;payout&quot;)">ใบสั่งจ่าย</button> › '+
-        (PO_EDIT?('แก้ใบ '+esc(PO_EDIT)):'สร้างใบสั่งจ่าย')+'</div>'+
+        poTitle+'</div>'+
       '<div id="mErr" class="m-err hidden"></div>'+
 
-      '<div class="sf-card"><div class="sf-h">💵 '+(PO_EDIT?('แก้ใบสั่งจ่าย '+esc(PO_EDIT)):'สร้างใบสั่งจ่าย')+'</div>'+
+      '<div class="sf-card"><div class="sf-h">💵 '+poTitle+
+        (PO_VIEW?' <span class="tag" style="font-weight:500">ดูอย่างเดียว · '+esc(cur.status||'')+'</span>':'')+'</div>'+
         '<div class="sf-grid">'+
           '<div class="sf-f c4"><label>บริษัทผู้จ่าย</label><select id="poEnt">'+entOpts+'</select></div>'+
           '<div class="sf-f c4"><label>ประเภทค่าใช้จ่าย</label>'+
@@ -10315,12 +10336,18 @@
             imgsFldHtml('poCon','สัญญา (ถ้ามี · ไม่บังคับ)')+'</div>')+
 
       '<div class="sf-bar">'+
-        '<button class="btn btn-ghost" onclick="switchView(&quot;payout&quot;)">ยกเลิก</button>'+
-        '<button class="btn btn-primary" id="poSend" onclick="doPayout()">'+
-          (PO_EDIT?'บันทึกการแก้ไข':'สร้างใบสั่งจ่าย')+'</button>'+
+        '<button class="btn btn-ghost" onclick="switchView(&quot;payout&quot;)">'+(PO_VIEW?'กลับ':'ยกเลิก')+'</button>'+
+        (PO_VIEW ? '' :
+          '<button class="btn btn-primary" id="poSend" onclick="doPayout()">'+
+            (PO_EDIT?'บันทึกการแก้ไข':'สร้างใบสั่งจ่าย')+'</button>')+
       '</div>';
 
     $('main').innerHTML=h;
+    /* โหมดดู = ปิดทุกช่องกรอก (ด่านจริงอยู่ที่ backend — ตรงนี้กันพิมพ์ไปแล้วเสียเวลาเปล่า) */
+    if(PO_VIEW){
+      Array.prototype.forEach.call(document.querySelectorAll('#main input,#main select,#main textarea'),
+        function(el){ el.disabled=true; });
+    }
     if(!PO_EDIT){ imgsFldBind('poImg'); imgsFldBind('poCon'); }
     poPayeeMode(PO_PAYEE);
     poFillRates(cur?cur.whtRate:null);
@@ -10525,9 +10552,15 @@
       }).catch(function(e){ toast(e.message); });
   }
 
-  function poCancel(no){
-    modal('<h3>🗑️ ยกเลิกใบจ่าย '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
-      '<div class="m-hint">ใบจะหายจากรายการ (แถวยังอยู่ในชีต ตรวจย้อนหลังได้) — ใช้กับใบที่ตั้งผิด/ซ้ำค่ะ</div>'+
+  function poCancel(no, paid){
+    /* ใบที่จ่ายเงินไปแล้ว = เตือนให้ชัดว่าเงินออกไปจริงแล้ว และเอกสารที่ออกไปจะถูกยกเลิกตาม */
+    var warn = paid
+      ? '<div class="m-hint" style="background:#FEF2F2;color:#991B1B">⚠️ ใบนี้<b>จ่ายเงินไปแล้ว</b> — ' +
+        'ยกเลิกแล้วยอดจะหลุดจากรายงานรายจ่าย และใบสำคัญจ่าย/50 ทวิ ที่ออกไปจะถูกยกเลิกตามด้วย<br>' +
+        'ถ้าเงินโอนออกไปจริง ให้บันทึกเหตุผลไว้ด้วยค่ะ</div>'
+      : '<div class="m-hint">ใบจะหายจากรายการ (แถวยังอยู่ในชีต ตรวจย้อนหลังได้) — ใช้กับใบที่ตั้งผิด/ซ้ำค่ะ</div>';
+    modal('<h3>🗑️ ยกเลิกใบสั่งจ่าย '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      warn+
       '<div class="fld"><label>เหตุผล (ไม่บังคับ)</label><input id="poCanNote" placeholder="เช่น ตั้งซ้ำกับใบก่อน"></div>'+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ไม่ยกเลิก</button>'+
       '<button class="btn btn-primary" id="poCanBtn" onclick="doPoCancel(\''+esc(no)+'\')">ยืนยันยกเลิก</button></div>');
@@ -10538,7 +10571,10 @@
     callBusy('กำลังยกเลิก…', jsonpPost({action:'waPoCancel', uid:UID, no:no, note:note}))
       .then(function(r){
         if(!r||!r.ok){ if(btn){btn.disabled=false;btn.textContent='ยืนยันยกเลิก';} mErr((r&&r.error)||'ยกเลิกไม่สำเร็จ'); return; }
-        closeModal(); toast('🗑️ ยกเลิกใบ '+no+' แล้ว'); renderPayout();
+        closeModal();
+        var ex=[]; if(r.voidedDocs && r.voidedDocs.length) ex.push('ยกเลิก '+r.voidedDocs.join(' · '));
+        if(r.filedWarn) ex.push(r.filedWarn);
+        toast('🗑️ ยกเลิกใบ '+no+' แล้ว'+(ex.length?' · '+ex.join(' · '):'')); renderPayout();
       }).catch(function(e){ if(btn){btn.disabled=false;btn.textContent='ยืนยันยกเลิก';} mErr(e.message); });
   }
   window.openPayout=openPayout; window.poPayeeMode=poPayeeMode; window.poStaffPick=poStaffPick;
@@ -23010,7 +23046,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260923-1025';
+  var APP_BUILD='20260923-1051';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
