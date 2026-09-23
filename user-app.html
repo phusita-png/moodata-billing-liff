@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260923-2045">
+<link rel="stylesheet" href="user.css?v=20260923-2311">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -6329,7 +6329,7 @@
   var PAY_MENU_ORDER = [
     /* ① ไฟล์ของใบ */       'pdf',
     '|',
-    /* ② แก้ไข + งานถัดไป */ 'edit', 'approve', 'reject', 'pay', 'slipadd', 'send', 'addrcp', 'relink',
+    /* ② แก้ไข + งานถัดไป */ 'edit', 'approve', 'reject', 'pay', 'paypetty', 'slipadd', 'send', 'addrcp', 'relink',
     '|',
     /* ③ เอกสารที่ออกแล้ว */ 'proof', 'contract', 'doc', 'pv', 'wht', 'whtpayee',
                             'realrcp', 'summary', 'dossier', 'slip',
@@ -6416,6 +6416,7 @@
     if(approved && !paid){
       a.push({ key:'pay', label:'📑 ออกใบสำคัญจ่าย PV',
         call:'exOpenPay(' + q + ",'" + String(x.nick || '').replace(/'/g, "\\'") + "'," + (Number(x.amount) || 0) + ',' + (rv && !x.docLink ? 1 : 0) + ')' });
+      a.push({ key:'paypetty', label:'🪙 ออกใบสำคัญจ่ายเงินสดย่อย PCV', call:'poOpenPayPetty(' + q + ')' });
     }
     /* ด่านเดียวกับหลังบ้าน: "ยังไม่มีไฟล์เอกสาร" ไม่ใช่ "ยังไม่มีเลข" (เฟส 2d ขั้น ③)
        ใบในเล่มใหม่จองเลข RV ไว้ตั้งแต่ตั้งเรื่อง */
@@ -9812,6 +9813,9 @@
     a.push({ key:'edit', label:'✏️ แก้ไขเอกสาร', call:'openPayout(' + q + ')' });
     if(mode === 'topay'){
       a.push({ key:'pay', label:'📑 ออกใบสำคัญจ่าย PV', call:'poOpenPay(' + q + ')' });
+      /* 🪙 ทางจ่ายที่สอง (พี่กี้เคาะ 23 ก.ย. 69 · spec-pcv.md) — จ่ายจากวงเงินสดย่อย
+         เงินยังไม่ออกจากบัญชีบริษัท จึงได้ PCV ไม่ใช่ PV และระบบลงรายการในวงให้เอง */
+      a.push({ key:'paypetty', label:'🪙 ออกใบสำคัญจ่ายเงินสดย่อย PCV', call:'poOpenPayPetty(' + q + ')' });
     }
     if(mode === 'done' && !x.paidSlip){
       a.push({ key:'slipadd', label:'📎 แนบสลิปโอน (ยังไม่มี)', call:'poOpenPay(' + q + ')', danger:true });
@@ -10513,7 +10517,7 @@
 
   /* ปุ่มงานของใบบนแถบล่าง — ใช้ชุดคำสั่งเดียวกับเมนู ⋮ (poRowActions) เพื่อให้เงื่อนไขตรงกันเสมอ
      🔴 เอาเฉพาะคำสั่งที่ "ทำแล้วเปลี่ยนสถานะ/ได้ไฟล์" ไม่เอาลิงก์เอกสารที่ดูได้จากเมนูอยู่แล้ว */
-  var PO_BAR_KEYS=['pdf','send','approve','reject','pay','slipadd','cancel'];
+  var PO_BAR_KEYS=['pdf','send','approve','reject','pay','paypetty','slipadd','cancel'];
   function poFormActionsHtml(cur){
     if(!cur) return '';
     var mode=poStageOf(cur.status);
@@ -10770,6 +10774,53 @@
     imgsFldBind('poSlip'); poMethodChange();
   }
   /** ช่องเลือกบัญชีที่จ่ายออก — รายการมาจาก backend (waPoInit) ห้ามหน้าเว็บพิมพ์เอง */
+  /* 🪙 จ่ายจากวงเงินสดย่อย (spec-pcv.md) — ต่างจาก "บันทึกจ่ายเงิน" ตรงที่
+     เงินออกจากวงเงินที่ตั้งไว้ ไม่ใช่บัญชีบริษัท ระบบจึงลงรายการในวงให้เอง
+     แล้ววงจะกลับเต็มตอนบริษัทจ่ายคืนใบสรุปเบิก */
+  var PCV_NO='';
+  function poOpenPayPetty(no){
+    PCV_NO=no;
+    var x=poFindAny(no); x=x?x.x:{};
+    modal('<h3>🪙 ออกใบสำคัญจ่ายเงินสดย่อย ' + esc(no) + '</h3><div id="mErr" class="m-err hidden"></div>' +
+      '<div class="m-hint">ผู้รับ: <b>' + esc(x.payeeName || '-') + '</b> · จ่ายจริง <b>' +
+        poMoney(x.netAmt || x.amount || 0) + '</b> บาท' +
+        '<br>เงินออกจากวงเงินสดย่อย ระบบจะลงรายการในวงให้เอง — วงจะกลับเต็มตอนบริษัทจ่ายคืนใบสรุปเบิก</div>' +
+      '<div class="fld"><label>จ่ายจากวงไหน</label><select id="pcvFund"><option value="">กำลังโหลด…</option></select></div>' +
+      '<div class="fld"><label>วันที่จ่ายจริง</label><input id="pcvDate" type="date" value="' + todayISO() + '"></div>' +
+      imgsFldHtml('pcvProof','📎 บิล/หลักฐานการจ่าย (ถ้ามี)') +
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>' +
+      '<button class="btn btn-primary" id="pcvBtn" onclick="doPoPayPetty()">ออกใบสำคัญจ่ายเงินสดย่อย</button></div>');
+    imgsFldBind('pcvProof');
+    /* รายการวง + ยอดคงเหลือมาจากหลังบ้าน — หน้าเว็บห้ามคิดยอดวงเอง */
+    jsonp({action:'waPoPettyFunds', uid:UID, entity:(x.entity||'')}).then(function(r){
+      var el=$('pcvFund'); if(!el) return;
+      var list=(r&&r.funds)||[];
+      if(!list.length){
+        el.innerHTML='<option value="">— ยังไม่มีวงเงินสดย่อย —</option>';
+        mErr('บริษัทนี้ยังไม่ได้ตั้งวงเงินสดย่อย — ไปตั้งที่เมนู 💵 เงินสดย่อย ก่อนนะคะ');
+        return;
+      }
+      el.innerHTML=list.map(function(f){
+        return '<option value="'+esc(f.id)+'">'+esc(f.label)+' · เหลือ '+poMoney(f.onHand)+' บาท</option>';
+      }).join('');
+    }).catch(function(e){ mErr(e.message); });
+  }
+  function doPoPayPetty(){
+    var btn=$('pcvBtn'); if(btn){ btn.disabled=true; btn.textContent='กำลังบันทึก…'; }
+    var p={action:'waPoPayPetty', uid:UID, no:PCV_NO,
+      fundId:(($('pcvFund')||{}).value)||'', payDate:(($('pcvDate')||{}).value)||''};
+    var im=IMGS['pcvProof']||[]; if(im.length) p.imgs=JSON.stringify(im);
+    callBusy('กำลังออกใบสำคัญจ่ายเงินสดย่อย…', jsonpPost(p)).then(function(r){
+      if(!r||!r.ok){ if(btn){btn.disabled=false;btn.textContent='ออกใบสำคัญจ่ายเงินสดย่อย';}
+        mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+      closeModal(); IMGS['pcvProof']=[];
+      toast('🪙 จ่ายจากเงินสดย่อยแล้ว · รายการ '+(r.ptNo||'')+((r.docs&&r.docs.docNo)?' · '+r.docs.docNo:''));
+      if((r.warn||[]).length) setTimeout(function(){ toast('⚠️ '+r.warn.join(' · ')); }, 1200);
+      PO_EDIT=''; renderPayout();
+    }).catch(function(e){ if(btn){btn.disabled=false;btn.textContent='ออกใบสำคัญจ่ายเงินสดย่อย';} mErr(e.message); });
+  }
+  window.poOpenPayPetty=poOpenPayPetty; window.doPoPayPetty=doPoPayPetty;
+
   function poAcctSelHtml(x){
     var list=PO.payAccounts||[];
     if(!list.length){
@@ -23403,7 +23454,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260923-2045';
+  var APP_BUILD='20260923-2311';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
