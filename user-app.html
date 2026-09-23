@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260923-1226">
+<link rel="stylesheet" href="user.css?v=20260923-1504">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -6791,6 +6791,7 @@
   //                        จ่ายออก = บริษัทจ่ายเองให้ผู้รับเงิน (ค่าเช่า/ค่าจ้าง/ซัพพลาย/ค่าตอบแทนพนักงาน)
   // เฟสนี้: ตั้งเรื่อง → อนุมัติ → จ่าย + แนบสลิป (เอกสาร PV/50 ทวิ = เฟสถัดไป)
   var PO=null, PO_EDIT='', PO_VIEW=false;   // PO = ข้อมูลจาก waPoInit · PO_EDIT = เลขใบที่เปิดอยู่ ('' = ใบใหม่)
+  var PO_TAB='doc', PO_LOG=null;   /* แท็บในหน้าใบ (doc|log) + ประวัติที่โหลดมาแล้ว */
   /* PO_VIEW = เปิดแบบ "ดูอย่างเดียว" (ใบที่ไม่ได้รออนุมัติแล้ว · พี่กี้เคาะ 23 ก.ย. 69:
      เปิดดูได้ทุกสถานะ แก้ได้เฉพาะรออนุมัติ — ให้ตรงกับใบเบิกที่เปิดดูได้ตลอด) */
   /* ═══════════ 🏛️ ศูนย์รวมภาษี + 50 ทวิ ที่ลูกค้าหักเรา (E6) ═══════════
@@ -10286,16 +10287,36 @@
       return '<option value="'+esc(m.uid)+'"'+((cur&&cur.payeeUid===m.uid)?' selected':'')+'>'+esc(m.display||m.name)+'</option>';
     }).join('');
 
+    /* โครงหน้าเดียวกับใบเสนอราคา (spec-po-form.md §2) — breadcrumb → เลขที่ตัวใหญ่ + ป้ายสถานะ → แท็บ */
     var h='<div class="bc"><button class="lnk" onclick="switchView(&quot;payout&quot;)">ใบสั่งจ่าย</button> › '+
-        poTitle+'</div>'+
-      '<div id="mErr" class="m-err hidden"></div>'+
+        (PO_EDIT?esc(PO_EDIT):'สร้างใบใหม่')+'</div>';
+    if(PO_EDIT){
+      h+='<div class="pg-title"><h2>'+esc(PO_EDIT)+'</h2>'+poStatusBadge(cur)+'</div>'+
+        pageTabs(PO_TAB, [['doc','ข้อมูลเอกสาร',"poTab('doc')"],
+                          ['log','ประวัติการใช้งาน',"poTab('log')"]]);
+      if(PO_TAB==='log'){ $('main').innerHTML=h+poLogHtml(); poLogLoad(); return; }
+    } else {
+      h+='<div class="pg-title" style="margin:0 0 12px"><h2>สร้างใบสั่งจ่าย</h2></div>';
+    }
+    h+='<div id="mErr" class="m-err hidden"></div>'+
 
-      '<div class="sf-card"><div class="sf-h">💵 '+poTitle+
-        (PO_VIEW?' <span class="tag" style="font-weight:500">ดูอย่างเดียว · '+esc(cur.status||'')+'</span>':'')+'</div>'+
+      '<div class="sf-card"><div class="sf-h">🧾 ข้อมูลเอกสาร'+
+        (PO_VIEW?'<span class="tag" style="font-weight:500;margin-left:8px">ดูอย่างเดียว</span>':'')+'</div>'+
         '<div class="sf-grid">'+
           '<div class="sf-f c4"><label>บริษัทผู้จ่าย</label><select id="poEnt">'+entOpts+'</select></div>'+
           '<div class="sf-f c4"><label>ประเภทค่าใช้จ่าย</label>'+
             '<select id="poType" onchange="poTypeChange()">'+typeOpts+'</select></div>'+
+          /* 🏪 ร้านค้า/ผู้ขาย — คู่ค้าที่ขึ้นบนเอกสาร (spec-po-form.md §1 ข้อ 3)
+             คนละช่องกับ "ผู้รับเงิน" ข้างล่าง: ใบเบิกพนักงานจ่ายให้ร้าน แต่โอนคืนเข้าบัญชีพนักงาน */
+          '<div class="sf-f c4"><label>ร้านค้า / ผู้ขาย</label>'+
+            '<input id="poVendor" placeholder="ชื่อร้าน/บริษัทที่จ่ายให้" value="'+esc(cur?(cur.vendor||''):'')+'">'+
+            '<div class="sf-note">ขึ้นเป็นคู่ค้าบนใบสั่งจ่าย · เว้นว่าง = ใช้ชื่อผู้รับเงิน</div></div>'+
+          '<div class="sf-f c4"><label>เลขผู้เสียภาษีร้านค้า</label>'+
+            '<div style="display:flex;gap:6px">'+
+            '<input id="poVendorTax" type="tel" inputmode="numeric" maxlength="17" placeholder="13 หลัก (ถ้ามี)" '+
+              'value="'+esc(cur?(cur.vendorTaxId||''):'')+'" style="flex:1;min-width:0">'+
+            (PO_VIEW?'':'<button class="btn btn-ghost" onclick="poVendorLookup()" title="ค้นจากกรมพัฒนาธุรกิจการค้า" '+
+              'style="flex:none;width:auto;padding:0 12px">🔍</button>')+'</div></div>'+
           '<div class="sf-f c4"><label>งวด / เดือนที่เกี่ยวข้อง</label>'+
             '<input id="poPeriod" placeholder="เช่น ส.ค. 2569 (ไม่บังคับ)" value="'+esc(cur?cur.period:'')+'"></div>'+
           /* 🔗 อ้างอิง — ใบนี้ถูกดึงมาจากเอกสารไหน (แบบช่องอ้างอิงของฟอร์มเอกสารขาย · พี่กี้ 22 ก.ย. 69)
@@ -10350,11 +10371,15 @@
             imgsFldHtml('poImg','ใบแจ้งหนี้ / ใบกำกับภาษี (รูป หรือ PDF · แนบได้หลายไฟล์)')+
             imgsFldHtml('poCon','สัญญา (ถ้ามี · ไม่บังคับ)')+'</div>')+
 
+      /* แถบปุ่มล่างติดขอบจอ — งานของใบทำได้จบในหน้าเดียว เหมือนฟอร์มใบเสนอราคา
+         🔴 เงื่อนไขปุ่มต้องตรงกับด่าน backend (ชุดเดียวกับเมนู ⋮) ไม่งั้นกดแล้วโดนปฏิเสธ */
       '<div class="sf-bar">'+
+        (PO_EDIT?poFormActionsHtml(cur):'')+
+        '<span style="flex:1"></span>'+
         '<button class="btn btn-ghost" onclick="switchView(&quot;payout&quot;)">'+(PO_VIEW?'กลับ':'ยกเลิก')+'</button>'+
         (PO_VIEW ? '' :
           '<button class="btn btn-primary" id="poSend" onclick="doPayout()">'+
-            (PO_EDIT?'บันทึกการแก้ไข':'สร้างใบสั่งจ่าย')+'</button>')+
+            (PO_EDIT?'บันทึก':'สร้างใบสั่งจ่าย')+'</button>')+
       '</div>';
 
     $('main').innerHTML=h;
@@ -10369,6 +10394,80 @@
     poCalc();
   }
   window.renderPoForm=renderPoForm;
+
+  /** ป้ายสถานะบนหัวเรื่อง (ใบใหม่ยังไม่มีสถานะ) */
+  function poStatusBadge(cur){
+    if(!cur||!cur.status) return '';
+    var st=String(cur.status);
+    /* ใช้คลาสป้ายชุดเดียวกับหน้ารายรับ (b-*) — ระบบมีชุดเดียว ห้ามตั้งสีใหม่ให้ฝั่งจ่าย */
+    var cls=(st.indexOf('จ่ายแล้ว')>=0)?'b-done'
+      :(st.indexOf('ยกเลิก')>=0||st.indexOf('ไม่อนุมัติ')>=0)?'b-cancel'
+      :(st.indexOf('รออนุมัติ')>=0)?'b-new':'b-doing';
+    return '<span class="tk-badge '+cls+'">'+esc(st)+'</span>';   /* บนจอโชว์ไอคอนได้ (ต่างจากบนเอกสาร) */
+  }
+  /** สลับแท็บในหน้าใบ */
+  function poTab(t){ PO_TAB=t; renderPoForm(); }
+  window.poTab=poTab;
+
+  /* ปุ่มงานของใบบนแถบล่าง — ใช้ชุดคำสั่งเดียวกับเมนู ⋮ (poRowActions) เพื่อให้เงื่อนไขตรงกันเสมอ
+     🔴 เอาเฉพาะคำสั่งที่ "ทำแล้วเปลี่ยนสถานะ/ได้ไฟล์" ไม่เอาลิงก์เอกสารที่ดูได้จากเมนูอยู่แล้ว */
+  var PO_BAR_KEYS=['req','send','approve','reject','pay','slipadd','redoc','cancel'];
+  function poFormActionsHtml(cur){
+    if(!cur) return '';
+    var mode=poStageOf(cur.status);
+    var acts=poRowActions(cur, mode).filter(function(a){
+      return !a.sep && PO_BAR_KEYS.indexOf(a.key)>=0;
+    });
+    return acts.map(function(a){
+      var cls='btn btn-ghost btn-sm'+(a.danger?' po-bar-danger':'');
+      if(a.href) return '<a class="'+cls+'" href="'+esc(a.href)+'" target="_blank">'+esc(a.label)+'</a>';
+      return '<button class="'+cls+'" onclick="'+esc(a.call)+'">'+esc(a.label)+'</button>';
+    }).join('');
+  }
+  /** สถานะใบ → mode ที่ poRowActions เข้าใจ (pending|topay|done) */
+  function poStageOf(status){
+    var st=String(status||'');
+    if(st.indexOf('จ่ายแล้ว')>=0) return 'done';
+    if(st.indexOf('รออนุมัติ')>=0) return 'pending';
+    if(st.indexOf('ไม่อนุมัติ')>=0||st.indexOf('ยกเลิก')>=0) return 'done';
+    return 'topay';
+  }
+
+  /** ประวัติการใช้งานของใบ — โครงเดียวกับฝั่งขาย (soneLogHtml) */
+  function poLogHtml(){
+    var r=PO_LOG;
+    if(!r) return '<div class="card"><div class="emptybox">กำลังโหลดประวัติ…</div></div>';
+    if(!r.items.length){
+      /* 🔴 ไม่เจอในช่วงที่สแกน ≠ ไม่เคยมีประวัติ — ต้องบอกให้ตรง */
+      return '<div class="card"><div class="emptybox">ไม่พบประวัติในช่วงที่เก็บไว้'+
+        (r.oldest?' (ย้อนถึง '+esc(r.oldest)+')':'')+'</div></div>';
+    }
+    return '<div class="card"><div class="pb" style="padding:18px 20px"><div class="tl">'+
+      r.items.map(function(x){
+        return '<div class="tl-i"><div class="tl-w">'+esc(x.label)+'</div>'+
+          '<div class="tl-m">'+esc([x.actor,x.at].filter(Boolean).join(' · '))+'</div></div>';
+      }).join('')+'</div></div></div>';
+  }
+  function poLogLoad(){
+    if(PO_LOG&&PO_LOG.no===PO_EDIT) return;
+    jsonp({action:'waPoLog', uid:UID, no:PO_EDIT}).then(function(r){
+      if(!r||!r.ok){ PO_LOG={no:PO_EDIT, items:[], oldest:''}; }
+      else { PO_LOG=r; PO_LOG.no=PO_EDIT; }
+      if(VIEW==='poform'&&PO_TAB==='log') renderPoForm();
+    }).catch(function(){ PO_LOG={no:PO_EDIT, items:[], oldest:''}; });
+  }
+
+  /** 🔍 ค้นร้านค้าจากกรมพัฒนาธุรกิจการค้า — ใช้ตัวเดียวกับฝั่งลูกค้า (waCustomerDbd) */
+  function poVendorLookup(){
+    var tax=((($('poVendorTax')||{}).value)||'').replace(/\D/g,'');
+    if(tax.length!==13){ toast('ใส่เลขผู้เสียภาษี 13 หลักก่อนค่ะ'); return; }
+    callBusy('กำลังค้น…', jsonp({action:'waCustomerDbd', uid:UID, taxId:tax})).then(function(r){
+      if(!r||!r.ok||!r.data){ toast((r&&r.error)||'ไม่พบข้อมูลจากกรมพัฒน์'); return; }
+      if($('poVendor')) $('poVendor').value=r.data.name||'';
+      toast('🔍 ได้ชื่อจากกรมพัฒน์แล้ว ตรวจก่อนบันทึกนะคะ');
+    }).catch(function(e){ toast(e.message); });
+  }
+  window.poVendorLookup=poVendorLookup; window.poStatusBadge=poStatusBadge;
 
   /** อัตราให้เลือก — ชุดเดียวกับ RV_WHT_RATES ฝั่ง backend (ค่านอกลิสต์ backend ตีเป็น 0) */
   function poFillRates(sel){
@@ -10423,13 +10522,13 @@
   }
   /** แยกฐาน/ภาษีจากยอดรวม — ตรรกะเดียวกับ payoutPriceSplit_ ฝั่งหลังบ้าน (เทสเทียบกันไว้) */
   function poSplit(total, mode, rate){
-    total=Math.round((parseFloat(total)||0)*100)/100;
+    total=r2(parseFloat(total)||0);
     var m=String(mode||'none');
     if(['excl','incl','none'].indexOf(m)<0) m='none';
     var r=parseFloat(rate)||0; if(!(r>0)) r=(m==='none')?0:7;
     if(m==='none') return {mode:m, rate:0, base:total, vat:0, total:total};
-    var base=Math.round(total*100/(100+r)*100)/100;
-    return {mode:m, rate:r, base:base, vat:Math.round((total-base)*100)/100, total:total};
+    var base=r2(total*100/(100+r));
+    return {mode:m, rate:r, base:base, vat:r2(total-base), total:total};
   }
   function poCalc(){
     var input=parseFloat((($('poAmt')||{}).value)||'0')||0;
@@ -10439,13 +10538,13 @@
     if(ent && ent.vatReg===false) pm='none';
     var rate7=7;
     /* "แยกภาษี" = ช่องที่กรอกคือราคาก่อน VAT → ยอดรวมต้องบวกภาษีเข้าไป */
-    var total=(pm==='excl') ? Math.round((input+Math.round(input*rate7)/100)*100)/100 : input;
+    var total=(pm==='excl') ? r2(input+r2(input*rate7/100)) : input;
     var sp=poSplit(total, pm, rate7);
     var sect=(($('poSect')||{}).value)||'', kind=(($('poKind')||{}).value)||'';
     var rate=sect ? (parseFloat((($('poRate')||{}).value)||'0')||0) : 0;
     var rf=$('poRateFld'); if(rf) rf.classList.toggle('hidden', !sect);
     /* ⚖️ หักภาษีจากฐานก่อน VAT ตามกฎหมาย — ตรงกับที่หลังบ้านคิด */
-    var wht=Math.round(sp.base*rate)/100, net=Math.round((sp.total*100)-(wht*100))/100;
+    var wht=r2(sp.base*rate/100), net=r2(sp.total-wht);
     var el=$('poSum'); if(!el) return;
     if(!(input>0)){ el.textContent='ใส่จำนวนเงินเพื่อดูยอดจ่ายสุทธิ'; return; }
     var vatLine = (sp.rate>0)
@@ -10464,7 +10563,9 @@
       payeeId:((($('poId')||{}).value)||'').replace(/\D/g,''), payeeAddr:((($('poAddr')||{}).value)||'').trim(),
       amount:(($('poAmt')||{}).value)||'', section:(($('poSect')||{}).value)||'',
       rate:(($('poSect')||{}).value) ? ((($('poRate')||{}).value)||'0') : '0',
-      priceMode:(($('poPm')||{}).value)||'none', vatRate:'7'};
+      priceMode:(($('poPm')||{}).value)||'none', vatRate:'7',
+      vendor:((($('poVendor')||{}).value)||'').trim(),
+      vendorTaxId:((($('poVendorTax')||{}).value)||'').replace(/\D/g,'')};
     if(PO_EDIT) p.no=PO_EDIT;
     if(PO_PAYEE==='staff'){
       p.payeeUid=(($('poStaff')||{}).value)||'';
@@ -15058,7 +15159,7 @@
     });
     var disc=Number((($('slDisc')||{}).value||'0').replace(/,/g,''))||0;
     if(disc>sub) disc=sub;
-    var after=Math.round((sub-disc)*100)/100;
+    var after=r2(sub-disc);
     /* 🔴 สูตรต้องตรงกับ calcSalesTotals_ ฝั่งหลังบ้านทุกบรรทัด
        รวมภาษี: ฐาน = ยอด×100/107 · VAT = ยอด − ฐาน (บวกกลับเท่ายอดที่กรอกเป๊ะ)
        บริษัทไม่จด VAT = ไม่มีภาษีเสมอ ไม่ว่าเลือกอะไรในช่อง */
@@ -15067,11 +15168,11 @@
     var rate=(ent&&ent.vatReg&&pm!=='none')?SALES.vatRate:0;
     var base, vat;
     if(pm==='incl' && rate>0){
-      base=Math.round(after*100/(100+rate)*100)/100;
-      vat=Math.round((after-base)*100)/100;
+      base=r2(after*100/(100+rate));
+      vat=r2(after-base);
     } else {
       base=after;
-      vat=Math.round(base*rate)/100;
+      vat=r2(base*rate/100);
     }
     var pmNote=$('sfPmNote');
     if(pmNote){
@@ -15093,8 +15194,8 @@
       (function(){
         if(!$('csWht')) return '';
         var w=Number((($('csWht')||{}).value||'0').replace(/,/g,''))||0;
-        var tot=Math.round((base+vat)*100)/100;
-        var net=Math.round((tot-w)*100)/100;
+        var tot=r2(base+vat);
+        var net=r2(tot-w);
         return w>0
           ? '<div class="r"><span>หักภาษี ณ ที่จ่าย</span><b>-'+money(w)+'</b></div>'+
             '<div class="r"><span>เงินเข้าบัญชีจริง</span><b>'+money(net)+'</b></div>'
@@ -22391,6 +22492,10 @@ function kpImpDraw(){
       if(!r||!r.ok){ toast((r&&r.error)||'โหลดสลิปไม่สำเร็จ'); return; } SLIPCACHE[key]=r.slip; showSlip(r.slip);
     }).catch(function(e){ toast(e.message); });
   }
+  /* ปัดสตางค์ — ต้องได้ผลเท่า toSatang_ ฝั่งหลังบ้านทุกสตางค์
+     🔴 Math.round(n*100)/100 เฉย ๆ ไม่พอ: 543.935 เก็บเป็น 543.93499… → ปัดลงเป็น 543.93
+        แต่หลังบ้าน (toPrecision 15 ก่อนปัด) ได้ 543.94 → ต่างกัน 1 สตางค์บนหน้าจอกับบนเอกสาร */
+  function r2(n){ return Math.round(Number(((Number(n)||0)*100).toPrecision(15)))/100; }
   function money(n){ return (Number(n)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2}); }
   function slipRow(l,v,bold){ return '<div class="sl-row'+(bold?' bold':'')+'"><span>'+esc(l)+'</span><span>'+money(v)+'</span></div>'; }
   function showSlip(p){
@@ -23116,7 +23221,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260923-1226';
+  var APP_BUILD='20260923-1504';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
