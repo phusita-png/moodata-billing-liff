@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260923-1200">
+<link rel="stylesheet" href="user.css?v=20260923-1210">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -9836,7 +9836,9 @@
          ใบบริษัทเก็บที่ proofLink · ใบเบิกพนักงานเก็บที่ receiptUrl (คนละเล่ม คนละชื่อช่อง) */
       var ev = x.proofLink || x.receiptUrl || '';
       if(ev)        docs+='<a href="'+esc(ev)+'" target="_blank">📎 หลักฐานที่แนบ</a>';
-      if(x.reqLink) docs+='<a href="'+esc(x.reqLink)+'" target="_blank">📝 ขออนุมัติ</a>';
+      /* ลิงก์เปิดไฟล์ใบสั่งจ่าย — ไม่ใช่ปุ่มสั่งอนุมัติ (พี่กี้ทัก 23 ก.ย. 69 ว่าป้ายทำให้เข้าใจผิด
+         เพราะแถวนั้นสถานะ "อนุมัติ" อยู่แล้ว) · คำเรียกต้องเป็น "ใบสั่งจ่าย" เหมือนทุกที่ในระบบ */
+      if(x.reqLink) docs+='<a href="'+esc(x.reqLink)+'" target="_blank">📝 ใบสั่งจ่าย</a>';
       if(x.docLink) docs+='<a href="'+esc(x.docLink)+'" target="_blank">📄 '+esc(x.docNo||'เอกสาร')+'</a>';
       if(x.realReceipt) docs+='<a href="'+esc(x.realReceipt)+'" target="_blank">🧾 ใบเสร็จตัวจริง</a>';
       if(x.whtLink) docs+='<a href="'+esc(x.whtLink)+'" target="_blank">🧾 50 ทวิ</a>';
@@ -23075,7 +23077,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260923-1200';
+  var APP_BUILD='20260923-1210';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
