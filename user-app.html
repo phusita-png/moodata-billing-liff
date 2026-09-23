@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260923-1518">
+<link rel="stylesheet" href="user.css?v=20260923-1533">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -729,6 +729,12 @@
   .sf-h .tk-badge::before{ content:''; width:9px; height:9px; border-radius:50%;
     background:currentColor; flex:none; }
   .pg-title h2{ margin:0; font-size:21px; }
+  /* ยอดเงินบนหัวเรื่อง (หน้าใบเบิก) — ชิดขวาเสมอ อ่านยอดได้ก่อนเลื่อนลง */
+  .pg-amt{ margin-left:auto; font-weight:700; font-size:18px; color:var(--ink); }
+  /* ป้ายสถานะบนหัวเรื่องต้องอยู่ติดเลขที่ใบ — กฎ margin-left:auto มีไว้สำหรับป้ายในหัวการ์ด (.sf-h) */
+  .pg-title .tk-badge{ margin-left:0; }
+  /* ตารางข้อมูลเมื่ออยู่ในการ์ด = ไม่ต้องมีกรอบของตัวเองอีกชั้น (กรอบซ้อนกรอบ) */
+  .sf-card .exd-grid{ background:transparent; border:0; padding:0; }
   /* ป้ายรหัสเอกสาร (QT · IV · RE …) — ตัวเดียวกับที่ติดท้ายเมนูซ้าย */
   /* สีต้องมาจากตัวแปรธีมเสมอ — ห้องลูกค้าเป็นโทนม่วง ฮาร์ดโค้ดสีฟ้าแล้วป้ายจะหลุดธีม
      (เทส test-theme.js จับได้ทันทีตอนเขียนครั้งแรก 21 ก.ย. 69) */
@@ -10345,7 +10351,11 @@
       h+='<div class="pg-title"><h2>'+esc(PO_EDIT)+'</h2>'+poStatusBadge(cur)+'</div>'+
         pageTabs(PO_TAB, [['doc','ข้อมูลเอกสาร',"poTab('doc')"],
                           ['log','ประวัติการใช้งาน',"poTab('log')"]]);
-      if(PO_TAB==='log'){ $('main').innerHTML=h+poLogHtml(); poLogLoad(); return; }
+      if(PO_TAB==='log'){
+        $('main').innerHTML=h+poLogHtml();
+        poLogLoad(PO_EDIT, function(){ if(VIEW==='poform'&&PO_TAB==='log') renderPoForm(); });
+        return;
+      }
     } else {
       h+='<div class="pg-title" style="margin:0 0 12px"><h2>สร้างใบสั่งจ่าย</h2></div>';
     }
@@ -10503,13 +10513,16 @@
           '<div class="tl-m">'+esc([x.actor,x.at].filter(Boolean).join(' · '))+'</div></div>';
       }).join('')+'</div></div></div>';
   }
-  function poLogLoad(){
-    if(PO_LOG&&PO_LOG.no===PO_EDIT) return;
-    jsonp({action:'waPoLog', uid:UID, no:PO_EDIT}).then(function(r){
-      if(!r||!r.ok){ PO_LOG={no:PO_EDIT, items:[], oldest:''}; }
-      else { PO_LOG=r; PO_LOG.no=PO_EDIT; }
-      if(VIEW==='poform'&&PO_TAB==='log') renderPoForm();
-    }).catch(function(){ PO_LOG={no:PO_EDIT, items:[], oldest:''}; });
+  /* โหลดประวัติของใบ 1 ใบ — ใช้ร่วมกันทั้งหน้าใบสั่งจ่ายและหน้าใบเบิกพนักงาน
+     (พี่กี้ 23 ก.ย. 69: "พนักงานหรือพี่ก็เหมือนกัน") · ฝั่งหลังบ้านอ่าน log ด้วยเลขที่ใบ
+     จึงใช้ได้ทั้งเลข PO และเลข EX เดิม */
+  function poLogLoad(no, after){
+    if(PO_LOG&&PO_LOG.no===no){ return; }
+    jsonp({action:'waPoLog', uid:UID, no:no}).then(function(r){
+      PO_LOG=(r&&r.ok)?r:{items:[], oldest:''};
+      PO_LOG.no=no;
+      if(typeof after==='function') after();
+    }).catch(function(){ PO_LOG={no:no, items:[], oldest:''}; });
   }
 
   /** 🔍 ค้นร้านค้าจากกรมพัฒนาธุรกิจการค้า — ใช้ตัวเดียวกับฝั่งลูกค้า (waCustomerDbd) */
@@ -11658,17 +11671,20 @@
         ตรรกะภาษี/ด่านตรวจจึงเดินทางเดียวกับที่อื่นเสมอ
      ③ **ส่งทีละก้อนตามลำดับ แล้วสรุปผลรวม** — ก้อนไหนพังต้องบอกว่าก้อนไหน ไม่ใช่ "บันทึกไม่สำเร็จ" ลอย ๆ
         (ยอดกับภาษีคนละ route กัน ถ้ายิงพร้อมกันแล้วอันหลังคิดจากยอดเก่า) */
-  var EXD_NO='', EXD_BACK='expense', EXD_FILES=[];
+  var EXD_NO='', EXD_BACK='expense', EXD_FILES=[], EXD_TAB='doc';
 
   /* พี่กี้ 7 ก.ย. 69: "ไม่ชอบเปิดดูข้อมูล/เอกสารแบบป๊อปอัป ไปเปิดเต็มหน้าดีกว่า"
      → ใบเบิกเป็น "หน้า" (view expone) ไม่ใช่ modal · มีปุ่มย้อนกลับไปหน้าที่มา */
   function exDetail(no){
     var x=exFind(no); if(!x){ toast('ไม่พบข้อมูลใบ '+no+' ลองรีเฟรชนะคะ'); return; }
-    EXD_NO=no;
+    EXD_NO=no; EXD_TAB='doc';
     if(VIEW!=='expone') EXD_BACK=VIEW;   // จำหน้าที่มา (รายการเบิก / อนุมัติ / สรุป)
     switchView('expone');
   }
   function exdBack(){ switchView(EXD_BACK||'expense'); }
+  /** สลับแท็บในหน้าใบเบิก — ชุดเดียวกับหน้าใบสั่งจ่าย */
+  function exdTab(t){ EXD_TAB=t; renderExpOne(); }
+  window.exdTab=exdTab;
 
   /** ลิงก์ Drive → file id (รองรับทั้ง /file/d/<id>/... และ ...?id=<id>) */
   function driveId_(u){
@@ -11757,15 +11773,22 @@
       return '<option value="'+esc(s.code)+'"'+(s.code===x.incomeSection?' selected':'')+'>'+esc(s.code+' '+s.label)+'</option>';
     }).join('');
 
-    $('main').innerHTML=('<div class="card exd-page">'+
-      '<div class="exd-top">'+
-        '<button type="button" class="btn btn-ghost btn-sm" onclick="exdBack()">← กลับ</button>'+
-        '<div class="exd-no">ใบเบิก '+esc(no)+'</div>'+
-        '<span class="lvb '+(paid?'lvb-ok':(pending?'lvb-wait':''))+'">'+esc(st)+'</span>'+
-        '<span class="exd-amt">'+money(x.amount)+' บาท</span>'+
-      '</div>'+
-
-      '<div class="exd-sec">● ข้อมูลใบเบิก</div>'+
+    /* 🔴 โครงหน้าเดียวกับหน้าใบสั่งจ่าย (spec-po-form.md ขั้น 4 · พี่กี้เคาะ 23 ก.ย. 69
+       "ขอพนักงานหรือพี่ก็เหมือนกัน") — breadcrumb → เลขที่ตัวใหญ่ + ป้ายสถานะ → แท็บ → การ์ด
+       ⚠️ เปลี่ยนแค่โครงกับชื่อคลาส ช่องกรอก/ปุ่ม/ตัวบันทึกเป็นของเดิมทุกตัว */
+    var h='<div class="bc"><button class="lnk" onclick="exdBack()">ทะเบียนการจ่าย</button> › '+esc(no)+'</div>'+
+      '<div class="pg-title"><h2>'+esc(no)+'</h2>'+poStatusBadge({status:st})+
+        '<span class="pg-amt">'+money(x.amount)+' บาท</span></div>'+
+      pageTabs(EXD_TAB, [['doc','ข้อมูลเอกสาร',"exdTab('doc')"],
+                         ['log','ประวัติการใช้งาน',"exdTab('log')"]]);
+    /* แท็บประวัติ = ตัวเดียวกับหน้าใบสั่งจ่าย (หลังบ้านอ่าน log ด้วยเลขที่ใบ ใช้ได้ทั้ง PO และ EX) */
+    if(EXD_TAB==='log'){
+      $('main').innerHTML=h+poLogHtml();
+      poLogLoad(no, function(){ if(VIEW==='expone'&&EXD_TAB==='log') renderExpOne(); });
+      return;
+    }
+    $('main').innerHTML=(h+
+      '<div class="sf-card"><div class="sf-h">🧾 ข้อมูลเอกสาร</div>'+
       '<div class="exd-grid">'+
         cell('ผู้เบิก', esc(x.nick||'—'))+
         cell('วันที่แจ้ง', esc(String(x.createdAt||'').split(' ')[0]||'—'))+
@@ -11784,11 +11807,13 @@
         (x.note?cell('หมายเหตุ', esc(x.note), true):'')+
       '</div>'+
 
-      '<div class="exd-sec">● เอกสารของใบนี้'+(EXD_FILES.length?' ('+EXD_FILES.length+')':'')+
-        '<span class="exd-hint">กดการ์ดเพื่อเปิดดูไฟล์เต็มหน้า</span></div>'+
-      '<div class="exd-files">'+files+'</div>'+
+      '</div>'+
 
-      '<div class="exd-sec">● แก้ไขข้อมูล</div>'+
+      '<div class="sf-card"><div class="sf-h">📎 เอกสารของใบนี้'+(EXD_FILES.length?' ('+EXD_FILES.length+')':'')+
+        '<span class="exd-hint">กดการ์ดเพื่อเปิดดูไฟล์เต็มหน้า</span></div>'+
+      '<div class="exd-files">'+files+'</div></div>'+
+
+      '<div class="sf-card"><div class="sf-h">✏️ แก้ไขข้อมูล</div>'+
       '<div id="mErr" class="m-err hidden"></div>'+
       '<div class="exd-form">'+
         '<div class="fld"><label>ประเภทค่าใช้จ่าย</label><select id="exdType">'+typeOpts+'</select></div>'+
@@ -11834,9 +11859,10 @@
         (paid?'<div class="exd-wide">'+imgsFldHtml('exdSlip','💸 เปลี่ยนสลิปโอนคืน (เว้นว่าง = ใช้ของเดิม)')+'</div>':'')+
       '</div>'+
       (hasDoc?'<div class="m-hint" style="color:#C8730B">⚠️ ใบนี้ออกเอกสารแล้ว — แก้เสร็จอย่าลืมสร้างเอกสาร/แฟ้มใหม่ให้ตรงกัน</div>':'')+
+      '</div>'+
 
-      '<div class="exd-sec">● งานอื่นของใบนี้</div>'+
-      '<div class="exd-acts">'+
+      /* แถบปุ่มล่างติดขอบจอ — ชุดเดียวกับหน้าใบสั่งจ่าย (งานของใบจบได้ในหน้าเดียว) */
+      '<div class="sf-bar">'+
         (x.bankAcct?'<button class="btn btn-ghost btn-sm" onclick="copyTxt(\''+esc(String(x.bankAcct).replace(/'/g,"\\'"))+'\')">📋 คัดลอกเลขที่บัญชี</button>':'')+
         (pending?'<button class="btn btn-ghost btn-sm" onclick="'+(x.payeeName?'exOpenWht':'exApprove')+'(\''+esc(no)+'\')">✅ อนุมัติ</button>':'')+
         (pending?'<button class="btn btn-ghost btn-sm" onclick="exReject(\''+esc(no)+'\')">❌ ไม่อนุมัติ</button>':'')+
@@ -11845,12 +11871,11 @@
         '<button class="btn btn-ghost btn-sm" onclick="vatOpen(\'expense\',\''+esc(no)+'\','+(Number(x.amount)||0)+')">🧾 ใบกำกับภาษีซื้อ</button>'+
         ((approved||paid)?'<button class="btn btn-ghost btn-sm" onclick="exRebuild(\''+esc(no)+'\')">🗂️ สร้างแฟ้มใหม่</button>':'')+
         (!paid&&(approved||rejected)&&!hasDoc?'<button class="btn btn-ghost btn-sm" onclick="exUndo(\''+esc(no)+'\')">↩️ ย้อนเป็นรออนุมัติ</button>':'')+
-        '<button class="btn btn-ghost btn-sm" style="color:#B4242A" onclick="exTrash(\''+esc(no)+'\')">🗑️ ยกเลิก</button>'+
-      '</div>'+
-
-      '<div class="exd-bar"><button class="btn btn-ghost" onclick="exdBack()">← กลับ</button>'+
-      '<button class="btn btn-primary" onclick="exdSave()">💾 บันทึกทั้งหมด</button></div>'+
-    '</div>');
+        '<button class="btn btn-ghost btn-sm" style="color:#B4242A" onclick="exTrash(\''+esc(no)+'\')">🗑️ ยกเลิกใบ</button>'+
+        '<span style="flex:1"></span>'+
+        '<button class="btn btn-ghost" onclick="exdBack()">กลับ</button>'+
+        '<button class="btn btn-primary" onclick="exdSave()">บันทึก</button>'+
+      '</div>');
     imgsFldBind('exdRcp');
     if($('exdSlip')) imgsFldBind('exdSlip');
   }
@@ -23298,7 +23323,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260923-1518';
+  var APP_BUILD='20260923-1533';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
