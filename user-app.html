@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260923-2311">
+<link rel="stylesheet" href="user.css?v=20260923-2328">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -8007,7 +8007,7 @@
         '<td>'+(i+1)+'</td>'+
         '<td><input id="pi_docNo_'+i+'" value="'+esc(x.docNo||'')+'" placeholder="IV-xxx" style="width:110px" onchange="piChange()"></td>'+
         '<td><input id="pi_docDate_'+i+'" type="date" value="'+esc(x.docDate||'')+'" style="width:130px" onchange="piChange()"></td>'+
-        '<td><input id="pi_ref_'+i+'" value="'+esc(x.ref||'')+'" style="width:110px" onchange="piChange()"></td>'+
+        '<td><input id="pi_ref_'+i+'" value="'+esc(x.ref||'')+'" placeholder="รหัส" style="width:110px" onchange="piChange()"></td>'+
         '<td><input id="pi_detail_'+i+'" value="'+esc(x.detail||'')+'" style="width:160px" onchange="piChange()"></td>'+
         '<td><input id="pi_qty_'+i+'" type="number" value="'+esc(x.qty||'')+'" style="width:64px" onchange="piChange()"></td>'+
         '<td><input id="pi_unitPrice_'+i+'" type="number" value="'+esc(x.unitPrice||'')+'" style="width:74px" onchange="piChange()"></td>'+
@@ -8047,13 +8047,13 @@
       '<div class="m-hint" style="margin:0 0 8px">ใบจ่าย 1 ใบที่รวมใบแจ้งหนี้ผู้ขายหลายฉบับ — กรอกที่นี่แล้ว'+
         'ยอดในใบจะเท่ากับผลรวมเสมอ · จ่ายรายการเดียวไม่ต้องกรอก ใช้ช่องจำนวนเงินข้างล่างพอค่ะ</div>'+
       '<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
-        '<th>#</th><th>เลขที่เอกสาร</th><th>วันที่</th><th>อ้างอิง</th><th>รายละเอียด</th>'+
+        '<th>#</th><th>เลขที่เอกสาร</th><th>วันที่</th><th>รหัสค่าใช้จ่าย / สินค้า</th><th>รายละเอียด</th>'+
         '<th>จำนวน</th><th>ราคา/หน่วย</th><th>มูลค่าก่อนภาษี</th><th>VAT</th><th>รวม</th><th></th>'+
         '</tr></thead><tbody id="piBody"></tbody></table></div>'+
       '<div class="m-hint" id="piSum"></div>'+
       (poCanType()?'<div class="tax-acts"><button class="btn btn-ghost" onclick="piAdd()">➕ เพิ่มรายการ</button></div>':'')+
       '<div class="sf-grid" id="piOpts">'+
-        '<div class="sf-f c4"><label>ชื่อหัวคอลัมน์อ้างอิงบนเอกสาร</label>'+
+        '<div class="sf-f c4"><label>ชื่อหัวคอลัมน์รหัสบนเอกสาร</label>'+
           '<input id="piRefLabel" placeholder="เช่น Domain / โครงการ / ทะเบียนรถ"></div>'+
         '<div class="sf-f c4"><label>หน่วยของช่องจำนวน</label>'+
           '<input id="piUnit" placeholder="เช่น คน / ชิ้น / เดือน"></div>'+
@@ -10390,25 +10390,41 @@
     }
     h+='<div id="mErr" class="m-err hidden"></div>'+
 
+      /* ① ข้อมูลเอกสาร — ช่องชุดเดียวกับใบเสนอราคา เปลี่ยน "ลูกค้า" เป็น "ผู้ขาย"
+         (พี่กี้ 23 ก.ย. 69: "หน้านี้ข้อมูลรูปแบบเหมือนกันเลย เปลี่ยนลูกค้าเป็นผู้ขาย
+          เอาชื่อร้าน ชื่อคน ชื่อบริษัทที่เราจะจ่ายมาใส่ได้หมด") */
       '<div class="sf-card"><div class="sf-h">🧾 ข้อมูลเอกสาร'+poEditBtn()+poStatusBadge(cur)+'</div>'+
         '<div class="sf-grid">'+
-          '<div class="sf-f c4"><label>บริษัทผู้จ่าย</label><select id="poEnt">'+entOpts+'</select></div>'+
-          '<div class="sf-f c4"><label>ประเภทค่าใช้จ่าย</label>'+
-            '<select id="poType" onchange="poTypeChange()">'+typeOpts+'</select></div>'+
-          /* 🏪 ร้านค้า/ผู้ขาย — คู่ค้าที่ขึ้นบนเอกสาร (spec-po-form.md §1 ข้อ 3)
-             คนละช่องกับ "ผู้รับเงิน" ข้างล่าง: ใบเบิกพนักงานจ่ายให้ร้าน แต่โอนคืนเข้าบัญชีพนักงาน */
-          '<div class="sf-f c4"><label>ร้านค้า / ผู้ขาย</label>'+
-            '<input id="poVendor" placeholder="ชื่อร้าน/บริษัทที่จ่ายให้" value="'+esc(cur?(cur.vendor||''):'')+'">'+
-            '<div class="sf-note">ขึ้นเป็นคู่ค้าบนใบสั่งจ่าย · เว้นว่าง = ใช้ชื่อผู้รับเงิน</div></div>'+
-          '<div class="sf-f c4"><label>เลขผู้เสียภาษีร้านค้า</label>'+
+          (((PO.entities||[]).length>1)
+            ? ('<div class="sf-f c4"><label>บริษัทผู้จ่าย</label><select id="poEnt">'+entOpts+'</select>'+
+               '<div class="sf-note">บริษัทที่เลือกเป็นตัวตัดสินว่ามี VAT 7% ไหม</div></div>')
+            : ('<input type="hidden" id="poEnt" value="'+esc((PO.entities&&PO.entities[0]&&PO.entities[0].code)||'')+'">'))+
+          '<div class="sf-f c2"><label>รหัสผู้ขาย</label>'+
+            '<input id="poVendorCode" placeholder="เช่น SUP-001" value="'+esc(cur?(cur.vendorCode||''):'')+'"></div>'+
+          '<div class="sf-f c4"><label>ผู้ขาย</label>'+
+            '<input id="poVendor" placeholder="ชื่อร้าน · ชื่อคน · ชื่อบริษัทที่จ่ายให้" value="'+esc(cur?(cur.vendor||''):'')+'">'+
+            '<div class="sf-note">ขึ้นเป็นคู่ค้าบนเอกสาร · เว้นว่าง = ใช้ชื่อผู้รับเงินในสรุปยอด</div></div>'+
+          '<div class="sf-f c3"><label>เลขผู้เสียภาษี</label>'+
             '<div style="display:flex;gap:6px">'+
             '<input id="poVendorTax" type="tel" inputmode="numeric" maxlength="17" placeholder="13 หลัก (ถ้ามี)" '+
               'value="'+esc(cur?(cur.vendorTaxId||''):'')+'" style="flex:1;min-width:0">'+
-            (PO_VIEW?'':'<button class="btn btn-ghost" onclick="poVendorLookup()" title="ค้นจากกรมพัฒนาธุรกิจการค้า" '+
-              'style="flex:none;width:auto;padding:0 12px">🔍</button>')+'</div></div>'+
-          '<div class="sf-f c4"><label>งวด / เดือนที่เกี่ยวข้อง</label>'+
-            '<input id="poPeriod" placeholder="เช่น ส.ค. 2569 (ไม่บังคับ)" value="'+esc(cur?cur.period:'')+'"></div>'+
-          /* 🔗 อ้างอิง — ใบนี้ถูกดึงมาจากเอกสารไหน (แบบช่องอ้างอิงของฟอร์มเอกสารขาย · พี่กี้ 22 ก.ย. 69)
+            '<button class="btn btn-ghost" onclick="poVendorLookup()" title="ค้นจากกรมพัฒนาธุรกิจการค้า" '+
+              'style="flex:none;width:auto;padding:0 12px">🔍</button></div></div>'+
+          '<div class="sf-f c3"><label>งวด / เดือนที่เกี่ยวข้อง</label>'+
+            '<input id="poPeriod" placeholder="เช่น ส.ค. 2569" value="'+esc(cur?cur.period:'')+'"></div>'+
+          '<div class="sf-f c6"><label>ที่อยู่ผู้ขาย</label>'+
+            '<input id="poVendorAddr" placeholder="ที่อยู่ที่จะพิมพ์บนเอกสาร" value="'+esc(cur?(cur.vendorAddr||''):'')+'"></div>'+
+          '<div class="sf-f c3"><label>อีเมล</label>'+
+            '<input id="poVendorEmail" placeholder="—" value="'+esc(cur?(cur.vendorEmail||''):'')+'"></div>'+
+          '<div class="sf-f c3"><label>เบอร์โทร</label>'+
+            '<input id="poVendorPhone" placeholder="—" value="'+esc(cur?(cur.vendorPhone||''):'')+'"></div>'+
+          '<div class="sf-f c4"><label>ประเภทค่าใช้จ่าย</label>'+
+            '<select id="poType" onchange="poTypeChange()">'+typeOpts+'</select></div>'+
+          /* ประเภทราคา — คำและตัวเลือกชุดเดียวกับฝั่งรายรับ
+             บริษัทไม่ได้จด VAT = บังคับ "ไม่มีภาษี" (ด่านจริงอยู่ที่ backend) */
+          '<div class="sf-f c4"><label>ประเภทราคา</label>'+
+            '<select id="poPm" onchange="poCalc()">'+pmOpts+'</select></div>'+
+          /* 🔗 อ้างอิง — ใบนี้ถูกดึงมาจากเอกสารไหน (ช่องเดียวกับฝั่งรายรับ)
              อ่านอย่างเดียว: ความสัมพันธ์เกิดจากตอนตั้งเบิก ไม่ใช่ค่าที่พิมพ์เองได้ */
           '<div class="sf-f c4"><label>อ้างอิง</label>'+
             '<input value="'+esc(poRefOf(PO_EDIT)||'')+'" placeholder="— ไม่ได้ดึงจากเอกสารอื่น —" readonly>'+
@@ -10419,8 +10435,23 @@
 
       poItemsCardHtml()+
 
-      '<div class="sf-card"><div class="sf-h">👤 ผู้รับเงิน</div>'+
+      /* ③ สรุปยอด — เงิน · ผู้รับเงิน · บัญชีที่ต้องโอน · ลายเซ็น
+         (พี่กี้: "เพิ่มบริเวณสรุปยอด ให้ใส่ข้อมูลบัญชีที่ต้องโอนเงินได้
+          ลงนามคนทำเอกสารจบ ถ้าพี่อนุมัติก็ลงนามอนุมัติ") */
+      '<div class="sf-card"><div class="sf-h">💰 สรุปยอด</div>'+
         '<div class="sf-grid">'+
+          '<div class="sf-f c4"><label>จำนวนเงิน (บาท)</label>'+
+            '<input id="poAmt" type="number" inputmode="decimal" min="0" step="0.01" oninput="poCalc()" value="'+esc(cur?poAmtInput(cur):'')+'">'+
+            '<div class="sf-note" id="poAmtNote"></div></div>'+
+          '<div class="sf-f c4"><label>มาตราเงินได้ (หัก ณ ที่จ่าย)</label>'+
+            '<select id="poSect" onchange="poSectChange()">'+sectOpts+'</select></div>'+
+          '<div class="sf-f c4" id="poRateFld"><label>อัตราหัก %</label>'+
+            '<select id="poRate" onchange="poCalc()"></select></div>'+
+          '<div class="sf-f wide"><div id="poSum" class="m-hint" style="margin:0"></div></div>'+
+
+          /* ── ผู้รับเงิน = คนที่เงินเข้าบัญชีจริง (คนละช่องกับผู้ขายด้านบน:
+             ใบเบิกพนักงานจ่ายให้ร้าน แต่โอนคืนเข้าบัญชีพนักงานที่สำรองจ่าย) ── */
+          '<div class="sf-f wide"><div class="sf-h" style="margin:6px 0 0;font-size:14px">👤 ผู้รับเงิน · บัญชีที่ต้องโอน</div></div>'+
           '<div class="sf-f c4"><label>จ่ายให้ใคร</label><div style="display:flex;gap:6px">'+
             '<button type="button" id="poPOut" class="btn btn-sm" onclick="poPayeeMode(\'out\')" style="flex:1">🏢 คนนอก / บริษัท</button>'+
             '<button type="button" id="poPStaff" class="btn btn-sm" onclick="poPayeeMode(\'staff\')" style="flex:1">👥 พนักงานเรา</button>'+
@@ -10431,30 +10462,18 @@
           '<div class="sf-f c4"><label>ผู้รับเงินเป็น</label>'+
             '<select id="poKind" onchange="poCalc()">'+kindOpts+'</select></div>'+
           '<div class="sf-f c6"><label>ชื่อผู้รับเงิน</label>'+
-            '<input id="poName" placeholder="ชื่อบริษัท หรือ ชื่อ-นามสกุล" value="'+esc(cur?cur.payeeName:'')+'"></div>'+
+            '<input id="poName" placeholder="เว้นว่าง = ใช้ชื่อผู้ขายด้านบน" value="'+esc(cur?cur.payeeName:'')+'"></div>'+
           '<div class="sf-f c6"><label>เลขประจำตัวผู้เสียภาษี / บัตร ปชช (13 หลัก)</label>'+
             '<input id="poId" type="tel" inputmode="numeric" maxlength="17" placeholder="บังคับเมื่อหักภาษี ณ ที่จ่าย" value="'+esc(cur?cur.payeeId:'')+'"></div>'+
           '<div class="sf-f wide"><label>ที่อยู่ผู้รับเงิน</label>'+
             '<textarea id="poAddr" rows="2" placeholder="บังคับเมื่อหักภาษี ณ ที่จ่าย (ใช้พิมพ์บน 50 ทวิ)">'+esc(cur?cur.payeeAddr:'')+'</textarea></div>'+
           /* 3 ช่องบัญชีเรียงแนวนอน — bankFields คืน .fld (บล็อกเต็มบรรทัด) จึงต้องครอบเป็นกริดเอง */
           '<div class="sf-f wide" id="poBankBox" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 18px">'+
-            bankFields('po', cur?cur.bank:{}, 'ผู้รับเงิน — ')+'</div>'+
-        '</div></div>'+
+            bankFields('po', cur?cur.bank:{}, 'บัญชีที่ต้องโอน — ')+'</div>'+
 
-      '<div class="sf-card"><div class="sf-h">💰 จำนวนเงิน · ภาษีหัก ณ ที่จ่าย</div>'+
-        '<div class="sf-grid">'+
-          /* ประเภทราคา — คำและตัวเลือกชุดเดียวกับฝั่งรายรับ (พี่กี้ 23 ก.ย. 69: "ใช้เหมือนกันทั้งระบบ")
-             บริษัทไม่ได้จด VAT = บังคับ "ไม่มีภาษี" (ด่านจริงอยู่ที่ backend เหมือนใบขาย) */
-          '<div class="sf-f c4"><label>ประเภทราคา</label>'+
-            '<select id="poPm" onchange="poCalc()">'+pmOpts+'</select></div>'+
-          '<div class="sf-f c4"><label>จำนวนเงิน (บาท)</label>'+
-            '<input id="poAmt" type="number" inputmode="decimal" min="0" step="0.01" oninput="poCalc()" value="'+esc(cur?poAmtInput(cur):'')+'">'+
-            '<div class="sf-note" id="poAmtNote"></div></div>'+
-          '<div class="sf-f c4"><label>มาตราเงินได้ (หัก ณ ที่จ่าย)</label>'+
-            '<select id="poSect" onchange="poSectChange()">'+sectOpts+'</select></div>'+
-          '<div class="sf-f c4" id="poRateFld"><label>อัตราหัก %</label>'+
-            '<select id="poRate" onchange="poCalc()"></select></div>'+
-          '<div class="sf-f wide"><div id="poSum" class="m-hint" style="margin:0"></div></div>'+
+          /* ── ลายเซ็นบนเอกสาร — ที่นี่แค่ "บอกว่าใครจะเซ็น" ตัวลายเซ็นจริงอยู่บน PDF
+             (ดึงจากลายเซ็นที่แต่ละคนอัปไว้ในตั้งค่าผู้ใช้งาน) ── */
+          '<div class="sf-f wide">'+poSignNoteHtml(cur)+'</div>'+
         '</div></div>'+
 
       (PO_EDIT
@@ -10487,6 +10506,15 @@
     poCalc();
   }
   window.renderPoForm=renderPoForm;
+
+  /* ✍️ บอกว่าเอกสารจะมีลายเซ็นของใครบ้าง (พี่กี้ 23 ก.ย. 69)
+     ตัวลายเซ็นจริงอยู่บน PDF — ดึงจากที่แต่ละคนอัปไว้ในตั้งค่าผู้ใช้งาน */
+  function poSignNoteHtml(cur){
+    var maker=(cur&&cur.creator)?cur.creator:'คนที่กดสร้างใบ';
+    var appr=(cur&&cur.approver)?cur.approver:'';
+    return '<div class="m-hint" style="margin:0">✍️ ลงนามบนเอกสาร: <b>'+esc(maker)+'</b> (ผู้จัดทำ)'+
+      (appr?' · <b>'+esc(appr)+'</b> (ผู้อนุมัติ)':' · ผู้อนุมัติจะลงนามให้ตอนกดอนุมัติ')+'</div>';
+  }
 
   /** ป้ายสถานะบนหัวเรื่อง (ใบใหม่ยังไม่มีสถานะ) */
   function poStatusBadge(cur){
@@ -10694,7 +10722,11 @@
       rate:(($('poSect')||{}).value) ? ((($('poRate')||{}).value)||'0') : '0',
       priceMode:(($('poPm')||{}).value)||'none', vatRate:'7',
       vendor:((($('poVendor')||{}).value)||'').trim(),
-      vendorTaxId:((($('poVendorTax')||{}).value)||'').replace(/\D/g,'')};
+      vendorTaxId:((($('poVendorTax')||{}).value)||'').replace(/\D/g,''),
+      vendorCode:((($('poVendorCode')||{}).value)||'').trim(),
+      vendorAddr:((($('poVendorAddr')||{}).value)||'').trim(),
+      vendorEmail:((($('poVendorEmail')||{}).value)||'').trim(),
+      vendorPhone:((($('poVendorPhone')||{}).value)||'').trim()};
     if(PO_EDIT) p.no=PO_EDIT;
     if(PO_PAYEE==='staff'){
       p.payeeUid=(($('poStaff')||{}).value)||'';
@@ -23454,7 +23486,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260923-2311';
+  var APP_BUILD='20260923-2328';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
