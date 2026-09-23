@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260923-1051">
+<link rel="stylesheet" href="user.css?v=20260923-1117">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -6351,16 +6351,19 @@
     var a = [];
 
     if(x.receiptUrl) a.push({ key:'proof', label:'📎 หลักฐาน/ใบแจ้งหนี้', href:x.receiptUrl });
-    /* 📝 ใบสั่งจ่าย (PDF) ของใบเบิก (23 ก.ย. 69) — ชุดเดียวกับใบที่บริษัทตั้งเอง
-       พี่กี้: "ไม่เห็นฟอร์ม PO เลย" — ใบเบิกอยู่ทะเบียนเดียวกันแล้ว ต้องมีเอกสารให้เปิด/พิมพ์เหมือนกัน */
-    if(x.reqLink)    a.push({ key:'req',   label:'📝 ใบสั่งจ่าย (PDF)', href:x.reqLink });
+    /* 📝 ใบสั่งจ่าย (PDF) — พนักงานเห็นเฉพาะไฟล์ที่มีแล้ว (ออกเอกสารเองไม่ได้ · waPoDocs เป็น owner only)
+       ส่วนของผู้ดูแลอยู่ใต้ด่าน isOwner ข้างล่าง: กดครั้งเดียวได้ไฟล์เสมอ */
+    if(x.reqLink) a.push({ key:'req', label:'📝 ใบสั่งจ่าย (PDF)', href:x.reqLink });
     if(x.docLink)    a.push({ key:'doc',   label:'📄 ' + (x.docNo || 'เอกสาร'), href:x.docLink });
     if(x.whtLink)    a.push({ key:'wht',   label:'🧾 50 ทวิ ' + (x.whtNo || ''), href:x.whtLink });
     if(x.dossier)    a.push({ key:'dossier', label:'🗂️ แฟ้มครบชุด', href:x.dossier });
     if(x.paidSlip)   a.push({ key:'slip',  label:'💸 สลิปโอน', href:x.paidSlip });
     /* ⏳ ใบที่ขอเงินไปจ่ายก่อน — ใบเสร็จตัวจริงตามมาทีหลัง (22 ก.ย. 69 · พี่กี้แนบเอง) */
     if(x.realReceipt) a.push({ key:'realrcp', label:'🧾 ใบเสร็จตัวจริง', href:x.realReceipt });
-    if(!isOwner) return a;   // พนักงานเห็นแค่ลิงก์เอกสารของใบตัวเอง
+    if(!isOwner) return payMenuSort(a);   // พนักงานเห็นแค่ลิงก์เอกสารของใบตัวเอง
+    /* ยังไม่มีไฟล์ (ใบที่ตั้งก่อนฟีเจอร์นี้ขึ้น) — กดแล้วระบบออกให้แล้วเปิดต่อเอง ไม่ต้องกด 2 จังหวะ
+       (พี่กี้ 23 ก.ย. 69: "พี่ต้องกดออกใบสั่งจ่ายก่อนเหรอ") */
+    if(!x.reqLink) a.push({ key:'req', label:'📝 ใบสั่งจ่าย (PDF)', call:'poOpenReq(' + q + ',0)' });
     if(expAwaitReceipt(x)) a.push({ key:'addrcp', label:'📎 แนบใบเสร็จตัวจริง (ยังไม่ได้รับ)',
       call:'expOpenReceipt(' + q + ')', danger:true });
 
@@ -6380,8 +6383,7 @@
     }
     /* ออกใบขออนุมัติใหม่ — ใบเก่าที่ตั้งก่อน 23 ก.ย. ยังไม่มีเอกสารนี้ · ใช้ปุ่มนี้ออกย้อนหลัง
        เส้นเดียวกับใบบริษัท (waPoDocs) · ใบที่จ่ายแล้วออกทับได้ เลขใบเดิม ไฟล์เดิม */
-    a.push({ key:'redoc', label:(x.reqLink ? '🔄 ออกใบสั่งจ่ายใหม่' : '📝 ออกใบสั่งจ่าย'),
-      call:'poDocs(' + q + ')' });
+    a.push({ key:'redoc', label:'🔄 ออกใบสั่งจ่ายใหม่', call:'poDocs(' + q + ')' });
     /* 📤 เสนอเรื่องเข้ากลุ่มการเงิน — ใบเบิกก็ส่งได้ (payoutFindForSend_ อ่าน 2 เล่ม)
        เดิมมีเฉพาะใบบริษัท ทั้งที่หลังบ้านรองรับทั้งคู่ */
     a.push({ key:'send', label:(x.sentAt ? '📤 ส่งเข้ากลุ่มการเงินอีกครั้ง' : '📤 ส่งเข้ากลุ่มการเงิน'),
@@ -9706,7 +9708,8 @@
     var a = [];
     if(x.proofLink)    a.push({ key:'proof',    label:'📎 หลักฐาน/ใบแจ้งหนี้', href:x.proofLink });
     if(x.contractLink) a.push({ key:'contract', label:'📄 สัญญา', href:x.contractLink });
-    if(x.reqLink)      a.push({ key:'req',      label:'📝 ใบสั่งจ่าย (PDF)', href:x.reqLink });
+    /* กดครั้งเดียวได้ไฟล์เสมอ — ชุดเดียวกับใบเบิก (23 ก.ย. 69) */
+    a.push({ key:'req', label:'📝 ใบสั่งจ่าย (PDF)', call:'poOpenReq(' + q + ',' + (x.reqLink ? 1 : 0) + ')' });
     if(x.docLink)      a.push({ key:'pv',       label:'📄 ใบสำคัญจ่าย ' + (x.docNo || ''), href:x.docLink });
     if(x.whtLink)      a.push({ key:'wht',      label:'🧾 50 ทวิ ' + (x.whtNo || ''), href:x.whtLink });
     if(x.whtPayeeLink) a.push({ key:'whtpayee', label:'🧾 50 ทวิ (ฉบับผู้รับเงิน)', href:x.whtPayeeLink });
@@ -10538,6 +10541,26 @@
       }).catch(function(e){ if(btn){btn.disabled=false;btn.textContent='บันทึกจ่ายแล้ว';} mErr(e.message); });
   }
   /** ออก/ออกเอกสารใหม่ให้ใบที่จ่ายแล้ว (PV + 50 ทวิ + แฟ้ม) — ใช้เลข PV เดิม ไม่กินเลขใหม่ */
+  /**
+   * เปิดใบสั่งจ่าย (PDF) ของใบใด ๆ — มีไฟล์แล้วเปิดเลย · ยังไม่มีก็ออกให้ก่อนแล้วเปิดต่อ
+   * 🔴 เปิดแท็บเปล่าไว้ก่อนเรียก backend — เบราว์เซอร์บล็อก window.open ที่เกิดหลัง await
+   *    (ถ้าถูกบล็อกจริงก็ยังมี toast + ลิงก์ให้กดเอง)
+   */
+  function poOpenReq(no, hasFile){
+    var cur=(PO&&PO.reg||[]).filter(function(x){ return x.no===no; })[0];
+    var url=cur&&cur.reqLink;
+    if(hasFile && url){ window.open(url,'_blank'); return; }
+    var w=window.open('','_blank');
+    callBusy('กำลังออกใบสั่งจ่าย…', jsonpPost({ action:'waPoDocs', uid:UID, no:no }))
+      .then(function(r){
+        var link=r&&r.ok&&r.docs&&r.docs.reqLink;
+        if(!link){ if(w) w.close(); toast((r&&r.error)||'ออกใบสั่งจ่ายไม่สำเร็จ'); return; }
+        if(w) w.location=link; else toast('📝 ออกใบสั่งจ่ายแล้ว · เปิดจากเมนูได้เลยค่ะ');
+        renderPayout();
+      }).catch(function(e){ if(w) w.close(); toast(e.message); });
+  }
+  window.poOpenReq=poOpenReq;
+
   function poDocs(no){
     callBusy('กำลังออกเอกสาร…', jsonpPost({ action:'waPoDocs', uid:UID, no:no }), 'ออกเอกสารแล้ว')
       .then(function(r){
@@ -23046,7 +23069,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260923-1051';
+  var APP_BUILD='20260923-1117';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
