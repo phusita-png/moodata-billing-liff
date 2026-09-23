@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260923-2328">
+<link rel="stylesheet" href="user.css?v=20260923-2336">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -5836,7 +5836,9 @@
       POR_MONTH=r.month;
       var s=r.sum, os=r.outstanding||{n:0,amt:0,rows:[]};
       var months=taxMonths(); if(months.indexOf(POR_MONTH)<0) months.unshift(POR_MONTH);
-      var h='<div class="section-h">📊 ทะเบียนใบสำคัญจ่ายของบริษัท</div>'+
+      var h='<div class="bc">รายจ่าย › ใบสำคัญจ่าย</div>'+
+        '<div class="pg-title"><h2>📑 ใบสำคัญจ่าย PV</h2>'+
+        '<span class="pg-amt">'+money(s.amount)+' บาท</span></div>'+
         '<div class="ds-sel"><select id="porYm" onchange="porSetMonth(this.value)">'+
         months.map(function(m){ return '<option value="'+esc(m)+'"'+(m===POR_MONTH?' selected':'')+'>'+esc(ymThai(m))+'</option>'; }).join('')+
         '</select><select id="porEnt" onchange="porSetEnt(this.value)">'+
@@ -5853,7 +5855,7 @@
 
       // ── ค้างจ่าย: ขึ้นก่อนตารางอื่น เพราะเป็นสิ่งที่ต้องลงมือ ──
       if(os.n){
-        h+='<div class="card"><div class="ds-h">⏰ ค้างจ่าย — อนุมัติแล้วยังไม่โอน (ทุกเดือน)</div>'+
+        h+='<div class="sf-card"><div class="sf-h">⏰ ค้างจ่าย — อนุมัติแล้วยังไม่โอน (ทุกเดือน)</div>'+
           '<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
           '<th>เลขที่</th><th>บริษัทผู้จ่าย</th><th>ผู้รับเงิน</th><th>รายละเอียด</th><th>ต้องโอน</th><th>อนุมัติเมื่อ</th></tr></thead><tbody>'+
           os.rows.map(function(x){
@@ -5865,7 +5867,7 @@
       }
 
       // ── สรุปตามประเภท ──
-      h+='<div class="card"><div class="ds-h">① สรุปตามประเภทค่าใช้จ่าย · '+esc(r.monthText)+'</div>';
+      h+='<div class="sf-card"><div class="sf-h">① สรุปตามประเภทค่าใช้จ่าย · '+esc(r.monthText)+'</div>';
       if(!(r.byType||[]).length){ h+='<div class="emptybox">เดือนนี้ยังไม่มีรายการ</div>'; }
       else {
         h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
@@ -5880,7 +5882,7 @@
       h+='</div>';
 
       // ── ทะเบียนรายใบ ──
-      h+='<div class="card"><div class="ds-h">② ทะเบียนใบจ่าย · '+esc(r.entityName||'ทุกบริษัท')+'</div>';
+      h+='<div class="sf-card"><div class="sf-h">② ทะเบียนใบจ่าย · '+esc(r.entityName||'ทุกบริษัท')+'</div>';
       if(!r.rows.length){ h+='<div class="emptybox">เดือนนี้ไม่มีใบจ่าย</div>'; }
       else {
         h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
@@ -5899,7 +5901,7 @@
       }
       h+='</div>';
 
-      h+='<div class="card"><div class="ds-h">📄 เอกสารสรุป · '+esc(r.monthText)+'</div>'+
+      h+='<div class="sf-card"><div class="sf-h">📄 เอกสารสรุป · '+esc(r.monthText)+'</div>'+
         '<div class="m-hint" style="margin:0 0 10px">แท็บในชีตระบบเขียนทับทุกครั้งที่เปิดหน้านี้ — อย่าพิมพ์เพิ่มในแท็บนั้นค่ะ</div>'+
         '<div class="tax-acts">'+
         (r.sheetUrl?'<a class="btn btn-ghost" href="'+esc(r.sheetUrl)+'" target="_blank">📋 เปิดแท็บในชีต</a>':'')+
@@ -9536,7 +9538,11 @@
   function ptPaint(){
     var r=PT_DATA; if(!r) return;
     var b=r.balance||{}, ents=r.entities||[], items=r.items||[], claims=r.claims||[];
-    var h='<div class="section-h">💵 เงินสดย่อย</div>';
+    /* 🔴 หัวหน้าชุดเดียวกับหน้าเอกสารฝั่งจ่าย (พี่กี้ 23 ก.ย. 69) —
+       breadcrumb → ชื่อเรื่องตัวใหญ่ · ของเดิมเป็น section-h ซึ่งไม่มีหน้าไหนใช้แล้ว */
+    var h='<div class="bc">รายจ่าย › เงินสดย่อย</div>'+
+      '<div class="pg-title"><h2>💵 เงินสดย่อย</h2>'+
+      (b.hasFund?'<span class="pg-amt">เหลือในมือ '+money(b.onHand)+' บาท</span>':'')+'</div>';
     if(ents.length>1){
       h+='<div class="ds-sel"><select id="ptEnt" onchange="ptSetEnt(this.value)">'+
         ents.map(function(e){
@@ -9558,7 +9564,7 @@
     }
 
     if(!b.hasFund){
-      h+='<div class="card"><div class="emptybox">บริษัทนี้ยังไม่ได้ตั้งวงเงินเงินสดย่อย<br>'+
+      h+='<div class="sf-card"><div class="emptybox">บริษัทนี้ยังไม่ได้ตั้งวงเงินเงินสดย่อย<br>'+
         '<span class="m-hint">ตั้งวงเงินก่อน ถึงจะบันทึกรายการที่จ่ายได้ค่ะ</span></div>'+
         '<div class="tax-acts"><button class="btn btn-primary" onclick="ptForm(\'fund\')">⚙️ ตั้งวงเงิน</button></div></div>';
     } else {
@@ -9573,7 +9579,7 @@
         statCard('ตั้งเบิกแล้ว · รอรับเงินคืน',money(ic),((b.inClaim&&b.inClaim.n)||0)+' รายการ')+
         statCard('เงินสดที่ควรมีในมือ',money(b.onHand),b.over?'⚠️ จ่ายเกินวงเงินแล้ว':'วงเงิน − ที่ยังไม่ได้คืน',b.over?'ds-warn':'')+
         '</div>'+
-        '<div class="card"><div class="ds-h">สัดส่วนวงเงิน</div>'+
+        '<div class="sf-card"><div class="sf-h">📊 สัดส่วนวงเงิน</div>'+
         '<div style="height:14px;border-radius:7px;background:#E8F0E9;overflow:hidden;display:flex">'+
           '<div style="width:'+pw+'%;background:'+(b.over?'#E5484D':'#C8730B')+'"></div>'+
           '<div style="width:'+pi+'%;background:var(--red)"></div>'+
@@ -9582,7 +9588,7 @@
           ' · 🔵 รอรับเงินคืนจากบริษัท '+money(ic)+
           ' · 🟢 เหลือในมือ '+money(b.onHand)+' · วงเงิน '+money(b.limit)+'</div>'+
         '<div class="tax-acts">'+
-          '<button class="btn btn-primary" onclick="ptForm(\'cash\')">➕ บันทึกจ่ายสด</button>'+
+          '<button class="btn btn-primary" onclick="ptForm(\'cash\')">➕ บันทึกจ่ายจากวงเงิน</button>'+
           '<button class="btn btn-ghost" onclick="ptForm(\'fund\')">⚙️ แก้วงเงิน</button>'+
           '<button class="btn btn-ghost" onclick="ptForm(\'newfund\')">➕ เพิ่มวงเงิน</button>'+
         '</div></div>';
@@ -9619,15 +9625,15 @@
     }
 
     // ── รายการเงินสดย่อย ──
-    h+='<div class="card"><div class="ds-h">📋 รายการที่จ่ายจากเงินสดย่อย</div>';
+    h+='<div class="sf-card"><div class="sf-h">📋 รายการที่จ่ายจากเงินสดย่อย</div>';
     if(!items.length){ h+='<div class="emptybox">ยังไม่มีรายการ</div>'; }
     else {
       // คอลัมน์น้อยที่สุดที่ยังอ่านครบ — ผู้รับเงิน/ที่มา/บิล ยุบเป็นบรรทัดเล็กใต้รายละเอียด
       // (ตารางกว้างเกินจอ = สิ่งที่พี่กี้บ่นมาตลอด · §7.13)
       h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
-        '<th style="width:34px"></th><th>วันที่</th><th>รายการ</th>'+
+        '<th style="width:34px"></th><th style="width:38px">#</th><th>วันที่</th><th>รายการ</th>'+
         '<th>ยอด</th><th>สถานะ</th><th style="width:34px"></th></tr></thead><tbody>'+
-        items.map(function(x){
+        items.map(function(x, xi){
           var locked=!!x.claimNo;   // เข้าใบสรุปแล้ว = ติ๊กซ้ำไม่ได้ (ด่านเดียวกับ backend)
           var q="'"+String(x.no).replace(/'/g,"\\'")+"'";
           var sub='<br><span style="font-size:12px;color:#8A94A6">'+esc(x.type)+(x.payee?' · '+esc(x.payee):'')+
@@ -9637,7 +9643,9 @@
             (x.docNo?' <a class="ex-lk" href="'+esc(x.docLink||'#')+'" target="_blank">📄 '+esc(x.docNo)+'</a>'
               :(x.proof?'':' <a class="ex-lk" href="#" onclick="ptDoc('+q+');return false">📄 ออกใบรับรองแทนใบเสร็จ</a>'));
           return '<tr'+(locked?' style="opacity:.55"':'')+'>'+
+            /* ลำดับ # — ทุกตารางในระบบต้องมี (พี่กี้สั่ง 22 ก.ย. 69) */
             '<td>'+(locked?'🔒':'<input type="checkbox" onchange="ptToggle('+q+',this.checked)"'+(PT_SEL[x.no]?' checked':'')+'>')+'</td>'+
+            '<td class="dt-nw">'+(xi+1)+'</td>'+
             '<td class="dt-nw">'+esc(x.date)+'</td>'+
             '<td style="white-space:normal">'+esc(x.detail)+sub+'</td>'+
             '<td class="ta-r dt-nw">'+money(x.amount)+'</td>'+
@@ -9650,24 +9658,26 @@
     h+='</div>';
 
     // ── ทะเบียนใบสรุปเบิก ──
-    h+='<div class="card"><div class="ds-h">📑 ใบสรุปเบิกเงินสดย่อย</div>';
+    h+='<div class="sf-card"><div class="sf-h">📑 ใบสรุปเบิกเงินสดย่อย</div>';
     if(!claims.length){ h+='<div class="emptybox">ยังไม่มีใบสรุปเบิก</div>'; }
     else {
       h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
-        '<th>เลขที่</th><th>วันที่</th><th>ช่วงรายการ</th><th>รายการ</th><th>ยอดรวม</th><th>สถานะ</th><th></th></tr></thead><tbody>'+
-        claims.map(function(c){
+        '<th style="width:38px">#</th><th>เลขที่</th><th>วันที่</th><th>ช่วงรายการ</th><th>รายการ</th>'+
+        '<th>ยอดรวม</th><th>สถานะ</th><th></th></tr></thead><tbody>'+
+        claims.map(function(c, ci){
           var q="'"+String(c.no).replace(/'/g,"\\'")+"'";
           var waiting = c.status.indexOf('รอตั้งเบิก')>=0 && !c.payoutNo;   // ยังไม่ส่งเข้าทะเบียนการจ่าย
           var settled = c.status.indexOf('จ่ายคืนแล้ว')>=0;
           var act = waiting
             ? '<a class="ex-lk" href="#" onclick="ptClaimPayout('+q+');return false">📤 ตั้งเบิกจากบริษัท</a>'+
-              '<br><a class="ex-lk" href="#" onclick="ptCancelClaim('+q+');return false">ยกเลิก</a>'
+              '<br><a class="ex-lk" href="#" onclick="ptCancelClaim('+q+');return false">🚫 ยกเลิกเอกสาร</a>'
             : (settled ? '' : '<a class="ex-lk" href="#" onclick="ptSettleClaim('+q+');return false">✅ บันทึกรับเงินคืน</a>');
           // ใบสรุป (PDF) = หลักฐานที่แนบไปกับใบสั่งจ่าย · ยังไม่มีก็กดออกได้
           act += '<br><a class="ex-lk" href="'+(c.pdf?esc(c.pdf):'#')+'"'+
             (c.pdf?' target="_blank"':' onclick="ptClaimDoc('+q+');return false"')+'>'+
             (c.pdf?'📄 เปิดใบสรุป':'📄 ออกใบสรุป (PDF)')+'</a>';
-          return '<tr><td>'+esc(c.no)+'</td><td class="dt-nw">'+esc(c.date)+'</td><td>'+esc(c.range||'-')+'</td>'+
+          return '<tr><td class="dt-nw">'+(ci+1)+'</td><td>'+esc(c.no)+'</td>'+
+            '<td class="dt-nw">'+esc(c.date)+'</td><td>'+esc(c.range||'-')+'</td>'+
             '<td>'+c.count+'</td><td class="ta-r dt-nw">'+money(c.total)+'</td>'+
             '<td>'+esc(c.status)+(c.payoutNo?'<br><span style="font-size:12px;color:#8A94A6">'+esc(c.payoutNo)+'</span>':'')+'</td>'+
             '<td>'+act+'</td></tr>';
@@ -23486,7 +23496,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260923-2328';
+  var APP_BUILD='20260923-2336';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
