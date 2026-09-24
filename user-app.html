@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260924-2127">
+<link rel="stylesheet" href="user.css?v=20260924-2141">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -6658,15 +6658,25 @@
       }).catch(function(){});
     }
   }
-  /** กล่อง "เงินจะโอนเข้าบัญชีนี้" ในฟอร์มเบิก — ยังไม่กรอก = เตือนแดง + ปุ่มกรอกทันที */
+  /** 🏦 บัญชีที่จะให้โอนเงินเข้า — ผู้เบิกระบุเองทุกใบ (พี่กี้เคาะ 25 ก.ย. 69)
+      เดิมดึงบัญชีพนักงานมาใส่ให้เงียบ ๆ → พนักงานที่ให้บริษัทโอนตรงเข้าร้านค้าต้องไปแก้ทีหลัง
+      ปุ่ม "ใช้บัญชีของฉัน" = ช่วยเติม ไม่ใช่ค่าตั้งต้น (กันโอนผิดบัญชีเพราะไม่ได้ดู) */
   function expMyBankHtml(){
-    if(HAS_BANK){
-      return '<div class="m-hint" style="color:#1B7F4B">🏦 โอนคืนเข้า: <b>'+esc(MYBANK.name)+' '+esc(MYBANK.acct)+'</b> ('+esc(MYBANK.owner)+') · '+
-        '<a href="#" onclick="closeModal();openBank();return false">เปลี่ยนบัญชี</a></div>';
-    }
-    return '<div class="m-hint" style="color:#E5484D">⚠️ ยังไม่ได้กรอกบัญชีรับโอนคืน — '+
-      '<a href="#" onclick="closeModal();openBank();return false"><b>กรอกบัญชีก่อนที่นี่</b></a> แล้วค่อยแจ้งเบิกนะคะ</div>';
+    return '<div class="fld" style="margin-bottom:0"><label>🏦 โอนเงินเข้าบัญชี'+
+        (HAS_BANK?' <a href="#" style="font-weight:400;margin-left:6px" onclick="expUseMyBank();return false">ใช้บัญชีของฉัน</a>':'')+
+      '</label></div>'+
+      bankFields('eb', {}, '')+
+      '<div class="m-hint" style="margin-top:-4px">ใส่บัญชีที่จะให้บริษัทโอนเงินเข้า — บัญชีตัวเอง หรือบัญชีร้านค้าก็ได้</div>';
   }
+  function expUseMyBank(){
+    if(!HAS_BANK) return;
+    var list=bankList(), other=MYBANK.name && list.indexOf(MYBANK.name)<0;
+    var sel=$('ebBank'); if(sel) sel.value=other?'__other__':MYBANK.name;
+    var o=$('ebBankOther'); if(o){ o.value=other?MYBANK.name:''; o.classList.toggle('hidden', !other); }
+    if($('ebAcct')) $('ebAcct').value=String(MYBANK.acct||'').replace(/^'/,'');
+    if($('ebOwner')) $('ebOwner').value=MYBANK.owner||'';
+  }
+  window.expUseMyBank=expUseMyBank;
   /** ตรวจ checksum เลขบัตร ปชช ไทย 13 หลัก (จับพิมพ์ผิด/มั่ว · ฟรี · ด่านจริงอยู่ backend) */
   function validThaiId(id){
     var s=String(id||'').replace(/\D/g,''); if(s.length!==13) return false;
@@ -6679,12 +6689,11 @@
     var type=$('eType').value, amt=$('eAmt').value, detail=$('eDetail').value.trim();
     if(!(parseFloat(amt)>0)){ mErr('กรอกจำนวนเงินก่อนค่ะ'); return; }
     if(!detail){ mErr('กรอกรายละเอียดก่อนค่ะ'); return; }
-    // ใบที่โอนคืนเข้าบัญชีพนักงาน (ไม่ใช่ RV) ต้องมีบัญชีก่อน — ด่านจริงอยู่ backend อันนี้กันเสียเวลาอัปรูป
-    if(EXP_PROOF!=='rv' && !HAS_BANK){
-      mErr('กรอกบัญชีรับโอนคืนก่อนค่ะ (ปุ่ม 🏦 บัญชีรับโอนของฉัน)'); return;
-    }
     var p={action:'waExpCreate',uid:UID,type:type,amount:amt,detail:detail};
     if(EXP_PROOF!=='rv'){
+      /* บัญชีรับโอนของใบนี้ (ผู้เบิกระบุเอง) — ใบ RV ใช้บัญชีผู้รับเงินในฟอร์ม RV แทน */
+      var eb=readBank('eb','บัญชีรับโอน'); if(!eb) return;
+      p.payBankName=eb.name; p.payBankAcct=eb.acct; p.payBankOwner=eb.owner;
       var vd=(($('eVendor')||{}).value||'').trim();
       if(!vd && EXP_PROOF!=='sr'){ mErr('กรอกชื่อร้านค้า/ผู้ขายก่อนค่ะ (ชื่อบนใบเสร็จหรือใบวางบิล)'); return; }
       p.vendor=vd;
@@ -12264,7 +12273,7 @@
      [x.whtLink,    '🧾 50 ทวิ '+(x.whtNo||''), 'ฉบับบริษัท'],
      [x.whtPayeeLink,'🧾 50 ทวิ '+(x.whtNo||''), 'ฉบับผู้รับเงิน'],
      [x.dossier,    '🗂️ แฟ้มครบชุด', 'รวมทุกใบเป็นเล่มเดียว'],
-     [x.paidSlip,   '💸 สลิปโอนคืน', 'หลักฐานการโอน']].forEach(function(p){
+     [x.paidSlip,   '💸 สลิปโอนเงิน', 'หลักฐานการโอน']].forEach(function(p){
       if(p[0]) EXD_FILES.push({ url:p[0], label:p[1], sub:p[2] });
     });
     var files=EXD_FILES.map(function(f,i){
@@ -12394,9 +12403,9 @@
                   '<option value="sr"'+(proofIsSr?' selected':'')+'>📄 บิลไม่ได้ออกในนามบริษัท / ไม่มีใบเสร็จ → ออกใบรับรองแทนใบเสร็จ</option>'+
                   '<option value="adv"'+(proofIsAdv?' selected':'')+'>⏳ จ่ายก่อน · ใบเสร็จตามมา</option>'+
                 '</select></div>')+
-            /* บัญชีรับโอน 3 ช่อง (พี่กี้ขอแยก 24 ก.ย. 69) · ใบ RV แก้ได้ (บัญชีคนนอก) ·
-               ใบพนักงาน = บัญชีจากข้อมูลพนักงาน อ่านอย่างเดียว (แก้ที่ ⚙️ ตั้งค่าของฉัน แล้วใบที่ยังไม่จ่ายตามให้เอง) */
-            (rv
+            /* บัญชีรับโอน 3 ช่อง (พี่กี้ขอแยก 24 ก.ย. 69) · 25 ก.ย. 69: ผู้เบิกระบุบัญชีเองต่อใบ
+               (อาจเป็นบัญชีร้านค้า ไม่ใช่บัญชีพนักงาน) → แก้ได้ทุกใบจนกว่าจะจ่าย · จ่ายแล้วอ่านอย่างเดียว (ต้องตรงกับที่โอนจริง) */
+            ((rv||!paid)
               ? '<div class="sf-f wide" id="exdPbBox" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 18px">'+
                   bankFields('exdPb', { name:x.bankName||'', acct:acctClean, owner:x.bankOwner||'' }, 'บัญชีรับโอน — ')+'</div>'
               : ro('ธนาคาร', x.bankName, 'c4')+ro('เลขที่บัญชี', acctClean, 'c4')+ro('ชื่อบัญชี', x.bankOwner, 'c4'))+
@@ -12422,8 +12431,9 @@
         '<div><div class="sf-tot">'+
           '<div class="r grand"><span>จำนวนเงินทั้งสิ้น</span><b>'+money(amtNum)+'</b></div>'+
           (x.whtRate?'<div class="r"><span>หัก ณ ที่จ่าย '+x.whtRate+'%</span><b>− '+money(whtNum)+'</b></div>':'')+
-          '<div class="r"><span>'+(rv?'ยอดที่ต้องโอน':'โอนคืนพนักงาน')+'</span><b>'+money(x.netAmt||amtNum)+'</b></div>'+
-          meta('ผู้เบิก', esc(x.nick||''))+
+          /* 🔴 25 ก.ย. 69 (พี่กี้) ตัดบรรทัด "โอนคืนพนักงาน" + "ผู้เบิก" — เงินอาจโอนเข้าบัญชีร้านค้า ไม่ใช่คืนพนักงาน
+             และชื่อผู้ทำรายการอยู่ในช่องลงนามบน PDF แล้ว · เหลือ "ยอดที่ต้องโอน" เฉพาะตอนยอดโอนไม่เท่ายอดรวม (มีหัก ณ ที่จ่าย) */
+          ((rv||x.whtRate)?'<div class="r"><span>ยอดที่ต้องโอน</span><b>'+money(x.netAmt||amtNum)+'</b></div>':'')+
           meta('ผู้อนุมัติ', esc(x.approver||''))+
           meta('วันที่จ่าย', esc(x.payDate||''))+
           meta('แบบยื่น', esc(x.formType||''))+
@@ -12434,7 +12444,7 @@
       '<div class="sf-card"><div class="sf-h">📎 เอกสารแนบ'+(EXD_FILES.length?' ('+EXD_FILES.length+')':'')+'</div>'+
         '<div class="exd-files">'+files+'</div>'+
         '<div class="exd-upload" style="margin-top:12px">'+imgsFldHtml('exdRcp','📎 เปลี่ยนไฟล์แนบ (เว้นว่าง = ใช้ไฟล์เดิม)')+'</div>'+
-        (paid?'<div class="exd-upload">'+imgsFldHtml('exdSlip','💸 เปลี่ยนสลิปโอนคืน (เว้นว่าง = ใช้ของเดิม)')+'</div>':'')+
+        (paid?'<div class="exd-upload">'+imgsFldHtml('exdSlip','💸 เปลี่ยนสลิปโอนเงิน (เว้นว่าง = ใช้ของเดิม)')+'</div>':'')+
       '</div>'+
 
       /* แถบปุ่มล่างติดขอบจอ — ชุดเดียวกับหน้าใบสั่งจ่าย (งานของใบจบได้ในหน้าเดียว) */
@@ -12504,11 +12514,17 @@
       if(en!==String(x.entity||'')) ed.entity=en;
     }
 
+    var ob=String(x.bankAcct||'').replace(/^'/,'');
+    var nb=$('exdPbBank') ? { name:(($('exdPbBank')||{}).value||''), acct:val('exdPbAcct'), owner:val('exdPbOwner') } : null;
+    var bankChanged=!!nb && (nb.acct.replace(/\D/g,'')!==ob.replace(/\D/g,'') || nb.owner!==String(x.bankOwner||'') || (nb.name&&nb.name!==String(x.bankName||'')));
+    if(!$('exdPayee') && bankChanged){
+      /* ใบพนักงาน (25 ก.ย. 69): แก้บัญชีรับโอนของใบนี้อย่างเดียว — ไม่แตะบัญชีในข้อมูลพนักงาน */
+      var bk=readBank('exdPb','บัญชีรับโอน'); if(!bk) return;
+      jobs.push({ name:'บัญชีรับโอน',
+        req:{action:'waPoPayee',uid:UID,no:no,bankOnly:'1',payeeBankName:bk.name,payeeBankAcct:bk.acct,payeeBankOwner:bk.owner} });
+    }
     if($('exdPayee')){
       var pn=val('exdPayee'), pi=val('exdPayeeId'), pa=val('exdPayeeAddr');
-      var ob=String(x.bankAcct||'').replace(/^'/,'');
-      var nb=$('exdPbBank') ? { name:(($('exdPbBank')||{}).value||''), acct:val('exdPbAcct'), owner:val('exdPbOwner') } : null;
-      var bankChanged=!!nb && (nb.acct.replace(/\D/g,'')!==ob.replace(/\D/g,'') || nb.owner!==String(x.bankOwner||'') || (nb.name&&nb.name!==String(x.bankName||'')));
       if(pn!==String(x.payeeName||'') || pi!==String(x.payeeId||'').replace(/^'/,'') || pa!==String(x.payeeAddr||'') || bankChanged){
         /* 🐞 หลังบ้านบังคับบัญชีผู้รับเงินครบทุกครั้ง — เดิมไม่ส่ง = แก้ผู้รับเงินจากฟอร์มไม่ผ่านเลย */
         var pb=readBank('exdPb','บัญชีผู้รับเงิน'); if(!pb) return;
@@ -23933,7 +23949,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260924-2127';
+  var APP_BUILD='20260924-2141';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
