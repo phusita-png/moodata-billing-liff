@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260924-0923">
+<link rel="stylesheet" href="user.css?v=20260924-1023">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -699,6 +699,11 @@
   .sf-items input,.sf-items select{ width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid var(--line);
     border-radius:8px; font-family:inherit; font-size:14px; background:#fff; }
   .sf-items .sf-del{ width:auto; border:none; background:none; color:#C0490F; font-size:16px; cursor:pointer; padding:4px 8px; }
+  /* ใบกำกับแยกบรรทัด (ใบรวมหลายใบแจ้งหนี้ · ขั้น C 24 ก.ย. 69) */
+  .sf-items .pi-inv{ display:grid; grid-template-columns:minmax(0,1fr) 140px; gap:6px; margin-top:6px; }
+  .sf-items .pi-own{ font-size:12px; margin-top:4px; padding:0; }
+  .pi-more{ margin-top:12px; font-size:13px; color:#5B6472; }
+  .pi-more summary{ cursor:pointer; font-weight:600; }
   .sf-sum{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,360px); gap:18px; align-items:start; }
   .sf-tot{ border:1px solid var(--line); border-radius:14px; overflow:hidden; }
   .sf-tot .r{ display:flex; justify-content:space-between; gap:12px; padding:10px 16px; font-size:14px; }
@@ -7983,129 +7988,173 @@
   window.renderWhtInMatch=renderWhtInMatch; window.wiSetMonth=wiSetMonth; window.wiSetEnt=wiSetEnt;
   window.wiUpload=wiUpload; window.wiSaveCert=wiSaveCert; window.wiSheet=wiSheet;
 
-  /* ═══════════ 📋 รายการย่อยใบสั่งจ่าย + สรุปเอกสารเบิกจ่าย (เฟส F) ═══════════
-     1 การจ่าย = ใบแจ้งหนี้ของผู้ขายหลายใบ → ตารางรายการ + ออก PDF สรุปให้แนบใบ
-     ⚠️ ยอดใบสั่งจ่ายถูกเขียนทับด้วยผลรวมรายการเสมอ (backend) — ที่นี่แค่โชว์ยอดให้เห็นก่อนบันทึก */
-  var PI_NO='', PI_ROWS=[], PI_VAT=7;
-  function piBlank(){ return { docNo:'', docDate:'', ref:'', detail:'', qty:'', unitPrice:'', base:'', vat:'' }; }
-  function piCalc(x){
-    var qty=Number(x.qty)||0, up=Number(x.unitPrice)||0;
-    var base=(String(x.base||'').trim()==='')?r2(qty*up):(Number(x.base)||0);
-    var vat=(String(x.vat||'').trim()==='')?r2(base*PI_VAT/100):(Number(x.vat)||0);
-    return { base:base, vat:vat, total:r2(base+vat) };
+  /* ═══════════ 📋 รายการใบสั่งจ่าย — ตารางแบบใบเสนอราคา (spec-po-unify ขั้น C · 24 ก.ย. 69) ═══════════
+     คอลัมน์: # · รหัส (ประเภทค่าใช้จ่าย) · ค่าใช้จ่าย/สินค้า · คำอธิบาย · จำนวน · ราคา/หน่วย · จำนวนเงิน
+     🔴 VAT คิดจาก "ประเภทราคา" ของทั้งใบเหมือนใบเสนอราคา (เลิกช่องฐาน/VAT รายบรรทัด)
+        บริษัทไม่ได้จด VAT = ไม่มีภาษีเสมอ · ส่งฐาน/VAT ที่คิดแล้วไปหลังบ้าน (savePayoutItems_ ใช้ตามที่ส่ง)
+     🔴 เลขที่/วันที่ใบกำกับ: มุมขวาบน = ค่าตั้งต้นของทุกบรรทัด · ใบที่รวมหลายใบแจ้งหนี้
+        กรอกแยกใต้คำอธิบายของบรรทัดนั้น (พี่กี้เคาะ ก.) — รายงานภาษีซื้อแตกบรรทัดจากตรงนี้เหมือนเดิม */
+  var PI_NO='', PI_ROWS=[], PI_VAT=7, PI_HDR={no:'',date:''};
+  function piBlank(){ return { docNo:'', docDate:'', ref:'', detail:'', note:'', qty:'1', unitPrice:'', own:false }; }
+  /** ประเภทราคาที่ใช้คิดจริง — บริษัทไม่ได้จด VAT = ไม่มีภาษี (ด่านจริงอยู่หลังบ้าน) */
+  function piMode(){
+    var pm=(($('poPm')||{}).value)||'none';
+    var ent=((PO&&PO.entities)||[]).filter(function(e){ return e.code===((($('poEnt')||{}).value)||''); })[0];
+    if(ent && ent.vatReg===false) pm='none';
+    return pm;
   }
-  function piSum(){
-    var s={base:0,vat:0,total:0};
-    PI_ROWS.forEach(function(x){ var c=piCalc(x); s.base+=c.base; s.vat+=c.vat; s.total+=c.total; });
-    var el=$('piSum'); if(!el) return;
-    if(!PI_ROWS.length){ el.innerHTML=''; return; }
-    el.innerHTML='<b>รวม '+PI_ROWS.length+' ฉบับ · มูลค่าก่อนภาษี '+money(s.base)+
-      ' · VAT '+money(s.vat)+' · จำนวนเงินทั้งสิ้น '+money(s.total)+' บาท</b>';
+  /** เงินของ 1 บรรทัดตามประเภทราคา → { amt, base, vat, total } */
+  function piCalc(x, mode){
+    var q=parseFloat(String(x.qty==null||x.qty===''?'1':x.qty).replace(/,/g,''))||0;
+    var up=parseFloat(String(x.unitPrice||'0').replace(/,/g,''))||0;
+    var amt=r2(q*up), m=mode||piMode(), rt=PI_VAT;
+    if(m==='excl'){ var v=r2(amt*rt/100); return { amt:amt, base:amt, vat:v, total:r2(amt+v) }; }
+    if(m==='incl'){ var b=r2(amt*100/(100+rt)); return { amt:amt, base:b, vat:r2(amt-b), total:amt }; }
+    return { amt:amt, base:amt, vat:0, total:amt };
   }
   /** อ่านค่าที่พิมพ์อยู่ในตารางกลับเข้า PI_ROWS (เรียกก่อนวาดใหม่/ก่อนบันทึก) */
   function piRead(){
     PI_ROWS.forEach(function(x,i){
-      ['docNo','docDate','ref','detail','qty','unitPrice','base','vat'].forEach(function(k){
+      ['ref','detail','note','qty','unitPrice','docNo','docDate'].forEach(function(k){
         var el=$('pi_'+k+'_'+i); if(el) x[k]=el.value;
       });
     });
   }
   function piAdd(){ piRead(); PI_ROWS.push(piBlank()); piPaint(); }
   function piDel(i){ piRead(); PI_ROWS.splice(i,1); if(!PI_ROWS.length) PI_ROWS.push(piBlank()); piPaint(); }
-  function piChange(){ piRead(); piSum(); if(VIEW==='poform') poCalc(); }
+  function piOwn(i){ piRead(); PI_ROWS[i].own=true; piPaint(); }
+  function piChange(){ piRead(); if(VIEW==='poform') poCalc(); }
+  /** เปลี่ยนเลข/วันที่ใบกำกับมุมขวาบน = ค่าตั้งต้นของบรรทัดที่ไม่ได้แยกใบ */
+  function poInvSync(){ PI_HDR.no=((($('poInvNo')||{}).value)||'').trim(); PI_HDR.date=(($('poInvDate')||{}).value)||''; }
   function piPaint(){
-    var body=PI_ROWS.map(function(x,i){
+    var box=$('piBox'); if(!box) return;
+    var types=((PO&&PO.types)||[]).map(function(t){
+      return '<option value="'+esc(t.label)+'"></option>'; }).join('');
+    var many=PI_ROWS.length>1;
+    var rows=PI_ROWS.map(function(x,i){
       var c=piCalc(x);
+      /* ใบกำกับของบรรทัดนี้ — แสดงเฉพาะบรรทัดที่แยกใบ (ใบรวมหลายใบแจ้งหนี้) */
+      var inv = x.own
+        ? '<div class="pi-inv"><input id="pi_docNo_'+i+'" placeholder="เลขที่ใบกำกับของบรรทัดนี้" value="'+esc(x.docNo||'')+'" onchange="piChange()">'+
+            '<input id="pi_docDate_'+i+'" type="date" value="'+esc(x.docDate||'')+'" onchange="piChange()"></div>'
+        : (poCanType()?'<button class="lnk pi-own" onclick="piOwn('+i+')">+ ใบกำกับคนละใบ</button>':'');
       return '<tr>'+
-        '<td>'+(i+1)+'</td>'+
-        '<td><input id="pi_docNo_'+i+'" value="'+esc(x.docNo||'')+'" placeholder="IV-xxx" style="width:110px" onchange="piChange()"></td>'+
-        '<td><input id="pi_docDate_'+i+'" type="date" value="'+esc(x.docDate||'')+'" style="width:130px" onchange="piChange()"></td>'+
-        '<td><input id="pi_ref_'+i+'" value="'+esc(x.ref||'')+'" placeholder="รหัส" style="width:110px" onchange="piChange()"></td>'+
-        '<td><input id="pi_detail_'+i+'" value="'+esc(x.detail||'')+'" style="width:160px" onchange="piChange()"></td>'+
-        '<td><input id="pi_qty_'+i+'" type="number" value="'+esc(x.qty||'')+'" style="width:64px" onchange="piChange()"></td>'+
-        '<td><input id="pi_unitPrice_'+i+'" type="number" value="'+esc(x.unitPrice||'')+'" style="width:74px" onchange="piChange()"></td>'+
-        '<td><input id="pi_base_'+i+'" type="number" value="'+esc(x.base||'')+'" placeholder="'+c.base+'" style="width:88px" onchange="piChange()"></td>'+
-        '<td><input id="pi_vat_'+i+'" type="number" value="'+esc(x.vat||'')+'" placeholder="'+c.vat+'" style="width:74px" onchange="piChange()"></td>'+
-        '<td class="ta-r dt-nw">'+money(c.total)+'</td>'+
-        '<td><a class="ex-lk" href="#" onclick="piDel('+i+');return false">🗑️</a></td></tr>';
-    }).join('');
-    var el=$('piBody'); if(el) el.innerHTML=body;
-    piSum();
-    /* ตารางอยู่บนหน้าใบ = ยอดสรุปด้านล่างต้องขยับตามทันที */
+        '<td class="dt-nw" style="color:#8A94A6">'+(i+1)+'</td>'+
+        '<td><input id="pi_ref_'+i+'" list="piTypeList" placeholder="ประเภท" value="'+esc(x.ref||'')+'" onchange="piChange()" autocomplete="off"></td>'+
+        '<td><input id="pi_detail_'+i+'" placeholder="ค่าใช้จ่าย / สินค้า" value="'+esc(x.detail||'')+'" onchange="piChange()"></td>'+
+        '<td><input id="pi_note_'+i+'" placeholder="คำอธิบายที่พิมพ์บนเอกสาร" value="'+esc(x.note||'')+'" onchange="piChange()">'+inv+'</td>'+
+        '<td><input id="pi_qty_'+i+'" inputmode="decimal" value="'+esc(x.qty==null?'1':x.qty)+'" oninput="piChange()"></td>'+
+        '<td><input id="pi_unitPrice_'+i+'" inputmode="decimal" placeholder="0.00" value="'+esc(x.unitPrice||'')+'" oninput="piChange()"></td>'+
+        '<td class="dt-amt" id="pi_amt_'+i+'">'+(c.amt?money(c.amt):'—')+'</td>'+
+        '<td class="dt-nw">'+((many&&poCanType())?'<button class="sf-del" title="ลบบรรทัดนี้" onclick="piDel('+i+')">✕</button>':'')+'</td>'+
+        '</tr>';
+    });
+    box.innerHTML='<datalist id="piTypeList">'+types+'</datalist><div class="sf-items">'+dtTable([
+      {label:'#',cls:'dt-nw',w:'38px'},{label:'รหัส',cls:'dt-nw',w:'15%'},{label:'ค่าใช้จ่าย/สินค้า',w:'22%'},
+      {label:'คำอธิบาย'},{label:'จำนวน',cls:'dt-nw',w:'8%'},{label:'ราคา/หน่วย',cls:'dt-nw',w:'12%'},
+      {label:'จำนวนเงิน',cls:'ta-r',w:'12%'},{label:'',w:'44px'}], rows, '', 'ยังไม่มีรายการ')+'</div>';
     if(VIEW==='poform') poCalc();
-    /* 🔒 ตารางวาดใหม่ทีหลัง (รายการโหลดแบบไม่รอ) — ต้องล็อกซ้ำเอง
-       ไม่งั้นช่องในตารางยังพิมพ์ได้ทั้งที่ยังไม่กด "แก้ไข" */
-    if(el && VIEW==='poform' && typeof poCanType==='function' && !poCanType()){
-      Array.prototype.forEach.call(el.querySelectorAll('input,select'), function(i){ i.disabled=true; });
-      Array.prototype.forEach.call(el.querySelectorAll('a'), function(a){ a.style.display='none'; });
+    /* 🔒 ตารางวาดใหม่ทีหลัง (รายการโหลดแบบไม่รอ) — ต้องล็อกซ้ำเอง */
+    if(VIEW==='poform' && typeof poCanType==='function' && !poCanType()){
+      Array.prototype.forEach.call(box.querySelectorAll('input,select'), function(el){ el.disabled=true; });
     }
   }
-  /** บรรทัดที่กรอกจริง (มีเลขที่เอกสารหรือรายละเอียด) — บรรทัดว่างไม่นับ */
+  /** บรรทัดที่กรอกจริง — บรรทัดว่างไม่นับ */
   function piFilled(){
     piRead();
-    return PI_ROWS.filter(function(x){ return String(x.docNo||'').trim()||String(x.detail||'').trim(); });
+    return PI_ROWS.filter(function(x){
+      return String(x.detail||'').trim() || String(x.ref||'').trim() || piCalc(x).amt>0;
+    });
   }
   /** ผลรวมของรายการที่กรอกจริง (ฐาน · VAT · รวมทั้งสิ้น) */
   function piTotals(){
-    var s={base:0,vat:0,total:0};
-    piFilled().forEach(function(x){ var c=piCalc(x); s.base=r2(s.base+c.base); s.vat=r2(s.vat+c.vat); s.total=r2(s.total+c.total); });
+    var s={base:0,vat:0,total:0}, m=piMode();
+    piFilled().forEach(function(x){ var c=piCalc(x,m); s.base=r2(s.base+c.base); s.vat=r2(s.vat+c.vat); s.total=r2(s.total+c.total); });
     return s;
   }
+  /** รายการที่จะส่งหลังบ้าน — ฐาน/VAT คิดแล้ว · บรรทัดที่ไม่ได้แยกใบ = ใช้ใบกำกับมุมขวาบน */
+  function piPayload(){
+    var m=piMode(); poInvSync();
+    return piFilled().map(function(x){
+      var c=piCalc(x,m), q=parseFloat(String(x.qty||'1').replace(/,/g,''))||1;
+      var own=x.own && String(x.docNo||'').trim();
+      return { docNo: own?String(x.docNo).trim():PI_HDR.no, docDate: own?(x.docDate||''):PI_HDR.date,
+        ref:String(x.ref||'').trim(), detail:String(x.detail||'').trim()||String(x.ref||'').trim(),
+        note:String(x.note||'').trim(), qty:q, unitPrice:r2(c.base/q), base:c.base, vat:c.vat };
+    });
+  }
 
-  /* 📋 การ์ด "รายการ" บนหน้าใบสั่งจ่าย (spec-po-form.md ขั้น 2)
-     เดิมอยู่ในเมนูแยก "รายการย่อย" ต้องเปิดอีกหน้า — พี่กี้สั่งให้รวมมาหน้าเดียวแบบใบเสนอราคา
-     🔴 ใช้ตาราง/สูตรตัวเดียวกับของเดิม (piPaint/piCalc) ไม่แตกตัวที่สอง */
+  /* 📋 การ์ด "รายการ" บนหน้าใบสั่งจ่าย — ตารางตัวเดียวทั้งใบบริษัท (ใบพนักงานใช้บรรทัดเดียว) */
   function poItemsCardHtml(){
     return '<div class="sf-card"><div class="sf-h">📋 รายการ</div>'+
-      '<div class="m-hint" style="margin:0 0 8px">ใบจ่าย 1 ใบที่รวมใบแจ้งหนี้ผู้ขายหลายฉบับ — กรอกที่นี่แล้ว'+
-        'ยอดในใบจะเท่ากับผลรวมเสมอ · จ่ายรายการเดียวไม่ต้องกรอก ใช้ช่องจำนวนเงินข้างล่างพอค่ะ</div>'+
-      '<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
-        '<th>#</th><th>เลขที่เอกสาร</th><th>วันที่</th><th>รหัสค่าใช้จ่าย / สินค้า</th><th>รายละเอียด</th>'+
-        '<th>จำนวน</th><th>ราคา/หน่วย</th><th>มูลค่าก่อนภาษี</th><th>VAT</th><th>รวม</th><th></th>'+
-        '</tr></thead><tbody id="piBody"></tbody></table></div>'+
-      '<div class="m-hint" id="piSum"></div>'+
-      (poCanType()?'<div class="tax-acts"><button class="btn btn-ghost" onclick="piAdd()">➕ เพิ่มรายการ</button></div>':'')+
-      '<div class="sf-grid" id="piOpts">'+
+      '<div id="piBox"></div>'+
+      (poCanType()?'<div class="tax-acts" style="margin:12px 0 0">'+
+        '<button class="btn btn-ghost" style="flex:none;width:auto;padding:9px 16px" onclick="piAdd()">+ เพิ่มรายการ</button></div>':'')+
+      /* ตั้งค่าเอกสาร "สรุปเอกสารเบิกจ่าย" (ใช้กับใบที่รวมหลายใบแจ้งหนี้) — พับไว้ ไม่รกหน้า */
+      '<details class="pi-more" id="piOpts"><summary>ตั้งค่าเอกสารสรุปเบิกจ่าย</summary><div class="sf-grid" style="margin-top:10px">'+
         '<div class="sf-f c4"><label>ชื่อหัวคอลัมน์รหัสบนเอกสาร</label>'+
-          '<input id="piRefLabel" placeholder="เช่น Domain / โครงการ / ทะเบียนรถ"></div>'+
+          '<input id="piRefLabel" placeholder="เช่น Domain / โครงการ"></div>'+
         '<div class="sf-f c4"><label>หน่วยของช่องจำนวน</label>'+
           '<input id="piUnit" placeholder="เช่น คน / ชิ้น / เดือน"></div>'+
         '<div class="sf-f wide"><label>หมายเหตุท้ายเอกสารสรุป</label>'+
-          '<textarea id="piNote" rows="2" placeholder="ระบบเติมให้อยู่แล้ว: จำนวนรวม · ภาษีหัก ณ ที่จ่าย · บัญชีที่ชำระ"></textarea></div>'+
-      '</div></div>';
+          '<textarea id="piNote" rows="2"></textarea></div>'+
+      '</div></details>'+
+      '<div id="piSum" class="sf-note" style="margin-top:6px"></div></div>';
   }
-  /** โหลดรายการย่อยของใบที่เปิดอยู่ (ใบใหม่ = เริ่มจากตารางว่าง) */
-  function poItemsLoad(){
-    if(!PO_EDIT){ if(!PI_LOADED){ PI_NO=''; PI_ROWS=[]; PI_LOADED=true; } piPaint(); poItemsOpts(null); return; }
+  /** โหลดรายการของใบที่เปิดอยู่ · ใบที่ยังไม่มีรายการ = 1 บรรทัดจากตัวใบ (ยอด/ประเภท/รายละเอียดเดิม) */
+  function poItemsLoad(cur){
+    function fromDoc(){
+      if(!cur) return [piBlank()];
+      var t=((PO&&PO.types)||[]).filter(function(x){ return x.label===cur.type || x.key===cur.type; })[0];
+      return [{ docNo:'', docDate:'', ref:t?t.label:(cur.type||''), detail:cur.detail||'', note:'',
+        qty:'1', unitPrice:String(poAmtInput(cur)||''), own:false }];
+    }
+    if(!PO_EDIT){ if(!PI_LOADED){ PI_NO=''; PI_ROWS=[piBlank()]; PI_LOADED=true; } piPaint(); poItemsOpts(null); return; }
     if(PI_LOADED && PI_NO===PO_EDIT){ piPaint(); return; }
     PI_NO=PO_EDIT;
+    PI_ROWS=fromDoc(); piPaint();
     jsonp({action:'waPoItems',uid:UID,no:PO_EDIT}).then(function(r){
-      if(!r||!r.ok){ PI_ROWS=[]; PI_LOADED=true; piPaint(); return; }
-      PI_VAT=Number(r.vatRate)||7;
-      PI_ROWS=(r.items||[]).map(function(x){
-        return { docNo:x.docNo, docDate:x.docDate, ref:x.ref, detail:x.detail,
-          qty:x.qty||'', unitPrice:x.unitPrice||'', base:x.base||'', vat:x.vat||'' };
-      });
       PI_LOADED=true;
+      if(!r||!r.ok||!(r.items||[]).length){ if(VIEW==='poform'&&PO_TAB==='doc') piPaint(); return; }
+      PI_VAT=Number(r.vatRate)||7;
+      /* เลขใบกำกับที่ทุกบรรทัดใช้ร่วมกัน = ขึ้นมุมขวาบน · บรรทัดที่ต่างจากนั้น = แยกใบ */
+      var nos={}; (r.items||[]).forEach(function(x){ nos[String(x.docNo||'')]=true; });
+      var keys=Object.keys(nos), same=(keys.length===1)?keys[0]:'';
+      var first=(r.items||[])[0]||{};
+      if(same){ PI_HDR.no=same; PI_HDR.date=piIso(first.docDate);
+        if($('poInvNo')) $('poInvNo').value=PI_HDR.no; if($('poInvDate')) $('poInvDate').value=PI_HDR.date; }
+      PI_ROWS=(r.items||[]).map(function(x){
+        var own=!same && !!x.docNo;
+        var q=Number(x.qty)||1, up=Number(x.unitPrice)||0;
+        /* ใบเก่าที่กรอกแต่ฐาน (ไม่มีจำนวน/ราคา) → ราคาต่อหน่วย = ยอดตามประเภทราคาของใบ */
+        if(!up){ var pm=piMode(); up=(pm==='excl'||pm==='none')?(Number(x.base)||0):(Number(x.total)||Number(x.base)||0); q=1; }
+        return { docNo:x.docNo||'', docDate:piIso(x.docDate), ref:x.ref||'', detail:x.detail||'', note:x.note||'',
+          qty:String(q), unitPrice:String(up), own:own };
+      });
       if(VIEW!=='poform'||PO_TAB!=='doc') return;
       piPaint(); poItemsOpts(r); poCalc();
-      /* ใบที่มีเอกสารสรุปแล้ว ให้เปิดดูได้จากหน้าใบเลย ไม่ต้องย้อนไปหน้าทะเบียน */
       if(r.summaryLink){
         var el=$('piSum');
-        if(el) el.innerHTML+=' · <a class="ex-lk" href="'+esc(r.summaryLink)+'" target="_blank">📄 เปิดสรุปเอกสารเบิกจ่าย</a>';
+        if(el) el.innerHTML='<a class="ex-lk" href="'+esc(r.summaryLink)+'" target="_blank">📄 เปิดสรุปเอกสารเบิกจ่าย</a>';
       }
-      if(PO_VIEW) Array.prototype.forEach.call(document.querySelectorAll('#piBody input,#piOpts input,#piOpts textarea'),
+      if(!poCanType()) Array.prototype.forEach.call(document.querySelectorAll('#piOpts input,#piOpts textarea'),
         function(el){ el.disabled=true; });
     }).catch(function(){ PI_LOADED=true; piPaint(); });
+  }
+  /** วันที่จากหลังบ้าน (Date/ISO/ข้อความ) → yyyy-MM-dd ให้ช่องวันที่ */
+  function piIso(v){
+    if(!v) return '';
+    if(/^\d{4}-\d{2}-\d{2}$/.test(String(v))) return String(v);
+    var d=new Date(v); if(isNaN(d.getTime())) return '';
+    return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
   }
   function poItemsOpts(r){
     [['piRefLabel',r?r.refLabel:''],['piUnit',r?r.unitLabel:''],['piNote',r?r.note:'']].forEach(function(f){
       var el=$(f[0]); if(el) el.value=f[1]||'';
     });
   }
-  /** บันทึกรายการย่อย (เรียกต่อจากบันทึกใบ — ใบต้องมีเลขก่อน) */
-  function poItemsSave(no){
-    var items=piFilled();
+  /** บันทึกรายการ (เรียกต่อจากบันทึกใบ — ใบต้องมีเลขก่อน) */
+  function poItemsSave(no, items){
     callBusy('กำลังบันทึกรายการ…', jsonpPost({action:'waPoItemsSave',uid:UID,no:no,
       items:JSON.stringify(items), refLabel:(($('piRefLabel')||{}).value||''),
       unitLabel:(($('piUnit')||{}).value||''), note:(($('piNote')||{}).value||'')})).then(function(r){
@@ -8114,7 +8163,7 @@
       PO_EDIT=''; PI_LOADED=false; PI_ROWS=[]; renderPayout();
     }).catch(function(e){ toast(e.message); PO_EDIT=''; PI_LOADED=false; renderPayout(); });
   }
-  window.poItemsCardHtml=poItemsCardHtml;
+  window.poItemsCardHtml=poItemsCardHtml; window.piOwn=piOwn; window.poInvSync=poInvSync;
 
   /* โมดัล "รายการย่อย" ถูกยกเลิก — ตารางไปอยู่ในหน้าใบแล้ว (spec-po-form.md ขั้น 2)
      เก็บไว้ 2 ที่ = วันหนึ่งจะแก้ที่เดียวแล้วอีกที่ค้าง */
@@ -10442,102 +10491,91 @@
     } else {
       h+='<div class="pg-title" style="margin:0 0 12px"><h2>สร้างใบสั่งจ่าย</h2></div>';
     }
+    /* 🔴 spec-po-unify ขั้น C (24 ก.ย. 69) — โครงเดียวกับใบเสนอราคาทุกการ์ด
+       ① ข้อมูลเอกสาร (มุมขวาบน = วันที่เอกสาร + เลขที่/วันที่ใบกำกับ) ② รายการ ③ สรุปยอด
+       ประเภทค่าใช้จ่ายย้ายเป็นช่อง "รหัส" ในตาราง · งวด/รายละเอียด ไปอยู่หมายเหตุ (พี่กี้เคาะ ข.) */
+    var typeKey=poTypeKeyOf(cur?cur.type:'')||(((PO.types||[])[0]||{}).key||'');
     h+='<div id="mErr" class="m-err hidden"></div>'+
-
-      /* ① ข้อมูลเอกสาร — ช่องชุดเดียวกับใบเสนอราคา เปลี่ยน "ลูกค้า" เป็น "ผู้ขาย"
-         (พี่กี้ 23 ก.ย. 69: "หน้านี้ข้อมูลรูปแบบเหมือนกันเลย เปลี่ยนลูกค้าเป็นผู้ขาย
-          เอาชื่อร้าน ชื่อคน ชื่อบริษัทที่เราจะจ่ายมาใส่ได้หมด") */
       '<div class="sf-card"><div class="sf-h">🧾 ข้อมูลเอกสาร'+poEditBtn()+poStatusBadge(cur)+'</div>'+
         '<div class="sf-grid">'+
           (((PO.entities||[]).length>1)
-            ? ('<div class="sf-f c4"><label>บริษัทผู้จ่าย</label><select id="poEnt">'+entOpts+'</select>'+
-               '<div class="sf-note">บริษัทที่เลือกเป็นตัวตัดสินว่ามี VAT 7% ไหม</div></div>')
+            ? ('<div class="sf-f wide"><label>บริษัทผู้จ่าย</label><select id="poEnt" onchange="poCalc()">'+entOpts+'</select></div>')
             : ('<input type="hidden" id="poEnt" value="'+esc((PO.entities&&PO.entities[0]&&PO.entities[0].code)||'')+'">'))+
           '<div class="sf-f c2"><label>รหัสผู้ขาย</label>'+
             '<input id="poVendorCode" placeholder="เช่น SUP-001" value="'+esc(cur?(cur.vendorCode||''):'')+'"></div>'+
           '<div class="sf-f c4"><label>ผู้ขาย</label>'+
-            '<input id="poVendor" placeholder="ชื่อร้าน · ชื่อคน · ชื่อบริษัทที่จ่ายให้" value="'+esc(cur?(cur.vendor||''):'')+'">'+
-            '<div class="sf-note">ขึ้นเป็นคู่ค้าบนเอกสาร · เว้นว่าง = ใช้ชื่อผู้รับเงินในสรุปยอด</div></div>'+
-          '<div class="sf-f c3"><label>เลขผู้เสียภาษี</label>'+
+            '<input id="poVendor" placeholder="ชื่อร้าน · ชื่อคน · ชื่อบริษัท" value="'+esc(cur?(cur.vendor||''):'')+'"></div>'+
+          '<div class="sf-f c2"><label>เลขผู้เสียภาษี</label>'+
             '<div style="display:flex;gap:6px">'+
-            '<input id="poVendorTax" type="tel" inputmode="numeric" maxlength="17" placeholder="13 หลัก (ถ้ามี)" '+
+            '<input id="poVendorTax" type="tel" inputmode="numeric" maxlength="17" placeholder="13 หลัก" '+
               'value="'+esc(cur?(cur.vendorTaxId||''):'')+'" style="flex:1;min-width:0">'+
             '<button class="btn btn-ghost" onclick="poVendorLookup()" title="ค้นจากกรมพัฒนาธุรกิจการค้า" '+
               'style="flex:none;width:auto;padding:0 12px">🔍</button></div></div>'+
-          '<div class="sf-f c3"><label>งวด / เดือนที่เกี่ยวข้อง</label>'+
-            '<input id="poPeriod" placeholder="เช่น ส.ค. 2569" value="'+esc(cur?cur.period:'')+'"></div>'+
+          /* วันที่เอกสาร = วันที่ตั้งเรื่อง (เลข PO กินตอนนั้น) — ยังไม่มีช่องแยกในชีต จึงอ่านอย่างเดียว */
+          '<div class="sf-f c2"><label>วันที่เอกสาร</label>'+
+            '<input value="'+esc(cur?poDateTh(cur.createdAt):poDateTh(new Date()))+'" readonly></div>'+
+          '<div class="sf-f c2"><label>เลขที่ใบกำกับ/ใบแจ้งหนี้</label>'+
+            '<input id="poInvNo" placeholder="เลขบนเอกสารผู้ขาย" oninput="poInvSync()"></div>'+
           '<div class="sf-f c6"><label>ที่อยู่ผู้ขาย</label>'+
             '<input id="poVendorAddr" placeholder="ที่อยู่ที่จะพิมพ์บนเอกสาร" value="'+esc(cur?(cur.vendorAddr||''):'')+'"></div>'+
-          '<div class="sf-f c3"><label>อีเมล</label>'+
+          '<div class="sf-f c2"><label>อีเมล</label>'+
             '<input id="poVendorEmail" placeholder="—" value="'+esc(cur?(cur.vendorEmail||''):'')+'"></div>'+
-          '<div class="sf-f c3"><label>เบอร์โทร</label>'+
+          '<div class="sf-f c2"><label>เบอร์โทร</label>'+
             '<input id="poVendorPhone" placeholder="—" value="'+esc(cur?(cur.vendorPhone||''):'')+'"></div>'+
-          '<div class="sf-f c4"><label>ประเภทค่าใช้จ่าย</label>'+
-            '<select id="poType" onchange="poTypeChange()">'+typeOpts+'</select></div>'+
-          /* ประเภทราคา — คำและตัวเลือกชุดเดียวกับฝั่งรายรับ
-             บริษัทไม่ได้จด VAT = บังคับ "ไม่มีภาษี" (ด่านจริงอยู่ที่ backend) */
-          '<div class="sf-f c4"><label>ประเภทราคา</label>'+
+          '<div class="sf-f c2"><label>วันที่ใบกำกับ</label>'+
+            '<input id="poInvDate" type="date"></div>'+
+          '<div class="sf-f c3"><label>ประเภทราคา</label>'+
             '<select id="poPm" onchange="poCalc()">'+pmOpts+'</select></div>'+
-          /* 🔗 อ้างอิง — ใบนี้ถูกดึงมาจากเอกสารไหน (ช่องเดียวกับฝั่งรายรับ)
-             อ่านอย่างเดียว: ความสัมพันธ์เกิดจากตอนตั้งเบิก ไม่ใช่ค่าที่พิมพ์เองได้ */
-          '<div class="sf-f c4"><label>อ้างอิง</label>'+
-            '<input value="'+esc(poRefOf(PO_EDIT)||'')+'" placeholder="— ไม่ได้ดึงจากเอกสารอื่น —" readonly>'+
-            '<div class="sf-note">ใบสรุปเบิกเงินสดย่อย (PC) หรือใบเบิกเดิมที่ย้ายมา</div></div>'+
-          '<div class="sf-f wide"><label>รายละเอียด (จ่ายค่าอะไร)</label>'+
-            '<textarea id="poDetail" rows="2" placeholder="เช่น ค่าเช่าออฟฟิศชั้น 2">'+esc(cur?cur.detail:'')+'</textarea></div>'+
+          '<div class="sf-f end3"><label>อ้างอิง</label>'+
+            '<input value="'+esc(poRefOf(PO_EDIT)||'')+'" placeholder="— ไม่ได้ดึงจากเอกสารอื่น —" readonly></div>'+
+          '<input type="hidden" id="poType" value="'+esc(typeKey)+'">'+
+          '<input type="hidden" id="poPeriod" value="'+esc(cur?cur.period:'')+'">'+
         '</div></div>'+
 
       poItemsCardHtml()+
 
-      /* ③ สรุปยอด — เงิน · ผู้รับเงิน · บัญชีที่ต้องโอน · ลายเซ็น
-         (พี่กี้: "เพิ่มบริเวณสรุปยอด ให้ใส่ข้อมูลบัญชีที่ต้องโอนเงินได้
-          ลงนามคนทำเอกสารจบ ถ้าพี่อนุมัติก็ลงนามอนุมัติ") */
-      '<div class="sf-card"><div class="sf-h">💰 สรุปยอด</div>'+
-        '<div class="sf-grid">'+
-          '<div class="sf-f c4"><label>จำนวนเงิน (บาท)</label>'+
-            '<input id="poAmt" type="number" inputmode="decimal" min="0" step="0.01" oninput="poCalc()" value="'+esc(cur?poAmtInput(cur):'')+'">'+
-            '<div class="sf-note" id="poAmtNote"></div></div>'+
-          '<div class="sf-f c4"><label>มาตราเงินได้ (หัก ณ ที่จ่าย)</label>'+
-            '<select id="poSect" onchange="poSectChange()">'+sectOpts+'</select></div>'+
-          '<div class="sf-f c4" id="poRateFld"><label>อัตราหัก %</label>'+
-            '<select id="poRate" onchange="poCalc()"></select></div>'+
-          '<div class="sf-f wide"><div id="poSum" class="m-hint" style="margin:0"></div></div>'+
+      '<div class="sf-card"><div class="sf-h">💰 สรุปยอด</div><div class="sf-sum">'+
+        '<div>'+
+          '<div class="sf-f"><label>หมายเหตุ (พิมพ์บนเอกสาร)</label>'+
+            '<textarea id="poDetail" placeholder="เช่น ค่าเช่าออฟฟิศ ก.ย. 2569">'+esc(cur?cur.detail:'')+'</textarea></div>'+
+          '<div class="sf-grid" style="margin-top:14px">'+
+            '<div class="sf-f c6"><label>หัก ณ ที่จ่าย (มาตรา)</label>'+
+              '<select id="poSect" onchange="poSectChange()">'+sectOpts+'</select></div>'+
+            '<div class="sf-f c6" id="poRateFld"><label>อัตรา</label>'+
+              '<select id="poRate" onchange="poCalc()"></select></div>'+
+          '</div>'+
+        '</div>'+
+        '<div><div class="sf-tot" id="poTot"></div>'+
+          '<input type="hidden" id="poAmt" value="'+esc(cur?poAmtInput(cur):'')+'"></div>'+
+      '</div>'+
 
-          /* ── ผู้รับเงิน = คนที่เงินเข้าบัญชีจริง (คนละช่องกับผู้ขายด้านบน:
-             ใบเบิกพนักงานจ่ายให้ร้าน แต่โอนคืนเข้าบัญชีพนักงานที่สำรองจ่าย) ── */
-          '<div class="sf-f wide"><div class="sf-h" style="margin:6px 0 0;font-size:14px">👤 ผู้รับเงิน · บัญชีที่ต้องโอน</div></div>'+
-          '<div class="sf-f c4"><label>จ่ายให้ใคร</label><div style="display:flex;gap:6px">'+
-            '<button type="button" id="poPOut" class="btn btn-sm" onclick="poPayeeMode(\'out\')" style="flex:1">🏢 คนนอก / บริษัท</button>'+
-            '<button type="button" id="poPStaff" class="btn btn-sm" onclick="poPayeeMode(\'staff\')" style="flex:1">👥 พนักงานเรา</button>'+
-          '</div></div>'+
-          '<div class="sf-f c4 hidden" id="poStaffBox"><label>เลือกพนักงาน</label>'+
-            '<select id="poStaff" onchange="poStaffPick()">'+staffOpts+'</select>'+
-            '<div id="poStaffBank" class="sf-note"></div></div>'+
-          '<div class="sf-f c4"><label>ผู้รับเงินเป็น</label>'+
-            '<select id="poKind" onchange="poCalc()">'+kindOpts+'</select></div>'+
-          '<div class="sf-f c6"><label>ชื่อผู้รับเงิน</label>'+
-            '<input id="poName" placeholder="เว้นว่าง = ใช้ชื่อผู้ขายด้านบน" value="'+esc(cur?cur.payeeName:'')+'"></div>'+
-          '<div class="sf-f c6"><label>เลขประจำตัวผู้เสียภาษี / บัตร ปชช (13 หลัก)</label>'+
-            '<input id="poId" type="tel" inputmode="numeric" maxlength="17" placeholder="บังคับเมื่อหักภาษี ณ ที่จ่าย" value="'+esc(cur?cur.payeeId:'')+'"></div>'+
-          '<div class="sf-f wide"><label>ที่อยู่ผู้รับเงิน</label>'+
-            '<textarea id="poAddr" rows="2" placeholder="บังคับเมื่อหักภาษี ณ ที่จ่าย (ใช้พิมพ์บน 50 ทวิ)">'+esc(cur?cur.payeeAddr:'')+'</textarea></div>'+
-          /* 3 ช่องบัญชีเรียงแนวนอน — bankFields คืน .fld (บล็อกเต็มบรรทัด) จึงต้องครอบเป็นกริดเอง */
-          '<div class="sf-f wide" id="poBankBox" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 18px">'+
-            bankFields('po', cur?cur.bank:{}, 'บัญชีที่ต้องโอน — ')+'</div>'+
-
-          /* ── ลายเซ็นบนเอกสาร — ที่นี่แค่ "บอกว่าใครจะเซ็น" ตัวลายเซ็นจริงอยู่บน PDF
-             (ดึงจากลายเซ็นที่แต่ละคนอัปไว้ในตั้งค่าผู้ใช้งาน) ── */
-          '<div class="sf-f wide">'+poSignNoteHtml(cur)+'</div>'+
+      /* ผู้รับเงิน = คนที่เงินเข้าบัญชีจริง (คนละช่องกับผู้ขายด้านบน) */
+      '<div class="sf-h" style="margin:18px 0 10px;font-size:14px">👤 ผู้รับเงิน · บัญชีที่ต้องโอน</div>'+
+      '<div class="sf-grid">'+
+        '<div class="sf-f c4"><label>จ่ายให้</label><div style="display:flex;gap:6px">'+
+          '<button type="button" id="poPOut" class="btn btn-sm" onclick="poPayeeMode(\'out\')" style="flex:1">🏢 คนนอก / บริษัท</button>'+
+          '<button type="button" id="poPStaff" class="btn btn-sm" onclick="poPayeeMode(\'staff\')" style="flex:1">👥 พนักงานเรา</button>'+
         '</div></div>'+
+        '<div class="sf-f c4 hidden" id="poStaffBox"><label>เลือกพนักงาน</label>'+
+          '<select id="poStaff" onchange="poStaffPick()">'+staffOpts+'</select>'+
+          '<div id="poStaffBank" class="sf-note"></div></div>'+
+        '<div class="sf-f c4"><label>ผู้รับเงินเป็น</label>'+
+          '<select id="poKind" onchange="poCalc()">'+kindOpts+'</select></div>'+
+        '<div class="sf-f c6"><label>ชื่อผู้รับเงิน</label>'+
+          '<input id="poName" placeholder="เว้นว่าง = ใช้ชื่อผู้ขาย" value="'+esc(cur?cur.payeeName:'')+'"></div>'+
+        '<div class="sf-f c6"><label>เลขประจำตัวผู้เสียภาษี / บัตร ปชช</label>'+
+          '<input id="poId" type="tel" inputmode="numeric" maxlength="17" placeholder="13 หลัก" value="'+esc(cur?cur.payeeId:'')+'"></div>'+
+        '<div class="sf-f wide"><label>ที่อยู่ผู้รับเงิน</label>'+
+          '<input id="poAddr" placeholder="ใช้พิมพ์บน 50 ทวิ" value="'+esc(cur?cur.payeeAddr:'')+'"></div>'+
+        '<div class="sf-f wide" id="poBankBox" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 18px">'+
+          bankFields('po', cur?cur.bank:{}, 'บัญชีที่ต้องโอน — ')+'</div>'+
+      '</div></div>'+
 
-      (PO_EDIT
-        ? '<div class="sf-card"><div class="m-hint" style="margin:0">💡 ไฟล์แนบแก้ที่ใบเดิมไม่ได้ในเฟสนี้ — ถ้าแนบผิดให้ยกเลิกเอกสารแล้วตั้งใหม่ค่ะ</div></div>'
+      (PO_EDIT ? ''
         : '<div class="sf-card"><div class="sf-h">📎 เอกสารแนบ</div>'+
-            imgsFldHtml('poImg','ใบแจ้งหนี้ / ใบกำกับภาษี (รูป หรือ PDF · แนบได้หลายไฟล์)')+
-            imgsFldHtml('poCon','สัญญา (ถ้ามี · ไม่บังคับ)')+'</div>')+
+            imgsFldHtml('poImg','ใบแจ้งหนี้ / ใบกำกับภาษี (รูป หรือ PDF · หลายไฟล์ได้)')+
+            imgsFldHtml('poCon','สัญญา (ถ้ามี)')+'</div>')+
 
-      /* แถบปุ่มล่างติดขอบจอ — งานของใบทำได้จบในหน้าเดียว เหมือนฟอร์มใบเสนอราคา
-         🔴 เงื่อนไขปุ่มต้องตรงกับด่าน backend (ชุดเดียวกับเมนู ⋮) ไม่งั้นกดแล้วโดนปฏิเสธ */
       '<div class="sf-bar">'+
         (PO_EDIT?poFormActionsHtml(cur):'')+
         '<span style="flex:1"></span>'+
@@ -10554,12 +10592,29 @@
         function(el){ el.disabled=true; });
     }
     if(!PO_EDIT){ imgsFldBind('poImg'); imgsFldBind('poCon'); }
+    PI_HDR={ no:(cur&&cur.vatInvNo)||'', date:(cur&&cur.vatInvDate)||'' };
+    if($('poInvNo')) $('poInvNo').value=PI_HDR.no;
+    if($('poInvDate')) $('poInvDate').value=PI_HDR.date;
     poPayeeMode(PO_PAYEE);
     poFillRates(cur?cur.whtRate:null);
-    poItemsLoad();
+    poItemsLoad(cur);
     poCalc();
   }
   window.renderPoForm=renderPoForm;
+  /** วันที่แบบไทย (วัน/เดือน/พ.ศ.) จากค่าที่หลังบ้านส่งมา (Date / ISO / ข้อความ) */
+  function poDateTh(v){
+    if(!v) return '';
+    var d=(v instanceof Date)?v:new Date(v);
+    if(isNaN(d.getTime())) return String(v);
+    return d.getDate()+'/'+(d.getMonth()+1)+'/'+(d.getFullYear()+543);
+  }
+  /** ป้ายประเภทค่าใช้จ่าย (หรือ key) → key ของทะเบียนประเภทใบสั่งจ่าย · ไม่รู้จัก = '' */
+  function poTypeKeyOf(v){
+    var t=String(v||'').trim(), L=(PO&&PO.types)||[];
+    var hit=L.filter(function(x){ return x.key===t || x.label===t || String(x.label).replace(/^\S+\s/,'')===t; })[0];
+    return hit?hit.key:'';   /* ไม่รู้จัก = ว่าง (ห้ามเดาเป็นประเภทแรก ไม่งั้นบันทึกแล้วประเภทใบเปลี่ยนเงียบ ๆ) */
+  }
+  window.poDateTh=poDateTh; window.poTypeKeyOf=poTypeKeyOf;
 
   /* ✍️ บอกว่าเอกสารจะมีลายเซ็นของใครบ้าง (พี่กี้ 23 ก.ย. 69)
      ตัวลายเซ็นจริงอยู่บน PDF — ดึงจากที่แต่ละคนอัปไว้ในตั้งค่าผู้ใช้งาน */
@@ -10725,46 +10780,26 @@
     return {mode:m, rate:r, base:base, vat:r2(total-base), total:total};
   }
   function poCalc(){
-    var input=parseFloat((($('poAmt')||{}).value)||'0')||0;
-    var pm=(($('poPm')||{}).value)||'none';
-    var ent=(PO.entities||[]).filter(function(e){ return e.code===((($('poEnt')||{}).value)||''); })[0];
-    /* บริษัทไม่ได้จด VAT = ไม่มีภาษีเสมอ (ด่านจริงอยู่ที่ backend · ตรงนี้กันกรอกไปแล้วงง) */
-    if(ent && ent.vatReg===false) pm='none';
-    var rate7=7;
-    /* "แยกภาษี" = ช่องที่กรอกคือราคาก่อน VAT → ยอดรวมต้องบวกภาษีเข้าไป */
-    var total=(pm==='excl') ? r2(input+r2(input*rate7/100)) : input;
-    var sp=poSplit(total, pm, rate7);
-    /* 🔴 ใบที่กรอกตารางรายการ: ยอด/ฐาน/VAT มาจากผลรวมรายการเสมอ (หลังบ้าน savePayoutItems_
-       เขียนทับยอดในใบให้ตรงกับผลรวมอยู่แล้ว) — ช่องจำนวนเงินจึงเป็น "ผลลัพธ์" ไม่ใช่ที่กรอก */
-    var fi=piFilled();
-    if(fi.length){
-      var ps=piTotals();
-      sp={mode:(ps.vat>0?'incl':'none'), rate:(ps.vat>0?rate7:0), base:ps.base, vat:ps.vat, total:ps.total};
-      input=ps.total;
-      var ai=$('poAmt'); if(ai){ ai.value=ps.total?String(ps.total):''; if(!PO_VIEW) ai.disabled=true; }
-      var pmi=$('poPm'); if(pmi){ pmi.value=sp.mode; if(!PO_VIEW) pmi.disabled=true; }
-      var an=$('poAmtNote'); if(an) an.textContent='ยอดมาจากผลรวมรายการข้างบน (แก้ที่ตาราง)';
-      var op=$('piOpts'); if(op) op.classList.remove('hidden');
-    } else {
-      var op2=$('piOpts'); if(op2) op2.classList.add('hidden');
-      var ai2=$('poAmt'); if(ai2 && !PO_VIEW) ai2.disabled=false;
-      var pmi2=$('poPm'); if(pmi2 && !PO_VIEW) pmi2.disabled=false;
-      var an2=$('poAmtNote'); if(an2) an2.textContent='';
-    }
+    /* ยอดทั้งใบมาจากตารางรายการเสมอ (หลังบ้านเขียนยอดในใบให้ตรงผลรวมรายการ) */
+    var t=piTotals(), m=piMode();
+    var pmi=$('poPm'); if(pmi && m==='none' && pmi.value!=='none') pmi.value='none';
+    var ai=$('poAmt'); if(ai) ai.value=t.total?String(t.total):'';
     var sect=(($('poSect')||{}).value)||'', kind=(($('poKind')||{}).value)||'';
     var rate=sect ? (parseFloat((($('poRate')||{}).value)||'0')||0) : 0;
     var rf=$('poRateFld'); if(rf) rf.classList.toggle('hidden', !sect);
     /* ⚖️ หักภาษีจากฐานก่อน VAT ตามกฎหมาย — ตรงกับที่หลังบ้านคิด */
-    var wht=r2(sp.base*rate/100), net=r2(sp.total-wht);
-    var el=$('poSum'); if(!el) return;
-    if(!(input>0)){ el.textContent='ใส่จำนวนเงินเพื่อดูยอดจ่ายสุทธิ'; return; }
-    var vatLine = (sp.rate>0)
-      ? ('🧾 ฐานก่อนภาษี '+poMoney(sp.base)+' + VAT '+sp.rate+'% '+poMoney(sp.vat)+          ' = รวม <b>'+poMoney(sp.total)+'</b> บาท')
-      : ('💰 ยอดรวม <b>'+poMoney(sp.total)+'</b> บาท · ไม่มีภาษีมูลค่าเพิ่ม');
-    if(!rate){ el.innerHTML=vatLine+'<br>ไม่หักภาษี ณ ที่จ่าย'; return; }
-    var fl=poFormLabel(kind, sect);
-    el.innerHTML=vatLine+'<br>− หัก ณ ที่จ่าย '+rate+'% ของฐาน ('+poMoney(wht)+') = จ่ายจริง <b>'+poMoney(net)+'</b> บาท'+
-      (fl?'<br>🧾 เข้าแบบ <b>'+esc(fl)+'</b> ของบริษัทผู้จ่าย · ออก 50 ทวิ ให้ตอนจ่ายเงิน':'');
+    var wht=r2(t.base*rate/100), net=r2(t.total-wht);
+    PI_ROWS.forEach(function(x,i){ var el=$('pi_amt_'+i); if(el){ var a=piCalc(x,m).amt; el.textContent=a?money(a):'—'; } });
+    var box=$('poTot'); if(!box) return;
+    var fl=rate?poFormLabel(kind, sect):'';
+    box.innerHTML=
+      '<div class="r"><span>ราคาก่อนภาษี</span><b>'+poMoney(t.base)+'</b></div>'+
+      '<div class="r"><span>ภาษีมูลค่าเพิ่ม'+(t.vat>0?' '+PI_VAT+'%':'')+'</span><b>'+poMoney(t.vat)+'</b></div>'+
+      '<div class="r grand"><span>จำนวนเงินทั้งสิ้น</span><b>'+poMoney(t.total)+'</b></div>'+
+      (rate
+        ? '<div class="r"><span>หัก ณ ที่จ่าย '+rate+'%'+(fl?' ('+esc(fl)+')':'')+'</span><b>− '+poMoney(wht)+'</b></div>'+
+          '<div class="r"><span>ยอดที่ต้องโอน</span><b>'+poMoney(net)+'</b></div>'
+        : '');
   }
   function doPayout(){
     var p={action:(PO_EDIT?'waPoEdit':'waPoCreate'), uid:UID,
@@ -10786,9 +10821,15 @@
       p.payeeUid=(($('poStaff')||{}).value)||'';
       if(!p.payeeUid){ mErr('เลือกพนักงานที่จะจ่ายก่อนค่ะ'); return; }
     }
-    if(piFilled().length) p.amount=String(piTotals().total);   /* ช่องถูก disable = ต้องอ่านยอดจากตาราง */
-    if(!(parseFloat(p.amount)>0)){ mErr('กรอกจำนวนเงินก่อนค่ะ'); return; }
-    if(!p.detail){ mErr('กรอกรายละเอียดก่อนค่ะ'); return; }
+    /* ขั้น C — ยอด = ผลรวมตาราง · ประเภท = รหัสบรรทัดแรก · หมายเหตุว่าง = ใช้ชื่อรายการบรรทัดแรก
+       ประเภทราคาที่ส่ง = รวมภาษี/ไม่มีภาษี (ยอดที่ส่งเป็นยอดรวมแล้ว) — รายการบันทึกทับให้ตรงอีกชั้น */
+    var items=piPayload(), tt=piTotals();
+    if(!items.length){ mErr('ใส่รายการอย่างน้อย 1 บรรทัดค่ะ'); return; }
+    p.amount=String(tt.total); p.priceMode=(tt.vat>0?'incl':'none');
+    p.type=poTypeKeyOf(items[0].ref)||p.type;
+    if(!p.detail) p.detail=items[0].detail;
+    if(!(parseFloat(p.amount)>0)){ mErr('ใส่ราคาในตารางรายการก่อนค่ะ'); return; }
+    if(!p.detail){ mErr('กรอกรายการก่อนค่ะ'); return; }
     if(PO_PAYEE!=='staff' && !p.payeeName){ mErr('กรอกชื่อผู้รับเงินก่อนค่ะ'); return; }
     // หักภาษี = ต้องมีเลขผู้เสียภาษี + ที่อยู่ (ไปพิมพ์บน 50 ทวิ) — ด่านจริงอยู่ backend อันนี้กันเสียเวลาอัปไฟล์
     if(p.section && parseFloat(p.rate)>0){
@@ -10814,7 +10855,7 @@
         /* 🔴 รายการย่อยบันทึกหลังใบมีเลขแล้วเสมอ (savePayoutItems_ ผูกกับเลขที่ใบ)
            ใบใหม่จึงต้องรอเลขจากหลังบ้านก่อน — บันทึกไม่สำเร็จต้องบอก ไม่ใช่เงียบ */
         var poNo=PO_EDIT||String(r.no||'');
-        if(poNo && piFilled().length){ poItemsSave(poNo); return; }
+        if(poNo && items.length){ poItemsSave(poNo, items); return; }
         PO_EDIT=''; renderPayout();
       }).catch(function(e){ if(btn){btn.disabled=false;btn.textContent=PO_EDIT?'บันทึกการแก้ไข':'สร้างใบสั่งจ่าย';} mErr(e.message); });
   }
@@ -11982,85 +12023,108 @@
                   : '<button class="btn btn-ghost btn-sm" style="margin-left:auto;width:auto" onclick="poEditOn()">✏️ แก้ไข</button>')
       : '<button class="btn btn-ghost btn-sm" style="margin-left:auto;width:auto" disabled title="'+esc(lockWhy)+'">✏️ แก้ไข</button>';
 
+    /* 🔴 spec-po-unify ขั้น C (24 ก.ย. 69) — การ์ด 3 ใบเรียงเหมือนใบบริษัท/ใบเสนอราคาเป๊ะ
+       ① ข้อมูลเอกสาร ② รายการ (ใบพนักงาน = บรรทัดเดียว) ③ สรุปยอด · ไฟล์แนบเป็นการ์ดท้าย
+       ⚠️ id ช่องทุกตัวคงเดิม (exdSave อ่านชุดเดิม) · เลขใบกำกับแก้ผ่านปุ่ม 🧾 เพราะผูกกับรายงานภาษีซื้อ */
+    var isNewBook=!!x.poNo;   /* ช่องติดต่อผู้ขาย (BW–BZ) มีเฉพาะเล่มใบสั่งจ่าย */
+    var entOpts=(ENTITIES||[]).map(function(e){
+      return '<option value="'+esc(e.code)+'"'+(e.code===(x.entity||DEF_ENT)?' selected':'')+'>'+esc(e.name||e.code)+'</option>';
+    }).join('');
+    function ro(label, val, cls){ return '<div class="sf-f '+(cls||'c2')+'"><label>'+esc(label)+'</label><input value="'+esc(val||'')+'" placeholder="—" readonly></div>'; }
+    function meta(label, val){ return val?'<div class="r"><span>'+esc(label)+'</span><b>'+val+'</b></div>':''; }
+    var amtNum=Number(x.amount)||0, whtNum=Number(x.whtAmt)||0;
+
     $('main').innerHTML=(h+
-      '<div class="sf-card"><div class="sf-h">🧾 ข้อมูลเอกสาร'+editBtn+poStatusBadge({status:st})+'</div>'+
-      /* ① ช่องที่ระบบเป็นคนกรอก — อ่านอย่างเดียวเสมอ ไม่ว่าจะโหมดไหน */
-      '<div class="exd-grid" style="margin-bottom:16px">'+
-        cell('ผู้เบิก', esc(x.nick||'—'))+
-        cell('วันที่แจ้ง', esc(String(x.createdAt||'').split(' ')[0]||'—'))+
-        (x.approver?cell('ผู้อนุมัติ', esc(x.approver)):'')+
-        (x.payDate?cell('วันที่จ่าย', esc(x.payDate)):'')+
-        (x.whtRate?cell('หัก ณ ที่จ่าย', x.whtRate+'% = '+money(x.whtAmt||0)+' บาท'):'')+
-        (x.whtRate?cell('โอนสุทธิ', money(x.netAmt||x.amount)+' บาท'):'')+
-        (x.formType?cell('แบบยื่น', esc(x.formType)):'')+
-        (x.signStatus?cell('ลายเซ็นผู้รับเงิน', esc(x.signStatus)):'')+
-        (x.bankAcct?cell('บัญชีรับโอน', esc((x.bankName||'')+' '+x.bankAcct+' '+(x.bankOwner||'')), true):'')+
-        (x.note?cell('หมายเหตุ', esc(x.note), true):'')+
-      '</div>'+
       '<div id="mErr" class="m-err hidden"></div>'+
-      /* ② ช่องที่แก้ได้ — ฟอร์มอยู่ในการ์ดเดียวกัน ไม่แยกการ์ดแล้ว */
-      '<div class="exd-form">'+
-        '<div class="fld"><label>ประเภทค่าใช้จ่าย</label><select id="exdType">'+typeOpts+'</select></div>'+
-        /* หลักฐาน — พนักงานมักเลือก "มีใบเสร็จ" ทั้งที่ไม่มี (พี่กี้ 18 ก.ย. 69)
-           เดิมเป็นปุ่มแยกอยู่ล่างสุด · ย้ายเข้าฟอร์มให้แก้พร้อมช่องอื่นแล้วกดบันทึกทีเดียว
-           ⚠️ เงื่อนไขต้องตรงกับด่าน backend: ใบ RV เปลี่ยนไม่ได้ · ออกเอกสารแล้วเปลี่ยนไม่ได้ */
-        (rv
-          /* ⛔ ล็อกเฉพาะใบสำคัญรับเงิน — คนละสายเอกสาร (ตรงกับด่าน handleWaExpSetProof_ ที่ห้ามเฉพาะ RV)
-             ⚠️ อย่าล็อกเพราะ "มี 50 ทวิ" — ใบที่มีใบเสร็จ+หักภาษีคือเคสที่พี่ต้องแก้บ่อยที่สุด */
-          ? '<div class="fld"><label>หลักฐาน — ใบสำคัญรับเงิน เปลี่ยนตรงนี้ไม่ได้</label>'+
-            '<input value="'+esc(x.docType||'')+'" disabled></div>'
-          : '<div class="fld"><label>หลักฐาน</label><select id="exdProof">'+
-              '<option value="rcp"'+((!proofIsSr&&!proofIsAdv)?' selected':'')+'>🧾 มีใบเสร็จ (แนบไฟล์มาแล้ว)</option>'+
-              '<option value="sr"'+(proofIsSr?' selected':'')+'>📄 ไม่มีใบเสร็จ → ระบบออกใบรับรองแทนให้</option>'+
-              /* ⏳ 22 ก.ย. 69 — ใบที่จ่ายไปก่อนแล้วใบเสร็จตามมา (เลือกทางนี้ = ยกเลิก SR ที่ออกไปให้ด้วย) */
-              '<option value="adv"'+(proofIsAdv?' selected':'')+'>⏳ จ่ายก่อน · ใบเสร็จตามมา (ไม่ออกใบรับรองแทน)</option>'+
-            '</select>'+
-            '<div class="m-hint" style="margin-top:4px">'+
-              (x.docNo
-                ? '⚠️ ใบนี้ออกเอกสาร '+esc(x.docNo)+' ไปแล้ว — เปลี่ยนประเภทได้ แต่เอกสารเดิมยังอยู่ ต้องตรวจให้ตรงกันเอง'
-                : 'เลือก "ไม่มีใบเสร็จ" แล้วบันทึก ระบบจะออกใบรับรองแทนใบเสร็จให้ทันทีถ้าใบนี้อนุมัติ/จ่ายแล้ว')+
-            '</div></div>')+
-        /* 🏪 ร้านค้า/ผู้ขาย — ชื่อที่ขึ้นเป็นคู่ค้าบนใบสั่งจ่าย (spec-po-form §1 ข้อ 3)
-           คนละช่องกับผู้รับเงิน: ใบเบิกจ่ายให้ร้าน แต่โอนคืนเข้าบัญชีพนักงานที่สำรองจ่าย
-           เดิมไม่มีช่องนี้ พี่กี้จึงแก้ชื่อผู้ขายบนเอกสารไม่ได้เลย (23 ก.ย. 69) */
-        '<div class="fld"><label>ร้านค้า / ผู้ขาย</label>'+
-          '<input id="exdVendor" placeholder="ชื่อร้าน/บริษัทที่จ่ายให้" value="'+esc(x.vendor||'')+'">'+
-          '<div class="m-hint" style="margin-top:4px">ขึ้นเป็นคู่ค้าบนใบสั่งจ่าย · เว้นว่าง = ใช้ชื่อผู้รับเงิน</div></div>'+
-        '<div class="fld"><label>เลขผู้เสียภาษีร้านค้า</label>'+
+      /* ① ข้อมูลเอกสาร */
+      '<div class="sf-card"><div class="sf-h">🧾 ข้อมูลเอกสาร'+editBtn+poStatusBadge({status:st})+'</div><div class="sf-grid">'+
+        (canEnt?'<div class="sf-f wide"><label>บริษัทผู้จ่าย</label><select id="exdEnt">'+entOpts+'</select></div>':'')+
+        (isNewBook
+          ? '<div class="sf-f c2"><label>รหัสผู้ขาย</label><input id="exdVendorCode" placeholder="เช่น SUP-001" value="'+esc(x.vendorCode||'')+'"></div>'
+          : ro('รหัสผู้ขาย',''))+
+        '<div class="sf-f c4"><label>ผู้ขาย</label>'+
+          '<input id="exdVendor" placeholder="ชื่อร้าน/บริษัทที่จ่ายให้" value="'+esc(x.vendor||'')+'"></div>'+
+        '<div class="sf-f c2"><label>เลขผู้เสียภาษี</label>'+
           '<div style="display:flex;gap:6px">'+
-          '<input id="exdVendorTax" type="tel" inputmode="numeric" maxlength="17" placeholder="13 หลัก (ถ้ามี)" '+
+          '<input id="exdVendorTax" type="tel" inputmode="numeric" maxlength="17" placeholder="13 หลัก" '+
             'value="'+esc(x.vendorTaxId||'')+'" style="flex:1;min-width:0">'+
           '<button class="btn btn-ghost" style="flex:none;width:auto;padding:0 12px" '+
             'onclick="poVendorLookup(\'exdVendor\',\'exdVendorTax\')" title="ค้นจากกรมพัฒนาธุรกิจการค้า">🔍</button>'+
           '</div></div>'+
-        '<div class="fld"><label>ยอดเงิน (บาท)'+(canAmt?'':' — จ่ายแล้ว แก้ไม่ได้')+'</label>'+
-          '<input id="exdAmt" inputmode="decimal" value="'+esc(String(x.amount||''))+'"'+(canAmt?'':' disabled')+'></div>'+
-        '<div class="fld exd-wide"><label>รายละเอียด</label>'+
-          '<textarea id="exdDetail"'+(canAmt?'':' disabled')+'>'+esc(x.detail||'')+'</textarea></div>'+
-        (canWht
-          ? ('<div class="fld"><label>ประเภทเงินได้ (มาตรา)</label><select id="exdSect">'+sectOpts+'</select></div>'+
-             '<div class="fld"><label>อัตราหัก ณ ที่จ่าย (%)</label>'+
-               '<input id="exdRate" type="number" step="0.01" min="0" max="100" value="'+esc(String(x.whtRate||0))+'">'+
-               '<div class="m-hint" style="margin-top:4px">ใส่อัตราเท่าไรก็ได้ 0-100 · หรือระบุยอดบาท (ยอดชนะอัตรา)</div></div>'+
-             '<div class="fld"><label>หรือระบุยอดภาษีเป็นบาท</label>'+
-               '<input id="exdWhtAmt" type="number" step="0.01" min="0" placeholder="เว้นว่าง = ใช้อัตราด้านบน"></div>')
-          : (x.whtNo?'<div class="m-hint exd-wide">🧾 ออก 50 ทวิ '+esc(x.whtNo)+' แล้ว — แก้ภาษีไม่ได้ค่ะ</div>':''))+
-        (canEnt?entField('exdEnt', x.entity, 'บริษัทผู้ออกเอกสาร'):'')+
+        ro('วันที่เอกสาร', x.createdAt)+
+        ro('เลขที่ใบกำกับ/ใบแจ้งหนี้', x.vatInvNo)+
+        (isNewBook
+          ? '<div class="sf-f c6"><label>ที่อยู่ผู้ขาย</label><input id="exdVendorAddr" placeholder="ที่อยู่ที่จะพิมพ์บนเอกสาร" value="'+esc(x.vendorAddr||'')+'"></div>'+
+            '<div class="sf-f c2"><label>อีเมล</label><input id="exdVendorEmail" placeholder="—" value="'+esc(x.vendorEmail||'')+'"></div>'+
+            '<div class="sf-f c2"><label>เบอร์โทร</label><input id="exdVendorPhone" placeholder="—" value="'+esc(x.vendorPhone||'')+'"></div>'
+          : ro('ที่อยู่ผู้ขาย','','c6')+ro('อีเมล','')+ro('เบอร์โทร',''))+
+        ro('วันที่ใบกำกับ', x.vatInvDate)+
         (rv
-          ? ('<div class="fld"><label>ชื่อผู้รับเงิน</label><input id="exdPayee" value="'+esc(x.payeeName||'')+'"></div>'+
-             '<div class="fld"><label>เลขบัตรประชาชน</label><input id="exdPayeeId" inputmode="numeric" value="'+esc(x.payeeId||'')+'"></div>'+
-             '<div class="fld exd-wide"><label>ที่อยู่ผู้รับเงิน</label><textarea id="exdPayeeAddr">'+esc(x.payeeAddr||'')+'</textarea></div>')
-          : '')+
-        '<div class="exd-wide exd-upload">'+imgsFldHtml('exdRcp','📎 เปลี่ยนไฟล์แนบ (เว้นว่าง = ใช้ไฟล์เดิม)')+'</div>'+
-        /* สลิปโอนคืน — เฉพาะใบที่จ่ายแล้ว (สลิปมักตามมาทีหลัง) · แนบใหม่แล้วระบบรวมแฟ้มให้เอง */
-        (paid?'<div class="exd-wide exd-upload">'+imgsFldHtml('exdSlip','💸 เปลี่ยนสลิปโอนคืน (เว้นว่าง = ใช้ของเดิม)')+'</div>':'')+
+          /* ⛔ ใบสำคัญรับเงินเปลี่ยนหลักฐานไม่ได้ (คนละสายเอกสาร · ตรงกับด่าน handleWaExpSetProof_) */
+          ? ro('หลักฐาน', x.docType, 'c4')
+          : '<div class="sf-f c4"><label>หลักฐาน</label><select id="exdProof">'+
+              '<option value="rcp"'+((!proofIsSr&&!proofIsAdv)?' selected':'')+'>🧾 มีใบเสร็จ</option>'+
+              '<option value="sr"'+(proofIsSr?' selected':'')+'>📄 ไม่มีใบเสร็จ → ออกใบรับรองแทน</option>'+
+              '<option value="adv"'+(proofIsAdv?' selected':'')+'>⏳ จ่ายก่อน · ใบเสร็จตามมา</option>'+
+            '</select></div>')+
+        ro('อ้างอิง', x.poNo&&x.poNo!==no ? x.poNo : (x.poNo?'':no), 'end3')+
       '</div>'+
-      (hasDoc?'<div class="m-hint" style="color:#C8730B">⚠️ ใบนี้ออกเอกสารแล้ว — แก้เสร็จอย่าลืมสร้างเอกสาร/แฟ้มใหม่ให้ตรงกัน</div>':'')+
+      (hasDoc?'<div class="sf-note" style="margin-top:8px;color:#C8730B">⚠️ ใบนี้ออกเอกสารแล้ว'+
+        (x.docNo&&!rv?' ('+esc(x.docNo)+' · เปลี่ยนหลักฐานได้ แต่เอกสารเดิมยังอยู่)':'')+
+        ' — แก้แล้วกด 🗂️ สร้างแฟ้มใหม่ให้ตรงกัน</div>':'')+
       '</div>'+
 
-      '<div class="sf-card"><div class="sf-h">📎 เอกสารแนบ'+(EXD_FILES.length?' ('+EXD_FILES.length+')':'')+
-        '<span class="exd-hint">กดการ์ดเพื่อเปิดดูไฟล์เต็มหน้า</span></div>'+
-      '<div class="exd-files">'+files+'</div></div>'+
+      /* ② รายการ — ใบของพนักงานมีบรรทัดเดียว: ประเภท · รายการ · ยอด */
+      '<div class="sf-card"><div class="sf-h">📋 รายการ</div><div class="sf-items">'+dtTable([
+        {label:'#',cls:'dt-nw',w:'38px'},{label:'รหัส',cls:'dt-nw',w:'18%'},{label:'ค่าใช้จ่าย/สินค้า'},
+        {label:'จำนวน',cls:'dt-nw',w:'8%'},{label:'ราคา/หน่วย',cls:'dt-nw',w:'14%'},
+        {label:'จำนวนเงิน',cls:'ta-r',w:'13%'}],
+        ['<tr><td class="dt-nw" style="color:#8A94A6">1</td>'+
+          '<td><select id="exdType">'+typeOpts+'</select></td>'+
+          '<td><input id="exdDetail" value="'+esc(x.detail||'')+'"'+(canAmt?'':' disabled')+'></td>'+
+          '<td><input value="1" readonly></td>'+
+          '<td><input id="exdAmt" inputmode="decimal" value="'+esc(String(x.amount||''))+'"'+(canAmt?'':' disabled')+'></td>'+
+          '<td class="dt-amt">'+money(amtNum)+'</td></tr>'], '', '')+'</div></div>'+
+
+      /* ③ สรุปยอด */
+      '<div class="sf-card"><div class="sf-h">💰 สรุปยอด</div><div class="sf-sum">'+
+        '<div>'+
+          (x.note?'<div class="sf-f"><label>หมายเหตุ</label><textarea readonly>'+esc(x.note)+'</textarea></div>':'')+
+          (canWht
+            ? ('<div class="sf-grid" style="margin-top:'+(x.note?'14':'0')+'px">'+
+                '<div class="sf-f c4"><label>หัก ณ ที่จ่าย (มาตรา)</label><select id="exdSect">'+sectOpts+'</select></div>'+
+                '<div class="sf-f c4"><label>อัตรา %</label>'+
+                  '<input id="exdRate" type="number" step="0.01" min="0" max="100" value="'+esc(String(x.whtRate||0))+'"></div>'+
+                '<div class="sf-f c4"><label>หรือยอดภาษี (บาท)</label>'+
+                  '<input id="exdWhtAmt" type="number" step="0.01" min="0" placeholder="เว้นว่าง = ใช้อัตรา"></div>'+
+              '</div>')
+            : (x.whtNo?'<div class="sf-note">🧾 ออก 50 ทวิ '+esc(x.whtNo)+' แล้ว — แก้ภาษีไม่ได้</div>':''))+
+          (rv
+            ? ('<div class="sf-grid" style="margin-top:14px">'+
+                '<div class="sf-f c6"><label>ชื่อผู้รับเงิน</label><input id="exdPayee" value="'+esc(x.payeeName||'')+'"></div>'+
+                '<div class="sf-f c6"><label>เลขบัตรประชาชน</label><input id="exdPayeeId" inputmode="numeric" value="'+esc(x.payeeId||'')+'"></div>'+
+                '<div class="sf-f wide"><label>ที่อยู่ผู้รับเงิน</label><textarea id="exdPayeeAddr">'+esc(x.payeeAddr||'')+'</textarea></div>'+
+              '</div>')
+            : '')+
+        '</div>'+
+        '<div><div class="sf-tot">'+
+          '<div class="r grand"><span>จำนวนเงินทั้งสิ้น</span><b>'+money(amtNum)+'</b></div>'+
+          (x.whtRate?'<div class="r"><span>หัก ณ ที่จ่าย '+x.whtRate+'%</span><b>− '+money(whtNum)+'</b></div>':'')+
+          '<div class="r"><span>'+(rv?'ยอดที่ต้องโอน':'โอนคืนพนักงาน')+'</span><b>'+money(x.netAmt||amtNum)+'</b></div>'+
+          meta('ผู้เบิก', esc(x.nick||''))+
+          meta('บัญชีรับโอน', x.bankAcct?esc((x.bankName||'')+' '+x.bankAcct+' '+(x.bankOwner||'')):'')+
+          meta('ผู้อนุมัติ', esc(x.approver||''))+
+          meta('วันที่จ่าย', esc(x.payDate||''))+
+          meta('แบบยื่น', esc(x.formType||''))+
+          meta('ลายเซ็นผู้รับเงิน', esc(x.signStatus||''))+
+        '</div></div>'+
+      '</div></div>'+
+
+      '<div class="sf-card"><div class="sf-h">📎 เอกสารแนบ'+(EXD_FILES.length?' ('+EXD_FILES.length+')':'')+'</div>'+
+        '<div class="exd-files">'+files+'</div>'+
+        '<div class="exd-upload" style="margin-top:12px">'+imgsFldHtml('exdRcp','📎 เปลี่ยนไฟล์แนบ (เว้นว่าง = ใช้ไฟล์เดิม)')+'</div>'+
+        (paid?'<div class="exd-upload">'+imgsFldHtml('exdSlip','💸 เปลี่ยนสลิปโอนคืน (เว้นว่าง = ใช้ของเดิม)')+'</div>':'')+
+      '</div>'+
 
       /* แถบปุ่มล่างติดขอบจอ — ชุดเดียวกับหน้าใบสั่งจ่าย (งานของใบจบได้ในหน้าเดียว) */
       '<div class="sf-bar">'+
@@ -12080,9 +12144,9 @@
     /* 🔒 ยังไม่กด "แก้ไข" = ทุกช่องปิดไว้ (พี่กี้ 23 ก.ย. 69 · กติกาเดียวกับหน้าตั้งค่าห้อง)
        ด่านจริงอยู่ที่ backend — ตรงนี้กันพิมพ์ไปทั้งหน้าแล้วกดบันทึกไม่ได้ */
     if(!PO_EDITING){
-      Array.prototype.forEach.call(document.querySelectorAll('#main .exd-form input,#main .exd-form select,#main .exd-form textarea'),
+      Array.prototype.forEach.call(document.querySelectorAll('#main .sf-card input,#main .sf-card select,#main .sf-card textarea'),
         function(el){ el.disabled=true; });
-      Array.prototype.forEach.call(document.querySelectorAll('#main .exd-upload,#main .exd-form button'),
+      Array.prototype.forEach.call(document.querySelectorAll('#main .exd-upload,#main .sf-grid button'),
         function(el){ el.style.display='none'; });
     } else {
       imgsFldBind('exdRcp');
@@ -12113,6 +12177,10 @@
         ed.vendor=vd; ed.vendorTaxId=vt;
       }
     }
+
+    /* ข้อมูลติดต่อผู้ขาย (ขั้น C) — มีเฉพาะใบในเล่มใบสั่งจ่าย · ส่งเฉพาะช่องที่เปลี่ยน */
+    [['exdVendorCode','vendorCode'],['exdVendorAddr','vendorAddr'],['exdVendorEmail','vendorEmail'],['exdVendorPhone','vendorPhone']]
+      .forEach(function(f){ var el=$(f[0]); if(el && !el.disabled && val(f[0])!==String(x[f[1]]||'')) ed[f[1]]=val(f[0]); });
 
     if($('exdSect')){
       var sc=val('exdSect'), rt=val('exdRate'), wa=val('exdWhtAmt');
@@ -23547,7 +23615,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260924-0923';
+  var APP_BUILD='20260924-1023';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
