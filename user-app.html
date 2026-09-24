@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260924-1400">
+<link rel="stylesheet" href="user.css?v=20260924-2048">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -10115,7 +10115,7 @@
     skel();
     jsonp({action:'waPoInit', uid:UID}).then(function(r){
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
-      PO=r; paintPayout();
+      PO=r; poApplyLists(r); paintPayout();
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
   }
   /**
@@ -10687,7 +10687,7 @@
       skel();
       jsonp({action:'waPoInit', uid:UID}).then(function(r){
         if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
-        PO=r; renderPoForm();
+        PO=r; poApplyLists(r); renderPoForm();
       }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
       return;
     }
@@ -11795,7 +11795,8 @@
   function renderExpenseApprove(){
     /* 🔴 spec-po-unify ขั้น B (พี่กี้เคาะ ค. 24 ก.ย. 69) — หน้าอนุมัติใบเบิกปิดแล้ว
        งานเดียวกันอยู่แท็บ "รออนุมัติ" ของทะเบียนใบสั่งจ่าย */
-    if(IS_OWNER){ PR_DOC='PO'; PR_TAB='pending'; switchView('payout'); return; }
+    /* ห้องที่ไม่ได้เปิดโมดูลการเงิน = ไม่มีทะเบียนใบสั่งจ่ายให้ไป → ใช้หน้านี้ต่อ (คำสั่งผ่านด่านได้เฉพาะใบพนักงาน) */
+    if(IS_OWNER && modOpen('fin')){ PR_DOC='PO'; PR_TAB='pending'; switchView('payout'); return; }
     if(!IS_OWNER){ $('main').innerHTML='<div class="card"><div class="empty">เฉพาะผู้ดูแล (พี่/HR) ค่ะ</div></div>'; return; }
     skel();
     $('main').innerHTML='<div class="section-h">💸 อนุมัติเบิกจ่าย</div><div id="expApprBlock"></div>';
@@ -11914,6 +11915,18 @@
   var ENTITIES=[], DEF_ENT='';
   // เงินสดย่อย (E2): บริษัทที่ตั้งวงเงินไว้แล้ว + ช่องทางจ่ายคืนที่เลือกได้
   var PETTY_ENTS=[], PAY_CHANNELS=['เงินสดย่อย','โอนจากบัญชีบริษัท'], PAY_ACCTS=[];
+  /** ลิสต์กลางที่โมดัลอนุมัติ/จ่ายคืน/แก้ภาษีใช้ — ตั้งจากข้อมูลทะเบียนใบสั่งจ่าย (waPoInit)
+      🐞 24 ก.ย. 69: เดิมตั้งแค่ในหน้าอนุมัติใบเบิก พอหน้านั้นปิด (spec-po-unify ขั้น B)
+      กดอนุมัติจากทะเบียน = ช่องมาตราว่าง เลือกไม่ได้ · เรียกจากทุกทางที่โหลด waPoInit */
+  function poApplyLists(r){
+    if(!r) return;
+    SECTIONS=r.sections||SECTIONS; KIND_CO=r.companyKind||KIND_CO;
+    EXP_TYPES=r.expTypes||EXP_TYPES;
+    ENTITIES=r.entities||ENTITIES; DEF_ENT=r.defaultEntity||DEF_ENT;
+    PETTY_ENTS=r.pettyEntities||PETTY_ENTS; PAY_CHANNELS=r.payChannels||PAY_CHANNELS;
+    PAY_ACCTS=r.payAccounts||PAY_ACCTS;
+  }
+  window.poApplyLists=poApplyLists;
   /** ชื่อบริษัทจากรหัส (ว่าง = บริษัทเริ่มต้น) */
   function entName(code){
     var c=String(code||'')||DEF_ENT;
@@ -22849,7 +22862,7 @@ function kpImpDraw(){
   function renderExpDash(){
     /* 🔴 ผู้ดูแล: หน้าสรุปใบเบิกปิดแล้ว (พี่กี้เคาะ ค. 24 ก.ย. 69) → ทะเบียนใบสั่งจ่าย
        พนักงานยังใช้หน้านี้ดูสรุปใบของตัวเองเหมือนเดิม */
-    if(IS_OWNER){ switchView('payout'); return; }
+    if(IS_OWNER && modOpen('fin')){ switchView('payout'); return; }
     skel();
     jsonp({action:'waExpDash',uid:UID,ym:DASH_YM}).then(function(r){
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
@@ -23895,7 +23908,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260924-1400';
+  var APP_BUILD='20260924-2048';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
