@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260924-2048">
+<link rel="stylesheet" href="user.css?v=20260924-2100">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -11879,7 +11879,13 @@
   function exOpenWht(no){
     var x=EXP_BYNO[no]||{}, rv=isRv(x);
     var kind=x.payeeKind||'บุคคลธรรมดา';
-    var opts=SECTIONS.map(function(s){ return '<option value="'+esc(s.code)+'">'+esc(s.code+' '+s.label)+'</option>'; }).join('');
+    /* 🔴 24 ก.ย. 69 (พี่กี้: "ค่าใช้จ่ายบริษัท ไม่ต้องหัก ณ ที่จ่าย ไม่มีมาตราอะไร พี่ข้ามยังไง")
+       ตัวเลือกแรก = ไม่หัก ณ ที่จ่าย — ค่าไปรษณีย์/ค่าส่งเอกสาร/ของใช้ ไม่ใช่เงินได้ตามมาตราใด
+       เลือกแล้วช่องอัตราหาย · ส่งมาตราว่าง + อัตรา 0 = ไม่เข้าแบบยื่น ไม่ออก 50 ทวิ
+       (ใบ RV ต้องเลือกมาตราเสมอ — จ่ายค่าจ้างคนนอก) · ใบที่เคยเลือกมาตราไว้แล้ว เปิดมาที่มาตรานั้น */
+    var curSec=String(x.incomeSection||'');
+    var opts=(rv?'':'<option value=""'+(curSec?'':' selected')+'>— ไม่หัก ณ ที่จ่าย (ไม่ใช่เงินได้ตามมาตรา) —</option>')+
+      SECTIONS.map(function(s){ return '<option value="'+esc(s.code)+'"'+(s.code===curSec?' selected':'')+'>'+esc(s.code+' '+s.label)+'</option>'; }).join('');
     modal('<h3>✅ อนุมัติ'+(rv?'ใบสำคัญรับเงิน ':'ใบสั่งจ่าย ')+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
       '<div class="m-hint">ผู้รับเงิน: <b>'+esc(x.payeeName||'-')+'</b> ('+esc(kind)+')'+
         (rv?' — อนุมัติแล้วระบบจะออกลิงก์ให้ผู้รับเงินเซ็น':' — มีใบเสร็จ/ใบกำกับแล้ว ไม่ต้องเซ็น ออก 50 ทวิ ตอนจ่าย')+'</div>'+
@@ -11887,7 +11893,7 @@
       '<div class="fld"><label>ประเภทเงินได้ (มาตรา)</label><select id="exSect" onchange="exSectChange()">'+opts+'</select></div>'+
       /* อัตราที่ใช้บ่อยให้กดเร็ว + "กำหนดเอง" สำหรับใบที่ตกลงอัตรา/ยอดแปลกไปจากมาตรฐาน
          (พี่กี้ 7 ก.ย. 69: บางใบหัก 1.5% บางใบตกลงยอดบาทตายตัวในสัญญา) */
-      '<div class="fld"><label>อัตราหัก ณ ที่จ่าย</label><select id="exWht" onchange="exSectChange(1)">'+
+      '<div class="fld" id="exWhtFld"><label>อัตราหัก ณ ที่จ่าย</label><select id="exWht" onchange="exSectChange(1)">'+
         '<option value="0">0% — ยกเว้น / ไม่หัก</option>'+
         '<option value="1">1% — ค่าขนส่ง</option>'+
         '<option value="2">2% — ค่าโฆษณา</option>'+
@@ -11950,6 +11956,9 @@
     var sc=($('exSect')||{}).value, rs=$('exWht'), note=$('exFormNote');
     var sec=null; for(var i=0;i<SECTIONS.length;i++){ if(SECTIONS[i].code===sc){ sec=SECTIONS[i]; break; } }
     if(sec && rs && !rateEdited) rs.value=String(sec.defRate);
+    /* ไม่หัก ณ ที่จ่าย = ซ่อนช่องอัตรา + บังคับ 0 (กันเลือกมาตราว่างแต่อัตราค้าง 3%) */
+    var wf=$('exWhtFld'); if(wf) wf.classList.toggle('hidden', !sc);
+    if(!sc && rs){ rs.value='0'; var cu0=$('exWhtCustom'); if(cu0) cu0.classList.add('hidden'); }
     // โหมดกำหนดเอง — เปิดช่องกรอกอัตรา/ยอดบาท
     var cus=$('exWhtCustom'), isCus=(rs && rs.value==='custom');
     if(cus) cus.classList.toggle('hidden', !isCus);
@@ -11975,7 +11984,7 @@
   }
   /** กดอนุมัติจากฟอร์มที่มีภาษี — รวบค่าทั้งหมดส่งทีเดียว */
   function exApproveWht(no){
-    var w=exWhtVals();
+    var w=(($('exSect')||{}).value) ? exWhtVals() : { rate:'0', amt:'' };   /* ไม่หัก = อัตรา 0 เสมอ */
     exDecide(no,'approve','',w.rate,($('rvPayDate')||{}).value,($('exSect')||{}).value,entVal('exEnt'),w.amt);
   }
   /** ค่าที่เลือกใน dropdown บริษัท (ไม่มีช่อง = มีบริษัทเดียว → ส่งค่าว่าง = บริษัทเริ่มต้น) */
@@ -23908,7 +23917,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260924-2048';
+  var APP_BUILD='20260924-2100';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
