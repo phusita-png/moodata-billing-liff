@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260924-2259">
+<link rel="stylesheet" href="user.css?v=20260925-0657">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -8791,6 +8791,7 @@
       toast(r.cleared?'ล้างข้อมูลภาษีซื้อแล้ว':('🧾 บันทึกภาษีซื้อ '+money(r.vat)+' บาทแล้ว'));
       if(r.warn) setTimeout(function(){ toast('⚠️ '+r.warn); },1300);
       if(VIEW==='vatbuy') renderVatBuy(); else if(VIEW==='payout') renderPayout();
+      else if(VIEW==='poform' && PO_SX && PO_EDIT) poOpenStaff(PO_EDIT, PO_EDITING);   /* สรุปยอดแยก VAT ขึ้นทันที */
       else if(VIEW==='expdash') renderExpDash(); else if(VIEW==='expapprove') renderExpenseApprove();
     }).catch(function(e){ mErr(e.message); });
   }
@@ -12543,6 +12544,16 @@
             : '')+
         '</div>'+
         '<div><div class="sf-tot">'+
+          /* 25 ก.ย. 69 (พี่กี้) บรรทัดแยก VAT แบบใบเสนอราคา — ค่ามาจากปุ่ม 🧾 ใบกำกับภาษีซื้อ (VAT_BASE/VAT_AMT)
+             ยังไม่กรอก = เว้นว่างไว้ · ห้ามเดา VAT จากยอดเอง (ไม่มีใบกำกับ = เครดิตภาษีซื้อไม่ได้) */
+          (function(){
+            var vb=Number(x.vatBase)||0, vv=Number(x.vatAmt)||0, has=vb>0||vv>0;
+            var blank='<span style="color:#8A94A6;font-weight:400">—</span>';
+            var rt=(vb>0&&vv>0)?Math.round(vv/vb*100):0;
+            return '<div class="r"><span>รวมรายการ</span><b>'+money(amtNum)+'</b></div>'+
+              '<div class="r"><span>มูลค่าที่คำนวณภาษี</span><b>'+(has?money(vb):blank)+'</b></div>'+
+              '<div class="r"><span>ภาษีมูลค่าเพิ่ม'+(rt?' '+rt+'%':'')+'</span><b>'+(has?money(vv):blank)+'</b></div>';
+          })()+
           '<div class="r grand"><span>จำนวนเงินทั้งสิ้น</span><b>'+money(amtNum)+'</b></div>'+
           (x.whtRate?'<div class="r"><span>หัก ณ ที่จ่าย '+x.whtRate+'%</span><b>− '+money(whtNum)+'</b></div>':'')+
           /* 🔴 25 ก.ย. 69 (พี่กี้) ตัดบรรทัด "โอนคืนพนักงาน" + "ผู้เบิก" — เงินอาจโอนเข้าบัญชีร้านค้า ไม่ใช่คืนพนักงาน
@@ -24074,7 +24085,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260924-2259';
+  var APP_BUILD='20260925-0657';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
