@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260924-2141">
+<link rel="stylesheet" href="user.css?v=20260924-2227">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -6403,7 +6403,7 @@
        ⚠️ ต้องอยู่หลังด่าน isOwner — หน้านี้มีฟอร์มแก้ + ปุ่มอนุมัติ พนักงานเห็นแล้วสับสน
           (เขาเห็นเฉพาะลิงก์เอกสารของใบตัวเองเหมือนเดิม)
        เมนูที่เหลือคงไว้เป็นทางลัด ไม่ต้องเปิดหน้ารายละเอียดก่อนก็ทำงานเดิมได้ */
-    a.push({ key:'edit', label:'✏️ แก้ไขเอกสาร', call:'exDetail(' + q + ')' });
+    a.push({ key:'edit', label:'✏️ แก้ไขเอกสาร', call:'exDetail(' + q + ',1)' });   /* ,1 = เข้าโหมดแก้ไขเลย */
     /* ใบที่ยกเลิกแล้ว (เลขเอกสารออกไปแล้ว) — ดูได้ แต่แก้/อนุมัติ/จ่าย/ยกเลิกซ้ำไม่ได้
        เงื่อนไขตรงกับด่าน backend (expenseDead_) */
     if(expVoided(x)) return payMenuSort(a);
@@ -6754,7 +6754,7 @@
           if(r&&r.needSign){ mErr((r.error||'')+' '); } else mErr((r&&r.error)||'ส่งไม่สำเร็จ'); return; }
         closeModal(); IMGS['eImg']=[]; IMGS['eSrImg']=[]; IMGS['eRvCard']=[]; IMGS['eRvImg']=[];
         toast('✅ ส่งคำขอเบิกแล้ว · ได้ใบสั่งจ่าย '+(r.no||'')+(r.merged?' · รวม '+r.files+' ไฟล์เป็น PDF แล้ว':'')+
-          (r.sr?' · จะออกใบรับรองแทนตอนอนุมัติ':'')+(r.rv?' · อนุมัติแล้วจะได้ลิงก์ให้ผู้รับเงินเซ็นค่ะ':''));
+          (r.sr?' · ออกใบรับรองแทนใบเสร็จให้แล้ว (รอผู้อนุมัติลงนาม)':'')+(r.rv?' · อนุมัติแล้วจะได้ลิงก์ให้ผู้รับเงินเซ็นค่ะ':''));
         renderExpense(); })
       .catch(function(e){ if(b){b.disabled=false;b.textContent='แจ้งเบิก';} mErr(e.message); });
   }
@@ -10155,7 +10155,7 @@
     }
     /* 🔎 เปิดดู/แก้ไข — ทุกสถานะ เหมือนใบเบิก (พี่กี้เคาะ 23 ก.ย. 69)
        ใบที่ไม่ใช่ "รออนุมัติ" เปิดเป็นโหมดดูอย่างเดียว (ด่านแก้จริงอยู่ที่ backend) */
-    a.push({ key:'edit', label:'✏️ แก้ไขเอกสาร', call:'openPayout(' + q + ')' });
+    a.push({ key:'edit', label:'✏️ แก้ไขเอกสาร', call:'openPayout(' + q + ',1)' });   /* ,1 = เข้าโหมดแก้ไขเลย */
     if(mode === 'topay'){
       a.push({ key:'pay', label:'📑 ออกใบสำคัญจ่าย PV', call:'poOpenPay(' + q + ')' });
       /* 🪙 ทางจ่ายที่สอง (พี่กี้เคาะ 23 ก.ย. 69 · spec-pcv.md) — จ่ายจากวงเงินสดย่อย
@@ -10656,9 +10656,11 @@
     }
     return null;
   }
-  function openPayout(no){
+  /* edit=1 (มาจากเมนู ✏️ แก้ไขเอกสาร · พี่กี้ 25 ก.ย. 69) = เปิดมาพิมพ์ได้เลย ไม่ต้องกดแก้ไขซ้ำ
+     กดเลขที่ใบเพื่อเปิดดู = อ่านอย่างเดียวเหมือนเดิม · ใบที่แก้ไม่ได้ (ไม่ใช่รออนุมัติ) ยังเปิดดูอย่างเดียวเสมอ */
+  function openPayout(no, edit){
     if(!PO){ toast('กำลังโหลด…'); switchView('payout'); return; }
-    PO_EDIT=String(no||''); PO_VIEW=false; PO_EDITING=false;
+    PO_EDIT=String(no||''); PO_VIEW=false; PO_EDITING=!!edit;
     PI_NO=''; PI_ROWS=[]; PI_LOADED=false;    /* รายการย่อยของใบก่อนหน้าต้องไม่ติดมา */
     PO_SX=null; PO_TAB='doc';
     if(PO_EDIT){
@@ -10666,6 +10668,7 @@
       if(!hit && poStaffRow(PO_EDIT)){ switchView('poform'); return; }   /* ใบพนักงาน — ฟอร์มเดียวกัน */
       if(!hit){ toast('ไม่พบใบนี้ในทะเบียนค่ะ'); return; }
       PO_VIEW=!hit.editable;        // ไม่ใช่ใบรออนุมัติ = เปิดดูอย่างเดียว (ด่านแก้ไขอยู่ที่ backend อยู่แล้ว)
+      if(PO_VIEW) PO_EDITING=false;
     }
     switchView('poform');
   }
@@ -10675,8 +10678,8 @@
     return ((PO&&PO.reg)||[]).filter(function(x){ return x.no===no && x.kind==='staff'; })[0]||null;
   }
   /** เปิดใบพนักงานจากที่ไหนก็ได้ (เมนู ⋮ · ลิงก์เก่าหน้าใบเบิก) — ปลายทางเดียวคือฟอร์มใบสั่งจ่าย */
-  function poOpenStaff(no){
-    PO_EDIT=String(no||''); PO_VIEW=false; PO_EDITING=false; PO_SX=null; PO_TAB='doc';
+  function poOpenStaff(no, edit){
+    PO_EDIT=String(no||''); PO_VIEW=false; PO_EDITING=!!edit; PO_SX=null; PO_TAB='doc';
     PI_NO=''; PI_ROWS=[]; PI_LOADED=false;
     switchView('poform');
   }
@@ -12135,7 +12138,7 @@
   function exUndoDo(no){
     callBusy('กำลังย้อนสถานะ…', jsonp({action:'waPoUndo',uid:UID,no:no}), 'ย้อนแล้ว').then(function(r){
       if(!r||!r.ok){ mErr((r&&r.error)||'ย้อนไม่สำเร็จ'); return; }
-      closeModal(); toast('↩️ '+no+' กลับมารออนุมัติแล้ว');
+      closeModal(); toast('↩️ '+no+' กลับมารออนุมัติแล้ว'+(r.srNo?' · ออก '+r.srNo+' ใหม่ (เอาลายเซ็นผู้อนุมัติออก)':''));
       exReload();
     }).catch(function(e){ mErr(e.message); });
   }
@@ -12204,10 +12207,10 @@
 
   /* พี่กี้ 7 ก.ย. 69: "ไม่ชอบเปิดดูข้อมูล/เอกสารแบบป๊อปอัป ไปเปิดเต็มหน้าดีกว่า"
      → ใบเป็น "หน้า" ไม่ใช่ modal · ตั้งแต่ 24 ก.ย. 69 หน้านั้นคือฟอร์มใบสั่งจ่าย (view poform) */
-  function exDetail(no){
+  function exDetail(no, edit){
     /* 🔴 spec-po-unify ขั้น B (24 ก.ย. 69) — ใบของพนักงานคือใบสั่งจ่ายใบหนึ่ง เปิดในฟอร์มเดียวกัน
        (เดิมไปหน้าใบเบิกแยก ทำให้แก้ฟอร์มใบสั่งจ่ายแล้วใบพนักงานไม่เปลี่ยนตาม) */
-    poOpenStaff(no);
+    poOpenStaff(no, edit);
   }
   /** view expone (หน้า "ใบเบิก" เดิม) ปิดแล้ว — ลิงก์เก่า/แท็บที่เปิดค้างพามาที่ทะเบียนใบสั่งจ่าย
       (ไม่รู้ว่าใบไหน เพราะเลขใบอยู่ในหน้าเดิมเท่านั้น) */
@@ -12254,8 +12257,11 @@
     var approved=!pending && !rejected && st.indexOf('อนุมัติ')>=0;
     var rv=!!(x.docType && x.docType.indexOf('ใบสำคัญ')>=0);
     var hasDoc=!!(x.docNo||x.whtNo);
+    /* 📄 มีแค่ใบรับรองแทนใบเสร็จ (25 ก.ย. 69) — บันทึกแล้วระบบออกฉบับใหม่ทับเลขเดิมให้เอง จึงไม่นับเป็น "ล็อก" */
+    var srDoc=String(x.docType||'').indexOf('ใบรับรอง')>=0 && !!x.docNo && !x.whtNo;
+    var docLock=hasDoc && !srDoc;
     // ด่านเดียวกับ backend: จ่ายแล้วแก้ยอดไม่ได้ · ออก 50 ทวิ แล้วแก้ภาษีไม่ได้ · ออกกระดาษแล้วเปลี่ยนบริษัทไม่ได้
-    var canAmt=!paid, canWht=!!(x.payeeName && !x.whtNo), canEnt=(multiEnt() && !hasDoc);
+    var canAmt=!paid, canWht=!!(x.payeeName && !x.whtNo), canEnt=(multiEnt() && !docLock && !(srDoc && paid));
     var proofIsSr=String(x.docType||'').indexOf('ใบรับรอง')>=0;
     var proofIsAdv=String(x.docType||'').indexOf('จ่ายก่อน')>=0;   /* ⏳ ใบเสร็จตามมาทีหลัง (22 ก.ย. 69) */
 
@@ -12323,6 +12329,7 @@
        ตอนนี้: ช่องที่แก้ไม่ได้อยู่แถวบน (readonly) · ช่องที่แก้ได้เป็นฟอร์มในการ์ดเดียวกัน
        ⚠️ id ช่องทุกตัวคงเดิม — exdSave ยังเป็นตัวเดิมไม่ต้องแก้ */
     var canEdit=pending;   /* แก้ได้เฉพาะใบที่ยังรออนุมัติ (ตรงกับด่าน backend) */
+    if(!canEdit) PO_EDITING=false;   /* มาจากเมนูแก้ไข แต่ใบแก้ไม่ได้แล้ว = เปิดดูอย่างเดียว */
     var lockWhy=paid ? 'ใบนี้จ่ายเงินแล้ว แก้ไม่ได้ค่ะ'
       : (expVoided(x) ? 'ใบนี้ถูกยกเลิกแล้วค่ะ'
       : 'ใบนี้ผ่านการอนุมัติแล้ว — กด ↩️ ย้อนเป็นรออนุมัติ ในแถบล่างก่อน แล้วค่อยกดแก้ไขค่ะ');
@@ -12373,7 +12380,10 @@
         ro('วันที่ใบกำกับ', x.vatInvDate)+
         ro('อ้างอิง', x.poNo&&x.poNo!==no ? x.poNo : (x.poNo?'':no), 'end3')+
       '</div>'+
-      (hasDoc?'<div class="sf-note" style="margin-top:8px;color:#C8730B">⚠️ ใบนี้ออกเอกสารแล้ว'+
+      (srDoc?'<div class="sf-note" style="margin-top:8px">📄 ใบรับรองแทนใบเสร็จ <b>'+esc(x.docNo)+'</b>'+
+        (pending?' · รอผู้อนุมัติลงนาม':'')+
+        ' — แก้ยอด/รายละเอียด/ประเภท แล้วกดบันทึก ระบบออกฉบับใหม่ทับเลขเดิมให้เอง</div>':'')+
+      (docLock?'<div class="sf-note" style="margin-top:8px;color:#C8730B">⚠️ ใบนี้ออกเอกสารแล้ว'+
         (x.docNo&&!rv?' ('+esc(x.docNo)+' · เปลี่ยนหลักฐานได้ แต่เอกสารเดิมยังอยู่)':'')+
         ' — แก้แล้วกด 🗂️ สร้างแฟ้มใหม่ให้ตรงกัน</div>':'')+
       '</div>'+
@@ -12456,7 +12466,7 @@
         (rv&&!x.docNo?'<button class="btn btn-ghost btn-sm" onclick="exRelink(\''+esc(no)+'\')">🔗 ส่งลิงก์เซ็นใหม่</button>':'')+
         '<button class="btn btn-ghost btn-sm" onclick="vatOpen(\'expense\',\''+esc(no)+'\','+(Number(x.amount)||0)+')">🧾 ใบกำกับภาษีซื้อ</button>'+
         ((approved||paid)?'<button class="btn btn-ghost btn-sm" onclick="exRebuild(\''+esc(no)+'\')">🗂️ สร้างแฟ้มใหม่</button>':'')+
-        (!paid&&(approved||rejected)&&!hasDoc?'<button class="btn btn-ghost btn-sm" onclick="exUndo(\''+esc(no)+'\')">↩️ ย้อนเป็นรออนุมัติ</button>':'')+
+        (!paid&&(approved||rejected)&&!docLock?'<button class="btn btn-ghost btn-sm" onclick="exUndo(\''+esc(no)+'\')">↩️ ย้อนเป็นรออนุมัติ</button>':'')+
         '<button class="btn btn-ghost btn-sm" style="color:#B4242A" onclick="exTrash(\''+esc(no)+'\')">🚫 ยกเลิกเอกสาร</button>'+
         '<span style="flex:1"></span>'+
         '<button class="btn btn-ghost" onclick="switchView(&quot;payout&quot;)">'+(PO_EDITING?'ยกเลิก':'กลับ')+'</button>'+
@@ -12577,8 +12587,13 @@
             if(r.voidedDoc) toast('🚫 ยกเลิก '+r.voidedDoc+' แล้ว'+(r.dossier?' · สร้างแฟ้มใหม่ให้แล้ว':'')+' · ใบนี้รอใบเสร็จตัวจริง');
             if(r.filedWarn) mErr(r.filedWarn);
           }
+          if(j.req.action==='waPoEdit' && r.srReissued) exdNote='📄 ออกใบรับรองแทนใบเสร็จ '+r.srReissued+' ฉบับใหม่ทับเลขเดิมให้แล้ว';
+          if(j.req.action==='waPoProof' && r.toReceipt && r.voidedDoc){
+            toast('🚫 ยกเลิกใบรับรองแทนใบเสร็จ '+r.voidedDoc+' แล้ว · ใบนี้ใช้ใบเสร็จแทน');
+            if(r.filedWarn) mErr(r.filedWarn);
+          }
           if(j.req.action==='waPoProof'){
-            if(r.issued)        exdNote='📄 ออกใบรับรองแทนใบเสร็จ '+(r.docNo||'')+' ให้แล้ว';
+            if(r.issued)        exdNote='📄 ออกใบรับรองแทนใบเสร็จ '+(r.docNo||'')+' ให้แล้ว'+(r.signed?'':' (รอผู้อนุมัติลงนาม)');
             else if(r.already)  exdNote='ใบนี้มีใบรับรองแทน '+(r.docNo||'')+' อยู่แล้ว';
             else if(r.needSign) exdNote='✍️ พนักงานยังไม่มีลายเซ็นในระบบ — ให้เขาเซ็นก่อน แล้วระบบจะออกให้อัตโนมัติ';
             else if(r.pending)  exdNote='จะออกใบรับรองแทนให้ตอนอนุมัติค่ะ';
@@ -12619,7 +12634,8 @@
       if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; }
       closeModal();
       if(r.docError) toast('✅ อนุมัติแล้ว · ⚠️ ออกเอกสารไม่สำเร็จ: '+r.docError);
-      else if(r.docNo) toast('✅ อนุมัติแล้ว · 📄 ออกใบรับรองแทน '+r.docNo+' แล้ว');
+      else if(r.docNo) toast('✅ อนุมัติแล้ว · 📄 ลงนามในใบรับรองแทนใบเสร็จ '+r.docNo+' แล้ว');
+      else if(r.voidedDoc) toast('❌ ไม่อนุมัติแล้ว · 🚫 ยกเลิกใบรับรองแทนใบเสร็จ '+r.voidedDoc+' แล้ว');
       else if(r.rvLink) toast('✅ อนุมัติแล้ว · 🔗 ส่งลิงก์ให้ผู้ตั้งเบิกส่งต่อให้ผู้รับเงินเซ็นแล้วค่ะ');
       else toast(decision==='approve'?'✅ อนุมัติแล้ว':'❌ ไม่อนุมัติแล้ว');
       exFade(no);
@@ -23949,7 +23965,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260924-2141';
+  var APP_BUILD='20260924-2227';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
