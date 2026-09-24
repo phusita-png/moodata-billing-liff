@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260923-2336">
+<link rel="stylesheet" href="user.css?v=20260924-0923">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -6306,15 +6306,12 @@
   function expSendReceipt(no){
     var arr=IMGS['eRealRcp']||[];
     if(!arr.length){ mErr('แนบไฟล์ก่อนค่ะ'); return; }
-    callBusy('กำลังบันทึก…', jsonpPost({action:'waExpReceipt',uid:UID,no:no,imgs:JSON.stringify(arr)}))
+    callBusy('กำลังบันทึก…', jsonpPost({action:'waPoReceipt',uid:UID,no:no,imgs:JSON.stringify(arr)}))
       .then(function(r){
         if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
         closeModal(); IMGS['eRealRcp']=[];
         toast('🧾 บันทึกใบเสร็จตัวจริงของ ' + no + ' แล้ว');
-        if(VIEW==='payout') renderPayout();
-        else if(VIEW==='expdash') renderExpDash();
-        else if(VIEW==='expone') renderExpOne();
-        else renderExpense();
+        exReload();
       }).catch(function(e){ mErr(e.message); });
   }
   window.expSendReceipt=expSendReceipt;
@@ -6523,6 +6520,10 @@
       '<div class="fld"><label>ประเภท</label><select id="eType">'+opts+'</select></div>'+
       '<div class="fld"><label>จำนวนเงิน (บาท)</label><input id="eAmt" type="number" inputmode="decimal" min="0" step="0.01" placeholder="เช่น 250"></div>'+
       '<div class="fld"><label>รายละเอียด (จ่ายค่าอะไร)</label><textarea id="eDetail" placeholder="เช่น ค่าแท็กซี่ไปหาลูกค้า A"></textarea></div>'+
+      /* 🏪 ร้านค้า/ผู้ขาย (พี่กี้เคาะ 24 ก.ย. 69) — ชื่อที่ขึ้นเป็นคู่ค้าบนใบสั่งจ่าย
+         ไม่มีช่องนี้ = เอกสารขึ้นชื่อพนักงานเป็นคู่ค้า · บังคับเฉพาะใบที่มีบิล (ดู expSetProof) */
+      '<div class="fld" id="eVendorFld"><label id="eVendorLb">ร้านค้า / ผู้ขาย</label>'+
+        '<input id="eVendor" placeholder="ชื่อร้านหรือบริษัทบนใบเสร็จ เช่น ร้านอาหารครัวคุณแดง"></div>'+
       '<div class="fld"><label>หลักฐาน</label>'+
         '<div style="display:flex;gap:6px">'+
           '<button type="button" id="epRcp" class="btn btn-sm" onclick="expSetProof(\'rcp\')" style="flex:1">🧾 มีใบเสร็จ</button>'+
@@ -6632,6 +6633,10 @@
     if(sb) sb.classList.toggle('hidden', mode!=='sr');
     if(vb) vb.classList.toggle('hidden', mode!=='rv');
     var ab=$('epAdvBox'); if(ab) ab.classList.toggle('hidden', mode!=='adv');
+    /* ร้านค้า: ใบ RV ใช้ชื่อผู้รับเงินอยู่แล้ว (ซ่อน) · ไม่มีใบเสร็จ = ไม่บังคับ · นอกนั้นบังคับ */
+    var vf=$('eVendorFld'), vl=$('eVendorLb');
+    if(vf) vf.classList.toggle('hidden', mode==='rv');
+    if(vl) vl.textContent = mode==='sr' ? 'ร้านค้า / ผู้ขาย (ถ้ารู้)' : 'ร้านค้า / ผู้ขาย';
     if(mode==='sr'){
       var el=$('epSign'); if(el) el.textContent='กำลังตรวจลายเซ็น…';
       jsonp({action:'waSignGet',uid:UID}).then(function(r){
@@ -6667,6 +6672,11 @@
       mErr('กรอกบัญชีรับโอนคืนก่อนค่ะ (ปุ่ม 🏦 บัญชีรับโอนของฉัน)'); return;
     }
     var p={action:'waExpCreate',uid:UID,type:type,amount:amt,detail:detail};
+    if(EXP_PROOF!=='rv'){
+      var vd=(($('eVendor')||{}).value||'').trim();
+      if(!vd && EXP_PROOF!=='sr'){ mErr('กรอกชื่อร้านค้า/ผู้ขายก่อนค่ะ (ชื่อบนใบเสร็จหรือใบวางบิล)'); return; }
+      p.vendor=vd;
+    }
     if(EXP_PROOF==='rv'){
       var rn=($('eRvName')||{}).value.trim(), rid=(($('eRvId')||{}).value||'').replace(/\D/g,'');
       var ra=($('eRvAddr')||{}).value.trim(), card=IMGS['eRvCard']||[];
@@ -6821,6 +6831,7 @@
   /* 🔒 เปิดใบมา = โหมดอ่านก่อนเสมอ ต้องกด "แก้ไข" ถึงพิมพ์ได้ (พี่กี้เคาะ 23 ก.ย. 69
      กติกาเดียวกับหน้าใบเบิกและหน้าตั้งค่าห้อง) · ใบใหม่ไม่ต้องกด เพราะกำลังสร้างอยู่แล้ว */
   var PO_EDITING=false;
+  var PO_SX=null;   /* ใบพนักงานที่เปิดอยู่ (เต็มใบจาก waPoGet) · null = ยังไม่โหลด (ขั้น B · 24 ก.ย. 69) */
   /* PO_VIEW = เปิดแบบ "ดูอย่างเดียว" (ใบที่ไม่ได้รออนุมัติแล้ว · พี่กี้เคาะ 23 ก.ย. 69:
      เปิดดูได้ทุกสถานะ แก้ได้เฉพาะรออนุมัติ — ให้ตรงกับใบเบิกที่เปิดดูได้ตลอด) */
   /* ═══════════ 🏛️ ศูนย์รวมภาษี + 50 ทวิ ที่ลูกค้าหักเรา (E6) ═══════════
@@ -10327,14 +10338,27 @@
     if(!PO){ toast('กำลังโหลด…'); switchView('payout'); return; }
     PO_EDIT=String(no||''); PO_VIEW=false; PO_EDITING=false;
     PI_NO=''; PI_ROWS=[]; PI_LOADED=false;    /* รายการย่อยของใบก่อนหน้าต้องไม่ติดมา */
+    PO_SX=null; PO_TAB='doc';
     if(PO_EDIT){
       var hit=poFindAny(PO_EDIT);
+      if(!hit && poStaffRow(PO_EDIT)){ switchView('poform'); return; }   /* ใบพนักงาน — ฟอร์มเดียวกัน */
       if(!hit){ toast('ไม่พบใบนี้ในทะเบียนค่ะ'); return; }
       PO_VIEW=!hit.editable;        // ไม่ใช่ใบรออนุมัติ = เปิดดูอย่างเดียว (ด่านแก้ไขอยู่ที่ backend อยู่แล้ว)
     }
     switchView('poform');
   }
   window.openPayout=openPayout;
+  /** แถวใบพนักงานในทะเบียน (null = ไม่ใช่ใบพนักงาน / ยังไม่โหลดทะเบียน) */
+  function poStaffRow(no){
+    return ((PO&&PO.reg)||[]).filter(function(x){ return x.no===no && x.kind==='staff'; })[0]||null;
+  }
+  /** เปิดใบพนักงานจากที่ไหนก็ได้ (เมนู ⋮ · ลิงก์เก่าหน้าใบเบิก) — ปลายทางเดียวคือฟอร์มใบสั่งจ่าย */
+  function poOpenStaff(no){
+    PO_EDIT=String(no||''); PO_VIEW=false; PO_EDITING=false; PO_SX=null; PO_TAB='doc';
+    PI_NO=''; PI_ROWS=[]; PI_LOADED=false;
+    switchView('poform');
+  }
+  window.poStaffRow=poStaffRow; window.poOpenStaff=poOpenStaff;
 
   /** เลขเอกสารต้นทางของใบ (หาในทะเบียนที่โหลดมาแล้ว) — ว่าง = ตั้งเรื่องเอง ไม่ได้ดึงจากใบอื่น */
   function poRefOf(no){
@@ -10355,6 +10379,26 @@
       return;
     }
     var found=PO_EDIT ? poFindAny(PO_EDIT) : null;
+    /* 🧾 ใบที่พนักงานสำรองจ่าย = ใบสั่งจ่ายใบเดียวกัน แค่ต้นทางต่าง (spec-po-unify ขั้น B)
+       ไม่อยู่ในรายการใบบริษัท → อ่านเต็มใบจากหลังบ้าน (waPoGet) แล้ววาดด้วยตัววาดของใบพนักงาน */
+    if(PO_EDIT && !found){
+      if(PO_SX){ renderPoStaff(); return; }
+      skel();
+      var want=PO_EDIT;
+      jsonp({action:'waPoGet', uid:UID, no:want}).then(function(r){
+        if(VIEW!=='poform' || PO_EDIT!==want) return;
+        if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="empty">'+esc((r&&r.error)||'ไม่พบใบ '+want)+'</div></div>'; return; }
+        if(r.kind!=='staff'){ $('main').innerHTML='<div class="card"><div class="empty">ไม่พบใบ '+esc(want)+' ในทะเบียน ลองรีเฟรชนะคะ</div></div>'; return; }
+        /* ลิสต์กลางที่โมดัลอนุมัติ/จ่ายคืน/แก้ภาษีใช้ — ชุดเดียวกับหน้าอนุมัติเดิม */
+        SECTIONS=r.sections||SECTIONS; KIND_CO=r.companyKind||KIND_CO; EXP_TYPES=r.types||EXP_TYPES;
+        ENTITIES=r.entities||ENTITIES; DEF_ENT=r.defaultEntity||DEF_ENT;
+        PETTY_ENTS=r.pettyEntities||PETTY_ENTS; PAY_CHANNELS=r.payChannels||PAY_CHANNELS;
+        PAY_ACCTS=r.payAccounts||PAY_ACCTS;
+        PO_SX=r.x; EXP_BYNO[want]=r.x;   /* เมนู ⋮ / โมดัลเดิมอ่านใบจาก EXP_BYNO */
+        renderPoStaff();
+      }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
+      return;
+    }
     var cur=found ? found.x : null;
     if(PO_EDIT && !found){ $('main').innerHTML='<div class="card"><div class="empty">ไม่พบใบ '+esc(PO_EDIT)+'</div></div>'; return; }
     var poTitle=!PO_EDIT ? 'สร้างใบสั่งจ่าย' : (PO_VIEW ? 'ใบสั่งจ่าย '+esc(PO_EDIT) : 'แก้ใบสั่งจ่าย '+esc(PO_EDIT));
@@ -11431,6 +11475,9 @@
   // ═══════════ VIEW: อนุมัติเบิกจ่าย (พี่) ═══════════
   // หน้าอนุมัติแบบเดี่ยว (deep link จาก LINE/GChat ?p=expapprove) — เมนูปกติรวมเข้าหน้าสรุปแล้ว
   function renderExpenseApprove(){
+    /* 🔴 spec-po-unify ขั้น B (พี่กี้เคาะ ค. 24 ก.ย. 69) — หน้าอนุมัติใบเบิกปิดแล้ว
+       งานเดียวกันอยู่แท็บ "รออนุมัติ" ของทะเบียนใบสั่งจ่าย */
+    if(IS_OWNER){ PR_DOC='PO'; PR_TAB='pending'; switchView('payout'); return; }
     if(!IS_OWNER){ $('main').innerHTML='<div class="card"><div class="empty">เฉพาะผู้ดูแล (พี่/HR) ค่ะ</div></div>'; return; }
     skel();
     $('main').innerHTML='<div class="section-h">💸 อนุมัติเบิกจ่าย</div><div id="expApprBlock"></div>';
@@ -11630,11 +11677,11 @@
       '<button class="btn btn-primary" onclick="exSaveEntity(\''+esc(no)+'\')">บันทึก</button></div>');
   }
   function exSaveEntity(no){
-    callBusy('กำลังบันทึก…', jsonp({action:'waExpSetEntity',uid:UID,no:no,entity:entVal('exEnt3')}), 'บันทึกแล้ว').then(function(r){
+    callBusy('กำลังบันทึก…', jsonp({action:'waPoEdit',uid:UID,no:no,entity:entVal('exEnt3')}), 'บันทึกแล้ว').then(function(r){
       if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
       closeModal();
       toast(r.changed?'✅ ออกเอกสารในนาม '+(r.name||entName(r.code)):'บริษัทเดิมอยู่แล้วค่ะ');
-      if(VIEW==='expdash') renderExpDash(); else if(VIEW==='expapprove') renderExpenseApprove(); else renderExpense();
+      exReload();
     }).catch(function(e){ mErr(e.message); });
   }
   /** ชื่อเดิม — การ์ด/ลิงก์เก่าที่ LINE แคชไว้ยังเรียก exOpenRv อยู่ */
@@ -11681,14 +11728,14 @@
     if(!validThaiId(id)){ mErr('เลขบัตรประชาชนไม่ถูกต้อง — ตรวจเลข 13 หลักอีกครั้งค่ะ'); return; }
     if(!ad){ mErr('กรอกที่อยู่ผู้รับเงินก่อนค่ะ'); return; }
     var eb=readBank('ed2','บัญชีผู้รับเงิน'); if(!eb) return;
-    var p={action:'waExpEditPayee',uid:UID,no:no,payeeName:nm,payeeId:id,payeeAddr:ad,
+    var p={action:'waPoPayee',uid:UID,no:no,payeeName:nm,payeeId:id,payeeAddr:ad,
       payeeBankName:eb.name,payeeBankAcct:eb.acct,payeeBankOwner:eb.owner};
     var card=IMGS['edCard']||[]; if(card.length) p.idcard=JSON.stringify(card);
     callBusy('กำลังบันทึก…', jsonpPost(p), 'บันทึกแล้ว').then(function(r){
       if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
       closeModal(); IMGS['edCard']=[];
       toast(r.hasDoc?'✅ แก้แล้ว — อย่าลืมออกเอกสารใหม่ให้ข้อมูลตรงกันนะคะ':'✅ แก้ข้อมูลผู้รับเงินแล้ว');
-      if(VIEW==='expdash') renderExpDash(); else if(VIEW==='expapprove') renderExpenseApprove(); else renderExpense();
+      exReload();
     }).catch(function(e){ mErr(e.message); });
   }
   /** ข้อมูลใบเบิกจากที่ไหนก็ได้ที่หน้านี้โหลดไว้ (การ์ดอนุมัติ / ตารางในหน้าสรุป) */
@@ -11717,11 +11764,11 @@
   function exSaveType(no){
     var k=($('etSel')||{}).value||'';
     if(!k){ mErr('เลือกประเภทก่อนค่ะ'); return; }
-    callBusy('กำลังบันทึก…', jsonp({action:'waExpSetType',uid:UID,no:no,type:k}), 'บันทึกแล้ว').then(function(r){
+    callBusy('กำลังบันทึก…', jsonp({action:'waPoEdit',uid:UID,no:no,type:k}), 'บันทึกแล้ว').then(function(r){
       if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
       closeModal();
       toast(r.changed?'✅ เปลี่ยนเป็น '+r.type:'ประเภทเดิมอยู่แล้วค่ะ');
-      if(VIEW==='expdash') renderExpDash(); else if(VIEW==='expapprove') renderExpenseApprove(); else renderExpense();
+      exReload();
     }).catch(function(e){ mErr(e.message); });
   }
   window.exEditType=exEditType; window.exSaveType=exSaveType;
@@ -11737,7 +11784,7 @@
       '<button class="btn btn-primary" onclick="exUndoDo(\''+esc(no)+'\')">ย้อนกลับ</button></div>');
   }
   function exUndoDo(no){
-    callBusy('กำลังย้อนสถานะ…', jsonp({action:'waExpUndo',uid:UID,no:no}), 'ย้อนแล้ว').then(function(r){
+    callBusy('กำลังย้อนสถานะ…', jsonp({action:'waPoUndo',uid:UID,no:no}), 'ย้อนแล้ว').then(function(r){
       if(!r||!r.ok){ mErr((r&&r.error)||'ย้อนไม่สำเร็จ'); return; }
       closeModal(); toast('↩️ '+no+' กลับมารออนุมัติแล้ว');
       exReload();
@@ -11758,7 +11805,7 @@
     var amt=(($('eaAmt')||{}).value||'').trim(), dt=(($('eaDetail')||{}).value||'').trim();
     if(!amt){ mErr('กรอกยอดเงินก่อนค่ะ'); return; }
     if(!dt){ mErr('กรอกรายละเอียดก่อนค่ะ'); return; }
-    callBusy('กำลังบันทึก…', jsonpPost({action:'waExpEditAmount',uid:UID,no:no,amount:amt,detail:dt}), 'บันทึกแล้ว').then(function(r){
+    callBusy('กำลังบันทึก…', jsonpPost({action:'waPoEdit',uid:UID,no:no,amount:amt,detail:dt}), 'บันทึกแล้ว').then(function(r){
       if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
       closeModal();
       toast(!r.changed?'ค่าเดิมอยู่แล้วค่ะ':(r.hasDoc?'✅ แก้แล้ว — อย่าลืมออกเอกสารใหม่นะคะ':'✅ แก้ยอดแล้ว'));
@@ -11785,7 +11832,7 @@
   }
   function exSaveWht(no){
     var sc=($('ewSect')||{}).value||'', rt=($('ewRate')||{}).value||'';
-    callBusy('กำลังบันทึก…', jsonp({action:'waExpEditWht',uid:UID,no:no,section:sc,rate:rt}), 'บันทึกแล้ว').then(function(r){
+    callBusy('กำลังบันทึก…', jsonp({action:'waPoEdit',uid:UID,no:no,section:sc,rate:rt}), 'บันทึกแล้ว').then(function(r){
       if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
       closeModal();
       toast('✅ '+r.section+' · หัก '+r.rate+'% = '+money(r.wht)+' บาท → '+(r.formLabel||''));
@@ -11804,23 +11851,18 @@
         ตรรกะภาษี/ด่านตรวจจึงเดินทางเดียวกับที่อื่นเสมอ
      ③ **ส่งทีละก้อนตามลำดับ แล้วสรุปผลรวม** — ก้อนไหนพังต้องบอกว่าก้อนไหน ไม่ใช่ "บันทึกไม่สำเร็จ" ลอย ๆ
         (ยอดกับภาษีคนละ route กัน ถ้ายิงพร้อมกันแล้วอันหลังคิดจากยอดเก่า) */
-  var EXD_NO='', EXD_BACK='expense', EXD_FILES=[], EXD_TAB='doc', EXD_EDIT=false;
+  var EXD_FILES=[];   /* การ์ดไฟล์ของใบที่เปิดอยู่ (exdOpenFile ใช้) */
 
   /* พี่กี้ 7 ก.ย. 69: "ไม่ชอบเปิดดูข้อมูล/เอกสารแบบป๊อปอัป ไปเปิดเต็มหน้าดีกว่า"
-     → ใบเบิกเป็น "หน้า" (view expone) ไม่ใช่ modal · มีปุ่มย้อนกลับไปหน้าที่มา */
+     → ใบเป็น "หน้า" ไม่ใช่ modal · ตั้งแต่ 24 ก.ย. 69 หน้านั้นคือฟอร์มใบสั่งจ่าย (view poform) */
   function exDetail(no){
-    var x=exFind(no); if(!x){ toast('ไม่พบข้อมูลใบ '+no+' ลองรีเฟรชนะคะ'); return; }
-    EXD_NO=no; EXD_TAB='doc'; EXD_EDIT=false;
-    if(VIEW!=='expone') EXD_BACK=VIEW;   // จำหน้าที่มา (รายการเบิก / อนุมัติ / สรุป)
-    switchView('expone');
+    /* 🔴 spec-po-unify ขั้น B (24 ก.ย. 69) — ใบของพนักงานคือใบสั่งจ่ายใบหนึ่ง เปิดในฟอร์มเดียวกัน
+       (เดิมไปหน้า "ใบเบิก" แยก ทำให้แก้ฟอร์มใบสั่งจ่ายแล้วใบพนักงานไม่เปลี่ยนตาม) */
+    poOpenStaff(no);
   }
-  function exdBack(){ switchView(EXD_BACK||'expense'); }
-  /** สลับแท็บในหน้าใบเบิก — ชุดเดียวกับหน้าใบสั่งจ่าย */
-  function exdTab(t){ EXD_TAB=t; renderExpOne(); }
-  /** กด "แก้ไข" ถึงจะพิมพ์ได้ — ใบที่อนุมัติ/จ่ายแล้วปุ่มจางกดไม่ได้
-      (ต้องกด ↩️ ย้อนเป็นรออนุมัติ ในแถบล่างก่อน · พี่กี้เคาะ 23 ก.ย. 69) */
-  function exdEditOn(){ EXD_EDIT=true; renderExpOne(); }
-  window.exdEditOn=exdEditOn;
+  /** view expone (หน้า "ใบเบิก" เดิม) ปิดแล้ว — ลิงก์เก่า/แท็บที่เปิดค้างพามาที่ทะเบียนใบสั่งจ่าย
+      (ไม่รู้ว่าใบไหน เพราะเลขใบอยู่ในหน้าเดิมเท่านั้น) */
+  function renderExpOne(){ switchView('payout'); }
 
   /** ลิงก์ Drive → file id (รองรับทั้ง /file/d/<id>/... และ ...?id=<id>) */
   function driveId_(u){
@@ -11843,7 +11885,7 @@
     var id=driveId_(f.url);
     openUrl(id ? ('https://drive.google.com/file/d/'+id+'/view') : f.url);
   }
-  window.exdBack=exdBack; window.exdOpenFile=exdOpenFile; window.openUrl=openUrl;
+  window.exdOpenFile=exdOpenFile; window.openUrl=openUrl;
 
   /* หน้าใบเบิก (จัดใหม่ 7 ก.ย. 69 รอบ 2 — พี่กี้ส่งตัวอย่างหน้า PEAK มาให้ดู)
      สิ่งที่พี่ขอ:
@@ -11853,8 +11895,10 @@
        ③ "เอกสารแนบที่แนบมาจากพนักงาน แสดงให้ดูด้วย" → นับไฟล์ให้ครบทุกช่อง
           รวม **สำเนาบัตร** และ **50 ทวิ ฉบับผู้รับเงิน** ที่รอบแรกตกหล่นไป
      ⚠️ id ของช่องกรอกต้องคงเดิมทุกตัว — exdSave() อ่านจาก id พวกนี้ */
-  function renderExpOne(){
-    var no=EXD_NO, x=exFind(no);
+  /* 🧾 เนื้อหาใบสั่งจ่ายที่พนักงานสำรองจ่าย — วาดใน view poform (ขั้น B · 24 ก.ย. 69)
+     ข้อมูลเต็มใบมาจาก waPoGet (PO_SX) ไม่ใช่แถวย่อในทะเบียน — แถวย่อไม่มีผู้อนุมัติ/ภาษี/วันจ่าย */
+  function renderPoStaff(){
+    var no=PO_EDIT, x=PO_SX;
     if(!x){ $('main').innerHTML='<div class="card"><div class="empty">ไม่พบข้อมูลใบนี้ค่ะ</div></div>'; return; }
     var st=String(x.status||''), paid=st.indexOf('จ่ายแล้ว')>=0, rejected=st.indexOf('ไม่อนุมัติ')>=0;
     var pending=st.indexOf('รออนุมัติ')>=0;
@@ -11912,17 +11956,17 @@
     /* 🔴 โครงหน้าเดียวกับหน้าใบสั่งจ่าย (spec-po-form.md ขั้น 4 · พี่กี้เคาะ 23 ก.ย. 69
        "ขอพนักงานหรือพี่ก็เหมือนกัน") — breadcrumb → เลขที่ตัวใหญ่ + ป้ายสถานะ → แท็บ → การ์ด
        ⚠️ เปลี่ยนแค่โครงกับชื่อคลาส ช่องกรอก/ปุ่ม/ตัวบันทึกเป็นของเดิมทุกตัว */
-    var h='<div class="bc"><button class="lnk" onclick="exdBack()">ทะเบียนการจ่าย</button> › '+esc(no)+'</div>'+
+    var h='<div class="bc"><button class="lnk" onclick="switchView(&quot;payout&quot;)">ใบสั่งจ่าย</button> › '+esc(no)+'</div>'+
       /* 🔴 ป้ายสถานะอยู่มุมขวาของหัวการ์ด "ข้อมูลเอกสาร" ที่เดียว — เหมือนใบเสนอราคา
          (เดิมขึ้นซ้ำทั้งบรรทัดหัวเรื่องและหัวการ์ด) */
       '<div class="pg-title"><h2>'+esc(no)+'</h2>'+
         '<span class="pg-amt">'+money(x.amount)+' บาท</span></div>'+
-      pageTabs(EXD_TAB, [['doc','ข้อมูลเอกสาร',"exdTab('doc')"],
-                         ['log','ประวัติการใช้งาน',"exdTab('log')"]]);
+      pageTabs(PO_TAB, [['doc','ข้อมูลเอกสาร',"poTab('doc')"],
+                         ['log','ประวัติการใช้งาน',"poTab('log')"]]);
     /* แท็บประวัติ = ตัวเดียวกับหน้าใบสั่งจ่าย (หลังบ้านอ่าน log ด้วยเลขที่ใบ ใช้ได้ทั้ง PO และ EX) */
-    if(EXD_TAB==='log'){
+    if(PO_TAB==='log'){
       $('main').innerHTML=h+poLogHtml();
-      poLogLoad(no, function(){ if(VIEW==='expone'&&EXD_TAB==='log') renderExpOne(); });
+      poLogLoad(no, function(){ if(VIEW==='poform'&&PO_TAB==='log') renderPoForm(); });
       return;
     }
     /* 🔴 การ์ดเดียวแบบใบเสนอราคา (พี่กี้ 23 ก.ย. 69: "ขอแบบใบเสนอราคา")
@@ -11934,8 +11978,8 @@
       : (expVoided(x) ? 'ใบนี้ถูกยกเลิกแล้วค่ะ'
       : 'ใบนี้ผ่านการอนุมัติแล้ว — กด ↩️ ย้อนเป็นรออนุมัติ ในแถบล่างก่อน แล้วค่อยกดแก้ไขค่ะ');
     var editBtn = canEdit
-      ? (EXD_EDIT ? '<span class="tag" style="margin-left:auto">กำลังแก้ไข</span>'
-                  : '<button class="btn btn-ghost btn-sm" style="margin-left:auto;width:auto" onclick="exdEditOn()">✏️ แก้ไข</button>')
+      ? (PO_EDITING ? '<span class="tag" style="margin-left:auto">กำลังแก้ไข</span>'
+                  : '<button class="btn btn-ghost btn-sm" style="margin-left:auto;width:auto" onclick="poEditOn()">✏️ แก้ไข</button>')
       : '<button class="btn btn-ghost btn-sm" style="margin-left:auto;width:auto" disabled title="'+esc(lockWhy)+'">✏️ แก้ไข</button>';
 
     $('main').innerHTML=(h+
@@ -12030,12 +12074,12 @@
         (!paid&&(approved||rejected)&&!hasDoc?'<button class="btn btn-ghost btn-sm" onclick="exUndo(\''+esc(no)+'\')">↩️ ย้อนเป็นรออนุมัติ</button>':'')+
         '<button class="btn btn-ghost btn-sm" style="color:#B4242A" onclick="exTrash(\''+esc(no)+'\')">🚫 ยกเลิกเอกสาร</button>'+
         '<span style="flex:1"></span>'+
-        '<button class="btn btn-ghost" onclick="exdBack()">'+(EXD_EDIT?'ยกเลิก':'กลับ')+'</button>'+
-        (EXD_EDIT?'<button class="btn btn-primary" onclick="exdSave()">บันทึก</button>':'')+
+        '<button class="btn btn-ghost" onclick="switchView(&quot;payout&quot;)">'+(PO_EDITING?'ยกเลิก':'กลับ')+'</button>'+
+        (PO_EDITING?'<button class="btn btn-primary" onclick="exdSave()">บันทึก</button>':'')+
       '</div>');
     /* 🔒 ยังไม่กด "แก้ไข" = ทุกช่องปิดไว้ (พี่กี้ 23 ก.ย. 69 · กติกาเดียวกับหน้าตั้งค่าห้อง)
        ด่านจริงอยู่ที่ backend — ตรงนี้กันพิมพ์ไปทั้งหน้าแล้วกดบันทึกไม่ได้ */
-    if(!EXD_EDIT){
+    if(!PO_EDITING){
       Array.prototype.forEach.call(document.querySelectorAll('#main .exd-form input,#main .exd-form select,#main .exd-form textarea'),
         function(el){ el.disabled=true; });
       Array.prototype.forEach.call(document.querySelectorAll('#main .exd-upload,#main .exd-form button'),
@@ -12048,45 +12092,44 @@
 
   /** บันทึกทุกช่องที่เปลี่ยน — ทีละก้อนตามลำดับ แล้วสรุปว่าอะไรสำเร็จ/อะไรไม่ */
   function exdSave(){
-    var no=EXD_NO, x=exFind(no)||{};
-    var jobs=[];   // { name, req } — ส่งเฉพาะที่ต่างจากของเดิมจริง
+    var no=PO_EDIT, x=PO_SX||exFind(no)||{};
+    var jobs=[], ed={};   // { name, req } — ส่งเฉพาะที่ต่างจากของเดิมจริง
     function val(id){ var el=$(id); return el?String(el.value||'').trim():''; }
 
     var ty=val('exdType');
-    if(ty && ty!==x.type) jobs.push({ name:'ประเภท', req:{action:'waExpSetType',uid:UID,no:no,type:ty} });
+    if(ty && ty!==x.type) ed.type=ty;
 
     var amt=val('exdAmt'), dt=val('exdDetail');
     var amtEl=$('exdAmt');
     if(amtEl && !amtEl.disabled && (Number(amt)!==Number(x.amount) || dt!==String(x.detail||''))){
       if(!amt){ mErr('กรอกยอดเงินก่อนค่ะ'); return; }
       if(!dt){ mErr('กรอกรายละเอียดก่อนค่ะ'); return; }
-      jobs.push({ name:'ยอด/รายละเอียด', req:{action:'waExpEditAmount',uid:UID,no:no,amount:amt,detail:dt} });
+      ed.amount=amt; ed.detail=dt;
     }
 
     if($('exdVendor')){
       var vd=val('exdVendor'), vt=val('exdVendorTax').replace(/[^0-9]/g,'');
       if(vd!==String(x.vendor||'') || vt!==String(x.vendorTaxId||'').replace(/[^0-9]/g,'')){
-        jobs.push({ name:'ร้านค้า/ผู้ขาย', req:{action:'waExpSetVendor',uid:UID,no:no,vendor:vd,vendorTaxId:vt} });
+        ed.vendor=vd; ed.vendorTaxId=vt;
       }
     }
 
     if($('exdSect')){
       var sc=val('exdSect'), rt=val('exdRate'), wa=val('exdWhtAmt');
       var changed = wa!=='' || sc!==String(x.incomeSection||'') || Number(rt)!==Number(x.whtRate||0);
-      if(sc && changed) jobs.push({ name:'ภาษีหัก ณ ที่จ่าย',
-        req:{action:'waExpEditWht',uid:UID,no:no,section:sc,rate:rt,whtAmt:wa} });
+      if(sc && changed){ ed.section=sc; ed.rate=rt; ed.whtAmt=wa; }
     }
 
     if($('exdEnt')){
       var en=entVal('exdEnt');
-      if(en!==String(x.entity||'')) jobs.push({ name:'บริษัทผู้ออกเอกสาร', req:{action:'waExpSetEntity',uid:UID,no:no,entity:en} });
+      if(en!==String(x.entity||'')) ed.entity=en;
     }
 
     if($('exdPayee')){
       var pn=val('exdPayee'), pi=val('exdPayeeId'), pa=val('exdPayeeAddr');
       if(pn!==String(x.payeeName||'') || pi!==String(x.payeeId||'') || pa!==String(x.payeeAddr||'')){
         jobs.push({ name:'ข้อมูลผู้รับเงิน',
-          req:{action:'waExpEditPayee',uid:UID,no:no,payeeName:pn,payeeId:pi,payeeAddr:pa} });
+          req:{action:'waPoPayee',uid:UID,no:no,payeeName:pn,payeeId:pi,payeeAddr:pa} });
       }
     }
 
@@ -12095,15 +12138,18 @@
       var wasSr=String(x.docType||'').indexOf('ใบรับรอง')>=0;
       var wasAdv=String(x.docType||'').indexOf('จ่ายก่อน')>=0;
       if(pf && pf!==(wasSr?'sr':(wasAdv?'adv':'rcp'))){
-        jobs.push({ name:'ประเภทหลักฐาน', req:{action:'waExpSetProof',uid:UID,no:no,proof:pf} });
+        jobs.push({ name:'ประเภทหลักฐาน', req:{action:'waPoProof',uid:UID,no:no,proof:pf} });
       }
     }
 
+    /* ช่องข้อมูลทั้งหมดส่งเป็นคำขอเดียว — หลังบ้าน (poEditStaff_) แก้ทีละก้อน ยอดก่อนภาษีเสมอ
+       แล้วบอกกลับว่าก้อนไหนไม่ผ่าน · 🔴 ใส่เฉพาะ key ที่เปลี่ยน (ไม่ใส่ = หลังบ้านไม่แตะช่องนั้น) */
+    if(Object.keys(ed).length) jobs.unshift({ name:'ข้อมูลใบ', req:Object.assign({action:'waPoEdit',uid:UID,no:no}, ed) });
     var rcp=IMGS['exdRcp']||[];
-    if(rcp.length) jobs.push({ name:'ไฟล์แนบ', req:{action:'waExpEditReceipt',uid:UID,no:no,imgs:JSON.stringify(rcp)} });
+    if(rcp.length) jobs.push({ name:'ไฟล์แนบ', req:{action:'waPoFile',uid:UID,no:no,imgs:JSON.stringify(rcp)} });
 
     var slip=IMGS['exdSlip']||[];
-    if(slip.length) jobs.push({ name:'สลิปโอนคืน', req:{action:'waExpEditSlip',uid:UID,no:no,imgs:JSON.stringify(slip)} });
+    if(slip.length) jobs.push({ name:'สลิปโอนคืน', req:{action:'waPoSlip',uid:UID,no:no,imgs:JSON.stringify(slip)} });
 
     if(!jobs.length){ toast('ยังไม่มีอะไรเปลี่ยนค่ะ'); return; }
 
@@ -12123,14 +12169,14 @@
       var j=jobs[i];
       jsonpPost(j.req).then(function(r){
         if(r&&r.ok){
-          done.push(j.name);
+          done.push(j.req.action==='waPoEdit' && r.done && r.done.length ? r.done.join(' · ') : j.name);
           /* ผลของการเปลี่ยนเป็น "ไม่มีใบเสร็จ" ต้องบอกให้ชัดว่าเอกสารออกให้แล้วหรือยัง
              (ไม่งั้นพี่ไม่รู้ว่าต้องตามให้พนักงานเซ็นลายเซ็นก่อน) */
-          if(j.req.action==='waExpSetProof' && r.toAdvance){
+          if(j.req.action==='waPoProof' && r.toAdvance){
             if(r.voidedDoc) toast('🚫 ยกเลิก '+r.voidedDoc+' แล้ว'+(r.dossier?' · สร้างแฟ้มใหม่ให้แล้ว':'')+' · ใบนี้รอใบเสร็จตัวจริง');
             if(r.filedWarn) mErr(r.filedWarn);
           }
-          if(j.req.action==='waExpSetProof'){
+          if(j.req.action==='waPoProof'){
             if(r.issued)        exdNote='📄 ออกใบรับรองแทนใบเสร็จ '+(r.docNo||'')+' ให้แล้ว';
             else if(r.already)  exdNote='ใบนี้มีใบรับรองแทน '+(r.docNo||'')+' อยู่แล้ว';
             else if(r.needSign) exdNote='✍️ พนักงานยังไม่มีลายเซ็นในระบบ — ให้เขาเซ็นก่อน แล้วระบบจะออกให้อัตโนมัติ';
@@ -12147,9 +12193,11 @@
 
   /** โหลดหน้าที่กำลังดูอยู่ใหม่ (ใช้ร่วมทุกปุ่มแก้ใบเบิก) */
   function exReload(){
-    /* อยู่บนหน้าใบเบิกเต็มหน้า → กลับไปหน้ารายการที่มา ไม่วาดหน้าเดิมซ้ำ
-       เพราะข้อมูลในหน้านี้มาจากรายการที่โหลดไว้ (EXP_BYNO) — วาดซ้ำเฉย ๆ = ยังเห็นสถานะเก่า */
-    if(VIEW==='expone'){ exdBack(); return; }
+    /* ประตูเดียว (spec-po-unify ขั้น B · 24 ก.ย. 69) — ใบของพนักงานเปิดในฟอร์มใบสั่งจ่ายแล้ว
+       อยู่ฟอร์ม = อ่านใบใหม่จากหลังบ้านแล้ววาดซ้ำ (สถานะ/เอกสารล่าสุด) · อยู่ทะเบียน = โหลดทะเบียนใหม่
+       🔴 เดิมทางนี้ตกไป renderExpense() = หน้าเบิกของพนักงานโผล่แทนหน้าทะเบียน */
+    if(VIEW==='poform'){ PO=null; PO_SX=null; renderPoForm(); return; }
+    if(VIEW==='payout'){ renderPayout(); return; }
     if(VIEW==='expdash') renderExpDash(); else if(VIEW==='expapprove') renderExpenseApprove(); else renderExpense();
   }
   window.exUndo=exUndo; window.exUndoDo=exUndoDo;
@@ -12166,7 +12214,7 @@
   }
   function exDecide(no,decision,note,wht,payDate,section,entity,whtAmt){
     toast(decision==='approve'?'กำลังอนุมัติ…':'กำลังบันทึก…');
-    callBusy(decision==='approve'?'กำลังสร้างเอกสาร…':'กำลังบันทึก…', jsonpPost({action:'waExpDecide',uid:UID,no:no,decision:decision,note:note||'',wht:wht||'0',payDate:payDate||'',section:section||'',entity:entity||'',whtAmt:whtAmt||''}), decision==='approve'?'อนุมัติแล้ว':'บันทึกแล้ว').then(function(r){
+    callBusy(decision==='approve'?'กำลังสร้างเอกสาร…':'กำลังบันทึก…', jsonpPost({action:'waPoDecide',uid:UID,no:no,decision:decision,note:note||'',wht:wht||'0',payDate:payDate||'',section:section||'',entity:entity||'',whtAmt:whtAmt||''}), decision==='approve'?'อนุมัติแล้ว':'บันทึกแล้ว').then(function(r){
       if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; }
       closeModal();
       if(r.docError) toast('✅ อนุมัติแล้ว · ⚠️ ออกเอกสารไม่สำเร็จ: '+r.docError);
@@ -12223,7 +12271,7 @@
     }
     var b=$('pSend'); if(b){ b.disabled=true; b.textContent='กำลังบันทึก…'; }
     toast('กำลังบันทึก…');
-    callBusy('กำลังสร้างเอกสาร + แฟ้ม…', jsonpPost({action:'waExpPay',uid:UID,no:no,imgs:JSON.stringify(slips),channel:(($('payCh')||{}).value||''),account:((($('payAcct')||{}).value)||'').trim()}), 'บันทึกจ่ายคืนแล้ว').then(function(r){
+    callBusy('กำลังสร้างเอกสาร + แฟ้ม…', jsonpPost({action:'waPoPay',uid:UID,no:no,imgs:JSON.stringify(slips),channel:(($('payCh')||{}).value||''),account:((($('payAcct')||{}).value)||'').trim()}), 'บันทึกจ่ายคืนแล้ว').then(function(r){
       if(!r||!r.ok){ if(b){b.disabled=false;b.textContent='บันทึกจ่ายคืน';} mErr((r&&r.error)||'ไม่สำเร็จ'); return; }
       closeModal(); IMGS['pSlips']=[];
       // แฟ้มครบชุดรวมให้เองตอนนี้ · ไม่เกิด/ขาดชิ้น = ไม่ใช่เรื่องใหญ่ (เงินจ่ายแล้ว) แต่ต้องบอกให้รู้
@@ -12252,25 +12300,25 @@
     var slips=IMGS['sSlips']||[];
     if(!slips.length){ mErr('ยังไม่ได้แนบสลิปค่ะ'); return; }
     var b=$('sSend'); if(b){ b.disabled=true; b.textContent='กำลังบันทึก…'; }
-    callBusy('กำลังบันทึกสลิป + รวมแฟ้ม…', jsonpPost({action:'waExpEditSlip',uid:UID,no:no,imgs:JSON.stringify(slips)}), 'บันทึกแล้ว').then(function(r){
+    callBusy('กำลังบันทึกสลิป + รวมแฟ้ม…', jsonpPost({action:'waPoSlip',uid:UID,no:no,imgs:JSON.stringify(slips)}), 'บันทึกแล้ว').then(function(r){
       if(!r||!r.ok){ if(b){b.disabled=false;b.textContent='บันทึก + รวมแฟ้มใหม่';} mErr((r&&r.error)||'ไม่สำเร็จ'); return; }
       closeModal(); IMGS['sSlips']=[];
       toast(r.dossier?('📎 แนบสลิปแล้ว · 🗂️ รวมแฟ้มใหม่ให้แล้ว'+missTxt(r.missing)):'📎 แนบสลิปแล้ว · แฟ้มยังไม่รวม (กด 🗂️ เพื่อสร้าง)');
-      if(VIEW==='expdash') renderExpDash(); else renderExpense();
+      exReload();
     }).catch(function(e){ if(b){b.disabled=false;b.textContent='บันทึก + รวมแฟ้มใหม่';} mErr(e.message); });
   }
   /** สร้างแฟ้มครบชุดใหม่ (พี่เท่านั้น) — เผื่อ Worker ล่มตอนจ่าย หรือแนบหลักฐานเพิ่มทีหลัง */
   function exRebuild(no){
     toast('กำลังรวมแฟ้ม…');
-    callBusy('กำลังสร้างเอกสาร + แฟ้ม…', jsonpPost({action:'waExpDossier',uid:UID,no:no}), 'สร้างแฟ้มแล้ว').then(function(r){
+    callBusy('กำลังสร้างเอกสาร + แฟ้ม…', jsonpPost({action:'waPoDossier',uid:UID,no:no}), 'สร้างแฟ้มแล้ว').then(function(r){
       if(!r||!r.ok){ toast((r&&r.error)||'รวมแฟ้มไม่สำเร็จ'); return; }
       toast('🗂️ รวมแฟ้มแล้ว ('+(r.parts||[]).length+' ชิ้น)'+(r.whtNo?' · ออก 50 ทวิ '+r.whtNo:'')+missTxt(r.missing));
-      renderExpense();
+      exReload();
     }).catch(function(e){ toast(e.message); });
   }
   /** การ์ดที่ตัดสินแล้ว fade ออก แล้วโหลดหน้าใหม่ (หน้าสรุป=โหลดทั้งหน้าให้ยอดอัปเดต · อนุมัติเดี่ยว=โหลดบล็อก) */
   function exFade(no){
-    var reload=(VIEW==='expdash')?renderExpDash:renderExpenseApprove;
+    var reload=(VIEW==='expdash')?renderExpDash:((VIEW==='poform'||VIEW==='payout')?exReload:renderExpenseApprove);
     var el=$('exr-'+no);   // id ของแถวในตาราง (เดิมเป็นการ์ด exa-)
     if(el){ el.style.transition='opacity .3s'; el.style.opacity='0'; setTimeout(reload,320); }
     else reload();
@@ -12300,7 +12348,7 @@
   }
   function exTrashDo(no){
     closeModal();
-    callBusy('กำลังยกเลิก…', jsonpPost({action:'waExpTrash',uid:UID,no:no}), 'ยกเลิกแล้ว').then(function(r){
+    callBusy('กำลังยกเลิก…', jsonpPost({action:'waPoCancel',uid:UID,no:no}), 'ยกเลิกแล้ว').then(function(r){
       if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; }
       // backend บอกกลับมาว่าทำแบบไหน — ข้อความต้องมาจากของจริง ไม่ใช่เดาเอาจากฝั่งหน้าเว็บ
       toast(r.voided
@@ -12332,11 +12380,11 @@
   function exSaveRcp(no){
     var arr=IMGS['edRcp']||[];
     if(!arr.length){ mErr('แนบไฟล์ใหม่ก่อนค่ะ'); return; }
-    callBusy('กำลังบันทึก + สร้างแฟ้ม…', jsonpPost({action:'waExpEditReceipt',uid:UID,no:no,imgs:JSON.stringify(arr)}), 'บันทึกแล้ว').then(function(r){
+    callBusy('กำลังบันทึก + สร้างแฟ้ม…', jsonpPost({action:'waPoFile',uid:UID,no:no,imgs:JSON.stringify(arr)}), 'บันทึกแล้ว').then(function(r){
       if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
       closeModal(); IMGS['edRcp']=[];
       toast('📎 เปลี่ยนไฟล์แนบ '+no+' แล้ว'+(r.dossier?' · รวมแฟ้มใหม่ให้แล้ว':''));
-      renderExpense();
+      exReload();
     }).catch(function(e){ mErr(e.message); });
   }
   window.exEditRcp=exEditRcp; window.exSaveRcp=exSaveRcp;
@@ -22452,6 +22500,9 @@ function kpImpDraw(){
   }
   window.edRender=edRender;
   function renderExpDash(){
+    /* 🔴 ผู้ดูแล: หน้าสรุปใบเบิกปิดแล้ว (พี่กี้เคาะ ค. 24 ก.ย. 69) → ทะเบียนใบสั่งจ่าย
+       พนักงานยังใช้หน้านี้ดูสรุปใบของตัวเองเหมือนเดิม */
+    if(IS_OWNER){ switchView('payout'); return; }
     skel();
     jsonp({action:'waExpDash',uid:UID,ym:DASH_YM}).then(function(r){
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
@@ -23496,7 +23547,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260923-2336';
+  var APP_BUILD='20260924-0923';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
