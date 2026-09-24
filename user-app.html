@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260924-2100">
+<link rel="stylesheet" href="user.css?v=20260924-2127">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -12332,6 +12332,8 @@
     function ro(label, val, cls){ return '<div class="sf-f '+(cls||'c2')+'"><label>'+esc(label)+'</label><input value="'+esc(val||'')+'" placeholder="—" readonly></div>'; }
     function meta(label, val){ return val?'<div class="r"><span>'+esc(label)+'</span><b>'+val+'</b></div>':''; }
     var amtNum=Number(x.amount)||0, whtNum=Number(x.whtAmt)||0;
+    /* ชีตเก็บเลขบัญชีเป็นข้อความขึ้นต้น ' (กัน Sheets แปลงเลข) — ตัดออกก่อนโชว์/คัดลอก */
+    var acctClean=String(x.bankAcct||'').replace(/^'/,'');
 
     $('main').innerHTML=(h+
       '<div id="mErr" class="m-err hidden"></div>'+
@@ -12360,14 +12362,6 @@
             '<div class="sf-f c2"><label>เบอร์โทร</label><input id="exdVendorPhone" placeholder="—" value="'+esc(x.vendorPhone||'')+'"></div>'
           : ro('ที่อยู่ผู้ขาย','','c6')+ro('อีเมล','')+ro('เบอร์โทร',''))+
         ro('วันที่ใบกำกับ', x.vatInvDate)+
-        (rv
-          /* ⛔ ใบสำคัญรับเงินเปลี่ยนหลักฐานไม่ได้ (คนละสายเอกสาร · ตรงกับด่าน handleWaExpSetProof_) */
-          ? ro('หลักฐาน', x.docType, 'c4')
-          : '<div class="sf-f c4"><label>หลักฐาน</label><select id="exdProof">'+
-              '<option value="rcp"'+((!proofIsSr&&!proofIsAdv)?' selected':'')+'>🧾 มีใบเสร็จ</option>'+
-              '<option value="sr"'+(proofIsSr?' selected':'')+'>📄 ไม่มีใบเสร็จ → ออกใบรับรองแทน</option>'+
-              '<option value="adv"'+(proofIsAdv?' selected':'')+'>⏳ จ่ายก่อน · ใบเสร็จตามมา</option>'+
-            '</select></div>')+
         ro('อ้างอิง', x.poNo&&x.poNo!==no ? x.poNo : (x.poNo?'':no), 'end3')+
       '</div>'+
       (hasDoc?'<div class="sf-note" style="margin-top:8px;color:#C8730B">⚠️ ใบนี้ออกเอกสารแล้ว'+
@@ -12390,7 +12384,24 @@
       /* ③ สรุปยอด */
       '<div class="sf-card"><div class="sf-h">💰 สรุปยอด</div><div class="sf-sum">'+
         '<div>'+
-          (x.note?'<div class="sf-f"><label>หมายเหตุ</label><textarea readonly>'+esc(x.note)+'</textarea></div>':'')+
+          /* 🔴 24 ก.ย. 69 (พี่กี้: "บิลไม่ได้ออกชื่อบริษัท ต้องเบิกแบบไม่มีใบเสร็จ … กดเข้าไปหาทางแก้ไม่เจอ")
+             ช่องหลักฐานเดิมชื่อแค่ "หลักฐาน" อยู่บนสุดของการ์ดข้อมูลเอกสาร → ย้ายมาคู่กับเงิน + เขียนตัวเลือกให้ตรงเคสจริง
+             ⛔ ใบสำคัญรับเงิน (RV) เปลี่ยนไม่ได้ (คนละสายเอกสาร · ตรงกับด่าน handleWaExpSetProof_) */
+          '<div class="sf-grid">'+
+            (rv ? ro('หลักฐานการจ่าย', x.docType, 'wide')
+              : '<div class="sf-f wide"><label>หลักฐานการจ่าย</label><select id="exdProof">'+
+                  '<option value="rcp"'+((!proofIsSr&&!proofIsAdv)?' selected':'')+'>🧾 มีใบเสร็จ / ใบกำกับภาษี ในนามบริษัท</option>'+
+                  '<option value="sr"'+(proofIsSr?' selected':'')+'>📄 บิลไม่ได้ออกในนามบริษัท / ไม่มีใบเสร็จ → ออกใบรับรองแทนใบเสร็จ</option>'+
+                  '<option value="adv"'+(proofIsAdv?' selected':'')+'>⏳ จ่ายก่อน · ใบเสร็จตามมา</option>'+
+                '</select></div>')+
+            /* บัญชีรับโอน 3 ช่อง (พี่กี้ขอแยก 24 ก.ย. 69) · ใบ RV แก้ได้ (บัญชีคนนอก) ·
+               ใบพนักงาน = บัญชีจากข้อมูลพนักงาน อ่านอย่างเดียว (แก้ที่ ⚙️ ตั้งค่าของฉัน แล้วใบที่ยังไม่จ่ายตามให้เอง) */
+            (rv
+              ? '<div class="sf-f wide" id="exdPbBox" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 18px">'+
+                  bankFields('exdPb', { name:x.bankName||'', acct:acctClean, owner:x.bankOwner||'' }, 'บัญชีรับโอน — ')+'</div>'
+              : ro('ธนาคาร', x.bankName, 'c4')+ro('เลขที่บัญชี', acctClean, 'c4')+ro('ชื่อบัญชี', x.bankOwner, 'c4'))+
+          '</div>'+
+          (x.note?'<div class="sf-f" style="margin-top:14px"><label>หมายเหตุ</label><textarea readonly>'+esc(x.note)+'</textarea></div>':'')+
           (canWht
             ? ('<div class="sf-grid" style="margin-top:'+(x.note?'14':'0')+'px">'+
                 '<div class="sf-f c4"><label>หัก ณ ที่จ่าย (มาตรา)</label><select id="exdSect">'+sectOpts+'</select></div>'+
@@ -12413,7 +12424,6 @@
           (x.whtRate?'<div class="r"><span>หัก ณ ที่จ่าย '+x.whtRate+'%</span><b>− '+money(whtNum)+'</b></div>':'')+
           '<div class="r"><span>'+(rv?'ยอดที่ต้องโอน':'โอนคืนพนักงาน')+'</span><b>'+money(x.netAmt||amtNum)+'</b></div>'+
           meta('ผู้เบิก', esc(x.nick||''))+
-          meta('บัญชีรับโอน', x.bankAcct?esc((x.bankName||'')+' '+x.bankAcct+' '+(x.bankOwner||'')):'')+
           meta('ผู้อนุมัติ', esc(x.approver||''))+
           meta('วันที่จ่าย', esc(x.payDate||''))+
           meta('แบบยื่น', esc(x.formType||''))+
@@ -12429,7 +12439,7 @@
 
       /* แถบปุ่มล่างติดขอบจอ — ชุดเดียวกับหน้าใบสั่งจ่าย (งานของใบจบได้ในหน้าเดียว) */
       '<div class="sf-bar">'+
-        (x.bankAcct?'<button class="btn btn-ghost btn-sm" onclick="copyTxt(\''+esc(String(x.bankAcct).replace(/'/g,"\\'"))+'\')">📋 คัดลอกเลขที่บัญชี</button>':'')+
+        (acctClean?'<button class="btn btn-ghost btn-sm" onclick="copyTxt(\''+esc(acctClean)+'\')">📋 คัดลอกเลขที่บัญชี</button>':'')+
         (pending?'<button class="btn btn-ghost btn-sm" onclick="'+(x.payeeName?'exOpenWht':'exApprove')+'(\''+esc(no)+'\')">✅ อนุมัติ</button>':'')+
         (pending?'<button class="btn btn-ghost btn-sm" onclick="exReject(\''+esc(no)+'\')">❌ ไม่อนุมัติ</button>':'')+
         (approved&&!paid?'<button class="btn btn-ghost btn-sm" onclick="exOpenPay(\''+esc(no)+'\',\''+esc(String(x.nick||''))+'\','+(Number(x.amount)||0)+','+((rv&&!x.docNo)?1:0)+')">💰 บันทึกจ่ายคืน</button>':'')+
@@ -12496,9 +12506,15 @@
 
     if($('exdPayee')){
       var pn=val('exdPayee'), pi=val('exdPayeeId'), pa=val('exdPayeeAddr');
-      if(pn!==String(x.payeeName||'') || pi!==String(x.payeeId||'') || pa!==String(x.payeeAddr||'')){
+      var ob=String(x.bankAcct||'').replace(/^'/,'');
+      var nb=$('exdPbBank') ? { name:(($('exdPbBank')||{}).value||''), acct:val('exdPbAcct'), owner:val('exdPbOwner') } : null;
+      var bankChanged=!!nb && (nb.acct.replace(/\D/g,'')!==ob.replace(/\D/g,'') || nb.owner!==String(x.bankOwner||'') || (nb.name&&nb.name!==String(x.bankName||'')));
+      if(pn!==String(x.payeeName||'') || pi!==String(x.payeeId||'').replace(/^'/,'') || pa!==String(x.payeeAddr||'') || bankChanged){
+        /* 🐞 หลังบ้านบังคับบัญชีผู้รับเงินครบทุกครั้ง — เดิมไม่ส่ง = แก้ผู้รับเงินจากฟอร์มไม่ผ่านเลย */
+        var pb=readBank('exdPb','บัญชีผู้รับเงิน'); if(!pb) return;
         jobs.push({ name:'ข้อมูลผู้รับเงิน',
-          req:{action:'waPoPayee',uid:UID,no:no,payeeName:pn,payeeId:pi,payeeAddr:pa} });
+          req:{action:'waPoPayee',uid:UID,no:no,payeeName:pn,payeeId:pi,payeeAddr:pa,
+               payeeBankName:pb.name,payeeBankAcct:pb.acct,payeeBankOwner:pb.owner} });
       }
     }
 
@@ -23917,7 +23933,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260924-2100';
+  var APP_BUILD='20260924-2127';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
