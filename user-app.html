@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260924-2235">
+<link rel="stylesheet" href="user.css?v=20260924-2259">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -705,6 +705,9 @@
   /* ใบกำกับแยกบรรทัด (ใบรวมหลายใบแจ้งหนี้ · ขั้น C 24 ก.ย. 69) */
   .sf-items .pi-inv{ display:grid; grid-template-columns:minmax(0,1fr) 140px; gap:6px; margin-top:6px; }
   .sf-items .pi-own{ font-size:12px; margin-top:4px; padding:0; }
+  /* ตารางรายการในการ์ดต้องพอดีกรอบ (25 ก.ย. 69) — .dt-tbl กลางบังคับ 960px ทำให้ปุ่ม ✕ ลบบรรทัดตกขอบขวาต้องเลื่อนหา
+     ต้องเจาะจงกว่า .dt-tbl (3 คลาส) · จอแคบกว่า 720px ยังเลื่อนในกรอบตารางได้เหมือนเดิม */
+  .sf-items .tax-tbl.dt-tbl{ min-width:720px; }
   .pi-more{ margin-top:12px; font-size:13px; color:#5B6472; }
   .pi-more summary{ cursor:pointer; font-weight:600; }
   .sf-sum{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,360px); gap:18px; align-items:start; }
@@ -6522,16 +6525,121 @@
     html+=dtTable(expCols(IS_OWNER), list.map(function(x){ return expRow(x,IS_OWNER); }), list.length>1?total:'');
     $('main').innerHTML=html;
   }
+  /* ═════════ 📋 รายการหลายบรรทัดของใบพนักงาน (spec-staff-multiline · M2 · 25 ก.ย. 69) ═════════
+     ใช้ร่วม 2 ที่: ฟอร์มขอเบิก (pfx 'el' · การ์ดเรียงลงบนมือถือ) · หน้าใบสั่งจ่ายของพนักงาน (pfx 'exd' · ตารางแบบใบบริษัท)
+     ค่าประเภท = ป้าย (หลังบ้านรับได้ทั้งรหัสและป้าย · expenseTypeLabel_) · ยอดรวม = ผลรวมบรรทัด พิมพ์เองไม่ได้
+     ช่องของบรรทัด i: pfx_t{i} ประเภท · pfx_d{i} รายละเอียด · pfx_a{i} จำนวนเงิน */
+  var SL={}, SL_OPT={};
+  function slTypeOpts(sel){
+    var seen=false;
+    var h=(EXP_TYPES||[]).map(function(t){
+      var lb=(typeof t==='string')?t:(t.label||t.key||'');
+      if(lb===sel) seen=true;
+      return '<option value="'+esc(lb)+'"'+(lb===sel?' selected':'')+'>'+esc(lb)+'</option>';
+    }).join('');
+    if(sel && !seen) h='<option value="'+esc(sel)+'" selected>'+esc(sel)+'</option>'+h;   /* ประเภทเก่าที่ไม่อยู่ในลิสต์แล้ว */
+    return h || '<option value="">— ไม่มีประเภท —</option>';
+  }
+  function slRead(pfx){
+    var out=[];
+    for(var i=0; $(pfx+'_t'+i); i++){
+      out.push({ type:($(pfx+'_t'+i).value||''), detail:String(($(pfx+'_d'+i)||{}).value||'').trim(),
+        amount:String(($(pfx+'_a'+i)||{}).value||'').replace(/,/g,'').trim() });
+    }
+    return out;
+  }
+  function slSum(list){ return (list||[]).reduce(function(a,x){ return Math.round((a+(parseFloat(x.amount)||0))*100)/100; },0); }
+  function slPaint(pfx){
+    var list=SL[pfx]||[], o=SL_OPT[pfx]||{}, box=$(pfx+'Box'); if(!box) return;
+    var many=list.length>1, edit=!!o.edit;
+    if(o.table){
+      var rows=list.map(function(x,i){
+        return '<tr><td class="dt-nw" style="color:#8A94A6">'+(i+1)+'</td>'+
+          '<td><select id="'+pfx+'_t'+i+'">'+slTypeOpts(x.type)+'</select></td>'+
+          '<td><input id="'+pfx+'_d'+i+'" value="'+esc(x.detail||'')+'"></td>'+
+          '<td><input value="1" readonly></td>'+
+          '<td><input id="'+pfx+'_a'+i+'" inputmode="decimal" value="'+esc(String(x.amount||''))+'" oninput="slTot(\''+pfx+'\')"></td>'+
+          '<td class="dt-amt" id="'+pfx+'_m'+i+'">'+money(parseFloat(x.amount)||0)+'</td>'+
+          '<td class="dt-nw">'+((edit&&many)?'<button class="sf-del" title="ลบบรรทัดนี้" onclick="slDel(\''+pfx+'\','+i+')">✕</button>':'')+'</td></tr>';
+      });
+      box.innerHTML=dtTable([
+        {label:'#',cls:'dt-nw',w:'38px'},{label:'รหัส',cls:'dt-nw',w:'18%'},{label:'ค่าใช้จ่าย/สินค้า'},
+        {label:'จำนวน',cls:'dt-nw',w:'8%'},{label:'ราคา/หน่วย',cls:'dt-nw',w:'14%'},
+        {label:'จำนวนเงิน',cls:'ta-r',w:'13%'},{label:'',cls:'dt-nw',w:'34px'}], rows,
+        many?'<tr class="tax-total"><td colspan="5" style="text-align:right">รวม '+list.length+' รายการ</td>'+
+          '<td class="dt-amt" id="'+pfx+'Tot">'+money(slSum(list))+'</td><td></td></tr>':'', '');
+    } else {
+      box.innerHTML=list.map(function(x,i){
+        return '<div style="border:1px solid #E3E8F0;border-radius:10px;padding:8px;margin-bottom:8px">'+
+          '<div style="display:flex;gap:6px;align-items:center">'+
+            (many?'<span style="color:#8A94A6;font-size:12px;min-width:14px">'+(i+1)+'</span>':'')+
+            '<select id="'+pfx+'_t'+i+'" style="flex:1;min-width:0">'+slTypeOpts(x.type)+'</select>'+
+            '<input id="'+pfx+'_a'+i+'" type="number" inputmode="decimal" min="0" step="0.01" placeholder="บาท" '+
+              'value="'+esc(String(x.amount||''))+'" oninput="slTot(\''+pfx+'\')" style="width:110px;flex:none">'+
+            /* ในป๊อปอัป ปุ่มกลางยืดเต็มแถว → กำหนดขนาดเองตรงนี้ (ไม่งั้นการ์ดล้นจอมือถือ) */
+            (many?'<button type="button" title="ลบบรรทัดนี้" onclick="slDel(\''+pfx+'\','+i+')" '+
+              'style="width:auto;flex:none;border:none;background:none;color:#C0490F;font-size:16px;padding:4px 6px;margin:0;cursor:pointer">✕</button>':'')+
+          '</div>'+
+          '<input id="'+pfx+'_d'+i+'" placeholder="จ่ายค่าอะไร เช่น ค่าแท็กซี่ไปหาลูกค้า A" value="'+esc(x.detail||'')+'" style="margin-top:6px">'+
+        '</div>';
+      }).join('');
+      var tt=$(pfx+'Tot'); if(tt) tt.textContent=money(slSum(list));
+    }
+    var ad=$(pfx+'Add'); if(ad) ad.classList.toggle('hidden', !edit || !!o.single);
+  }
+  /** เปิดตัวจัดการ — list ว่าง = 1 บรรทัดเปล่า */
+  function slInit(pfx, list, opt){
+    SL[pfx]=(list&&list.length)?list.map(function(x){ return {type:x.type||'',detail:x.detail||'',amount:(x.amount===''||x.amount==null)?'':String(x.amount)}; })
+      :[{type:(opt&&opt.defType)||'',detail:'',amount:''}];
+    SL_OPT[pfx]=opt||{};
+    slPaint(pfx);
+  }
+  function slAdd(pfx){
+    SL[pfx]=slRead(pfx);
+    if(SL[pfx].length>=20){ toast('ใส่ได้ไม่เกิน 20 รายการต่อใบค่ะ'); return; }
+    var last=SL[pfx][SL[pfx].length-1]||{};
+    SL[pfx].push({type:last.type||'',detail:'',amount:''});   /* ประเภทตามบรรทัดก่อน — เบิกชุดเดียวกันมักประเภทเดียวกัน */
+    slPaint(pfx);
+    var d=$(pfx+'_d'+(SL[pfx].length-1)); if(d) d.focus();
+  }
+  function slDel(pfx, i){
+    SL[pfx]=slRead(pfx); if(SL[pfx].length<=1) return;
+    SL[pfx].splice(i,1); slPaint(pfx);
+  }
+  function slTot(pfx){
+    var list=slRead(pfx);
+    list.forEach(function(x,i){ var m=$(pfx+'_m'+i); if(m) m.textContent=money(parseFloat(x.amount)||0); });
+    var tt=$(pfx+'Tot'); if(tt) tt.textContent=money(slSum(list));
+  }
+  /** ตรวจก่อนส่ง (ด่านจริงอยู่หลังบ้าน staffItemsParse_) — คืนรายการที่กรอก หรือ null (เขียน mErr ให้แล้ว) */
+  function slCollect(pfx){
+    var list=slRead(pfx).filter(function(x){ return x.detail || x.amount; });
+    if(!list.length){ mErr('ใส่รายการอย่างน้อย 1 บรรทัดค่ะ'); return null; }
+    for(var i=0;i<list.length;i++){
+      var n=list.length>1?('รายการที่ '+(i+1)+': '):'';
+      if(!list[i].type){ mErr(n+'เลือกประเภทก่อนค่ะ'); return null; }
+      if(!(parseFloat(list[i].amount)>0)){ mErr(n+'กรอกจำนวนเงินก่อนค่ะ'); return null; }
+      if(!list[i].detail){ mErr(n+'กรอกรายละเอียดก่อนค่ะ'); return null; }
+    }
+    return list;
+  }
+  window.slAdd=slAdd; window.slDel=slDel; window.slTot=slTot;
+
   // โหมดหลักฐาน 3 ทาง: 'rcp' แนบใบเสร็จ · 'sr' ไม่มีใบเสร็จ (ออกใบรับรองแทน) · 'rv' จ่ายค่าจ้างคนนอก (ใบสำคัญรับเงิน)
   var EXP_PROOF='rcp';
   function openExpense(){
     if(!EXP_TYPES.length){ toast('กำลังโหลดประเภท…'); return; }
     EXP_PROOF='rcp';
     var opts=EXP_TYPES.map(function(t){return '<option value="'+esc(t.key)+'">'+esc(t.label)+'</option>';}).join('');
+    var typeDef=(typeof EXP_TYPES[0]==='string')?EXP_TYPES[0]:((EXP_TYPES[0]||{}).label||'');
     modal('<h3>💸 แจ้งเบิกค่าใช้จ่าย</h3><div id="mErr" class="m-err hidden"></div>'+
-      '<div class="fld"><label>ประเภท</label><select id="eType">'+opts+'</select></div>'+
-      '<div class="fld"><label>จำนวนเงิน (บาท)</label><input id="eAmt" type="number" inputmode="decimal" min="0" step="0.01" placeholder="เช่น 250"></div>'+
-      '<div class="fld"><label>รายละเอียด (จ่ายค่าอะไร)</label><textarea id="eDetail" placeholder="เช่น ค่าแท็กซี่ไปหาลูกค้า A"></textarea></div>'+
+      /* 📋 หลายรายการ (25 ก.ย. 69 · พี่กี้: พนักงานรวม 2 ค่าไว้บรรทัดเดียว) — 1 ใบ = 1 ร้าน หลายรายการได้ */
+      '<div class="fld"><label>รายการค่าใช้จ่าย <span style="font-weight:400;color:#8A94A6">(ร้านเดียวกัน หลายรายการได้)</span></label>'+
+        '<div id="elBox"></div>'+
+        '<div style="display:flex;align-items:center;gap:10px">'+
+          '<button type="button" id="elAdd" class="btn btn-ghost btn-sm" style="width:auto;flex:none" onclick="slAdd(\'el\')">+ เพิ่มรายการ</button>'+
+          '<span style="margin-left:auto;font-size:13px;color:#5B6576">รวม <b id="elTot">0.00</b> บาท</span>'+
+        '</div></div>'+
       /* 🏪 ร้านค้า/ผู้ขาย (พี่กี้เคาะ 24 ก.ย. 69) — ชื่อที่ขึ้นเป็นคู่ค้าบนใบสั่งจ่าย
          ไม่มีช่องนี้ = เอกสารขึ้นชื่อพนักงานเป็นคู่ค้า · บังคับเฉพาะใบที่มีบิล (ดู expSetProof) */
       '<div class="fld" id="eVendorFld"><label id="eVendorLb">ร้านค้า / ผู้ขาย</label>'+
@@ -6602,6 +6710,7 @@
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
       '<button class="btn btn-primary" id="eSend" onclick="doExpense()">แจ้งเบิก</button></div>');
     imgsFldBind('eImg'); imgsFldBind('eSrImg'); imgsFldBind('eRvCard'); imgsFldBind('eRvImg'); imgsFldBind('eAdvImg');
+    slInit('el', [], { edit:true, defType:typeDef });
     expSetProof('rcp');
   }
   /** ติ๊ก "หักภาษี ณ ที่จ่าย" บนใบแนบใบเสร็จ → เปิดช่องข้อมูลผู้ถูกหัก (ไปโผล่บน 50 ทวิ) */
@@ -6645,6 +6754,8 @@
     if(sb) sb.classList.toggle('hidden', mode!=='sr');
     if(vb) vb.classList.toggle('hidden', mode!=='rv');
     var ab=$('epAdvBox'); if(ab) ab.classList.toggle('hidden', mode!=='adv');
+    /* ใบสำคัญรับเงินพิมพ์ได้รายการเดียว → ซ่อนปุ่มเพิ่ม + เก็บเหลือบรรทัดแรก */
+    if(SL_OPT.el){ SL_OPT.el.single=(mode==='rv'); if(mode==='rv' && $('el_t1')){ SL.el=slRead('el').slice(0,1); } slPaint('el'); }
     /* ร้านค้า: ใบ RV ใช้ชื่อผู้รับเงินอยู่แล้ว (ซ่อน) · ไม่มีใบเสร็จ = ไม่บังคับ · นอกนั้นบังคับ */
     var vf=$('eVendorFld'), vl=$('eVendorLb');
     if(vf) vf.classList.toggle('hidden', mode==='rv');
@@ -6686,10 +6797,9 @@
   /** ดึง Drive file id จากลิงก์ → URL รูป thumbnail (โชว์สำเนาบัตร inline ให้พี่เทียบตอนอนุมัติ) */
   function drvThumb(u,w){ var m=String(u||'').match(/[-\w]{25,}/); return m?('https://drive.google.com/thumbnail?id='+m[0]+'&sz=w'+(w||600)):''; }
   function doExpense(){
-    var type=$('eType').value, amt=$('eAmt').value, detail=$('eDetail').value.trim();
-    if(!(parseFloat(amt)>0)){ mErr('กรอกจำนวนเงินก่อนค่ะ'); return; }
-    if(!detail){ mErr('กรอกรายละเอียดก่อนค่ะ'); return; }
-    var p={action:'waExpCreate',uid:UID,type:type,amount:amt,detail:detail};
+    var lines=slCollect('el'); if(!lines) return;
+    var type=lines[0].type, amt=String(slSum(lines)), detail=lines[0].detail;
+    var p={action:'waExpCreate',uid:UID,type:type,amount:amt,detail:detail,items:JSON.stringify(lines)};
     if(EXP_PROOF!=='rv'){
       /* บัญชีรับโอนของใบนี้ (ผู้เบิกระบุเอง) — ใบ RV ใช้บัญชีผู้รับเงินในฟอร์ม RV แทน */
       var eb=readBank('eb','บัญชีรับโอน'); if(!eb) return;
@@ -12388,17 +12498,11 @@
         ' — แก้แล้วกด 🗂️ สร้างแฟ้มใหม่ให้ตรงกัน</div>':'')+
       '</div>'+
 
-      /* ② รายการ — ใบของพนักงานมีบรรทัดเดียว: ประเภท · รายการ · ยอด */
-      '<div class="sf-card"><div class="sf-h">📋 รายการ</div><div class="sf-items">'+dtTable([
-        {label:'#',cls:'dt-nw',w:'38px'},{label:'รหัส',cls:'dt-nw',w:'18%'},{label:'ค่าใช้จ่าย/สินค้า'},
-        {label:'จำนวน',cls:'dt-nw',w:'8%'},{label:'ราคา/หน่วย',cls:'dt-nw',w:'14%'},
-        {label:'จำนวนเงิน',cls:'ta-r',w:'13%'}],
-        ['<tr><td class="dt-nw" style="color:#8A94A6">1</td>'+
-          '<td><select id="exdType">'+typeOpts+'</select></td>'+
-          '<td><input id="exdDetail" value="'+esc(x.detail||'')+'"'+(canAmt?'':' disabled')+'></td>'+
-          '<td><input value="1" readonly></td>'+
-          '<td><input id="exdAmt" inputmode="decimal" value="'+esc(String(x.amount||''))+'"'+(canAmt?'':' disabled')+'></td>'+
-          '<td class="dt-amt">'+money(amtNum)+'</td></tr>'], '', '')+'</div></div>'+
+      /* ② รายการ — หลายบรรทัดได้ (spec-staff-multiline · 25 ก.ย. 69) · ตารางชุดเดียวกับใบบริษัท
+         วาดด้วย slPaint('exd') หลังใส่หน้า · ใบ RV = รายการเดียว (ใบสำคัญรับเงินพิมพ์รายการเดียว) */
+      '<div class="sf-card"><div class="sf-h">📋 รายการ</div><div class="sf-items" id="exdBox"></div>'+
+        '<div class="tax-acts" style="margin:12px 0 0"><button id="exdAdd" class="btn btn-ghost hidden" '+
+          'style="flex:none;width:auto;padding:9px 16px" onclick="slAdd(\'exd\')">+ เพิ่มรายการ</button></div></div>'+
 
       /* ③ สรุปยอด */
       '<div class="sf-card"><div class="sf-h">💰 สรุปยอด</div><div class="sf-sum">'+
@@ -12474,6 +12578,9 @@
       '</div>');
     /* 🔒 ยังไม่กด "แก้ไข" = ทุกช่องปิดไว้ (พี่กี้ 23 ก.ย. 69 · กติกาเดียวกับหน้าตั้งค่าห้อง)
        ด่านจริงอยู่ที่ backend — ตรงนี้กันพิมพ์ไปทั้งหน้าแล้วกดบันทึกไม่ได้ */
+    /* วาดตารางรายการ "ก่อน" ล็อกช่อง — ช่องที่เพิ่งวาดต้องโดนล็อกด้วยในโหมดอ่านอย่างเดียว */
+    slInit('exd', (x.items&&x.items.length)?x.items:[{type:x.type,detail:x.detail,amount:x.amount}],
+      { table:true, edit:!!(PO_EDITING && canAmt), single:rv });
     if(!PO_EDITING){
       Array.prototype.forEach.call(document.querySelectorAll('#main .sf-card input,#main .sf-card select,#main .sf-card textarea'),
         function(el){ el.disabled=true; });
@@ -12491,15 +12598,17 @@
     var jobs=[], ed={};   // { name, req } — ส่งเฉพาะที่ต่างจากของเดิมจริง
     function val(id){ var el=$(id); return el?String(el.value||'').trim():''; }
 
-    var ty=val('exdType');
-    if(ty && ty!==x.type) ed.type=ty;
-
-    var amt=val('exdAmt'), dt=val('exdDetail');
-    var amtEl=$('exdAmt');
-    if(amtEl && !amtEl.disabled && (Number(amt)!==Number(x.amount) || dt!==String(x.detail||''))){
-      if(!amt){ mErr('กรอกยอดเงินก่อนค่ะ'); return; }
-      if(!dt){ mErr('กรอกรายละเอียดก่อนค่ะ'); return; }
-      ed.amount=amt; ed.detail=dt;
+    /* 📋 รายการ (25 ก.ย. 69) — เทียบทั้งชุดกับของเดิม เปลี่ยนแม้บรรทัดเดียว = ส่งทั้งชุด (หลังบ้านสรุปหัวใบให้) */
+    var a0=$('exd_a0');
+    if(a0 && !a0.disabled){
+      var orig=(x.items&&x.items.length)?x.items:[{type:x.type,detail:x.detail,amount:x.amount}];
+      var now=slRead('exd').filter(function(r){ return r.detail || r.amount; });
+      var diff=now.length!==orig.length || now.some(function(r,i){
+        var o=orig[i]||{};
+        return r.type!==String(o.type||'') || r.detail!==String(o.detail||'').trim() ||
+          Math.round((parseFloat(r.amount)||0)*100)!==Math.round((Number(o.amount)||0)*100);
+      });
+      if(diff){ var lines=slCollect('exd'); if(!lines) return; ed.items=JSON.stringify(lines); }
     }
 
     if($('exdVendor')){
@@ -23965,7 +24074,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260924-2235';
+  var APP_BUILD='20260924-2259';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
