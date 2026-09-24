@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260924-1023">
+<link rel="stylesheet" href="user.css?v=20260924-1305">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -2441,7 +2441,7 @@
     <button class="nav-btn" data-view="expense" aria-label="เบิกค่าใช้จ่าย">
       <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9v6M18 9v6"/></svg><span>เบิกค่าใช้จ่าย</span></button>
     <button class="nav-btn" data-view="expdash" aria-label="สรุปค่าใช้จ่าย">
-      <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span id="navExpDashLabel">ใบเบิกพนักงาน</span></button>
+      <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span id="navExpDashLabel">การเบิกของฉัน</span></button>
     <button class="nav-btn" data-view="reimb" aria-label="ตั้งเบิกลูกค้า" id="navReimb" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6Z"/><path d="M14 3v5h5M9 12h6M9 16h4"/></svg><span>ตั้งเบิกลูกค้า</span></button>
     <button class="nav-btn" data-view="bizdash" aria-label="ภาพรวมธุรกิจ" id="navBizDash" style="display:none">
@@ -2579,8 +2579,8 @@
     portal:['🧭','เมนูหลัก'], payroll:['💰','ระบบเงินเดือน'], modsoon:['🚧','กำลังพัฒนา'], perf:['🩺','วัดความเร็วระบบ'],
     hubreq:['🏛️','คำขอสมัคร'], hubrooms:['🏢','ห้องลูกค้า'], roomset:['⚙️','ตั้งค่าห้อง'], home:['🏠','ภาพรวมประจำวัน'], clock:['🕐','ลงเวลา'],
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], leave:['📝','การลา'],
-    expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติเบิกจ่าย'], expone:['🔎','ใบเบิก'],
-    expdash:['📊','สรุปค่าใช้จ่ายใบเบิก'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ใบสั่งจ่าย (PO)'], poform:['📝','สร้างใบสั่งจ่าย'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','ภาษีซื้อ/ภ.พ.30'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก (WI)'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ใบสำคัญจ่าย (PV)'], sales:['💰','รายรับ'], salesqt:['📄','ใบเสนอราคา (QT)'], salesiv:['🧾','ใบแจ้งหนี้ (IV)'], salesre:['💵','ใบเสร็จรับเงิน (RE)'], salescn:['↩️','ใบลดหนี้ (CN)'], wtreg:['🧾','ภาษีที่หัก 50 ทวิ (WT)'], datain:['📥','นำเข้าข้อมูล'], airead:['🤖','อ่านเอกสารด้วย AI'], contract:['📑','สัญญาบริการ'], recvkind:['💰','ประเภทการรับเงิน'], statement:['🏦','กระทบยอด Statement'], cashreport:['📊','รายงานเงินสด/ธนาคาร'], ar:['📊','ทะเบียนลูกหนี้'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51'], finhist:['📈','เทียบย้อนหลัง'], docdash:['📊','ภาพรวม'], docreg:['🗂️','จัดการเอกสาร'], doccheck:['✅','ตรวจก่อนส่ง'], docbycat:['📑','รายงานตามประเภท'], docreport:['📦','รายงานประจำเดือน'], doccat:['🏷️','จัดการหมวด'], hubmods:['🧩','โมดูลของแต่ละห้อง'], teamperm:['🔐','สิทธิ์ทีม'], kpiemp:['👥','ทะเบียนพนักงาน'], kpiperson:['📈','ประวัติรายคน'], kpidash:['📊','ภาพรวม'], kpientry:['✍️','กรอกผลงาน'], kpiscore:['⭐','คะแนนคุณลักษณะ'], kpidoc:['📄','ใบประเมิน'], kpiround:['📋','รอบการประเมิน'], kpifill:['✍️','ประเมินผลงาน'], kpimanage:['📊','จัดการผลการประเมิน'], kpirule:['⚖️','เกณฑ์ทั้งองค์กร'], kpimetric:['🎯','ตัวชี้วัด (KPI)'], kpitrait:['🧭','คุณลักษณะรายบุคคล'], kpiimport:['📥','นำเข้าข้อมูลเดิม'], kpireport:['📄','รายงาน'], kpihelp:['📘','คู่มือการใช้งาน'], myset:['🙋','ตั้งค่าของฉัน'], bank:['🏦','บัญชีธนาคาร'], expcat:['🏷️','ประเภทค่าใช้จ่าย'],
+    expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติใบสั่งจ่าย'], expone:['🔎','ใบสั่งจ่าย'],
+    expdash:['📊','สรุปการเบิกของฉัน'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ใบสั่งจ่าย (PO)'], poform:['📝','สร้างใบสั่งจ่าย'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','ภาษีซื้อ/ภ.พ.30'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก (WI)'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ใบสำคัญจ่าย (PV)'], sales:['💰','รายรับ'], salesqt:['📄','ใบเสนอราคา (QT)'], salesiv:['🧾','ใบแจ้งหนี้ (IV)'], salesre:['💵','ใบเสร็จรับเงิน (RE)'], salescn:['↩️','ใบลดหนี้ (CN)'], wtreg:['🧾','ภาษีที่หัก 50 ทวิ (WT)'], datain:['📥','นำเข้าข้อมูล'], airead:['🤖','อ่านเอกสารด้วย AI'], contract:['📑','สัญญาบริการ'], recvkind:['💰','ประเภทการรับเงิน'], statement:['🏦','กระทบยอด Statement'], cashreport:['📊','รายงานเงินสด/ธนาคาร'], ar:['📊','ทะเบียนลูกหนี้'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51'], finhist:['📈','เทียบย้อนหลัง'], docdash:['📊','ภาพรวม'], docreg:['🗂️','จัดการเอกสาร'], doccheck:['✅','ตรวจก่อนส่ง'], docbycat:['📑','รายงานตามประเภท'], docreport:['📦','รายงานประจำเดือน'], doccat:['🏷️','จัดการหมวด'], hubmods:['🧩','โมดูลของแต่ละห้อง'], teamperm:['🔐','สิทธิ์ทีม'], kpiemp:['👥','ทะเบียนพนักงาน'], kpiperson:['📈','ประวัติรายคน'], kpidash:['📊','ภาพรวม'], kpientry:['✍️','กรอกผลงาน'], kpiscore:['⭐','คะแนนคุณลักษณะ'], kpidoc:['📄','ใบประเมิน'], kpiround:['📋','รอบการประเมิน'], kpifill:['✍️','ประเมินผลงาน'], kpimanage:['📊','จัดการผลการประเมิน'], kpirule:['⚖️','เกณฑ์ทั้งองค์กร'], kpimetric:['🎯','ตัวชี้วัด (KPI)'], kpitrait:['🧭','คุณลักษณะรายบุคคล'], kpiimport:['📥','นำเข้าข้อมูลเดิม'], kpireport:['📄','รายงาน'], kpihelp:['📘','คู่มือการใช้งาน'], myset:['🙋','ตั้งค่าของฉัน'], bank:['🏦','บัญชีธนาคาร'], expcat:['🏷️','ประเภทค่าใช้จ่าย'],
     customers:['👥','ทะเบียนลูกค้า'], custfile:['📂','แฟ้มลูกค้า'], dataimp:['📥','นำเข้าแบบตาราง'],
     svcreg:['🧰','ทะเบียนสินค้า/บริการ'], salesone:['📄','รายละเอียดเอกสาร'], salesform:['✏️','ออกเอกสารขาย'], ctform:['✏️','สร้างสัญญาบริการ']
   };
@@ -5944,8 +5944,8 @@
         '</div>';
 
       // ── ① เงินออก ──
-      h+='<div class="card"><div class="ds-h">① เบิกค่าใช้จ่ายพนักงาน (เงินออก)</div>';
-      if(!r.expense.rows.length){ h+='<div class="emptybox">เดือนนี้ไม่มีใบเบิก</div>'; }
+      h+='<div class="card"><div class="ds-h">① ใบสั่งจ่ายที่พนักงานสำรองจ่าย (เงินออก)</div>';
+      if(!r.expense.rows.length){ h+='<div class="emptybox">เดือนนี้ไม่มีรายการ</div>'; }
       else {
         h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
           '<th>#</th><th>เลขที่</th><th>ผู้เบิก</th><th>ประเภท</th><th>ยอดเต็ม</th><th>หัก ณ ที่จ่าย</th><th>จ่ายจริง</th><th>สถานะ</th></tr></thead><tbody>'+
@@ -6067,7 +6067,7 @@
       TRASH_ITEMS=r.items||[]; paintTrash();
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
   }
-  function trashTypeMeta(t){ return t==='task'?['🎫','งาน']:t==='project'?['📁','Project']:t==='leave'?['📝','ใบลา']:t==='expense'?['💸','ใบเบิก']:t==='ot'?['⏰','OT']:['🗑️','']; }
+  function trashTypeMeta(t){ return t==='task'?['🎫','งาน']:t==='project'?['📁','Project']:t==='leave'?['📝','ใบลา']:t==='expense'?['💸','ใบสั่งจ่าย (พนักงาน)']:t==='ot'?['⏰','OT']:['🗑️','']; }
   function paintTrash(){
     var html='<div class="section-h">🗑️ ถังขยะ '+(IS_OWNER?'(ผู้ดูแล)':'(งานที่ยกเลิก)')+'</div>'+
       '<div class="m-hint" style="margin:0 0 12px">'+(IS_OWNER
@@ -6506,7 +6506,7 @@
       // บัญชีรับโอนคืน — ต้องมีก่อนถึงแจ้งเบิกได้ (พี่จะได้ไม่ต้องไล่ถามเลขบัญชีในแชท)
       '<button class="btn btn-ghost" style="width:100%;margin-bottom:14px'+(HAS_BANK?'':';border-color:#E5484D;color:#E5484D')+'" onclick="openBank()">🏦 บัญชีรับโอนของฉัน'+
         '<span style="color:#8A94A6;font-weight:400">'+(HAS_BANK?(' · '+esc(MYBANK.name)+' '+esc(MYBANK.acct)):' · ยังไม่ได้กรอก')+'</span></button>'+
-      (IS_OWNER?'<div class="m-hint" style="margin:0 0 12px">👑 มุมผู้ดูแล: เห็นใบเบิก<b>ทุกคน</b> · จัดการ/แก้/ลบได้จากที่นี่</div>':'');
+      (IS_OWNER?'<div class="m-hint" style="margin:0 0 12px">👑 มุมผู้ดูแล: เห็นคำขอเบิกของ<b>ทุกคน</b> · จัดการเต็มรูปแบบที่เมนู 💵 ใบสั่งจ่าย</div>':'');
     if(!list.length){ html+='<div class="card"><div class="emptybox">ยังไม่มีรายการเบิก 😊</div></div>'; $('main').innerHTML=html; return; }
     // ตารางมาตรฐาน (พี่กี้เคาะ 1 ก.ย. 69) — ปุ่มสั่งงานรวมในเมนู ⋮ ท้ายแถว ไม่กระจายเป็นลิงก์ยาว
     var sum=list.reduce(function(a,x){ return a+(Number(x.amount)||0); },0);
@@ -6730,14 +6730,14 @@
       }
     }
     var b=$('eSend'); if(b){ b.disabled=true; b.textContent='กำลังส่ง…'; }
-    toast('กำลังส่งใบเบิก…');
+    toast('กำลังส่งคำขอเบิก…');
     // POST — รูป base64 ยาวเกิน URL limit ของ JSONP GET
-    callBusy('กำลังส่งใบเบิก…', jsonpPost(p))
+    callBusy('กำลังส่งคำขอเบิก…', jsonpPost(p))
       .then(function(r){ if(!r||!r.ok){ if(b){b.disabled=false;b.textContent='แจ้งเบิก';}
           if(r&&r.needBank){ closeModal(); toast(r.error||'กรอกบัญชีรับโอนก่อนค่ะ'); openBank(); return; }
           if(r&&r.needSign){ mErr((r.error||'')+' '); } else mErr((r&&r.error)||'ส่งไม่สำเร็จ'); return; }
         closeModal(); IMGS['eImg']=[]; IMGS['eSrImg']=[]; IMGS['eRvCard']=[]; IMGS['eRvImg']=[];
-        toast('✅ ส่งใบเบิกแล้ว ('+(r.no||'')+')'+(r.merged?' · รวม '+r.files+' ไฟล์เป็น PDF แล้ว':'')+
+        toast('✅ ส่งคำขอเบิกแล้ว · ได้ใบสั่งจ่าย '+(r.no||'')+(r.merged?' · รวม '+r.files+' ไฟล์เป็น PDF แล้ว':'')+
           (r.sr?' · จะออกใบรับรองแทนตอนอนุมัติ':'')+(r.rv?' · อนุมัติแล้วจะได้ลิงก์ให้ผู้รับเงินเซ็นค่ะ':''));
         renderExpense(); })
       .catch(function(e){ if(b){b.disabled=false;b.textContent='แจ้งเบิก';} mErr(e.message); });
@@ -6788,9 +6788,9 @@
   }
   function openBank(){
     modal('<h3>🏦 บัญชีรับโอนของฉัน</h3><div id="mErr" class="m-err hidden"></div>'+
-      '<div class="m-hint">กรอกครั้งเดียว ระบบจำไว้ใช้ทุกใบเบิก — เวลาโอนคืน พี่จะเห็นเลขบัญชีนี้บนใบเบิกเลย ไม่ต้องถามในแชทค่ะ</div>'+
+      '<div class="m-hint">กรอกครั้งเดียว ระบบจำไว้ใช้ทุกครั้งที่ขอเบิก — เวลาโอนคืน ผู้ดูแลเห็นเลขบัญชีนี้บนใบสั่งจ่ายเลย</div>'+
       bankFields('mb', MYBANK, '')+
-      '<div class="m-hint">💡 ใบเบิกที่ยัง<b>ไม่จ่าย</b>ของคุณ จะถูกอัปเดตเป็นบัญชีใหม่ให้อัตโนมัติ (ใบที่จ่ายแล้วคงเดิม)</div>'+
+      '<div class="m-hint">💡 คำขอเบิกที่ยัง<b>ไม่จ่าย</b>ของคุณ จะถูกอัปเดตเป็นบัญชีใหม่ให้อัตโนมัติ (ใบที่จ่ายแล้วคงเดิม)</div>'+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
       '<button class="btn btn-primary" id="mbSave" onclick="bankSave()">บันทึก</button></div>');
   }
@@ -8219,7 +8219,7 @@
         /* สรุปค่าใช้จ่ายของใบเบิกพนักงาน (กราฟ + แยกตามประเภท/คน) — หน้าลูกของรายงานนี้
            🔴 ทางเข้าเดียวของหน้านั้นแล้ว (22 ก.ย. 69 ถอดปุ่มออกจากหน้าทะเบียนการจ่าย)
               ปุ่มนี้หายเมื่อไหร่ = หน้าสรุปเข้าไม่ได้เลย */
-        '<button class="btn btn-ghost" onclick="switchView(&quot;expdash&quot;)">📊 สรุปค่าใช้จ่ายใบเบิก</button></div></div>';
+        '<button class="btn btn-ghost" onclick="switchView(&quot;payout&quot;)">📋 ทะเบียนใบสั่งจ่าย</button></div></div>';
 
       h+='<div class="ds-grid">'+
         statCard('รายจ่ายรวม',money(s.amount),s.n+' รายการ')+
@@ -8236,7 +8236,7 @@
         }).join('')+
         '<tr class="tax-total"><td>รวม</td><td>'+s.n+'</td><td class="ta-r">'+money(s.amount)+'</td><td class="ta-r">'+money(s.net)+'</td></tr>'+
         '</tbody></table></div>'+
-        '<div class="m-hint" style="margin-top:8px">จ่ายสดจากเงินสดย่อยนับเฉพาะที่พี่จ่ายเอง — รายการที่มาจากใบเบิกไม่ถูกนับซ้ำ '+
+        '<div class="m-hint" style="margin-top:8px">จ่ายสดจากเงินสดย่อยนับเฉพาะที่พี่จ่ายเอง — รายการที่มาจากใบสั่งจ่ายไม่ถูกนับซ้ำ '+
         'และใบสั่งจ่ายที่เป็นการคืนเงินสดย่อยก็ถูกหักออกแล้ว</div></div>';
 
       // ② ตามประเภท
@@ -8288,7 +8288,7 @@
           return '<tr><td class="dt-nw">'+esc(x.date)+'</td><td>'+esc(x.no)+'</td>'+
             '<td style="white-space:normal">'+esc(x.detail||'-')+
               '<br><span style="font-size:12px;color:#8A94A6">'+esc(x.type||'')+
-              ({expense:' · ใบเบิก',payout:' · ใบสั่งจ่าย',petty:' · เงินสดย่อย'}[x.channel]||'')+'</span></td>'+
+              ({expense:' · พนักงานสำรองจ่าย',payout:' · ใบสั่งจ่าย',petty:' · เงินสดย่อย'}[x.channel]||'')+'</span></td>'+
             '<td>'+esc(x.payee||'-')+'</td><td class="ta-r dt-nw">'+money(x.amount)+'</td>'+
             '<td class="ta-r dt-nw">'+money(x.net)+'</td><td>'+esc(x.status)+'</td></tr>';
         }).join('')+'</tbody></table></div>';
@@ -8341,7 +8341,7 @@
       h+='<div class="card"><div class="ds-h">📋 รายงานภาษีซื้อ · '+esc(r.monthText||'')+'</div>';
       if(!rows.length){
         h+='<div class="emptybox">เดือนนี้ยังไม่มีใบกำกับภาษีซื้อ<br>'+
-          '<span class="m-hint">กรอกได้จากเมนู ⋮ ของใบเบิก/ใบสั่งจ่าย → 🧾 ใบกำกับภาษีซื้อ</span></div>';
+          '<span class="m-hint">กรอกได้จากเมนู ⋮ ของใบสั่งจ่าย → 🧾 ใบกำกับภาษีซื้อ</span></div>';
       } else {
         h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
           '<th>วันที่</th><th>เลขที่ใบกำกับ</th><th>ผู้ขาย</th><th>รายการ</th><th>มูลค่า</th><th>ภาษีซื้อ</th></tr></thead><tbody>'+
@@ -8464,7 +8464,7 @@
     /* D3: ตั้งใบใหม่จากไฟล์ (ตามปลายทางของหมวด) + แนบเข้าใบที่ตั้งไว้แล้ว
        ⚠️ ไฟล์ของระบบไม่มีทั้งสองปุ่ม — มันเกิดจากใบในเล่มอยู่แล้ว (กฎเหล็กข้อ ①) */
     if(isOwner && !x.linkKind && !x.isSystem) {
-      if(x.link==='expense') a.push({ key:'newexp', label:'➕ ตั้งเป็นใบเบิก', call:'drLinkForm('+q+",'expense')" });
+      if(x.link==='expense') a.push({ key:'newexp', label:'➕ ตั้งเป็นใบสั่งจ่าย (พนักงานสำรองจ่าย)', call:'drLinkForm('+q+",'expense')" });
       if(x.link==='payout')  a.push({ key:'newpo',  label:'➕ ตั้งเป็นใบสั่งจ่าย', call:'drLinkForm('+q+",'payout')" });
       a.push({ key:'attach', label:'📎 แนบเข้าใบที่ตั้งไว้แล้ว', call:'drLinkForm('+q+",'attach')" });
     }
@@ -8968,7 +8968,7 @@
     /* ── D3 ① ตั้งใบเบิกใหม่จากไฟล์ — ผู้เบิกคือคนที่กด (ระบบไม่เดาจากชื่อบนบิล) ── */
     if(kind==='expense'){
       return head+
-        '<div class="m-hint">ตั้งใบเบิกจากไฟล์นี้ — ระบบใช้ไฟล์ในแฟ้มเป็นหลักฐานให้เลย ไม่ต้องอัปซ้ำ<br>'+
+        '<div class="m-hint">ตั้งใบสั่งจ่ายจากไฟล์นี้ — ระบบใช้ไฟล์ในแฟ้มเป็นหลักฐานให้เลย ไม่ต้องอัปซ้ำ<br>'+
         'ผู้เบิก = คุณ (คนที่กดปุ่มนี้) · ใบจะเข้าคิวรออนุมัติตามปกติ</div>'+
         '<div class="fld"><label>ประเภทค่าใช้จ่าย</label><select id="drLkExType">'+
           (((DR&&DR.expTypes)||[]).map(function(o){
@@ -9015,7 +9015,7 @@
         return '<option value="'+esc(o.kind+'|'+o.no)+'">'+esc(o.label)+'</option>';
       }).join('');
       return head+
-        '<div class="m-hint">ภาษีซื้อผูกกับใบที่จ่ายเงินจริง — เลือกใบเบิก/ใบสั่งจ่ายที่ตรงกับใบกำกับนี้ค่ะ</div>'+
+        '<div class="m-hint">ภาษีซื้อผูกกับใบที่จ่ายเงินจริง — เลือกใบสั่งจ่ายที่ตรงกับใบกำกับนี้ค่ะ</div>'+
         '<div class="fld"><label>ใบปลายทาง</label><select id="drLkTarget">'+
           (opts||'<option value="">— ไม่มีใบที่ยังไม่ได้บันทึกภาษีซื้อ —</option>')+'</select></div>'+
         '<div class="fld"><label>เลขที่ใบกำกับภาษี</label><input id="drLkInvNo" value="'+esc(sc.docNo||x.docNo||'')+'"></div>'+
@@ -9697,7 +9697,7 @@
           var locked=!!x.claimNo;   // เข้าใบสรุปแล้ว = ติ๊กซ้ำไม่ได้ (ด่านเดียวกับ backend)
           var q="'"+String(x.no).replace(/'/g,"\\'")+"'";
           var sub='<br><span style="font-size:12px;color:#8A94A6">'+esc(x.type)+(x.payee?' · '+esc(x.payee):'')+
-            ' · '+(x.source===r.cashSource?'💵 จ่ายสด':'ใบเบิก '+esc(x.source))+'</span>'+
+            ' · '+(x.source===r.cashSource?'💵 จ่ายสด':'ใบสั่งจ่าย '+esc(x.source))+'</span>'+
             (x.proof?' <a class="ex-lk" href="'+esc(x.proof)+'" target="_blank">🔍 บิล</a>':'')+
             // เอกสารรายจ่าย: มีแล้วโชว์ลิงก์ · ยังไม่มีและไม่มีบิล = กดออกใบรับรองแทนใบเสร็จได้
             (x.docNo?' <a class="ex-lk" href="'+esc(x.docLink||'#')+'" target="_blank">📄 '+esc(x.docNo)+'</a>'
@@ -10036,7 +10036,7 @@
       /* 🔴 กำหนดความกว้างทุกคอลัมน์ให้รวม ~100% (ตารางเป็น table-layout:fixed)
          ผสม px หลายช่องแล้วปล่อย "รายละเอียด" ว่างไว้ = ช่องนั้นเหลือไม่กี่พิกเซล ตกบรรทัดทีละคำ */
       {label:'เลขที่',cls:'dt-nw',w:'9%'},
-      {label:'ประเภทใบ',cls:'ta-c dt-nw',w:'7%'},{label:'ผู้รับเงิน / ผู้เบิก',w:'13%'},
+      {label:'ต้นทาง',cls:'ta-c dt-nw',w:'7%'},{label:'ผู้รับเงิน / ผู้เบิก',w:'13%'},
       {label:'ประเภทค่าใช้จ่าย',w:'10%'},{label:'รายละเอียด',w:'24%'},
       {label:'ยอด (บาท)',cls:'ta-r',w:'8%'},{label:'สถานะ',cls:'dt-nw',w:'8%'},
       {label:'เอกสาร',w:'12%'},
@@ -10242,9 +10242,9 @@
       {label:'ยอด (บาท)',cls:'ta-r',w:isRv?'7.5%':'9%'}];
     if(isRv){ cols.push({label:'หัก ณ ที่จ่าย',cls:'ta-r',w:'7.5%'});
               cols.push({label:'ลายเซ็นผู้รับเงิน',cls:'dt-nw',w:'10%'}); }
-    cols.push({label:'สถานะใบเบิก',cls:'dt-nw',w:isRv?'8.5%':'10%'});
+    cols.push({label:'สถานะใบสั่งจ่าย',cls:'dt-nw',w:isRv?'8.5%':'10%'});
     cols.push({label:'เอกสาร',w:isRv?'10%':'9%'});
-    cols.push({label:'ใบเบิกต้นทาง',cls:'dt-nw',w:isRv?'9%':'11%'});
+    cols.push({label:'ใบสั่งจ่ายต้นทาง',cls:'dt-nw',w:isRv?'9%':'11%'});
     return dtTable(cols, body, total,
       'ยังไม่มี'+(isRv?'ใบสำคัญรับเงิน':'ใบรับรองแทนใบเสร็จ')+'ในทะเบียนค่ะ');
   }
@@ -10263,7 +10263,7 @@
     var isRv=(PR_DOC==='RV');
     var head=['ลำดับ','เลขที่','วันที่',(isRv?'ผู้รับเงิน':'ผู้เบิก'),'รายละเอียด','ยอด (บาท)']
       .concat(isRv?['หัก ณ ที่จ่าย','ลายเซ็นผู้รับเงิน']:[])
-      .concat(['สถานะใบเบิก','ใบเบิกต้นทาง']);
+      .concat(['สถานะใบสั่งจ่าย','ใบสั่งจ่ายต้นทาง']);
     var q=function(v){ return '"'+String(v==null?'':v).replace(/"/g,'""')+'"'; };
     var lines=[head.map(q).join(',')].concat(rows.map(function(x,i){
       var r=[i+1,x.no,x.date,x.who,x.detail,x.amount];
@@ -10299,8 +10299,7 @@
           '</select>'+
           '<button class="btn btn-ghost" onclick="pdCsv()">↓ CSV (ตามที่กรอง)</button>'+
         '</div></div>'+
-      '<div class="m-hint" style="margin:0 0 10px">📌 เอกสารพวกนี้ออกจาก "ใบเบิก" — '+
-        'ถ้าต้องแก้หรือยกเลิก ให้เข้าไปที่ใบเบิกต้นทางค่ะ</div>'+
+      
       '<div id="pdTbl"></div></div>';
     $('main').innerHTML=poBc()+html;
     pdPaintTbl();
@@ -10314,7 +10313,7 @@
               'รายละเอียด','ยอด (บาท)','เดือน','เลขที่เอกสาร'];
     var q=function(v){ return '"'+String(v==null?'':v).replace(/"/g,'""')+'"'; };
     var lines=[head.map(q).join(',')].concat(rows.map(function(x,i){
-      return [i+1, x.no, (x.kind==='staff'?'ใบเบิกพนักงาน':'ใบของบริษัท'), x.status,
+      return [i+1, x.no, (x.kind==='staff'?'พนักงานสำรองจ่าย':'บริษัทตั้งเอง'), x.status,
         x.who, x.type, x.detail, x.amount, x.month, x.docNo].map(q).join(',');
     }));
     /* ใส่ BOM ให้ Excel อ่านภาษาไทยไม่เป็นขยะ (บทเรียนเดียวกับ CSV ทุกหน้าในระบบ) */
@@ -10341,8 +10340,7 @@
     var html=poBc()+poDocTabs()+
       '<div class="lst-card"><div class="lst-head">'+
         '<div class="t"><b>ใบสั่งจ่าย <span class="doc-code">PO</span></b>'+
-          '<div>ใบที่บริษัทตั้งเอง กับใบเบิกที่พนักงานสำรองจ่าย อยู่ในทะเบียนเดียวกัน (เลขที่ PO ชุดเดียว) '+
-          '— แยกกันตอนจ่าย: ใบบริษัทโอนให้ผู้รับเงิน · ใบเบิกโอนคืนพนักงาน</div></div>'+
+          '<div>ทุกใบที่ต้องจ่าย ทั้งที่บริษัทตั้งเองและที่พนักงานสำรองจ่าย</div></div>'+
         '<div class="lst-tools">'+
           '<input class="s-find" placeholder="ค้นหาเลขที่ / ชื่อ / รายละเอียด" '+
             'value="'+esc(PR_Q)+'" oninput="prSetQ(this.value)">'+
@@ -10350,9 +10348,9 @@
             months.map(function(m){ return '<option value="'+esc(m)+'"'+(PR_MONTH===m?' selected':'')+'>'+esc(ymThai(m))+'</option>'; }).join('')+
           '</select>'+
           '<select onchange="prSetKind(this.value)">'+
-            '<option value="">ทุกประเภทใบ</option>'+
-            '<option value="company"'+(PR_KIND==='company'?' selected':'')+'>🏢 ใบของบริษัท</option>'+
-            '<option value="staff"'+(PR_KIND==='staff'?' selected':'')+'>🧾 ใบเบิกพนักงาน</option>'+
+            '<option value="">ทุกต้นทาง</option>'+
+            '<option value="company"'+(PR_KIND==='company'?' selected':'')+'>🏢 บริษัทตั้งเอง</option>'+
+            '<option value="staff"'+(PR_KIND==='staff'?' selected':'')+'>🧾 พนักงานสำรองจ่าย</option>'+
           '</select>'+
           '<button class="btn btn-ghost" onclick="prCsv()">↓ CSV (ตามที่กรอง)</button>'+
           '<button class="btn btn-primary" onclick="openPayout()">+ สร้างใบสั่งจ่าย</button>'+
@@ -11119,7 +11117,7 @@
           '<input id="'+p+'_email" type="text" value="'+esc(m.email||'')+'"></div>'+
       '</div>'+
 
-      '<div class="us-sec">🏦 บัญชีรับโอนคืน <span>ใช้ตอนจ่ายคืนใบเบิก</span></div>'+
+      '<div class="us-sec">🏦 บัญชีรับโอนคืน <span>ใช้ตอนโอนคืนค่าที่สำรองจ่าย</span></div>'+
       '<div class="en-row">'+
         '<div class="fld"><label>ธนาคาร</label><select id="'+p+'_bankName">'+
           '<option value="">— เลือกธนาคาร —</option>'+bankOpts+'</select></div>'+
@@ -11541,7 +11539,7 @@
       PAY_ACCTS=r.payAccounts||PAY_ACCTS;   // บัญชีบริษัทที่เงินออก (ขั้น ④)
       // ตาราง 3 ก้อนตามงานที่ต้องทำ (พี่กี้เคาะ 1 ก.ย. 69: ตาราง + เมนู ⋮ แทนการ์ดปุ่มเยอะ)
       var html='';
-      html+=expTable('⏳ รออนุมัติ', pd, true, 'ไม่มีใบเบิกรออนุมัติ 🎉');
+      html+=expTable('⏳ รออนุมัติ', pd, true, 'ไม่มีใบสั่งจ่ายรออนุมัติ 🎉');
       html+=expTable('💰 อนุมัติแล้ว · รอจ่ายคืน', tp, true, 'ไม่มีรายการค้างจ่ายคืน 😊');
       // จ่ายแล้วแต่ผู้รับยังไม่เซ็น → เอกสาร + 50 ทวิ ยังไม่ออก ต้องตามลายเซ็นให้จบ
       if(aw.length){
@@ -11602,7 +11600,7 @@
     var x=EXP_BYNO[no]||{}, rv=isRv(x);
     var kind=x.payeeKind||'บุคคลธรรมดา';
     var opts=SECTIONS.map(function(s){ return '<option value="'+esc(s.code)+'">'+esc(s.code+' '+s.label)+'</option>'; }).join('');
-    modal('<h3>✅ อนุมัติ'+(rv?'ใบสำคัญรับเงิน ':'ใบเบิก ')+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+    modal('<h3>✅ อนุมัติ'+(rv?'ใบสำคัญรับเงิน ':'ใบสั่งจ่าย ')+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
       '<div class="m-hint">ผู้รับเงิน: <b>'+esc(x.payeeName||'-')+'</b> ('+esc(kind)+')'+
         (rv?' — อนุมัติแล้วระบบจะออกลิงก์ให้ผู้รับเงินเซ็น':' — มีใบเสร็จ/ใบกำกับแล้ว ไม่ต้องเซ็น ออก 50 ทวิ ตอนจ่าย')+'</div>'+
       entField('exEnt', x.entity, 'บริษัทผู้ออกเอกสาร')+
@@ -11697,7 +11695,7 @@
   function exApprove(no){
     if(!multiEnt()){ exDecide(no,'approve',''); return; }
     var x=exFind(no)||{};
-    modal('<h3>✅ อนุมัติใบเบิก '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+    modal('<h3>✅ อนุมัติใบสั่งจ่าย '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
       '<div class="m-hint">'+esc(x.type||'')+' · <b>'+money(x.amount)+'</b> บาท'+(x.nick?' · '+esc(x.nick):'')+'</div>'+
       (x.detail?'<div class="m-hint">'+esc(x.detail)+'</div>':'')+
       entField('exEnt2', x.entity, 'บริษัทผู้ออกเอกสาร')+
@@ -11794,7 +11792,7 @@
     var opts=EXP_TYPES.map(function(t){
       return '<option value="'+esc(t.key)+'"'+(t.label===cur?' selected':'')+'>'+esc(t.label)+'</option>';
     }).join('');
-    modal('<h3>✏️ แก้ประเภทใบเบิก '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+    modal('<h3>✏️ แก้ประเภทค่าใช้จ่าย '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
       '<div class="m-hint">ประเภทมีผลกับ<b>รายงานสรุปตามประเภท</b>อย่างเดียว — ไม่กระทบยอดเงิน เอกสาร หรือภาษี'+
         (x.status&&x.status.indexOf('รออนุมัติ')<0?' · ใบนี้ '+esc(x.status)+' แล้ว แก้ย้อนหลังได้ค่ะ':'')+'</div>'+
       (x.detail?'<div class="m-hint">รายละเอียดที่พนักงานพิมพ์: <b>'+esc(x.detail)+'</b></div>':'')+
@@ -11898,7 +11896,7 @@
      → ใบเป็น "หน้า" ไม่ใช่ modal · ตั้งแต่ 24 ก.ย. 69 หน้านั้นคือฟอร์มใบสั่งจ่าย (view poform) */
   function exDetail(no){
     /* 🔴 spec-po-unify ขั้น B (24 ก.ย. 69) — ใบของพนักงานคือใบสั่งจ่ายใบหนึ่ง เปิดในฟอร์มเดียวกัน
-       (เดิมไปหน้า "ใบเบิก" แยก ทำให้แก้ฟอร์มใบสั่งจ่ายแล้วใบพนักงานไม่เปลี่ยนตาม) */
+       (เดิมไปหน้าใบเบิกแยก ทำให้แก้ฟอร์มใบสั่งจ่ายแล้วใบพนักงานไม่เปลี่ยนตาม) */
     poOpenStaff(no);
   }
   /** view expone (หน้า "ใบเบิก" เดิม) ปิดแล้ว — ลิงก์เก่า/แท็บที่เปิดค้างพามาที่ทะเบียนใบสั่งจ่าย
@@ -11959,7 +11957,7 @@
        ① หลักฐานที่พนักงานแนบมา (สำคัญสุด — ใช้ตัดสินว่าอนุมัติไหม) ② สำเนาบัตร
        ③ เอกสารที่ระบบออก ④ 50 ทวิ 2 ฉบับ ⑤ แฟ้ม ⑥ สลิปโอนคืน */
     EXD_FILES=[];
-    [[x.receiptUrl, '📎 หลักฐานจากพนักงาน', (x.docType||'ที่แนบมากับใบเบิก')],
+    [[x.receiptUrl, '📎 หลักฐานจากพนักงาน', (x.docType||'ที่แนบมาตอนขอเบิก')],
      [x.idCardUrl,  '🪪 สำเนาบัตรประชาชน',  'ผู้รับเงิน'],
      [x.docLink,    '📄 '+(x.docNo||'เอกสารที่ออก'), rv?'ใบสำคัญรับเงิน':'ใบรับรองแทนใบเสร็จ'],
      [x.whtLink,    '🧾 50 ทวิ '+(x.whtNo||''), 'ฉบับบริษัท'],
@@ -12275,7 +12273,7 @@
   window.exEditPayee=exEditPayee; window.exSavePayee=exSavePayee;
   /** ไม่อนุมัติ → ถามเหตุผลก่อน (ลงคอลัมน์หมายเหตุ + แจ้งผู้แจ้ง) */
   function exReject(no){
-    modal('<h3>❌ ไม่อนุมัติใบเบิก '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+    modal('<h3>❌ ไม่อนุมัติใบสั่งจ่าย '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
       '<div class="fld"><label>เหตุผล (ไม่บังคับ · ผู้แจ้งจะเห็น)</label><textarea id="exNote" placeholder="เช่น ใบเสร็จไม่ชัด ขอถ่ายใหม่"></textarea></div>'+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
       '<button class="btn btn-danger" onclick="exDecide(\''+esc(no)+'\',\'reject\',$(\'exNote\').value.trim())">ไม่อนุมัติ</button></div>');
@@ -14371,7 +14369,7 @@
     '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl sm-tbl">'+
     '<colgroup><col style="width:36%"><col style="width:16%"><col style="width:24%"><col style="width:24%"></colgroup>'+
     '<thead><tr><th>ใบปลายทาง</th><th style="text-align:right">ยอดในใบ</th><th>สถานะ</th><th></th></tr></thead>'+
-    '<tbody>'+(rows || stEmptyRow(4,'ยังไม่มีใบสั่งจ่าย/ใบเบิกที่เข้าเกณฑ์ — ตั้งใบก่อนแล้วกลับมาแนบค่ะ'))+
+    '<tbody>'+(rows || stEmptyRow(4,'ยังไม่มีใบสั่งจ่ายที่เข้าเกณฑ์ — ตั้งใบก่อนแล้วกลับมาแนบค่ะ'))+
     '</tbody></table></div>';
   }
   function arApplyVat(kind,no){
@@ -16675,7 +16673,7 @@
     }
     if(P51.autoLoading){
       h += '<div class="p51-warn" style="background:#EEF4FF;border-color:#C7D8F5;color:#1B4E9B">' +
-        '⏳ กำลังดึงยอดครึ่งปีแรกจากระบบ… (อ่านชีตขาย/ใบสั่งจ่าย/ใบเบิก/เงินเดือน) ' +
+        '⏳ กำลังดึงยอดครึ่งปีแรกจากระบบ… (อ่านชีตขาย/ใบสั่งจ่าย/เงินเดือน) ' +
         'ระหว่างนี้กรอกตัวเลขเองได้เลย พอดึงเสร็จจะเติมให้</div>';
     }
     h += '<div class="card"><div class="p51-gauge">' + p51Gauge(c.risk.gaugeRatio, c.risk.level) +
@@ -18901,7 +18899,7 @@
             (cash.partial?' ⚠️ ยังไม่ครบทุกบัญชี':'')})+
       bzCard({tone:'in', icon:'📈', label:'รายได้', value:money(cur.income), sub:'ออกบิลแล้ว · '+scope})+
       bzCard({tone:'out', icon:'📉', label:'รายจ่าย', value:money(cur.outgo),
-        sub:'จ่ายจริง · ใบเบิก + ใบสั่งจ่าย + เงินสดย่อย'})+
+        sub:'จ่ายจริง · ใบสั่งจ่าย + เงินสดย่อย'})+
       bzCard({tone:(cur.profit<0?'loss':'pf'), icon:(cur.profit<0?'⚠️':'🏆'), label:'กำไร / (ขาดทุน)',
         value:bzNeg(cur.profit), sub:'รายได้ − รายจ่าย'+(cur.income?(' · อัตรากำไร '+rate.toFixed(1)+'%'):'')})+
       '</div>';
@@ -23615,7 +23613,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260924-1023';
+  var APP_BUILD='20260924-1305';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
