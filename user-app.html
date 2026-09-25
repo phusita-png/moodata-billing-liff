@@ -10354,7 +10354,7 @@
     var tot=0; items.forEach(function(x){ tot+=Number(x.amount)||0; });
     h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
       '<th style="width:34px"></th><th style="width:38px">#</th><th>วันที่</th><th>รายการ</th>'+
-      '<th>ยอด</th><th>สถานะ</th><th class="ta-c" style="width:46px">PC</th><th class="ta-c" style="width:46px">PV</th><th style="width:34px"></th></tr></thead><tbody>'+
+      '<th>ยอด</th><th>สถานะ</th><th class="ta-c" style="width:46px">PC</th><th class="ta-c" style="width:46px">✍️</th><th style="width:40px"></th></tr></thead><tbody>'+
       items.map(function(x, xi){
         /* จุด PC/PV แบบทะเบียนใบสั่งจ่าย (พี่กี้ 25 ก.ย. 69) — PC = รวมในใบสรุปแล้ว · PV = ใบสรุปนั้นจ่ายคืนแล้ว */
         var cl=x.claimNo?(((PT_DATA||{}).claims||[]).filter(function(c){ return c.no===x.claimNo; })[0]||{}):{};
@@ -10365,9 +10365,22 @@
           /* 📁 มาจากใบสั่งจ่าย = แฟ้มครบชุด (ใบขออนุมัติ+บิล+เอกสาร) · จ่ายสด/ยังไม่มีแฟ้ม = บิลเดิม (พี่กี้ 25 ก.ย. 69) */
           (x.dossier?' <a class="ex-lk" href="'+esc(x.dossier)+'" target="_blank">📁 แฟ้ม</a>'
             :(x.proof?' <a class="ex-lk" href="'+esc(x.proof)+'" target="_blank">🔍 บิล</a>':''))+
-          // เอกสารรายจ่าย: มีแล้วโชว์ลิงก์ · ยังไม่มีและไม่มีบิล = กดออกใบรับรองแทนใบเสร็จได้
-          (x.docNo?' <a class="ex-lk" href="'+esc(x.docLink||'#')+'" target="_blank">📄 '+esc(x.docNo)+'</a>'
-            :(x.proof?'':' <a class="ex-lk" href="#" onclick="ptDoc('+q+');return false">📄 ออกใบรับรองแทนใบเสร็จ</a>'));
+          /* ใบรับรองแทนใบเสร็จจบที่ใบสั่งจ่าย (พี่กี้ 25 ก.ย. 69) — ที่นี่โชว์เฉพาะของรายการจ่ายสดเก่าที่ออกไว้แล้ว */
+          (x.docNo?' <a class="ex-lk" href="'+esc(x.docLink||'#')+'" target="_blank">📄 '+esc(x.docNo)+'</a>':'');
+        var rs=x.recvStatus||'', signed=rs.indexOf('เซ็นรับแล้ว')>=0||rs.indexOf('แนบรูป')>=0, waitSign=rs.indexOf('รอเซ็น')>=0;
+        /* ⋮ มาตรฐาน — โชว์ตามสถานะ */
+        var acts=[];
+        if(x.dossier) acts.push({label:'📁 เปิดแฟ้ม', href:x.dossier});
+        else if(x.proof) acts.push({label:'🔍 เปิดบิล', href:x.proof});
+        if(x.source && x.source!==r.cashSource) acts.push({label:'🔎 ใบสั่งจ่ายต้นทาง', call:'prGoSrc('+"'"+esc(x.source)+"'"+')'});
+        if(x.source===r.cashSource && !x.docNo && !x.proof) acts.push({label:'📄 ออกใบรับรองแทนใบเสร็จ (รายการเก่า)', call:'ptDoc('+q+')'});
+        if(!signed){
+          if(acts.length) acts.push({sep:1});
+          if(x.recvStaff) acts.push({label:'✍️ ส่งการ์ดให้พนักงานยืนยันรับเงิน', call:'ptRecvPush('+q+')'});
+          acts.push({label:'🔗 ลิงก์ให้ผู้รับเงินเซ็นออนไลน์', call:'ptRecvLink('+q+')'});
+          acts.push({label:'📷 แนบรูปใบที่เซ็นรับแล้ว', call:'ptRecvUpload('+q+')'});
+        }
+        if(!locked){ acts.push({sep:1}); acts.push({label:'🗑️ ยกเลิกรายการ', call:'ptVoid('+q+')', danger:true}); }
         return '<tr'+(locked?' style="opacity:.55"':'')+'>'+
           /* ลำดับ # — ทุกตารางในระบบต้องมี (พี่กี้สั่ง 22 ก.ย. 69) */
           '<td>'+(locked?'🔒':'<input type="checkbox" onchange="ptToggle('+q+',this.checked)"'+(PT_SEL[x.no]?' checked':'')+'>')+'</td>'+
@@ -10375,11 +10388,12 @@
           '<td class="dt-nw">'+esc(x.date)+'</td>'+
           '<td style="white-space:normal">'+esc(x.detail)+sub+'</td>'+
           '<td class="ta-r dt-nw">'+money(x.amount)+'</td>'+
-          '<td class="dt-nw">'+(locked?'<span style="font-size:12px;color:#8A94A6">เบิกคืนแล้ว<br>'+esc(x.claimNo)+'</span>'
-            :'<span style="color:#C8730B">รอเบิกคืน</span>')+'</td>'+
+          '<td class="dt-nw">'+(locked?'<span style="font-size:12px;color:#8A94A6">อยู่ในใบสรุป<br>'+esc(x.claimNo)+'</span>'
+            :'<span style="color:#C8730B">รอออกใบสรุป</span>')+
+            (waitSign?'<br><span style="font-size:12px;color:#B8650B">✍️ รอเซ็นรับ</span>':'')+'</td>'+
           '<td class="ta-c dt-nw">'+prDot(x.claimNo, cl.pdf||'', 'รวมในใบสรุป')+'</td>'+
-          '<td class="ta-c dt-nw">'+prDot(cl.pvNo, cl.pvLink||'', 'ใบสำคัญจ่าย')+'</td>'+
-          '<td>'+(locked?'':'<a class="ex-lk" href="#" onclick="ptVoid('+q+');return false">🗑️</a>')+'</td></tr>';
+          '<td class="ta-c dt-nw">'+(signed?prDot('เซ็นรับแล้ว'+(x.recvAt?' '+x.recvAt:''), '', ''):(waitSign?'<span class="rf-dot rf-none" title="รอผู้รับเงินเซ็น"></span>':'<span style="color:#C3CAD5">–</span>'))+'</td>'+
+          dtActCell('pt-'+x.no, acts)+'</tr>';
         }).join('')+
       '<tr class="tax-total"><td></td><td colspan="3">รวม '+items.length+' รายการ</td><td class="ta-r dt-nw">'+money(Math.round(tot*100)/100)+'</td><td colspan="4"></td></tr>'+
       '</tbody></table></div>';
@@ -10395,7 +10409,7 @@
     var lines=[['#','วันที่','รายการ','ประเภท','ผู้รับเงิน','ที่มา','ยอด','สถานะ','ใบสรุปเบิก'].join(',')];
     rows.forEach(function(x,i){
       lines.push([i+1, q(x.date), q(x.detail), q(x.type), q(x.payee), q(x.source===r.cashSource?'จ่ายสด':x.source),
-        (Number(x.amount)||0).toFixed(2), x.claimNo?'เบิกคืนแล้ว':'รอเบิกคืน', q(x.claimNo||'')].join(','));
+        (Number(x.amount)||0).toFixed(2), x.claimNo?'อยู่ในใบสรุป':'รอออกใบสรุป', q(x.claimNo||'')].join(','));
     });
     dlText('เงินสดย่อย'+(PT_MONTH?'-'+PT_MONTH:'')+'.csv', '\uFEFF'+lines.join('\r\n'));
   }
@@ -10497,7 +10511,8 @@
           ' · 🔵 รอรับเงินคืนจากบริษัท '+money(ic)+
           ' · 🟢 เหลือในมือ '+money(b.onHand)+' · วงเงิน '+money(b.limit)+'</div>'+
         '<div class="tax-acts">'+
-          '<button class="btn btn-primary" onclick="ptForm(\'cash\')">➕ บันทึกจ่ายจากวงเงิน</button>'+
+          /* ทุกรายการต้องมีใบสั่งจ่าย (พี่กี้เคาะ 25 ก.ย. 69) → อนุมัติ → ⋮ 🪙 จ่ายจากเงินสดย่อย */
+          '<button class="btn btn-primary" onclick="openPayout()">➕ สร้างใบสั่งจ่าย (จ่ายเงินสดย่อย)</button>'+
           '<button class="btn btn-ghost" onclick="ptForm(\'fund\')">⚙️ แก้วงเงิน</button>'+
           '<button class="btn btn-ghost" onclick="ptForm(\'newfund\')">➕ เพิ่มวงเงิน</button>'+
         '</div></div>';
@@ -10551,7 +10566,7 @@
           '<button class="btn btn-ghost" style="width:auto;flex:none" onclick="ptCsv()">↓ CSV (ตามที่กรอง)</button>'+
         '</div>'+
         '<div class="tax-acts" style="margin:0 0 12px">'+
-          [['all','ทั้งหมด'],['wait','⏳ รอเบิกคืน'],['done','✅ เบิกคืนแล้ว']].map(function(t){
+          [['all','ทั้งหมด'],['wait','⏳ รอออกใบสรุป'],['done','📑 อยู่ในใบสรุป']].map(function(t){
             return '<button class="btn '+(PT_TAB===t[0]?'btn-primary':'btn-ghost')+'" style="flex:1" onclick="ptSetTab(&quot;'+t[0]+'&quot;)">'+
               esc(t[1])+' <span style="opacity:.75">'+(ptCnt[t[0]]||0)+'</span></button>';
           }).join('')+
@@ -10567,29 +10582,29 @@
     else {
       h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
         '<th style="width:38px">#</th><th>เลขที่</th><th>วันที่</th><th>ช่วงรายการ</th><th>รายการ</th>'+
-        '<th>ยอดรวม</th><th>สถานะ</th><th></th></tr></thead><tbody>'+
+        '<th>ยอดรวม</th><th>สถานะ</th><th class="ta-c" style="width:46px">PV</th><th style="width:40px"></th></tr></thead><tbody>'+
         claims.map(function(c, ci){
           var q="'"+String(c.no).replace(/'/g,"\\'")+"'";
           var waiting = c.status.indexOf('รอตั้งเบิก')>=0 && !c.payoutNo;   // ยังไม่จ่ายคืน
           var settled = c.status.indexOf('จ่ายคืนแล้ว')>=0;
           /* 💳 25 ก.ย. 69 (spec-petty-pc-pv) PC → PV ตรง · ใบเก่าที่ผูกใบสั่งจ่ายไว้ = ให้กดย้ายก่อน */
-          var act = waiting
-            ? '<a class="ex-lk" href="#" onclick="ptClaimPv('+q+');return false">💳 จ่ายคืนวงเงิน (ออก PV)</a>'+
-              '<br><a class="ex-lk" href="#" onclick="ptCancelClaim('+q+');return false">🚫 ยกเลิกเอกสาร</a>'
-            : (c.pvNo
-              ? '<a class="ex-lk" href="'+esc(c.pvLink||'#')+'" target="_blank">📑 '+esc(c.pvNo)+'</a>'+
-                '<br><a class="ex-lk" href="#" onclick="ptClaimPvVoid('+q+');return false">↩️ ยกเลิก PV</a>'
-              : (settled ? '' : '<span class="m-hint" style="margin:0">ใบวิธีเดิม — กด 🔁 ย้ายเอกสารเก่า ด้านล่าง</span>'));
-          // ใบสรุป (PDF) = หลักฐานที่แนบไปกับใบสั่งจ่าย · ยังไม่มีก็กดออกได้
-          act += '<br><a class="ex-lk" href="'+(c.pdf?esc(c.pdf):'#')+'"'+
-            (c.pdf?' target="_blank"':' onclick="ptClaimDoc('+q+');return false"')+'>'+
-            (c.pdf?'📄 เปิดใบสรุป':'📄 ออกใบสรุป (PDF)')+'</a>';
+          var oldWay = !waiting && !c.pvNo && !settled;   // ใบวิธีเดิม — ให้กด 🔁 ย้ายเอกสารเก่า
+          /* ⋮ มาตรฐาน (พี่กี้ 25 ก.ย. 69) แทนลิงก์เรียงซ้อน — โชว์ตามสถานะ */
+          var cacts=[{label:'👁 ดูใบ (ข้อมูล + ประวัติ)', call:'openPcOne('+q+')'},
+            c.pdf?{label:'📄 เปิดใบสรุป (PDF)', href:c.pdf}:{label:'📄 ออกใบสรุป (PDF)', call:'ptClaimDoc('+q+')'}];
+          if(waiting){ cacts.push({sep:1}); cacts.push({label:'💳 จ่ายคืนวงเงิน (ออก PV)', call:'ptClaimPv('+q+')'});
+            cacts.push({sep:1}); cacts.push({label:'🚫 ยกเลิกใบสรุป', call:'ptCancelClaim('+q+')', danger:true}); }
+          if(c.pvNo){ cacts.push({sep:1}); cacts.push({label:'📑 เปิดใบสำคัญจ่าย '+c.pvNo, href:c.pvLink||'#'});
+            if(c.slip) cacts.push({label:'🧾 เปิดสลิป', href:c.slip});
+            cacts.push({sep:1}); cacts.push({label:'↩️ ยกเลิก PV', call:'ptClaimPvVoid('+q+')', danger:true}); }
           return '<tr><td class="dt-nw">'+(ci+1)+'</td><td><a class="ex-lk" href="#" onclick="openPcOne('+q+');return false"><b>'+esc(c.no)+'</b></a></td>'+
             '<td class="dt-nw">'+esc(c.date)+'</td><td>'+esc(c.range||'-')+'</td>'+
             '<td>'+c.count+'</td><td class="ta-r dt-nw">'+money(c.total)+'</td>'+
             '<td>'+esc(c.status)+((c.pvNo||c.payoutNo)?'<br><span style="font-size:12px;color:#8A94A6">'+esc(c.pvNo||c.payoutNo)+
-              (c.payAccount?' · '+esc(c.payAccount):'')+'</span>':'')+'</td>'+
-            '<td>'+act+'</td></tr>';
+              (c.payAccount?' · '+esc(c.payAccount):'')+'</span>':'')+
+              (oldWay?'<br><span style="font-size:12px;color:#8A94A6">ใบวิธีเดิม — กด 🔁 ย้ายเอกสารเก่า ด้านล่าง</span>':'')+'</td>'+
+            '<td class="ta-c dt-nw">'+prDot(c.pvNo, c.pvLink||'', 'ใบสำคัญจ่าย')+'</td>'+
+            dtActCell('pc-'+c.no, cacts)+'</tr>';
         }).join('')+'</tbody></table></div>'+
         '<div class="m-hint" style="margin-top:8px">💳 จ่ายคืนวงเงิน = บริษัทโอนคืนผู้ถือเงินสดย่อย → ออกใบสำคัญจ่าย PV ทันที '+
         '(ไม่ผ่านใบสั่งจ่าย) · วงเงินกลับเต็ม · PV ขึ้นในหน้า 📑 ใบสำคัญจ่าย</div>'+
@@ -10646,7 +10661,7 @@
     callBusy('กำลังออกใบสรุปเบิก…', jsonp({action:'waPettyClaim',uid:UID,entity:PT_ENT,
       fundId:ptFundId(),nos:nos.join(',')}), 'ออกใบแล้ว').then(function(r){
       if(!r||!r.ok){ toast((r&&r.error)||'ออกใบไม่สำเร็จ'); return; }
-      PT_SEL={}; toast('📑 ออกใบสรุปเบิก '+r.no+' · '+r.count+' รายการ · '+money(r.total)+' บาท'); renderPetty();
+      PT_SEL={}; toast('📑 ออกใบสรุปเบิก '+r.no+' · '+r.count+' รายการ · '+money(r.total)+' บาท'+(r.warn?' · ⚠️ '+r.warn:'')); renderPetty();
     }).catch(function(e){ toast(e.message); });
   }
   function ptCancelClaim(no){
@@ -10750,6 +10765,72 @@
       closeModal(); toast('🔁 ย้ายแล้ว · ยกเลิก PCV '+(r.pcv||[]).length+' ใบ · ปลดใบสรุป '+(r.claims||[]).length+' ใบ'); renderPetty();
     }).catch(function(e){ mErr(e.message); });
   }
+  /* ═════ ✍️ ผู้รับเงินเซ็นรับเงินสด (spec-petty-pc-pv §7 · 25 ก.ย. 69) ═════ */
+  function ptRecvPush(no){
+    callBusy('กำลังส่งการ์ด…', jsonp({action:'waPettyRecvPush',uid:UID,no:no}), 'ส่งแล้ว').then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'ส่งไม่สำเร็จ'); return; }
+      toast('✍️ ส่งการ์ดยืนยันรับเงินสดให้พนักงานแล้ว');
+    }).catch(function(e){ toast(e.message); });
+  }
+  function ptRecvLink(no){
+    callBusy('กำลังสร้างลิงก์…', jsonp({action:'waPettyRecvLink',uid:UID,no:no})).then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'สร้างลิงก์ไม่สำเร็จ'); return; }
+      modal('<h3>🔗 ลิงก์ให้ผู้รับเงินเซ็นรับ · '+esc(no)+'</h3>'+
+        '<div class="m-hint">ส่งลิงก์นี้ให้ผู้รับเงิน (LINE/แชท) · ใช้ได้ครั้งเดียว · หมดอายุ '+esc(r.exp||'')+'</div>'+
+        '<div class="fld"><input id="ptRecvUrl" value="'+esc(r.url)+'" readonly onclick="this.select()"></div>'+
+        '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button>'+
+        '<button class="btn btn-primary" onclick="ptRecvCopy()">📋 คัดลอกลิงก์</button></div>');
+    }).catch(function(e){ toast(e.message); });
+  }
+  function ptRecvCopy(){
+    var el=$('ptRecvUrl'); if(!el) return;
+    el.select();
+    try{ navigator.clipboard.writeText(el.value).then(function(){ toast('📋 คัดลอกแล้ว'); },function(){ document.execCommand('copy'); toast('📋 คัดลอกแล้ว'); }); }
+    catch(e){ try{ document.execCommand('copy'); toast('📋 คัดลอกแล้ว'); }catch(_){} }
+  }
+  var PT_RECV_NO='';
+  function ptRecvUpload(no){
+    PT_RECV_NO=no;
+    modal('<h3>📷 แนบรูปใบที่เซ็นรับแล้ว · '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">ถ่ายรูปกระดาษที่ผู้รับเงินเซ็นรับเงินสดแล้ว — ใช้เป็นลายเซ็นในใบสรุปเบิก</div>'+
+      imgsFldHtml('ptRecvImg','📎 รูปใบเซ็นรับ')+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" id="ptRecvBtn" onclick="doPtRecvUpload()">บันทึก</button></div>');
+    imgsFldBind('ptRecvImg');
+  }
+  function doPtRecvUpload(){
+    var im=IMGS['ptRecvImg']||[]; if(!im.length){ mErr('แนบรูปก่อนค่ะ'); return; }
+    var btn=$('ptRecvBtn'); if(btn){ btn.disabled=true; btn.textContent='กำลังบันทึก…'; }
+    callBusy('กำลังบันทึก…', jsonpPost({action:'waPettyRecvUpload',uid:UID,no:PT_RECV_NO,imgs:JSON.stringify(im)})).then(function(r){
+      if(!r||!r.ok){ if(btn){ btn.disabled=false; btn.textContent='บันทึก'; } mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+      closeModal(); IMGS['ptRecvImg']=[]; toast('📎 บันทึกใบเซ็นรับแล้ว'); renderPetty();
+    }).catch(function(e){ if(btn){ btn.disabled=false; btn.textContent='บันทึก'; } mErr(e.message); });
+  }
+  window.ptRecvPush=ptRecvPush; window.ptRecvLink=ptRecvLink; window.ptRecvCopy=ptRecvCopy;
+  window.ptRecvUpload=ptRecvUpload; window.doPtRecvUpload=doPtRecvUpload;
+
+  /* ── 💵 พนักงาน: รายการที่ต้องยืนยันรับเงินสด (หน้าเบิกของฉัน) ── */
+  function myRecvLoad(){
+    var box=$('myRecvBlock'); if(!box) return;
+    jsonp({action:'waMyPettyRecv',uid:UID}).then(function(r){
+      var b=$('myRecvBlock'); if(!b || !r || !r.ok || !(r.rows||[]).length){ if(b) b.innerHTML=''; return; }
+      b.innerHTML='<div class="card" style="border:1px solid #F0C27A"><div class="ds-h">💵 รอยืนยันรับเงินสด ('+r.rows.length+')</div>'+
+        (r.hasSign?'':'<div class="m-err">ยังไม่มีลายเซ็นของคุณในระบบ — ไปเซ็นที่ ⚙️ ตั้งค่าของฉัน ก่อนค่ะ</div>')+
+        r.rows.map(function(x){
+          return '<div style="display:flex;gap:10px;align-items:center;justify-content:space-between;padding:8px 0;border-top:1px solid #F1F4F9">'+
+            '<div><b>'+money(x.amount)+' บาท</b> · '+esc(x.detail)+'<br><span class="m-hint" style="margin:0">'+esc(x.date)+' · '+esc(x.no)+'</span></div>'+
+            '<button class="btn btn-primary" style="width:auto;flex:none" onclick="myRecvOk('+"'"+esc(x.no)+"'"+')"'+(r.hasSign?'':' disabled')+'>✅ ได้รับเงินสดแล้ว</button></div>';
+        }).join('')+'</div>';
+    }).catch(function(){});
+  }
+  function myRecvOk(no){
+    callBusy('กำลังบันทึก…', jsonp({action:'waPettyRecvConfirm',uid:UID,no:no}), 'บันทึกแล้ว').then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+      toast('✅ บันทึกว่าได้รับเงินสดแล้ว'); myRecvLoad();
+    }).catch(function(e){ toast(e.message); });
+  }
+  window.myRecvLoad=myRecvLoad; window.myRecvOk=myRecvOk;
+
   window.ptClaimPv=ptClaimPv; window.doPtClaimPv=doPtClaimPv; window.ptClaimPvVoid=ptClaimPvVoid;
   window.ptMigrate=ptMigrate; window.ptMigrateGo=ptMigrateGo;
   window.ptDoc=ptDoc; window.ptClaimDoc=ptClaimDoc; window.ptClaimPayout=ptClaimPayout; window.ptSettleClaim=ptSettleClaim;
@@ -23774,7 +23855,8 @@ function kpImpDraw(){
       // ลิสต์ที่ฟอร์มแก้ไขใบเบิกต้องใช้ (หน้านี้เปิดหน้าแก้ไขต่อได้ · พี่กี้เจอ dropdown ว่าง 18 ก.ย. 69)
       EXP_TYPES=r.types||EXP_TYPES; SECTIONS=r.sections||SECTIONS;
       // พี่/HR: บล็อกอนุมัติเบิกจ่าย อยู่บนสุดของหน้าสรุป (พี่ขอรวมหน้าเดียว 18 ก.ค.)
-      var h=(IS_OWNER?'<div class="tax-acts" style="margin:0 0 12px"><button class="btn btn-ghost" onclick="switchView(&quot;payout&quot;)">← กลับใบสั่งจ่าย PO</button></div>':'')+(IS_OWNER?'<div class="section-h">💸 อนุมัติเบิกจ่าย</div><div id="expApprBlock"></div><div class="section-h" style="margin-top:20px">📊 สรุปค่าใช้จ่าย</div>':'')+
+      setTimeout(myRecvLoad, 0);   /* 💵 รอยืนยันรับเงินสด (25 ก.ย. 69) — โหลดหลังวาดหน้า */
+      var h='<div id="myRecvBlock"></div>'+(IS_OWNER?'<div class="tax-acts" style="margin:0 0 12px"><button class="btn btn-ghost" onclick="switchView(&quot;payout&quot;)">← กลับใบสั่งจ่าย PO</button></div>':'')+(IS_OWNER?'<div class="section-h">💸 อนุมัติเบิกจ่าย</div><div id="expApprBlock"></div><div class="section-h" style="margin-top:20px">📊 สรุปค่าใช้จ่าย</div>':'')+
         '<div class="ds-sel"><select id="dsYm" onchange="dsSetYm(this.value)">'+
         r.months.slice().reverse().map(function(m){
           return '<option value="'+esc(m)+'"'+(m===r.ym?' selected':'')+'>'+esc(ymThai(m))+'</option>';
@@ -24808,7 +24890,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260925-1439';
+  var APP_BUILD='20260925-1855';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
