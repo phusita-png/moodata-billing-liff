@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260925-1044">
+<link rel="stylesheet" href="user.css?v=20260925-1114">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -10571,7 +10571,8 @@
       if(x.dossier) docs+='<a href="'+esc(x.dossier)+'" target="_blank">📚 แฟ้ม</a>';
       var flag='';
       if(x.selfApprove) flag+='<br><span style="color:#C8730B">'+esc(x.selfApprove)+'</span>';
-      if(x.stage==='done' && !x.paidSlip) flag+='<br><span style="color:#DC2626;font-weight:600">📎 ยังไม่มีสลิปโอน</span>';
+      /* จ่ายจากเงินสดย่อย = ไม่มีการโอน ไม่ต้องเตือนสลิป (พี่กี้ 25 ก.ย. 69) */
+      if(x.stage==='done' && !x.paidSlip && !(x.pay&&x.pay.petty)) flag+='<br><span style="color:#DC2626;font-weight:600">📎 ยังไม่มีสลิปโอน</span>';
       /* ⏳ ใบที่ขอเงินไปจ่ายก่อน ยังตามใบเสร็จตัวจริงไม่ได้ (22 ก.ย. 69) */
       if(expAwaitReceipt(x)) flag+='<br><span style="color:#B45309;font-weight:600">⏳ รอใบเสร็จตัวจริง</span>';
       /* 22 ก.ย. 69 เย็น — เดิมติ๊กได้เฉพาะใบบริษัท (คิดว่าใบเบิกไม่มีเอกสารให้แนบ)
@@ -10589,9 +10590,18 @@
         '<td class="dt-amt">'+poMoney(x.amount)+'</td>'+
         '<td class="dt-nw"><span class="tk-badge '+(x.kind==='staff'?expBadge(x.status):poBadge(x.status))+'">'+esc(x.status)+'</span></td>'+
         '<td class="dt-doc">'+(docs||'—')+'</td>'+
-        '<td class="ta-c dt-nw">'+prDot(prRefFrom(x), '', 'มาจาก')+'</td>'+
-        '<td class="ta-c dt-nw">'+
-          (function(){ var d=prRefTo(x); return prDot(d&&d.no, d&&d.link, 'ออกเป็น'); })()+'</td>'+
+        /* 💳 PC / PV (พี่กี้ 25 ก.ย. 69) — เดิมคอลัมน์ PV หยิบเอกสารใบแรก (SR/RV) → ใบพนักงานเขียวตั้งแต่อนุมัติ
+           PC = จ่ายจากเงินสดย่อย (ใบ PCV) หรือใบนี้มาจากใบสรุปเบิก PC · PV = ออกใบสำคัญจ่ายจากบัญชีบริษัทแล้วเท่านั้น
+           หลังบ้านเก่ายังไม่ส่ง x.pay = ใช้แบบเดิม */
+        '<td class="ta-c dt-nw">'+(function(){
+          var p=x.pay;
+          if(p&&p.petty) return prDot((p.pcv&&p.pcv.no)||'เงินสดย่อย', p.pcv&&p.pcv.link, 'จ่ายจากเงินสดย่อย');
+          return prDot(prRefFrom(x), '', 'มาจาก');
+        })()+'</td>'+
+        '<td class="ta-c dt-nw">'+(function(){
+          if(x.pay) return prDot(x.pay.pv&&x.pay.pv.no, x.pay.pv&&x.pay.pv.link, 'ใบสำคัญจ่าย');
+          var d=prRefTo(x); return prDot(d&&d.no, d&&d.link, 'ออกเป็น');
+        })()+'</td>'+
         dtActCell('pr-'+x.no, acts)+
         '</tr>';
     });
@@ -24455,7 +24465,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260925-1044';
+  var APP_BUILD='20260925-1114';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
