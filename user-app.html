@@ -6539,11 +6539,12 @@
     /* ① ไฟล์ของใบ */       'pdf',
     '|',
     /* ② แก้ไข + งานถัดไป */ 'edit', 'approve', 'reject', 'pay', 'paypetty', 'slipadd', 'send', 'addrcp', 'relink',
+                            'recvpush', 'recvlink', 'recvup',   /* ✍️ เซ็นรับเงินสดย่อย (25 ก.ย. 69) */
     '|',
-    /* ③ เอกสารที่ออกแล้ว */ 'proof', 'contract', 'doc', 'pv', 'wht', 'whtpayee',
+    /* ③ เอกสารที่ออกแล้ว */ 'proof', 'contract', 'src', 'doc', 'pv', 'wht', 'whtpayee',
                             'realrcp', 'summary', 'dossier', 'slip',
     '|',
-    /* ④ อื่น ๆ */           'mksummary', 'vat', 'copy',
+    /* ④ อื่น ๆ */           'mksummary', 'mksr', 'vat', 'copy',
     '|',
     'cancel'
   ];
@@ -10368,19 +10369,20 @@
           /* ใบรับรองแทนใบเสร็จจบที่ใบสั่งจ่าย (พี่กี้ 25 ก.ย. 69) — ที่นี่โชว์เฉพาะของรายการจ่ายสดเก่าที่ออกไว้แล้ว */
           (x.docNo?' <a class="ex-lk" href="'+esc(x.docLink||'#')+'" target="_blank">📄 '+esc(x.docNo)+'</a>':'');
         var rs=x.recvStatus||'', signed=rs.indexOf('เซ็นรับแล้ว')>=0||rs.indexOf('แนบรูป')>=0, waitSign=rs.indexOf('รอเซ็น')>=0;
-        /* ⋮ มาตรฐาน — โชว์ตามสถานะ */
+        /* ⋮ มาตรฐานเดียวกับใบสั่งจ่าย (พี่กี้ 25 ก.ย. 69) — ใส่คีย์ แล้ว payMenuSort เรียงกลุ่ม + เส้นคั่นให้ */
         var acts=[];
-        if(x.dossier) acts.push({label:'📁 เปิดแฟ้ม', href:x.dossier});
-        else if(x.proof) acts.push({label:'🔍 เปิดบิล', href:x.proof});
-        if(x.source && x.source!==r.cashSource) acts.push({label:'🔎 ใบสั่งจ่ายต้นทาง', call:'prGoSrc('+"'"+esc(x.source)+"'"+')'});
-        if(x.source===r.cashSource && !x.docNo && !x.proof) acts.push({label:'📄 ออกใบรับรองแทนใบเสร็จ (รายการเก่า)', call:'ptDoc('+q+')'});
         if(!signed){
-          if(acts.length) acts.push({sep:1});
-          if(x.recvStaff) acts.push({label:'✍️ ส่งการ์ดให้พนักงานยืนยันรับเงิน', call:'ptRecvPush('+q+')'});
-          acts.push({label:'🔗 ลิงก์ให้ผู้รับเงินเซ็นออนไลน์', call:'ptRecvLink('+q+')'});
-          acts.push({label:'📷 แนบรูปใบที่เซ็นรับแล้ว', call:'ptRecvUpload('+q+')'});
+          if(x.recvStaff) acts.push({key:'recvpush', label:'✍️ ส่งการ์ดยืนยันรับเงิน', call:'ptRecvPush('+q+')'});
+          acts.push({key:'recvlink', label:'🔗 ส่งลิงก์เซ็นรับเงิน', call:'ptRecvLink('+q+')'});
+          acts.push({key:'recvup', label:'📎 แนบใบเซ็นรับเงิน', call:'ptRecvUpload('+q+')'});
         }
-        if(!locked){ acts.push({sep:1}); acts.push({label:'🗑️ ยกเลิกรายการ', call:'ptVoid('+q+')', danger:true}); }
+        if(x.proof) acts.push({key:'proof', label:'📎 เอกสารแนบ', href:x.proof});
+        if(x.source && x.source!==r.cashSource) acts.push({key:'src', label:'📄 ใบสั่งจ่าย '+x.source, call:'prGoSrc('+"'"+esc(x.source)+"'"+')'});
+        if(x.docNo) acts.push({key:'doc', label:'📄 '+x.docNo, href:x.docLink||'#'});
+        if(x.dossier) acts.push({key:'dossier', label:'🗂️ แฟ้มครบชุด', href:x.dossier});
+        if(x.source===r.cashSource && !x.docNo && !x.proof) acts.push({key:'mksr', label:'📄 ออกใบรับรองแทนใบเสร็จ', call:'ptDoc('+q+')'});
+        if(!locked) acts.push({key:'cancel', label:'🚫 ยกเลิกรายการ', call:'ptVoid('+q+')', danger:true});
+        acts=payMenuSort(acts);
         return '<tr'+(locked?' style="opacity:.55"':'')+'>'+
           /* ลำดับ # — ทุกตารางในระบบต้องมี (พี่กี้สั่ง 22 ก.ย. 69) */
           '<td>'+(locked?'🔒':'<input type="checkbox" onchange="ptToggle('+q+',this.checked)"'+(PT_SEL[x.no]?' checked':'')+'>')+'</td>'+
@@ -10590,15 +10592,17 @@
           /* 💳 25 ก.ย. 69 (spec-petty-pc-pv) PC → PV ตรง · ใบเก่าที่ผูกใบสั่งจ่ายไว้ = ให้กดย้ายก่อน */
           var oldWay = !waiting && !c.pvNo && !settled;   // ใบวิธีเดิม — ให้กด 🔁 ย้ายเอกสารเก่า
           /* ⋮ มาตรฐาน (พี่กี้ 25 ก.ย. 69) แทนลิงก์เรียงซ้อน — โชว์ตามสถานะ */
-          var cacts=[{label:'👁 ดูใบ (ข้อมูล + ประวัติ)', call:'openPcOne('+q+')'},
-            c.pdf?{label:'📄 เปิดใบสรุป (PDF)', href:c.pdf}:{label:'📄 ออกใบสรุป (PDF)', call:'ptClaimDoc('+q+')'}];
-          /* 📤 เหมือนใบสั่งจ่าย — ให้เจ้านายเห็นว่าจะเบิกเงินออกบริษัท (25 ก.ย. 69) */
-          if(c.status.indexOf('ยกเลิก')<0) cacts.push({label:(c.sentAt?'📤 ส่งเข้ากลุ่มการเงินอีกครั้ง':'📤 ส่งเข้ากลุ่มการเงิน'), call:'ptClaimSend('+q+')'});
-          if(waiting){ cacts.push({sep:1}); cacts.push({label:'💳 จ่ายคืนวงเงิน (ออก PV)', call:'ptClaimPv('+q+')'});
-            cacts.push({sep:1}); cacts.push({label:'🚫 ยกเลิกใบสรุป', call:'ptCancelClaim('+q+')', danger:true}); }
-          if(c.pvNo){ cacts.push({sep:1}); cacts.push({label:'📑 เปิดใบสำคัญจ่าย '+c.pvNo, href:c.pvLink||'#'});
-            if(c.slip) cacts.push({label:'🧾 เปิดสลิป', href:c.slip});
-            cacts.push({sep:1}); cacts.push({label:'↩️ ยกเลิก PV', call:'ptClaimPvVoid('+q+')', danger:true}); }
+          /* ⋮ มาตรฐานเดียวกับใบสั่งจ่าย (พี่กี้ 25 ก.ย. 69) — ป้ายเดียวกัน · payMenuSort เรียงกลุ่ม */
+          var cacts=[c.pdf?{key:'pdf', label:'🖨️ พิมพ์ PDF', href:c.pdf}:{key:'pdf', label:'🖨️ พิมพ์ PDF', call:'ptClaimDoc('+q+')'},
+            {key:'edit', label:'🔎 เปิดดูเอกสาร', call:'openPcOne('+q+')'}];
+          /* 📤 ให้เจ้านายเห็นว่าจะเบิกเงินออกบริษัท (25 ก.ย. 69) */
+          if(c.status.indexOf('ยกเลิก')<0) cacts.push({key:'send', label:(c.sentAt?'📤 ส่งเข้ากลุ่มการเงินอีกครั้ง':'📤 ส่งเข้ากลุ่มการเงิน'), call:'ptClaimSend('+q+')'});
+          if(waiting){ cacts.push({key:'pay', label:'📑 ออกใบสำคัญจ่าย PV', call:'ptClaimPv('+q+')'});
+            cacts.push({key:'cancel', label:'🚫 ยกเลิกเอกสาร', call:'ptCancelClaim('+q+')', danger:true}); }
+          if(c.pvNo){ cacts.push({key:'pv', label:'📄 ใบสำคัญจ่าย '+c.pvNo, href:c.pvLink||'#'});
+            if(c.slip) cacts.push({key:'slip', label:'💸 สลิปโอน', href:c.slip});
+            cacts.push({key:'cancel', label:'🚫 ยกเลิกใบสำคัญจ่าย '+c.pvNo, call:'ptClaimPvVoid('+q+')', danger:true}); }
+          cacts=payMenuSort(cacts);
           return '<tr><td class="dt-nw">'+(ci+1)+'</td><td><a class="ex-lk" href="#" onclick="openPcOne('+q+');return false"><b>'+esc(c.no)+'</b></a></td>'+
             '<td class="dt-nw">'+esc(c.date)+'</td><td>'+esc(c.range||'-')+'</td>'+
             '<td>'+c.count+'</td><td class="ta-r dt-nw">'+money(c.total)+'</td>'+
@@ -24900,7 +24904,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260925-1909';
+  var APP_BUILD='20260925-1942';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
