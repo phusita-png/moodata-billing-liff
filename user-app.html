@@ -10381,7 +10381,7 @@
         if(x.docNo) acts.push({key:'doc', label:'📄 '+x.docNo, href:x.docLink||'#'});
         if(x.dossier) acts.push({key:'dossier', label:'🗂️ แฟ้มครบชุด', href:x.dossier});
         if(x.source===r.cashSource && !x.docNo && !x.proof) acts.push({key:'mksr', label:'📄 ออกใบรับรองแทนใบเสร็จ', call:'ptDoc('+q+')'});
-        if(!locked) acts.push({key:'cancel', label:'🚫 ยกเลิกรายการ', call:'ptVoid('+q+')', danger:true});
+        if(!locked) acts.push({key:'cancel', label:'🚫 ยกเลิกเอกสาร', call:'ptVoid('+q+')', danger:true});
         acts=payMenuSort(acts);
         return '<tr'+(locked?' style="opacity:.55"':'')+'>'+
           /* ลำดับ # — ทุกตารางในระบบต้องมี (พี่กี้สั่ง 22 ก.ย. 69) */
@@ -10450,7 +10450,7 @@
           'ไม่พบรายการ (อาจอยู่วงเงินอื่น — เลือกวงให้ตรงก่อน)')+'</div>'+
       '<div class="tax-acts">'+
         (c.pdf?'<a class="btn btn-ghost" style="width:auto" href="'+esc(c.pdf)+'" target="_blank">📄 ใบสรุป (PDF)</a>':'<button class="btn btn-ghost" style="width:auto" onclick="ptClaimDoc('+q+')">📄 ออกใบสรุป (PDF)</button>')+
-        (waiting?'<button class="btn btn-primary" style="width:auto" onclick="ptClaimPv('+q+')">💳 จ่ายคืนวงเงิน (ออก PV)</button>':'')+
+        (waiting?'<button class="btn btn-primary" style="width:auto" onclick="ptClaimPv('+q+')">📑 ออกใบสำคัญจ่าย PV</button>':'')+
         (c.pvNo?'<a class="btn btn-primary" style="width:auto" href="'+esc(c.pvLink||'#')+'" target="_blank">📑 '+esc(c.pvNo)+'</a>'+
           '<button class="btn btn-ghost" style="width:auto" onclick="ptClaimPvVoid('+q+')">↩️ ยกเลิก PV</button>':'')+
         (c.slip?'<a class="btn btn-ghost" style="width:auto" href="'+esc(c.slip)+'" target="_blank">🧾 สลิป</a>':'')+
@@ -10601,7 +10601,7 @@
             cacts.push({key:'cancel', label:'🚫 ยกเลิกเอกสาร', call:'ptCancelClaim('+q+')', danger:true}); }
           if(c.pvNo){ cacts.push({key:'pv', label:'📄 ใบสำคัญจ่าย '+c.pvNo, href:c.pvLink||'#'});
             if(c.slip) cacts.push({key:'slip', label:'💸 สลิปโอน', href:c.slip});
-            cacts.push({key:'cancel', label:'🚫 ยกเลิกใบสำคัญจ่าย '+c.pvNo, call:'ptClaimPvVoid('+q+')', danger:true}); }
+            cacts.push({key:'cancel', label:'🚫 ยกเลิกเอกสาร', call:'ptClaimPvVoid('+q+')', danger:true}); }
           cacts=payMenuSort(cacts);
           return '<tr><td class="dt-nw">'+(ci+1)+'</td><td><a class="ex-lk" href="#" onclick="openPcOne('+q+');return false"><b>'+esc(c.no)+'</b></a></td>'+
             '<td class="dt-nw">'+esc(c.date)+'</td><td>'+esc(c.range||'-')+'</td>'+
@@ -10613,7 +10613,7 @@
             '<td class="ta-c dt-nw">'+prDot(c.pvNo, c.pvLink||'', 'ใบสำคัญจ่าย')+'</td>'+
             dtActCell('pc-'+c.no, cacts)+'</tr>';
         }).join('')+'</tbody></table></div>'+
-        '<div class="m-hint" style="margin-top:8px">💳 จ่ายคืนวงเงิน = บริษัทโอนคืนผู้ถือเงินสดย่อย → ออกใบสำคัญจ่าย PV ทันที '+
+        '<div class="m-hint" style="margin-top:8px">📑 ออกใบสำคัญจ่าย PV = บริษัทโอนคืนผู้ถือเงินสดย่อย → ออกใบสำคัญจ่าย PV ทันที '+
         '(ไม่ผ่านใบสั่งจ่าย) · วงเงินกลับเต็ม · PV ขึ้นในหน้า 📑 ใบสำคัญจ่าย</div>'+
         '<div class="tax-acts" style="margin-top:8px"><button class="btn btn-ghost" style="width:auto;flex:none" onclick="ptMigrate()">🔁 ย้ายเอกสารเก่าเข้าวิธีใหม่</button></div>';
     }
@@ -10716,7 +10716,7 @@
     PT_PV_NO=no;
     var r=PT_DATA||{}, c=(r.claims||[]).filter(function(x){ return x.no===no; })[0]||{};
     var accs=(r.payAccounts||[]);
-    modal('<h3>💳 จ่ายคืนวงเงิน · '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+    modal('<h3>📑 ออกใบสำคัญจ่าย PV · '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
       '<div class="m-hint">บริษัทโอนคืนผู้ถือเงินสดย่อย <b>'+money(c.total||0)+'</b> บาท ('+(c.count||0)+' รายการ) '+
         '→ ออกใบสำคัญจ่าย PV ทันที · วงเงินกลับเต็ม</div>'+
       '<div class="fld"><label>จ่ายจากบัญชี</label>'+(accs.length
@@ -10741,7 +10741,7 @@
     }).catch(function(e){ if(btn){ btn.disabled=false; btn.textContent='ออก PV'; } mErr(e.message); });
   }
   function ptClaimPvVoid(no){
-    if(!confirm('ยกเลิกใบสำคัญจ่ายของใบสรุป '+no+'?\nใบสรุปจะกลับเป็น "รอตั้งเบิก" แล้วกดจ่ายคืนวงเงินใหม่ได้ (ได้เลข PV ใหม่)')) return;
+    if(!confirm('ยกเลิกใบสำคัญจ่ายของใบสรุป '+no+'?\nใบสรุปจะกลับเป็น "รอตั้งเบิก" แล้วกดออกใบสำคัญจ่าย PV ใหม่ได้ (ได้เลข PV ใหม่)')) return;
     callBusy('กำลังยกเลิก…', jsonp({action:'waPettyClaimPvVoid',uid:UID,no:no}), 'ยกเลิกแล้ว').then(function(r){
       if(!r||!r.ok){ toast((r&&r.error)||'ยกเลิกไม่สำเร็จ'); return; }
       toast('↩️ ยกเลิก '+(r.voided||'PV')+' แล้ว'); if(r.filedWarn) setTimeout(function(){ toast('⚠️ '+r.filedWarn); },1400);
@@ -24904,7 +24904,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260925-1942';
+  var APP_BUILD='20260925-1950';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
