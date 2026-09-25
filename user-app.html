@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260925-1025">
+<link rel="stylesheet" href="user.css?v=20260925-1033">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -11374,11 +11374,11 @@
       (d.nameEN?dbdRow_('ชื่อภาษาอังกฤษ', d.nameEN):'')+
       dbdRow_('ประเภท', d.type)+
       dbdRow_('สถานะ', d.status)+
-      dbdRow_('สาขา', d.branch)+
+      dbdBranchRow_(d)+
       dbdRow_('ที่อยู่จดทะเบียน', d.address)+
       dbdRow_('เลขผู้เสียภาษี', d.taxId)+
       (d.capital?dbdRow_('ทุนจดทะเบียน', money(d.capital)+' บาท'):'')+
-      '</tbody></table></div>'+
+      '</tbody></table></div>'+dbdRdBtn_(d)+
       (onUse?'<div class="m-hint" style="margin:10px 0 0">กด "ใช้ข้อมูลนี้" ระบบจะเติม <b>'+esc(fills||'')+'</b> ลงในฟอร์ม '+
         '(ยังไม่บันทึกจนกว่าจะกดบันทึก)</div>':'')+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button>'+
@@ -15854,11 +15854,11 @@
         (closed?'<div class="m-err">สถานะนิติบุคคล: '+esc(d.status)+' — ตรวจก่อนออกเอกสารนะคะ</div>':'')+
         '<div class="tax-tbl-wrap"><table class="tax-tbl"><tbody>'+
         dbdRow_('ชื่อนิติบุคคล', d.nameTH)+
-        dbdRow_('สาขา', d.branch)+
+        dbdBranchRow_(d)+
         dbdRow_('ที่อยู่จดทะเบียน', d.address)+
         dbdRow_('เลขผู้เสียภาษี', d.taxId)+
         dbdRow_('สถานะ', d.status)+
-        '</tbody></table></div>'+
+        '</tbody></table></div>'+dbdRdBtn_(d)+
         '<div class="m-hint" style="margin:10px 0 0">จะบันทึกลงทะเบียนของ <b>'+esc(custName)+'</b> '+
         '(ชื่อเต็ม · เลขภาษี · สาขา · ที่อยู่) แล้วใบนี้จะใช้ข้อมูลใหม่ทันที</div>'+
         '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button>'+
@@ -18448,11 +18448,11 @@
         (d.nameEN?dbdRow_('ชื่อภาษาอังกฤษ', d.nameEN):'')+
         dbdRow_('ประเภท', d.type)+
         dbdRow_('สถานะ', d.status)+
-        dbdRow_('สาขา', d.branch)+
+        dbdBranchRow_(d)+
         dbdRow_('ที่อยู่จดทะเบียน', d.address)+
         dbdRow_('เลขผู้เสียภาษี', d.taxId)+
         (d.capital?dbdRow_('ทุนจดทะเบียน', money(d.capital)+' บาท'):'')+
-        '</tbody></table></div>'+
+        '</tbody></table></div>'+dbdRdBtn_(d)+
         '<div class="m-hint" style="margin:10px 0 0">กด "ใช้ข้อมูลนี้" แล้วระบบจะเติม <b>ชื่อเต็ม · สาขา · ที่อยู่</b> '+
         'ลงในฟอร์ม (ยังไม่บันทึกจนกว่าจะกดบันทึก) — ถ้าลูกค้าให้ออกใบกำกับตามที่อยู่อื่น แก้ทับได้เลยค่ะ</div>'+
         '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button>'+
@@ -18463,6 +18463,26 @@
   function dbdRow_(k,v){
     return '<tr><td style="color:#8A94A6;white-space:nowrap;width:150px">'+esc(k)+'</td><td>'+esc(v||'—')+'</td></tr>';
   }
+  /* 🏢 สาขา (พี่กี้ถาม 25 ก.ย. 69) — API กรมพัฒน์ให้ข้อมูลระดับบริษัท ช่องสาขาเป็น "สำนักงานใหญ่" เสมอ
+     เลขสาขาจดกับสรรพากรตอนจด VAT (API ของสรรพากรปิดไปแล้ว) → บอกให้ชัด + ลิงก์ไปค้นเองที่ VATINFO */
+  function dbdBranchRow_(d){
+    return '<tr><td style="color:#8A94A6;white-space:nowrap;width:150px">สาขา</td><td>'+esc(d.branch||'สำนักงานใหญ่')+
+      '<div style="font-size:12px;color:#C8730B;margin-top:3px">กรมพัฒน์มีข้อมูลเฉพาะสำนักงานใหญ่ — ถ้าคู่ค้าเป็นสาขา '+
+      'แก้เลขสาขาและที่อยู่ตามใบกำกับภาษีของเขา</div></td></tr>';
+  }
+  var RD_VATINFO_URL='https://vsinter.rd.go.th/rd-webcontent-web/#/vatsearch';
+  function dbdRdBtn_(d){
+    return '<div style="margin:10px 0 0"><button class="btn btn-ghost btn-sm" style="width:auto" '+
+      'onclick="dbdOpenRd(\''+esc(String(d.taxId||'').replace(/\D/g,''))+'\')">🔎 ตรวจสาขาที่สรรพากร (VATINFO)</button>'+
+      '<span class="m-hint" style="margin-left:8px">คัดลอกเลขผู้เสียภาษีให้แล้ว วางในช่องค้นหาได้เลย</span></div>';
+  }
+  /** คัดลอกเลข 13 หลัก แล้วเปิดหน้าค้น VATINFO (หน้านั้นรับเลขผ่านลิงก์ไม่ได้ ต้องวางเอง) */
+  function dbdOpenRd(tax){
+    try{ if(navigator.clipboard) navigator.clipboard.writeText(String(tax||'')); }catch(e){}
+    window.open(RD_VATINFO_URL, '_blank');
+    toast('📋 คัดลอก '+tax+' แล้ว — วางในช่องเลขผู้เสียภาษีของสรรพากรได้เลยค่ะ');
+  }
+  window.dbdOpenRd=dbdOpenRd;
 
   /** เติมค่าลงฟอร์ม — ช่องที่คนกรอกไว้แล้วไม่ทับ ถามก่อน (กันข้อมูลที่พิมพ์เองหาย) */
   function custDbdUse(){
@@ -24352,7 +24372,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260925-1025';
+  var APP_BUILD='20260925-1033';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
