@@ -11549,9 +11549,11 @@
               'value="'+esc(cur?(cur.vendorTaxId||''):'')+'" style="flex:1;min-width:0">'+
             '<button class="btn btn-ghost" onclick="poVendorLookup()" title="ค้นจากกรมพัฒนาธุรกิจการค้า" '+
               'style="flex:none;width:auto;padding:0 12px">🔍</button></div></div>'+
-          /* วันที่เอกสาร = วันที่ตั้งเรื่อง (เลข PO กินตอนนั้น) — ยังไม่มีช่องแยกในชีต จึงอ่านอย่างเดียว */
+          /* 📅 วันที่เอกสาร (พี่กี้เคาะ 25 ก.ย. 69) — ค่าตั้งต้น = วันที่ตั้งเรื่อง · แก้ได้เฉพาะใบรออนุมัติ
+             พิมพ์บน PDF ใบสั่งจ่าย + ใช้กรองเดือนในทะเบียน (วันที่จ่ายของ PV เป็นอีกช่อง) */
           '<div class="sf-f c2"><label>วันที่เอกสาร</label>'+
-            '<input value="'+esc(cur?poDateTh(cur.createdAt):poDateTh(new Date()))+'" readonly></div>'+
+            '<input id="poDocDate" type="date" value="'+esc(cur?(cur.docDateIso||''):todayISO())+'"'+
+              ((cur && String(cur.status||'').indexOf('รออนุมัติ')<0)?' readonly title="แก้ได้เฉพาะใบที่ยังรออนุมัติ"':'')+'></div>'+
           '<div class="sf-f c2"><label>เลขที่ใบกำกับ/ใบแจ้งหนี้</label>'+
             '<input id="poInvNo" placeholder="เลขบนเอกสารผู้ขาย" oninput="poInvSync()"></div>'+
           '<div class="sf-f c6"><label>ที่อยู่ผู้ขาย</label>'+
@@ -12007,7 +12009,8 @@
       vendorCode:((($('poVendorCode')||{}).value)||'').trim(),
       vendorAddr:((($('poVendorAddr')||{}).value)||'').trim(),
       vendorEmail:((($('poVendorEmail')||{}).value)||'').trim(),
-      vendorPhone:((($('poVendorPhone')||{}).value)||'').trim()};
+      vendorPhone:((($('poVendorPhone')||{}).value)||'').trim(),
+      docDate:(($('poDocDate')||{}).value)||''};
     if(PO_EDIT) p.no=PO_EDIT;
     if(PO_PAYEE==='staff'){
       p.payeeUid=(($('poStaff')||{}).value)||'';
@@ -13273,7 +13276,10 @@
           '<button class="btn btn-ghost" style="flex:none;width:auto;padding:0 12px" '+
             'onclick="poVendorLookup(\'exdVendor\',\'exdVendorTax\')" title="ค้นจากกรมพัฒนาธุรกิจการค้า">🔍</button>'+
           '</div></div>'+
-        ro('วันที่เอกสาร', x.createdAt)+
+        /* 📅 วันที่เอกสาร — แก้ได้เฉพาะใบรออนุมัติ (25 ก.ย. 69) */
+        (String(x.status||'').indexOf('รออนุมัติ')>=0 && x.docDateIso
+          ? '<div class="sf-f c2"><label>วันที่เอกสาร</label><input id="exdDocDate" type="date" value="'+esc(x.docDateIso)+'"></div>'
+          : ro('วันที่เอกสาร', x.docDateIso ? poDateTh(x.docDateIso+'T00:00:00') : x.createdAt))+
         ro('เลขที่ใบกำกับ/ใบแจ้งหนี้', x.vatInvNo)+
         (isNewBook
           ? '<div class="sf-f c6"><label>ที่อยู่ผู้ขาย</label><input id="exdVendorAddr" placeholder="ที่อยู่ที่จะพิมพ์บนเอกสาร" value="'+esc(x.vendorAddr||'')+'"></div>'+
@@ -13428,6 +13434,10 @@
       if(sc && changed){ ed.section=sc; ed.rate=rt; ed.whtAmt=wa; }
     }
 
+    if($('exdDocDate')){
+      var ddv=val('exdDocDate');
+      if(ddv && ddv!==String(x.docDateIso||'')) ed.docDate=ddv;
+    }
     if($('exdEnt')){
       var en=entVal('exdEnt');
       if(en!==String(x.entity||'')) ed.entity=en;
@@ -25064,7 +25074,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260925-2041';
+  var APP_BUILD='20260925-2207';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
