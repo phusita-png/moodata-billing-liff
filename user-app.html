@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260925-1414">
+<link rel="stylesheet" href="user.css?v=20260925-1423">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -10300,7 +10300,9 @@
         var q="'"+String(x.no).replace(/'/g,"\\'")+"'";
         var sub='<br><span style="font-size:12px;color:#8A94A6">'+esc(x.type)+(x.payee?' · '+esc(x.payee):'')+
           ' · '+(x.source===r.cashSource?'💵 จ่ายสด':'ใบสั่งจ่าย '+esc(x.source))+'</span>'+
-          (x.proof?' <a class="ex-lk" href="'+esc(x.proof)+'" target="_blank">🔍 บิล</a>':'')+
+          /* 📁 มาจากใบสั่งจ่าย = แฟ้มครบชุด (ใบขออนุมัติ+บิล+เอกสาร) · จ่ายสด/ยังไม่มีแฟ้ม = บิลเดิม (พี่กี้ 25 ก.ย. 69) */
+          (x.dossier?' <a class="ex-lk" href="'+esc(x.dossier)+'" target="_blank">📁 แฟ้ม</a>'
+            :(x.proof?' <a class="ex-lk" href="'+esc(x.proof)+'" target="_blank">🔍 บิล</a>':''))+
           // เอกสารรายจ่าย: มีแล้วโชว์ลิงก์ · ยังไม่มีและไม่มีบิล = กดออกใบรับรองแทนใบเสร็จได้
           (x.docNo?' <a class="ex-lk" href="'+esc(x.docLink||'#')+'" target="_blank">📄 '+esc(x.docNo)+'</a>'
             :(x.proof?'':' <a class="ex-lk" href="#" onclick="ptDoc('+q+');return false">📄 ออกใบรับรองแทนใบเสร็จ</a>'));
@@ -24699,7 +24701,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260925-1414';
+  var APP_BUILD='20260925-1423';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
