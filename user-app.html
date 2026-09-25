@@ -3149,12 +3149,12 @@
       '<b>ไม่ติ๊กเลยทั้งแถว = เปิดครบทุกโมดูล</b> (ห้องที่ยังไม่ได้จำกัดแพ็ก)<br>'+
       'โมดูลฟรีทุกห้อง ('+esc((r.modList||[]).filter(function(m){return m.free;}).map(function(m){return m.label;}).join(' · '))+
       ') ไม่ต้องติ๊ก</div>';
-    if(!rooms.length){ h+='<div class="emptybox">ยังไม่มีห้องลูกค้าค่ะ</div></div>'; $('main').innerHTML=h; return; }
-
+    /* โครงมาก่อนข้อมูล: ไม่มีห้อง ก็ยังโชว์หัวตาราง + แถวบอกว่าว่าง */
     h+='<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl"><thead><tr>'+
       '<th style="min-width:150px">ห้อง</th>'+
       mods.map(function(m){ return '<th class="hm-th">'+esc(m.label)+'</th>'; }).join('')+
       '</tr></thead><tbody>'+
+      (rooms.length ? '' : '<tr class="dt-empty"><td colspan="'+(mods.length+1)+'">ยังไม่มีห้องลูกค้าค่ะ</td></tr>')+
       rooms.map(function(t){
         return '<tr><td><b>'+esc(t.name||t.code)+'</b><br><span style="font-size:12px;color:#8A94A6">'+esc(t.code)+
           (t.all?' · เปิดครบ':'')+'</span></td>'+
@@ -3165,8 +3165,8 @@
           }).join('')+'</tr>';
       }).join('')+
       '</tbody></table></div>'+
-      '<div class="tax-acts"><button class="btn btn-primary" onclick="hmSave()">บันทึกทุกห้อง</button></div>'+
-      '<div class="rs-note">ห้องที่ติ๊กครบทุกช่องจะถูกบันทึกเป็น "เปิดครบ" — วันหลังเพิ่มโมดูลใหม่ในระบบ ห้องนั้นได้ด้วยอัตโนมัติ</div>'+
+      (rooms.length ? '<div class="tax-acts"><button class="btn btn-primary" onclick="hmSave()">บันทึกทุกห้อง</button></div>'+
+      '<div class="rs-note">ห้องที่ติ๊กครบทุกช่องจะถูกบันทึกเป็น "เปิดครบ" — วันหลังเพิ่มโมดูลใหม่ในระบบ ห้องนั้นได้ด้วยอัตโนมัติ</div>' : '')+
       '</div>';
     $('main').innerHTML=h;
   }
@@ -3227,12 +3227,11 @@
     h+='<div class="card"><div class="m-hint">ติ๊กว่าแต่ละคนเห็นโมดูลไหนได้บ้าง · '+
       '<b>ไม่ติ๊กเลย = เห็นทุกโมดูลที่บริษัทเปิดไว้</b><br>'+
       'เลือกได้เฉพาะโมดูลที่บริษัทเปิดใช้อยู่ — เมนูส่วนตัวกับช่องแจ้งปัญหาทุกคนเห็นเสมอ</div>';
-    if(!team.length){ h+='<div class="emptybox">ยังไม่มีคนในทีมค่ะ</div></div>'; $('main').innerHTML=h; return; }
-
     h+='<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl"><thead><tr>'+
       '<th style="min-width:150px">ชื่อ</th>'+
       mods.map(function(m){ return '<th class="hm-th">'+esc(m.label)+'</th>'; }).join('')+
       '<th style="width:90px"></th></tr></thead><tbody>'+
+      (team.length ? '' : '<tr class="dt-empty"><td colspan="'+(mods.length+2)+'">ยังไม่มีคนในทีมค่ะ</td></tr>')+
       team.map(function(p){
         var q="'"+String(p.uid).replace(/'/g,"\\'")+"'";
         return '<tr><td><b>'+esc(p.nick||p.name)+'</b>'+
@@ -5924,26 +5923,26 @@
 
       // ── สรุปตามประเภท ──
       h+='<div class="sf-card"><div class="sf-h">① สรุปตามประเภทค่าใช้จ่าย · '+esc(r.monthText)+'</div>';
-      if(!(r.byType||[]).length){ h+='<div class="emptybox">เดือนนี้ยังไม่มีรายการ</div>'; }
-      else {
-        h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
-          '<th>ประเภท</th><th>ใบ</th><th>ยอดเต็ม</th><th>หัก ณ ที่จ่าย</th><th>จ่ายจริง</th></tr></thead><tbody>'+
-          r.byType.map(function(t){
-            return '<tr><td>'+esc(t.label)+'</td><td>'+t.n+'</td><td class="ta-r">'+money(t.amount)+'</td>'+
-              '<td class="ta-r">'+(t.wht?money(t.wht):'-')+'</td><td class="ta-r">'+money(t.net)+'</td></tr>'; }).join('')+
-          '<tr class="tax-total"><td>รวม</td><td>'+s.n+'</td><td class="ta-r">'+money(s.amount)+'</td>'+
-          '<td class="ta-r">'+money(s.wht)+'</td><td class="ta-r">'+money(s.net)+'</td></tr>'+
-          '</tbody></table></div>';
-      }
+      // โครงมาก่อนข้อมูล: ไม่มีรายการก็ยังโชว์หัวตาราง + แถวรวม 0.00
+      var byType=r.byType||[];
+      h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
+        '<th>ประเภท</th><th>ใบ</th><th>ยอดเต็ม</th><th>หัก ณ ที่จ่าย</th><th>จ่ายจริง</th></tr></thead><tbody>'+
+        (byType.length ? '' : '<tr class="dt-empty"><td colspan="5">เดือนนี้ยังไม่มีรายการ</td></tr>')+
+        byType.map(function(t){
+          return '<tr><td>'+esc(t.label)+'</td><td>'+t.n+'</td><td class="ta-r">'+money(t.amount)+'</td>'+
+            '<td class="ta-r">'+(t.wht?money(t.wht):'-')+'</td><td class="ta-r">'+money(t.net)+'</td></tr>'; }).join('')+
+        '<tr class="tax-total"><td>รวม</td><td>'+(s.n||0)+'</td><td class="ta-r">'+money(s.amount)+'</td>'+
+        '<td class="ta-r">'+money(s.wht)+'</td><td class="ta-r">'+money(s.net)+'</td></tr>'+
+        '</tbody></table></div>';
       h+='</div>';
 
       // ── ทะเบียนรายใบ ──
       h+='<div class="sf-card"><div class="sf-h">② ทะเบียนใบจ่าย · '+esc(r.entityName||'ทุกบริษัท')+'</div>';
-      if(!r.rows.length){ h+='<div class="emptybox">เดือนนี้ไม่มีใบจ่าย</div>'; }
-      else {
+      {
         h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
           '<th>#</th><th>เลขที่</th><th>ผู้รับเงิน</th><th>ประเภท</th><th>ยอดเต็ม</th><th>หัก ณ ที่จ่าย</th>'+
           '<th>จ่ายจริง</th><th>สถานะ</th><th>ใบสำคัญจ่าย</th></tr></thead><tbody>'+
+          (r.rows.length ? '' : '<tr class="dt-empty"><td colspan="9">เดือนนี้ไม่มีใบจ่าย</td></tr>')+
           r.rows.map(function(x){
             var doc = x.docLink ? ('<a href="'+esc(x.docLink)+'" target="_blank" style="color:var(--red)">'+esc(x.docNo||'เปิด')+'</a>') : (x.docNo?esc(x.docNo):'-');
             if(x.dossier) doc += ' · <a href="'+esc(x.dossier)+'" target="_blank" style="color:#1B7F4B">แฟ้ม</a>';
@@ -6150,10 +6149,10 @@
 
       // ── ① เงินออก ──
       h+='<div class="card"><div class="ds-h">① ใบสั่งจ่ายที่พนักงานสำรองจ่าย (เงินออก)</div>';
-      if(!r.expense.rows.length){ h+='<div class="emptybox">เดือนนี้ไม่มีรายการ</div>'; }
-      else {
+      {
         h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
           '<th>#</th><th>เลขที่</th><th>ผู้เบิก</th><th>ประเภท</th><th>ยอดเต็ม</th><th>หัก ณ ที่จ่าย</th><th>จ่ายจริง</th><th>สถานะ</th></tr></thead><tbody>'+
+          (r.expense.rows.length ? '' : '<tr class="dt-empty"><td colspan="8">เดือนนี้ไม่มีรายการ</td></tr>')+
           r.expense.rows.map(function(x){
             return '<tr><td>'+x.seq+'</td><td>'+esc(x.no)+'</td><td>'+esc(x.who)+'</td><td>'+esc(x.type)+'</td>'+
               '<td class="ta-r">'+money(x.amount)+'</td><td class="ta-r">'+(x.wht?money(x.wht):'-')+'</td>'+
@@ -6166,10 +6165,10 @@
 
       // ── ② เงินที่เรียกคืน ──
       h+='<div class="card"><div class="ds-h">② ตั้งเบิกลูกค้า (เงินที่เรียกคืน)</div>';
-      if(!r.reimb.rows.length){ h+='<div class="emptybox">เดือนนี้ไม่มีใบตั้งเบิกที่ส่งแล้ว</div>'; }
-      else {
+      {
         h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
           '<th>#</th><th>เลขที่</th><th>วันที่ส่ง</th><th>ลูกค้า</th><th>รายละเอียด</th><th>ยอด</th><th>สถานะ</th></tr></thead><tbody>'+
+          (r.reimb.rows.length ? '' : '<tr class="dt-empty"><td colspan="7">เดือนนี้ไม่มีใบตั้งเบิกที่ส่งแล้ว</td></tr>')+
           r.reimb.rows.map(function(x){
             return '<tr><td>'+x.seq+'</td><td>'+esc(x.no||'-')+'</td><td>'+esc(x.sentText)+'</td><td>'+esc(x.customer)+'</td>'+
               '<td>'+esc(x.title)+'</td><td class="ta-r">'+money(x.amount)+'</td><td>'+esc(x.stage)+'</td></tr>'; }).join('')+
@@ -6690,14 +6689,14 @@
   /** ตารางใบเบิก 1 ก้อน (หัวข้อ + ตาราง + แถวรวม) */
   function expTable(title, list, showNick, emptyText){
     var h = '<div class="dt-sec">' + esc(title) + ' (' + list.length + ')</div>';
-    if(!list.length) return h + '<div class="card"><div class="emptybox">' + esc(emptyText || 'ไม่มีรายการ') + '</div></div>';
+    // โครงมาก่อนข้อมูล: ไม่มีใบก็ยังโชว์หัวตาราง (dtTable ใส่แถวว่างให้)
     var sum = list.reduce(function(a, x){ return a + (Number(x.amount) || 0); }, 0);
     var cols = expCols(showNick);
     var total = list.length > 1
       ? '<tr class="tax-total"><td colspan="' + (showNick ? 5 : 4) + '" style="text-align:right">รวม ' + list.length + ' ใบ</td>' +
         '<td class="dt-amt">' + money(sum) + '</td><td colspan="3"></td></tr>'
       : '';
-    return h + dtTable(cols, list.map(function(x){ return expRow(x, showNick); }), total);
+    return h + dtTable(cols, list.map(function(x){ return expRow(x, showNick); }), total, emptyText || 'ไม่มีรายการ');
   }
   window.expRow = expRow; window.expTable = expTable;
 
@@ -6713,12 +6712,12 @@
       '<button class="btn btn-ghost" style="width:100%;margin-bottom:14px'+(HAS_BANK?'':';border-color:#E5484D;color:#E5484D')+'" onclick="openBank()">🏦 บัญชีรับโอนของฉัน'+
         '<span style="color:#8A94A6;font-weight:400">'+(HAS_BANK?(' · '+esc(MYBANK.name)+' '+esc(MYBANK.acct)):' · ยังไม่ได้กรอก')+'</span></button>'+
       (IS_OWNER?'<div class="m-hint" style="margin:0 0 12px">👑 มุมผู้ดูแล: เห็นคำขอเบิกของ<b>ทุกคน</b> · จัดการเต็มรูปแบบที่เมนู 💵 ใบสั่งจ่าย</div>':'');
-    if(!list.length){ html+='<div class="card"><div class="emptybox">ยังไม่มีรายการเบิก 😊</div></div>'; $('main').innerHTML=html; return; }
     // ตารางมาตรฐาน (พี่กี้เคาะ 1 ก.ย. 69) — ปุ่มสั่งงานรวมในเมนู ⋮ ท้ายแถว ไม่กระจายเป็นลิงก์ยาว
+    // โครงมาก่อนข้อมูล: ยังไม่มีใบก็โชว์หัวตาราง + แถวว่าง (dtTable จัดให้)
     var sum=list.reduce(function(a,x){ return a+(Number(x.amount)||0); },0);
     var total='<tr class="tax-total"><td colspan="'+(IS_OWNER?5:4)+'" style="text-align:right">รวม '+list.length+' ใบ</td>'+
       '<td class="dt-amt">'+money(sum)+'</td><td colspan="3"></td></tr>';
-    html+=dtTable(expCols(IS_OWNER), list.map(function(x){ return expRow(x,IS_OWNER); }), list.length>1?total:'');
+    html+=dtTable(expCols(IS_OWNER), list.map(function(x){ return expRow(x,IS_OWNER); }), list.length>1?total:'', 'ยังไม่มีรายการเบิก 😊');
     $('main').innerHTML=html;
   }
   /* ═════════ 📋 รายการหลายบรรทัดของใบพนักงาน (spec-staff-multiline · M2 · 25 ก.ย. 69) ═════════
@@ -8310,13 +8309,13 @@
             s.missing?'ds-warn':'')+
         '</div>';
       h+='<div class="card"><div class="ds-h">รายการรับเงินที่ถูกหักภาษี</div>';
-      if(!(r.rows||[]).length){
-        h+='<div class="emptybox">เดือนนี้ยังไม่มีรายการที่ลูกค้าหักภาษี<br>'+
-          '<span class="m-hint">รายการมาจากหน้า 💰 รายรับ ตอนบันทึกรับชำระ (ช่อง "ภาษีที่ลูกค้าหัก")</span></div>';
-      } else {
+      {
+        var wiRows=r.rows||[];
         h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
           '<th>วันที่รับเงิน</th><th>ลูกค้า</th><th>เอกสาร</th><th>ยอดรับ</th><th>ภาษีถูกหัก</th><th>หนังสือรับรอง</th></tr></thead><tbody>'+
-          r.rows.map(function(x){
+          (wiRows.length ? '' : '<tr class="dt-empty"><td colspan="6">เดือนนี้ยังไม่มีรายการที่ลูกค้าหักภาษี<br>'+
+            '<span class="m-hint">รายการมาจากหน้า 💰 รายรับ ตอนบันทึกรับชำระ (ช่อง "ภาษีที่ลูกค้าหัก")</span></td></tr>')+
+          wiRows.map(function(x){
             var q="'"+String(x.no).replace(/'/g,"\\'")+"'";
             return '<tr><td class="dt-nw">'+esc(x.date)+'</td><td style="white-space:normal">'+esc(x.customer||'-')+'</td>'+
               '<td><span style="font-size:12px;color:#8A94A6">'+esc(x.ivNo||'')+(x.reNo?' · '+esc(x.reNo):'')+'</span></td>'+
@@ -8873,9 +8872,9 @@
 
       // ② ตามประเภท
       h+='<div class="card"><div class="ds-h">② สรุปตามประเภทค่าใช้จ่าย</div>';
-      if(!(r.byType||[]).length) h+='<div class="emptybox">ช่วงนี้ยังไม่มีรายจ่าย</div>';
-      else h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr><th>ประเภท</th><th>รายการ</th><th>ยอดเต็ม</th><th>จ่ายจริง</th></tr></thead><tbody>'+
-        r.byType.map(function(t2){
+      h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr><th>ประเภท</th><th>รายการ</th><th>ยอดเต็ม</th><th>จ่ายจริง</th></tr></thead><tbody>'+
+        ((r.byType||[]).length ? '' : '<tr class="dt-empty"><td colspan="4">ช่วงนี้ยังไม่มีรายจ่าย</td></tr>')+
+        (r.byType||[]).map(function(t2){
           return '<tr><td>'+esc(t2.label)+'</td><td>'+t2.n+'</td><td class="ta-r">'+money(t2.amount)+'</td><td class="ta-r">'+money(t2.net)+'</td></tr>';
         }).join('')+'</tbody></table></div>';
       h+='</div>';
@@ -8892,10 +8891,10 @@
 
       // ④ เจ้าหนี้
       h+='<div class="card"><div class="ds-h">④ เจ้าหนี้คงค้าง — อนุมัติแล้วยังไม่จ่าย (ทุกช่วงเวลา)</div>';
-      if(!ap.rows.length) h+='<div class="emptybox">ไม่มีเจ้าหนี้ค้างจ่าย 🎉</div>';
-      else {
+      {
         h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
           '<th>ประเภท</th><th>เลขที่</th><th>ผู้รับเงิน</th><th>รายละเอียด</th><th>ค้างมา</th><th>ค้างจ่าย</th></tr></thead><tbody>'+
+          (ap.rows.length ? '' : '<tr class="dt-empty"><td colspan="6">ไม่มีเจ้าหนี้ค้างจ่าย 🎉</td></tr>')+
           ap.rows.map(function(x){
             return '<tr><td>'+esc(x.kindLabel)+'</td><td>'+esc(x.no)+'</td><td>'+esc(x.payee||'-')+'</td>'+
               '<td style="white-space:normal">'+esc(x.detail||'-')+'</td>'+
@@ -8913,10 +8912,10 @@
 
       // ⑤ ทะเบียนรายจ่าย
       h+='<div class="card"><div class="ds-h">⑤ ทะเบียนรายจ่ายในช่วงนี้</div>';
-      if(!(r.rows||[]).length) h+='<div class="emptybox">ช่วงนี้ยังไม่มีรายจ่าย</div>';
-      else h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
+      h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
         '<th>วันที่</th><th>เลขที่</th><th>รายการ</th><th>ผู้รับเงิน</th><th>ยอดเต็ม</th><th>จ่ายจริง</th><th>สถานะ</th></tr></thead><tbody>'+
-        r.rows.map(function(x){
+        ((r.rows||[]).length ? '' : '<tr class="dt-empty"><td colspan="7">ช่วงนี้ยังไม่มีรายจ่าย</td></tr>')+
+        (r.rows||[]).map(function(x){
           return '<tr><td class="dt-nw">'+esc(x.date)+'</td><td>'+esc(x.no)+'</td>'+
             '<td style="white-space:normal">'+esc(x.detail||'-')+
               '<br><span style="font-size:12px;color:#8A94A6">'+esc(x.type||'')+
@@ -8977,12 +8976,11 @@
     rows.forEach(function(x){ if(x.canceled) return; n++;
       sum.base+=Number(x.base)||0; sum.vat+=Number(x.vat)||0; sum.total+=Number(x.total)||0; });
     var tn=$('vrTotal'); if(tn) tn.textContent=rows.length;
-    if(!rows.length){
-      box.innerHTML='<div class="emptybox">'+(VR_Q?'ไม่พบรายการที่ค้นหา':(side==='sale'
+    /* 🔴 โครงมาก่อนข้อมูล (พี่กี้ย้ำ 25 ก.ย. 69 · กฎทั้งระบบ) — ไม่มีรายการก็ต้องเห็นหัวคอลัมน์ + แถวรวม 0.00
+       แล้วบอกในตารางว่าว่างเพราะอะไร · ห้ามเอากล่องเปล่ามาแทนทั้งตาราง */
+    var emptyRow = rows.length ? '' : '<tr class="dt-empty"><td colspan="'+cols.length+'">'+(VR_Q?'ไม่พบรายการที่ค้นหา':(side==='sale'
         ? 'เดือนนี้ยังไม่มีใบเสร็จรับเงิน/ใบกำกับภาษี หรือใบลดหนี้<br><span class="m-hint">ภาษีขายเกิดที่ใบเสร็จ (RE) · ใบแจ้งหนี้ยังไม่ใช่ใบกำกับภาษี</span>'
-        : 'เดือนนี้ยังไม่มีใบกำกับภาษีซื้อ<br><span class="m-hint">กรอกได้จากปุ่ม 🧾 ใบกำกับภาษีซื้อ ในหน้าใบสั่งจ่าย</span>'))+'</div>';
-      return;
-    }
+        : 'เดือนนี้ยังไม่มีใบกำกับภาษีซื้อ<br><span class="m-hint">กรอกได้จากปุ่ม 🧾 ใบกำกับภาษีซื้อ ในหน้าใบสั่งจ่าย</span>'))+'</td></tr>';
     var head='<tr>'+cols.map(function(c){ return '<th'+(c[2]?' class="ta-r"':'')+'>'+esc(c[0])+'</th>'; }).join('')+'</tr>';
     var tot='<tr class="vr-sum">'+cols.map(function(c,i){
       if(i===1) return '<td>รวม</td>';
@@ -8998,7 +8996,7 @@
         return '<td'+(/^(date|docDate|no|docNo|invNo|taxId|sellerId|kind|kindText)$/.test(c[1])?' class="dt-nw"':'')+'>'+esc(v==null||v===''?'':String(v))+'</td>';
       }).join('')+'</tr>';
     }).join('');
-    box.innerHTML='<div class="tax-tbl-wrap"><table class="tax-tbl vr-tbl"><thead>'+head+'</thead><tbody>'+tot+body+'</tbody></table></div>';
+    box.innerHTML='<div class="tax-tbl-wrap"><table class="tax-tbl vr-tbl"><thead>'+head+'</thead><tbody>'+tot+(emptyRow||body)+'</tbody></table></div>';
   }
   function vrHtml(side, r){
     var months=taxMonths(); if(months.indexOf(VB_MONTH)<0) months.unshift(VB_MONTH);
@@ -10168,19 +10166,26 @@
         (BC_OUT.warn?(' · '+esc(BC_OUT.warn)):'')+'</div>'):'')+
       '</div>';
 
+    var bcHead='<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl">'+
+        '<colgroup><col style="width:34px"><col style="width:11%"><col style="width:14%"><col style="width:25%">'+
+        '<col style="width:12%"><col style="width:10%"><col style="width:12%"><col style="width:70px"></colgroup>'+
+        '<thead><tr><th class="dr-idx">#</th><th>วันที่เอกสาร</th><th>เลขที่เอกสาร</th><th>คู่ค้า</th>'+
+        '<th class="dt-amt">มูลค่า</th><th class="dt-amt">ภาษี</th><th class="dt-amt">รวมทั้งสิ้น</th>'+
+        '<th>ไฟล์</th></tr></thead><tbody>';
+    // โครงมาก่อนข้อมูล: ไม่มีเอกสาร ก็ยังโชว์หัวตาราง + แถวว่าง + แถวรวม 0.00
     if(!(r.groups||[]).length){
-      h+='<div class="card"><div class="emptybox">ไม่มีเอกสารในช่วงนี้ค่ะ</div></div>';
+      h+='<div class="card">'+bcHead+
+        '<tr class="dt-empty"><td colspan="8">ไม่มีเอกสารในช่วงนี้ค่ะ</td></tr>'+
+        '<tr><td colspan="4"><b>รวม</b></td>'+
+        '<td class="dt-amt"><b>'+money(0)+'</b></td><td class="dt-amt"><b>'+money(0)+'</b></td>'+
+        '<td class="dt-amt"><b>'+money(0)+'</b></td><td></td></tr>'+
+        '</tbody></table></div></div>';
       $('main').innerHTML=h; return;
     }
 
     h+=(r.groups||[]).map(function(g){
       return '<div class="card"><div class="ds-h">'+esc(g.name)+' · '+g.count+' ใบ</div>'+
-        '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl">'+
-        '<colgroup><col style="width:34px"><col style="width:11%"><col style="width:14%"><col style="width:25%">'+
-        '<col style="width:12%"><col style="width:10%"><col style="width:12%"><col style="width:70px"></colgroup>'+
-        '<thead><tr><th class="dr-idx">#</th><th>วันที่เอกสาร</th><th>เลขที่เอกสาร</th><th>คู่ค้า</th>'+
-        '<th class="dt-amt">มูลค่า</th><th class="dt-amt">ภาษี</th><th class="dt-amt">รวมทั้งสิ้น</th>'+
-        '<th>ไฟล์</th></tr></thead><tbody>'+
+        bcHead+
         (g.docs||[]).map(function(x,i){
           var base=x.base||(x.amount&&x.vat?(x.amount-x.vat):0);
           return '<tr><td class="dr-idx">'+(i+1)+'</td>'+
@@ -10349,13 +10354,14 @@
       return true;
     });
   }
-  function ptItemsHtml(){
+  function ptItemsHtml(emptyMsg){
     var r=PT_DATA||{}, items=ptFiltered(), h='';
-    if(!items.length) return '<div class="emptybox">ไม่พบรายการตามที่กรอง</div>';
     var tot=0; items.forEach(function(x){ tot+=Number(x.amount)||0; });
+    // โครงมาก่อนข้อมูล: กรองแล้วไม่เจอ ก็ยังโชว์หัวตาราง + แถวรวม 0.00
     h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
       '<th style="width:34px"></th><th style="width:38px">#</th><th>วันที่</th><th>รายการ</th>'+
       '<th>ยอด</th><th>สถานะ</th><th class="ta-c" style="width:46px">PC</th><th class="ta-c" style="width:46px">✍️</th><th style="width:40px"></th></tr></thead><tbody>'+
+      (items.length ? '' : '<tr class="dt-empty"><td colspan="9">'+(emptyMsg||'ไม่พบรายการตามที่กรอง')+'</td></tr>')+
       items.map(function(x, xi){
         /* จุด PC/PV แบบทะเบียนใบสั่งจ่าย (พี่กี้ 25 ก.ย. 69) — PC = รวมในใบสรุปแล้ว · PV = ใบสรุปนั้นจ่ายคืนแล้ว */
         var cl=x.claimNo?(((PT_DATA||{}).claims||[]).filter(function(c){ return c.no===x.claimNo; })[0]||{}):{};
@@ -10552,7 +10558,8 @@
 
     // ── รายการเงินสดย่อย — แถบกรองแบบหน้าใบสั่งจ่าย (พี่กี้ 25 ก.ย. 69) ──
     h+='<div class="sf-card"><div class="sf-h">📋 รายการที่จ่ายจากเงินสดย่อย</div>';
-    if(!items.length){ h+='<div class="emptybox">ยังไม่มีรายการ</div>'; }
+    // โครงมาก่อนข้อมูล: ยังไม่มีรายการ ก็ยังโชว์หัวตาราง (ไม่ต้องมีแถบกรอง)
+    if(!items.length){ h+='<div id="ptItems">'+ptItemsHtml('ยังไม่มีรายการ')+'</div>'; }
     else {
       var ptMonths=[], ptCnt={all:items.length, wait:0, done:0};
       items.forEach(function(x){
@@ -10580,7 +10587,13 @@
 
     // ── ทะเบียนใบสรุปเบิก ──
     h+='<div class="sf-card"><div class="sf-h">📑 ใบสรุปเบิกเงินสดย่อย</div>';
-    if(!claims.length){ h+='<div class="emptybox">ยังไม่มีใบสรุปเบิก</div>'; }
+    // โครงมาก่อนข้อมูล: ยังไม่มีใบสรุป ก็ยังโชว์หัวตาราง + แถวว่าง
+    if(!claims.length){
+      h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
+        '<th style="width:38px">#</th><th>เลขที่</th><th>วันที่</th><th>ช่วงรายการ</th><th>รายการ</th>'+
+        '<th>ยอดรวม</th><th>สถานะ</th><th class="ta-c" style="width:46px">PV</th><th style="width:40px"></th></tr></thead><tbody>'+
+        '<tr class="dt-empty"><td colspan="9">ยังไม่มีใบสรุปเบิก</td></tr></tbody></table></div>';
+    }
     else {
       h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
         '<th style="width:38px">#</th><th>เลขที่</th><th>วันที่</th><th>ช่วงรายการ</th><th>รายการ</th>'+
@@ -17204,17 +17217,19 @@
 
     h += fhKpiHtml(r.kpi, cmp);
 
+    var fhHead='<div class="card"><div class="ds-h">ผลประกอบการรายปี (ตัวเลขจริง)</div><div class="p51-grid"><table>'+
+        '<thead><tr><th>ปี</th><th style="text-align:right">รายได้</th><th style="text-align:right">เติบโต</th>'+
+        '<th style="text-align:right">ต้นทุน+ค่าใช้จ่าย</th><th style="text-align:right">กำไรสุทธิ</th>'+
+        '<th style="text-align:right">อัตรากำไร</th><th style="text-align:right">ภาษีที่ชำระ</th></tr></thead><tbody>';
+    // โครงมาก่อนข้อมูล: ยังไม่มีข้อมูล ก็ยังโชว์หัวตารางผลประกอบการ + แถวบอกวิธีใส่
     if(!rows.length && !cmp.length){
-      return h+'<div class="card"><div class="emptybox">ยังไม่มีข้อมูลย้อนหลังของบริษัทนี้<br>'+
-        '<span style="font-size:13px">ใส่ได้จากหน้า 📐 ภ.ง.ด.51 → ปุ่ม 📥 วางผลจาก AI</span></div></div>';
+      return h+fhHead+'<tr class="dt-empty"><td colspan="7">ยังไม่มีข้อมูลย้อนหลังของบริษัทนี้<br>'+
+        '<span style="font-size:13px">ใส่ได้จากหน้า 📐 ภ.ง.ด.51 → ปุ่ม 📥 วางผลจาก AI</span></td></tr></tbody></table></div></div>';
     }
 
     // ── ① ผลประกอบการรายปี ──
     if(rows.length){
-      h+='<div class="card"><div class="ds-h">ผลประกอบการรายปี (ตัวเลขจริง)</div><div class="p51-grid"><table>'+
-        '<thead><tr><th>ปี</th><th style="text-align:right">รายได้</th><th style="text-align:right">เติบโต</th>'+
-        '<th style="text-align:right">ต้นทุน+ค่าใช้จ่าย</th><th style="text-align:right">กำไรสุทธิ</th>'+
-        '<th style="text-align:right">อัตรากำไร</th><th style="text-align:right">ภาษีที่ชำระ</th></tr></thead><tbody>'+
+      h+=fhHead+
         rows.map(function(x){
           var gc = x.growth===null ? '' : (x.growth>=0?'#1E7A48':'#DC2626');
           return '<tr><td class="rl">'+x.year+'</td>'+
@@ -17563,8 +17578,8 @@
 
     // งานที่บันทึกไว้
     h += '<div class="card"><div class="ds-h">📋 งานที่บันทึกไว้</div>';
-    if(!jobs.length){ h += '<div class="emptybox">ยังไม่มีงานที่บันทึก — เลือกบริษัทกับปีด้านบนแล้วกดเปิดหน้าคำนวณ</div>'; }
-    else {
+    // โครงมาก่อนข้อมูล: ยังไม่มีงาน ก็ยังโชว์หัวตาราง (dtTable ใส่แถวว่างให้)
+    {
       var rows = jobs.map(function(j){
         var id = 'p51_' + j.no;
         var acts = [{ key:'open', label:'📐 เปิดหน้าคำนวณ', call:"p51Open('" + j.entity + "'," + j.year + ")" }];
@@ -17581,7 +17596,8 @@
       });
       h += dtTable([{ label:'เลขที่งาน', w:'150px' }, { label:'บริษัท', w:'200px' }, { label:'ครบกำหนดยื่น', w:'130px' },
         { label:'ประมาณการกำไร', cls:'ta-r', w:'130px' }, { label:'ต้องชำระ/(ขอคืน)', cls:'ta-r', w:'140px' },
-        { label:'ความเสี่ยง', w:'100px' }, { label:'สถานะ', w:'100px' }, { label:'', w:'44px' }], rows);
+        { label:'ความเสี่ยง', w:'100px' }, { label:'สถานะ', w:'100px' }, { label:'', w:'44px' }], rows, '',
+        'ยังไม่มีงานที่บันทึก — เลือกบริษัทกับปีด้านบนแล้วกดเปิดหน้าคำนวณ');
     }
     h += '</div>';
     $('main').innerHTML = h;
@@ -18166,12 +18182,12 @@
       }
 
       h+='<div class="card"><div class="ds-h">① สรุปตามลูกค้า · '+esc(r.monthText)+'</div>';
-      if(!(r.byCustomer||[]).length){ h+='<div class="emptybox">เดือนนี้ยังไม่ได้ออกใบแจ้งหนี้</div>'; }
-      else {
+      {
         h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
           '<th>ลูกค้า</th><th>ใบ</th><th>ยอดออกบิล</th><th>รับแล้วเดือนนี้</th><th>คงค้างของใบเดือนนี้</th>'+
           '</tr></thead><tbody>'+
-          r.byCustomer.map(function(c){
+          ((r.byCustomer||[]).length ? '' : '<tr class="dt-empty"><td colspan="5">เดือนนี้ยังไม่ได้ออกใบแจ้งหนี้</td></tr>')+
+          (r.byCustomer||[]).map(function(c){
             return '<tr><td>'+esc(c.customer)+'</td><td>'+c.n+'</td><td class="ta-r">'+money(c.billed)+'</td>'+
               '<td class="ta-r">'+(c.received?money(c.received):'—')+'</td>'+
               '<td class="ta-r"'+(c.balance>0?' style="color:#C8730B"':'')+'>'+(c.balance?money(c.balance):'—')+'</td></tr>'; }).join('')+
@@ -18182,12 +18198,12 @@
 
       // ── เงินเข้าของเดือน ──
       h+='<div class="card"><div class="ds-h">② เงินเข้าของเดือนนี้</div>';
-      if(!(r.recvRows||[]).length){ h+='<div class="emptybox">เดือนนี้ยังไม่มีเงินเข้า</div>'; }
-      else {
+      {
         h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
           '<th>เลขที่</th><th>วันที่</th><th>ใบแจ้งหนี้</th><th>ลูกค้า</th><th>เงินเข้า</th>'+
           '<th>ภาษีถูกหัก</th><th>ช่องทาง</th><th>ใบเสร็จ</th><th>50 ทวิ</th></tr></thead><tbody>'+
-          r.recvRows.map(function(x){
+          ((r.recvRows||[]).length ? '' : '<tr class="dt-empty"><td colspan="9">เดือนนี้ยังไม่มีเงินเข้า</td></tr>')+
+          (r.recvRows||[]).map(function(x){
             return '<tr><td>'+esc(x.no)+'</td><td>'+esc(x.dateText||'')+'</td><td>'+esc(x.ivNo)+'</td>'+
               '<td>'+esc(x.customer||'-')+'</td><td class="ta-r">'+money(x.amount)+'</td>'+
               '<td class="ta-r">'+(x.wht?money(x.wht):'—')+'</td><td>'+esc(x.method||'')+'</td>'+
@@ -18201,12 +18217,12 @@
 
       // ── ทะเบียนเอกสารขายของเดือน ──
       h+='<div class="card"><div class="ds-h">③ เอกสารขายที่ออกเดือนนี้ · '+esc(r.entityName||'ทุกบริษัท')+'</div>';
-      if(!(r.rows||[]).length){ h+='<div class="emptybox">เดือนนี้ไม่มีเอกสารขาย</div>'; }
-      else {
+      {
         h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
           '<th>เลขที่</th><th>วันที่</th><th>ชนิด</th><th>ลูกค้า</th><th>ยอดรวม</th><th>คงค้าง</th><th>สถานะ</th>'+
           '</tr></thead><tbody>'+
-          r.rows.map(function(x){
+          ((r.rows||[]).length ? '' : '<tr class="dt-empty"><td colspan="7">เดือนนี้ไม่มีเอกสารขาย</td></tr>')+
+          (r.rows||[]).map(function(x){
             return '<tr><td>'+(x.pdfLink?'<a href="'+esc(x.pdfLink)+'" target="_blank">'+esc(x.no)+'</a>':esc(x.no))+'</td>'+
               '<td>'+esc(x.dateText||'')+'</td><td>'+esc(x.kindLabel)+'</td><td>'+esc(x.customer)+'</td>'+
               '<td class="ta-r">'+money(x.total)+'</td><td class="ta-r">'+(x.balance?money(x.balance):'—')+'</td>'+
@@ -18597,14 +18613,15 @@
     jsonp({action:'waReceivables',uid:UID}).then(function(r){
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
       var h='<div class="section-h">📊 ลูกหนี้ค้างรับ <span style="font-weight:400;color:#8A94A6;font-size:12px">ณ '+esc(r.asOf)+'</span></div>'+arTabsHtml();
-      if(!r.customers.length){
-        $('main').innerHTML=h+'<div class="card"><div class="emptybox">ไม่มียอดค้างรับ เก็บเงินครบทุกใบ 🎉</div></div>'; return; }
+      // ตารางรายลูกค้า (กดแถวเพื่อดูใบในมือ)
+      var cols=[{label:'ลูกค้า',w:'170px'},{label:'ใบ',cls:'ta-r',w:'54px'},{label:'ค้างรวม',cls:'ta-r',w:'112px'}]
+        .concat((r.buckets||[]).map(function(b){ return {label:b.label,cls:'ta-r',w:'104px'}; }));
+      // โครงมาก่อนข้อมูล: ไม่มียอดค้าง ก็ยังโชว์หัวตาราง + แถวว่าง
+      if(!(r.customers||[]).length){
+        $('main').innerHTML=h+dtTable(cols, [], '', 'ไม่มียอดค้างรับ เก็บเงินครบทุกใบ 🎉'); return; }
       var t=r.totals;
       h+='<div class="m-hint" style="margin:0 0 12px">ค้างรับรวม <b style="font-size:16px">'+money(t.total)+'</b> บาท · '+
         t.count+' ใบ · <span style="color:#DC2626">เกินกำหนด '+money(t.overdue)+'</span></div>';
-      // ตารางรายลูกค้า (กดแถวเพื่อดูใบในมือ)
-      var cols=[{label:'ลูกค้า',w:'170px'},{label:'ใบ',cls:'ta-r',w:'54px'},{label:'ค้างรวม',cls:'ta-r',w:'112px'}]
-        .concat(r.buckets.map(function(b){ return {label:b.label,cls:'ta-r',w:'104px'}; }));
       var rows=r.customers.map(function(c,i){
         return '<tr style="cursor:pointer" onclick="arToggle('+i+')"><td>'+esc(c.customer)+' <span style="color:#8A94A6">▾</span></td>'+
           '<td class="dt-amt">'+c.count+'</td><td class="dt-amt"><b>'+money(c.total)+'</b></td>'+
@@ -20753,11 +20770,12 @@
     var fileOf={}; (r.docs||[]).forEach(function(d){ fileOf[d.ym]=d.link; });
     var doneMonths=ser.filter(function(x){ return x.total!==null&&x.total!==undefined; });
     h+='<div class="card"><div class="section-h">ใบประเมินย้อนหลัง</div>';
-    if(!doneMonths.length) h+='<div class="emptybox">ยังไม่มีเดือนที่คิดคะแนนแล้ว</div>';
-    else {
+    {
       h+='<div class="kp-wrap"><table class="kp-tbl"><thead><tr><th>เดือน</th>'+
         '<th class="kp-r">คะแนนรวม</th><th class="kp-c">เกรด</th><th class="kp-c">สถานะ</th>'+
         '<th class="kp-c">ใบประเมิน</th></tr></thead><tbody>';
+      // โครงมาก่อนข้อมูล: ยังไม่มีเดือนที่คิดคะแนน ก็ยังโชว์หัวตาราง
+      if(!doneMonths.length) h+='<tr class="dt-empty"><td colspan="5">ยังไม่มีเดือนที่คิดคะแนนแล้ว</td></tr>';
       doneMonths.slice().reverse().forEach(function(x){
         h+='<tr><td>'+esc(kpLabel(x.ym))+'</td>'+
           '<td class="kp-r"><b>'+kpNum(x.total)+'</b></td>'+
@@ -21634,13 +21652,14 @@
       '<span class="kp-grow"></span>'+
       '<button class="btn btn-ghost btn-sm" onclick="kpPickAll(1)">เลือกทั้งหมด</button>'+
       '<button class="btn btn-ghost btn-sm" onclick="kpPickAll(0)">ไม่เลือกเลย</button></div>';
-    if(!staff.length) h+='<div class="emptybox">ยังไม่มีพนักงานในทะเบียน — ไปเพิ่มที่หน้าทะเบียนพนักงานก่อนค่ะ</div>';
-    else {
+    {
       /* ลำดับคอลัมน์ล้อกับหน้าทะเบียนพนักงาน (พี่กี้ 10 ก.ย. 69) — คนอ่านสองหน้านี้ต่อกัน
          ถ้าคอลัมน์สลับที่ต้องไล่หาใหม่ทุกครั้ง · แผนกไม่มีในหน้านี้ตามที่พี่กี้กำหนด */
       h+='<div class="kp-wrap"><table class="kp-tbl"><thead><tr><th class="kp-c">เลือก</th>'+
         '<th class="kp-c">ลำดับ</th><th class="kp-c">รหัสพนักงาน</th><th>ชื่อ-นามสกุล</th><th>ชื่อเล่น</th>'+
         '<th>ตำแหน่ง</th><th class="kp-c">สถานะในรอบนี้</th></tr></thead><tbody>';
+      // โครงมาก่อนข้อมูล: ยังไม่มีพนักงาน ก็ยังโชว์หัวตาราง + แถวบอกทาง (ไม่มีปุ่มเปิดรอบ)
+      if(!staff.length) h+='<tr class="dt-empty"><td colspan="7">ยังไม่มีพนักงานในทะเบียน — ไปเพิ่มที่หน้าทะเบียนพนักงานก่อนค่ะ</td></tr>';
       staff.forEach(function(p,i){
         var cur=(r.rows||[]).filter(function(x){ return x.code===p.code; })[0];
         h+='<tr><td class="kp-c"><input type="checkbox" class="kp-pick" data-code="'+esc(p.code)+'"'+
@@ -21653,7 +21672,7 @@
           '<td class="kp-c">'+(cur&&cur.hasDoc?kpStatusPill(cur.status):'<span class="kp-dot kp-dot-no">ยังไม่อยู่ในรอบ</span>')+'</td></tr>';
       });
       h+='</tbody></table></div>';
-      h+='<div class="kp-bar"><button class="btn btn-primary" onclick="kpOpenRound()">'+
+      if(staff.length) h+='<div class="kp-bar"><button class="btn btn-primary" onclick="kpOpenRound()">'+
         (r.opened?'สร้างฟอร์มให้คนที่เลือก →':'เปิดรอบและสร้างฟอร์มประเมิน →')+'</button>'+
         (r.opened?'<button class="btn btn-ghost btn-sm" onclick="kpStep(2)">ยกเลิก</button>':'')+
         '<span class="m-hint" style="margin:0">ระบบจะดึงตำแหน่งของแต่ละคนมาสร้างชุดฟอร์มที่ต้องประเมินให้เอง</span></div>';
@@ -23625,12 +23644,13 @@ function kpImpDraw(){
       '<span class="kp-lb">ข้อมูลโบนัสคิดจากทั้งปี '+esc(r.year)+'</span></div></div>';
 
     h+='<div class="card"><div class="section-h">คนที่ผลงานดีทั้งปี (ใช้พิจารณาโบนัส/ปรับเงินเดือน)</div>';
-    if(!r.top.length) h+='<div class="emptybox">ยังไม่มีเดือนที่อนุมัติในปีนี้</div>';
-    else {
+    // โครงมาก่อนข้อมูล (ทั้ง 3 ตารางในหน้านี้): ว่างก็ยังโชว์หัวตาราง + แถวบอกว่าว่าง
+    {
       h+='<div class="kp-wrap"><table class="kp-tbl"><thead><tr><th>อันดับ</th><th>พนักงาน</th><th>ตำแหน่ง</th>'+
         '<th class="kp-r">เฉลี่ยทั้งปี</th><th class="kp-r">สูงสุด</th><th class="kp-r">จำนวนรอบ</th>'+
         '<th class="kp-c">เกรดสูงสุด</th><th class="kp-c">เกรดต่ำสุด</th>'+
         '<th class="kp-c">คงเส้นคงวา</th></tr></thead><tbody>';
+      if(!r.top.length) h+='<tr class="dt-empty"><td colspan="9">ยังไม่มีเดือนที่อนุมัติในปีนี้</td></tr>';
       r.top.forEach(function(x,i){
         h+='<tr><td>'+(i+1)+'</td><td><b>'+kpWho(x)+'</b><div class="kp-nick">'+esc([x.nick,x.dept].filter(Boolean).join(' · '))+'</div></td>'+
           '<td>'+esc(x.pos)+'</td><td class="kp-r"><b>'+x.avg.toFixed(2)+'</b></td>'+
@@ -23647,10 +23667,10 @@ function kpImpDraw(){
     h+='</div>';
 
     h+='<div class="card"><div class="section-h">คนที่ควรคุย (เกรด 1-2 ติดกันตั้งแต่ 2 รอบ)</div>';
-    if(!r.pip.length) h+='<div class="emptybox">ไม่มีใครเข้าเกณฑ์ในช่วง 6 เดือนล่าสุด</div>';
-    else {
+    {
       h+='<div class="kp-wrap"><table class="kp-tbl"><thead><tr><th>พนักงาน</th><th>ตำแหน่ง</th>'+
         '<th class="kp-c">ติดต่อกัน</th><th>ประวัติเกรด</th></tr></thead><tbody>';
+      if(!r.pip.length) h+='<tr class="dt-empty"><td colspan="4">ไม่มีใครเข้าเกณฑ์ในช่วง 6 เดือนล่าสุด</td></tr>';
       r.pip.forEach(function(x){
         h+='<tr><td>'+kpWhoCell(x)+'</td><td>'+esc(x.pos)+'</td>'+
           '<td class="kp-c"><b>'+x.streak+'</b> รอบ</td><td>'+
@@ -23664,10 +23684,10 @@ function kpImpDraw(){
     h+='<div class="card"><div class="section-h">มาตรฐานการให้คะแนนของผู้ประเมิน</div>'+
       '<div class="m-hint">ค่าเฉลี่ยรวมของเดือนนี้ '+(r.raters.avgAll||0).toFixed(2)+
       ' · ห่างจากค่ากลางเกิน 0.7 ระดับ = ควรคุยเรื่องมาตรฐาน ไม่ใช่การจับผิด</div>';
-    if(!r.raters.raters.length) h+='<div class="emptybox">ยังไม่มีการให้คะแนนคุณลักษณะในเดือนนี้</div>';
-    else {
+    {
       h+='<div class="kp-wrap"><table class="kp-tbl"><thead><tr><th>ผู้ประเมิน</th><th class="kp-r">ประเมิน</th>'+
         '<th class="kp-r">ข้อที่ให้คะแนน</th><th class="kp-r">เฉลี่ยที่ให้</th><th class="kp-r">ห่างค่ากลาง</th></tr></thead><tbody>';
+      if(!r.raters.raters.length) h+='<tr class="dt-empty"><td colspan="5">ยังไม่มีการให้คะแนนคุณลักษณะในเดือนนี้</td></tr>';
       r.raters.raters.forEach(function(x){
         /* 🔴 เดิมเขียน x.name||x.rater — ชีตไม่มีชื่อเมื่อไหร่ หน้าเว็บโชว์ LINE userId ดิบทันที
            backend เลิกส่ง x.rater มาแล้ว ตรงนี้จึงต้องไม่มี fallback ไปคีย์ใด ๆ อีก */
@@ -23735,7 +23755,7 @@ function kpImpDraw(){
     return h;
   }
   function kpGroupTable(list){
-    if(!list||!list.length) return '<div class="emptybox">ยังไม่มีข้อมูล</div>';
+    list=list||[];   // โครงมาก่อนข้อมูล: ว่างก็ยังโชว์หัวตาราง + แถวว่าง
     /* ความกว้างคอลัมน์ตายตัว — ตาราง "สรุปตามแผนก" กับ "สรุปตามตำแหน่ง" อยู่ซ้อนกันในหน้าเดียว
        ถ้าปล่อยให้เบราว์เซอร์คิดเอง สองตารางจะกว้างไม่เท่ากันตามความยาวชื่อกลุ่ม อ่านแล้วไม่สวย
        (พี่กี้ทัก 12 ก.ย. 69) */
@@ -23744,6 +23764,7 @@ function kpImpDraw(){
       '<th class="kp-r" style="width:11%">คะแนนเฉลี่ย</th>'+
       '<th style="width:25%">สูงสุด</th><th style="width:25%">ต่ำสุด</th>'+
       '<th style="width:14%">การกระจายเกรด</th></tr></thead><tbody>';
+    if(!list.length) h+='<tr class="dt-empty"><td colspan="6">ยังไม่มีข้อมูล</td></tr>';
     list.forEach(function(g){
       var pills='';
       for(var k in g.grades) pills+='<b class="kp-g kp-g'+k+'">'+k+'</b>×'+g.grades[k]+' ';
@@ -23758,7 +23779,12 @@ function kpImpDraw(){
   function kpTrendHtml(r){
     var h='<div class="section-h">เทียบผลย้อนหลัง</div><div class="card">'+kpRepTabs();
     h+='<div class="m-hint">นับเฉพาะเดือนที่อนุมัติแล้ว — เดือนที่ยังกรอกอยู่ไม่ถูกนำมาเทียบค่ะ</div>';
-    if(!r.company.length) h+='<div class="emptybox">ยังไม่มีเดือนที่อนุมัติ</div>';
+    // โครงมาก่อนข้อมูล: ยังไม่มีเดือนที่อนุมัติ ก็ยังโชว์หัวตาราง (กราฟขึ้นเฉพาะตอนมีข้อมูล)
+    if(!r.company.length){
+      h+='<div class="kp-wrap"><table class="kp-tbl"><thead><tr><th>เดือน</th><th class="kp-r">จำนวนคน</th>'+
+        '<th class="kp-r">คะแนนเฉลี่ย</th><th class="kp-r">ผ่าน</th></tr></thead><tbody>'+
+        '<tr class="dt-empty"><td colspan="4">ยังไม่มีเดือนที่อนุมัติ</td></tr></tbody></table></div>';
+    }
     else {
       h+='<div class="kp-wrap"><table class="kp-tbl"><thead><tr><th>เดือน</th><th class="kp-r">จำนวนคน</th>'+
         '<th class="kp-r">คะแนนเฉลี่ย</th><th class="kp-r">ผ่าน</th></tr></thead><tbody>';
@@ -23788,7 +23814,9 @@ function kpImpDraw(){
       });
       h+='</tbody></table></div>'+
         kpTrendBars(r.person.history.map(function(x){ return { ym:x.ym, avg:(x.total===null||x.total===undefined?null:Number(x.total)) }; }), r.grades);
-    } else if(KPRP_CODE) h+='<div class="emptybox">ยังไม่มีเดือนที่อนุมัติของคนนี้</div>';
+    } else if(KPRP_CODE) h+='<div class="kp-wrap"><table class="kp-tbl"><thead><tr><th>เดือน</th><th class="kp-r">KPI</th>'+
+        '<th class="kp-r">คุณลักษณะ</th><th class="kp-r">สถิติ</th><th class="kp-r">รวม</th><th class="kp-c">เกรด</th></tr></thead><tbody>'+
+        '<tr class="dt-empty"><td colspan="6">ยังไม่มีเดือนที่อนุมัติของคนนี้</td></tr></tbody></table></div>';
     h+='</div>';
     return h;
   }
@@ -23985,10 +24013,11 @@ function kpImpDraw(){
         statCard('ภาษีนำส่ง',money(r.sum.wht),'บาท · ยื่นสรรพากร','ds-wait')+
         '</div>';
       h+='<div class="card"><div class="ds-h">'+esc(r.formLabel||'')+' · ผู้จ่าย: '+esc(r.company)+'</div>';
-      if(!r.rows.length){ h+='<div class="emptybox">เดือนนี้ยังไม่มีรายการที่เข้า '+esc(r.formLabel||'')+'</div>'; }
-      else {
+      // โครงมาก่อนข้อมูล: ไม่มีรายการ ก็ยังโชว์หัวตาราง + แถวรวม 0.00
+      {
         h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
           '<th>#</th><th>เลขบัตร</th><th>ชื่อผู้ถูกหัก</th><th>ประเภทเงินได้</th><th>อัตรา</th><th>ยอดจ่าย</th><th>ภาษีหัก</th></tr></thead><tbody>'+
+          (r.rows.length ? '' : '<tr class="dt-empty"><td colspan="7">เดือนนี้ยังไม่มีรายการที่เข้า '+esc(r.formLabel||'')+'</td></tr>')+
           r.rows.map(function(x){ return '<tr><td>'+x.seq+'</td><td>'+esc(x.payeeId)+'</td><td>'+esc(x.payeeName)+'</td><td>'+esc(x.incomeType)+'</td><td>'+x.rate+'%</td><td class="ta-r">'+money(x.amount)+'</td><td class="ta-r">'+money(x.wht)+'</td></tr>'; }).join('')+
           '<tr class="tax-total"><td colspan="5">รวม '+r.sum.count+' ราย</td><td class="ta-r">'+money(r.sum.amount)+'</td><td class="ta-r">'+money(r.sum.wht)+'</td></tr>'+
           '</tbody></table></div>';
@@ -24904,7 +24933,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260925-1950';
+  var APP_BUILD='20260925-2008';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
