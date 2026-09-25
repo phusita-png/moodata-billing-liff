@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260925-0927">
+<link rel="stylesheet" href="user.css?v=20260925-1004">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -8416,7 +8416,7 @@
   function vdDbd(){
     var tax=((($('vdTax')||{}).value)||'').replace(/\D/g,'');
     if(tax.length!==13){ toast('ใส่เลขผู้เสียภาษี 13 หลักก่อนค่ะ'); return; }
-    callBusy('กำลังค้น…', jsonp({action:'waCustomerDbd', uid:UID, taxId:tax})).then(function(r){
+    callBusy('กำลังค้น…', dbdLookup(tax)).then(function(r){
       if(!r||!r.ok||!r.data){ toast((r&&r.error)||'ไม่พบข้อมูลจากกรมพัฒน์'); return; }
       var d=r.data;
       if($('vdName') && !$('vdName').value.trim()) $('vdName').value=d.nameTH||'';
@@ -11286,7 +11286,7 @@
     if(idAddr===undefined) idAddr=(idName==='poVendor')?'poVendorAddr':(idName==='exdVendor'?'exdVendorAddr':'');
     var tax=((($(idTax)||{}).value)||'').replace(/\D/g,'');
     if(tax.length!==13){ toast('ใส่เลขผู้เสียภาษี 13 หลักก่อนค่ะ'); return; }
-    callBusy('กำลังค้น…', jsonp({action:'waCustomerDbd', uid:UID, taxId:tax})).then(function(r){
+    callBusy('กำลังค้น…', dbdLookup(tax)).then(function(r){
       if(!r||!r.ok||!r.data){ toast((r&&r.error)||'ไม่พบข้อมูลจากกรมพัฒน์'); return; }
       /* 🐞 24 ก.ย. 69 — หลังบ้านส่งชื่อมาเป็น nameTH (เดิมอ่าน r.data.name = ว่างเสมอ ชื่อไม่เคยขึ้น) */
       if($(idName)) $(idName).value=r.data.nameTH||r.data.name||'';
@@ -11296,6 +11296,67 @@
     }).catch(function(e){ toast(e.message); });
   }
   window.poVendorLookup=poVendorLookup; window.poStatusBadge=poStatusBadge;
+
+  /* ═════ 🔍 ค้นนิติบุคคลจากกรมพัฒน์ — ให้เบราว์เซอร์ถามเอง (25 ก.ย. 69) ═════
+     🔴 openapi.dbd.go.th เปิดให้เฉพาะ IP ในไทย: Apps Script (Google สหรัฐ) ได้ 403 · Worker ก็วิ่งออกสาขาสหรัฐ
+        แต่เบราว์เซอร์ของผู้ใช้อยู่ในไทย และ DBD อนุญาต CORS ให้โดเมนนี้ → ถามตรงจากหน้าเว็บ
+     ไม่สำเร็จ (เปิดจากต่างประเทศ/เน็ตบล็อก) = ถอยไปทางหลังบ้านเดิม (waCustomerDbd)
+     ⚠️ ตัวแกะข้อมูลต้องได้ผลเท่ากับ dbdLookup_ หลังบ้าน — tests/test-dbd-web.js เทียบกันไว้ */
+  var DBD_WEB_URL='https://openapi.dbd.go.th/api/v1/juristic_person/';
+  function dbdAddrWeb(a){
+    if(!a) return '';
+    function t(v){ return String(v==null?'':v).trim(); }
+    function sub(o,k){ return o?t(o[k]):''; }
+    function pre(w,v){ return v.indexOf(w)===0?v:w+v; }
+    var p=[], no=t(a['cd:AddressNo'])||t(a['cd:Address']);
+    if(no) p.push(no);
+    if(t(a['cd:Building'])) p.push('อาคาร'+t(a['cd:Building']));
+    if(t(a['cd:RoomNo'])) p.push('ห้อง '+t(a['cd:RoomNo']));
+    if(t(a['cd:Floor'])) p.push('ชั้น '+t(a['cd:Floor']));
+    if(t(a['cd:Village'])) p.push('หมู่บ้าน'+t(a['cd:Village']));
+    if(t(a['cd:Moo'])) p.push('หมู่ที่ '+t(a['cd:Moo']));
+    if(t(a['cd:Trok'])) p.push('ตรอก'+t(a['cd:Trok']));
+    if(t(a['cd:Soi'])) p.push('ซอย'+t(a['cd:Soi']));
+    if(t(a['cd:Yaek'])) p.push('แยก'+t(a['cd:Yaek']));
+    if(t(a['cd:Road'])) p.push('ถนน'+t(a['cd:Road']));
+    var tambon=sub(a['cd:CitySubDivision'],'cr:CitySubDivisionTextTH');
+    var amphoe=sub(a['cd:City'],'cr:CityTextTH');
+    var prov=sub(a['cd:CountrySubDivision'],'cr:CountrySubDivisionTextTH');
+    var bkk=prov.indexOf('กรุงเทพ')>=0;
+    if(tambon) p.push(pre(bkk?'แขวง':'ตำบล', tambon));
+    if(amphoe) p.push(pre(bkk?'เขต':'อำเภอ', amphoe));
+    if(prov) p.push(bkk?prov:('จังหวัด'+prov));
+    return p.join(' ');
+  }
+  function dbdParseWeb(j, id){
+    var rows=(j&&j.data)||[];
+    var o=rows.length?rows[0]['cd:OrganizationJuristicPerson']:null;
+    if(!o||!o['cd:OrganizationJuristicID']) return { ok:false, error:'ไม่พบเลข '+id+' ในทะเบียนนิติบุคคล — อาจเป็นบุคคลธรรมดา หรือเลขผิดค่ะ' };
+    var addr=(o['cd:OrganizationJuristicAddress']||{})['cr:AddressType'];
+    return { ok:true, data:{
+      taxId:String(o['cd:OrganizationJuristicID']||''),
+      nameTH:String(o['cd:OrganizationJuristicNameTH']||'').trim(),
+      nameEN:String(o['cd:OrganizationJuristicNameEN']||'').trim(),
+      type:String(o['cd:OrganizationJuristicType']||'').trim(),
+      status:String(o['cd:OrganizationJuristicStatus']||'').trim(),
+      branch:String(o['cd:OrganizationJuristicBranchName']||'').trim()||'สำนักงานใหญ่',
+      address:dbdAddrWeb(addr),
+      capital:Number(o['cd:OrganizationJuristicRegisterCapital']||0)||0,
+      registerDate:String(o['cd:OrganizationJuristicRegisterDate']||'').trim()
+    } };
+  }
+  /** → Promise<{ok,data}|{ok:false,error}> รูปเดียวกับ waCustomerDbd */
+  function dbdLookup(tax){
+    var id=String(tax||'').replace(/\D/g,'');
+    if(id.length!==13) return Promise.resolve({ ok:false, error:'เลขประจำตัวผู้เสียภาษีต้องมี 13 หลักค่ะ' });
+    var back=function(){ return jsonp({action:'waCustomerDbd', uid:UID, taxId:id}); };
+    if(typeof fetch!=='function') return back();
+    return fetch(DBD_WEB_URL+id, { headers:{ 'Accept':'application/json' } })
+      .then(function(r){ if(!r.ok) throw new Error('code '+r.status); return r.json(); })
+      .then(function(j){ return dbdParseWeb(j, id); })
+      .catch(function(){ return back(); });
+  }
+  window.dbdLookup=dbdLookup;
 
   /** อัตราให้เลือก — ชุดเดียวกับ RV_WHT_RATES ฝั่ง backend (ค่านอกลิสต์ backend ตีเป็น 0) */
   function poFillRates(sel){
@@ -15755,7 +15816,7 @@
     var tax=((($('sfDbdTax')||{}).value)||'').replace(/\D/g,'');
     if(tax.length!==13){ mErr('กรอกเลขผู้เสียภาษี 13 หลักค่ะ'); return; }
     busy('กำลังค้นจากกรมพัฒน์…');
-    jsonp({action:'waCustomerDbd',uid:UID,taxId:tax}).then(function(r){
+    dbdLookup(tax).then(function(r){
       unbusy();
       if(!r||!r.ok){ mErr((r&&r.error)||'ค้นไม่สำเร็จ'); return; }
       var d=r.data;
@@ -18345,7 +18406,7 @@
     var tax=(($('cuTax')||{}).value||'').replace(/\D/g,'');
     if(tax.length!==13){ toast('กรอกเลขผู้เสียภาษี 13 หลักก่อนค่ะ'); return; }
     busy('กำลังค้นจากกรมพัฒน์…');
-    jsonp({action:'waCustomerDbd',uid:UID,taxId:tax}).then(function(r){
+    dbdLookup(tax).then(function(r){
       unbusy();
       if(!r||!r.ok){ toast((r&&r.error)||'ค้นไม่สำเร็จ'); return; }
       DBD_HIT=r.data;
@@ -24262,7 +24323,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260925-0927';
+  var APP_BUILD='20260925-1004';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
