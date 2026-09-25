@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260925-1004">
+<link rel="stylesheet" href="user.css?v=20260925-1025">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -8418,13 +8418,15 @@
     if(tax.length!==13){ toast('ใส่เลขผู้เสียภาษี 13 หลักก่อนค่ะ'); return; }
     callBusy('กำลังค้น…', dbdLookup(tax)).then(function(r){
       if(!r||!r.ok||!r.data){ toast((r&&r.error)||'ไม่พบข้อมูลจากกรมพัฒน์'); return; }
-      var d=r.data;
-      if($('vdName') && !$('vdName').value.trim()) $('vdName').value=d.nameTH||'';
-      if($('vdLegal')) $('vdLegal').value=d.nameTH||'';
-      if($('vdAddr') && d.address) $('vdAddr').value=d.address;
-      if($('vdBranch') && d.branch) $('vdBranch').value=d.branch;
-      if($('vdKind')) $('vdKind').value='นิติบุคคล';
-      toast('🔍 ได้ข้อมูลจากกรมพัฒน์แล้ว ตรวจก่อนบันทึกนะคะ');
+      /* 🔍 โชว์ป๊อปอัปให้ตรวจก่อน กดใช้ค่อยเติม (พี่กี้ 25 ก.ย. 69 · แบบ TRCloud — บางทีแค่อยากเช็ค) */
+      dbdShow(r.data, 'ชื่อตามหนังสือรับรอง · สาขา · ที่อยู่', function(d){
+        if($('vdName') && !$('vdName').value.trim()) $('vdName').value=d.nameTH||'';
+        if($('vdLegal')) $('vdLegal').value=d.nameTH||'';
+        if($('vdAddr') && d.address) $('vdAddr').value=d.address;
+        if($('vdBranch') && d.branch) $('vdBranch').value=d.branch;
+        if($('vdKind')) $('vdKind').value='นิติบุคคล';
+        toast('🔍 เติมข้อมูลจากกรมพัฒน์แล้ว ตรวจก่อนบันทึกนะคะ');
+      });
     }).catch(function(e){ toast(e.message); });
   }
   function vdSave(){
@@ -11288,11 +11290,13 @@
     if(tax.length!==13){ toast('ใส่เลขผู้เสียภาษี 13 หลักก่อนค่ะ'); return; }
     callBusy('กำลังค้น…', dbdLookup(tax)).then(function(r){
       if(!r||!r.ok||!r.data){ toast((r&&r.error)||'ไม่พบข้อมูลจากกรมพัฒน์'); return; }
-      /* 🐞 24 ก.ย. 69 — หลังบ้านส่งชื่อมาเป็น nameTH (เดิมอ่าน r.data.name = ว่างเสมอ ชื่อไม่เคยขึ้น) */
-      if($(idName)) $(idName).value=r.data.nameTH||r.data.name||'';
-      if(idAddr && $(idAddr) && r.data.address) $(idAddr).value=r.data.address;
-      if(idName==='poVendor') poVendorNote();
-      toast('🔍 ได้ข้อมูลจากกรมพัฒน์แล้ว ตรวจก่อนบันทึกนะคะ');
+      dbdShow(r.data, 'ชื่อผู้ขาย'+(idAddr?' · ที่อยู่':''), function(d){
+        /* 🐞 24 ก.ย. 69 — หลังบ้านส่งชื่อมาเป็น nameTH (เดิมอ่าน r.data.name = ว่างเสมอ ชื่อไม่เคยขึ้น) */
+        if($(idName)) $(idName).value=d.nameTH||d.name||'';
+        if(idAddr && $(idAddr) && d.address) $(idAddr).value=d.address;
+        if(idName==='poVendor') poVendorNote();
+        toast('🔍 เติมข้อมูลจากกรมพัฒน์แล้ว ตรวจก่อนบันทึกนะคะ');
+      });
     }).catch(function(e){ toast(e.message); });
   }
   window.poVendorLookup=poVendorLookup; window.poStatusBadge=poStatusBadge;
@@ -11357,6 +11361,31 @@
       .catch(function(){ return back(); });
   }
   window.dbdLookup=dbdLookup;
+  /** ป๊อปอัปผลค้นกรมพัฒน์ (ตัวกลาง) — ดูอย่างเดียวก็ได้ · กด "ใช้ข้อมูลนี้" = เรียก onUse(d) แล้วปิด
+      🔴 ตัวช่วยกรอกเท่านั้น ห้ามเติมลงช่องเงียบ ๆ (ที่อยู่จดทะเบียนกับที่อยู่ออกใบกำกับอาจคนละที่) */
+  var DBD_ON_USE=null, DBD_SHOWN=null;
+  function dbdShow(d, fills, onUse){
+    DBD_SHOWN=d; DBD_ON_USE=onUse||null;
+    var closed=d.status&&d.status.indexOf('ยังดำเนินกิจการ')<0;
+    modal('<h3>🔍 ข้อมูลจากกรมพัฒนาธุรกิจการค้า</h3><div id="mErr" class="m-err hidden"></div>'+
+      (closed?'<div class="m-err">สถานะนิติบุคคล: '+esc(d.status)+' — ตรวจก่อนใช้นะคะ</div>':'')+
+      '<div class="tax-tbl-wrap"><table class="tax-tbl"><tbody>'+
+      dbdRow_('ชื่อนิติบุคคล', d.nameTH)+
+      (d.nameEN?dbdRow_('ชื่อภาษาอังกฤษ', d.nameEN):'')+
+      dbdRow_('ประเภท', d.type)+
+      dbdRow_('สถานะ', d.status)+
+      dbdRow_('สาขา', d.branch)+
+      dbdRow_('ที่อยู่จดทะเบียน', d.address)+
+      dbdRow_('เลขผู้เสียภาษี', d.taxId)+
+      (d.capital?dbdRow_('ทุนจดทะเบียน', money(d.capital)+' บาท'):'')+
+      '</tbody></table></div>'+
+      (onUse?'<div class="m-hint" style="margin:10px 0 0">กด "ใช้ข้อมูลนี้" ระบบจะเติม <b>'+esc(fills||'')+'</b> ลงในฟอร์ม '+
+        '(ยังไม่บันทึกจนกว่าจะกดบันทึก)</div>':'')+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button>'+
+      (onUse?'<button class="btn btn-primary" onclick="dbdUseGo()">ใช้ข้อมูลนี้</button>':'')+'</div>');
+  }
+  function dbdUseGo(){ var f=DBD_ON_USE, d=DBD_SHOWN; closeModal(); if(f&&d) f(d); }
+  window.dbdShow=dbdShow; window.dbdUseGo=dbdUseGo;
 
   /** อัตราให้เลือก — ชุดเดียวกับ RV_WHT_RATES ฝั่ง backend (ค่านอกลิสต์ backend ตีเป็น 0) */
   function poFillRates(sel){
@@ -24323,7 +24352,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260925-1004';
+  var APP_BUILD='20260925-1025';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
