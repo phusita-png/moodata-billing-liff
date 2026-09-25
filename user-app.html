@@ -2831,7 +2831,7 @@
     if(gi) $('tbIcon').innerHTML=gi.replace('stroke-width="1.9"','stroke-width="2"'); else $('tbIcon').textContent=meta[0];
     $('tbTitle').textContent=meta[1];
     mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
-    ({ bank:renderBank, expcat:renderExpCat, svcreg:renderSvcReg, salesone:renderSalesOne, salesform:renderSalesForm, ctform:renderCtForm, portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, perf:renderPerf, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expone:renderExpOne, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, poform:renderPoForm, vendors:renderVendors, vendorform:renderVendorForm, petty:renderPetty, vatbuy:renderVatBuy, vatsale:renderVatSale, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, salesqt:renderSalesQt, salesiv:renderSalesIv, salesre:renderSalesRe, salescn:renderSalesCn, datain:renderDataIn, contract:renderContract, recvkind:renderRecvKind, wtreg:renderSoonPage, statement:renderStatement, cashreport:renderCashReport, airead:renderAiRead, ar:renderAr, customers:renderCustomers, custfile:renderCustFile, dataimp:renderDataImp, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51, finhist:renderFinHist, docreg:renderDocReg, doccheck:renderDocCheck, docdash:renderDocDash, docbycat:renderDocByCat, docreport:renderDocReport, doccat:renderDocCat, kpiemp:renderKpiEmp, kpiperson:renderKpiPerson, kpidash:renderKpiDash, kpientry:renderKpiEntry, kpiscore:renderKpiScore, kpidoc:renderKpiDoc, kpiround:renderKpiRound, kpifill:renderKpiFill, kpimanage:renderKpiManage, kpirule:renderKpiRule, kpimetric:renderKpiMetric, kpitrait:renderKpiTrait, kpiimport:renderKpiImport, kpireport:renderKpiReport, kpihelp:renderKpiHelp, myset:renderMyset }[v] || soon)();
+    ({ bank:renderBank, expcat:renderExpCat, svcreg:renderSvcReg, salesone:renderSalesOne, salesform:renderSalesForm, ctform:renderCtForm, portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, perf:renderPerf, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expone:renderExpOne, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, poform:renderPoForm, vendors:renderVendors, vendorform:renderVendorForm, petty:renderPetty, vatbuy:renderVatBuy, vatsale:renderVatSale, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, salesqt:renderSalesQt, salesiv:renderSalesIv, salesre:renderSalesRe, salescn:renderSalesCn, datain:renderDataIn, contract:renderContract, recvkind:renderRecvKind, wtreg:renderWtReg, statement:renderStatement, cashreport:renderCashReport, airead:renderAiRead, ar:renderAr, customers:renderCustomers, custfile:renderCustFile, dataimp:renderDataImp, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51, finhist:renderFinHist, docreg:renderDocReg, doccheck:renderDocCheck, docdash:renderDocDash, docbycat:renderDocByCat, docreport:renderDocReport, doccat:renderDocCat, kpiemp:renderKpiEmp, kpiperson:renderKpiPerson, kpidash:renderKpiDash, kpientry:renderKpiEntry, kpiscore:renderKpiScore, kpidoc:renderKpiDoc, kpiround:renderKpiRound, kpifill:renderKpiFill, kpimanage:renderKpiManage, kpirule:renderKpiRule, kpimetric:renderKpiMetric, kpitrait:renderKpiTrait, kpiimport:renderKpiImport, kpireport:renderKpiReport, kpihelp:renderKpiHelp, myset:renderMyset }[v] || soon)();
   }
 
   // ───── มือถือ: เมนูกลุ่ม (ล่าง) + แท็บย่อย (บน) · คอมใช้ sidebar เดิม ไม่เกี่ยว ─────
@@ -15782,6 +15782,137 @@
              'ออกอัตโนมัติตอนกดจ่าย — ไม่มีปุ่มสร้างเอง'],
       note:'ระหว่างนี้ดูได้ที่ ระบบภาษี ▸ รายงานภาษี (ภ.ง.ด.1 / 3 / 53) ซึ่งดึงจากทะเบียนเดียวกัน' }
   };
+  /* ═══════════ 🧾 ภาษีที่หัก 50 ทวิ (WT) — ทะเบียนใบที่เราออกให้ผู้รับเงิน (พี่กี้เคาะ 25 ก.ย. 69) ═══════════
+     แท็บตามสถานะส่ง · กรองเดือน/บริษัท/แบบยื่น · ใบออกอัตโนมัติตอนกดจ่าย (ไม่มีปุ่มสร้างเอง)
+     ส่ง: พนักงานที่ผูก LINE = ส่งการ์ด · คนนอก = คัดลอกลิงก์ แล้วระบบจดว่าส่งแล้ว */
+  var WT=null, WT_TAB='all', WT_Q='', WT_MONTH='', WT_ENT='', WT_FORM='';
+  var WT_TABS=[['all','ทั้งหมด'],['wait','⏳ ยังไม่ส่งผู้รับเงิน'],['sent','✅ ส่งแล้ว'],['void','🚫 ยกเลิก']];
+  function wtStage(x){ return x.voided?'void':(x.sentAt?'sent':'wait'); }
+  function renderWtReg(){
+    if(!IS_OWNER){ $('main').innerHTML='<div class="card"><div class="emptybox">เฉพาะผู้ดูแลค่ะ</div></div>'; return; }
+    skel();
+    jsonp({action:'waWhtReg',uid:UID}).then(function(r){
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      WT=r; wtPaint();
+    }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
+  }
+  function wtBase(){
+    var q=WT_Q.trim().toLowerCase();
+    return ((WT&&WT.rows)||[]).filter(function(x){
+      if(WT_MONTH && x.month!==WT_MONTH) return false;
+      if(WT_ENT && (x.entity||'')!==WT_ENT) return false;
+      if(WT_FORM && x.form!==WT_FORM) return false;
+      if(!q) return true;
+      return [x.no,x.payee,x.payeeId,x.src,x.incomeType].some(function(v){ return String(v||'').toLowerCase().indexOf(q)>=0; });
+    });
+  }
+  function wtPaint(){
+    var r=WT||{}, base=wtBase(), cnt={all:base.length};
+    base.forEach(function(x){ var k=wtStage(x); cnt[k]=(cnt[k]||0)+1; });
+    var ents=r.entities||[];
+    var h='<div class="bc">รายจ่าย › ภาษีที่หัก 50 ทวิ</div>'+
+      '<div class="lst-card"><div class="lst-head">'+
+        '<div class="t"><b>ภาษีที่หัก 50 ทวิ <span class="doc-code">WT</span></b>'+
+          '<div>หนังสือรับรองการหักภาษี ณ ที่จ่าย ที่เราออกให้ผู้รับเงิน · ออกอัตโนมัติตอนกดจ่าย</div></div>'+
+        '<div class="lst-tools">'+
+          '<input class="s-find" placeholder="ค้นหาเลขที่ / ชื่อ / เลขผู้เสียภาษี" value="'+esc(WT_Q)+'" oninput="wtSet(&quot;q&quot;,this.value)">'+
+          '<select onchange="wtSet(&quot;m&quot;,this.value)"><option value="">ทุกเดือน</option>'+
+            (r.months||[]).map(function(m){ return '<option value="'+esc(m.key)+'"'+(WT_MONTH===m.key?' selected':'')+'>'+esc(m.text)+'</option>'; }).join('')+
+          '</select>'+
+          (ents.length>1?'<select onchange="wtSet(&quot;e&quot;,this.value)"><option value="">ทุกบริษัท</option>'+
+            ents.map(function(e){ return '<option value="'+esc(e.code)+'"'+(WT_ENT===e.code?' selected':'')+'>'+esc(e.name)+'</option>'; }).join('')+'</select>':'')+
+          '<select onchange="wtSet(&quot;f&quot;,this.value)"><option value="">ทุกแบบยื่น</option>'+
+            ['ภ.ง.ด.1','ภ.ง.ด.3','ภ.ง.ด.53'].map(function(k){ return '<option'+(WT_FORM===k?' selected':'')+'>'+k+'</option>'; }).join('')+
+          '</select>'+
+          '<button class="btn btn-ghost" onclick="wtCsv()">↓ CSV (ตามที่กรอง)</button>'+
+        '</div></div>'+
+      '<div class="tax-acts" style="margin:0 0 12px">'+WT_TABS.map(function(t){
+          return '<button class="btn '+(WT_TAB===t[0]?'btn-primary':'btn-ghost')+'" style="flex:1" onclick="wtSet(&quot;t&quot;,&quot;'+t[0]+'&quot;)">'+
+            esc(t[1])+' <span style="opacity:.75">'+(cnt[t[0]]||0)+'</span></button>'; }).join('')+'</div>'+
+      '<div id="wtTbl">'+wtTblHtml(base)+'</div></div>';
+    $('main').innerHTML=h;
+  }
+  function wtTblHtml(base){
+    var rows=base.filter(function(x){ return WT_TAB==='all' || wtStage(x)===WT_TAB; });
+    var sumAmt=0, sumWht=0;
+    rows.forEach(function(x){ if(x.voided) return; sumAmt+=Number(x.amount)||0; sumWht+=Number(x.wht)||0; });
+    var head='<th style="width:38px">#</th><th>วันที่</th><th>เลขที่</th><th>ผู้ถูกหักภาษี</th><th>เลขผู้เสียภาษี</th>'+
+      '<th>เงินได้ (มาตรา)</th><th>แบบยื่น</th><th class="ta-r">ยอดจ่าย</th><th class="ta-r">อัตรา</th><th class="ta-r">ภาษีที่หัก</th>'+
+      '<th>สถานะส่ง</th><th style="width:40px"></th>';
+    /* 🔴 โครงมาก่อนข้อมูล — ไม่มีใบก็ต้องเห็นหัวคอลัมน์ + แถวรวม */
+    var body=rows.length ? rows.map(function(x,i){
+      var q="'"+String(x.no).split("'").join('')+"'";
+      var st=x.voided?'<span style="color:#E5484D">🚫 ยกเลิก</span>'
+        :(x.sentAt?'<span style="color:#1F7A4D">✅ ส่งแล้ว</span><br><span style="font-size:12px;color:#8A94A6">'+esc(x.sentVia||'')+' · '+esc(x.sentAt)+'</span>'
+          :'<span style="color:#C8730B">⏳ ยังไม่ส่ง</span>'+(x.staff?'<br><span style="font-size:12px;color:#8A94A6">พนักงาน · ส่ง LINE ได้</span>':''));
+      var a=[];
+      if(x.pdf) a.push({key:'pdf', label:'🖨️ พิมพ์ PDF', href:x.pdf});
+      if(!x.voided) a.push({key:'send', label:(x.sentAt?'📤 ส่งให้ผู้รับเงินอีกครั้ง':'📤 ส่งให้ผู้รับเงิน'), call:'wtSend('+q+')'});
+      if(x.payeeLink) a.push({key:'doc', label:'📄 ฉบับผู้รับเงิน', href:x.payeeLink});
+      if(x.src) a.push({key:'contract', label:'📄 ใบสั่งจ่าย '+x.src, call:'prGoSrc('+q.replace(x.no,x.src)+')'});
+      if(!x.voided) a.push({key:'cancel', label:'🚫 ยกเลิกเอกสาร', call:'wtVoid('+q+')', danger:true});
+      return '<tr'+(x.voided?' class="vr-void"':'')+'><td class="dt-nw" style="color:#8A94A6">'+(i+1)+'</td>'+
+        '<td class="dt-nw">'+esc(x.date)+'</td>'+
+        '<td class="dt-nw">'+(x.pdf?'<a class="ex-lk" href="'+esc(x.pdf)+'" target="_blank"><b>'+esc(x.no)+'</b></a>':'<b>'+esc(x.no)+'</b>')+'</td>'+
+        '<td>'+esc(x.payee)+'</td><td class="dt-nw">'+esc(x.payeeId||'-')+'</td>'+
+        '<td>'+esc(x.incomeType||'-')+(x.section?'<br><span style="font-size:12px;color:#8A94A6">'+esc(x.section)+'</span>':'')+'</td>'+
+        '<td class="dt-nw">'+esc(x.form||'-')+'</td>'+
+        '<td class="ta-r dt-nw">'+money(x.amount)+'</td><td class="ta-r dt-nw">'+(Number(x.rate)||0)+'%</td>'+
+        '<td class="ta-r dt-nw">'+money(x.wht)+'</td><td class="dt-nw">'+st+'</td>'+
+        dtActCell('wt-'+x.no, payMenuSort(a))+'</tr>';
+    }).join('') : '<tr class="dt-empty"><td colspan="12">'+(WT_Q||WT_MONTH||WT_ENT||WT_FORM||WT_TAB!=='all'
+        ? 'ไม่พบ 50 ทวิ ตามที่กรอง'
+        : 'ยังไม่มี 50 ทวิ ที่ออกให้ผู้รับเงิน<br><span class="m-hint">ออกอัตโนมัติเมื่อกดจ่ายใบสั่งจ่ายที่มีหัก ณ ที่จ่าย</span>')+'</td></tr>';
+    var tot='<tr class="tax-total"><td></td><td colspan="6">รวม '+rows.filter(function(x){ return !x.voided; }).length+' ใบ (ไม่นับที่ยกเลิก)</td>'+
+      '<td class="ta-r dt-nw">'+money(Math.round(sumAmt*100)/100)+'</td><td></td><td class="ta-r dt-nw">'+money(Math.round(sumWht*100)/100)+'</td><td colspan="2"></td></tr>';
+    return '<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+head+'</tr></thead><tbody>'+body+tot+'</tbody></table></div>';
+  }
+  function wtSet(k, v){
+    if(k==='q'){ WT_Q=v||''; var b=$('wtTbl'); if(b){ b.innerHTML=wtTblHtml(wtBase()); } return; }
+    if(k==='m') WT_MONTH=v; else if(k==='e') WT_ENT=v; else if(k==='f') WT_FORM=v; else if(k==='t') WT_TAB=v;
+    wtPaint();
+  }
+  function wtSend(no){
+    callBusy('กำลังส่ง…', jsonp({action:'waWhtRegSend',uid:UID,no:no})).then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'ส่งไม่สำเร็จ'); return; }
+      if(r.needCopy){
+        modal('<h3>📤 ส่ง 50 ทวิ '+esc(no)+' ให้ '+esc(r.payee||'ผู้รับเงิน')+'</h3>'+
+          '<div class="m-hint">ผู้รับเงินไม่ได้ผูก LINE กับระบบ — คัดลอกลิงก์นี้ไปส่งเอง (LINE/อีเมล) แล้วระบบจะจดว่าส่งแล้ว</div>'+
+          '<div class="fld"><input id="wtLink" value="'+esc(r.link)+'" readonly onclick="this.select()"></div>'+
+          '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+          '<button class="btn btn-primary" onclick="wtCopy(&quot;'+esc(no)+'&quot;)">📋 คัดลอกลิงก์ + จดว่าส่งแล้ว</button></div>');
+        return;
+      }
+      toast('📤 ส่ง 50 ทวิ '+r.no+' ทาง LINE ให้ '+(r.payee||'')+' แล้ว'); renderWtReg();
+    }).catch(function(e){ toast(e.message); });
+  }
+  function wtCopy(no){
+    var el=$('wtLink'); if(el){ el.select(); try{ navigator.clipboard.writeText(el.value).catch(function(){ document.execCommand('copy'); }); }catch(e){ try{ document.execCommand('copy'); }catch(_){} } }
+    callBusy('กำลังบันทึก…', jsonp({action:'waWhtRegSend',uid:UID,no:no,copied:1}), 'จดแล้ว').then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+      closeModal(); toast('📋 คัดลอกลิงก์แล้ว · จดว่าส่ง '+r.no+' แล้ว'); renderWtReg();
+    }).catch(function(e){ toast(e.message); });
+  }
+  function wtVoid(no){
+    if(!confirm('ยกเลิกเอกสาร 50 ทวิ '+no+' ?  เลขที่ยังคงอยู่ในทะเบียน และจะหลุดจากแบบยื่น ภ.ง.ด. — ใบสั่งจ่ายต้นทางไม่เปลี่ยน')) return;
+    callBusy('กำลังยกเลิก…', jsonp({action:'waWhtRegVoid',uid:UID,no:no}), 'ยกเลิกแล้ว').then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'ยกเลิกไม่สำเร็จ'); return; }
+      toast('🚫 ยกเลิก '+r.no+' แล้ว'+(r.warn?' · ⚠️ '+r.warn:'')); renderWtReg();
+    }).catch(function(e){ toast(e.message); });
+  }
+  function wtCsv(){
+    var rows=wtBase().filter(function(x){ return WT_TAB==='all' || wtStage(x)===WT_TAB; });
+    var q=function(v){ v=String(v==null?'':v); return /[",]/.test(v)||v.indexOf(String.fromCharCode(10))>=0?'"'+v.split('"').join('""')+'"':v; };
+    var lines=[['#','วันที่','เลขที่','ผู้ถูกหักภาษี','เลขผู้เสียภาษี','เงินได้','มาตรา','แบบยื่น','ยอดจ่าย','อัตรา','ภาษีที่หัก','สถานะ','ใบสั่งจ่าย'].join(',')];
+    rows.forEach(function(x,i){
+      lines.push([i+1,q(x.date),q(x.no),q(x.payee),x.payeeId?'="'+x.payeeId+'"':'',q(x.incomeType),q(x.section),q(x.form),
+        (Number(x.amount)||0).toFixed(2),(Number(x.rate)||0),(Number(x.wht)||0).toFixed(2),
+        q(x.voided?'ยกเลิก':(x.sentAt?'ส่งแล้ว':'ยังไม่ส่ง')),q(x.src)].join(','));
+    });
+    dlText('50ทวิ-WT'+(WT_MONTH?'-'+WT_MONTH:'')+'.csv', String.fromCharCode(65279)+lines.join(String.fromCharCode(13,10)));
+  }
+  window.renderWtReg=renderWtReg; window.wtSet=wtSet; window.wtSend=wtSend; window.wtCopy=wtCopy; window.wtVoid=wtVoid; window.wtCsv=wtCsv;
+
   function renderSoonPage(){
     var pg=SOON_PAGE[VIEW]||{ icon:'🛠️', title:'กำลังพัฒนา', lines:[], note:'' };
     $('main').innerHTML='<div class="section-h">'+pg.icon+' '+esc(pg.title)+'</div>'+
@@ -24933,7 +25064,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260925-2008';
+  var APP_BUILD='20260925-2041';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
