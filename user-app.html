@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260925-0824">
+<link rel="stylesheet" href="user.css?v=20260925-0853">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -712,6 +712,9 @@
   .pi-more summary{ cursor:pointer; font-weight:600; }
   .sf-sum{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,360px); gap:18px; align-items:start; }
   .sf-tot{ border:1px solid var(--line); border-radius:14px; overflow:hidden; }
+  /* ตัวเว้นเท่าหัวข้อช่อง 1 บรรทัด — ให้กล่องสรุปยอดเริ่มระดับเดียวกับช่องกรอกแถวแรกฝั่งซ้าย
+     แบบใบเสนอราคา (พี่กี้ 25 ก.ย. 69) · จอแคบเรียงแถวเดียวแล้วไม่ต้องเว้น */
+  .sf-tot-sp{ display:block; font-size:13px; font-weight:600; visibility:hidden; margin-bottom:6px; }
   .sf-tot .r{ display:flex; justify-content:space-between; gap:12px; padding:10px 16px; font-size:14px; }
   .sf-tot .r+.r{ border-top:1px solid #F1F4F9; }
   .sf-tot .r b{ font-variant-numeric:tabular-nums; }
@@ -735,6 +738,7 @@
   @media (max-width:860px){
     .sf-grid{ grid-template-columns:1fr; }
     .sf-sum{ grid-template-columns:1fr; }
+    .sf-tot-sp{ display:none; }
   }
   /* ── โครงหน้าเอกสารขายตาม mockup ของพี่กี้ (19 ก.ย. 69) ── */
   .bc{ font-size:12.5px; color:#8A94A6; margin:0 0 6px; }
@@ -11013,7 +11017,7 @@
               '<select id="poRate" onchange="poCalc()"></select></div>'+
           '</div>'+
         '</div>'+
-        '<div><div class="sf-tot" id="poTot"></div>'+
+        '<div><span class="sf-tot-sp" aria-hidden="true" style="margin-bottom:4px">.</span><div class="sf-tot" id="poTot"></div>'+
           '<input type="hidden" id="poAmt" value="'+esc(cur?poAmtInput(cur):'')+'"></div>'+
       '</div>'+
 
@@ -12618,7 +12622,7 @@
               '</div>')
             : '')+
         '</div>'+
-        '<div><div class="sf-tot">'+
+        '<div><span class="sf-tot-sp" aria-hidden="true">.</span><div class="sf-tot">'+
           /* 25 ก.ย. 69 (พี่กี้) บรรทัดแยก VAT แบบใบเสนอราคา — ค่ามาจากปุ่ม 🧾 ใบกำกับภาษีซื้อ (VAT_BASE/VAT_AMT)
              ยังไม่กรอก = เว้นว่างไว้ · ห้ามเดา VAT จากยอดเอง (ไม่มีใบกำกับ = เครดิตภาษีซื้อไม่ได้) */
           (function(){
@@ -24160,7 +24164,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260925-0824';
+  var APP_BUILD='20260925-0853';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
