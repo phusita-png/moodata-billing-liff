@@ -11866,7 +11866,10 @@
       var hq=!no || Number(no)===0;
       return { brano:hq?'00000':('00000'+no).slice(-5), branch:hq?'สำนักงานใหญ่':('สาขาที่ '+('00000'+no).slice(-5)),
         name:[t(x.title), t(x.firnam), t(x.midnam), t(x.lasnam)].filter(Boolean).join(' '),
-        address:p.join(' '), since:t(x.vataprdat) };
+        address:p.join(' '), since:t(x.vataprdat),
+        /* ที่อยู่แยกช่อง (25 ก.ย. 69) — หน้ากรอก 50 ทวิ เติมทีละช่องแบบ TRCloud */
+        parts:{ bldg:t(x.bldgnam), room:t(x.roomno), floor:t(x.floorno), village:t(x.village), no:t(x.addno), moo:t(x.moono),
+          soi:t(x.soinam), yaek:t(x.yaek), road:t(x.thnnam), tambon:t(x.tamnam), amphur:t(x.ampnam), province:t(x.provnam), zip:t(x.poscod) } };
     }).sort(function(a,b){ return a.brano<b.brano?-1:(a.brano>b.brano?1:0); });
   }
   /** รวมผลกรมพัฒน์ + สาขาสรรพากร → รูปเดียวกับเดิม + branches[] (ค่าตั้งต้น = สำนักงานใหญ่ตามทะเบียน VAT) */
@@ -11882,7 +11885,7 @@
     d.dbdAddress=d.address;          /* ที่อยู่จดทะเบียนกรมพัฒน์ เก็บไว้โชว์ */
     d.branches=br;
     d.vatReg=br.length>0;
-    if(br.length){ d.branch=br[0].branch; d.address=br[0].address||d.address; d.brIdx=0; }
+    if(br.length){ d.branch=br[0].branch; d.address=br[0].address||d.address; d.brIdx=0; d.brano=br[0].brano; d.addrParts=br[0].parts||null; }
     return r;
   }
   window.dbdLookup=dbdLookup;
@@ -15819,9 +15822,10 @@
   function wtTabs(){
     return pageTabs(WT_VIEW, [['list','📋 รายการ',"wtView('list')"],['report','📊 รายงาน',"wtView('report')"]]);
   }
-  function wtView(v){ WT_VIEW=v; if(v==='report') wtReport(); else wtPaint(); }
+  function wtView(v){ WT_VIEW=v; if(v==='report') wtReport(); else if(v==='form') wtFormPaint(); else wtPaint(); }
   function wtPaint(){
     if(WT_VIEW==='report'){ wtReportPaint(); return; }
+    if(WT_VIEW==='form'){ WT_VIEW='list'; }   /* โหลดทะเบียนใหม่หลังบันทึก = กลับหน้ารายการ */
     var r=WT||{}, base=wtBase(), cnt={all:base.length};
     base.forEach(function(x){ var k=wtStage(x); cnt[k]=(cnt[k]||0)+1; });
     var ents=r.entities||[];
@@ -15929,67 +15933,199 @@
     });
     dlText('50ทวิ-WT'+(WT_MONTH?'-'+WT_MONTH:'')+'.csv', String.fromCharCode(65279)+lines.join(String.fromCharCode(13,10)));
   }
-  /* ✍️ สร้าง / แก้ไข / คัดลอก 50 ทวิ (พี่กี้เคาะ 25 ก.ย. 69)
-     ใบจากใบสั่งจ่าย: แก้ได้แค่เลขผู้เสียภาษี + ที่อยู่ (ยอดต้องตรงกับที่จ่ายจริง → แก้ที่ใบสั่งจ่าย) */
-  var WT_FORM_NO='', WT_FORM_MODE='new';
+  /* ✍️ หน้ากรอก 50 ทวิ เต็มหน้า (พี่กี้เคาะ 25 ก.ย. 69 · ชุดช่องแบบ TRCloud ในหน้าตาฟอร์มมาตรฐานของเรา)
+     ① ผู้ถูกหักภาษี (มุมขวาบน = เลขที่ + วันที่จ่าย) ② ที่อยู่แยกช่อง ③ เงินได้ตามมาตรา 40 (โชว์ครบ กรอกได้ 1 แถว)
+     ใบจากใบสั่งจ่าย (แก้ไข): ยอด/แถว/วันที่/แบบยื่น ล็อก — แก้ได้แค่ตัวตน ที่อยู่ เงื่อนไข อ้างอิง แนบไฟล์ */
+  var WTF=null, WTF_ADDR_HAND=false, WTF_FORM_HAND=false;
+  var WT_ADDR_F=[['bldg','อาคาร'],['room','ห้องเลขที่'],['floor','ชั้นที่'],['village','หมู่บ้าน'],['no','บ้านเลขที่'],['moo','หมู่ที่'],
+    ['soi','ซอย'],['yaek','แยก'],['road','ถนน'],['tambon','ตำบล/แขวง'],['amphur','อำเภอ/เขต'],['province','จังหวัด'],['zip','รหัสไปรษณีย์']];
   function wtFind(no){ return ((WT&&WT.rows)||[]).filter(function(x){ return x.no===no; })[0]||null; }
   function wtForm(no, mode){
-    var r=WT||{}, x=no?wtFind(no):null;
-    WT_FORM_NO=(mode==='edit'&&x)?x.no:''; WT_FORM_MODE=mode||'new';
-    var lock=(mode==='edit' && x && !x.manual);   // ใบจากใบสั่งจ่าย
-    var v=function(k,d){ return x&&x[k]!=null&&x[k]!==''?x[k]:(d||''); };
+    var x=no?wtFind(no):null;
+    WTF={ mode:mode||'new', x:x, lock:(mode==='edit' && x && !x.manual) };
+    WTF_ADDR_HAND=!!(x && x.payeeAddr); WTF_FORM_HAND=!!(x && mode==='edit');
+    WT_VIEW='form'; wtFormPaint();
+    try{ window.scrollTo(0,0); }catch(e){}
+  }
+  function wtFormPaint(){
+    var r=WT||{}, F=WTF||{}, x=F.x, lock=F.lock, mode=F.mode;
+    var v=function(k,d){ return x&&x[k]!=null&&x[k]!==''?x[k]:(d==null?'':d); };
     var dis=lock?' disabled':'';
-    var ents=r.entities||[];
-    var title=mode==='edit'?'✏️ แก้ไข 50 ทวิ '+esc(x.no):(mode==='copy'?'📋 คัดลอกเป็นใบใหม่ (จาก '+esc(x.no)+')':'+ สร้าง 50 ทวิ');
-    modal('<h3>'+title+'</h3><div id="mErr" class="m-err hidden"></div>'+
-      (lock?'<div class="m-hint">ใบนี้มาจากใบสั่งจ่าย '+esc(x.src)+' — แก้ได้เฉพาะเลขผู้เสียภาษีกับที่อยู่ · ยอด/มาตรา/วันที่ ต้องแก้ที่ใบสั่งจ่าย</div>'
-        :'<div class="m-hint">สำหรับเงินที่จ่ายนอกระบบ — ออกเลข WT + PDF และนับเข้าแบบยื่น ภ.ง.ด. ของเดือนที่จ่าย</div>')+
-      (ents.length>1?'<div class="fld"><label>บริษัทผู้จ่าย</label><select id="wtfEnt"'+dis+'>'+ents.map(function(e){
+    var ents=r.entities||[], parts=(x&&x.addrParts)||{};
+    var title=mode==='edit'?'แก้ไข 50 ทวิ '+x.no:(mode==='copy'?'สร้าง 50 ทวิ (คัดลอกจาก '+x.no+')':'สร้าง 50 ทวิ');
+    var h='<div class="bc"><button class="lnk" onclick="wtView(&quot;list&quot;)">รายจ่าย › ภาษีที่หัก 50 ทวิ</button> › '+esc(mode==='edit'?'แก้ไข':'สร้าง')+'</div>'+
+      '<div class="pg-title" style="margin:0 0 12px"><h2>🧾 '+esc(title)+'</h2></div>'+
+      '<div id="mErr" class="m-err hidden"></div>'+
+      (lock?'<div class="m-hint" style="margin:0 0 12px">ใบนี้มาจากใบสั่งจ่าย <b>'+esc(x.src)+'</b> — ยอด/แถวเงินได้/วันที่/แบบยื่น ต้องแก้ที่ใบสั่งจ่าย · หน้านี้แก้ได้แค่ข้อมูลผู้ถูกหักภาษี ที่อยู่ เงื่อนไข อ้างอิง</div>':'');
+    // ① ผู้ถูกหักภาษี
+    h+='<div class="sf-card"><div class="sf-h">👤 ผู้ถูกหักภาษี ณ ที่จ่าย</div><div class="sf-grid">'+
+      (ents.length>1?'<div class="sf-f wide"><label>บริษัทผู้จ่าย (ผู้มีหน้าที่หักภาษี)</label><select id="wtfEnt"'+dis+'>'+ents.map(function(e){
         return '<option value="'+esc(e.code)+'"'+(v('entity')===e.code||(!v('entity')&&e.isDefault)?' selected':'')+'>'+esc(e.name)+'</option>'; }).join('')+'</select></div>':'')+
-      '<div class="fld"><label>ประเภทผู้ถูกหักภาษี</label><select id="wtfKind"'+dis+' onchange="wtfCalc()">'+(r.kinds||['บุคคลธรรมดา','นิติบุคคล']).map(function(k){
+      '<div class="sf-f c4"><label>ค้นจากทะเบียนผู้ขาย</label><input id="wtfVendor" list="wtfVendorList" placeholder="พิมพ์ชื่อเพื่อค้นหา แล้วเลือก" autocomplete="off" onchange="wtfVendorPick()">'+
+        '<datalist id="wtfVendorList">'+(r.vendors||[]).map(function(vd){ return '<option value="'+esc(vd.name)+'">'+esc((vd.taxId||'')+(vd.branch?' · '+vd.branch:''))+'</option>'; }).join('')+'</datalist></div>'+
+      '<div class="sf-f c2"><label>ประเภทผู้ถูกหักภาษี</label><select id="wtfKind"'+dis+' onchange="wtfCalc()">'+(r.kinds||['บุคคลธรรมดา','นิติบุคคล']).map(function(k){
         return '<option'+(v('payeeKind','บุคคลธรรมดา')===k?' selected':'')+'>'+esc(k)+'</option>'; }).join('')+'</select></div>'+
-      '<div class="fld"><label>เลขผู้เสียภาษี (13 หลัก)</label><div style="display:flex;gap:6px">'+
-        '<input id="wtfId" type="tel" inputmode="numeric" maxlength="17" value="'+esc(v('payeeId'))+'" style="flex:1;min-width:0">'+
-        '<button class="btn btn-ghost" style="flex:none;width:auto;padding:0 12px" onclick="poVendorLookup(&quot;wtfName&quot;,&quot;wtfId&quot;,&quot;wtfAddr&quot;)" title="ค้นจากกรมพัฒนาธุรกิจการค้า">🔍</button></div></div>'+
-      '<div class="fld"><label>ชื่อผู้ถูกหักภาษี</label><input id="wtfName" value="'+esc(v('payee'))+'"'+dis+'></div>'+
-      '<div class="fld"><label>ที่อยู่</label><input id="wtfAddr" value="'+esc(v('payeeAddr'))+'" placeholder="ใช้ในใบแนบ ภ.ง.ด."></div>'+
-      '<div class="fld"><label>วันที่จ่ายเงิน</label><input id="wtfDate" type="date" value="'+esc(mode==='copy'?(r.today||''):v('iso',r.today||''))+'"'+dis+'></div>'+
-      '<div class="fld"><label>ประเภทเงินได้ (มาตรา)</label><select id="wtfSect"'+dis+' onchange="wtfSectChange()"><option value="">— เลือก —</option>'+(r.sections||[]).map(function(sc){
-        return '<option value="'+esc(sc.code)+'" data-rate="'+sc.defRate+'"'+(v('section')===sc.code?' selected':'')+'>'+esc(sc.code+' '+sc.label)+'</option>'; }).join('')+'</select></div>'+
-      '<div style="display:flex;gap:10px"><div class="fld" style="flex:2"><label>จำนวนเงินที่จ่าย (ก่อน VAT)</label><input id="wtfAmt" inputmode="decimal" value="'+esc(v('amount'))+'" oninput="wtfCalc()"'+dis+'></div>'+
-        '<div class="fld" style="flex:1"><label>อัตรา %</label><input id="wtfRate" inputmode="decimal" value="'+esc(v('rate','3'))+'" oninput="wtfCalc()"'+dis+'></div></div>'+
-      '<div class="m-hint" id="wtfSum"></div>'+
-      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
-      '<button class="btn btn-primary" id="wtfBtn" onclick="wtSave()">'+(mode==='edit'?'บันทึก + ออก PDF ใหม่ทับเลขเดิม':'ออก 50 ทวิ')+'</button></div>');
+      '<div class="sf-f c2"><label>เลขที่เอกสาร</label><input value="'+esc(mode==='edit'?x.no:'ออกอัตโนมัติ')+'" readonly></div>'+
+      '<div class="sf-f c2"><label>วันที่จ่ายเงิน</label><input id="wtfDate" type="date" value="'+esc(mode==='edit'?v('iso',r.today):(r.today||''))+'"'+dis+'></div>'+
+      '<div class="sf-f c2"><label>ต้นทาง</label><input value="'+esc(mode==='edit'&&x.src?'ใบสั่งจ่าย '+x.src:'สร้างเอง')+'" readonly></div>'+
+      '<div class="sf-f c2"><label>คำนำหน้าชื่อ</label><input id="wtfPrefix" list="wtfPrefixList" value="'+esc(v('prefix'))+'" placeholder="นาย / บริษัท">'+
+        '<datalist id="wtfPrefixList">'+['นาย','นาง','นางสาว','บริษัท','ห้างหุ้นส่วนจำกัด','ห้างหุ้นส่วนสามัญ'].map(function(p){ return '<option value="'+p+'">'; }).join('')+'</datalist></div>'+
+      '<div class="sf-f c4"><label>ชื่อผู้ถูกหักภาษี</label><input id="wtfName" value="'+esc(v('payee'))+'" placeholder="ชื่อเต็มตามบัตร/หนังสือรับรอง"></div>'+
+      '<div class="sf-f c2"><label>สาขา (5 หลัก)</label><input id="wtfBranch" inputmode="numeric" maxlength="5" value="'+esc(String(v('branch')).replace(/[^0-9]/g,''))+'" placeholder="00000 = สนญ."></div>'+
+      '<div class="sf-f c4"><label>เลขประจำตัวผู้เสียภาษี / เลขบัตรประชาชน</label><div style="display:flex;gap:6px">'+
+        '<input id="wtfId" type="tel" inputmode="numeric" maxlength="17" value="'+esc(v('payeeId'))+'" style="flex:1;min-width:0" placeholder="13 หลัก">'+
+        '<button class="btn btn-ghost" style="flex:none;width:auto;padding:0 12px" onclick="wtfLookup()" title="ค้นจากกรมพัฒน์ + สาขาจากสรรพากร">🔍</button></div></div>'+
+      '<div class="sf-f c4"><label>ประเภทการหัก ณ ที่จ่าย (แบบยื่น)</label><select id="wtfForm"'+dis+' onchange="WTF_FORM_HAND=true">'+(r.forms||[]).map(function(fm){
+        return '<option value="'+esc(fm.key)+'"'+(v('formType')===fm.key?' selected':'')+'>'+esc(fm.label)+'</option>'; }).join('')+'</select></div>'+
+      '<div class="sf-f c4"><label>เงื่อนไขผู้จ่ายเงิน</label><select id="wtfCond">'+(r.conditions||[]).map(function(c){
+        return '<option value="'+esc(c.key)+'"'+(v('condition','1')===c.key?' selected':'')+'>'+esc(c.label)+'</option>'; }).join('')+'</select></div>'+
+      '<div class="sf-f c4"><label>เอกสารอ้างอิง</label><input id="wtfRef" value="'+esc(v('refNo'))+'" placeholder="เช่น เลขใบแจ้งหนี้ของผู้รับเงิน"></div>'+
+      '</div></div>';
+    // ② ที่อยู่
+    h+='<div class="sf-card"><div class="sf-h">🏠 ที่อยู่ผู้ถูกหักภาษี</div><div class="sf-grid">'+
+      WT_ADDR_F.map(function(fd){ return '<div class="sf-f c2"><label>'+esc(fd[1])+'</label><input id="wtfP_'+fd[0]+'" value="'+esc(parts[fd[0]]||'')+'" oninput="wtfAddrCompose()"></div>'; }).join('')+
+      '<div class="sf-f wide"><label>ที่อยู่ที่พิมพ์บน 50 ทวิ / ใบแนบ ภ.ง.ด. <span style="font-weight:400;color:#8A94A6">(รวมจากช่องด้านบนให้เอง · แก้เองได้)</span></label>'+
+        '<input id="wtfAddr" value="'+esc(v('payeeAddr'))+'" oninput="WTF_ADDR_HAND=true"></div>'+
+      '</div></div>';
+    // ③ เงินได้ตามมาตรา 40
+    var rows=r.certRows||[], act=v('certRow');
+    h+='<div class="sf-card"><div class="sf-h">📋 เงินได้ตามมาตรา 40 <span style="font-weight:400;color:#8A94A6;font-size:13px">กรอกได้ 1 แถวต่อใบ · จ่ายหลายประเภท = ออกหลายใบ</span></div>'+
+      '<datalist id="wtRates">'+[1,2,3,5,10,15].map(function(n){ return '<option value="'+n+'">'; }).join('')+'</datalist>'+
+      '<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr><th>เงินได้ตามมาตรา 40</th><th style="width:190px">ประเภทเงินได้ที่จ่าย</th>'+
+        '<th class="ta-r" style="width:140px">จำนวนเงิน</th><th class="ta-r" style="width:90px">อัตรา %</th><th class="ta-r" style="width:130px">ภาษีหัก ณ ที่จ่าย</th></tr></thead><tbody>'+
+      rows.map(function(rw){
+        var pad='padding-left:'+(12+(rw.indent||0)*22)+'px';
+        if(rw.head) return '<tr><td colspan="5" style="'+pad+';color:#3B4452;white-space:normal">'+esc(rw.label)+'</td></tr>';
+        var on=act===rw.key;
+        return '<tr><td style="'+pad+';white-space:normal">'+esc(rw.label)+'</td>'+
+          '<td>'+(rw.spec?'<input id="wtfT_'+rw.key+'" value="'+esc(on?v('incomeType'):'')+'" placeholder="'+esc(rw.defText||'ระบุ')+'"'+dis+'>'
+            :'<span style="color:#8A94A6;font-size:13px">'+esc(rw.short||'')+'</span>')+'</td>'+
+          '<td><input id="wtfA_'+rw.key+'" class="ta-r" inputmode="decimal" value="'+esc(on?v('amount'):'')+'" oninput="wtfRowInput(&quot;'+rw.key+'&quot;)"'+dis+'></td>'+
+          '<td><input id="wtfR_'+rw.key+'" class="ta-r" list="wtRates" inputmode="decimal" value="'+esc(on?v('rate'):(rw.defRate||3))+'" oninput="wtfCalc()"'+dis+'></td>'+
+          '<td class="ta-r dt-nw" id="wtfW_'+rw.key+'">—</td></tr>';
+      }).join('')+
+      '<tr class="tax-total"><td colspan="2">รวม</td><td class="ta-r dt-nw" id="wtfSumA">0.00</td><td></td><td class="ta-r dt-nw" id="wtfSumW">0.00</td></tr>'+
+      '</tbody></table></div>'+
+      '<div class="m-hint" id="wtfSum" style="margin:10px 0 0"></div>'+
+      '<div class="sf-grid" style="margin-top:12px"><div class="sf-f c6"><label>ลิงก์ไฟล์แนบ</label><input id="wtfAttach" value="'+esc(v('attach'))+'" placeholder="Attached URL…"></div>'+
+      '<div class="sf-f c6">'+imgsFldHtml('wtfImgs','📎 แนบไฟล์หลักฐาน (รูป)')+'</div></div>'+
+      '</div>';
+    h+='<div class="sf-bar"><button class="btn btn-ghost" onclick="wtView(&quot;list&quot;)">ยกเลิก</button>'+
+      '<button class="btn btn-ghost" onclick="wtForm('+(x?'&quot;'+esc(x.no)+'&quot;':'&quot;&quot;')+',&quot;'+esc(mode)+'&quot;)">รีเซ็ต</button>'+
+      '<button class="btn btn-primary" id="wtfBtn" onclick="wtSave()">'+(mode==='edit'?'บันทึก + ออก PDF ใหม่ทับเลขเดิม':'บันทึก + ออก 50 ทวิ')+'</button></div>';
+    $('main').innerHTML=h;
+    imgsFldBind('wtfImgs');
+    if(!WTF_ADDR_HAND) wtfAddrCompose();
     wtfCalc();
   }
-  function wtfSectChange(){
-    var sel=$('wtfSect'); if(!sel) return; var o=sel.options[sel.selectedIndex];
-    if(o && o.getAttribute('data-rate') && $('wtfRate')) $('wtfRate').value=o.getAttribute('data-rate');
-    wtfCalc();
+  function wtfNum(id){ return Number(String((($(id)||{}).value)||'').split(',').join(''))||0; }
+  /** กรอก 1 แถวต่อใบ — แถวที่มียอดแล้ว ล็อกแถวอื่น */
+  function wtfRowInput(key){ wtfCalc(); }
+  function wtfActive(){
+    var rows=((WT||{}).certRows||[]).filter(function(rw){ return !rw.head; });
+    return rows.filter(function(rw){ return wtfNum('wtfA_'+rw.key)>0; });
   }
   function wtfCalc(){
-    var amt=Number(String(($('wtfAmt')||{}).value||'').split(',').join(''))||0, rate=Number(($('wtfRate')||{}).value)||0;
-    var wht=Math.round(amt*rate)/100, box=$('wtfSum'); if(!box) return;
-    var sect=(($('wtfSect')||{}).value)||'', kind=(($('wtfKind')||{}).value)||'';
-    var form=!sect?'':(kind==='นิติบุคคล'?'ภ.ง.ด.53':(sect==='40(1)'||sect==='40(2)'?'ภ.ง.ด.1':'ภ.ง.ด.3'));
-    box.innerHTML=amt>0?('ภาษีที่หัก <b>'+money(wht)+'</b> บาท · จ่ายสุทธิ '+money(Math.round((amt-wht)*100)/100)+' บาท'+(form?' · เข้าแบบ <b>'+form+'</b>':'')):'';
+    var rows=((WT||{}).certRows||[]).filter(function(rw){ return !rw.head; });
+    var act=wtfActive(), one=act.length===1?act[0]:null, lock=WTF&&WTF.lock;
+    var sa=0, sw=0;
+    rows.forEach(function(rw){
+      var am=wtfNum('wtfA_'+rw.key), rt=wtfNum('wtfR_'+rw.key), w=Math.round(am*rt)/100;
+      var cell=$('wtfW_'+rw.key); if(cell) cell.textContent=am>0?money(w):'—';
+      var inp=$('wtfA_'+rw.key); if(inp && !lock) inp.disabled=!!(one && one.key!==rw.key);
+      if(am>0){ sa+=am; sw+=w; }
+    });
+    if($('wtfSumA')) $('wtfSumA').textContent=money(Math.round(sa*100)/100);
+    if($('wtfSumW')) $('wtfSumW').textContent=money(Math.round(sw*100)/100);
+    var kind=(($('wtfKind')||{}).value)||'';
+    if(one && !WTF_FORM_HAND && $('wtfForm')){
+      $('wtfForm').value=kind==='นิติบุคคล'?'PND53':((one.section==='40(1)'||one.section==='40(2)')?'PND1':'PND3');
+    }
+    var box=$('wtfSum'); if(!box) return;
+    box.innerHTML=act.length>1?'<span style="color:#DC2626">กรอกได้ 1 แถวต่อใบ — ล้างยอดแถวอื่นก่อนค่ะ</span>'
+      :(one?('ภาษีที่หัก <b>'+money(sw)+'</b> บาท · จ่ายสุทธิ '+money(Math.round((sa-sw)*100)/100)+' บาท · เข้าแบบ <b>'+
+        esc(((($('wtfForm')||{}).selectedOptions||[])[0]||{}).text||'')+'</b>'):'กรอกจำนวนเงินในแถวเงินได้ที่จ่าย');
+  }
+  function wtfAddrCompose(){
+    if(WTF_ADDR_HAND) return;
+    var g=function(k){ return String((($('wtfP_'+k)||{}).value)||'').trim(); };
+    var bkk=g('province').indexOf('กรุงเทพ')>=0, p=[];
+    var pre=function(w,t){ return t.indexOf(w)===0?t:w+t; };
+    if(g('no')) p.push(g('no'));
+    if(g('bldg')) p.push(pre('อาคาร',g('bldg')));
+    if(g('room')) p.push('ห้อง '+g('room'));
+    if(g('floor')) p.push('ชั้น '+g('floor'));
+    if(g('village')) p.push(pre('หมู่บ้าน',g('village')));
+    if(g('moo')) p.push('หมู่ที่ '+g('moo'));
+    if(g('soi')) p.push(pre('ซอย',g('soi')));
+    if(g('yaek')) p.push(pre('แยก',g('yaek')));
+    if(g('road')) p.push(pre('ถนน',g('road')));
+    if(g('tambon')) p.push(pre(bkk?'แขวง':'ตำบล',g('tambon')));
+    if(g('amphur')) p.push(pre(bkk?'เขต':'อำเภอ',g('amphur')));
+    if(g('province')) p.push(bkk?g('province'):pre('จังหวัด',g('province')));
+    if(g('zip')) p.push(g('zip'));
+    var el=$('wtfAddr'); if(el && p.length) el.value=p.join(' ');
+  }
+  function wtfFillParts(pt){
+    WT_ADDR_F.forEach(function(fd){ var el=$('wtfP_'+fd[0]); if(el) el.value=(pt&&pt[fd[0]])||''; });
+  }
+  function wtfVendorPick(){
+    var nm=String((($('wtfVendor')||{}).value)||'').trim();
+    var vd=((WT||{}).vendors||[]).filter(function(x){ return x.name===nm; })[0]; if(!vd) return;
+    if($('wtfName')) $('wtfName').value=vd.name;
+    if($('wtfId')) $('wtfId').value=vd.taxId||'';
+    var bn=String(vd.branch||'').replace(/[^0-9]/g,'');
+    if($('wtfBranch')) $('wtfBranch').value=bn?('00000'+bn).slice(-5):(String(vd.branch||'').indexOf('ใหญ่')>=0?'00000':'');
+    if(vd.kind && $('wtfKind') && !(WTF&&WTF.lock)) $('wtfKind').value=vd.kind.indexOf('นิติ')>=0?'นิติบุคคล':'บุคคลธรรมดา';
+    wtfFillParts({}); WTF_ADDR_HAND=true; if($('wtfAddr')) $('wtfAddr').value=vd.address||'';
+    wtfCalc(); toast('🏪 เติมข้อมูลจากทะเบียนผู้ขายแล้ว ตรวจก่อนบันทึกนะคะ');
+  }
+  function wtfLookup(){
+    var tax=String((($('wtfId')||{}).value)||'').replace(/[^0-9]/g,'');
+    if(tax.length!==13){ toast('ใส่เลขผู้เสียภาษี 13 หลักก่อนค่ะ'); return; }
+    callBusy('กำลังค้น…', dbdLookup(tax)).then(function(r){
+      if(!r||!r.ok||!r.data){ toast((r&&r.error)||'ไม่พบข้อมูลจากกรมพัฒน์'); return; }
+      dbdShow(r.data, 'ชื่อ · สาขา · ที่อยู่', function(d){
+        if($('wtfName')) $('wtfName').value=d.nameTH||d.name||'';
+        if($('wtfBranch')) $('wtfBranch').value=d.brano||'00000';
+        if($('wtfKind') && !(WTF&&WTF.lock) && d.type) $('wtfKind').value='นิติบุคคล';
+        if(d.addrParts){ wtfFillParts(d.addrParts); WTF_ADDR_HAND=false; wtfAddrCompose(); }
+        else { wtfFillParts({}); WTF_ADDR_HAND=true; if($('wtfAddr')) $('wtfAddr').value=d.address||''; }
+        wtfCalc(); toast('🔍 เติมข้อมูลแล้ว ตรวจก่อนบันทึกนะคะ');
+      });
+    }).catch(function(e){ toast(e.message); });
   }
   function wtSave(){
+    var act=wtfActive();
+    if(!(WTF&&WTF.lock)){
+      if(!act.length){ mErr('กรอกจำนวนเงินในแถวเงินได้ที่จ่ายก่อนค่ะ'); return; }
+      if(act.length>1){ mErr('กรอกได้ 1 แถวต่อใบค่ะ — จ่ายหลายประเภทให้ออกหลายใบ'); return; }
+    }
+    var one=act[0]||{}, parts={};
+    WT_ADDR_F.forEach(function(fd){ var t=String((($('wtfP_'+fd[0])||{}).value)||'').trim(); if(t) parts[fd[0]]=t; });
     var p={action:'waWhtRegSave',uid:UID,
       entity:(($('wtfEnt')||{}).value)||'', payeeKind:(($('wtfKind')||{}).value)||'',
-      payeeId:String((($('wtfId')||{}).value)||'').replace(/[^0-9]/g,''), payeeName:String((($('wtfName')||{}).value)||'').trim(),
-      payeeAddr:String((($('wtfAddr')||{}).value)||'').trim(), payDate:(($('wtfDate')||{}).value)||'',
-      section:(($('wtfSect')||{}).value)||'', rate:(($('wtfRate')||{}).value)||'', amount:(($('wtfAmt')||{}).value)||''};
-    if(WT_FORM_NO) p.no=WT_FORM_NO;
+      prefix:String((($('wtfPrefix')||{}).value)||'').trim(), payeeName:String((($('wtfName')||{}).value)||'').trim(),
+      branch:String((($('wtfBranch')||{}).value)||'').replace(/[^0-9]/g,''),
+      payeeId:String((($('wtfId')||{}).value)||'').replace(/[^0-9]/g,''),
+      payeeAddr:String((($('wtfAddr')||{}).value)||'').trim(), addrParts:JSON.stringify(parts),
+      payDate:(($('wtfDate')||{}).value)||'', formType:(($('wtfForm')||{}).value)||'',
+      condition:(($('wtfCond')||{}).value)||'1', refNo:String((($('wtfRef')||{}).value)||'').trim(),
+      attach:String((($('wtfAttach')||{}).value)||'').trim(),
+      certRow:one.key||'', incomeText:String((($('wtfT_'+(one.key||''))||{}).value)||'').trim(),
+      amount:(($('wtfA_'+(one.key||''))||{}).value)||'', rate:(($('wtfR_'+(one.key||''))||{}).value)||''};
+    var im=IMGS['wtfImgs']||[]; if(im.length) p.imgs=JSON.stringify(im);
+    if(WTF && WTF.mode==='edit' && WTF.x) p.no=WTF.x.no;
     var btn=$('wtfBtn'); if(btn){ btn.disabled=true; btn.textContent='กำลังออกเอกสาร…'; }
     callBusy('กำลังออก 50 ทวิ…', jsonpPost(p), 'บันทึกแล้ว').then(function(r){
-      if(!r||!r.ok){ if(btn){ btn.disabled=false; btn.textContent='ลองอีกครั้ง'; } mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
-      closeModal(); toast((WT_FORM_NO?'✏️ แก้ไข ':'🧾 ออก ')+r.no+' แล้ว'+(r.warn?' · ⚠️ '+r.warn:''));
+      if(!r||!r.ok){ if(btn){ btn.disabled=false; btn.textContent='ลองอีกครั้ง'; } mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); try{ window.scrollTo(0,0); }catch(e){} return; }
+      IMGS['wtfImgs']=[];
+      toast((p.no?'✏️ แก้ไข ':'🧾 ออก ')+r.no+' แล้ว'+(r.warn?' · ⚠️ '+r.warn:''));
       if(r.pdf) window.open(r.pdf,'_blank');
-      renderWtReg();
+      WT_VIEW='list'; renderWtReg();
     }).catch(function(e){ if(btn){ btn.disabled=false; btn.textContent='ลองอีกครั้ง'; } mErr(e.message); });
   }
+  window.wtfRowInput=wtfRowInput; window.wtfAddrCompose=wtfAddrCompose; window.wtfVendorPick=wtfVendorPick; window.wtfLookup=wtfLookup;
 
   /* 📊 แท็บรายงาน (แบบ TRCloud) — ข้อมูลชุดเดียวกับแบบยื่น ภ.ง.ด. · PDF = ใบแนบจากตัวออกที่มีอยู่ */
   function wtReport(){
@@ -16059,7 +16195,7 @@
       window.open(r.pdfUrl,'_blank');
     }).catch(function(e){ toast(e.message); });
   }
-  window.wtView=wtView; window.wtForm=wtForm; window.wtfSectChange=wtfSectChange; window.wtfCalc=wtfCalc; window.wtSave=wtSave;
+  window.wtView=wtView; window.wtForm=wtForm; window.wtfCalc=wtfCalc; window.wtSave=wtSave;
   window.wtReport=wtReport; window.wtRepSet=wtRepSet; window.wtRepExcel=wtRepExcel; window.wtRepPdf=wtRepPdf;
   window.renderWtReg=renderWtReg; window.wtSet=wtSet; window.wtSend=wtSend; window.wtCopy=wtCopy; window.wtVoid=wtVoid; window.wtCsv=wtCsv;
 
@@ -19295,7 +19431,7 @@
   }
   function dbdPickBranch(i){
     var d=DBD_CUR, b=d&&d.branches&&d.branches[i]; if(!b) return;
-    d.brIdx=i; d.branch=b.branch; d.address=b.address||d.dbdAddress||d.address;
+    d.brIdx=i; d.branch=b.branch; d.address=b.address||d.dbdAddress||d.address; d.brano=b.brano; d.addrParts=b.parts||null;
   }
   window.dbdPickBranch=dbdPickBranch;
   var RD_VATINFO_URL='https://vsinter.rd.go.th/rd-webcontent-web/#/vatsearch';
@@ -25214,7 +25350,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260925-2247';
+  var APP_BUILD='20260925-2323';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
