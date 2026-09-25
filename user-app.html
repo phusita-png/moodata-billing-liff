@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260925-0857">
+<link rel="stylesheet" href="user.css?v=20260925-0915">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -6612,12 +6612,61 @@
   function slDel(pfx, i){
     SL[pfx]=slRead(pfx); if(SL[pfx].length<=1) return;
     SL[pfx].splice(i,1); slPaint(pfx);
+    if(pfx==='exd') exdCalc();   /* ลบบรรทัด = ยอดเปลี่ยน */
   }
   function slTot(pfx){
     var list=slRead(pfx);
     list.forEach(function(x,i){ var m=$(pfx+'_m'+i); if(m) m.textContent=money(parseFloat(x.amount)||0); });
     var tt=$(pfx+'Tot'); if(tt) tt.textContent=money(slSum(list));
+    if(pfx==='exd') exdCalc();
   }
+
+  /* ═════ 💲 สรุปยอดใบพนักงาน (25 ก.ย. 69 · พี่กี้เคาะ) ═════
+     แยกภาษี = ราคาที่กรอก + 7% · รวมภาษี = ถอดฐาน/VAT · ไม่มีภาษี = ใช้ฐาน/VAT จากปุ่ม 🧾 (ไม่มี = เว้นว่าง)
+     หัก ณ ที่จ่ายคิดจากฐานก่อน VAT · ตัวคิดตรงกับหลังบ้าน (staffPriceCalc_ · staffWhtBase_) — หลังบ้านคิดซ้ำตอนบันทึกเสมอ */
+  function exdOneAmt(x){ return (x.priceMode==='excl' && Number(x.vatBase)>0) ? Number(x.vatBase) : x.amount; }
+  function exdPriceCalc(sum, mode){
+    var r2=function(n){ return Math.round((Number(n)||0)*100)/100; }, s=r2(sum);
+    if(mode==='excl'){ var v=r2(s*7/100); return { base:s, vat:v, total:r2(s+v), vatMode:true }; }
+    if(mode==='incl'){ var b=r2(s*100/107); return { base:b, vat:r2(s-b), total:s, vatMode:true }; }
+    return { base:s, vat:0, total:s, vatMode:false };
+  }
+  /** live=null → ค่าที่บันทึกไว้ · live={sum,mode} → คิดจากหน้าจอ */
+  function exdTotHtml(x, live){
+    var blank='<span style="color:#8A94A6;font-weight:400">—</span>';
+    var rv=!!(x.docType && x.docType.indexOf('ใบสำคัญ')>=0);
+    var sum, total, base, vat, has;
+    if(live){
+      var pc=exdPriceCalc(live.sum, live.mode);
+      sum=live.sum; total=pc.total;
+      if(pc.vatMode){ base=pc.base; vat=pc.vat; has=true; }
+      else { base=Number(x.vatBase)||0; vat=Number(x.vatAmt)||0; has=(base>0||vat>0) && live.mode===(x.priceMode||'none'); }
+    } else {
+      total=Number(x.amount)||0;
+      base=Number(x.vatBase)||0; vat=Number(x.vatAmt)||0; has=base>0||vat>0;
+      sum=(x.priceMode==='excl' && base>0) ? base : total;
+    }
+    var rate=Number(x.whtRate)||0;
+    var whtBase=(has && base>0 && base<=total && (live ? exdPriceCalc(0,live.mode).vatMode : (x.priceMode==='excl'||x.priceMode==='incl'))) ? base : total;
+    /* ยอด/โหมดเท่าที่บันทึก = ใช้ภาษีที่บันทึกไว้ (อาจเป็นยอดบาทที่พี่พิมพ์เอง ห้ามคิดทับ) */
+    var keep=!live || (live.mode===(x.priceMode||'none') && Math.round(total*100)===Math.round((Number(x.amount)||0)*100));
+    var wht=keep ? (Number(x.whtAmt)||0) : Math.round(whtBase*rate)/100;
+    var net=keep ? (Number(x.netAmt)||total) : Math.round((total-wht)*100)/100;
+    var rt=(base>0&&vat>0)?Math.round(vat/base*100):0;
+    return '<div class="r"><span>รวมรายการ</span><b>'+money(sum)+'</b></div>'+
+      '<div class="r"><span>มูลค่าที่คำนวณภาษี</span><b>'+(has?money(base):blank)+'</b></div>'+
+      '<div class="r"><span>ภาษีมูลค่าเพิ่ม'+(rt?' '+rt+'%':'')+'</span><b>'+(has?money(vat):blank)+'</b></div>'+
+      '<div class="r grand"><span>จำนวนเงินทั้งสิ้น</span><b>'+money(total)+'</b></div>'+
+      (rate?'<div class="r"><span>หัก ณ ที่จ่าย '+rate+'%</span><b>− '+money(wht)+'</b></div>':'')+
+      /* ยอดที่ต้องโอน เฉพาะตอนไม่เท่ายอดรวม (มีหัก ณ ที่จ่าย) หรือใบ RV — พี่กี้ตัดบรรทัดโอนคืนพนักงาน 25 ก.ย. 69 */
+      ((rv||rate)?'<div class="r"><span>ยอดที่ต้องโอน</span><b>'+money(net)+'</b></div>':'');
+  }
+  function exdCalc(){
+    var box=$('exdTotBox'), x=PO_SX; if(!box||!x) return;
+    var pm=($('exdPm')||{}).value||(x.priceMode||'none');
+    box.innerHTML=exdTotHtml(x, { sum:slSum(slRead('exd')), mode:pm });
+  }
+  window.exdCalc=exdCalc;
   /** ตรวจก่อนส่ง (ด่านจริงอยู่หลังบ้าน staffItemsParse_) — คืนรายการที่กรอก หรือ null (เขียน mErr ให้แล้ว) */
   function slCollect(pfx){
     var list=slRead(pfx).filter(function(x){ return x.detail || x.amount; });
@@ -12570,6 +12619,13 @@
             '<div class="sf-f c2"><label>เบอร์โทร</label><input id="exdVendorPhone" placeholder="—" value="'+esc(x.vendorPhone||'')+'"></div>'
           : ro('ที่อยู่ผู้ขาย','','c6')+ro('อีเมล','')+ro('เบอร์โทร',''))+
         ro('วันที่ใบกำกับ', x.vatInvDate)+
+        /* 💲 ประเภทราคา (พี่กี้ 25 ก.ย. 69) — คิดเหมือนใบเสนอราคา · ใบเล่มเดิม (EX) / ใบ RV ไม่มีช่องนี้ (ใช้ปุ่ม 🧾) */
+        ((x.newBook && !rv)
+          ? '<div class="sf-f c3"><label>ประเภทราคา</label><select id="exdPm" onchange="exdCalc()"'+(canAmt?'':' disabled')+'>'+
+              [['excl','แยกภาษี'],['incl','รวมภาษี'],['none','ไม่มีภาษี']].map(function(m){
+                return '<option value="'+m[0]+'"'+(m[0]===(x.priceMode||'none')?' selected':'')+'>'+m[1]+'</option>';
+              }).join('')+'</select></div>'
+          : '')+
         ro('อ้างอิง', x.poNo&&x.poNo!==no ? x.poNo : (x.poNo?'':no), 'end3')+
       '</div>'+
       (srDoc?'<div class="sf-note" style="margin-top:8px">📄 ใบรับรองแทนใบเสร็จ <b>'+esc(x.docNo)+'</b>'+
@@ -12625,21 +12681,8 @@
             : '')+
         '</div>'+
         '<div><span class="sf-tot-sp" aria-hidden="true">.</span><div class="sf-tot">'+
-          /* 25 ก.ย. 69 (พี่กี้) บรรทัดแยก VAT แบบใบเสนอราคา — ค่ามาจากปุ่ม 🧾 ใบกำกับภาษีซื้อ (VAT_BASE/VAT_AMT)
-             ยังไม่กรอก = เว้นว่างไว้ · ห้ามเดา VAT จากยอดเอง (ไม่มีใบกำกับ = เครดิตภาษีซื้อไม่ได้) */
-          (function(){
-            var vb=Number(x.vatBase)||0, vv=Number(x.vatAmt)||0, has=vb>0||vv>0;
-            var blank='<span style="color:#8A94A6;font-weight:400">—</span>';
-            var rt=(vb>0&&vv>0)?Math.round(vv/vb*100):0;
-            return '<div class="r"><span>รวมรายการ</span><b>'+money(amtNum)+'</b></div>'+
-              '<div class="r"><span>มูลค่าที่คำนวณภาษี</span><b>'+(has?money(vb):blank)+'</b></div>'+
-              '<div class="r"><span>ภาษีมูลค่าเพิ่ม'+(rt?' '+rt+'%':'')+'</span><b>'+(has?money(vv):blank)+'</b></div>';
-          })()+
-          '<div class="r grand"><span>จำนวนเงินทั้งสิ้น</span><b>'+money(amtNum)+'</b></div>'+
-          (x.whtRate?'<div class="r"><span>หัก ณ ที่จ่าย '+x.whtRate+'%</span><b>− '+money(whtNum)+'</b></div>':'')+
-          /* 🔴 25 ก.ย. 69 (พี่กี้) ตัดบรรทัด "โอนคืนพนักงาน" + "ผู้เบิก" — เงินอาจโอนเข้าบัญชีร้านค้า ไม่ใช่คืนพนักงาน
-             และชื่อผู้ทำรายการอยู่ในช่องลงนามบน PDF แล้ว · เหลือ "ยอดที่ต้องโอน" เฉพาะตอนยอดโอนไม่เท่ายอดรวม (มีหัก ณ ที่จ่าย) */
-          ((rv||x.whtRate)?'<div class="r"><span>ยอดที่ต้องโอน</span><b>'+money(x.netAmt||amtNum)+'</b></div>':'')+
+          /* 💲 วาดจาก exdTotHtml ตัวเดียว — เปิดหน้าใช้ค่าที่บันทึกไว้ · แก้ยอด/เปลี่ยนประเภทราคา = คิดใหม่ทันที (exdCalc) */
+          '<div id="exdTotBox">'+exdTotHtml(x, null)+'</div>'+
           meta('ผู้อนุมัติ', esc(x.approver||''))+
           meta('วันที่จ่าย', esc(x.payDate||''))+
           meta('แบบยื่น', esc(x.formType||''))+
@@ -12671,7 +12714,7 @@
     /* 🔒 ยังไม่กด "แก้ไข" = ทุกช่องปิดไว้ (พี่กี้ 23 ก.ย. 69 · กติกาเดียวกับหน้าตั้งค่าห้อง)
        ด่านจริงอยู่ที่ backend — ตรงนี้กันพิมพ์ไปทั้งหน้าแล้วกดบันทึกไม่ได้ */
     /* วาดตารางรายการ "ก่อน" ล็อกช่อง — ช่องที่เพิ่งวาดต้องโดนล็อกด้วยในโหมดอ่านอย่างเดียว */
-    slInit('exd', (x.items&&x.items.length)?x.items:[{type:x.type,detail:x.detail,amount:x.amount}],
+    slInit('exd', (x.items&&x.items.length)?x.items:[{type:x.type,detail:x.detail,amount:exdOneAmt(x)}],
       { table:true, edit:!!(PO_EDITING && canAmt), single:rv });
     if(!PO_EDITING){
       Array.prototype.forEach.call(document.querySelectorAll('#main .sf-card input,#main .sf-card select,#main .sf-card textarea'),
@@ -12693,7 +12736,7 @@
     /* 📋 รายการ (25 ก.ย. 69) — เทียบทั้งชุดกับของเดิม เปลี่ยนแม้บรรทัดเดียว = ส่งทั้งชุด (หลังบ้านสรุปหัวใบให้) */
     var a0=$('exd_a0');
     if(a0 && !a0.disabled){
-      var orig=(x.items&&x.items.length)?x.items:[{type:x.type,detail:x.detail,amount:x.amount}];
+      var orig=(x.items&&x.items.length)?x.items:[{type:x.type,detail:x.detail,amount:exdOneAmt(x)}];
       var now=slRead('exd').filter(function(r){ return r.detail || r.amount; });
       var diff=now.length!==orig.length || now.some(function(r,i){
         var o=orig[i]||{};
@@ -12702,6 +12745,9 @@
       });
       if(diff){ var lines=slCollect('exd'); if(!lines) return; ed.items=JSON.stringify(lines); }
     }
+
+    var pmEl=$('exdPm');
+    if(pmEl && !pmEl.disabled && pmEl.value!==(x.priceMode||'none')) ed.priceMode=pmEl.value;   /* 💲 หลังบ้านคิดยอด/ฐาน/VAT/หัก ณ ที่จ่ายใหม่ให้ */
 
     if($('exdVendor')){
       var vd=val('exdVendor'), vt=val('exdVendorTax').replace(/[^0-9]/g,'');
@@ -24167,7 +24213,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260925-0857';
+  var APP_BUILD='20260925-0915';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
