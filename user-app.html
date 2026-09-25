@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260925-0853">
+<link rel="stylesheet" href="user.css?v=20260925-0857">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -2520,8 +2520,10 @@
       <svg viewBox="0 0 24 24"><path d="M5 4.5h10l4 4V19.5H5z"/><path d="M15 4.5v4h4"/><path d="M12 11.5v5M9.5 14l2.5 2.5 2.5-2.5"/></svg><span>50 ทวิ ที่ถูกหัก<span class="doc-code">WI</span></span></button>
     <button class="nav-btn" data-view="expreport" aria-label="รายงานรายจ่าย" id="navExpReport" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M4 19.5h16"/><path d="M7 16V9M12 16V6M17 16v-4"/><path d="M3 4.5h6"/></svg><span>รายงานรายจ่าย</span></button>
-    <button class="nav-btn" data-view="vatbuy" aria-label="ภาษีซื้อ" id="navVatBuy" style="display:none">
-      <svg viewBox="0 0 24 24"><path d="M5 3.5h14v17l-3-1.6-2 1.6-2-1.6-2 1.6-2-1.6L5 20.5z"/><path d="M9 8.5h6M9 12h6M9 15.5h3"/></svg><span>ภาษีซื้อ/ภ.พ.30</span></button>
+    <button class="nav-btn" data-view="vatbuy" aria-label="รายงานภาษีซื้อ" id="navVatBuy" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M5 3.5h14v17l-3-1.6-2 1.6-2-1.6-2 1.6-2-1.6L5 20.5z"/><path d="M9 8.5h6M9 12h6M9 15.5h3"/></svg><span>รายงานภาษีซื้อ</span></button>
+    <button class="nav-btn" data-view="vatsale" aria-label="รายงานภาษีขาย" id="navVatSale" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M5 3.5h14v17l-3-1.6-2 1.6-2-1.6-2 1.6-2-1.6L5 20.5z"/><path d="M9 8.5h6M9 12h6M9 15.5h3"/></svg><span>รายงานภาษีขาย</span></button>
     <button class="nav-btn" data-view="pnd51" aria-label="ภ.ง.ด.51" id="navPnd51" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M6 3.5h12v17H6z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg><span>ภ.ง.ด.51</span></button>
     <button class="nav-btn" data-view="finreport" aria-label="รายงานการเงิน" id="navFinReport" style="display:none">
@@ -24076,7 +24078,8 @@ function kpImpDraw(){
         var nth=$('navTaxHub'); if(nth) nth.style.display='';               // 🏛️ ศูนย์รวมรายงานภาษี = พี่คนเดียว
         var nwi=$('navWhtIn'); if(nwi) nwi.style.display='';               // 🧾 50 ทวิ ที่ลูกค้าหักเรา = พี่คนเดียว
         var ner=$('navExpReport'); if(ner) ner.style.display='';           // 📊 รายงานรายจ่าย + เจ้าหนี้ = พี่คนเดียว
-        var nvb=$('navVatBuy'); if(nvb) nvb.style.display='';             // 🧾 ภาษีซื้อ/ภ.พ.30 = พี่คนเดียว
+        var nvb=$('navVatBuy'); if(nvb) nvb.style.display='';             // 🧾 รายงานภาษีซื้อ = พี่คนเดียว
+        var nvs=$('navVatSale'); if(nvs) nvs.style.display='';            // 🧾 รายงานภาษีขาย = พี่คนเดียว (25 ก.ย. 69)
         var n51=$('navPnd51'); if(n51) n51.style.display=''; }              // 📐 ภ.ง.ด.51 = พี่คนเดียว (backend pnd51Gate_ กันซ้ำอีกชั้น)           // 📊 ทะเบียนใบสำคัญจ่าย = พี่คนเดียว (backend poGate_ กันซ้ำอีกชั้น)
       // รายงานการเงินรวม = พี่ + HR ที่ตั้งใน Script Property (backend ตัดสิน ไม่ผูกกับ IS_OWNER)
       CAN_FIN=!!r.canFinance;
@@ -24164,7 +24167,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260925-0853';
+  var APP_BUILD='20260925-0857';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
