@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260925-1033">
+<link rel="stylesheet" href="user.css?v=20260925-1044">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -727,6 +727,9 @@
   .tax-tbl.vr-tbl th{ font-size:12px; white-space:normal; vertical-align:bottom; max-width:120px; line-height:1.35; }
   .tax-tbl.vr-tbl{ min-width:0; }
   .vr-tbl td{ font-size:13px; vertical-align:top; }
+  /* ป๊อปอัปกรมพัฒน์ — ที่อยู่ยาวต้องตัดบรรทัด ไม่ล้นขวา (25 ก.ย. 69) */
+  .tax-tbl.dbd-tbl{ min-width:0; width:100%; }
+  .tax-tbl.dbd-tbl td{ white-space:normal; vertical-align:top; }
   .vr-tbl tr.vr-sum td{ background:#EEF1F5; font-weight:700; }
   .vr-tbl tr.vr-void td{ color:#8A94A6; }
   /* ตัวเว้นเท่าหัวข้อช่อง 1 บรรทัด — ให้กล่องสรุปยอดเริ่มระดับเดียวกับช่องกรอกแถวแรกฝั่งซ้าย
@@ -11355,10 +11358,69 @@
     if(id.length!==13) return Promise.resolve({ ok:false, error:'เลขประจำตัวผู้เสียภาษีต้องมี 13 หลักค่ะ' });
     var back=function(){ return jsonp({action:'waCustomerDbd', uid:UID, taxId:id}); };
     if(typeof fetch!=='function') return back();
-    return fetch(DBD_WEB_URL+id, { headers:{ 'Accept':'application/json' } })
+    var rd=rdVatBranches(id);   /* ถามสรรพากรคู่กันไป — ล่ม/ไม่จด VAT = ไม่มีรายการสาขา ไม่ทำให้การค้นพัง */
+    var dbd=fetch(DBD_WEB_URL+id, { headers:{ 'Accept':'application/json' } })
       .then(function(r){ if(!r.ok) throw new Error('code '+r.status); return r.json(); })
       .then(function(j){ return dbdParseWeb(j, id); })
       .catch(function(){ return back(); });
+    return Promise.all([dbd, rd]).then(function(x){ return dbdMergeRd(x[0], x[1], id); });
+  }
+
+  /* ═════ 🏢 สาขาจากทะเบียน VAT ของสรรพากร (พี่กี้ 25 ก.ย. 69 · แบบ PEAK) ═════
+     กรมพัฒน์ให้ข้อมูลระดับบริษัท (สาขา = สำนักงานใหญ่เสมอ) · เลขสาขาจดกับสรรพากรตอนจด VAT
+     API เดียวกับหน้า VATINFO (vsinter.rd.go.th) — เปิด CORS ให้ทุกโดเมน · ไม่ต้องล็อกอิน
+     คืน [] เมื่อไม่พบ (ยังไม่จด VAT) หรือเรียกไม่ได้ */
+  var RD_VAT_API='https://vsinter.rd.go.th/rd-commoninter-service/subother/vatsbtsearch/getVatInfo';
+  function rdVatBranches(id){
+    if(typeof fetch!=='function') return Promise.resolve([]);
+    return fetch(RD_VAT_API, { method:'POST', headers:{ 'Content-Type':'application/json' },
+        body:JSON.stringify({ nid:id, brano:'', searchType:'1', firNam:'', midNam:'', lasNam:'' }) })
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(j){ return rdParseBranches(j); })
+      .catch(function(){ return []; });
+  }
+  /** คำตอบสรรพากร → [{ brano, branch, name, address, since }] เรียงสำนักงานใหญ่ก่อน */
+  function rdParseBranches(j){
+    if(!j || j.status!=='000' || !Array.isArray(j.data)) return [];
+    function t(v){ v=String(v==null?'':v).trim(); return (v==='-')?'':v; }
+    function pre(w,v){ return v.indexOf(w)===0?v:w+v; }
+    return j.data.map(function(x){
+      var bkk=t(x.provnam).indexOf('กรุงเทพ')>=0, p=[];
+      if(t(x.addno)) p.push(t(x.addno));
+      if(t(x.bldgnam)) p.push(pre('อาคาร', t(x.bldgnam)));
+      if(t(x.roomno)) p.push('ห้อง '+t(x.roomno));
+      if(t(x.floorno)) p.push('ชั้น '+t(x.floorno));
+      if(t(x.village)) p.push(pre('หมู่บ้าน', t(x.village)));
+      if(t(x.moono)) p.push('หมู่ที่ '+t(x.moono));
+      if(t(x.soinam)) p.push(pre('ซอย', t(x.soinam)));
+      if(t(x.yaek)) p.push(pre('แยก', t(x.yaek)));
+      if(t(x.thnnam)) p.push(pre('ถนน', t(x.thnnam)));
+      if(t(x.tamnam)) p.push(pre(bkk?'แขวง':'ตำบล', t(x.tamnam)));
+      if(t(x.ampnam)) p.push(pre(bkk?'เขต':'อำเภอ', t(x.ampnam)));
+      if(t(x.provnam)) p.push(bkk?t(x.provnam):pre('จังหวัด', t(x.provnam)));
+      if(t(x.poscod)) p.push(t(x.poscod));
+      var no=String(x.brano||'').replace(/\D/g,'');
+      var hq=!no || Number(no)===0;
+      return { brano:hq?'00000':('00000'+no).slice(-5), branch:hq?'สำนักงานใหญ่':('สาขาที่ '+('00000'+no).slice(-5)),
+        name:[t(x.title), t(x.firnam), t(x.midnam), t(x.lasnam)].filter(Boolean).join(' '),
+        address:p.join(' '), since:t(x.vataprdat) };
+    }).sort(function(a,b){ return a.brano<b.brano?-1:(a.brano>b.brano?1:0); });
+  }
+  /** รวมผลกรมพัฒน์ + สาขาสรรพากร → รูปเดียวกับเดิม + branches[] (ค่าตั้งต้น = สำนักงานใหญ่ตามทะเบียน VAT) */
+  function dbdMergeRd(r, br, id){
+    br=br||[];
+    if((!r||!r.ok) && br.length){
+      /* กรมพัฒน์ไม่พบ/ล่ม แต่สรรพากรมี (เช่นบุคคลธรรมดาที่จด VAT) — ใช้ข้อมูลสรรพากรแทน */
+      r={ ok:true, data:{ taxId:id, nameTH:br[0].name, nameEN:'', type:'', status:'', branch:br[0].branch,
+        address:br[0].address, capital:0, registerDate:'' } };
+    }
+    if(!r||!r.ok||!r.data) return r;
+    var d=r.data;
+    d.dbdAddress=d.address;          /* ที่อยู่จดทะเบียนกรมพัฒน์ เก็บไว้โชว์ */
+    d.branches=br;
+    d.vatReg=br.length>0;
+    if(br.length){ d.branch=br[0].branch; d.address=br[0].address||d.address; d.brIdx=0; }
+    return r;
   }
   window.dbdLookup=dbdLookup;
   /** ป๊อปอัปผลค้นกรมพัฒน์ (ตัวกลาง) — ดูอย่างเดียวก็ได้ · กด "ใช้ข้อมูลนี้" = เรียก onUse(d) แล้วปิด
@@ -11369,13 +11431,13 @@
     var closed=d.status&&d.status.indexOf('ยังดำเนินกิจการ')<0;
     modal('<h3>🔍 ข้อมูลจากกรมพัฒนาธุรกิจการค้า</h3><div id="mErr" class="m-err hidden"></div>'+
       (closed?'<div class="m-err">สถานะนิติบุคคล: '+esc(d.status)+' — ตรวจก่อนใช้นะคะ</div>':'')+
-      '<div class="tax-tbl-wrap"><table class="tax-tbl"><tbody>'+
+      '<div class="tax-tbl-wrap"><table class="tax-tbl dbd-tbl"><tbody>'+
       dbdRow_('ชื่อนิติบุคคล', d.nameTH)+
       (d.nameEN?dbdRow_('ชื่อภาษาอังกฤษ', d.nameEN):'')+
       dbdRow_('ประเภท', d.type)+
       dbdRow_('สถานะ', d.status)+
       dbdBranchRow_(d)+
-      dbdRow_('ที่อยู่จดทะเบียน', d.address)+
+      dbdRow_('ที่อยู่จดทะเบียน (กรมพัฒน์)', d.dbdAddress||d.address)+
       dbdRow_('เลขผู้เสียภาษี', d.taxId)+
       (d.capital?dbdRow_('ทุนจดทะเบียน', money(d.capital)+' บาท'):'')+
       '</tbody></table></div>'+dbdRdBtn_(d)+
@@ -15852,22 +15914,24 @@
       var closed=d.status&&d.status.indexOf('ยังดำเนินกิจการ')<0;
       modal('<h3>🔍 ข้อมูลจากกรมพัฒนาธุรกิจการค้า</h3><div id="mErr" class="m-err hidden"></div>'+
         (closed?'<div class="m-err">สถานะนิติบุคคล: '+esc(d.status)+' — ตรวจก่อนออกเอกสารนะคะ</div>':'')+
-        '<div class="tax-tbl-wrap"><table class="tax-tbl"><tbody>'+
+        '<div class="tax-tbl-wrap"><table class="tax-tbl dbd-tbl"><tbody>'+
         dbdRow_('ชื่อนิติบุคคล', d.nameTH)+
         dbdBranchRow_(d)+
-        dbdRow_('ที่อยู่จดทะเบียน', d.address)+
+        dbdRow_('ที่อยู่จดทะเบียน (กรมพัฒน์)', d.dbdAddress||d.address)+
         dbdRow_('เลขผู้เสียภาษี', d.taxId)+
         dbdRow_('สถานะ', d.status)+
         '</tbody></table></div>'+dbdRdBtn_(d)+
         '<div class="m-hint" style="margin:10px 0 0">จะบันทึกลงทะเบียนของ <b>'+esc(custName)+'</b> '+
         '(ชื่อเต็ม · เลขภาษี · สาขา · ที่อยู่) แล้วใบนี้จะใช้ข้อมูลใหม่ทันที</div>'+
         '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button>'+
-        '<button class="btn btn-primary" onclick="sfDbdSave(\''+jss(custName)+'\',\''+jss(d.nameTH)+'\',\''+
-          jss(d.taxId)+'\',\''+jss(d.branch)+'\',\''+jss(d.address)+'\')">บันทึกลงทะเบียน</button></div>');
+        '<button class="btn btn-primary" onclick="sfDbdSaveCur(\''+jss(custName)+'\')">บันทึกลงทะเบียน</button></div>');
     }).catch(function(e){ unbusy(); mErr(e.message); });
   }
   window.sfDbdGo=sfDbdGo;
 
+  /** บันทึกจากป๊อปอัป — อ่านสาขา/ที่อยู่ที่เลือกไว้ตอนกด (ไม่ใช่ตอนวาด) */
+  function sfDbdSaveCur(name){ var d=DBD_CUR||{}; sfDbdSave(name, d.nameTH, d.taxId, d.branch, d.address); }
+  window.sfDbdSaveCur=sfDbdSaveCur;
   function sfDbdSave(name, legal, tax, branch, addr){
     /* สาขา: ทะเบียนเก็บ "สำนักงานใหญ่" หรือเลขสาขา — backend เติมคำว่า "สาขาที่" ให้เอง */
     var br='สำนักงานใหญ่';
@@ -18443,13 +18507,13 @@
       var closed=d.status&&d.status.indexOf('ยังดำเนินกิจการ')<0;
       modal('<h3>🔍 ข้อมูลจากกรมพัฒนาธุรกิจการค้า</h3><div id="mErr" class="m-err hidden"></div>'+
         (closed?'<div class="m-err">สถานะนิติบุคคล: '+esc(d.status)+' — ตรวจก่อนออกเอกสารนะคะ</div>':'')+
-        '<div class="tax-tbl-wrap"><table class="tax-tbl"><tbody>'+
+        '<div class="tax-tbl-wrap"><table class="tax-tbl dbd-tbl"><tbody>'+
         dbdRow_('ชื่อนิติบุคคล', d.nameTH)+
         (d.nameEN?dbdRow_('ชื่อภาษาอังกฤษ', d.nameEN):'')+
         dbdRow_('ประเภท', d.type)+
         dbdRow_('สถานะ', d.status)+
         dbdBranchRow_(d)+
-        dbdRow_('ที่อยู่จดทะเบียน', d.address)+
+        dbdRow_('ที่อยู่จดทะเบียน (กรมพัฒน์)', d.dbdAddress||d.address)+
         dbdRow_('เลขผู้เสียภาษี', d.taxId)+
         (d.capital?dbdRow_('ทุนจดทะเบียน', money(d.capital)+' บาท'):'')+
         '</tbody></table></div>'+dbdRdBtn_(d)+
@@ -18465,13 +18529,32 @@
   }
   /* 🏢 สาขา (พี่กี้ถาม 25 ก.ย. 69) — API กรมพัฒน์ให้ข้อมูลระดับบริษัท ช่องสาขาเป็น "สำนักงานใหญ่" เสมอ
      เลขสาขาจดกับสรรพากรตอนจด VAT (API ของสรรพากรปิดไปแล้ว) → บอกให้ชัด + ลิงก์ไปค้นเองที่ VATINFO */
+  var DBD_CUR=null;   /* ผลค้นที่เปิดป๊อปอัปอยู่ — เลือกสาขาแล้วแก้ branch/address ในตัวนี้ (ป๊อปอัปทุกแบบอ่านตัวเดียวกัน) */
   function dbdBranchRow_(d){
+    DBD_CUR=d;
+    var br=d.branches||[];
+    if(br.length){
+      return '<tr><td style="color:#8A94A6;white-space:nowrap;width:150px;vertical-align:top">สาขา (ทะเบียน VAT)</td><td>'+
+        br.map(function(b,i){
+          return '<label style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;cursor:pointer;border-top:'+(i?'1px solid #F1F4F9':'0')+'">'+
+            '<input type="radio" name="dbdBr" style="width:auto;margin-top:3px" '+(i===(d.brIdx||0)?'checked':'')+' onchange="dbdPickBranch('+i+')">'+
+            '<span><b>'+esc(b.branch)+'</b>'+(b.since?' <span style="color:#8A94A6;font-size:12px">· จด VAT '+esc(b.since)+'</span>':'')+
+            '<br><span style="font-size:13px">'+esc(b.address||'—')+'</span></span></label>';
+        }).join('')+
+        '<div style="font-size:12px;color:#5B6472;margin-top:4px">เลือกสาขาที่ตรงกับใบกำกับภาษีของคู่ค้า — ระบบจะเติมเลขสาขาและที่อยู่ของสาขานั้น</div></td></tr>';
+    }
     return '<tr><td style="color:#8A94A6;white-space:nowrap;width:150px">สาขา</td><td>'+esc(d.branch||'สำนักงานใหญ่')+
-      '<div style="font-size:12px;color:#C8730B;margin-top:3px">กรมพัฒน์มีข้อมูลเฉพาะสำนักงานใหญ่ — ถ้าคู่ค้าเป็นสาขา '+
-      'แก้เลขสาขาและที่อยู่ตามใบกำกับภาษีของเขา</div></td></tr>';
+      '<div style="font-size:12px;color:#C8730B;margin-top:3px">ไม่พบในทะเบียน VAT ของสรรพากร (ยังไม่จด VAT หรือค้นไม่ได้ตอนนี้) — '+
+      'ถ้าคู่ค้าเป็นสาขา แก้เลขสาขาและที่อยู่ตามใบกำกับภาษีของเขา</div></td></tr>';
   }
+  function dbdPickBranch(i){
+    var d=DBD_CUR, b=d&&d.branches&&d.branches[i]; if(!b) return;
+    d.brIdx=i; d.branch=b.branch; d.address=b.address||d.dbdAddress||d.address;
+  }
+  window.dbdPickBranch=dbdPickBranch;
   var RD_VATINFO_URL='https://vsinter.rd.go.th/rd-webcontent-web/#/vatsearch';
   function dbdRdBtn_(d){
+    if(d.branches && d.branches.length) return '';
     return '<div style="margin:10px 0 0"><button class="btn btn-ghost btn-sm" style="width:auto" '+
       'onclick="dbdOpenRd(\''+esc(String(d.taxId||'').replace(/\D/g,''))+'\')">🔎 ตรวจสาขาที่สรรพากร (VATINFO)</button>'+
       '<span class="m-hint" style="margin-left:8px">คัดลอกเลขผู้เสียภาษีให้แล้ว วางในช่องค้นหาได้เลย</span></div>';
@@ -24372,7 +24455,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260925-1033';
+  var APP_BUILD='20260925-1044';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
