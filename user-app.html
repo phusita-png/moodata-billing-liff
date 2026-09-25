@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260925-0915">
+<link rel="stylesheet" href="user.css?v=20260925-0927">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -712,6 +712,23 @@
   .pi-more summary{ cursor:pointer; font-weight:600; }
   .sf-sum{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,360px); gap:18px; align-items:start; }
   .sf-tot{ border:1px solid var(--line); border-radius:14px; overflow:hidden; }
+  /* 🧾 หน้ารายงานภาษีขาย/ซื้อ แบบ TRCloud (25 ก.ย. 69) */
+  .vr-bar{ display:flex; flex-wrap:wrap; gap:10px 12px; align-items:flex-end; padding:14px 16px; }
+  .vr-f{ display:flex; flex-direction:column; gap:4px; min-width:150px; }
+  .vr-f label{ font-size:12px; color:#5B6472; font-weight:600; }
+  .vr-f select,.vr-f input{ padding:9px 10px; border:1px solid var(--line); border-radius:10px; font:inherit; font-size:14px; background:#fff; }
+  .vr-grow{ flex:1 1 220px; }
+  .vr-acts{ display:flex; gap:8px; margin-left:auto; }
+  .vr-acts .btn{ width:auto; flex:none; padding:9px 14px; font-weight:700; font-size:13px; }
+  .vr-run{ background:#F5B43C; color:#fff; } .vr-xls{ background:#16A34A; color:#fff; } .vr-pdf{ background:#E5484D; color:#fff; }
+  .vr-acts .btn:disabled{ opacity:.45; cursor:not-allowed; }
+  .vr-pp{ font-size:13.5px; color:#3B4452; margin:2px 2px 10px; }
+  .vr-info{ display:flex; align-items:center; gap:6px; font-size:14px; margin:0 0 10px; }
+  .tax-tbl.vr-tbl th{ font-size:12px; white-space:normal; vertical-align:bottom; max-width:120px; line-height:1.35; }
+  .tax-tbl.vr-tbl{ min-width:0; }
+  .vr-tbl td{ font-size:13px; vertical-align:top; }
+  .vr-tbl tr.vr-sum td{ background:#EEF1F5; font-weight:700; }
+  .vr-tbl tr.vr-void td{ color:#8A94A6; }
   /* ตัวเว้นเท่าหัวข้อช่อง 1 บรรทัด — ให้กล่องสรุปยอดเริ่มระดับเดียวกับช่องกรอกแถวแรกฝั่งซ้าย
      แบบใบเสนอราคา (พี่กี้ 25 ก.ย. 69) · จอแคบเรียงแถวเดียวแล้วไม่ต้องเว้น */
   .sf-tot-sp{ display:block; font-size:13px; font-weight:600; visibility:hidden; margin-bottom:6px; }
@@ -8750,61 +8767,140 @@
   var VB_MONTH='', VB_ENT='';
   function vbSetMonth(v){ VB_MONTH=v; renderVatBuy(); }
   function vbSetEnt(v){ VB_ENT=v||''; renderVatBuy(); }
+  /* ═══════════ 🧾 หน้ารายงานภาษีขาย / ภาษีซื้อ — โครงแบบ TRCloud (พี่กี้ส่งแบบมา 25 ก.ย. 69) ═══════════
+     แถบกรองด้านบน (เดือน · บริษัท · ค้นหา · เรียง · RUN/EXCEL/PDF) → "Total: N" → ตาราง: หัว · แถวรวม (เทา) · รายการ
+     ⚠️ ตัวเลขมาจากหลังบ้านล้วน (vatSaleData_ / vatBuyReportData_) — จอแค่กรอง/เรียง ไม่บวกลบยอดเอง
+        ยกเว้นแถวรวมตอนพิมพ์ค้นหา (รวมเฉพาะแถวที่เห็น) */
+  var VR={ sale:null, buy:null }, VR_Q='', VR_ORD='asc';
+  function vrCols(side){
+    return side==='sale'
+      ? [['#','n'],['วันที่','date'],['เลขที่เอกสาร','no'],['ชื่อผู้ซื้อสินค้า/ผู้รับบริการ','party'],['เลขประจำตัวผู้เสียภาษี','taxId'],
+         ['สาขาผู้ประกอบการ','branch'],['มูลค่าสินค้า/บริการ (ฐานภาษี)','base','m'],['ภาษีมูลค่าเพิ่ม','vat','m'],['ประเภท','kind'],
+         ['เลขที่อ้างอิง','refNo'],['มูลค่ารวมภาษี','total','m'],['หมายเหตุ','note']]
+      : [['#','n'],['วันที่','docDate'],['เลขที่เอกสาร (ภายใน)','docNo'],['วันที่ใช้ภาษี','date'],['เลขที่ใบกำกับ','invNo'],
+         ['ชื่อผู้ขายสินค้า/บริการ','seller'],['เลขประจำตัวผู้เสียภาษี','sellerId'],['สาขาผู้ประกอบการ','branch'],
+         ['มูลค่าสินค้า/บริการ (ฐานภาษี)','base','m'],['ภาษีมูลค่าเพิ่ม','vat','m'],['ประเภท','kindText'],['มูลค่ารวมภาษี','total','m'],['รายการ','detail']];
+  }
+  function vrRows(side){
+    var r=VR[side]; if(!r) return [];
+    var q=VR_Q.trim().toLowerCase();
+    var rows=(r.rows||[]).map(function(x,i){
+      var o=Object.assign({}, x, { _i:i });
+      if(side==='buy') o.kindText=String(x.docNo||'').split('-')[0]||'';
+      return o;
+    }).filter(function(x){
+      if(!q) return true;
+      return [x.no,x.party,x.taxId,x.refNo,x.note,x.docNo,x.invNo,x.seller,x.sellerId,x.detail]
+        .some(function(v){ return String(v||'').toLowerCase().indexOf(q)>=0; });
+    });
+    if(VR_ORD==='desc') rows.reverse();   /* หลังบ้านเรียงตามวันที่ให้แล้ว (เก่า → ใหม่) */
+    return rows;
+  }
+  function vrPaint(side){
+    var box=$('vrTbl'); if(!box) return;
+    var cols=vrCols(side), rows=vrRows(side);
+    var sum={ base:0, vat:0, total:0 }, n=0;
+    rows.forEach(function(x){ if(x.canceled) return; n++;
+      sum.base+=Number(x.base)||0; sum.vat+=Number(x.vat)||0; sum.total+=Number(x.total)||0; });
+    var tn=$('vrTotal'); if(tn) tn.textContent=rows.length;
+    if(!rows.length){
+      box.innerHTML='<div class="emptybox">'+(VR_Q?'ไม่พบรายการที่ค้นหา':(side==='sale'
+        ? 'เดือนนี้ยังไม่มีใบเสร็จรับเงิน/ใบกำกับภาษี หรือใบลดหนี้<br><span class="m-hint">ภาษีขายเกิดที่ใบเสร็จ (RE) · ใบแจ้งหนี้ยังไม่ใช่ใบกำกับภาษี</span>'
+        : 'เดือนนี้ยังไม่มีใบกำกับภาษีซื้อ<br><span class="m-hint">กรอกได้จากปุ่ม 🧾 ใบกำกับภาษีซื้อ ในหน้าใบสั่งจ่าย</span>'))+'</div>';
+      return;
+    }
+    var head='<tr>'+cols.map(function(c){ return '<th'+(c[2]?' class="ta-r"':'')+'>'+esc(c[0])+'</th>'; }).join('')+'</tr>';
+    var tot='<tr class="vr-sum">'+cols.map(function(c,i){
+      if(i===1) return '<td>รวม</td>';
+      if(c[2]) return '<td class="ta-r">'+money(Math.round(sum[c[1]]*100)/100)+'</td>';
+      return '<td></td>';
+    }).join('')+'</tr>';
+    var body=rows.map(function(x,i){
+      return '<tr'+(x.canceled?' class="vr-void"':'')+'>'+cols.map(function(c){
+        if(c[1]==='n') return '<td class="dt-nw" style="color:#8A94A6">'+(i+1)+'</td>';
+        if(c[2]) return '<td class="ta-r dt-nw">'+money(x[c[1]])+'</td>';
+        if(c[1]==='note' && x.canceled) return '<td><span style="color:#E5484D">🚫 ยกเลิก</span></td>';
+        var v=x[c[1]];
+        return '<td'+(/^(date|docDate|no|docNo|invNo|taxId|sellerId|kind|kindText)$/.test(c[1])?' class="dt-nw"':'')+'>'+esc(v==null||v===''?'':String(v))+'</td>';
+      }).join('')+'</tr>';
+    }).join('');
+    box.innerHTML='<div class="tax-tbl-wrap"><table class="tax-tbl vr-tbl"><thead>'+head+'</thead><tbody>'+tot+body+'</tbody></table></div>';
+  }
+  function vrHtml(side, r){
+    var months=taxMonths(); if(months.indexOf(VB_MONTH)<0) months.unshift(VB_MONTH);
+    var ents=r.entities||[], pp=r.pp30||{};
+    var pay=Number(pp.payable)||0, cre=Number(pp.credit)||0;
+    var title=side==='sale'?'รายงานภาษีขาย':'รายงานภาษีซื้อ';
+    var h='<div class="section-h">🧾 '+title+'</div>'+
+      '<div class="card vr-bar">'+
+        '<div class="vr-f"><label>Type</label><select disabled><option>เดือน</option></select></div>'+
+        '<div class="vr-f"><label>เดือนภาษี</label><select onchange="vrSet(\''+side+'\',\'m\',this.value)">'+
+          months.map(function(m){ return '<option value="'+esc(m)+'"'+(m===VB_MONTH?' selected':'')+'>'+esc(ymThai(m))+'</option>'; }).join('')+
+        '</select></div>'+
+        (ents.length>1
+          ? '<div class="vr-f"><label>บริษัท</label><select onchange="vrSet(\''+side+'\',\'e\',this.value)"><option value="">ทุกบริษัท</option>'+
+              ents.map(function(e){ return '<option value="'+esc(e.code)+'"'+(e.code===VB_ENT?' selected':'')+'>'+esc(e.name)+'</option>'; }).join('')+
+            '</select></div>'
+          : '')+
+        '<div class="vr-f vr-grow"><label>ค้นหา</label><input id="vrQ" placeholder="เลขที่ · ชื่อคู่ค้า · เลขผู้เสียภาษี" value="'+esc(VR_Q)+'" oninput="vrSearch(\''+side+'\',this.value)"></div>'+
+        '<div class="vr-f"><label>Order by</label><select onchange="vrOrder(\''+side+'\',this.value)">'+
+          '<option value="asc"'+(VR_ORD==='asc'?' selected':'')+'>วันที่ - ASC</option>'+
+          '<option value="desc"'+(VR_ORD==='desc'?' selected':'')+'>วันที่ - DESC</option></select></div>'+
+        '<div class="vr-acts">'+
+          '<button class="btn vr-run" onclick="'+(side==='sale'?'renderVatSale()':'renderVatBuy()')+'">🚀 RUN</button>'+
+          '<button class="btn vr-xls" onclick="vrExcel(\''+side+'\')">📗 EXCEL</button>'+
+          '<button class="btn vr-pdf" onclick="vatReportPdf(\''+side+'\')"'+(r.canIssue===false?' disabled title="'+esc(r.issueNote||'')+'"':'')+'>📄 PDF</button>'+
+        '</div>'+
+      '</div>';
+    /* ภ.พ.30 ย่อเป็นบรรทัดเดียว — ตัวเลขชุดเดียวกับหน้าสรุปภาษี */
+    h+='<div class="vr-pp">ภ.พ.30 · '+esc(r.monthText||'')+' — ภาษีขาย <b>'+money((pp.sale&&pp.sale.vat)||0)+'</b>'+
+      ' − ภาษีซื้อ <b>'+money((pp.buy&&pp.buy.vat)||0)+'</b> = '+
+      (pay>0?'ต้องชำระ <b style="color:#C0490F">'+money(pay)+'</b>':'ชำระเกิน (ยกไป/ขอคืน) <b>'+money(cre)+'</b>')+
+      (r.canIssue===false&&r.issueNote?' · <span style="color:#8A94A6">'+esc(r.issueNote)+'</span>':'')+'</div>';
+    if((r.warn||[]).length){
+      h+='<div class="m-hint" style="color:#C8730B;margin:0 0 10px">'+r.warn.map(function(w){ return '⚠️ '+esc(w); }).join('<br>')+'</div>';
+    }
+    h+='<div class="card"><div class="vr-info">ℹ️ '+title+' · '+esc(r.monthText||'')+' | <b>Total: <span id="vrTotal">0</span></b>'+
+      (side==='buy'?' <button class="lnk" style="margin-left:auto" onclick="vbSheet()">📄 สร้างแท็บในชีต</button>':'')+'</div>'+
+      '<div id="vrTbl"></div></div>';
+    return h;
+  }
+  function vrSet(side, k, v){ if(k==='m') VB_MONTH=v; else VB_ENT=v; if(side==='sale') renderVatSale(); else renderVatBuy(); }
+  function vrSearch(side, v){ VR_Q=v||''; vrPaint(side); }
+  function vrOrder(side, v){ VR_ORD=v==='desc'?'desc':'asc'; vrPaint(side); }
+  /** EXCEL = CSV (เปิดใน Excel ได้ตรง ๆ · มี BOM ให้ภาษาไทยไม่เพี้ยน) · ส่งออกตามที่กรอง/เรียงอยู่บนจอ */
+  function vrExcel(side){
+    var r=VR[side]; if(!r){ toast('ยังไม่มีข้อมูลค่ะ'); return; }
+    var cols=vrCols(side), rows=vrRows(side);
+    var q=function(v){ v=String(v==null?'':v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+    var lines=[cols.map(function(c){ return q(c[0]); }).join(',')];
+    rows.forEach(function(x,i){
+      lines.push(cols.map(function(c){
+        if(c[1]==='n') return i+1;
+        if(c[2]) return (Number(x[c[1]])||0).toFixed(2);
+        if(c[1]==='note' && x.canceled) return 'ยกเลิก';
+        /* เลขยาว (เลขผู้เสียภาษี) — ใส่ ="…" ไม่ให้ Excel แปลงเป็นเลขวิทยาศาสตร์/ตัด 0 หน้า */
+        if(c[1]==='taxId'||c[1]==='sellerId') return x[c[1]]?'="'+x[c[1]]+'"':'';
+        return q(x[c[1]]);
+      }).join(','));
+    });
+    dlText((side==='sale'?'รายงานภาษีขาย':'รายงานภาษีซื้อ')+'-'+VB_MONTH+(VB_ENT?'-'+VB_ENT:'')+'.csv', '\uFEFF'+lines.join('\r\n'));
+  }
+  window.vrSet=vrSet; window.vrSearch=vrSearch; window.vrOrder=vrOrder; window.vrExcel=vrExcel;
+
   function renderVatBuy(){
     if(!IS_OWNER){ $('main').innerHTML='<div class="card"><div class="emptybox">เฉพาะผู้ดูแลค่ะ</div></div>'; return; }
     skel();
     jsonp({action:'waVatBuy',uid:UID,month:VB_MONTH,entity:VB_ENT}).then(function(r){
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
-      VB_MONTH=r.month;
-      var pp=r.pp30||{}, rows=r.rows||[], sum=r.sum||{n:0,base:0,vat:0};
-      var months=taxMonths(); if(months.indexOf(VB_MONTH)<0) months.unshift(VB_MONTH);
-      var h='<div class="section-h">🧾 รายงานภาษีซื้อ · ภ.พ.30</div>'+
-        '<div class="ds-sel"><select id="vbYm" onchange="vbSetMonth(this.value)">'+
-        months.map(function(m){ return '<option value="'+esc(m)+'"'+(m===VB_MONTH?' selected':'')+'>'+esc(ymThai(m))+'</option>'; }).join('')+
-        '</select><select id="vbEnt" onchange="vbSetEnt(this.value)"><option value="">ทุกบริษัท</option>'+
-        (r.entities||[]).map(function(e){ return '<option value="'+esc(e.code)+'"'+(e.code===VB_ENT?' selected':'')+'>'+esc(e.name)+'</option>'; }).join('')+
-        '</select></div>';
-
-      // ── ภ.พ.30: ภาษีขาย − ภาษีซื้อ = ต้องชำระ / ชำระเกิน ──
-      var pay=Number(pp.payable)||0, cre=Number(pp.credit)||0;
-      h+='<div class="ds-grid">'+
-        statCard('ภาษีขาย',money((pp.sale&&pp.sale.vat)||0),'จากใบเสร็จ/ใบกำกับที่ออก (หักใบลดหนี้แล้ว)')+
-        statCard('ภาษีซื้อ',money((pp.buy&&pp.buy.vat)||0),sum.n+' ฉบับ')+
-        statCard(pay>0?'ภาษีที่ต้องชำระ':'ภาษีชำระเกิน (ยกไป/ขอคืน)',money(pay>0?pay:cre),
-          pay>0?'ยื่นแบบ ภ.พ.30 ภายในวันที่ 15 ของเดือนถัดไป':'ภาษีซื้อมากกว่าภาษีขาย',pay>0?'ds-warn':'')+
-        '</div>';
-      if((r.warn||[]).length){
-        h+='<div class="card"><div class="m-hint" style="color:#C8730B;margin:0">'+
-          r.warn.map(function(w){ return '⚠️ '+esc(w); }).join('<br>')+'</div></div>';
-      }
-
-      // ── รายงานภาษีซื้อ (ตัวที่ต้องแนบยื่น) ──
-      h+='<div class="card"><div class="ds-h">📋 รายงานภาษีซื้อ · '+esc(r.monthText||'')+'</div>';
-      if(!rows.length){
-        h+='<div class="emptybox">เดือนนี้ยังไม่มีใบกำกับภาษีซื้อ<br>'+
-          '<span class="m-hint">กรอกได้จากเมนู ⋮ ของใบสั่งจ่าย → 🧾 ใบกำกับภาษีซื้อ</span></div>';
-      } else {
-        h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
-          '<th>#</th><th>วันที่</th><th>เลขที่ใบกำกับ</th><th>ผู้ขาย</th><th>รายการ</th><th>มูลค่า</th><th>ภาษีซื้อ</th></tr></thead><tbody>'+
-          rows.map(function(x,i){
-            return '<tr><td>'+(i+1)+'</td><td class="dt-nw">'+esc(x.date)+'</td><td>'+esc(x.invNo)+'</td>'+
-              '<td style="white-space:normal">'+esc(x.seller||'-')+
-                (x.sellerId?'<br><span style="font-size:12px;color:#8A94A6">'+esc(x.sellerId)+'</span>'
-                  :'<br><span style="font-size:12px;color:#E5484D">ยังไม่มีเลขผู้เสียภาษี</span>')+'</td>'+
-              '<td style="white-space:normal">'+esc(x.detail||'-')+
-                '<br><span style="font-size:12px;color:#8A94A6">'+esc(x.docNo)+'</span></td>'+
-              '<td class="ta-r dt-nw">'+money(x.base)+'</td><td class="ta-r dt-nw">'+money(x.vat)+'</td></tr>';
-          }).join('')+
-          '<tr class="tax-total"><td colspan="5">รวม '+sum.n+' ฉบับ</td>'+
-          '<td class="ta-r">'+money(sum.base)+'</td><td class="ta-r">'+money(sum.vat)+'</td></tr>'+
-          '</tbody></table></div>';
-      }
-      /* 25 ก.ย. 69 ปุ่ม PDF ตามแบบสรรพากร — ต้องเลือกบริษัทที่จด VAT (ด่านจริงอยู่หลังบ้าน) */
-      h+='<div class="tax-acts"><button class="btn btn-primary" onclick="vatReportPdf(\'buy\')">📄 ออก PDF รายงานภาษีซื้อ</button>'+
-        '<button class="btn btn-ghost" onclick="vbSheet()">📄 สร้างแท็บรายงานในชีต</button></div></div>';
-      $('main').innerHTML=h;
+      VB_MONTH=vatYmBEWeb(r.month);
+      VR.buy=r; VR_Q='';
+      $('main').innerHTML=vrHtml('buy', r);
+      vrPaint('buy');
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
   }
+  /** เดือนจากหลังบ้านบางตัวเป็น ค.ศ. — ให้หน้าจอใช้ พ.ศ. ชุดเดียวกับตัวเลือกเดือน */
+  function vatYmBEWeb(ym){ var p=String(ym||'').split('-'), y=parseInt(p[0],10); return (y&&y<2400)?(y+543)+'-'+p[1]:String(ym||''); }
   function vbSheet(){
     callBusy('กำลังสร้างแท็บ…', jsonp({action:'waVatBuySheet',uid:UID,month:VB_MONTH,entity:VB_ENT}), 'สร้างแล้ว').then(function(r){
       if(!r||!r.ok){ toast((r&&r.error)||'สร้างไม่สำเร็จ'); return; }
@@ -8828,56 +8924,9 @@
     jsonp({action:'waVatSale',uid:UID,month:VB_MONTH,entity:VB_ENT}).then(function(r){
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
       VB_MONTH=r.month; if(r.entity) VB_ENT=r.entity;
-      var rows=r.rows||[], sum=r.sum||{n:0,base:0,vat:0,canceled:0}, pp=r.pp30||{};
-      var months=taxMonths(); if(months.indexOf(VB_MONTH)<0) months.unshift(VB_MONTH);
-      var ents=r.entities||[];
-      var h='<div class="section-h">🧾 รายงานภาษีขาย</div>'+
-        '<div class="ds-sel"><select onchange="vsSetMonth(this.value)">'+
-        months.map(function(m){ return '<option value="'+esc(m)+'"'+(m===VB_MONTH?' selected':'')+'>'+esc(ymThai(m))+'</option>'; }).join('')+
-        '</select>'+
-        (ents.length>1
-          ? '<select onchange="vsSetEnt(this.value)"><option value="">ทุกบริษัท</option>'+
-            ents.map(function(e){ return '<option value="'+esc(e.code)+'"'+(e.code===VB_ENT?' selected':'')+'>'+esc(e.name)+'</option>'; }).join('')+
-            '</select>'
-          : '')+
-        '</div>';
-      var pay=Number(pp.payable)||0, cre=Number(pp.credit)||0;
-      h+='<div class="ds-grid">'+
-        statCard('มูลค่าสินค้า/บริการ',money(sum.base||0),sum.n+' ฉบับ'+(sum.canceled?' · ยกเลิก '+sum.canceled:''))+
-        statCard('ภาษีขาย',money(sum.vat||0),'หักใบลดหนี้แล้ว')+
-        statCard(pay>0?'ภาษีที่ต้องชำระ (ภ.พ.30)':'ภาษีชำระเกิน (ยกไป/ขอคืน)',money(pay>0?pay:cre),
-          'ภาษีขาย − ภาษีซื้อ '+money((pp.buy&&pp.buy.vat)||0),pay>0?'ds-warn':'')+
-        '</div>';
-      if((r.warn||[]).length){
-        h+='<div class="card"><div class="m-hint" style="color:#C8730B;margin:0">'+
-          r.warn.map(function(w){ return '⚠️ '+esc(w); }).join('<br>')+'</div></div>';
-      }
-      h+='<div class="card"><div class="ds-h">📋 รายงานภาษีขาย · '+esc(r.monthText||'')+'</div>';
-      if(!rows.length){
-        h+='<div class="emptybox">เดือนนี้ยังไม่มีใบเสร็จรับเงิน/ใบกำกับภาษี หรือใบลดหนี้<br>'+
-          '<span class="m-hint">ภาษีขายเกิดที่ใบเสร็จ (RE) · ใบแจ้งหนี้ยังไม่ใช่ใบกำกับภาษี</span></div>';
-      } else {
-        h+='<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+
-          '<th>#</th><th>วันที่</th><th>เลขที่ใบกำกับ</th><th>ผู้ซื้อ/ผู้รับบริการ</th><th>สถานประกอบการ</th>'+
-          '<th>มูลค่า</th><th>ภาษีขาย</th><th>หมายเหตุ</th></tr></thead><tbody>'+
-          rows.map(function(x,i){
-            var dim=x.canceled?' style="color:#8A94A6;text-decoration:line-through"':'';
-            return '<tr><td>'+(i+1)+'</td><td class="dt-nw">'+esc(x.date)+'</td>'+
-              '<td class="dt-nw"'+dim+'>'+esc(x.no)+'</td>'+
-              '<td style="white-space:normal">'+esc(x.party||'-')+
-                (x.taxId?'<br><span style="font-size:12px;color:#8A94A6">'+esc(x.taxId)+'</span>':'')+'</td>'+
-              '<td class="dt-nw">'+esc(x.branch||'')+'</td>'+
-              '<td class="ta-r dt-nw">'+money(x.base)+'</td><td class="ta-r dt-nw">'+money(x.vat)+'</td>'+
-              '<td style="white-space:normal">'+(x.canceled?'<span style="color:#E5484D">🚫 ยกเลิก</span>':esc(x.note||''))+'</td></tr>';
-          }).join('')+
-          '<tr class="tax-total"><td colspan="5">รวม '+sum.n+' ฉบับ'+(sum.canceled?' (ยกเลิก '+sum.canceled+')':'')+'</td>'+
-          '<td class="ta-r">'+money(sum.base)+'</td><td class="ta-r">'+money(sum.vat)+'</td><td></td></tr>'+
-          '</tbody></table></div>';
-      }
-      h+='<div class="tax-acts">'+(r.canIssue
-          ? '<button class="btn btn-primary" onclick="vatReportPdf(\'sale\')">📄 ออก PDF รายงานภาษีขาย</button>'
-          : '<span class="m-hint">'+esc(r.issueNote||'')+'</span>')+'</div></div>';
-      $('main').innerHTML=h;
+      VR.sale=r; VR_Q='';
+      $('main').innerHTML=vrHtml('sale', r);
+      vrPaint('sale');
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
   }
   function vsSetMonth(v){ VB_MONTH=v; renderVatSale(); }
@@ -24213,7 +24262,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260925-0915';
+  var APP_BUILD='20260925-0927';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
