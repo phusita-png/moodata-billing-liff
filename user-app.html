@@ -7450,15 +7450,26 @@
         opt('line','💬 กลุ่ม LINE ลูกค้า', x.hasGroup?'ส่งเข้ากลุ่ม LINE ที่ผูกกับลูกค้ารายนี้':'ลูกค้ารายนี้ยังไม่ได้ผูกกลุ่ม LINE', !x.hasGroup)+
         opt('copy','📋 คัดลอกข้อความ','ได้ข้อความติดตามสำเร็จรูป (มีลิงก์แนบไฟล์) ไปวางส่งเอง')+
       '</div>'+
-      '<div class="fld"><label>มูลค่าก่อนหัก ณ ที่จ่าย (แจ้งในข้อความ)</label><input id="wgcBase" inputmode="decimal" value="'+esc(x.chaseBase?Number(x.chaseBase).toFixed(2):'')+'">'+
+      '<div class="fld"><label>'+(x.vatReg?'มูลค่าสินค้า/บริการ ก่อน VAT (แจ้งในข้อความ)':'มูลค่าก่อนหัก ณ ที่จ่าย (แจ้งในข้อความ)')+'</label><input id="wgcBase" inputmode="decimal" value="'+esc(x.chaseBase?Number(x.chaseBase).toFixed(2):'')+'" oninput="wgcMoney()">'+
+        '<div id="wgcMoney" style="font-size:13px;margin:6px 0 0"></div>'+
         (x.baseGuess?'<div class="m-hint" style="margin:4px 0 0;color:#C8730B">⚠️ ประมาณจากภาษี ÷ 3% (หารายการรับเงินในระบบไม่เจอ) — ตรวจ/แก้ก่อนส่ง</div>'
           :'<div class="m-hint" style="margin:4px 0 0">จากใบแจ้งหนี้ในระบบ</div>')+'</div>'+
       '<div class="fld" id="wgcViaEmail"><label>อีเมลลูกค้า</label><input id="wgcEmail" value="'+esc(x.chaseTo||'')+'" placeholder="account@customer.co.th">'+
         (x.chaseTo?'':'<div class="m-hint" style="margin:4px 0 0">ยังไม่มีอีเมลในทะเบียนลูกค้า</div>')+'</div>'+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
       '<button class="btn btn-primary" id="wgcBtn" onclick="wgcGo()">ส่ง</button></div>');
-    wgcViaChange();
+    wgcViaChange(); wgcMoney();
   }
+  /** พรีวิวบรรทัดยอดเงินที่จะอยู่ในข้อความ — สูตรเดียวกับหลังบ้าน (whtChaseMoney_) */
+  function wgcMoney(){
+    var x=wgFindRow(WGC_ROW), box=$('wgcMoney'); if(!x||!box) return;
+    var b=Number(String((($('wgcBase')||{}).value)||'').split(',').join(''))||0, w=Number(x.debit)||0, r2=function(n){ return Math.round(n*100)/100; };
+    if(!(b>0)){ box.innerHTML=''; return; }
+    var L=x.vatReg?(function(){ var v=r2(b*7/100), t=r2(b+v); return [['มูลค่าก่อน VAT',b],['VAT 7%',v],['รวมเงินทั้งสิ้น',t],['หัก ณ ที่จ่าย',w],['ยอดชำระสุทธิ',r2(t-w)]]; })()
+      :[['มูลค่าก่อนหัก ณ ที่จ่าย',b],['หัก ณ ที่จ่าย',w],['ยอดชำระสุทธิ',r2(b-w)]];
+    box.innerHTML='<span style="color:#8A94A6">ในข้อความ:</span> '+L.map(function(l){ return esc(l[0])+' <b>'+money(l[1])+'</b>'; }).join(' · ');
+  }
+  window.wgcMoney=wgcMoney;
   function wgcVia(){ var r=document.querySelector('input[name="wgcVia"]:checked'); return r?r.value:'email'; }
   function wgcViaChange(){
     var v=wgcVia(), e=$('wgcViaEmail'), b=$('wgcBtn');
@@ -25455,7 +25466,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260926-0941';
+  var APP_BUILD='20260926-0950';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
