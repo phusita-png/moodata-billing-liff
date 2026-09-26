@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260926-1613">
+<link rel="stylesheet" href="user.css?v=20260926-1623">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -6385,7 +6385,8 @@
   }
   var PV_TAX_ED=null;
   function pvTaxEdit(no, seq){
-    var t=((PV_ONE_D||{}).tax||[]).filter(function(r){ return r.seq===seq; })[0]; if(!t) return;
+    var src=(TAX_CTX && TAX_CTX.no===no) ? TAX_CTX.lines : ((PV_ONE_D||{}).tax||[]);
+    var t=src.filter(function(r){ return r.seq===seq; })[0]; if(!t) return;
     PV_TAX_ED={no:no, seq:seq};
     var f=function(id,label,val,ph,type){ return '<div class="fld"><label>'+label+'</label><input id="'+id+'"'+(type?' type="'+type+'"':'')+
       ' value="'+esc(val==null?'':String(val))+'" placeholder="'+esc(ph||'')+'"></div>'; };
@@ -6411,6 +6412,7 @@
       if(!r||!r.ok){ if(btn){ btn.disabled=false; btn.textContent='บันทึก'; } mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
       closeModal(); toast('🧾 บันทึกใบกำกับแล้ว');
       if(r.warn) setTimeout(function(){ toast('⚠️ '+r.warn); },1400);
+      if(TAX_CTX && TAX_CTX.no===e.no){ TAX_CTX.after(); return; }
       PV_ONE_D=null; paintPvOne();
     }).catch(function(err){ if(btn){ btn.disabled=false; btn.textContent='บันทึก'; } mErr(err.message); });
   }
@@ -9483,14 +9485,14 @@
       var urg=(t.daysLeft!=null && t.daysLeft<=60);
       var q="'"+String(t.no).replace(/'/g,"\\'")+"'";
       return '<tr><td class="dt-nw" style="color:#8A94A6">'+(i+1)+'</td>'+
-        '<td class="dt-nw"><a class="ex-lk" href="#" onclick="openPvOne('+q+');return false"><b>'+esc(t.no)+'</b></a>'+
+        '<td class="dt-nw"><a class="ex-lk" href="#" onclick="'+(t.kind==='PC'?'taxLinesOpen':'openPvOne')+'('+q+');return false"><b>'+esc(t.no)+'</b></a>'+
           '<div style="font-size:12px;color:#8A94A6">'+esc(t.srcNo||'')+'</div></td>'+
         '<td class="dt-nw">'+esc(t.payDate||'')+'</td>'+
         '<td>'+esc(t.seller||'-')+'</td><td class="dt-detail"><div class="pv-clamp">'+esc(t.detail||'-')+'</div></td>'+
         '<td class="dt-amt">'+money(t.vat)+'</td>'+
         '<td class="dt-nw">'+esc(t.deadline||'')+'</td>'+
         '<td class="dt-nw" style="font-weight:600;color:'+(urg?'var(--red)':'inherit')+'">'+(t.daysLeft!=null?Math.max(0,t.daysLeft)+' วัน':'')+'</td>'+
-        '<td class="dt-act"><button class="dt-mbtn" title="เปิดใบ PV กรอกใบกำกับ" onclick="openPvOne('+q+')">✏️</button></td></tr>';
+        '<td class="dt-act"><button class="dt-mbtn" title="กรอกใบกำกับ" onclick="'+(t.kind==='PC'?'taxLinesOpen':'openPvOne')+'('+q+')">✏️</button></td></tr>';
     });
     var vat=pend.reduce(function(s,t){ return s+(Number(t.vat)||0); },0);
     return '<div class="card"><div class="m-hint" style="margin:0 0 10px">จ่ายเงินแล้วแต่ยังไม่ได้รับใบกำกับภาษี — <b>ไม่เข้ารายงานภาษีซื้อ</b> จนกว่าจะกรอกเลขที่/วันที่ใบกำกับ · '+
@@ -10804,7 +10806,10 @@
           (x.dossier?' <a class="ex-lk" href="'+esc(x.dossier)+'" target="_blank">📁 แฟ้ม</a>'
             :(x.proof?' <a class="ex-lk" href="'+esc(x.proof)+'" target="_blank">🔍 บิล</a>':''))+
           /* ใบรับรองแทนใบเสร็จจบที่ใบสั่งจ่าย (พี่กี้ 25 ก.ย. 69) — ที่นี่โชว์เฉพาะของรายการจ่ายสดเก่าที่ออกไว้แล้ว */
-          (x.docNo?' <a class="ex-lk" href="'+esc(x.docLink||'#')+'" target="_blank">📄 '+esc(x.docNo)+'</a>':'');
+          (x.docNo?' <a class="ex-lk" href="'+esc(x.docLink||'#')+'" target="_blank">📄 '+esc(x.docNo)+'</a>':'')+
+          (x.tax?(x.tax.pending?' <span class="tk-badge b-review" style="font-size:11px">📭 รอใบกำกับ</span>'
+            :(x.tax.vat>0?' <span style="font-size:12px;color:#1F7A4D">🧾 VAT '+money(x.tax.vat)+'</span>':''))+
+            (x.tax.wht>0?' <span style="font-size:12px;color:#8A94A6">หัก ณ ที่จ่าย '+money(x.tax.wht)+(x.tax.whtNo?' · '+esc(x.tax.whtNo):' · ยังไม่ออก 50 ทวิ')+'</span>':''):'');
         var rs=x.recvStatus||'', signed=rs.indexOf('เซ็นรับแล้ว')>=0||rs.indexOf('แนบรูป')>=0, waitSign=rs.indexOf('รอเซ็น')>=0;
         /* ⋮ มาตรฐานเดียวกับใบสั่งจ่าย (พี่กี้ 25 ก.ย. 69) — ใส่คีย์ แล้ว payMenuSort เรียงกลุ่ม + เส้นคั่นให้ */
         var acts=[];
@@ -10817,6 +10822,8 @@
         if(x.source && x.source!==r.cashSource) acts.push({key:'src', label:'📄 ใบสั่งจ่าย '+x.source, call:'prGoSrc('+"'"+esc(x.source)+"'"+')'});
         if(x.docNo) acts.push({key:'doc', label:'📄 '+x.docNo, href:x.docLink||'#'});
         if(x.dossier) acts.push({key:'dossier', label:'🗂️ แฟ้มครบชุด', href:x.dossier});
+        /* 🧾 ภาษีตามการจ่าย (26 ก.ย. 69) — ดู/กรอกใบกำกับที่มาช้า */
+        if(x.tax) acts.push({key:'vat', label:(x.tax.pending?'📭 กรอกใบกำกับภาษี (รอใบกำกับ)':'🧾 ใบกำกับภาษี'), call:'taxLinesOpen('+q+')'});
         if(x.source===r.cashSource && !x.docNo && !x.proof) acts.push({key:'mksr', label:'📄 ออกใบรับรองแทนใบเสร็จ', call:'ptDoc('+q+')'});
         if(!locked) acts.push({key:'cancel', label:'🚫 ยกเลิกเอกสาร', call:'ptVoid('+q+')', danger:true});
         acts=payMenuSort(acts);
@@ -10981,7 +10988,8 @@
         '<div class="fld"><label>ประเภทค่าใช้จ่าย</label><select id="ptcType">'+topts+'</select></div>'+
         '<div class="fld"><label>จ่ายให้ใคร</label><input id="ptcPayee" placeholder="ร้าน/คนที่รับเงิน"></div>'+
         '<div class="fld"><label>รายละเอียด</label><input id="ptcDetail" placeholder="จ่ายค่าอะไร"></div>'+
-        '<div class="fld"><label>จำนวนเงิน (บาท)</label><input id="ptcAmt" type="number" inputmode="decimal"></div>'+
+        '<div class="fld"><label>จำนวนเงิน (บาท) — ยอดตามบิล</label><input id="ptcAmt" type="number" inputmode="decimal" oninput="ptTaxCalc()"></div>'+
+        ptTaxBlock(r)+
         imgsFldHtml('ptcImgs','📎 บิล/ใบเสร็จ — รูป หรือ PDF (แนบหลายใบได้)')+
         '<div class="tax-acts"><button class="btn btn-ghost" onclick="ptForm(\'cash\')">ปิด</button>'+
         '<button class="btn btn-primary" id="ptcSend" onclick="ptSaveCash()">บันทึกรายการ</button></div></div>';
@@ -11082,15 +11090,77 @@
       toast(isNew?'✅ เพิ่มวงเงินแล้ว':'✅ บันทึกวงเงินแล้ว'); renderPetty();
     }).catch(function(e){ mErr(e.message); });
   }
+  /* ═════ 🧾 ส่วนภาษีของฟอร์มจ่ายสด (spec-tax-at-payment · 26 ก.ย. 69) ═════
+     ยอดที่กรอก = ยอดตามบิล · หัก ณ ที่จ่ายจากฐานก่อน VAT · เงินออกจากวง = ยอดบิล − ภาษีที่หัก */
+  function ptTaxBlock(r){
+    var secs=(r.sections||[]).map(function(x){ return '<option value="'+esc(x.code)+'">'+esc(x.code+' '+x.label)+'</option>'; }).join('');
+    var rates=(r.whtRates||[0,1,2,3,5]).map(function(x){ return '<option value="'+x+'">'+(x?x+'%':'ไม่หัก')+'</option>'; }).join('');
+    var kinds=(r.payeeKinds||[]).map(function(x){ return '<option>'+esc(x)+'</option>'; }).join('');
+    return '<div class="fld"><label style="display:flex;gap:8px;align-items:center;cursor:pointer">'+
+        '<input type="checkbox" id="ptcTaxOn" style="width:auto" onchange="ptTaxToggle()"> 🧾 มีใบกำกับภาษี / หัก ณ ที่จ่าย</label></div>'+
+      '<div id="ptcTax" class="hidden" style="border:1px solid #E3E8F0;border-radius:10px;padding:12px;margin:0 0 12px">'+
+        '<div class="fld"><label>VAT ในบิล <button type="button" class="lnk" onclick="ptTaxVat7()">คิด 7/107 จากยอดบิล</button></label>'+
+          '<input id="ptcVat" type="number" inputmode="decimal" value="0" oninput="ptTaxCalc()"></div>'+
+        '<div class="fld"><label>เลขที่ใบกำกับภาษี (เว้นว่าง = ยังไม่ได้รับ → 📭 รอใบกำกับ)</label><input id="ptcInv"></div>'+
+        '<div class="fld"><label>วันที่ใบกำกับ</label><input id="ptcInvDate" type="date"></div>'+
+        '<div class="fld"><label>เลขผู้เสียภาษีผู้ขาย</label><input id="ptcSellerId" placeholder="13 หลัก"></div>'+
+        '<div class="fld"><label>สาขาผู้ขาย</label><input id="ptcBranch" placeholder="สำนักงานใหญ่ = 00000"></div>'+
+        '<div class="fld"><label>หัก ณ ที่จ่าย</label><select id="ptcWhtRate" onchange="ptTaxCalc()">'+rates+'</select></div>'+
+        '<div id="ptcWhtBox" class="hidden">'+
+          '<div class="fld"><label>ประเภทเงินได้ (มาตรา)</label><select id="ptcSection"><option value="">— เลือก —</option>'+secs+'</select></div>'+
+          '<div class="fld"><label>ผู้รับเงินเป็น</label><select id="ptcPayeeKind">'+kinds+'</select></div>'+
+          '<div class="fld"><label>เลขผู้เสียภาษีผู้รับเงิน (ออก 50 ทวิ)</label><input id="ptcPayeeId"></div>'+
+          '<div class="fld"><label>ที่อยู่ผู้รับเงิน (ออก 50 ทวิ)</label><input id="ptcPayeeAddr"></div>'+
+        '</div>'+
+        '<div class="m-hint" id="ptcTaxSum" style="margin:0"></div>'+
+      '</div>';
+  }
+  function ptTaxToggle(){ var on=!!(($('ptcTaxOn')||{}).checked); var b=$('ptcTax'); if(b) b.classList.toggle('hidden',!on); ptTaxCalc(); }
+  function ptTaxVat7(){ var a=Number(($('ptcAmt')||{}).value)||0; if($('ptcVat')) $('ptcVat').value=(Math.round((a-a*100/107)*100)/100).toFixed(2); ptTaxCalc(); }
+  function ptTaxCalc(){
+    var box=$('ptcTaxSum'); if(!box) return;
+    var a=Number(($('ptcAmt')||{}).value)||0, v=Number(($('ptcVat')||{}).value)||0, rt=Number(($('ptcWhtRate')||{}).value)||0;
+    var wb=$('ptcWhtBox'); if(wb) wb.classList.toggle('hidden',!rt);
+    var base=Math.round((a-v)*100)/100, wht=Math.round(base*rt)/100;
+    box.innerHTML='ฐานก่อน VAT <b>'+money(base)+'</b> · VAT <b>'+money(v)+'</b>'+
+      (rt?' · หัก '+rt+'% = <b>'+money(wht)+'</b>':'')+' · <b>เงินออกจากวง '+money(Math.round((a-wht)*100)/100)+'</b>';
+  }
+  function ptTaxParams(){
+    if(!(($('ptcTaxOn')||{}).checked)) return {};
+    var v=function(id){ return (($(id)||{}).value||'').trim(); };
+    return { taxOn:'1', vat:v('ptcVat'), invNo:v('ptcInv'), invDate:v('ptcInvDate'), sellerId:v('ptcSellerId'),
+      branch:v('ptcBranch'), whtRate:v('ptcWhtRate'), section:v('ptcSection'), payeeKind:v('ptcPayeeKind'),
+      payeeId:v('ptcPayeeId'), payeeAddr:v('ptcPayeeAddr') };
+  }
+  /** 🧾 แถวภาษีของเอกสารจ่าย 1 ใบ (รายการเงินสดย่อย) — ✏️ ใช้ฟอร์มเดียวกับหน้า PV */
+  var TAX_CTX=null;
+  function taxLinesOpen(no){
+    callBusy('กำลังโหลด…', jsonp({action:'waPettyTaxLines', uid:UID, no:no})).then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'โหลดไม่สำเร็จ'); return; }
+      TAX_CTX={no:no, lines:r.tax||[], after:function(){ taxLinesOpen(no); if(VIEW==='petty') renderPetty(); }};
+      var q="'"+String(no).replace(/'/g,"\\'")+"'";
+      modal('<h3>🧾 ภาษี · '+esc(no)+'</h3>'+
+        (TAX_CTX.lines.length ? TAX_CTX.lines.map(function(t){
+          return '<div class="card" style="padding:10px 12px;margin:0 0 8px"><div style="display:flex;gap:8px;align-items:flex-start">'+
+            '<div style="flex:1">'+pvTaxBadge(t)+'<div style="margin-top:4px">'+esc(t.invNo||'ยังไม่มีเลขใบกำกับ')+(t.invDate?' · '+esc(t.invDate):'')+'</div>'+
+            '<div style="font-size:12px;color:#8A94A6">'+esc(t.seller||'-')+' · ฐาน '+money(t.base)+' · VAT '+money(t.vat)+
+              (t.ymText?' · ใช้สิทธิ์ '+esc(t.ymText):'')+(t.whtAmt?' · หัก '+money(t.whtAmt)+(t.whtNo?' ('+esc(t.whtNo)+')':''):'')+'</div></div>'+
+            (t.isVoid?'':'<button class="btn btn-ghost btn-sm" style="width:auto" onclick="pvTaxEdit('+q+','+t.seq+')">✏️ แก้</button>')+
+            '</div></div>';
+        }).join('') : '<div class="m-hint">รายการนี้ไม่มีข้อมูลภาษี</div>')+
+        '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button></div>');
+    }).catch(function(e){ toast(e.message); });
+  }
+  window.ptTaxToggle=ptTaxToggle; window.ptTaxVat7=ptTaxVat7; window.ptTaxCalc=ptTaxCalc; window.taxLinesOpen=taxLinesOpen;
   function ptSaveCash(){
     var detail=(($('ptcDetail')||{}).value||'').trim(), amt=($('ptcAmt')||{}).value;
     if(!detail){ mErr('กรอกรายละเอียดค่ะ'); return; }
     if(!(Number(amt)>0)){ mErr('จำนวนเงินไม่ถูกต้องค่ะ'); return; }
     var b=$('ptcSend'); if(b){ b.disabled=true; b.textContent='กำลังบันทึก…'; }
-    callBusy('กำลังบันทึก…', jsonpPost({action:'waPettyCash',uid:UID,entity:PT_ENT,fundId:ptFundId(),
+    callBusy('กำลังบันทึก…', jsonpPost(Object.assign({action:'waPettyCash',uid:UID,entity:PT_ENT,fundId:ptFundId(),
       payDate:($('ptcDate')||{}).value||'', type:($('ptcType')||{}).value||'',
       payee:(($('ptcPayee')||{}).value||'').trim(), detail:detail, amount:amt,
-      imgs:JSON.stringify(IMGS['ptcImgs']||[])}), 'บันทึกแล้ว').then(function(r){
+      imgs:JSON.stringify(IMGS['ptcImgs']||[])}, ptTaxParams())), 'บันทึกแล้ว').then(function(r){
       if(!r||!r.ok){ if(b){b.disabled=false;b.textContent='บันทึกรายการ';} mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
       IMGS['ptcImgs']=[]; PT_FORM='';
       toast('✅ บันทึกแล้ว '+(r.no||'')+(r.docNo?' · 📄 ออกใบรับรองแทนใบเสร็จ '+r.docNo:''));
@@ -25831,7 +25901,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260926-1613';
+  var APP_BUILD='20260926-1623';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
