@@ -3824,7 +3824,8 @@
   }
   /** ตารางประเภท — ฟังก์ชันบริสุทธิ์ (ของจริงกับเทสเรียกตัวเดียวกัน) */
   function ecTableHtml(cats, isOwner){
-    var rows=(cats||[]).map(function(c){
+    var n=(cats||[]).length;
+    var rows=(cats||[]).map(function(c, i){
       var q="'"+String(c.code).replace(/'/g,"\'")+"'";
       var off = c.status==='ปิด';
       var used = Number(c.used)||0;
@@ -3840,7 +3841,12 @@
           (used ? (' disabled title="ลบไม่ได้ — มีใบใช้อยู่ '+used+' ใบ · กดปิดแทนได้ค่ะ"')
                 : (' onclick="ecDelete('+q+')"'))+
         '>ลบ</button>') : '';
-      return '<tr'+(off?' style="opacity:.55"':'')+'>'+
+      /* # ลำดับ + ↕️ จัดลำดับเอง (พี่กี้ 26 ก.ย. 69) — ลากวางบนคอม · ปุ่ม ▲▼ ใช้ได้ทุกจอ */
+      var mv = isOwner ? ('<span class="ec-mv">'+
+          '<button class="ec-arr" title="เลื่อนขึ้น"'+(i===0?' disabled':' onclick="ecMove('+i+',-1)"')+'>▲</button>'+
+          '<button class="ec-arr" title="เลื่อนลง"'+(i===n-1?' disabled':' onclick="ecMove('+i+',1)"')+'>▼</button></span>') : '';
+      return '<tr'+(off?' style="opacity:.55"':'')+(isOwner?' draggable="true" data-i="'+i+'" ondragstart="ecDragStart(event,'+i+')" ondragover="ecDragOver(event)" ondragleave="ecDragLeave(event)" ondrop="ecDrop(event,'+i+')" ondragend="ecDragEnd()"':'')+'>'+
+        '<td class="dt-nw" style="color:#8A94A6">'+(isOwner?'<span class="ec-grip" title="ลากเพื่อย้าย">⋮⋮</span> ':'')+(i+1)+mv+'</td>'+
         '<td><b>'+esc(c.name)+'</b>'+(off?' <span class="m-hint" style="margin:0">(ปิดอยู่)</span>':'')+'</td>'+
         '<td class="dt-nw">'+esc(c.kind||'')+'</td>'+
         '<td class="dt-nw">'+esc(c.sect||'—')+'</td>'+
@@ -3849,11 +3855,35 @@
         '</tr>';
     }).join('');
     return '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl ec-tbl">'+
-      '<colgroup><col style="width:30%"><col style="width:11%"><col style="width:13%">'+
-      '<col style="width:13%"><col style="width:33%"></colgroup>'+
-      '<thead><tr><th>ประเภท</th><th>ชนิด</th><th>มาตราเริ่มต้น</th><th>ใบที่ใช้อยู่</th><th></th></tr></thead>'+
-      '<tbody>'+(rows || stEmptyRow(5,'ยังไม่มีประเภท — กดเพิ่มด้านล่างได้เลยค่ะ'))+'</tbody></table></div>';
+      '<colgroup><col style="width:'+(isOwner?'120px':'48px')+'"><col style="width:28%"><col style="width:10%"><col style="width:12%">'+
+      '<col style="width:12%"><col></colgroup>'+
+      '<thead><tr><th>#</th><th>ประเภท</th><th>ชนิด</th><th>มาตราเริ่มต้น</th><th>ใบที่ใช้อยู่</th><th></th></tr></thead>'+
+      '<tbody>'+(rows || stEmptyRow(6,'ยังไม่มีประเภท — กดเพิ่มด้านล่างได้เลยค่ะ'))+'</tbody></table></div>'+
+      '<style>.ec-grip{cursor:grab;color:#B8C1CF;letter-spacing:-2px;margin-right:4px}'+
+      '.ec-mv{display:inline-flex;gap:2px;margin-left:8px;vertical-align:middle}'+
+      '.ec-arr{border:1px solid var(--line);background:#fff;border-radius:6px;width:24px;height:22px;padding:0;font-size:10px;line-height:1;color:#5B6472;cursor:pointer}'+
+      '.ec-arr:disabled{opacity:.3;cursor:default}'+
+      '.ec-tbl tr.ec-over td{border-top:2px solid var(--blue,#1E6FD9)}'+
+      '.ec-tbl tr.ec-drag{opacity:.4}</style>';
   }
+  /* ↕️ จัดลำดับ — ย้ายบนจอก่อน (เห็นผลทันที) แล้วบันทึกทั้งชุดทีเดียว */
+  var EC_DRAG=-1;
+  function ecReorder(from, to){
+    var cats=(EC&&EC.cats)||[];
+    if(from<0||to<0||from>=cats.length||to>=cats.length||from===to) return;
+    var it=cats.splice(from,1)[0]; cats.splice(to,0,it);
+    ecPaint();
+    callBusy('กำลังบันทึกลำดับ…', jsonpPost(withRoom_({ action:'waExpCat', uid:UID, op:'reorder', codes:cats.map(function(c){ return c.code; }).join(',') })))
+      .then(function(r){ if(!r||!r.ok){ toast((r&&r.error)||'บันทึกลำดับไม่สำเร็จ'); renderExpCat(); return; } EC=r; ecPaint(); toast('↕️ จัดลำดับแล้วค่ะ'); })
+      .catch(function(e){ toast(e.message); renderExpCat(); });
+  }
+  function ecMove(i, d){ ecReorder(i, i+d); }
+  function ecDragStart(ev, i){ EC_DRAG=i; try{ ev.dataTransfer.effectAllowed='move'; ev.dataTransfer.setData('text/plain', String(i)); }catch(e){} var tr=ev.currentTarget; if(tr) tr.classList.add('ec-drag'); }
+  function ecDragOver(ev){ ev.preventDefault(); var tr=ev.currentTarget; if(tr) tr.classList.add('ec-over'); }
+  function ecDragLeave(ev){ var tr=ev.currentTarget; if(tr) tr.classList.remove('ec-over'); }
+  function ecDrop(ev, i){ ev.preventDefault(); var f=EC_DRAG; EC_DRAG=-1; ecReorder(f, i); }
+  function ecDragEnd(){ EC_DRAG=-1; document.querySelectorAll('.ec-tbl tr').forEach(function(tr){ tr.classList.remove('ec-over','ec-drag'); }); }
+  window.ecMove=ecMove; window.ecDragStart=ecDragStart; window.ecDragOver=ecDragOver; window.ecDragLeave=ecDragLeave; window.ecDrop=ecDrop; window.ecDragEnd=ecDragEnd;
   function ecPaint(){
     var own=!!(EC&&EC.isOwner);
     $('main').innerHTML='<div class="card"><div class="pb" style="padding:16px 18px">'+
@@ -25468,7 +25498,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260926-1002';
+  var APP_BUILD='20260926-1011';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
