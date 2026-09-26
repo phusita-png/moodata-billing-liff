@@ -7279,114 +7279,10 @@
        ข้อมูลฝั่งระบบย้ายมาอยู่ในคอลัมน์ "ในระบบ" + ผลเทียบมูลค่าของหน้ากระทบยอด GL แทน */
     return '<div class="tax-acts" style="margin-bottom:12px">'+
       t('gl','📊 กระทบยอด GL','renderWhtGl()')+
-      t('reg','📄 รายการ 50 ทวิ','renderWhtIn()')+
-      t('chase','📨 ยังไม่ได้รับ (ทวง)','renderWhtChase()')+'</div>';
+      t('reg','📄 รายการ 50 ทวิ','renderWhtIn()')+'</div>';
   }
 
-  /* ═══════════ 📨 ทวง 50 ทวิ ที่ลูกค้ายังไม่ส่ง (พี่กี้เคาะ 26 ก.ย. 69) ═══════════
-     รายการรับชำระที่ลูกค้าหักภาษีไว้ แต่ยังไม่มีไฟล์ 50 ทวิ และยังไม่มีใบในทะเบียน WI ที่จับคู่
-     ทวงทีละใบ · อีเมล / กลุ่ม LINE ลูกค้า / คัดลอกข้อความ · ข้อความมีลิงก์ให้ลูกค้าแนบไฟล์เอง (30 วัน) */
-  var WC=null, WC_Q='', WC_NO='';
-  function renderWhtChase(){
-    if(!IS_OWNER){ $('main').innerHTML='<div class="card"><div class="emptybox">เฉพาะผู้ดูแลค่ะ</div></div>'; return; }
-    skel();
-    jsonp({action:'waWhtChaseList',uid:UID}).then(function(r){
-      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
-      WC=r; wcPaint();
-    }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
-  }
-  function wcRows(){
-    var q=WC_Q.trim().toLowerCase();
-    return ((WC&&WC.rows)||[]).filter(function(x){
-      return !q || [x.customer,x.reNo,x.ivNo,x.no].some(function(v){ return String(v||'').toLowerCase().indexOf(q)>=0; });
-    });
-  }
-  function wcPaint(){
-    var all=(WC&&WC.rows)||[], sumW=0, never=0;
-    all.forEach(function(x){ sumW+=Number(x.wht)||0; if(!x.chaseCount) never++; });
-    var h='<div class="ds-grid">'+
-        statCard('ยังไม่ได้รับ 50 ทวิ', all.length+' ใบ', 'ภาษี '+money(Math.round(sumW*100)/100)+' บาท ที่ยังเครดิตไม่ได้', all.length?'ds-warn':'')+
-        statCard('ยังไม่เคยทวง', never+' ใบ', never?'กด ⋮ › 📨 ทวง 50 ทวิ':'ทวงครบทุกใบแล้ว')+
-      '</div>'+
-      '<div class="lst-card"><div class="lst-head">'+
-        '<div class="t"><b>รายการที่ยังไม่ได้รับ 50 ทวิ จากลูกค้า</b>'+
-          '<div>ลูกค้าหักภาษีไว้ตอนจ่ายเงิน แต่ยังไม่ส่งหนังสือรับรองมา · ลูกค้าแนบไฟล์ผ่านลิงก์แล้ว รายการจะหายจากหน้านี้เอง</div></div>'+
-        '<div class="lst-tools"><input class="s-find" placeholder="ค้นหาลูกค้า / เลขที่เอกสาร" value="'+esc(WC_Q)+'" oninput="wcSetQ(this.value)"></div></div>'+
-        '<div id="wcTbl">'+wcTblHtml()+'</div></div>';
-    $('main').innerHTML=wiTabs('chase')+h;
-  }
-  function wcSetQ(v){ WC_Q=v||''; var b=$('wcTbl'); if(b) b.innerHTML=wcTblHtml(); }
-  function wcTblHtml(){
-    var rows=wcRows(), sa=0, sw=0;
-    rows.forEach(function(x){ sa+=Number(x.amount)||0; sw+=Number(x.wht)||0; });
-    var head='<th style="width:38px">#</th><th>วันที่รับเงิน</th><th>ลูกค้า</th><th>ใบเสร็จ / ใบแจ้งหนี้</th>'+
-      '<th class="ta-r">ยอดรับ</th><th class="ta-r">ภาษีถูกหัก</th><th>การทวง</th><th style="width:40px"></th>';
-    /* 🔴 โครงมาก่อนข้อมูล */
-    var body=rows.length?rows.map(function(x,i){
-      var q="'"+String(x.no).split("'").join('')+"'";
-      var a=[{key:'send', label:(x.chaseCount?'📨 ทวงอีกครั้ง':'📨 ทวง 50 ทวิ'), call:'wcOpen('+q+')'},
-             {key:'proof', label:'📎 แนบไฟล์เอง (ได้รับทางอื่นแล้ว)', call:'wiUpload('+q+')'}];
-      return '<tr><td class="dt-nw" style="color:#8A94A6">'+(i+1)+'</td><td class="dt-nw">'+esc(x.date)+'</td>'+
-        '<td style="white-space:normal">'+esc(x.customer||'-')+'</td>'+
-        '<td class="dt-nw">'+esc(x.reNo||'-')+(x.ivNo?'<br><span style="font-size:12px;color:#8A94A6">'+esc(x.ivNo)+'</span>':'')+'</td>'+
-        '<td class="ta-r dt-nw">'+money(x.amount)+'</td><td class="ta-r dt-nw">'+money(x.wht)+'</td>'+
-        '<td class="dt-nw">'+(x.chaseCount?'<span style="color:#C8730B">📨 ทวงแล้ว '+x.chaseCount+' ครั้ง</span><br><span style="font-size:12px;color:#8A94A6">ล่าสุด '+esc(x.chaseAt)+'</span>'
-          :'<span style="color:#8A94A6">ยังไม่เคยทวง</span>')+'</td>'+
-        dtActCell('wc-'+x.no, payMenuSort(a))+'</tr>';
-    }).join(''):'<tr class="dt-empty"><td colspan="8">'+(WC_Q?'ไม่พบรายการที่ค้นหา':'🎉 ได้รับ 50 ทวิ ครบทุกรายการแล้ว')+'</td></tr>';
-    var tot='<tr class="tax-total"><td></td><td colspan="3">รวม '+rows.length+' ใบ</td><td class="ta-r dt-nw">'+money(Math.round(sa*100)/100)+'</td>'+
-      '<td class="ta-r dt-nw">'+money(Math.round(sw*100)/100)+'</td><td colspan="2"></td></tr>';
-    return '<div class="tax-tbl-wrap"><table class="tax-tbl"><thead><tr>'+head+'</tr></thead><tbody>'+body+tot+'</tbody></table></div>';
-  }
-  function wcFind(no){ return ((WC&&WC.rows)||[]).filter(function(x){ return x.no===no; })[0]||null; }
-  function wcOpen(no){
-    var x=wcFind(no); if(!x) return; WC_NO=no;
-    var def=x.email?'email':(x.hasGroup?'line':'email');
-    var opt=function(k,lb,sub,dis){ return '<label style="display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:12px;cursor:pointer'+(dis?';opacity:.5':'')+'">'+
-      '<input type="radio" name="wcVia" value="'+k+'" style="width:auto;margin-top:3px"'+(k===def?' checked':'')+(dis?' disabled':'')+' onchange="wcViaChange()">'+
-      '<span><b>'+lb+'</b><br><span style="font-size:12.5px;color:#8A94A6">'+sub+'</span></span></label>'; };
-    modal('<h3>📨 ทวง 50 ทวิ — '+esc(x.customer||'ลูกค้า')+'</h3><div id="mErr" class="m-err hidden"></div>'+
-      '<div class="m-hint">'+esc(x.reNo||x.ivNo||x.no)+' · รับเงิน '+esc(x.date)+' · ภาษีถูกหัก <b>'+money(x.wht)+'</b> บาท'+
-        (x.chaseCount?' · ทวงแล้ว '+x.chaseCount+' ครั้ง (ล่าสุด '+esc(x.chaseAt)+')':'')+'</div>'+
-      '<div style="display:flex;flex-direction:column;gap:8px;margin:6px 0 12px">'+
-        opt('email','📧 อีเมล','ส่งข้อความทวงพร้อมปุ่มแนบไฟล์ ถึงอีเมลลูกค้า (ใส่ได้หลายอีเมล คั่นด้วย ,)')+
-        opt('line','💬 กลุ่ม LINE ลูกค้า', x.hasGroup?'ส่งข้อความทวงเข้ากลุ่ม LINE ที่ผูกกับลูกค้ารายนี้':'ลูกค้ารายนี้ยังไม่ได้ผูกกลุ่ม LINE', !x.hasGroup)+
-        opt('copy','📋 คัดลอกข้อความ','ได้ข้อความทวงสำเร็จรูป (มีลิงก์แนบไฟล์) ไปวางส่งเอง')+
-      '</div>'+
-      '<div class="fld" id="wcViaEmail"><label>อีเมลลูกค้า</label><input id="wcEmail" value="'+esc(x.email||'')+'" placeholder="account@customer.co.th">'+
-        (x.email?'':'<div class="m-hint" style="margin:4px 0 0">ยังไม่มีอีเมลในทะเบียนลูกค้า</div>')+'</div>'+
-      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
-      '<button class="btn btn-primary" id="wcBtn" onclick="wcGo()">ส่ง</button></div>');
-    wcViaChange();
-  }
-  function wcVia(){ var r=document.querySelector('input[name="wcVia"]:checked'); return r?r.value:'email'; }
-  function wcViaChange(){
-    var v=wcVia(), e=$('wcViaEmail'), b=$('wcBtn');
-    if(e) e.classList.toggle('hidden', v!=='email');
-    if(b) b.textContent=v==='email'?'📧 ส่งอีเมลทวง':(v==='line'?'💬 ส่งเข้ากลุ่ม LINE':'📋 สร้างข้อความ + จดว่าทวงแล้ว');
-  }
-  function wcGo(){
-    var v=wcVia(), req={action:'waWhtChase',uid:UID,no:WC_NO,via:v};
-    if(v==='email'){ req.email=String((($('wcEmail')||{}).value)||'').trim(); if(!req.email){ mErr('ใส่อีเมลลูกค้าก่อนค่ะ'); return; } }
-    var btn=$('wcBtn'); if(btn){ btn.disabled=true; btn.textContent='กำลังส่ง…'; }
-    callBusy('กำลังส่ง…', jsonp(req), 'ส่งแล้ว').then(function(r){
-      if(!r||!r.ok){ if(btn){ btn.disabled=false; wcViaChange(); } mErr((r&&r.error)||'ส่งไม่สำเร็จ'); return; }
-      if(v==='copy'){
-        modal('<h3>📋 ข้อความทวง 50 ทวิ</h3><div class="m-hint">คัดลอกไปวางส่งลูกค้าได้เลย — จดว่าทวงครั้งที่ '+r.count+' แล้ว</div>'+
-          '<div class="fld"><textarea id="wcText" rows="12" readonly onclick="this.select()">'+esc(r.text)+'</textarea></div>'+
-          '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal();renderWhtChase()">ปิด</button>'+
-          '<button class="btn btn-primary" onclick="wcCopy()">📋 คัดลอก</button></div>');
-        return;
-      }
-      closeModal(); toast((v==='email'?'📧 ส่งอีเมลทวง':'💬 ส่งเข้ากลุ่ม LINE')+' แล้ว · ครั้งที่ '+r.count); renderWhtChase();
-    }).catch(function(e){ if(btn){ btn.disabled=false; wcViaChange(); } mErr(e.message); });
-  }
-  function wcCopy(){
-    var el=$('wcText'); if(!el) return; el.select();
-    try{ navigator.clipboard.writeText(el.value).then(function(){ toast('📋 คัดลอกแล้ว'); },function(){ document.execCommand('copy'); toast('📋 คัดลอกแล้ว'); }); }
-    catch(e){ try{ document.execCommand('copy'); toast('📋 คัดลอกแล้ว'); }catch(_){} }
-  }
-  window.renderWhtChase=renderWhtChase; window.wcSetQ=wcSetQ; window.wcOpen=wcOpen; window.wcViaChange=wcViaChange; window.wcGo=wcGo; window.wcCopy=wcCopy;
+
   /* ═══════════ 📊 กระทบยอด 50 ทวิ ↔ GL (spec docs/spec-wht-gl.md · 21 ก.ย. 69) ═══════════
      ต้นแบบมาจากไฟล์ที่พี่กี้ทำมือไว้ก่อน — หน้านี้คือย้ายของนั้นเข้าระบบ
      🔴 GL คือความจริงจากโปรแกรมบัญชี หน้านี้อ่านอย่างเดียว (แก้ได้แค่ช่องหมายเหตุ) */
@@ -7502,7 +7398,9 @@
           '<div>'+esc(dp.name)+'</div></td>'+
         '<td class="dt-amt">'+(r.debit?money(r.debit):'—')+'</td>'+
         '<td class="dt-amt">'+(r.credit?money(r.credit):'—')+'</td>'+
-        '<td class="ta-c dt-nw"><span class="tk-badge '+(cls[tg]||'b-new')+'">'+esc(r.status||'')+'</span></td>'+
+        '<td class="ta-c dt-nw"><span class="tk-badge '+(cls[tg]||'b-new')+'">'+esc(r.status||'')+'</span>'+
+          /* 📨 ทวงแล้วกี่ครั้ง (26 ก.ย. 69) */
+          (r.chaseCount?'<div style="font-size:12px;color:#C8730B;margin-top:3px">📨 ทวงแล้ว '+r.chaseCount+' ครั้ง · '+esc(r.chaseAt||'')+'</div>':'')+'</td>'+
         /* มีรายการรับเงินในระบบไหม — คนละเรื่องกับ "มีใบ 50 ทวิ"
            ลง GL แล้วแต่ระบบไม่มีรายการ = เงินเข้าที่ยังไม่ได้บันทึก */
         '<td class="ta-c dt-nw">'+(r.sysMatch
@@ -7514,6 +7412,8 @@
         '<td class="dt-nw">'+esc(r.matchNo||'—')+'</td>'+
         '<td><input class="wg-note" value="'+esc(r.note||'')+'" placeholder="บันทึก…" '+
           'onchange="wgNote('+r.row+',this.value)"></td>'+
+        /* ⋮ ทวง 50 ทวิ — เฉพาะแถวที่ยังไม่มีใบ (พี่กี้ 26 ก.ย. 69 · ทำต่อจากหน้านี้ ไม่แยกแท็บ) */
+        dtActCell('wg-'+r.row, r.canChase?[{key:'send', label:(r.chaseCount?'📨 ทวงอีกครั้ง':'📨 ทวง 50 ทวิ'), call:'wgChase('+r.row+')'}]:[])+
         '</tr>';
     }).join('');
     /* 22 ก.ย. 69 — ตัดคอลัมน์ "สมุด" ออก (พี่กี้: ไม่ได้ใช้) แล้วเกลี่ยความกว้างใหม่
@@ -7524,10 +7424,66 @@
       {label:'เดบิต (Dr)',cls:'ta-r',w:'9%'},{label:'เครดิต (Cr)',cls:'ta-r',w:'9%'},
       {label:'สถานะ',cls:'ta-c dt-nw',w:'12%'},{label:'ในระบบ',cls:'ta-c dt-nw',w:'7%'},
       {label:'มูลค่า',cls:'ta-c dt-nw',w:'7%'},
-      {label:'เลขที่ใบ 50 ทวิ',cls:'dt-nw',w:'10%'},{label:'หมายเหตุ',w:'10%'}],
+      {label:'เลขที่ใบ 50 ทวิ',cls:'dt-nw',w:'10%'},{label:'หมายเหตุ',w:'10%'},{label:'',w:'40px'}],
       body?[body]:[], '', 'ยังไม่มีรายการ GL ในปีนี้ — กด "นำเข้าไฟล์ GL" ด้านบนค่ะ');
   }
   window.wgTableHtml=wgTableHtml;
+
+  /* ═══════════ 📨 ทวง 50 ทวิ จากแถว GL ที่ยังไม่มีใบ (พี่กี้เคาะ 26 ก.ย. 69) ═══════════
+     ทวงทีละแถว · อีเมล / กลุ่ม LINE ลูกค้า / คัดลอกข้อความ · ข้อความมีลิงก์ให้ลูกค้าแนบไฟล์ (30 วัน)
+     ลูกค้าแนบแล้ว → ลงทะเบียน 50 ทวิ ที่ถูกหัก + จับคู่แถว GL นี้ให้เอง */
+  var WGC_ROW=0;
+  function wgFindRow(row){ return (((WG||{}).rows)||[]).filter(function(x){ return x.row===row; })[0]||null; }
+  function wgChase(row){
+    var x=wgFindRow(row); if(!x) return; WGC_ROW=row;
+    var dp=wgDescParts(x), who=x.custName||dp.name;
+    var def=x.chaseTo?'email':(x.hasGroup?'line':'email');
+    var opt=function(k,lb,sub,dis){ return '<label style="display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:12px;cursor:pointer'+(dis?';opacity:.5':'')+'">'+
+      '<input type="radio" name="wgcVia" value="'+k+'" style="width:auto;margin-top:3px"'+(k===def?' checked':'')+(dis?' disabled':'')+' onchange="wgcViaChange()">'+
+      '<span><b>'+lb+'</b><br><span style="font-size:12.5px;color:#8A94A6">'+sub+'</span></span></label>'; };
+    modal('<h3>📨 ทวง 50 ทวิ — '+esc(who)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">'+esc(dp.no)+' · '+esc(x.date||'')+' · ภาษีถูกหัก <b>'+money(x.debit)+'</b> บาท'+
+        (x.chaseCount?' · ทวงแล้ว '+x.chaseCount+' ครั้ง (ล่าสุด '+esc(x.chaseAt)+')':'')+
+        (x.custName?'':'<br>⚠️ หาชื่อนี้ในทะเบียนลูกค้าไม่เจอ — ใส่อีเมลเอง หรือคัดลอกข้อความ')+'</div>'+
+      '<div style="display:flex;flex-direction:column;gap:8px;margin:6px 0 12px">'+
+        opt('email','📧 อีเมล','ส่งข้อความทวงพร้อมปุ่มแนบไฟล์ (ใส่ได้หลายอีเมล คั่นด้วย ,)')+
+        opt('line','💬 กลุ่ม LINE ลูกค้า', x.hasGroup?'ส่งเข้ากลุ่ม LINE ที่ผูกกับลูกค้ารายนี้':'ลูกค้ารายนี้ยังไม่ได้ผูกกลุ่ม LINE', !x.hasGroup)+
+        opt('copy','📋 คัดลอกข้อความ','ได้ข้อความทวงสำเร็จรูป (มีลิงก์แนบไฟล์) ไปวางส่งเอง')+
+      '</div>'+
+      '<div class="fld" id="wgcViaEmail"><label>อีเมลลูกค้า</label><input id="wgcEmail" value="'+esc(x.chaseTo||'')+'" placeholder="account@customer.co.th">'+
+        (x.chaseTo?'':'<div class="m-hint" style="margin:4px 0 0">ยังไม่มีอีเมลในทะเบียนลูกค้า</div>')+'</div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" id="wgcBtn" onclick="wgcGo()">ส่ง</button></div>');
+    wgcViaChange();
+  }
+  function wgcVia(){ var r=document.querySelector('input[name="wgcVia"]:checked'); return r?r.value:'email'; }
+  function wgcViaChange(){
+    var v=wgcVia(), e=$('wgcViaEmail'), b=$('wgcBtn');
+    if(e) e.classList.toggle('hidden', v!=='email');
+    if(b) b.textContent=v==='email'?'📧 ส่งอีเมลทวง':(v==='line'?'💬 ส่งเข้ากลุ่ม LINE':'📋 สร้างข้อความ + จดว่าทวงแล้ว');
+  }
+  function wgcGo(){
+    var v=wgcVia(), req={action:'waWhtChase',uid:UID,row:WGC_ROW,via:v};
+    if(v==='email'){ req.email=String((($('wgcEmail')||{}).value)||'').trim(); if(!req.email){ mErr('ใส่อีเมลลูกค้าก่อนค่ะ'); return; } }
+    var btn=$('wgcBtn'); if(btn){ btn.disabled=true; btn.textContent='กำลังส่ง…'; }
+    callBusy('กำลังส่ง…', jsonp(req), 'ส่งแล้ว').then(function(r){
+      if(!r||!r.ok){ if(btn){ btn.disabled=false; wgcViaChange(); } mErr((r&&r.error)||'ส่งไม่สำเร็จ'); return; }
+      if(v==='copy'){
+        modal('<h3>📋 ข้อความทวง 50 ทวิ</h3><div class="m-hint">คัดลอกไปวางส่งลูกค้าได้เลย — จดว่าทวงครั้งที่ '+r.count+' แล้ว</div>'+
+          '<div class="fld"><textarea id="wgcText" rows="12" readonly onclick="this.select()">'+esc(r.text)+'</textarea></div>'+
+          '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal();renderWhtGl()">ปิด</button>'+
+          '<button class="btn btn-primary" onclick="wgcCopy()">📋 คัดลอก</button></div>');
+        return;
+      }
+      closeModal(); toast((v==='email'?'📧 ส่งอีเมลทวง':'💬 ส่งเข้ากลุ่ม LINE')+' แล้ว · ครั้งที่ '+r.count); renderWhtGl();
+    }).catch(function(e){ if(btn){ btn.disabled=false; wgcViaChange(); } mErr(e.message); });
+  }
+  function wgcCopy(){
+    var el=$('wgcText'); if(!el) return; el.select();
+    try{ navigator.clipboard.writeText(el.value).then(function(){ toast('📋 คัดลอกแล้ว'); },function(){ document.execCommand('copy'); toast('📋 คัดลอกแล้ว'); }); }
+    catch(e){ try{ document.execCommand('copy'); toast('📋 คัดลอกแล้ว'); }catch(_){} }
+  }
+  window.wgChase=wgChase; window.wgcViaChange=wgcViaChange; window.wgcGo=wgcGo; window.wgcCopy=wgcCopy;
 
   /* ═══ กราฟภาพรวม (พี่กี้เลือก 21 ก.ย. 69: ซ้าย=ความคืบหน้า · ขวา=รายเดือน) ═══
      🔴 ฟังก์ชันบริสุทธิ์ — ของจริงกับเทส/พรีวิวเรียกตัวเดียวกัน
@@ -8451,7 +8407,7 @@
     if(!imgs.length){ mErr('แนบไฟล์ก่อนค่ะ'); return; }
     callBusy('กำลังบันทึก…', jsonpPost({action:'waWhtInCert',uid:UID,no:no,imgs:JSON.stringify(imgs)}), 'บันทึกแล้ว').then(function(r){
       if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
-      closeModal(); IMGS['wiImgs']=[]; toast('✅ เก็บหนังสือรับรองแล้ว'); if(WC && $('wcTbl')) renderWhtChase(); else renderWhtIn();
+      closeModal(); IMGS['wiImgs']=[]; toast('✅ เก็บหนังสือรับรองแล้ว'); renderWhtIn();
     }).catch(function(e){ mErr(e.message); });
   }
   function wiSheet(){
@@ -25496,7 +25452,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260926-0848';
+  var APP_BUILD='20260926-0859';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
