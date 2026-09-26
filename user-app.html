@@ -3864,7 +3864,10 @@
       '.ec-arr{border:1px solid var(--line);background:#fff;border-radius:6px;width:24px;height:22px;padding:0;font-size:10px;line-height:1;color:#5B6472;cursor:pointer}'+
       '.ec-arr:disabled{opacity:.3;cursor:default}'+
       '.ec-tbl tr.ec-over td{border-top:2px solid var(--blue,#1E6FD9)}'+
-      '.ec-tbl tr.ec-drag{opacity:.4}</style>';
+      '.ec-tbl tr.ec-drag{opacity:.4}'+
+      /* คอม (มีเมาส์) = ลากวางอย่างเดียว ซ่อนลูกศร · มือถือ/แท็บเล็ต (จอสัมผัส ลากวางไม่ได้) = โชว์ลูกศร (พี่กี้ 26 ก.ย. 69) */
+      '@media (hover:hover) and (pointer:fine){.ec-mv{display:none}}'+
+      '@media (hover:none),(pointer:coarse){.ec-grip{display:none}}</style>';
   }
   /* ↕️ จัดลำดับ — ย้ายบนจอก่อน (เห็นผลทันที) แล้วบันทึกทั้งชุดทีเดียว */
   var EC_DRAG=-1;
@@ -25498,7 +25501,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260926-1011';
+  var APP_BUILD='20260926-1016';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
