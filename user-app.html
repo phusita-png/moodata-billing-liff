@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260926-1634">
+<link rel="stylesheet" href="user.css?v=20260926-2246">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -6013,7 +6013,7 @@
     skel();
     jsonp({action:'waPayoutPvReg',uid:UID}).then(function(r){
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
-      PV_DATA=r; if(PV_ONE) paintPvOne(); else paintPvReg();
+      PV_DATA=r; if(PV_NEW) paintPvNew(); else if(PV_ONE) paintPvOne(); else paintPvReg();
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
   }
   /** กรองตามแท็บ/เดือน/บริษัท/คำค้น — ฟังก์ชันบริสุทธิ์ */
@@ -6049,6 +6049,8 @@
             ents.map(function(e){ return '<option value="'+esc(e.code)+'"'+(PV_ENT===e.code?' selected':'')+'>'+esc(e.name)+'</option>'; }).join('')+
           '</select>':'')+
           '<button class="btn btn-ghost" onclick="pvCsv()">↓ CSV (ตามที่กรอง)</button>'+
+          '<button class="btn btn-ghost" onclick="pvImpOpen()">📥 นำเข้า</button>'+
+          '<button class="btn btn-primary" style="width:auto" onclick="pvNewOpen()">+ สร้าง PV</button>'+
         '</div></div>'+
       '<div class="tax-acts" style="margin:0 0 12px">'+PV_TABS.map(function(t){
         return '<button class="btn '+(PV_TAB===t[0]?'btn-primary':'btn-ghost')+'" style="flex:1" onclick="pvSetTab(&quot;'+t[0]+'&quot;)">'+
@@ -6101,7 +6103,7 @@
           (x.account?'<div style="font-size:12px;color:#8A94A6;line-height:1.35;margin-top:2px">'+esc(x.account)+'</div>':'')+'</td>'+
         '<td class="dt-detail"><div class="pv-clamp" title="'+esc(x.detail||'')+'">'+esc(x.detail||'-')+'</div></td>'+
         '<td class="dt-nw">'+(x.poNo?('<a class="ex-lk" href="#" onclick="pvGoSrc('+qs+');return false">'+esc(x.poNo)+'</a>'):'—')+
-          '<div style="font-size:12px;color:#8A94A6">'+(pvIsPc(x)?'ใบสรุปเบิก PC':(x.poStaff?'🧾 ใบพนักงาน':'🏢 ใบบริษัท'))+'</div></td>'+
+          '<div style="font-size:12px;color:#8A94A6">'+(x.direct?('✍️ '+esc(x.origin||'สร้างเอง')+(x.refNo?' · '+esc(x.refNo):'')):(pvIsPc(x)?'ใบสรุปเบิก PC':(x.poStaff?'🧾 ใบพนักงาน':'🏢 ใบบริษัท')))+'</div></td>'+
         '<td class="dt-amt">'+money(x.amount)+'</td>'+
         '<td class="dt-amt">'+(x.whtMismatch?'<span title="ยอดหักไม่ตรงกับใบสั่งจ่าย ('+money(x.srcWht)+') — กด ⋮ 🔄 ออกเอกสารใหม่" style="color:var(--red)">⚠️ </span>':'')+
           (x.wht?money(x.wht):'-')+'</td>'+
@@ -6137,9 +6139,212 @@
     }).catch(function(e){ toast(e.message); });
   }
   /** 🚫 ยกเลิกเอกสาร — ใช้ทางยกเลิกของใบต้นทาง (เอกสารชุดเดียวกัน ยกเลิกแยกใบไม่ได้) */
+  /* ═════ ➕ สร้างใบสำคัญจ่าย PV ตรง (ไม่ผ่าน PO) + 📥 นำเข้าไฟล์ (spec-pv-direct · พี่กี้ 26 ก.ย. 69) ═════
+     เลข PV ระบบออกให้ (เดือนของวันที่จ่าย) · เลขเดิมเก็บเป็นเลขที่อ้างอิง · หัก ณ ที่จ่าย = ออก 50 ทวิ เสมอ */
+  var PV_NEW=null;
+  function pvNewOpen(){
+    PV_NEW={ lines:[{invNo:'',invDate:'',seller:'',sellerId:'',branch:'',detail:'',base:'',vat:''}] };
+    PV_ONE=''; paintPvNew();
+  }
+  function pvNewClose(){ PV_NEW=null; paintPvReg(); }
+  function pvNewSum(){
+    var b=0,v=0; (PV_NEW.lines||[]).forEach(function(l){ b+=Number(l.base)||0; v+=Number(l.vat)||0; });
+    var rt=Number((($('pvnRate')||{}).value))||0, w=Math.round(b*rt)/100;
+    b=Math.round(b*100)/100; v=Math.round(v*100)/100;
+    return {base:b, vat:v, total:Math.round((b+v)*100)/100, wht:w, net:Math.round((b+v-w)*100)/100};
+  }
+  function pvNewSumPaint(){
+    var s=pvNewSum(), el=$('pvnSum'); if(!el) return;
+    el.innerHTML='<div class="r"><span>มูลค่าก่อน VAT</span><b>'+money(s.base)+'</b></div>'+
+      '<div class="r"><span>VAT</span><b>'+money(s.vat)+'</b></div>'+
+      '<div class="r"><span>จำนวนเงินรวมทั้งสิ้น</span><b>'+money(s.total)+'</b></div>'+
+      '<div class="r"><span>หัก ณ ที่จ่าย</span><b>'+(s.wht?'− '+money(s.wht):'—')+'</b></div>'+
+      '<div class="r grand"><span>จ่ายสุทธิ</span><b>'+money(s.net)+'</b></div>';
+    var wb=$('pvnWhtBox'); if(wb) wb.classList.toggle('hidden', !(Number((($('pvnRate')||{}).value))||0));
+  }
+  function pvNewSet(el){
+    var i=Number(el.getAttribute('data-i')), k=el.getAttribute('data-k');
+    PV_NEW.lines[i][k]=el.value; if(k==='base'||k==='vat') pvNewSumPaint();
+  }
+  function pvNewAddLine(){ pvNewKeep(); var f=PV_NEW.lines[0]||{}; PV_NEW.lines.push({invNo:'',invDate:'',seller:f.seller||'',sellerId:f.sellerId||'',branch:f.branch||'',detail:'',base:'',vat:''}); paintPvNew(); }
+  function pvNewDelLine(i){ pvNewKeep(); PV_NEW.lines.splice(i,1); paintPvNew(); }
+  function pvNewVat7(i){ var l=PV_NEW.lines[i]; var t=Number(l.base)||0; l.vat=(Math.round(t*7)/100).toFixed(2); paintPvNew(); }
+  /** เก็บค่าช่องหัวใบก่อนวาดใหม่ (เพิ่ม/ลบบรรทัด) */
+  function pvNewKeep(){
+    ['pvnEnt','pvnDate','pvnRef','pvnPayee','pvnKind','pvnPayeeId','pvnAddr','pvnBankName','pvnBankAcct','pvnBankOwner',
+     'pvnDetail','pvnRate','pvnSection','pvnMethod','pvnAcct','pvnCheque'].forEach(function(id){ if($(id)) PV_NEW[id]=$(id).value; });
+  }
+  function paintPvNew(){
+    var r=PV_DATA||{}, N=PV_NEW, val=function(id,def){ return esc(N[id]!=null?N[id]:(def||'')); };
+    var ents=r.entities||[], accs=r.payAccounts||[];
+    var opt=function(list,cur,fmt){ return list.map(function(x){ var v=fmt?fmt(x):[x,x]; return '<option value="'+esc(v[0])+'"'+(String(cur)===String(v[0])?' selected':'')+'>'+esc(v[1])+'</option>'; }).join(''); };
+    var inp=function(i,k,v,ph,type,w){ return '<input data-i="'+i+'" data-k="'+k+'"'+(type?' type="'+type+'"':'')+' value="'+esc(v==null?'':String(v))+'" placeholder="'+esc(ph||'')+'" oninput="pvNewSet(this)"'+(w?' style="width:'+w+'"':'')+'>'; };
+    var rows=N.lines.map(function(l,i){
+      return '<tr><td class="dt-nw" style="color:#8A94A6">'+(i+1)+'</td>'+
+        '<td>'+inp(i,'detail',l.detail,'รายละเอียด')+'</td>'+
+        '<td>'+inp(i,'invNo',l.invNo,'ว่าง = รอใบกำกับ')+'</td><td>'+inp(i,'invDate',l.invDate,'','date')+'</td>'+
+        '<td>'+inp(i,'seller',l.seller,'ผู้ขาย')+'<div style="margin-top:4px">'+inp(i,'sellerId',l.sellerId,'เลขผู้เสียภาษี')+'</div></td>'+
+        '<td>'+inp(i,'base',l.base,'0.00','number')+'</td>'+
+        '<td>'+inp(i,'vat',l.vat,'0.00','number')+'<div><button type="button" class="lnk" onclick="pvNewVat7('+i+')">คิด 7%</button></div></td>'+
+        '<td class="dt-act">'+(N.lines.length>1?'<button class="dt-mbtn" onclick="pvNewDelLine('+i+')">🗑</button>':'')+'</td></tr>';
+    });
+    var h='<div class="bc"><button class="lnk" onclick="pvNewClose()">‹ ใบสำคัญจ่าย</button> › สร้างใบใหม่</div>'+
+      '<div class="pg-title" style="margin:0 0 12px"><h2>สร้างใบสำคัญจ่าย</h2></div><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="sf-card"><div class="sf-h">🧾 ข้อมูลเอกสาร</div><div class="sf-grid">'+
+        (ents.length>1?'<div class="sf-f c3"><label>บริษัทผู้จ่าย</label><select id="pvnEnt">'+opt(ents,N.pvnEnt,function(e){ return [e.code,e.name]; })+'</select></div>':'')+
+        '<div class="sf-f c3"><label>วันที่จ่าย</label><input id="pvnDate" type="date" value="'+val('pvnDate',todayISO())+'"></div>'+
+        '<div class="sf-f c3"><label>เลขที่อ้างอิง (เลขเอกสารเดิม)</label><input id="pvnRef" value="'+val('pvnRef')+'" placeholder="ไม่มีก็เว้นได้"></div>'+
+        '<div class="sf-f wide"><label>รายละเอียด</label><input id="pvnDetail" value="'+val('pvnDetail')+'" placeholder="จ่ายค่าอะไร"></div>'+
+      '</div></div>'+
+      '<div class="sf-card"><div class="sf-h">👤 ผู้รับเงิน</div><div class="sf-grid">'+
+        '<div class="sf-f c6"><label>ชื่อผู้รับเงิน</label><input id="pvnPayee" value="'+val('pvnPayee')+'"></div>'+
+        '<div class="sf-f c3"><label>ประเภท</label><select id="pvnKind">'+opt(r.payeeKinds||[],N.pvnKind)+'</select></div>'+
+        '<div class="sf-f c3"><label>เลขผู้เสียภาษี</label><input id="pvnPayeeId" value="'+val('pvnPayeeId')+'"></div>'+
+        '<div class="sf-f wide"><label>ที่อยู่</label><input id="pvnAddr" value="'+val('pvnAddr')+'"></div>'+
+        '<div class="sf-f c4"><label>ธนาคารรับโอน</label><input id="pvnBankName" value="'+val('pvnBankName')+'"></div>'+
+        '<div class="sf-f c4"><label>เลขบัญชีรับโอน</label><input id="pvnBankAcct" value="'+val('pvnBankAcct')+'"></div>'+
+        '<div class="sf-f c4"><label>ชื่อบัญชี</label><input id="pvnBankOwner" value="'+val('pvnBankOwner')+'"></div>'+
+      '</div></div>'+
+      '<div class="sf-card"><div class="sf-h">📋 รายการ (ทีละใบกำกับ)</div>'+
+        dtTable([{label:'#',cls:'dt-nw',w:'38px'},{label:'รายละเอียด'},{label:'เลขที่ใบกำกับ',w:'150px'},{label:'วันที่ใบกำกับ',w:'150px'},
+          {label:'ผู้ขาย',w:'190px'},{label:'มูลค่าก่อน VAT',w:'130px'},{label:'VAT',w:'110px'},{label:'',w:'44px'}], rows, '', '')+
+        '<div style="margin-top:8px"><button class="btn btn-ghost btn-sm" style="width:auto" onclick="pvNewAddLine()">+ เพิ่มบรรทัด</button></div></div>'+
+      '<div class="sf-card"><div class="sf-h">💳 การชำระ + หัก ณ ที่จ่าย</div><div class="sf-grid">'+
+        '<div class="sf-f c3"><label>วิธีจ่าย</label><select id="pvnMethod">'+opt(r.methods||['โอนเงิน','เช็ค','เงินสด'],N.pvnMethod)+'</select></div>'+
+        '<div class="sf-f c3"><label>บัญชีที่จ่าย</label><select id="pvnAcct"><option value="">— ไม่ระบุ (เงินสด) —</option>'+
+          opt(accs,N.pvnAcct!=null?N.pvnAcct:((accs.filter(function(a){ return a.isDefault; })[0]||{}).id||''),function(a){ return [a.id,a.label]; })+'</select></div>'+
+        '<div class="sf-f c3"><label>เลขที่เช็ค</label><input id="pvnCheque" value="'+val('pvnCheque')+'"></div>'+
+        '<div class="sf-f c3"><label>หัก ณ ที่จ่าย</label><select id="pvnRate" onchange="pvNewSumPaint()">'+
+          opt(r.whtRates||[0,1,2,3,5],N.pvnRate||0,function(x){ return [x,x?x+'%':'ไม่หัก']; })+'</select></div>'+
+        '<div class="sf-f wide hidden" id="pvnWhtBox"><label>ประเภทเงินได้ (มาตรา) — ออก 50 ทวิ ให้อัตโนมัติ</label><select id="pvnSection"><option value="">— เลือก —</option>'+
+          opt(r.sections||[],N.pvnSection,function(x){ return [x.code,x.code+' '+x.label]; })+'</select></div>'+
+      '</div></div>'+
+      '<div class="sf-card"><div class="sf-h">💰 สรุปยอด</div><div class="sf-sum"><div></div><div><div class="sf-tot" id="pvnSum"></div></div></div></div>'+
+      '<div class="sf-bar"><span style="flex:1"></span><button class="btn btn-ghost" onclick="pvNewClose()">ยกเลิก</button>'+
+        '<button class="btn btn-primary" id="pvnSave" onclick="pvNewSave()">สร้างใบสำคัญจ่าย</button></div>';
+    $('main').innerHTML=h;
+    pvNewSumPaint();
+  }
+  function pvNewDoc(){
+    pvNewKeep(); var N=PV_NEW;
+    return { entity:N.pvnEnt||'', payDate:N.pvnDate||'', refNo:(N.pvnRef||'').trim(), payeeName:(N.pvnPayee||'').trim(),
+      payeeKind:N.pvnKind||'', payeeId:(N.pvnPayeeId||'').trim(), payeeAddr:(N.pvnAddr||'').trim(),
+      bank:{ name:(N.pvnBankName||'').trim(), acct:(N.pvnBankAcct||'').trim(), owner:(N.pvnBankOwner||'').trim() },
+      detail:(N.pvnDetail||'').trim(), method:N.pvnMethod||'', accountId:N.pvnAcct||'', chequeNo:(N.pvnCheque||'').trim(),
+      whtRate:Number(N.pvnRate)||0, section:N.pvnSection||'',
+      lines:N.lines.filter(function(l){ return (Number(l.base)||0)||(Number(l.vat)||0)||l.invNo; }) };
+  }
+  function pvNewSave(){
+    var d=pvNewDoc();
+    if(!d.payeeName){ mErr('ใส่ชื่อผู้รับเงินค่ะ'); return; }
+    if(!d.lines.length){ mErr('ใส่ยอดในรายการอย่างน้อย 1 บรรทัดค่ะ'); return; }
+    var b=$('pvnSave'); if(b){ b.disabled=true; b.textContent='กำลังสร้าง…'; }
+    callBusy('กำลังสร้างใบสำคัญจ่าย…', jsonpPost({action:'waPayoutPvCreate', uid:UID, docs:JSON.stringify([d])})).then(function(r){
+      var x=(r&&r.results&&r.results[0])||{};
+      if(!r||!r.ok||!x.ok){ if(b){ b.disabled=false; b.textContent='สร้างใบสำคัญจ่าย'; } mErr(x.error||(r&&r.error)||'สร้างไม่สำเร็จ'); window.scrollTo(0,0); return; }
+      toast('✅ สร้าง '+x.no+' แล้ว'); if(x.warn) setTimeout(function(){ toast('⚠️ '+x.warn); },1400);
+      if(x.url) window.open(x.url,'_blank');
+      PV_NEW=null; PV_ONE=x.no; PV_ONE_D=null; renderPvReg();
+    }).catch(function(e){ if(b){ b.disabled=false; b.textContent='สร้างใบสำคัญจ่าย'; } mErr(e.message); });
+  }
+
+  /* 📥 นำเข้า — CSV หรือวางจาก Excel → ดูตัวอย่าง → นำเข้าทีละชุด 5 ใบ */
+  var PV_IMP=null;
+  var PV_IMP_HEAD=['เลขที่อ้างอิง','วันที่จ่าย','ผู้รับเงิน','ประเภทผู้รับ','เลขผู้เสียภาษีผู้รับ','ที่อยู่ผู้รับ','รายละเอียด',
+    'เลขที่ใบกำกับ','วันที่ใบกำกับ','ผู้ขาย','เลขผู้เสียภาษีผู้ขาย','สาขา','มูลค่าก่อน VAT','VAT','อัตราหัก','มาตรา','วิธีจ่าย','บัญชีที่จ่าย','เลขที่เช็ค'];
+  function pvImpTemplate(){
+    var ex=['EX-001','15/03/2569','บริษัท ตัวอย่าง จำกัด','นิติบุคคล','0105500000001','99 ถ.ตัวอย่าง กทม.','ค่าบริการ มี.ค.',
+      'IV-123','15/03/2569','บริษัท ตัวอย่าง จำกัด','0105500000001','00000','10000','700','3','40(2)','โอนเงิน','',''];
+    dlText('แม่แบบนำเข้าใบสำคัญจ่าย.csv', '﻿'+PV_IMP_HEAD.join(',')+'\r\n'+ex.join(',')+'\r\n');
+  }
+  function pvImpOpen(){
+    PV_IMP=null;
+    modal('<h3>📥 นำเข้าใบสำคัญจ่าย</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">1 แถว = 1 ใบกำกับ · แถวที่ <b>เลขที่อ้างอิง</b> เดียวกัน = PV ใบเดียว · เลขที่อ้างอิงที่มีแล้วจะข้าม (ไม่นำเข้าซ้ำ) · '+
+        'หัก ณ ที่จ่ายต้องมีมาตรา + เลขผู้เสียภาษี + ที่อยู่ (ออก 50 ทวิ ให้) · '+
+        '<a href="#" onclick="pvImpTemplate();return false">⬇️ แม่แบบ CSV</a></div>'+
+      '<div class="fld"><label>วิธีที่ 1 — เลือกไฟล์ CSV</label><input type="file" id="pvImpFile" accept=".csv,text/csv"></div>'+
+      '<div class="fld"><label>วิธีที่ 2 — คัดลอกจาก Excel มาวาง <span class="lbl-note">(ไฟล์ .xlsx ใช้ทางนี้ค่ะ)</span></label>'+
+        '<textarea id="pvImpText" style="min-height:120px" placeholder="วางทั้งตารางรวมแถวหัวคอลัมน์"></textarea></div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" id="pvImpBtn" onclick="pvImpRead()">ดูตัวอย่าง</button></div>');
+  }
+  function pvImpRead(){
+    var txt=(($('pvImpText')||{}).value||'').trim(), f=($('pvImpFile')||{}).files;
+    var go=function(payload){
+      callBusy('กำลังอ่านไฟล์…', jsonpPost(payload)).then(function(r){
+        if(!r||!r.ok){ mErr((r&&r.error)||'อ่านไม่สำเร็จ'); return; }
+        PV_IMP=r.docs||[]; closeModal(); paintPvImp();
+      }).catch(function(e){ mErr(e.message); });
+    };
+    if(f&&f.length){
+      if(/\.xlsx?$/i.test(String(f[0].name||''))){ mErr('ไฟล์ Excel (.xlsx) ให้คัดลอกทั้งตารางมาวางที่ช่องล่างค่ะ'); return; }
+      var rd=new FileReader();
+      rd.onload=function(){ var b64=String(rd.result||'').split(',')[1]||''; if(!b64){ mErr('อ่านไฟล์ไม่ได้ค่ะ'); return; } go({action:'waPayoutPvImport',uid:UID,b64:b64}); };
+      rd.readAsDataURL(f[0]); return;
+    }
+    if(!txt){ mErr('เลือกไฟล์หรือวางข้อมูลก่อนค่ะ'); return; }
+    go({action:'waPayoutPvImport',uid:UID,text:txt});
+  }
+  function paintPvImp(){
+    var L=PV_IMP||[], ok=L.filter(function(d){ return !d.error; });
+    var rows=L.map(function(d,i){
+      return '<tr'+(d.error?' style="background:#FEF2F2"':'')+'><td class="dt-nw" style="color:#8A94A6">'+(i+1)+'</td>'+
+        '<td class="dt-nw">'+esc(d.refNo||'—')+'</td><td class="dt-nw">'+esc(d.payDate||'')+'</td><td>'+esc(d.payeeName||'')+'</td>'+
+        '<td class="dt-nw">'+d.lines.length+'</td><td class="dt-amt">'+money(d.amount||0)+'</td><td class="dt-amt">'+(d.wht?money(d.wht):'-')+'</td>'+
+        '<td style="white-space:normal;color:'+(d.error?'var(--red)':'#8A94A6')+'">'+esc(d.error||d.warn||'พร้อมนำเข้า')+'</td></tr>';
+    });
+    $('main').innerHTML='<div class="bc"><button class="lnk" onclick="PV_IMP=null;paintPvReg()">‹ ใบสำคัญจ่าย</button> › นำเข้า</div>'+
+      '<div class="pg-title" style="margin:0 0 12px"><h2>📥 ตัวอย่างก่อนนำเข้า</h2></div>'+
+      '<div class="m-hint">พร้อมนำเข้า <b>'+ok.length+'</b> ใบ · มีปัญหา/ซ้ำ <b>'+(L.length-ok.length)+'</b> ใบ (แถวสีแดงจะไม่ถูกนำเข้า)</div>'+
+      '<div class="sf-card">'+dtTable([{label:'#',cls:'dt-nw',w:'38px'},{label:'เลขที่อ้างอิง',cls:'dt-nw'},{label:'วันที่จ่าย',cls:'dt-nw'},
+        {label:'ผู้รับเงิน'},{label:'ใบกำกับ',cls:'dt-nw'},{label:'ยอดรวม',cls:'dt-amt'},{label:'หัก ณ ที่จ่าย',cls:'dt-amt'},{label:'ผลตรวจ'}], rows, '', 'ไม่พบรายการ')+'</div>'+
+      '<div class="sf-bar"><div class="sf-bar-acts" id="pvImpProg"></div><button class="btn btn-ghost" onclick="PV_IMP=null;paintPvReg()">ยกเลิก</button>'+
+        (ok.length?'<button class="btn btn-primary" id="pvImpGo" onclick="pvImpGo()">นำเข้า '+ok.length+' ใบ</button>':'')+'</div>';
+  }
+  function pvImpGo(){
+    var todo=(PV_IMP||[]).filter(function(d){ return !d.error; }), done=0, okN=0, fails=[];
+    var b=$('pvImpGo'); if(b){ b.disabled=true; b.textContent='กำลังนำเข้า…'; }
+    var prog=function(){ var p=$('pvImpProg'); if(p) p.textContent='นำเข้าแล้ว '+done+' / '+todo.length+' ใบ'; };
+    var next=function(){
+      if(done>=todo.length){
+        toast('✅ นำเข้า '+okN+' ใบ'+(fails.length?' · ไม่สำเร็จ '+fails.length+' ใบ':''));
+        if(fails.length) setTimeout(function(){ toast('⚠️ '+fails.slice(0,3).join(' · ')); },1400);
+        PV_IMP=null; renderPvReg(); return;
+      }
+      var chunk=todo.slice(done, done+5);
+      jsonpPost({action:'waPayoutPvCreate', uid:UID, origin:'import', docs:JSON.stringify(chunk)}).then(function(r){
+        ((r&&r.results)||[]).forEach(function(x){ if(x.ok) okN++; else fails.push((x.ref||'')+': '+(x.error||'')); });
+        done+=chunk.length; prog(); next();
+      }).catch(function(e){ fails.push(e.message); done+=chunk.length; prog(); next(); });
+    };
+    prog(); next();
+  }
+  /** 🚫 ยกเลิก PV ตรง — PV + 50 ทวิ + ภาษี (เลขคงอยู่) */
+  function pvDirectVoid(no){
+    modal('<h3>🚫 ยกเลิกเอกสาร '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">ใบนี้สร้างตรง (ไม่มีใบสั่งจ่าย) — ยกเลิกแล้วใบสำคัญจ่าย · 50 ทวิ · ข้อมูลภาษีของใบนี้ถูกยกเลิกด้วยกัน '+
+        'เลขทุกใบยังอยู่ในทะเบียนพร้อมสถานะ "ยกเลิก"</div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ไม่ยกเลิก</button>'+
+      '<button class="btn btn-primary" id="pvdvBtn" onclick="pvDirectVoidGo(\''+esc(no)+'\')">ยืนยันยกเลิก</button></div>');
+  }
+  function pvDirectVoidGo(no){
+    var b=$('pvdvBtn'); if(b){ b.disabled=true; b.textContent='กำลังยกเลิก…'; }
+    callBusy('กำลังยกเลิก…', jsonp({action:'waPayoutPvVoid',uid:UID,no:no})).then(function(r){
+      if(!r||!r.ok){ if(b){ b.disabled=false; b.textContent='ยืนยันยกเลิก'; } mErr((r&&r.error)||'ยกเลิกไม่สำเร็จ'); return; }
+      closeModal(); toast('🚫 ยกเลิก '+(r.voided||no)+' แล้ว');
+      if(r.filedWarn) setTimeout(function(){ toast('⚠️ '+r.filedWarn); },1400);
+      renderPvReg();
+    }).catch(function(e){ if(b){ b.disabled=false; b.textContent='ยืนยันยกเลิก'; } mErr(e.message); });
+  }
+  window.pvNewOpen=pvNewOpen; window.pvNewClose=pvNewClose; window.pvNewSet=pvNewSet; window.pvNewAddLine=pvNewAddLine;
+  window.pvNewDelLine=pvNewDelLine; window.pvNewVat7=pvNewVat7; window.pvNewSumPaint=pvNewSumPaint; window.pvNewSave=pvNewSave;
+  window.pvImpOpen=pvImpOpen; window.pvImpRead=pvImpRead; window.pvImpGo=pvImpGo; window.pvImpTemplate=pvImpTemplate;
+  window.pvDirectVoid=pvDirectVoid; window.pvDirectVoidGo=pvDirectVoidGo;
   function pvCancel(no){
     var x=((PV_DATA||{}).rows||[]).filter(function(r){ return r.no===no; })[0];
     if(!x) return;
+    if(x.direct){ pvDirectVoid(no); return; }
     if(pvIsPc(x)){
       modal('<h3>🚫 ยกเลิกเอกสาร '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
         '<div class="m-hint">ใบนี้เติมเงินสดย่อยตามใบสรุปเบิก <b>'+esc(x.poNo)+'</b><br>'+
@@ -6281,7 +6486,7 @@
     $('main').innerHTML=head+
       '<div class="sf-card"><div class="sf-h">🧾 ข้อมูลเอกสาร'+editBtn+badge+'</div><div class="sf-grid">'+
         docRo('เลขที่', x.no)+docRo('ชนิด', x.topup?'เติมเงินสดย่อย':'จ่ายค่าใช้จ่าย')+
-        docRo('บริษัท', x.entityName||x.entity)+docRo('อ้างอิง', x.poNo)+
+        docRo('บริษัท', x.entityName||x.entity)+docRo(x.direct?'เลขที่อ้างอิง':'อ้างอิง', x.direct?x.refNo:x.poNo)+
         docRo('ผู้รับเงิน', x.payee, 'c6')+docRo('เลขประจำตัวผู้เสียภาษี', x.payeeId, 'c6')+
         docRo('ที่อยู่ผู้รับเงิน', D.loading?'กำลังโหลด…':(D.payeeAddr||''), 'c6')+docRo('บัญชีที่โอนเข้า', D.loading?'กำลังโหลด…':bank, 'c6')+
       '</div></div>'+
@@ -25989,7 +26194,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260926-1634';
+  var APP_BUILD='20260926-2246';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
