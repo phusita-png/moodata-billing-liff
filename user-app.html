@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260926-1602">
+<link rel="stylesheet" href="user.css?v=20260926-1613">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -9460,10 +9460,48 @@
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
       VB_MONTH=vatYmBEWeb(r.month);
       VR.buy=r; VR_Q='';
-      $('main').innerHTML=vrHtml('buy', r);
-      vrPaint('buy');
+      paintVatBuy();
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
   }
+  /* ═════ 📭 แท็บรอใบกำกับ (spec-tax-at-payment · พี่กี้เคาะ 26 ก.ย. 69) ═════
+     จ่ายแล้วแต่ยังไม่ได้ใบกำกับ = ไม่เข้ารายงาน · ใช้สิทธิ์ได้ภายใน 6 เดือนนับจากวันจ่าย */
+  var VB_TAB='report';
+  function vbTab(t){ VB_TAB=(t==='pending')?'pending':'report'; paintVatBuy(); }
+  function paintVatBuy(){
+    var r=VR.buy; if(!r) return;
+    var pend=r.pending||[];
+    var tabs=pageTabs(VB_TAB, [['report','📄 รายงานภาษีซื้อ',"vbTab('report')"],['pending','📭 รอใบกำกับ '+pend.length,"vbTab('pending')"]]);
+    if(VB_TAB==='pending'){ $('main').innerHTML='<div class="section-h">🧾 รายงานภาษีซื้อ</div>'+tabs+vbPendingHtml(pend); return; }
+    var src=(r.source==='pay')
+      ? '<div class="m-hint" style="margin:0 0 10px">ตั้งแต่ '+esc(ymThai(r.startYm||''))+' ภาษีซื้อนับจาก<b>เอกสารจ่าย (PV / เงินสดย่อย)</b> ตามเดือนที่ใช้สิทธิ์ · รายการรอใบกำกับยังไม่นับ</div>'
+      : '';
+    $('main').innerHTML=tabs+src+vrHtml('buy', r);
+    vrPaint('buy');
+  }
+  function vbPendingHtml(pend){
+    var rows=pend.map(function(t,i){
+      var urg=(t.daysLeft!=null && t.daysLeft<=60);
+      var q="'"+String(t.no).replace(/'/g,"\\'")+"'";
+      return '<tr><td class="dt-nw" style="color:#8A94A6">'+(i+1)+'</td>'+
+        '<td class="dt-nw"><a class="ex-lk" href="#" onclick="openPvOne('+q+');return false"><b>'+esc(t.no)+'</b></a>'+
+          '<div style="font-size:12px;color:#8A94A6">'+esc(t.srcNo||'')+'</div></td>'+
+        '<td class="dt-nw">'+esc(t.payDate||'')+'</td>'+
+        '<td>'+esc(t.seller||'-')+'</td><td class="dt-detail"><div class="pv-clamp">'+esc(t.detail||'-')+'</div></td>'+
+        '<td class="dt-amt">'+money(t.vat)+'</td>'+
+        '<td class="dt-nw">'+esc(t.deadline||'')+'</td>'+
+        '<td class="dt-nw" style="font-weight:600;color:'+(urg?'var(--red)':'inherit')+'">'+(t.daysLeft!=null?Math.max(0,t.daysLeft)+' วัน':'')+'</td>'+
+        '<td class="dt-act"><button class="dt-mbtn" title="เปิดใบ PV กรอกใบกำกับ" onclick="openPvOne('+q+')">✏️</button></td></tr>';
+    });
+    var vat=pend.reduce(function(s,t){ return s+(Number(t.vat)||0); },0);
+    return '<div class="card"><div class="m-hint" style="margin:0 0 10px">จ่ายเงินแล้วแต่ยังไม่ได้รับใบกำกับภาษี — <b>ไม่เข้ารายงานภาษีซื้อ</b> จนกว่าจะกรอกเลขที่/วันที่ใบกำกับ · '+
+        'ใช้สิทธิ์ได้ภายใน 6 เดือนนับจากวันจ่าย (เรียงใกล้หมดสิทธิ์ก่อน)</div>'+
+      dtTable([{label:'#',cls:'dt-nw',w:'38px'},{label:'เอกสารจ่าย',cls:'dt-nw',w:'130px'},{label:'วันที่จ่าย',cls:'dt-nw',w:'96px'},
+        {label:'ผู้ขาย',w:'180px'},{label:'รายละเอียด'},{label:'ภาษีซื้อที่รอ',cls:'dt-amt',w:'110px'},
+        {label:'ใช้สิทธิ์ถึง',cls:'dt-nw',w:'100px'},{label:'เหลือ',cls:'dt-nw',w:'70px'},{label:'',w:'44px'}], rows,
+        rows.length?'<tr class="tax-total"><td colspan="5" style="text-align:right">รวม '+rows.length+' รายการ</td><td class="dt-amt">'+money(Math.round(vat*100)/100)+'</td><td colspan="3"></td></tr>':'',
+        'ไม่มีรายการรอใบกำกับ 🎉')+'</div>';
+  }
+  window.vbTab=vbTab; window.paintVatBuy=paintVatBuy;
   /** เดือนจากหลังบ้านบางตัวเป็น ค.ศ. — ให้หน้าจอใช้ พ.ศ. ชุดเดียวกับตัวเลือกเดือน */
   function vatYmBEWeb(ym){ var p=String(ym||'').split('-'), y=parseInt(p[0],10); return (y&&y<2400)?(y+543)+'-'+p[1]:String(ym||''); }
   function vbSheet(){
@@ -25793,7 +25831,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260926-1602';
+  var APP_BUILD='20260926-1613';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
