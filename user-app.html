@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260926-1459">
+<link rel="stylesheet" href="user.css?v=20260926-1508">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -6103,7 +6103,8 @@
         '<td class="dt-nw">'+(x.poNo?('<a class="ex-lk" href="#" onclick="pvGoSrc('+qs+');return false">'+esc(x.poNo)+'</a>'):'—')+
           '<div style="font-size:12px;color:#8A94A6">'+(pvIsPc(x)?'ใบสรุปเบิก PC':(x.poStaff?'🧾 ใบพนักงาน':'🏢 ใบบริษัท'))+'</div></td>'+
         '<td class="dt-amt">'+money(x.amount)+'</td>'+
-        '<td class="dt-amt">'+(x.wht?money(x.wht):'-')+'</td>'+
+        '<td class="dt-amt">'+(x.whtMismatch?'<span title="ยอดหักไม่ตรงกับใบสั่งจ่าย ('+money(x.srcWht)+') — กด ⋮ 🔄 ออกเอกสารใหม่" style="color:var(--red)">⚠️ </span>':'')+
+          (x.wht?money(x.wht):'-')+'</td>'+
         '<td class="dt-amt">'+money(x.net)+'</td>'+
         '<td class="dt-nw">'+(x.topup?'<span class="tk-badge b-review">🪙 เติมเงินสดย่อย</span>':(x.kind==='pcv'?'<span class="tk-badge b-void">เอกสารเดิม</span>':'<span class="tk-badge b-new">💳 จ่ายค่าใช้จ่าย</span>'))+'</td>'+
         '<td class="dt-nw">'+(x.isVoid?'<span class="tk-badge b-void">🚫 ยกเลิก</span>':'<span class="tk-badge b-done">✅ จ่ายแล้ว</span>')+'</td>'+
@@ -25696,7 +25697,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260926-1459';
+  var APP_BUILD='20260926-1508';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
