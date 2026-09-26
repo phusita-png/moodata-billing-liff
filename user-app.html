@@ -3890,13 +3890,13 @@
   function ecPaint(){
     var own=!!(EC&&EC.isOwner);
     $('main').innerHTML='<div class="card"><div class="pb" style="padding:16px 18px">'+
-      '<div class="rs-h">🏷️ ประเภทค่าใช้จ่าย</div>'+
+      /* + เพิ่มประเภท อยู่มุมขวาบน (พี่กี้ 26 ก.ย. 69 · เหมือนปุ่มสร้างของหน้าอื่น) */
+      '<div style="display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap">'+
+      '<div style="flex:1;min-width:240px"><div class="rs-h">🏷️ ประเภทค่าใช้จ่าย</div>'+
       '<div class="rs-sub">กลุ่มที่พนักงานเลือกตอนเบิก และที่การเงินใช้ตอนตั้งใบสั่งจ่าย — '+
-      'ใช้ชุดเดียวกันทั้งระบบ · เปลี่ยนชื่อได้อิสระ ใบเก่าไม่กำพร้าเพราะใบเก็บรหัสไว้</div>'+
+      'ใช้ชุดเดียวกันทั้งระบบ · เปลี่ยนชื่อได้อิสระ ใบเก่าไม่กำพร้าเพราะใบเก็บรหัสไว้</div></div>'+
+      (own?'<button class="btn btn-primary" style="width:auto;flex:none" onclick="ecAddOpen()">+ เพิ่มประเภท</button>':'')+'</div>'+
       ecTableHtml((EC&&EC.cats)||[], own)+
-      (own ? ('<div class="fld" style="margin-top:12px"><label>เพิ่มประเภทใหม่</label>'+
-        '<input id="ecNew" placeholder="เช่น ค่ารับรองลูกค้า"></div>'+
-        '<div class="tax-acts"><button class="btn btn-primary" onclick="ecAdd()">เพิ่มประเภท</button></div>') : '')+
       '<div class="rs-steps" style="margin-top:16px"><b>ลบ กับ ปิด ต่างกันตรงนี้</b>'+
       '<b>ลบ</b> ได้เฉพาะกลุ่มที่ยังไม่มีใบไหนใช้ (ช่วงจัดกลุ่มลองผิดลองถูกได้เต็มที่) · '+
       'พอมีใบใช้แล้วปุ่มลบจะหายไปเอง ให้กด <b>ปิด</b> แทน — กลุ่มจะไม่โผล่ตอนตั้งใบใหม่ '+
@@ -3910,10 +3910,20 @@
         EC=r; ecPaint(); toast('บันทึกแล้วค่ะ');
       }).catch(function(e){ toast(e.message); });
   }
+  /* + เพิ่มประเภท — ปุ่มมุมขวาบน เด้งช่องกรอก (พี่กี้ 26 ก.ย. 69) */
+  function ecAddOpen(){
+    modal('<h3>+ เพิ่มประเภทค่าใช้จ่าย</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="fld"><label>ชื่อประเภท</label><input id="ecNew" placeholder="เช่น ค่ารับรองลูกค้า" onkeydown="if(event.key===&quot;Enter&quot;)ecAdd()"></div>'+
+      '<div class="m-hint">เพิ่มแล้วต่อท้ายรายการ — ลากไปจัดลำดับได้ · ตั้งมาตราเริ่มต้นได้ที่ปุ่มแก้ไข</div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" onclick="ecAdd()">เพิ่มประเภท</button></div>');
+    setTimeout(function(){ var el=$('ecNew'); if(el) el.focus(); }, 50);
+  }
+  window.ecAddOpen=ecAddOpen;
   function ecAdd(){
     var v=((($('ecNew')||{}).value)||'').trim();
-    if(!v){ toast('ใส่ชื่อประเภทก่อนนะคะ'); return; }
-    ecSave({ name:v });
+    if(!v){ mErr('ใส่ชื่อประเภทก่อนนะคะ'); return; }
+    closeModal(); ecSave({ name:v });
   }
   /** ฟอร์มแก้ประเภท — แก้ได้ทั้งชื่อ ลำดับ และมาตราเริ่มต้น (backend รับครบอยู่แล้ว) */
   function ecEdit(code){
@@ -25501,7 +25511,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260926-1016';
+  var APP_BUILD='20260926-1039';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
