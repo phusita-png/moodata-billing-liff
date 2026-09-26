@@ -16001,7 +16001,7 @@
           '<td>'+(rw.spec?'<input id="wtfT_'+rw.key+'" value="'+esc(on?v('incomeType'):'')+'" placeholder="'+esc(rw.defText||'ระบุ')+'"'+dis+'>'
             :'<span style="color:#8A94A6;font-size:13px">'+esc(rw.short||'')+'</span>')+'</td>'+
           '<td><input id="wtfA_'+rw.key+'" class="ta-r" inputmode="decimal" value="'+esc(on?v('amount'):'')+'" oninput="wtfRowInput(&quot;'+rw.key+'&quot;)"'+dis+'></td>'+
-          '<td><input id="wtfR_'+rw.key+'" class="ta-r" list="wtRates" inputmode="decimal" value="'+esc(on?v('rate'):(rw.defRate||3))+'" oninput="wtfCalc()"'+dis+'></td>'+
+          '<td><input id="wtfR_'+rw.key+'" class="ta-r" list="wtRates" inputmode="decimal" value="'+esc(on?v('rate'):'')+'" placeholder="%" oninput="wtfCalc()"'+dis+'></td>'+
           '<td class="ta-r dt-nw" id="wtfW_'+rw.key+'">—</td></tr>';
       }).join('')+
       '<tr class="tax-total"><td colspan="2">รวม</td><td class="ta-r dt-nw" id="wtfSumA">0.00</td><td></td><td class="ta-r dt-nw" id="wtfSumW">0.00</td></tr>'+
@@ -16020,7 +16020,17 @@
   }
   function wtfNum(id){ return Number(String((($(id)||{}).value)||'').split(',').join(''))||0; }
   /** กรอก 1 แถวต่อใบ — แถวที่มียอดแล้ว ล็อกแถวอื่น */
-  function wtfRowInput(key){ wtfCalc(); }
+  /* อัตราตั้งต้นต่อแถว (26 ก.ย. 69) — เติมให้ตอนเริ่มกรอกยอดในแถวนั้นเท่านั้น (เดิมใส่ 3 ทุกแถว พี่กี้ทัก)
+     40(1) เงินเดือน = อัตราก้าวหน้า ไม่มีอัตราคงที่ → เว้นให้กรอกเอง · แก้ได้ทุกแถว */
+  var WT_DEF_RATE={ r2:3, r3:3, r4a:1, r411:10, r412:10, r413:10, r414:10, r421:10, r422:10, r423:10, r424:10, r425:10, r4c:10, r5:3, r6:3 };
+  function wtfRowInput(key){
+    var am=wtfNum('wtfA_'+key), rt=$('wtfR_'+key);
+    if(rt){
+      if(am>0 && !String(rt.value||'').trim() && WT_DEF_RATE[key]) rt.value=WT_DEF_RATE[key];
+      if(!(am>0) && !(WTF&&WTF.lock)) rt.value='';
+    }
+    wtfCalc();
+  }
   function wtfActive(){
     var rows=((WT||{}).certRows||[]).filter(function(rw){ return !rw.head; });
     return rows.filter(function(rw){ return wtfNum('wtfA_'+rw.key)>0; });
@@ -25350,7 +25360,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260926-0803';
+  var APP_BUILD='20260926-0810';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
