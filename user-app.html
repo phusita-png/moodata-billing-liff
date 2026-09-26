@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260926-1623">
+<link rel="stylesheet" href="user.css?v=20260926-1634">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -6356,12 +6356,16 @@
           (t.branch?' · สาขา '+esc(t.branch):'')+'</div></td>'+
         '<td class="dt-amt">'+money(t.base)+'</td><td class="dt-amt">'+money(t.vat)+'</td>'+
         '<td class="dt-nw">'+esc(t.ymText||'—')+'</td>'+
-        '<td class="dt-act">'+(x.isVoid||t.isVoid?'—':'<button class="dt-mbtn" title="แก้ใบกำกับ" onclick="pvTaxEdit('+q+','+t.seq+')">✏️</button>')+'</td></tr>';
+        '<td class="dt-act">'+(x.isVoid||t.isVoid?'—':'<button class="dt-mbtn" title="แก้ใบกำกับ" onclick="pvTaxEdit('+q+','+t.seq+')">✏️</button>'+
+          (i>0&&!t.whtAmt?'<button class="dt-mbtn" title="ลบบรรทัด" onclick="taxLineDel('+q+','+t.seq+')">🗑</button>':''))+'</td></tr>';
     });
     var sum=tax.reduce(function(s,t){ return {base:s.base+t.base, vat:s.vat+t.vat}; },{base:0,vat:0});
     var w=tax.filter(function(t){ return t.whtAmt>0; })[0];
     var pend=tax.filter(function(t){ return t.status.indexOf('รอใบกำกับ')>=0; }).length;
-    return (pend?'<div class="m-hint" style="margin:0 0 10px;background:#FFF7ED;color:#9A3412">📭 รอใบกำกับ '+pend+' รายการ — ยังไม่เข้ารายงานภาษีซื้อ · '+
+    var tot=Math.round((sum.base+sum.vat)*100)/100, mis=Math.abs(tot-(Number(x.amount)||0))>=0.01;
+    return (mis?'<div class="m-hint" style="margin:0 0 10px;background:#FEF2F2;color:#991B1B">⚠️ ยอดรวมใบกำกับ (ฐาน + VAT) '+money(tot)+' ไม่เท่ายอดใบ '+money(x.amount)+' — ตรวจยอดแต่ละบรรทัด</div>':'')+
+      (x.isVoid?'':'<div style="margin:0 0 8px"><button class="btn btn-ghost btn-sm" style="width:auto" onclick="taxLineAdd('+q+')">+ เพิ่มใบกำกับ</button></div>')+
+      (pend?'<div class="m-hint" style="margin:0 0 10px;background:#FFF7ED;color:#9A3412">📭 รอใบกำกับ '+pend+' รายการ — ยังไม่เข้ารายงานภาษีซื้อ · '+
         'ได้ใบแล้วกด ✏️ กรอกเลขที่/วันที่ใบกำกับ</div>':'')+
       dtTable([{label:'#',cls:'dt-nw',w:'38px'},{label:'สถานะ',cls:'dt-nw',w:'150px'},{label:'ใบกำกับ',cls:'dt-nw',w:'130px'},
         {label:'ผู้ขาย'},{label:'มูลค่าก่อน VAT',cls:'dt-amt',w:'120px'},{label:'ภาษีซื้อ',cls:'dt-amt',w:'100px'},
@@ -11145,12 +11149,30 @@
             '<div style="flex:1">'+pvTaxBadge(t)+'<div style="margin-top:4px">'+esc(t.invNo||'ยังไม่มีเลขใบกำกับ')+(t.invDate?' · '+esc(t.invDate):'')+'</div>'+
             '<div style="font-size:12px;color:#8A94A6">'+esc(t.seller||'-')+' · ฐาน '+money(t.base)+' · VAT '+money(t.vat)+
               (t.ymText?' · ใช้สิทธิ์ '+esc(t.ymText):'')+(t.whtAmt?' · หัก '+money(t.whtAmt)+(t.whtNo?' ('+esc(t.whtNo)+')':''):'')+'</div></div>'+
-            (t.isVoid?'':'<button class="btn btn-ghost btn-sm" style="width:auto" onclick="pvTaxEdit('+q+','+t.seq+')">✏️ แก้</button>')+
+            (t.isVoid?'':'<button class="btn btn-ghost btn-sm" style="width:auto" onclick="pvTaxEdit('+q+','+t.seq+')">✏️ แก้</button>'+
+              (t.seq>1&&!t.whtAmt?'<button class="btn btn-ghost btn-sm" style="width:auto" onclick="taxLineDel('+q+','+t.seq+')">🗑</button>':''))+
             '</div></div>';
         }).join('') : '<div class="m-hint">รายการนี้ไม่มีข้อมูลภาษี</div>')+
-        '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button></div>');
+        '<div class="m-act"><button class="btn btn-ghost" onclick="taxLineAdd('+q+')">+ เพิ่มใบกำกับ</button>'+
+          '<button class="btn btn-ghost" onclick="closeModal()">ปิด</button></div>');
     }).catch(function(e){ toast(e.message); });
   }
+  /** ➕/🗑 บรรทัดใบกำกับ (ใช้ทั้งหน้า PV และรายการเงินสดย่อย) */
+  function taxLineAfter(no){ if(TAX_CTX && TAX_CTX.no===no){ TAX_CTX.after(); return; } PV_ONE_D=null; paintPvOne(); }
+  function taxLineAdd(no){
+    callBusy('กำลังเพิ่ม…', jsonp({action:'waPayoutPvTaxLine', uid:UID, no:no, op:'add'})).then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'เพิ่มไม่สำเร็จ'); return; }
+      toast('➕ เพิ่มบรรทัดแล้ว — กด ✏️ กรอกใบกำกับ'); taxLineAfter(no);
+    }).catch(function(e){ toast(e.message); });
+  }
+  function taxLineDel(no, seq){
+    if(!confirm('ลบบรรทัดใบกำกับ #'+seq+' ?')) return;
+    callBusy('กำลังลบ…', jsonp({action:'waPayoutPvTaxLine', uid:UID, no:no, seq:seq, op:'del'})).then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'ลบไม่สำเร็จ'); return; }
+      toast('🗑 ลบบรรทัดแล้ว'); taxLineAfter(no);
+    }).catch(function(e){ toast(e.message); });
+  }
+  window.taxLineAdd=taxLineAdd; window.taxLineDel=taxLineDel;
   window.ptTaxToggle=ptTaxToggle; window.ptTaxVat7=ptTaxVat7; window.ptTaxCalc=ptTaxCalc; window.taxLinesOpen=taxLinesOpen;
   function ptSaveCash(){
     var detail=(($('ptcDetail')||{}).value||'').trim(), amt=($('ptcAmt')||{}).value;
@@ -12581,6 +12603,68 @@
       }).catch(function(e){ if(btn){btn.disabled=false;btn.textContent='ยืนยัน';} mErr(e.message); });
   }
   /** บันทึกจ่ายเงิน — วันที่ย้อนหลังได้ (วันที่จ่ายจริง = วันที่หักภาษีบน 50 ทวิ) */
+  /* ═════ 🧾 ตรวจภาษีก่อนกดจ่าย (spec-tax-at-payment · พี่กี้สั่ง 26 ก.ย. 69) ═════
+     ดึงค่าตั้งต้นจากใบสั่งจ่าย → คนจ่ายแก้/เพิ่มใบกำกับได้ · ยอด (ฐาน+VAT) รวมต้องเท่ายอดใบ
+     เว้นเลขที่ใบกำกับ = 📭 รอใบกำกับ (ไม่เข้ารายงานภาษีซื้อ) */
+  var TAX_ED=null;
+  function taxEdLoad(no){
+    TAX_ED=null;
+    var box=$('taxEdBox'); if(!box) return;
+    box.innerHTML='<div class="m-hint">🧾 กำลังโหลดข้อมูลภาษี…</div>';
+    jsonp({action:'waPayoutTaxPreview', uid:UID, no:no}).then(function(r){
+      if(!r||!r.ok){ box.innerHTML=''; return; }
+      TAX_ED={no:no, amount:r.amount, wht:r.wht, lines:r.lines||[], dirty:false};
+      taxEdPaint();
+    }).catch(function(){ box.innerHTML=''; });
+  }
+  function taxEdPaint(){
+    var box=$('taxEdBox'); if(!box||!TAX_ED) return;
+    var L=TAX_ED.lines;
+    var sum=L.reduce(function(s,l){ return s+(Number(l.base)||0)+(Number(l.vat)||0); },0);
+    var ok=Math.abs(Math.round(sum*100)/100-TAX_ED.amount)<0.01;
+    var inp=function(i,k,v,ph,type){ return '<input data-tx="'+i+'" data-k="'+k+'"'+(type?' type="'+type+'"':'')+' value="'+esc(v==null?'':String(v))+
+      '" placeholder="'+esc(ph||'')+'" oninput="taxEdSet(this)" style="width:100%">'; };
+    box.innerHTML='<div style="border:1px solid #E3E8F0;border-radius:10px;padding:10px 12px;margin:0 0 12px">'+
+      '<div style="font-weight:700;margin-bottom:6px">🧾 ภาษี (ตรวจก่อนจ่าย · บันทึก ณ วันที่จ่าย)</div>'+
+      L.map(function(l,i){
+        return '<div style="border-top:'+(i?'1px dashed #E3E8F0':'0')+';padding-top:'+(i?'8px':'0')+';margin-top:'+(i?'8px':'0')+'">'+
+          '<div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:#5B6472">ใบกำกับ #'+(i+1)+
+            (L.length>1?' <button type="button" class="lnk" onclick="taxEdDel('+i+')">🗑 ลบ</button>':'')+'</div>'+
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px">'+
+            inp(i,'invNo',l.invNo,'เลขที่ใบกำกับ (ว่าง = รอใบกำกับ)')+inp(i,'invDate',l.invDate,'','date')+
+            inp(i,'seller',l.seller,'ผู้ขาย')+inp(i,'sellerId',l.sellerId,'เลขผู้เสียภาษีผู้ขาย')+
+            inp(i,'base',l.base,'มูลค่าก่อน VAT','number')+inp(i,'vat',l.vat,'VAT','number')+
+          '</div></div>';
+      }).join('')+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:13px">'+
+        '<button type="button" class="lnk" onclick="taxEdAdd()">+ เพิ่มใบกำกับ</button>'+
+        '<span style="color:'+(ok?'#1F7A4D':'var(--red)')+'">รวม '+money(Math.round(sum*100)/100)+(ok?' ✓':' ≠ ยอดใบ '+money(TAX_ED.amount))+'</span></div>'+
+      (TAX_ED.wht&&TAX_ED.wht.wht>0?'<div class="m-hint" style="margin:6px 0 0">หัก ณ ที่จ่าย '+TAX_ED.wht.rate+'% จากฐาน '+money(TAX_ED.wht.base)+' = '+money(TAX_ED.wht.wht)+' (ตามใบสั่งจ่าย)</div>':'')+
+      '</div>';
+  }
+  function taxEdSet(el){
+    if(!TAX_ED) return;
+    var i=Number(el.getAttribute('data-tx')), k=el.getAttribute('data-k');
+    TAX_ED.lines[i][k]=el.value; TAX_ED.dirty=true;
+    if(k==='base'||k==='vat'){ var f=document.activeElement===el; taxEdRefreshSum(); if(f) el.focus(); }
+  }
+  function taxEdRefreshSum(){
+    /* คิดรวมใหม่โดยไม่วาดช่องกรอกใหม่ (กันเคอร์เซอร์หลุดตอนพิมพ์) */
+    var L=TAX_ED.lines, sum=L.reduce(function(s,l){ return s+(Number(l.base)||0)+(Number(l.vat)||0); },0);
+    var ok=Math.abs(Math.round(sum*100)/100-TAX_ED.amount)<0.01;
+    var sp=document.querySelector('#taxEdBox span'); if(sp){ sp.style.color=ok?'#1F7A4D':'var(--red)';
+      sp.textContent='รวม '+money(Math.round(sum*100)/100)+(ok?' ✓':' ≠ ยอดใบ '+money(TAX_ED.amount)); }
+  }
+  function taxEdAdd(){ var f=TAX_ED.lines[0]||{}; TAX_ED.lines.push({invNo:'',invDate:'',seller:f.seller||'',sellerId:f.sellerId||'',branch:f.branch||'',detail:f.detail||'',base:0,vat:0}); TAX_ED.dirty=true; taxEdPaint(); }
+  function taxEdDel(i){ TAX_ED.lines.splice(i,1); TAX_ED.dirty=true; taxEdPaint(); }
+  /** คืน JSON แถวภาษี · '' = ไม่ได้แก้ (ใช้ค่าจากใบ) · false = ยอดไม่ตรง (หยุด) */
+  function taxEdCollect(){
+    if(!TAX_ED||!TAX_ED.dirty) return '';
+    var sum=TAX_ED.lines.reduce(function(s,l){ return s+(Number(l.base)||0)+(Number(l.vat)||0); },0);
+    if(Math.abs(Math.round(sum*100)/100-TAX_ED.amount)>=0.01){ mErr('ยอดรวมใบกำกับ (ฐาน + VAT) ต้องเท่ายอดใบ '+money(TAX_ED.amount)+' ค่ะ'); return false; }
+    return JSON.stringify(TAX_ED.lines);
+  }
+  window.taxEdSet=taxEdSet; window.taxEdAdd=taxEdAdd; window.taxEdDel=taxEdDel;
   function poOpenPay(no){
     var x=((PO.topay||[]).concat(PO.paid||[])).filter(function(y){ return y.no===no; })[0]||{};
     var mOpts=(PO.methods||[]).map(function(m){ return '<option value="'+esc(m)+'"'+((x.payMethod===m)?' selected':'')+'>'+esc(m)+'</option>'; }).join('');
@@ -12595,9 +12679,11 @@
          ไม่มีบัญชีในทะเบียน = บอกทางไปเพิ่ม ไม่ใช่ปล่อยช่องว่างให้สงสัย */
       '<div class="fld" id="poAcctFld"><label>บัญชีที่จ่ายออก</label>'+poAcctSelHtml(x)+'</div>'+
       imgsFldHtml('poSlip','📎 สลิปโอน / หลักฐานการจ่าย (รูป หรือ PDF)')+
+      (String(x.status||'').indexOf('จ่ายแล้ว')<0?'<div id="taxEdBox"></div>':'')+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
       '<button class="btn btn-primary" id="poPayBtn" onclick="doPoPay(\''+esc(no)+'\')">บันทึกจ่ายแล้ว</button></div>');
     imgsFldBind('poSlip'); poMethodChange();
+    if($('taxEdBox')) taxEdLoad(no);
   }
   /** ช่องเลือกบัญชีที่จ่ายออก — รายการมาจาก backend (waPoInit) ห้ามหน้าเว็บพิมพ์เอง */
   /* 🪙 จ่ายจากวงเงินสดย่อย (spec-pcv.md) — ต่างจาก "บันทึกจ่ายเงิน" ตรงที่
@@ -12613,10 +12699,10 @@
         '<br>เงินออกจากวงเงินสดย่อย ระบบลงรายการในวงให้เอง — ใบสำคัญจ่าย PV ออกตอนจ่ายคืนวงเงินจากใบสรุปเบิก PC</div>' +
       '<div class="fld"><label>จ่ายจากวงไหน</label><select id="pcvFund"><option value="">กำลังโหลด…</option></select></div>' +
       '<div class="fld"><label>วันที่จ่ายจริง</label><input id="pcvDate" type="date" value="' + todayISO() + '"></div>' +
-      imgsFldHtml('pcvProof','📎 บิล/หลักฐานการจ่าย (ถ้ามี)') +
+      imgsFldHtml('pcvProof','📎 บิล/หลักฐานการจ่าย (ถ้ามี)') + '<div id="taxEdBox"></div>' +
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>' +
       '<button class="btn btn-primary" id="pcvBtn" onclick="doPoPayPetty()">บันทึกจ่ายจากเงินสดย่อย</button></div>');
-    imgsFldBind('pcvProof');
+    imgsFldBind('pcvProof'); taxEdLoad(no);
     /* รายการวง + ยอดคงเหลือมาจากหลังบ้าน — หน้าเว็บห้ามคิดยอดวงเอง */
     jsonp({action:'waPoPettyFunds', uid:UID, entity:(x.entity||'')}).then(function(r){
       var el=$('pcvFund'); if(!el) return;
@@ -12635,6 +12721,7 @@
     var btn=$('pcvBtn'); if(btn){ btn.disabled=true; btn.textContent='กำลังบันทึก…'; }
     var p={action:'waPoPayPetty', uid:UID, no:PCV_NO,
       fundId:(($('pcvFund')||{}).value)||'', payDate:(($('pcvDate')||{}).value)||''};
+    var tl=taxEdCollect(); if(tl===false){ if(btn){ btn.disabled=false; btn.textContent='บันทึกจ่ายจากเงินสดย่อย'; } return; } if(tl) p.taxLines=tl;
     var im=IMGS['pcvProof']||[]; if(im.length) p.imgs=JSON.stringify(im);
     callBusy('กำลังบันทึก…', jsonpPost(p)).then(function(r){
       if(!r||!r.ok){ if(btn){btn.disabled=false;btn.textContent='บันทึกจ่ายจากเงินสดย่อย';}
@@ -12674,6 +12761,7 @@
       payDate:(($('poPayDate')||{}).value)||'', method:(($('poMethod')||{}).value)||'',
       chequeNo:((($('poChq')||{}).value)||'').trim(),
       account:((($('poAcct')||{}).value)||'').trim()};   // บัญชีที่เงินออก (19 ก.ย. 69)
+    var tl=taxEdCollect(); if(tl===false) return; if(tl) p.taxLines=tl;
     var slips=IMGS['poSlip']||[];
     if(slips.length) p.imgs=JSON.stringify(slips);
     var btn=$('poPayBtn'); if(btn){ btn.disabled=true; btn.textContent='กำลังบันทึก…'; }
@@ -25901,7 +25989,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260926-1623';
+  var APP_BUILD='20260926-1634';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
