@@ -7450,6 +7450,9 @@
         opt('line','💬 กลุ่ม LINE ลูกค้า', x.hasGroup?'ส่งเข้ากลุ่ม LINE ที่ผูกกับลูกค้ารายนี้':'ลูกค้ารายนี้ยังไม่ได้ผูกกลุ่ม LINE', !x.hasGroup)+
         opt('copy','📋 คัดลอกข้อความ','ได้ข้อความติดตามสำเร็จรูป (มีลิงก์แนบไฟล์) ไปวางส่งเอง')+
       '</div>'+
+      '<div class="fld"><label>มูลค่าก่อนหัก ณ ที่จ่าย (แจ้งในข้อความ)</label><input id="wgcBase" inputmode="decimal" value="'+esc(x.chaseBase?Number(x.chaseBase).toFixed(2):'')+'">'+
+        (x.baseGuess?'<div class="m-hint" style="margin:4px 0 0;color:#C8730B">⚠️ ประมาณจากภาษี ÷ 3% (หารายการรับเงินในระบบไม่เจอ) — ตรวจ/แก้ก่อนส่ง</div>'
+          :'<div class="m-hint" style="margin:4px 0 0">จากใบแจ้งหนี้ในระบบ</div>')+'</div>'+
       '<div class="fld" id="wgcViaEmail"><label>อีเมลลูกค้า</label><input id="wgcEmail" value="'+esc(x.chaseTo||'')+'" placeholder="account@customer.co.th">'+
         (x.chaseTo?'':'<div class="m-hint" style="margin:4px 0 0">ยังไม่มีอีเมลในทะเบียนลูกค้า</div>')+'</div>'+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
@@ -7463,7 +7466,7 @@
     if(b) b.textContent=v==='email'?'📧 ส่งอีเมลติดตาม':(v==='line'?'💬 ส่งเข้ากลุ่ม LINE':'📋 สร้างข้อความ + จดว่าติดตามแล้ว');
   }
   function wgcGo(){
-    var v=wgcVia(), req={action:'waWhtChase',uid:UID,row:WGC_ROW,via:v};
+    var v=wgcVia(), req={action:'waWhtChase',uid:UID,row:WGC_ROW,via:v,base:String((($('wgcBase')||{}).value)||'').trim()};
     if(v==='email'){ req.email=String((($('wgcEmail')||{}).value)||'').trim(); if(!req.email){ mErr('ใส่อีเมลลูกค้าก่อนค่ะ'); return; } }
     var btn=$('wgcBtn'); if(btn){ btn.disabled=true; btn.textContent='กำลังส่ง…'; }
     callBusy('กำลังส่ง…', jsonp(req), 'ส่งแล้ว').then(function(r){
@@ -25452,7 +25455,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260926-0906';
+  var APP_BUILD='20260926-0941';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
