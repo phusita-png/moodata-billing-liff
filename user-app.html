@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260926-1508">
+<link rel="stylesheet" href="user.css?v=20260926-1521">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -6289,8 +6289,14 @@
       '<div class="sf-card"><div class="sf-h">📋 รายการ</div>'+
         dtTable(itCols, itRows, itTot, D.loading?'กำลังโหลดรายการ…':(D.err||'ไม่พบรายการ'))+'</div>'+
       '<div class="sf-card"><div class="sf-h">💰 สรุปยอด</div><div class="sf-sum"><div></div><div><div class="sf-tot">'+
-        '<div class="r"><span>ยอดเต็ม</span><b>'+money(x.amount)+'</b></div>'+
-        '<div class="r"><span>หัก ณ ที่จ่าย'+(x.whtRate?' '+x.whtRate+'%':'')+'</span><b>'+(x.wht?'− '+money(x.wht):'—')+'</b></div>'+
+        /* 🧾 ครบเท่า PDF: ฐาน · VAT · รวม · หัก ณ ที่จ่าย (บอกฐานที่ใช้หัก) · สุทธิ (พี่กี้ 26 ก.ย. 69) */
+        (x.vat>0
+          ? '<div class="r"><span>มูลค่าก่อน VAT</span><b>'+money(x.base)+'</b></div>'+
+            '<div class="r"><span>ภาษีมูลค่าเพิ่ม '+(x.vatRate||7)+'%</span><b>'+money(x.vat)+'</b></div>'+
+            '<div class="r"><span>จำนวนเงินรวมทั้งสิ้น</span><b>'+money(x.amount)+'</b></div>'
+          : '<div class="r"><span>จำนวนเงินรวมทั้งสิ้น</span><b>'+money(x.amount)+'</b></div>')+
+        '<div class="r"><span>หัก ณ ที่จ่าย'+(x.whtRate?' '+x.whtRate+'%':'')+
+          (x.wht?' <span style="font-weight:400;color:#8A94A6">(จากฐาน '+money(x.whtBase)+')</span>':'')+'</span><b>'+(x.wht?'− '+money(x.wht):'—')+'</b></div>'+
         '<div class="r grand"><span>จ่ายสุทธิ</span><b>'+money(x.net)+'</b></div>'+
       '</div></div></div></div>'+
       '<div class="sf-card"><div class="sf-h">📎 เอกสารที่เกี่ยวข้อง</div>'+relHtml+'</div>'+
@@ -25697,7 +25703,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260926-1508';
+  var APP_BUILD='20260926-1521';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
