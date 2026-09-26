@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260925-1439">
+<link rel="stylesheet" href="user.css?v=20260926-1459">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -935,6 +935,8 @@
      (พี่กี้เจอกับตารางรายรับ 3 ก.ย. 69) · ตารางนี้ fixed layout อยู่แล้ว ให้ตัดคำในเซลล์เสมอ */
   .dt-tbl td{ vertical-align:middle; white-space:normal; }
   .dt-tbl td.dt-detail{ white-space:normal; color:#5B6472; line-height:1.45; }
+  /* รายละเอียดยาว = ตัดเหลือ 2 บรรทัด (เต็มอยู่ใน title) · ตาราง PV 26 ก.ย. 69 */
+  .pv-clamp{ display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
   .dt-tbl td.dt-nw, .dt-tbl th.dt-nw{ white-space:nowrap; }   /* วันที่/เลขที่ ห้ามตัดกลางคำ */
   .dt-tbl td.dt-amt{ text-align:right; font-variant-numeric:tabular-nums; font-weight:600; white-space:nowrap; }
   /* หัวคอลัมน์เงินต้องชิดขวาให้ตรงกับตัวเลขข้างล่าง (พี่กี้ทัก 6 ก.ย.) */
@@ -5924,7 +5926,7 @@
   function renderPoReport(){
     if(!IS_OWNER){ $('main').innerHTML='<div class="card"><div class="emptybox">เฉพาะผู้ดูแลค่ะ</div></div>'; return; }
     /* 25 ก.ย. 69 พี่กี้: เอาแท็บสรุปออก — หน้านี้เป็นทะเบียนใบสำคัญจ่ายอย่างเดียว (สรุปตามประเภทอยู่หน้ารายงานรายจ่าย) */
-    if(POR_TAB==='reg' || true){ if(PV_ONE) paintPvOne(); else renderPvReg(); return; }
+    if(POR_TAB==='reg' || true){ renderPvReg(); return; }
     skel();
     jsonp({action:'waPayoutReport',uid:UID,month:POR_MONTH,entity:POR_ENT}).then(function(r){
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
@@ -6011,7 +6013,7 @@
     skel();
     jsonp({action:'waPayoutPvReg',uid:UID}).then(function(r){
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
-      PV_DATA=r; paintPvReg();
+      PV_DATA=r; if(PV_ONE) paintPvOne(); else paintPvReg();
     }).catch(function(e){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
   }
   /** กรองตามแท็บ/เดือน/บริษัท/คำค้น — ฟังก์ชันบริสุทธิ์ */
@@ -6056,38 +6058,108 @@
     $('main').innerHTML=h;
     pvPaintTbl();
   }
+  /* ═════ 📑 ตารางใบสำคัญจ่าย + เมนู ⋮ (พี่กี้เคาะ 26 ก.ย. 69 — มาตรฐานเดียวกับ PO/PC) ═════
+     คอลัมน์: # · เลขที่ · วันที่จ่าย · ผู้รับเงิน (บัญชีที่จ่ายตัวเล็ก) · รายละเอียด (ตัด 2 บรรทัด) · อ้างอิง ·
+              ยอด · หัก ณ ที่จ่าย · จ่ายสุทธิ · ชนิด · สถานะ · ⋮
+     🔴 ไม่มี "ลบ" — ใบ PV มีเลขในทะเบียนแล้ว ใช้ 🚫 ยกเลิกเอกสาร (เลขคงอยู่) */
+  function pvIsPc(x){ return !!x && (/^PC-/i.test(String(x.poNo||'')) || !!x.topup); }
+  /** คำสั่งในเมนู ⋮ ของใบ PV 1 ใบ — **ฟังก์ชันบริสุทธิ์** (ตาราง/แถบล่าง/เทส ใช้ตัวเดียวกัน) */
+  function pvRowActions(x){
+    var q="'"+String(x.no).replace(/'/g,"\\'")+"'";
+    var a=[];
+    if(x.pdf) a.push({key:'pdf', label:'🖨️ พิมพ์ PDF', href:x.pdf});
+    else if(!x.isVoid) a.push({key:'pdf', label:'🖨️ พิมพ์ PDF', call:'pvReissue('+q+')'});
+    if(!x.isVoid){
+      a.push({key:'edit', label:'✏️ แก้ไขเอกสาร', call:'openPvOne('+q+',1)'});
+      a.push({key:'reissue', label:'🔄 ออกเอกสารใหม่', call:'pvReissue('+q+')'});
+    }
+    if(x.poNo) a.push({key:'src', label:(pvIsPc(x)?'📑 ใบสรุปเบิก ':'📑 ใบสั่งจ่าย ')+x.poNo,
+      call:"pvGoSrc('"+String(x.poNo).replace(/'/g,"\\'")+"')"});
+    if(x.proofLink) a.push({key:'proof', label:'📎 เอกสารแนบ', href:x.proofLink});
+    if(x.whtLink) a.push({key:'wht', label:'🧾 50 ทวิ '+(x.whtNo||''), href:x.whtLink});
+    if(x.whtPayeeLink) a.push({key:'whtpayee', label:'🧾 50 ทวิ (ฉบับผู้รับเงิน)', href:x.whtPayeeLink});
+    if(x.dossier) a.push({key:'dossier', label:'🗂️ แฟ้มครบชุด', href:x.dossier});
+    if(x.slip) a.push({key:'slip', label:'📎 สลิปโอน', href:x.slip});
+    if(x.pdf) a.push({key:'copy', label:'🔗 คัดลอกลิงก์ PDF', call:"copyTxt('"+String(x.pdf).replace(/'/g,"\\'")+"')"});
+    if(!x.isVoid) a.push({key:'cancel', label:'🚫 ยกเลิกเอกสาร', call:'pvCancel('+q+')', danger:true});
+    return payMenuSort(a);
+  }
+  window.pvRowActions=pvRowActions; window.pvIsPc=pvIsPc;
   function pvPaintTbl(){
     var box=$('pvTbl'); if(!box) return;
     var rows=pvFilter((PV_DATA||{}).rows, PV_TAB, PV_MONTH, PV_ENT, PV_Q);
     var sum={amount:0,wht:0,net:0};
     rows.forEach(function(x){ if(x.isVoid) return; sum.amount+=x.amount||0; sum.wht+=x.wht||0; sum.net+=x.net||0; });
     var body=rows.map(function(x,i){
-      var q="'"+String(x.poNo||'').replace(/'/g,"\\'")+"'";
+      var q="'"+String(x.no).replace(/'/g,"\\'")+"'";
+      var qs="'"+String(x.poNo||'').replace(/'/g,"\\'")+"'";
       return '<tr'+(x.isVoid?' style="opacity:.55"':'')+'>'+
         '<td class="dt-nw" style="color:#8A94A6">'+(i+1)+'</td>'+
-        '<td class="dt-nw"><a class="ex-lk" href="#" onclick="openPvOne('+"'"+esc(x.no)+"'"+');return false"><b>'+esc(x.no)+'</b></a></td>'+
+        '<td class="dt-nw"><a class="ex-lk" href="#" onclick="openPvOne('+q+');return false"><b>'+esc(x.no)+'</b></a></td>'+
         '<td class="dt-nw">'+esc(x.date||'')+'</td>'+
-        '<td class="dt-nw">'+(x.poNo?('<a class="ex-lk" href="#" onclick="'+(/^PC-/i.test(x.poNo)?'switchView(\'petty\')':'prGoSrc('+q+')')+';return false">'+esc(x.poNo)+'</a>'):'—')+
-          '<br><span style="font-size:12px;color:#8A94A6">'+(x.topup?'เติมวงเงินสดย่อย':(x.poStaff?'🧾 พนักงาน':'🏢 บริษัท'))+'</span></td>'+
-        '<td>'+esc(x.payee||'-')+'</td>'+
-        '<td class="dt-detail">'+esc(x.detail||'-')+'</td>'+
+        '<td>'+esc(x.payee||'-')+
+          (x.account?'<div style="font-size:12px;color:#8A94A6;line-height:1.35;margin-top:2px">'+esc(x.account)+'</div>':'')+'</td>'+
+        '<td class="dt-detail"><div class="pv-clamp" title="'+esc(x.detail||'')+'">'+esc(x.detail||'-')+'</div></td>'+
+        '<td class="dt-nw">'+(x.poNo?('<a class="ex-lk" href="#" onclick="pvGoSrc('+qs+');return false">'+esc(x.poNo)+'</a>'):'—')+
+          '<div style="font-size:12px;color:#8A94A6">'+(pvIsPc(x)?'ใบสรุปเบิก PC':(x.poStaff?'🧾 ใบพนักงาน':'🏢 ใบบริษัท'))+'</div></td>'+
         '<td class="dt-amt">'+money(x.amount)+'</td>'+
         '<td class="dt-amt">'+(x.wht?money(x.wht):'-')+'</td>'+
         '<td class="dt-amt">'+money(x.net)+'</td>'+
-        '<td class="dt-nw">'+(x.topup?'<span class="tk-badge b-review">🪙 เติมเงินสดย่อย</span>':(x.kind==='pcv'?'<span class="tk-badge b-void">เอกสารเดิม</span>':'<span class="tk-badge b-new">💳 จ่ายค่าใช้จ่าย</span>'))+
-          (x.account?'<br><span style="font-size:12px;color:#8A94A6">'+esc(x.account)+'</span>':'')+'</td>'+
+        '<td class="dt-nw">'+(x.topup?'<span class="tk-badge b-review">🪙 เติมเงินสดย่อย</span>':(x.kind==='pcv'?'<span class="tk-badge b-void">เอกสารเดิม</span>':'<span class="tk-badge b-new">💳 จ่ายค่าใช้จ่าย</span>'))+'</td>'+
         '<td class="dt-nw">'+(x.isVoid?'<span class="tk-badge b-void">🚫 ยกเลิก</span>':'<span class="tk-badge b-done">✅ จ่ายแล้ว</span>')+'</td>'+
+        dtActCell('pv:'+x.no, pvRowActions(x))+
         '</tr>';
     });
     box.innerHTML=dtTable([
-      {label:'#',cls:'dt-nw',w:'38px'},{label:'เลขที่',cls:'dt-nw'},{label:'วันที่จ่าย',cls:'dt-nw'},{label:'อ้างอิงใบสั่งจ่าย',cls:'dt-nw'},
-      {label:'ผู้รับเงิน'},{label:'รายละเอียด'},{label:'ยอด (บาท)',cls:'ta-r'},{label:'หัก ณ ที่จ่าย',cls:'ta-r'},
-      {label:'จ่ายสุทธิ',cls:'ta-r'},{label:'ชนิด / บัญชี',cls:'dt-nw'},{label:'สถานะ',cls:'dt-nw'}], body,
+      {label:'#',cls:'dt-nw',w:'38px'},{label:'เลขที่',cls:'dt-nw',w:'118px'},{label:'วันที่จ่าย',cls:'dt-nw',w:'96px'},
+      {label:'ผู้รับเงิน',w:'190px'},{label:'รายละเอียด'},{label:'อ้างอิง',cls:'dt-nw',w:'124px'},
+      {label:'ยอด (บาท)',cls:'dt-amt',w:'104px'},{label:'หัก ณ ที่จ่าย',cls:'dt-amt',w:'96px'},{label:'จ่ายสุทธิ',cls:'dt-amt',w:'104px'},
+      {label:'ชนิด',cls:'dt-nw',w:'140px'},{label:'สถานะ',cls:'dt-nw',w:'104px'},{label:'',w:'44px'}], body,
       rows.length?'<tr class="tax-total"><td colspan="6" style="text-align:right">รวม '+rows.filter(function(x){return !x.isVoid;}).length+' ใบ (ไม่นับใบยกเลิก)</td>'+
         '<td class="dt-amt">'+money(Math.round(sum.amount*100)/100)+'</td><td class="dt-amt">'+money(Math.round(sum.wht*100)/100)+'</td>'+
-        '<td class="dt-amt">'+money(Math.round(sum.net*100)/100)+'</td><td colspan="2"></td></tr>':'',
+        '<td class="dt-amt">'+money(Math.round(sum.net*100)/100)+'</td><td colspan="3"></td></tr>':'',
       PV_DATA&&PV_DATA.rows&&PV_DATA.rows.length?'ไม่พบใบตามที่กรอง':'ยังไม่มีใบสำคัญจ่าย — ออกเมื่อบันทึกจ่ายในหน้าใบสั่งจ่าย');
   }
+  /** ไปใบต้นทาง — PC เปิดหน้าใบสรุป · PO/ใบพนักงาน ค้นในทะเบียนใบสั่งจ่ายด้วยเลขใบ */
+  function pvGoSrc(no){
+    no=String(no||'');
+    if(/^PC-/i.test(no)){ PC_ONE=no; PC_ONE_TAB='doc'; DOC_LOG=null; switchView('petty'); return; }
+    PR_DOC='PO'; PR_TAB='all'; PR_MONTH=''; PR_KIND=''; PR_Q=no;
+    switchView('payout');
+  }
+  /** 🔄 ออกเอกสารใหม่ (เลขเดิม · ฟอร์มมาตรฐาน) */
+  function pvReissue(no){
+    callBusy('กำลังออกเอกสาร…', jsonp({action:'waPayoutPvReissue', uid:UID, no:no}), 'ออกเอกสารแล้ว').then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'ออกเอกสารไม่สำเร็จ'); return; }
+      toast('📄 ออก '+no+' ใหม่แล้ว'); if(r.url) window.open(r.url,'_blank');
+      renderPvReg();
+    }).catch(function(e){ toast(e.message); });
+  }
+  /** 🚫 ยกเลิกเอกสาร — ใช้ทางยกเลิกของใบต้นทาง (เอกสารชุดเดียวกัน ยกเลิกแยกใบไม่ได้) */
+  function pvCancel(no){
+    var x=((PV_DATA||{}).rows||[]).filter(function(r){ return r.no===no; })[0];
+    if(!x) return;
+    if(pvIsPc(x)){
+      modal('<h3>🚫 ยกเลิกเอกสาร '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+        '<div class="m-hint">ใบนี้เติมเงินสดย่อยตามใบสรุปเบิก <b>'+esc(x.poNo)+'</b><br>'+
+          'ยกเลิกแล้ว เลข <b>'+esc(no)+'</b> ยังอยู่ในทะเบียนพร้อมสถานะ "ยกเลิก" · ใบสรุปกลับเป็น "รอตั้งเบิก" '+
+          'แล้วกดออกใบสำคัญจ่าย PV ใหม่ได้ (ได้เลขใหม่)</div>'+
+        '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ไม่ยกเลิก</button>'+
+        '<button class="btn btn-primary" id="pvCanBtn" onclick="pvCancelPc(\''+esc(x.poNo)+'\')">ยืนยันยกเลิก</button></div>');
+      return;
+    }
+    poCancel(x.poNo, 1, no);   /* ส่งเลข PV ไปด้วย = ขึ้นคำอธิบาย + ยกเลิกเสร็จกลับมาหน้า PV */
+  }
+  function pvCancelPc(claimNo){
+    var btn=$('pvCanBtn'); if(btn){ btn.disabled=true; btn.textContent='กำลังยกเลิก…'; }
+    callBusy('กำลังยกเลิก…', jsonp({action:'waPettyClaimPvVoid',uid:UID,no:claimNo})).then(function(r){
+      if(!r||!r.ok){ if(btn){ btn.disabled=false; btn.textContent='ยืนยันยกเลิก'; } mErr((r&&r.error)||'ยกเลิกไม่สำเร็จ'); return; }
+      closeModal(); toast('🚫 ยกเลิก '+(r.voided||'PV')+' แล้ว');
+      if(r.filedWarn) setTimeout(function(){ toast('⚠️ '+r.filedWarn); },1400);
+      renderPvReg();
+    }).catch(function(e){ if(btn){ btn.disabled=false; btn.textContent='ยืนยันยกเลิก'; } mErr(e.message); });
+  }
+  window.pvGoSrc=pvGoSrc; window.pvReissue=pvReissue; window.pvCancel=pvCancel; window.pvCancelPc=pvCancelPc;
   /* ═════ 🕘 แท็บประวัติการใช้งาน — ตัวกลางทุกเอกสาร (พี่กี้ 25 ก.ย. 69: "มาตรฐานเอกสารทุกฉบับ") ═════
      อ่านจากชีต Log ผ่าน waPoLog (also = เลขเอกสารที่เกี่ยวกัน ให้เห็นทั้งสาย) · หน้าตาเดียวกับ poLogHtml */
   var DOC_LOG=null;
@@ -6109,39 +6181,145 @@
   }
   function docRo(label, val, cls){ return '<div class="sf-f '+(cls||'c3')+'"><label>'+esc(label)+'</label><input value="'+esc(val==null?'':String(val))+'" placeholder="—" readonly></div>'; }
 
-  /* ── 📑 ใบสำคัญจ่าย 1 ใบ ── */
-  var PV_ONE='', PV_ONE_TAB='doc';
-  function openPvOne(no){ PV_ONE=no; PV_ONE_TAB='doc'; DOC_LOG=null; paintPvOne(); }
-  function pvOneBack(){ PV_ONE=''; paintPvReg(); }
+  /* ── 📑 ใบสำคัญจ่าย 1 ใบ — โครงเดียวกับหน้าใบสั่งจ่าย (พี่กี้เคาะ 26 ก.ย. 69) ──
+     ป้ายสถานะมุมขวาบนของการ์ดข้อมูลเอกสาร · ✏️ แก้ไข = เฉพาะข้อมูลการจ่าย · แถบล่างติดขอบจอ = ปุ่มชุดเดียวกับเมนู ⋮ */
+  var PV_ONE='', PV_ONE_TAB='doc', PV_ONE_EDIT=false, PV_ONE_D=null;
+  var PV_BAR_KEYS=['pdf','reissue','cancel'];
+  function openPvOne(no, edit){
+    if(PV_ONE!==no) PV_ONE_D=null;
+    PV_ONE=no; PV_ONE_TAB='doc'; PV_ONE_EDIT=!!edit; DOC_LOG=null;
+    if(VIEW!=='poreport' || !PV_DATA){ switchView('poreport'); return; }
+    paintPvOne();
+  }
+  function pvOneBack(){ PV_ONE=''; PV_ONE_EDIT=false; paintPvReg(); }
   function pvOneTab(t){ PV_ONE_TAB=t; paintPvOne(); }
+  function pvEditOn(){ PV_ONE_EDIT=true; paintPvOne(); }
+  function pvEditOff(){ PV_ONE_EDIT=false; paintPvOne(); }
+  function pvOneLoad(no){
+    jsonp({action:'waPayoutPvOne', uid:UID, no:no}).then(function(r){
+      PV_ONE_D=(r&&r.ok)?r:{no:no, items:[], err:(r&&r.error)||'โหลดรายละเอียดไม่สำเร็จ'};
+      if(PV_ONE===no) paintPvOne();
+    }).catch(function(e){ PV_ONE_D={no:no, items:[], err:e.message}; if(PV_ONE===no) paintPvOne(); });
+  }
   function paintPvOne(){
     var x=((PV_DATA||{}).rows||[]).filter(function(r){ return r.no===PV_ONE; })[0];
     if(!x){ PV_ONE=''; renderPvReg(); return; }
+    if(x.isVoid) PV_ONE_EDIT=false;
+    var q="'"+String(x.no).replace(/'/g,"\\'")+"'";
+    var isPc=pvIsPc(x);
     var tabs=pageTabs(PV_ONE_TAB, [['doc','ข้อมูลเอกสาร',"pvOneTab('doc')"],['log','ประวัติการใช้งาน',"pvOneTab('log')"]]);
     var head='<div class="bc"><button class="lnk" onclick="pvOneBack()">‹ ใบสำคัญจ่าย</button> › '+esc(x.no)+'</div>'+
-      '<div class="pg-title"><h2>'+esc(x.no)+'</h2>'+(x.isVoid?'<span class="tk-badge b-void">🚫 ยกเลิก</span>':'<span class="tk-badge b-done">✅ จ่ายแล้ว</span>')+
-      '<span class="pg-amt">'+money(x.net)+' บาท</span></div>'+tabs;
+      '<div class="pg-title"><h2>'+esc(x.no)+'</h2></div>'+tabs;
     if(PV_ONE_TAB==='log'){
       if(!DOC_LOG || DOC_LOG.no!==x.no) docLogLoad(x.no, [x.poNo], function(){ if(PV_ONE===x.no && PV_ONE_TAB==='log') paintPvOne(); });
       $('main').innerHTML=head+docLogHtml(); return;
     }
-    var ref=x.poNo?('<a class="ex-lk" href="#" onclick="'+(/^PC-/i.test(x.poNo)?"switchView('petty')":"prGoSrc('"+esc(x.poNo)+"')")+';return false">'+esc(x.poNo)+'</a>'):'—';
+    if(!PV_ONE_D || PV_ONE_D.no!==x.no){ PV_ONE_D={no:x.no, loading:true, items:[]}; pvOneLoad(x.no); }
+    var D=PV_ONE_D;
+    var badge=x.isVoid?'<span class="tk-badge b-cancel">🚫 ยกเลิก</span>':'<span class="tk-badge b-done">✅ จ่ายแล้ว</span>';
+    var editBtn=x.isVoid
+      ? '<button class="btn btn-ghost btn-sm" style="margin-left:auto;width:auto" disabled title="ใบที่ยกเลิกแล้ว แก้ไม่ได้ค่ะ">✏️ แก้ไข</button>'
+      : (PV_ONE_EDIT ? '<span style="margin-left:auto"></span>'
+         : '<button class="btn btn-ghost btn-sm" style="margin-left:auto;width:auto" onclick="pvEditOn()">✏️ แก้ไข</button>');
+    var bank=D.bank?[D.bank.name, D.bank.acct, D.bank.owner?'('+D.bank.owner+')':''].filter(Boolean).join(' · '):'';
+
+    /* 💳 การชำระเงิน — ส่วนเดียวที่แก้ได้ */
+    var pay;
+    if(PV_ONE_EDIT){
+      var methods=(PV_DATA.methods||['โอนเงิน','เช็ค','เงินสด']).slice();
+      if(x.method && methods.indexOf(x.method)<0) methods.push(x.method);
+      var accs=(PV_DATA.payAccounts||[]);
+      var curAcc=accs.filter(function(a){ return a.label===x.account; })[0];
+      var lockDate=(x.wht>0);
+      pay='<div class="sf-grid">'+
+        '<div class="sf-f c3"><label>วันที่จ่าย</label><input id="pvEdDate" type="date" value="'+esc(x.isoDate||'')+'"'+
+          (lockDate?' disabled title="ใบนี้หักภาษี ณ ที่จ่าย — วันที่ผูกกับ 50 ทวิ"':'')+'></div>'+
+        '<div class="sf-f c3"><label>วิธีจ่าย</label><select id="pvEdMethod" onchange="pvEdMethod()">'+
+          methods.map(function(m){ return '<option'+(m===x.method?' selected':'')+'>'+esc(m)+'</option>'; }).join('')+'</select></div>'+
+        '<div class="sf-f c3"><label>บัญชีที่จ่าย</label><select id="pvEdAcct"><option value="">— ไม่ระบุ (เงินสด) —</option>'+
+          accs.map(function(a){ var sel=!!curAcc && a.id===curAcc.id;
+            return '<option value="'+esc(a.id)+'"'+(sel?' selected':'')+'>'+esc(a.label)+'</option>'; }).join('')+'</select></div>'+
+        '<div class="sf-f c3"><label>เลขที่เช็ค</label><input id="pvEdCheque" value="'+esc(x.chequeNo||'')+'" placeholder="เฉพาะจ่ายเช็ค"></div>'+
+        '</div><div class="m-hint" style="margin:10px 0 0">แก้ได้เฉพาะข้อมูลการจ่าย · ยอด ผู้รับเงิน และรายการ แก้ที่ใบต้นทาง '+esc(x.poNo||'')+
+          (lockDate?' · <b>ใบนี้หักภาษี ณ ที่จ่าย</b> วันที่จ่ายแก้ไม่ได้ (ผูกกับวันที่บน 50 ทวิ)':'')+
+          ' · บันทึกแล้วระบบออก PDF ใหม่ให้ (เลขเดิม)</div>';
+    } else {
+      pay='<div class="sf-grid">'+docRo('วันที่จ่าย', x.date)+docRo('วิธีจ่าย', x.method)+
+        docRo('บัญชีที่จ่าย', x.account)+docRo('เลขที่เช็ค', x.chequeNo)+'</div>';
+    }
+
+    /* 📋 รายการ */
+    var its=D.items||[];
+    var itCols=isPc
+      ? [{label:'#',cls:'dt-nw',w:'38px'},{label:'วันที่',cls:'dt-nw',w:'100px'},{label:'รายการ'},{label:'จ่ายให้',w:'180px'},{label:'ยอด',cls:'dt-amt',w:'120px'}]
+      : [{label:'#',cls:'dt-nw',w:'38px'},{label:'รายการ'},{label:'ยอด',cls:'dt-amt',w:'120px'}];
+    var itRows=its.map(function(it,i){
+      return '<tr><td class="dt-nw" style="color:#8A94A6">'+(i+1)+'</td>'+
+        (isPc?'<td class="dt-nw">'+esc(it.date||'')+'</td>':'')+
+        '<td class="dt-detail">'+esc(it.detail||'-')+'</td>'+
+        (isPc?'<td>'+esc(it.payee||'-')+'</td>':'')+
+        '<td class="dt-amt">'+money(it.amount)+'</td></tr>';
+    });
+    var itTot=its.length?'<tr class="tax-total"><td colspan="'+(itCols.length-1)+'" style="text-align:right">รวม '+its.length+' รายการ</td>'+
+      '<td class="dt-amt">'+money(its.reduce(function(s,it){ return s+(Number(it.amount)||0); },0))+'</td></tr>':'';
+
+    /* 📎 เอกสารที่เกี่ยวข้อง — ชุดเดียวกับเมนู ⋮ กลุ่มเอกสาร */
+    var rel=pvRowActions(x).filter(function(a){ return ['src','proof','wht','whtpayee','dossier','slip'].indexOf(a.key)>=0; });
+    var relHtml=rel.length ? '<div class="tax-acts" style="margin:0">'+rel.map(function(a){
+        return a.href ? '<a class="btn btn-ghost btn-sm" style="width:auto" href="'+esc(a.href)+'" target="_blank">'+esc(a.label)+'</a>'
+                      : '<button class="btn btn-ghost btn-sm" style="width:auto" onclick="'+esc(a.call)+'">'+esc(a.label)+'</button>';
+      }).join('')+'</div>' : '<div class="m-hint" style="margin:0">—</div>';
+
+    /* แถบล่าง — ปุ่มงานของใบ (ชุดเดียวกับเมนู ⋮) ซ้าย · กลับ/บันทึก ขวา */
+    var bar=pvRowActions(x).filter(function(a){ return !a.sep && PV_BAR_KEYS.indexOf(a.key)>=0; }).map(function(a){
+      var cls='btn btn-ghost btn-sm'+(a.danger?' po-bar-danger':'');
+      return a.href ? '<a class="'+cls+'" href="'+esc(a.href)+'" target="_blank">'+esc(a.label)+'</a>'
+                    : '<button class="'+cls+'" onclick="'+esc(a.call)+'">'+esc(a.label)+'</button>';
+    }).join('');
+
     $('main').innerHTML=head+
-      '<div class="sf-card"><div class="sf-h">🧾 ข้อมูลเอกสาร</div><div class="sf-grid">'+
-        docRo('เลขที่', x.no)+docRo('วันที่จ่าย', x.date)+docRo('ชนิด', x.topup?'เติมเงินสดย่อย':'จ่ายค่าใช้จ่าย')+
-        docRo('บริษัท', x.entityName||x.entity)+
-        docRo('ผู้รับเงิน', x.payee, 'c6')+docRo('บัญชีที่จ่าย', x.account, 'c6')+
-        docRo('รายละเอียด', x.detail, 'wide')+
-      '</div><div class="m-hint" style="margin-top:10px">อ้างอิง: '+ref+'</div></div>'+
+      '<div class="sf-card"><div class="sf-h">🧾 ข้อมูลเอกสาร'+editBtn+badge+'</div><div class="sf-grid">'+
+        docRo('เลขที่', x.no)+docRo('ชนิด', x.topup?'เติมเงินสดย่อย':'จ่ายค่าใช้จ่าย')+
+        docRo('บริษัท', x.entityName||x.entity)+docRo('อ้างอิง', x.poNo)+
+        docRo('ผู้รับเงิน', x.payee, 'c6')+docRo('เลขประจำตัวผู้เสียภาษี', x.payeeId, 'c6')+
+        docRo('ที่อยู่ผู้รับเงิน', D.loading?'กำลังโหลด…':(D.payeeAddr||''), 'c6')+docRo('บัญชีที่โอนเข้า', D.loading?'กำลังโหลด…':bank, 'c6')+
+      '</div></div>'+
+      '<div class="sf-card"><div class="sf-h">💳 การชำระเงิน</div>'+pay+'</div>'+
+      '<div class="sf-card"><div class="sf-h">📋 รายการ</div>'+
+        dtTable(itCols, itRows, itTot, D.loading?'กำลังโหลดรายการ…':(D.err||'ไม่พบรายการ'))+'</div>'+
       '<div class="sf-card"><div class="sf-h">💰 สรุปยอด</div><div class="sf-sum"><div></div><div><div class="sf-tot">'+
         '<div class="r"><span>ยอดเต็ม</span><b>'+money(x.amount)+'</b></div>'+
-        '<div class="r"><span>หัก ณ ที่จ่าย</span><b>'+(x.wht?'− '+money(x.wht):'—')+'</b></div>'+
+        '<div class="r"><span>หัก ณ ที่จ่าย'+(x.whtRate?' '+x.whtRate+'%':'')+'</span><b>'+(x.wht?'− '+money(x.wht):'—')+'</b></div>'+
         '<div class="r grand"><span>จ่ายสุทธิ</span><b>'+money(x.net)+'</b></div>'+
       '</div></div></div></div>'+
-      '<div class="tax-acts">'+(x.pdf?'<a class="btn btn-primary" style="width:auto" href="'+esc(x.pdf)+'" target="_blank">📄 เปิดใบสำคัญจ่าย (PDF)</a>':'')+
-        '<button class="btn btn-ghost" style="width:auto" onclick="pvOneBack()">‹ กลับทะเบียน</button></div>';
+      '<div class="sf-card"><div class="sf-h">📎 เอกสารที่เกี่ยวข้อง</div>'+relHtml+'</div>'+
+      '<div class="sf-bar"><div class="sf-bar-acts">'+bar+'</div>'+
+        (PV_ONE_EDIT
+          ? '<button class="btn btn-ghost" onclick="pvEditOff()">ยกเลิก</button>'+
+            '<button class="btn btn-primary" id="pvEdSave" onclick="pvEditSave('+q+')">บันทึก</button>'
+          : '<button class="btn btn-ghost" onclick="pvOneBack()">กลับ</button>')+
+      '</div>';
+    if(PV_ONE_EDIT) pvEdMethod();
+  }
+  /** เช็คเท่านั้นที่ต้องมีเลขที่เช็ค · เงินสดไม่ต้องเลือกบัญชี */
+  function pvEdMethod(){
+    var m=(($('pvEdMethod')||{}).value)||'';
+    if($('pvEdCheque')) $('pvEdCheque').disabled=(m!=='เช็ค');
+  }
+  function pvEditSave(no){
+    var btn=$('pvEdSave'); if(btn){ btn.disabled=true; btn.textContent='กำลังบันทึก…'; }
+    var p={action:'waPayoutPvEdit', uid:UID, no:no,
+      payDate:(($('pvEdDate')||{}).value)||'', method:(($('pvEdMethod')||{}).value)||'',
+      account:(($('pvEdAcct')||{}).value)||'', chequeNo:(($('pvEdCheque')||{}).value)||''};
+    callBusy('กำลังบันทึก + ออกเอกสารใหม่…', jsonpPost(p)).then(function(r){
+      if(!r||!r.ok){ if(btn){ btn.disabled=false; btn.textContent='บันทึก'; } toast((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+      PV_ONE_EDIT=false; PV_ONE_D=null;
+      toast(r.warn?('⚠️ '+r.warn):('✏️ บันทึก '+no+' แล้ว · ออก PDF ใหม่แล้ว'));
+      renderPvReg();
+    }).catch(function(e){ if(btn){ btn.disabled=false; btn.textContent='บันทึก'; } toast(e.message); });
   }
   window.openPvOne=openPvOne; window.pvOneBack=pvOneBack; window.pvOneTab=pvOneTab;
+  window.pvEditOn=pvEditOn; window.pvEditOff=pvEditOff; window.pvEdMethod=pvEdMethod; window.pvEditSave=pvEditSave;
 
   function pvSetTab(t){ PV_TAB=t||'all'; paintPvReg(); }
   function pvSetMonth(v){ PV_MONTH=v||''; pvPaintTbl(); }
@@ -6577,7 +6755,7 @@
   var PAY_MENU_ORDER = [
     /* ① ไฟล์ของใบ */       'pdf',
     '|',
-    /* ② แก้ไข + งานถัดไป */ 'edit', 'approve', 'reject', 'pay', 'paypetty', 'slipadd', 'send', 'addrcp', 'relink',
+    /* ② แก้ไข + งานถัดไป */ 'edit', 'reissue', 'approve', 'reject', 'pay', 'paypetty', 'slipadd', 'send', 'addrcp', 'relink',
                             'recvpush', 'recvlink', 'recvup',   /* ✍️ เซ็นรับเงินสดย่อย (25 ก.ย. 69) */
     '|',
     /* ③ เอกสารที่ออกแล้ว */ 'proof', 'contract', 'src', 'doc', 'pv', 'wht', 'whtpayee',
@@ -12348,14 +12526,23 @@
       }).catch(function(e){ toast(e.message); });
   }
 
-  function poCancel(no, paid){
+  /* pvNo = เรียกจากหน้าใบสำคัญจ่าย (26 ก.ย. 69) — PV ยกเลิกแยกจากใบสั่งจ่ายไม่ได้ (เอกสารชุดเดียวกัน)
+     จึงบอกให้ชัดว่ายกเลิกทั้งชุด แล้วยกเลิกเสร็จกลับมาหน้า PV */
+  var PO_CANCEL_PV='';
+  function poCancel(no, paid, pvNo){
+    PO_CANCEL_PV=pvNo||'';
     /* ใบที่จ่ายเงินไปแล้ว = เตือนให้ชัดว่าเงินออกไปจริงแล้ว และเอกสารที่ออกไปจะถูกยกเลิกตาม */
-    var warn = paid
+    var pvHint = pvNo
+      ? '<div class="m-hint">ใบสำคัญจ่าย <b>'+esc(pvNo)+'</b> ออกจากใบสั่งจ่าย <b>'+esc(no)+'</b> — '+
+        'ยกเลิกแล้วทั้งชุดถูกยกเลิกด้วยกัน (ใบสั่งจ่าย · ใบสำคัญจ่าย · 50 ทวิ) · เลขทุกใบยังอยู่ในทะเบียนพร้อมสถานะ "ยกเลิก"<br>'+
+        'ถ้าจะจ่ายใหม่ ให้สร้างใบสั่งจ่ายใบใหม่ค่ะ</div>'
+      : '';
+    var warn = pvHint + (paid
       ? '<div class="m-hint" style="background:#FEF2F2;color:#991B1B">⚠️ ใบนี้<b>จ่ายเงินไปแล้ว</b> — ' +
         'ยกเลิกแล้วยอดจะหลุดจากรายงานรายจ่าย และใบสำคัญจ่าย/50 ทวิ ที่ออกไปจะถูกยกเลิกตามด้วย<br>' +
         'ถ้าเงินโอนออกไปจริง ให้บันทึกเหตุผลไว้ด้วยค่ะ</div>'
-      : '<div class="m-hint">ใบจะหายจากรายการ (แถวยังอยู่ในชีต ตรวจย้อนหลังได้) — ใช้กับใบที่ตั้งผิด/ซ้ำค่ะ</div>';
-    modal('<h3>🚫 ยกเลิกเอกสาร '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      : '<div class="m-hint">ใบจะหายจากรายการ (แถวยังอยู่ในชีต ตรวจย้อนหลังได้) — ใช้กับใบที่ตั้งผิด/ซ้ำค่ะ</div>');
+    modal('<h3>🚫 ยกเลิกเอกสาร '+esc(pvNo||no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
       warn+
       '<div class="fld"><label>เหตุผล (ไม่บังคับ)</label><input id="poCanNote" placeholder="เช่น ตั้งซ้ำกับใบก่อน"></div>'+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ไม่ยกเลิก</button>'+
@@ -12370,7 +12557,8 @@
         closeModal();
         var ex=[]; if(r.voidedDocs && r.voidedDocs.length) ex.push('ยกเลิก '+r.voidedDocs.join(' · '));
         if(r.filedWarn) ex.push(r.filedWarn);
-        toast('🚫 ยกเลิกเอกสาร '+no+' แล้ว'+(ex.length?' · '+ex.join(' · '):'')); renderPayout();
+        toast('🚫 ยกเลิกเอกสาร '+no+' แล้ว'+(ex.length?' · '+ex.join(' · '):''));
+        if(PO_CANCEL_PV){ PO_CANCEL_PV=''; renderPvReg(); } else renderPayout();
       }).catch(function(e){ if(btn){btn.disabled=false;btn.textContent='ยืนยันยกเลิก';} mErr(e.message); });
   }
   window.openPayout=openPayout; window.poPayeeMode=poPayeeMode; window.poStaffPick=poStaffPick;
@@ -25508,7 +25696,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260926-1041';
+  var APP_BUILD='20260926-1459';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
