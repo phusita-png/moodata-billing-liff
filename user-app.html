@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260927-1516">
+<link rel="stylesheet" href="user.css?v=20260927-1539">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -7255,12 +7255,23 @@
      ค่าประเภท = ป้าย (หลังบ้านรับได้ทั้งรหัสและป้าย · expenseTypeLabel_) · ยอดรวม = ผลรวมบรรทัด พิมพ์เองไม่ได้
      ช่องของบรรทัด i: pfx_t{i} ประเภท · pfx_d{i} รายละเอียด · pfx_a{i} จำนวนเงิน */
   var SL={}, SL_OPT={};
+  /* 🏷️ ป้ายเดิมของใบเก่า → ชื่อในทะเบียนประเภทค่าใช้จ่าย (หลังบ้านส่งมา · 27 ก.ย. 69)
+     ใบเก่าเก็บ '🚗 เดินทาง' แต่ dropdown ใหม่เป็น 'ค่าเดินทาง' — ไม่แปลง = เปิดใบมาแล้วช่องประเภทไม่ถูกเลือก */
+  var TYPE_ALIAS={};
+  function typeResolve(v){
+    var s=String(v==null?'':v).trim(); if(!s) return '';
+    if(TYPE_ALIAS[s]) return TYPE_ALIAS[s];
+    var bare=s.replace(/^\S+\s+/,'');
+    return TYPE_ALIAS[bare]||s;
+  }
+  window.typeResolve=typeResolve;
   function slTypeOpts(sel){
-    var seen=false;
+    var seen=false, rs=typeResolve(sel);
     var h=(EXP_TYPES||[]).map(function(t){
       var lb=(typeof t==='string')?t:(t.label||t.key||'');
-      if(lb===sel) seen=true;
-      return '<option value="'+esc(lb)+'"'+(lb===sel?' selected':'')+'>'+esc(lb)+'</option>';
+      var on=!!sel && (lb===sel || lb===rs);
+      if(on) seen=true;
+      return '<option value="'+esc(lb)+'"'+(on?' selected':'')+'>'+esc(lb)+'</option>';
     }).join('');
     if(sel && !seen) h='<option value="'+esc(sel)+'" selected>'+esc(sel)+'</option>'+h;   /* ประเภทเก่าที่ไม่อยู่ในลิสต์แล้ว */
     return h || '<option value="">— ไม่มีประเภท —</option>';
@@ -9255,10 +9266,43 @@
   function piRead(){
     PI_ROWS.forEach(function(x,i){
       ['ref','detail','note','qty','unitPrice','docNo','docDate'].forEach(function(k){
-        var el=$('pi_'+k+'_'+i); if(el) x[k]=el.value;
+        var el=$('pi_'+k+'_'+i); if(!el) return;
+        x[k]=(k==='ref') ? piRefVal(el.value) : el.value;
       });
     });
   }
+  /* 🏷️ ช่อง "รหัส" = dropdown จากทะเบียนประเภทค่าใช้จ่าย (พี่กี้ 27 ก.ย. 69 · เดิมเป็นช่องพิมพ์ + คำแนะนำ
+     ที่มือถือ/LINE ไม่ขึ้นให้เลือก) · ค่าใน option = รหัส · ที่เก็บในใบ = ชื่อประเภท
+     ใบเก่าที่พิมพ์อย่างอื่นไว้ (เช่น 'Domain') = โชว์เป็นตัวเลือก "(ค่าเดิม)" ไม่ทิ้งค่าให้ */
+  function piRefOpts(ref){
+    var L=(PO&&PO.types)||[], r=String(ref||'').trim(), rs=typeResolve(r), seen=false;
+    var h='<option value="">— เลือกประเภท —</option>'+L.map(function(t){
+      var on=!!r && (t.label===r || t.key===r || t.label===rs);
+      if(on) seen=true;
+      return '<option value="'+esc(t.key)+'"'+(on?' selected':'')+'>'+esc(t.label)+'</option>';
+    }).join('');
+    if(r && !seen) h+='<option value="'+esc('='+r)+'" selected>'+esc(r)+' (ค่าเดิม)</option>';
+    return h;
+  }
+  /** ค่าใน dropdown → ข้อความที่เก็บในบรรทัด (ชื่อประเภท · ค่าเดิมที่ไม่อยู่ในทะเบียน = ตามเดิม) */
+  function piRefVal(v){
+    v=String(v||'');
+    if(v.charAt(0)==='=') return v.slice(1);
+    var t=((PO&&PO.types)||[]).filter(function(x){ return x.key===v; })[0];
+    return t ? t.label : v;
+  }
+  /** เลือกประเภทบรรทัดแรก = ประเภทหลักของใบ + เติมมาตราเริ่มต้นให้ถ้ายังไม่ได้เลือก (แก้ทับได้) */
+  function piRefChange(i){
+    piChange();
+    if(i!==0) return;
+    var el=$('pi_ref_0'), v=el?el.value:'';
+    var t=((PO&&PO.types)||[]).filter(function(x){ return x.key===v; })[0];
+    if(!t) return;
+    var h=$('poType'); if(h) h.value=t.key;
+    var s=$('poSect');
+    if(t.sect && s && !s.value){ s.value=t.sect; poSectChange(); }
+  }
+  window.piRefChange=piRefChange; window.piRefOpts=piRefOpts; window.piRefVal=piRefVal;
   function piAdd(){ piRead(); PI_ROWS.push(piBlank()); piPaint(); }
   function piDel(i){ piRead(); PI_ROWS.splice(i,1); if(!PI_ROWS.length) PI_ROWS.push(piBlank()); piPaint(); }
   function piOwn(i){ piRead(); PI_ROWS[i].own=true; piPaint(); }
@@ -9267,8 +9311,6 @@
   function poInvSync(){ PI_HDR.no=((($('poInvNo')||{}).value)||'').trim(); PI_HDR.date=(($('poInvDate')||{}).value)||''; }
   function piPaint(){
     var box=$('piBox'); if(!box) return;
-    var types=((PO&&PO.types)||[]).map(function(t){
-      return '<option value="'+esc(t.label)+'"></option>'; }).join('');
     var many=PI_ROWS.length>1;
     var rows=PI_ROWS.map(function(x,i){
       var c=piCalc(x);
@@ -9279,7 +9321,7 @@
         : (poCanType()?'<button class="lnk pi-own" onclick="piOwn('+i+')">+ ใบกำกับคนละใบ</button>':'');
       return '<tr>'+
         '<td class="dt-nw" style="color:#8A94A6">'+(i+1)+'</td>'+
-        '<td><input id="pi_ref_'+i+'" list="piTypeList" placeholder="ประเภท" value="'+esc(x.ref||'')+'" onchange="piChange()" autocomplete="off"></td>'+
+        '<td><select id="pi_ref_'+i+'" onchange="piRefChange('+i+')">'+piRefOpts(x.ref)+'</select></td>'+
         '<td><input id="pi_detail_'+i+'" placeholder="ค่าใช้จ่าย / สินค้า" value="'+esc(x.detail||'')+'" onchange="piChange()"></td>'+
         '<td><input id="pi_note_'+i+'" placeholder="คำอธิบายที่พิมพ์บนเอกสาร" value="'+esc(x.note||'')+'" onchange="piChange()">'+inv+'</td>'+
         '<td><input id="pi_qty_'+i+'" inputmode="decimal" value="'+esc(x.qty==null?'1':x.qty)+'" oninput="piChange()"></td>'+
@@ -9288,7 +9330,7 @@
         '<td class="dt-nw">'+((many&&poCanType())?'<button class="sf-del" title="ลบบรรทัดนี้" onclick="piDel('+i+')">✕</button>':'')+'</td>'+
         '</tr>';
     });
-    box.innerHTML='<datalist id="piTypeList">'+types+'</datalist><div class="sf-items">'+dtTable([
+    box.innerHTML='<div class="sf-items">'+dtTable([
       {label:'#',cls:'dt-nw',w:'38px'},{label:'รหัส',cls:'dt-nw',w:'15%'},{label:'ค่าใช้จ่าย/สินค้า',w:'22%'},
       {label:'คำอธิบาย'},{label:'จำนวน',cls:'dt-nw',w:'8%'},{label:'ราคา/หน่วย',cls:'dt-nw',w:'12%'},
       {label:'จำนวนเงิน',cls:'ta-r',w:'12%'},{label:'',w:'44px'}], rows, '', 'ยังไม่มีรายการ')+'</div>';
@@ -9344,7 +9386,8 @@
   function poItemsLoad(cur){
     function fromDoc(){
       if(!cur) return [piBlank()];
-      var t=((PO&&PO.types)||[]).filter(function(x){ return x.label===cur.type || x.key===cur.type; })[0];
+      var tk=poTypeKeyOf(cur.type);
+      var t=((PO&&PO.types)||[]).filter(function(x){ return x.key===tk; })[0];
       return [{ docNo:'', docDate:'', ref:t?t.label:(cur.type||''), detail:cur.detail||'', note:'',
         qty:'1', unitPrice:String(poAmtInput(cur)||''), own:false }];
     }
@@ -12211,6 +12254,7 @@
         if(r.kind!=='staff'){ $('main').innerHTML='<div class="card"><div class="empty">ไม่พบใบ '+esc(want)+' ในทะเบียน ลองรีเฟรชนะคะ</div></div>'; return; }
         /* ลิสต์กลางที่โมดัลอนุมัติ/จ่ายคืน/แก้ภาษีใช้ — ชุดเดียวกับหน้าอนุมัติเดิม */
         SECTIONS=r.sections||SECTIONS; KIND_CO=r.companyKind||KIND_CO; EXP_TYPES=r.types||EXP_TYPES;
+        TYPE_ALIAS=r.typeAlias||TYPE_ALIAS;
         ENTITIES=r.entities||ENTITIES; DEF_ENT=r.defaultEntity||DEF_ENT;
         PETTY_ENTS=r.pettyEntities||PETTY_ENTS; PAY_CHANNELS=r.payChannels||PAY_CHANNELS;
         PAY_ACCTS=r.payAccounts||PAY_ACCTS;
@@ -12266,7 +12310,9 @@
     /* 🔴 spec-po-unify ขั้น C (24 ก.ย. 69) — โครงเดียวกับใบเสนอราคาทุกการ์ด
        ① ข้อมูลเอกสาร (มุมขวาบน = วันที่เอกสาร + เลขที่/วันที่ใบกำกับ) ② รายการ ③ สรุปยอด
        ประเภทค่าใช้จ่ายย้ายเป็นช่อง "รหัส" ในตาราง · งวด/รายละเอียด ไปอยู่หมายเหตุ (พี่กี้เคาะ ข.) */
-    var typeKey=poTypeKeyOf(cur?cur.type:'')||(((PO.types||[])[0]||{}).key||'');
+    /* 🐞 เดิมใบใหม่ได้กลุ่มแรกของลิสต์ (ค่าเช่า) ทุกใบ เพราะช่องนี้ซ่อน ไม่มีใครเลือก (พบ 27 ก.ย. 69)
+       → ใบใหม่เริ่มว่าง แล้วรับประเภทจากบรรทัดแรกของตารางรายการ (piRefChange / doPayout) */
+    var typeKey=poTypeKeyOf(cur?cur.type:'');
     h+='<div id="mErr" class="m-err hidden"></div>'+
       '<div class="sf-card"><div class="sf-h">🧾 ข้อมูลเอกสาร'+poEditBtn()+poStatusBadge(cur)+'</div>'+
         '<div class="sf-grid">'+
@@ -12392,8 +12438,10 @@
   }
   /** ป้ายประเภทค่าใช้จ่าย (หรือ key) → key ของทะเบียนประเภทใบสั่งจ่าย · ไม่รู้จัก = '' */
   function poTypeKeyOf(v){
-    var t=String(v||'').trim(), L=(PO&&PO.types)||[];
-    var hit=L.filter(function(x){ return x.key===t || x.label===t || String(x.label).replace(/^\S+\s/,'')===t; })[0];
+    var t=String(v||'').trim(), L=(PO&&PO.types)||[], rs=typeResolve(t);
+    if(!t) return '';
+    /* rs = ชื่อในทะเบียนของป้ายเดิม ('🏠 ค่าเช่า' → 'ค่าเช่า') — ใบเก่ายังหาประเภทเจอ */
+    var hit=L.filter(function(x){ return x.key===t || x.label===t || x.label===rs || String(x.label).replace(/^\S+\s/,'')===t; })[0];
     return hit?hit.key:'';   /* ไม่รู้จัก = ว่าง (ห้ามเดาเป็นประเภทแรก ไม่งั้นบันทึกแล้วประเภทใบเปลี่ยนเงียบ ๆ) */
   }
   window.poDateTh=poDateTh; window.poTypeKeyOf=poTypeKeyOf;
@@ -12753,6 +12801,10 @@
       vendorEmail:((($('poVendorEmail')||{}).value)||'').trim(),
       vendorPhone:((($('poVendorPhone')||{}).value)||'').trim(),
       docDate:(($('poDocDate')||{}).value)||''};
+    /* ประเภทหลักของใบ = ประเภทของบรรทัดแรกในตาราง (บรรทัดที่เป็น "ค่าเดิม" นอกทะเบียน = คงประเภทเดิมของใบ) */
+    var fr=piFilled()[0], fk=fr?poTypeKeyOf(fr.ref):'';
+    if(fk) p.type=fk;
+    if(!p.type){ mErr('เลือกประเภทค่าใช้จ่ายในช่อง "รหัส" ของรายการแรกก่อนค่ะ'); return; }
     if(PO_EDIT) p.no=PO_EDIT;
     if(PO_PAYEE==='staff'){
       p.payeeUid=(($('poStaff')||{}).value)||'';
@@ -13687,7 +13739,7 @@
   function poApplyLists(r){
     if(!r) return;
     SECTIONS=r.sections||SECTIONS; KIND_CO=r.companyKind||KIND_CO;
-    EXP_TYPES=r.expTypes||EXP_TYPES;
+    EXP_TYPES=r.expTypes||EXP_TYPES; TYPE_ALIAS=r.typeAlias||TYPE_ALIAS;
     ENTITIES=r.entities||ENTITIES; DEF_ENT=r.defaultEntity||DEF_ENT;
     PETTY_ENTS=r.pettyEntities||PETTY_ENTS; PAY_CHANNELS=r.payChannels||PAY_CHANNELS;
     PAY_ACCTS=r.payAccounts||PAY_ACCTS;
@@ -14047,10 +14099,7 @@
 
     /* ⚠️ ลิสต์ประเภทมาจากหน้าที่โหลดก่อนหน้า — ถ้าเข้าหน้านี้จากหน้าที่ไม่ได้ส่งลิสต์มา
        ต้องไม่ปล่อยให้ช่องว่างเปล่าจนแก้อะไรไม่ได้ (พี่กี้เจอ 18 ก.ย. 69) */
-    var typeOpts=EXP_TYPES.map(function(t){
-      var lb=(typeof t==='string')?t:(t.label||t.key||'');
-      return '<option value="'+esc(lb)+'"'+(lb===x.type?' selected':'')+'>'+esc(lb)+'</option>';
-    }).join('');
+    var typeOpts=(EXP_TYPES&&EXP_TYPES.length)?slTypeOpts(x.type):'';   /* ตัวเดียวกับตารางรายการ — ใบเก่าเลือกค่าเดิมผ่าน TYPE_ALIAS */
     if(!typeOpts) typeOpts='<option value="'+esc(x.type||'')+'" selected>'+esc(x.type||'— ไม่ระบุ —')+'</option>';
     var sectOpts='<option value="">— ไม่ระบุ —</option>'+SECTIONS.map(function(s){
       return '<option value="'+esc(s.code)+'"'+(s.code===x.incomeSection?' selected':'')+'>'+esc(s.code+' '+s.label)+'</option>';
@@ -26229,7 +26278,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260927-1516';
+  var APP_BUILD='20260927-1539';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
