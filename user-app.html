@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260927-0002">
+<link rel="stylesheet" href="user.css?v=20260927-1516">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -7062,7 +7062,7 @@
   var PAY_MENU_ORDER = [
     /* ① ไฟล์ของใบ */       'pdf',
     '|',
-    /* ② แก้ไข + งานถัดไป */ 'edit', 'reissue', 'approve', 'reject', 'pay', 'paypetty', 'slipadd', 'send', 'addrcp', 'relink',
+    /* ② แก้ไข + งานถัดไป */ 'edit', 'reissue', 'approve', 'reject', 'undo', 'pay', 'paypetty', 'slipadd', 'send', 'addrcp', 'relink',
                             'recvpush', 'recvlink', 'recvup',   /* ✍️ เซ็นรับเงินสดย่อย (25 ก.ย. 69) */
     '|',
     /* ③ เอกสารที่ออกแล้ว */ 'proof', 'contract', 'src', 'doc', 'pv', 'wht', 'whtpayee',
@@ -7136,6 +7136,11 @@
       a.push({ key:'approve', label:'✅ อนุมัติ', call:(x.payeeName ? 'exOpenWht(' + q + ')' : 'exApprove(' + q + ')') });
       a.push({ key:'reject',  label:'❌ ไม่อนุมัติ', call:'exReject(' + q + ')' });
     }
+    /* ↩️ ย้อนเป็นรออนุมัติ — ชุดเดียวกับใบบริษัท (27 ก.ย. 69) · ด่านเดียวกับแถบล่างหน้าใบ + undoExpenseDecision_
+       (ใบที่มีแค่ SR ย้อนได้ ระบบออก SR ทับเลขเดิมให้) */
+    var srOnlyU = String(x.docType || '').indexOf('ใบรับรอง') >= 0 && !!x.docNo && !x.whtNo;
+    if(!paid && (approved || rejected) && !(hasDoc && !srOnlyU))
+      a.push({ key:'undo', label:'↩️ ย้อนเป็นรออนุมัติ', call:'exUndo(' + q + ')' });
     /* ออกใบขออนุมัติใหม่ — ใบเก่าที่ตั้งก่อน 23 ก.ย. ยังไม่มีเอกสารนี้ · ใช้ปุ่มนี้ออกย้อนหลัง
        เส้นเดียวกับใบบริษัท (waPoDocs) · ใบที่จ่ายแล้วออกทับได้ เลขใบเดิม ไฟล์เดิม */
     /* 🔴 ไม่มี "ออกใบสั่งจ่ายใหม่" แล้ว (พี่กี้ 23 ก.ย. 69) — แก้ไขแล้วกดบันทึก
@@ -11639,6 +11644,12 @@
     if(mode === 'done' && !x.paidSlip){
       a.push({ key:'slipadd', label:'📎 แนบสลิปโอน (ยังไม่มี)', call:'poOpenPay(' + q + ')', danger:true });
     }
+    /* ↩️ ย้อนเป็นรออนุมัติ (พี่กี้ 27 ก.ย. 69 — อนุมัติแล้วอยากแก้ แต่ไม่มีทางกลับ)
+       ด่านตรงกับ undoPayoutDecision_: อนุมัติ/ไม่อนุมัติ · ยังไม่จ่าย · ยังไม่มีเลข PV/50 ทวิ */
+    var stU = String(x.status || '');
+    if((mode === 'topay' || stU.indexOf('ไม่อนุมัติ') >= 0) && stU.indexOf('ยกเลิก') < 0 && !x.docNo && !x.whtNo){
+      a.push({ key:'undo', label:'↩️ ย้อนเป็นรออนุมัติ', call:'poUndo(' + q + ')' });
+    }
     /* 🔄 ออกเอกสารใหม่ — ทุกสถานะ เหมือนใบเบิก (ก่อนจ่าย = ออกใบสั่งจ่ายทับ · จ่ายแล้ว = ออก PV/50 ทวิ/แฟ้มด้วย)
        ด่านว่าออกอะไรได้บ้างอยู่ที่ handleWaPoDocs_ ฝั่ง backend */
     /* 🔴 ตัด "ออกใบสั่งจ่ายใหม่/ออกเอกสารใหม่" ออกจากเมนู (พี่กี้ 23 ก.ย. 69)
@@ -12412,7 +12423,7 @@
   function poEditBtn(){
     if(!PO_EDIT) return '';
     if(PO_VIEW) return '<button class="btn btn-ghost btn-sm" style="margin-left:auto;width:auto" disabled '+
-      'title="ใบนี้ไม่ได้อยู่สถานะรออนุมัติ — แก้ไม่ได้ค่ะ">✏️ แก้ไข</button>';
+      'title="ใบนี้ไม่ได้อยู่สถานะรออนุมัติ — กด ↩️ ย้อนเป็นรออนุมัติ ในแถบล่างก่อน แล้วค่อยกดแก้ไขค่ะ">✏️ แก้ไข</button>';
     return PO_EDITING
       ? '<span style="margin-left:auto"></span>'  /* ไม่ขึ้นคำว่ากำลังแก้ไข (พี่กี้ 25 ก.ย. 69) · span ว่างดันป้ายสถานะไปขวา */
       : '<button class="btn btn-ghost btn-sm" style="margin-left:auto;width:auto" onclick="poEditOn()">✏️ แก้ไข</button>';
@@ -12425,7 +12436,7 @@
 
   /* ปุ่มงานของใบบนแถบล่าง — ใช้ชุดคำสั่งเดียวกับเมนู ⋮ (poRowActions) เพื่อให้เงื่อนไขตรงกันเสมอ
      🔴 เอาเฉพาะคำสั่งที่ "ทำแล้วเปลี่ยนสถานะ/ได้ไฟล์" ไม่เอาลิงก์เอกสารที่ดูได้จากเมนูอยู่แล้ว */
-  var PO_BAR_KEYS=['pdf','send','approve','reject','pay','paypetty','slipadd','cancel'];
+  var PO_BAR_KEYS=['pdf','send','approve','reject','undo','pay','paypetty','slipadd','cancel'];
   function poFormActionsHtml(cur){
     if(!cur) return '';
     var mode=poStageOf(cur.status);
@@ -12807,6 +12818,30 @@
         renderPayout();
       }).catch(function(e){ if(btn){btn.disabled=false;btn.textContent='ยืนยัน';} mErr(e.message); });
   }
+  /** ↩️ ย้อนใบบริษัทเป็น "รออนุมัติ" (27 ก.ย. 69) — ย้อนเสร็จเปิดใบในโหมดแก้ไขให้เลย */
+  function poUndo(no){
+    var hit=poFindAny(no), x=hit?hit.x:{};
+    modal('<h3>↩️ ย้อนกลับเป็น "รออนุมัติ"</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">ใบ <b>'+esc(no)+'</b> · ตอนนี้ '+esc(x.status||'')+
+      '<br>ระบบจะล้างชื่อผู้อนุมัติของรอบที่แล้ว แล้วออกใบขออนุมัติจ่ายใหม่ (เลขเดิม · ยังไม่มีลายเซ็นผู้อนุมัติ)'+
+      '<br>แก้ไขเสร็จต้องกด ✅ อนุมัติ ใหม่อีกครั้งนะคะ</div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" id="poUndoBtn" onclick="poUndoDo(\''+esc(no)+'\')">ย้อนกลับ</button></div>');
+  }
+  function poUndoDo(no){
+    var btn=$('poUndoBtn'); if(btn){ btn.disabled=true; btn.textContent='กำลังย้อน…'; }
+    callBusy('กำลังย้อนสถานะ…', jsonpPost({action:'waPoUndo', uid:UID, no:no}))
+      .then(function(r){
+        if(!r||!r.ok){ if(btn){btn.disabled=false;btn.textContent='ย้อนกลับ';} mErr((r&&r.error)||'ย้อนไม่สำเร็จ'); return; }
+        closeModal(); toast('↩️ '+no+' กลับมารออนุมัติแล้ว — แก้ไขได้เลยค่ะ');
+        /* โหลดทะเบียนใหม่ แล้วเปิดใบในโหมดแก้ไข (พี่ย้อนเพราะอยากแก้) */
+        jsonp({action:'waPoInit', uid:UID}).then(function(r2){
+          if(r2&&r2.ok){ PO=r2; poApplyLists(r2); }
+          openPayout(no, 1);
+        }).catch(function(){ renderPayout(); });
+      }).catch(function(e){ if(btn){btn.disabled=false;btn.textContent='ย้อนกลับ';} mErr(e.message); });
+  }
+  window.poUndo=poUndo; window.poUndoDo=poUndoDo;
   /** บันทึกจ่ายเงิน — วันที่ย้อนหลังได้ (วันที่จ่ายจริง = วันที่หักภาษีบน 50 ทวิ) */
   /* ═════ 🧾 ตรวจภาษีก่อนกดจ่าย (spec-tax-at-payment · พี่กี้สั่ง 26 ก.ย. 69) ═════
      ดึงค่าตั้งต้นจากใบสั่งจ่าย → คนจ่ายแก้/เพิ่มใบกำกับได้ · ยอด (ฐาน+VAT) รวมต้องเท่ายอดใบ
@@ -26194,7 +26229,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260927-0002';
+  var APP_BUILD='20260927-1516';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
