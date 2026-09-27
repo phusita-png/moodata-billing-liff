@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260927-1539">
+<link rel="stylesheet" href="user.css?v=20260927-1547">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -9262,6 +9262,21 @@
     if(m==='incl'){ var b=r2(amt*100/(100+rt)); return { amt:amt, base:b, vat:r2(amt-b), total:amt }; }
     return { amt:amt, base:amt, vat:0, total:amt };
   }
+  /**
+   * บรรทัดที่บันทึกไว้ → จำนวน + ราคา/หน่วย ที่จะเติมกลับในช่องกรอก (ฟังก์ชันบริสุทธิ์ · เทส test-po-typecat §⑧)
+   * 🐞 27 ก.ย. 69 — ชีตเก็บ "ราคา/หน่วย" เป็นราคาก่อน VAT เสมอ (piPayload ส่ง base/qty)
+   *    แต่ใบ "รวมภาษี" ช่องนี้ต้องเป็นราคารวม VAT → เดิมโหลดมาแล้วถอด VAT ซ้ำอีกรอบ
+   *    (11,200 → 10,467.29 → 9,782.51 · พี่กี้เจอ PO-2609-004) · ตอนนี้คิดกลับจากฐาน+VAT ที่บันทึกไว้
+   */
+  function piLoadUnit(x, pm){
+    var q=Number(x.qty)||1, up=Number(x.unitPrice)||0;
+    var base=Number(x.base)||0, tot=Number(x.total)||r2(base+(Number(x.vat)||0));
+    /* ใบเก่าที่กรอกแต่ฐาน (ไม่มีจำนวน/ราคา) → ราคาต่อหน่วย = ยอดตามประเภทราคาของใบ */
+    if(!up) return { qty:1, unitPrice:(pm==='excl'||pm==='none') ? base : (tot||base) };
+    if(pm==='incl' && base>0) return { qty:q, unitPrice:r2(tot/q) };
+    return { qty:q, unitPrice:up };
+  }
+  window.piLoadUnit=piLoadUnit;
   /** อ่านค่าที่พิมพ์อยู่ในตารางกลับเข้า PI_ROWS (เรียกก่อนวาดใหม่/ก่อนบันทึก) */
   function piRead(){
     PI_ROWS.forEach(function(x,i){
@@ -9405,13 +9420,12 @@
       var first=(r.items||[])[0]||{};
       if(same){ PI_HDR.no=same; PI_HDR.date=piIso(first.docDate);
         if($('poInvNo')) $('poInvNo').value=PI_HDR.no; if($('poInvDate')) $('poInvDate').value=PI_HDR.date; }
+      var pmL=piMode();
       PI_ROWS=(r.items||[]).map(function(x){
         var own=!same && !!x.docNo;
-        var q=Number(x.qty)||1, up=Number(x.unitPrice)||0;
-        /* ใบเก่าที่กรอกแต่ฐาน (ไม่มีจำนวน/ราคา) → ราคาต่อหน่วย = ยอดตามประเภทราคาของใบ */
-        if(!up){ var pm=piMode(); up=(pm==='excl'||pm==='none')?(Number(x.base)||0):(Number(x.total)||Number(x.base)||0); q=1; }
+        var qu=piLoadUnit(x, pmL);
         return { docNo:x.docNo||'', docDate:piIso(x.docDate), ref:x.ref||'', detail:x.detail||'', note:x.note||'',
-          qty:String(q), unitPrice:String(up), own:own };
+          qty:String(qu.qty), unitPrice:String(qu.unitPrice), own:own };
       });
       if(VIEW!=='poform'||PO_TAB!=='doc') return;
       piPaint(); poItemsOpts(r); poCalc();
@@ -26278,7 +26292,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260927-1539';
+  var APP_BUILD='20260927-1547';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
