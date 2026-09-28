@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260927-1547">
+<link rel="stylesheet" href="user.css?v=20260928-2017">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -11820,6 +11820,8 @@
       if(x.selfApprove) flag+='<br><span style="color:#C8730B">'+esc(x.selfApprove)+'</span>';
       /* จ่ายจากเงินสดย่อย = ไม่มีการโอน ไม่ต้องเตือนสลิป (พี่กี้ 25 ก.ย. 69) */
       if(x.stage==='done' && !x.paidSlip && !(x.pay&&x.pay.petty)) flag+='<br><span style="color:#DC2626;font-weight:600">📎 ยังไม่มีสลิปโอน</span>';
+      /* 📎 กลุ่มการเงินส่งสลิปกลับทางบอทแล้ว แต่ยังไม่ได้กดบันทึกจ่าย (28 ก.ย. 69) */
+      if(x.stage!=='done' && x.paidSlip) flag+='<br><span style="color:#1F7A4D;font-weight:600">📎 ได้สลิปจากกลุ่มแล้ว · รอบันทึกจ่าย</span>';
       /* ⏳ ใบที่ขอเงินไปจ่ายก่อน ยังตามใบเสร็จตัวจริงไม่ได้ (22 ก.ย. 69) */
       if(expAwaitReceipt(x)) flag+='<br><span style="color:#B45309;font-weight:600">⏳ รอใบเสร็จตัวจริง</span>';
       /* 22 ก.ย. 69 เย็น — เดิมติ๊กได้เฉพาะใบบริษัท (คิดว่าใบเบิกไม่มีเอกสารให้แนบ)
@@ -12984,6 +12986,7 @@
       /* บัญชีที่เงินออก (19 ก.ย. 69) — จำเป็นตอนกระทบยอดกับสมุดบัญชีธนาคาร
          ไม่มีบัญชีในทะเบียน = บอกทางไปเพิ่ม ไม่ใช่ปล่อยช่องว่างให้สงสัย */
       '<div class="fld" id="poAcctFld"><label>บัญชีที่จ่ายออก</label>'+poAcctSelHtml(x)+'</div>'+
+      (String(x.status||'').indexOf('จ่ายแล้ว')<0?poSlipHaveHtml(x.paidSlip):'')+
       imgsFldHtml('poSlip','📎 สลิปโอน / หลักฐานการจ่าย (รูป หรือ PDF)')+
       (String(x.status||'').indexOf('จ่ายแล้ว')<0?'<div id="taxEdBox"></div>':'')+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
@@ -14458,9 +14461,10 @@
       if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; }
       closeModal();
       if(r.docError) toast('✅ อนุมัติแล้ว · ⚠️ ออกเอกสารไม่สำเร็จ: '+r.docError);
-      else if(r.docNo) toast('✅ อนุมัติแล้ว · 📄 ลงนามในใบรับรองแทนใบเสร็จ '+r.docNo+' แล้ว');
+      /* 🐞 28 ก.ย. 69: ใบ RV มีเลขจองตั้งแต่ตั้งเรื่อง — เช็คลิงก์เซ็นก่อน ไม่งั้นใบค่าจ้างขึ้นว่าเป็นใบรับรองแทนใบเสร็จ */
+      else if(decision==='approve' && (r.rvLink || r.isRv)) toast('✅ อนุมัติแล้ว · 🔗 ส่งลิงก์ให้ผู้ตั้งเบิกส่งต่อให้ผู้รับเงินเซ็นใบสำคัญรับเงิน'+(r.docNo?' '+r.docNo:'')+'แล้วค่ะ');
+      else if(r.docNo) toast('✅ อนุมัติแล้ว · 📄 ลงนามใน'+(r.docLabel||'ใบรับรองแทนใบเสร็จ')+' '+r.docNo+' แล้ว');
       else if(r.voidedDoc) toast('❌ ไม่อนุมัติแล้ว · 🚫 ยกเลิกใบรับรองแทนใบเสร็จ '+r.voidedDoc+' แล้ว');
-      else if(r.rvLink) toast('✅ อนุมัติแล้ว · 🔗 ส่งลิงก์ให้ผู้ตั้งเบิกส่งต่อให้ผู้รับเงินเซ็นแล้วค่ะ');
       else toast(decision==='approve'?'✅ อนุมัติแล้ว':'❌ ไม่อนุมัติแล้ว');
       exFade(no);
     }).catch(function(e){ toast(e.message); });
@@ -14483,6 +14487,7 @@
       // จ่ายก่อนผู้รับเซ็นได้ แต่ต้องรู้ว่ายังต้องตามลายเซ็น (เอกสาร+50 ทวิ ออกตอนเซ็นเสร็จ)
       (unsigned?'<div class="m-hint" style="color:#C8730B">⚠️ ผู้รับเงิน<b>ยังไม่ได้ลงนาม</b> — บันทึกจ่ายได้เลยค่ะ '+
         'แต่ใบสำคัญรับเงินกับ 50 ทวิ จะออกให้ตอนผู้รับเซ็นเสร็จ (ระบบรวมแฟ้มใหม่ให้เอง) · อย่าลืมตามลิงก์เซ็นนะคะ</div>':'')+
+      poSlipHaveHtml(x0.paidSlip)+
       imgsFldHtml('pSlips','📎 สลิปโอนคืน — รูป หรือ PDF (แนบหลายใบได้ · ผู้แจ้งจะเห็น)')+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
       '<button class="btn btn-primary" id="pSend" onclick="exDoPay(\''+esc(no)+'\')">บันทึกจ่ายคืน</button></div>');
@@ -14490,6 +14495,13 @@
   }
   /* ช่องเลือกบัญชีที่เงินออก (ขั้น ④) — รายการมาจากทะเบียนเท่านั้น หน้าเว็บห้ามพิมพ์เอง
      ไม่มีบัญชีในทะเบียน = บอกทางไปเพิ่ม ไม่ใช่ปล่อยช่องว่างให้สงสัย (เหมือนหน้าใบสั่งจ่าย) */
+  /** สลิปที่กลุ่มการเงินส่งกลับทางบอทแล้ว (28 ก.ย. 69) — บันทึกจ่ายโดยไม่แนบใหม่ = ระบบใช้ไฟล์นี้ */
+  function poSlipHaveHtml(url){
+    if(!url) return '';
+    return '<div class="m-hint" style="color:#1F7A4D">📎 มีสลิปที่ส่งมาจากกลุ่มการเงินแล้ว '+
+      '(<a href="'+esc(url)+'" target="_blank">เปิดดู</a>) — ไม่ต้องแนบซ้ำ · ถ้าแนบไฟล์ใหม่ ระบบใช้ไฟล์ใหม่แทน</div>';
+  }
+  window.poSlipHaveHtml=poSlipHaveHtml;
   function exAcctFldHtml(){
     if(!PAY_ACCTS.length){
       return '<div class="fld"><label>บัญชีที่จ่ายออก</label>'+
@@ -14505,7 +14517,7 @@
   function exDoPay(no,force){
     var slips=IMGS['pSlips']||[];
     // ไม่มีสลิป = แฟ้มครบชุดจะขาดชิ้นสำคัญ → ถามยืนยันก่อน (ไม่ห้าม แต่ไม่ปล่อยเงียบ)
-    if(!slips.length && !force){
+    if(!slips.length && !force && !((exFind(no)||{}).paidSlip)){
       mErr('ยังไม่ได้แนบสลิปโอนคืน — แฟ้มครบชุดจะไม่มีหลักฐานการโอน กด "บันทึกจ่ายคืน" อีกครั้งถ้าตั้งใจข้าม');
       var b0=$('pSend'); if(b0){ b0.textContent='บันทึกจ่ายคืน (ไม่มีสลิป)'; b0.setAttribute('onclick','exDoPay(\''+esc(no)+'\',1)'); }
       return;
@@ -26292,7 +26304,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260927-1547';
+  var APP_BUILD='20260928-2017';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
