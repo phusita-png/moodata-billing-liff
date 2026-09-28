@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260928-2017">
+<link rel="stylesheet" href="user.css?v=20260928-2043">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -2789,7 +2789,18 @@
           }
           throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ (รหัส '+r.status+')');
         }
-        return r.json();
+        /* 🐞 28 ก.ย. 69 (พี่กี้เจอ "Unexpected token 'M', "Moodata Yi"... is not valid JSON")
+           Google ส่งคำขอถึงสคริปต์แบบข้อมูลหาย (ไม่มี action) เป็นครั้งคราว → สคริปต์ตอบป้าย "Moodata Yindee … ✅"
+           แปลว่ายังไม่ได้ทำอะไรเลย → ลองส่งใหม่ได้ปลอดภัย (ลองซ้ำแล้วผ่าน · ทดสอบกับเซิร์ฟเวอร์จริงแล้ว) */
+        return r.text().then(function(t){
+          try { return JSON.parse(t); } catch(pe) {}
+          if(/^Moodata Yindee/.test(String(t||'')) && _try<2){
+            jsonpRetryNote_(_try+2);
+            stop();
+            return new Promise(function(res){ setTimeout(res, 800); }).then(function(){ return jsonpPost(params,_try+1,timeoutMs); });
+          }
+          throw new Error('เซิร์ฟเวอร์ตอบกลับผิดรูปแบบ — กดรีเฟรชแล้วดูว่าบันทึกเข้าไปหรือยัง ก่อนกดซ้ำนะคะ');
+        });
       })
       .then(function(d){ stop(); return d; }, function(err){
         stop();
@@ -13015,6 +13026,8 @@
     /* รายการวง + ยอดคงเหลือมาจากหลังบ้าน — หน้าเว็บห้ามคิดยอดวงเอง */
     jsonp({action:'waPoPettyFunds', uid:UID, entity:(x.entity||'')}).then(function(r){
       var el=$('pcvFund'); if(!el) return;
+      /* อ่านไม่ได้ ≠ ยังไม่ตั้งวง — บอกเหตุผลจริง (28 ก.ย. 69) */
+      if(!r||!r.ok){ el.innerHTML='<option value="">— โหลดวงเงินไม่สำเร็จ —</option>'; mErr((r&&r.error)||'โหลดวงเงินสดย่อยไม่สำเร็จ ลองเปิดใหม่อีกครั้งค่ะ'); return; }
       var list=(r&&r.funds)||[];
       if(!list.length){
         el.innerHTML='<option value="">— ยังไม่มีวงเงินสดย่อย —</option>';
@@ -26304,7 +26317,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260928-2017';
+  var APP_BUILD='20260928-2043';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
