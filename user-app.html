@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260928-2043">
+<link rel="stylesheet" href="user.css?v=20260928-2115">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -12425,8 +12425,20 @@
 
       (PO_EDIT ? ''
         : '<div class="sf-card"><div class="sf-h">📎 เอกสารแนบ</div>'+
+            /* 🧾 ชนิดเอกสารประกอบ (28 ก.ย. 69 · พี่กี้) — ไม่ใช่ "มีใบกำกับ" = ยืมเส้นทางใบพนักงาน (ออก SR/RV ให้) */
+            '<div class="sf-f" style="margin-bottom:10px"><label>เอกสารประกอบการจ่าย</label>'+
+              '<select id="poProof" onchange="poProofChange()">'+
+                '<option value="rcp">🧾 มีใบกำกับภาษี / ใบเสร็จ</option>'+
+                '<option value="sr">📄 ไม่มีใบเสร็จ → ออกใบรับรองแทนใบเสร็จ (SR)</option>'+
+                '<option value="rv">✍️ จ่ายค่าจ้างคนนอก → ใบสำคัญรับเงิน (RV · ผู้รับเงินเซ็นออนไลน์)</option>'+
+                '<option value="adv">⏳ จ่ายก่อน · ใบเสร็จตามมา</option>'+
+              '</select><div id="poProofNote" class="sf-note"></div></div>'+
             imgsFldHtml('poImg','ใบแจ้งหนี้ / ใบกำกับภาษี (รูป หรือ PDF · หลายไฟล์ได้)')+
-            imgsFldHtml('poCon','สัญญา (ถ้ามี)')+'</div>')+
+            '<div id="poIdCardBox" class="hidden">'+imgsFldHtml('poIdCard','สำเนาบัตรประชาชนผู้รับเงิน (บังคับ)')+'</div>'+
+            '<div id="poNoProofBox" class="hidden"><label style="display:flex;gap:6px;align-items:center;font-size:13px">'+
+              '<input type="checkbox" id="poNoProof" onchange="poProofChange()"> ไม่มีหลักฐานเลย (ระบุเหตุผล)</label>'+
+              '<input id="poNoProofWhy" class="hidden" placeholder="เช่น จ่ายเงินสดให้ร้านที่ไม่ออกบิล" style="margin-top:6px"></div>'+
+            '<div id="poConBox">'+imgsFldHtml('poCon','สัญญา (ถ้ามี)')+'</div></div>')+
 
       '<div class="sf-bar">'+
         (PO_EDIT?poFormActionsHtml(cur):'')+
@@ -12443,7 +12455,7 @@
       Array.prototype.forEach.call(document.querySelectorAll('#main .sf-card input,#main .sf-card select,#main .sf-card textarea'),
         function(el){ el.disabled=true; });
     }
-    if(!PO_EDIT){ imgsFldBind('poImg'); imgsFldBind('poCon'); }
+    if(!PO_EDIT){ imgsFldBind('poImg'); imgsFldBind('poCon'); imgsFldBind('poIdCard'); poProofChange(); }
     PI_HDR={ no:(cur&&cur.vatInvNo)||'', date:(cur&&cur.vatInvDate)||'' };
     if($('poInvNo')) $('poInvNo').value=PI_HDR.no;
     if($('poInvDate')) $('poInvDate').value=PI_HDR.date;
@@ -12812,6 +12824,77 @@
           '<div class="r"><span>ยอดที่ต้องโอน</span><b>'+poMoney(net)+'</b></div>'
         : '');
   }
+  /* ═══ 🧾 ชนิดเอกสารประกอบของใบบริษัท (28 ก.ย. 69 · spec-po-company-proof) ═══
+     พี่กี้เคาะ: ใบบริษัทเลือก ไม่มีใบเสร็จ(SR) / ค่าจ้างคนนอก(RV) / จ่ายก่อน ได้
+     · ยืมเส้นทางใบพนักงาน (waExpCreate + fromPo) — ผู้ขอ/ผู้รับรอง SR = คนที่สร้างใบ · SR ออกตอนสร้างใบ
+     · ในตารางช่องต้นทางจึงขึ้น "พนักงาน" (ผู้ขอ = คนสร้าง) — พี่กี้รับทราบแล้ว */
+  var PO_PROOF_NOTE={
+    rcp:'',
+    sr:'ระบบออก <b>ใบรับรองแทนใบเสร็จ</b> ทันทีที่สร้างใบ · ผู้รับรอง = คุณ (ต้องมีลายเซ็นในระบบ) · ผู้อนุมัติลงนามตอนอนุมัติ<br>แนบหลักฐานเท่าที่มี (สลิป/บิลเงินสด) — "ไม่มีใบเสร็จ ≠ ไม่มีหลักฐาน"',
+    rv:'ผู้รับเงินต้องเป็น <b>บุคคลธรรมดา</b> · กรอกชื่อ เลขบัตร ที่อยู่ บัญชี + แนบสำเนาบัตร · อนุมัติแล้วได้ลิงก์ให้ผู้รับเงินเซ็นออนไลน์<br>หัก ณ ที่จ่าย เลือกตอนอนุมัติ (ช่องมาตราด้านบนไม่ใช้กับใบนี้)',
+    adv:'ไม่ออกเอกสารใด ๆ — ใบค้างสถานะ "รอใบเสร็จตัวจริง" · แนบใบวางบิล/ใบเสนอราคา (บังคับ)'
+  };
+  function poProofChange(){
+    var el=$('poProof'); if(!el) return;
+    var m=el.value;
+    var n=$('poProofNote'); if(n) n.innerHTML=PO_PROOF_NOTE[m]||'';
+    var ic=$('poIdCardBox'); if(ic) ic.classList.toggle('hidden', m!=='rv');
+    var np=$('poNoProofBox'); if(np) np.classList.toggle('hidden', m!=='sr');
+    var why=$('poNoProofWhy'); if(why) why.classList.toggle('hidden', !(m==='sr' && ($('poNoProof')||{}).checked));
+    var cb=$('poConBox'); if(cb) cb.classList.toggle('hidden', m!=='rcp');
+    if(m==='rv' && $('poKind')){ $('poKind').value='บุคคลธรรมดา'; }
+  }
+  window.poProofChange=poProofChange;
+  function poCreateViaStaff(proof, p, items, tt){
+    if(PO_PAYEE!=='out'){ mErr('ชนิดเอกสารนี้ใช้กับผู้รับเงินที่เป็น "คนนอก / บริษัท" ค่ะ — จ่ายพนักงานเราใช้เมนูแจ้งเบิก'); return; }
+    if(proof!=='adv' && tt.vat>0){ mErr('ไม่มีใบกำกับภาษี = ไม่มี VAT ค่ะ — เปลี่ยนประเภทราคาเป็น "ไม่มีภาษี" ก่อนนะคะ'); return; }
+    if(proof!=='rv' && p.section && parseFloat(p.rate)>0){ mErr('ใบไม่มีใบเสร็จ / จ่ายก่อน หัก ณ ที่จ่ายไม่ได้ค่ะ — ตั้งช่องมาตราเป็น "ไม่หัก"'); return; }
+    var q={action:'waExpCreate', uid:UID, fromPo:'1', entity:p.entity,
+      items:JSON.stringify(items.map(function(x){
+        return { type: poTypeKeyOf(x.ref)||p.type, detail: x.detail, amount: r2((Number(x.base)||0)+(Number(x.vat)||0)) }; }))};
+    var imgs=IMGS['poImg']||[];
+    var payee=p.payeeName||p.vendor;
+    if(proof==='rv'){
+      if(!payee){ mErr('กรอกชื่อผู้รับเงินก่อนค่ะ'); return; }
+      if(p.payeeId.length!==13 || !validThaiId(p.payeeId)){ mErr('เลขบัตรประชาชนผู้รับเงินไม่ถูกต้อง (13 หลัก) ค่ะ'); return; }
+      if(!p.payeeAddr){ mErr('กรอกที่อยู่ผู้รับเงินก่อนค่ะ'); return; }
+      var card=IMGS['poIdCard']||[]; if(!card.length){ mErr('แนบสำเนาบัตรประชาชนผู้รับเงินก่อนค่ะ'); return; }
+      var rb=readBank('po','บัญชีผู้รับเงิน'); if(!rb) return;
+      q.proof='rv'; q.payeeName=payee; q.payeeId=p.payeeId; q.payeeAddr=p.payeeAddr;
+      q.payeeBankName=rb.name; q.payeeBankAcct=rb.acct; q.payeeBankOwner=rb.owner;
+      q.idcard=JSON.stringify(card); if(imgs.length) q.imgs=JSON.stringify(imgs);
+    } else {
+      /* ต้องระบุบัญชีปลายทางเสมอ — ไม่ส่งมา หลังบ้านจะตกไปใช้บัญชีของคนสร้างใบ (ผิดคน) */
+      var b=readBank('po','บัญชีที่ต้องโอน'); if(!b) return;
+      q.payBankName=b.name; q.payBankAcct=b.acct; q.payBankOwner=b.owner;
+      q.vendor=p.vendor||payee;
+      if(!q.vendor){ mErr('กรอกชื่อผู้ขาย/ผู้รับเงินก่อนค่ะ'); return; }
+      if(proof==='sr'){
+        q.noReceipt='1'; q.payDate=p.docDate||todayISO();
+        if(($('poNoProof')||{}).checked){
+          var why=((($('poNoProofWhy')||{}).value)||'').trim();
+          if(!why){ mErr('ระบุเหตุผลที่ไม่มีหลักฐานก่อนค่ะ'); return; }
+          q.noProofReason=why;
+        } else {
+          if(!imgs.length){ mErr('แนบหลักฐานเท่าที่มีก่อนค่ะ (สลิป/บิลเงินสด) — ถ้าไม่มีเลยให้ติ๊ก "ไม่มีหลักฐานเลย"'); return; }
+          q.imgs=JSON.stringify(imgs);
+        }
+      } else {   /* adv */
+        if(!imgs.length){ mErr('แนบใบวางบิล/ใบเสนอราคาก่อนค่ะ (หลักฐานว่าต้องจ่ายเท่าไหร่)'); return; }
+        q.proof='adv'; q.imgs=JSON.stringify(imgs);
+      }
+    }
+    var btn=$('poSend'); if(btn){ btn.disabled=true; btn.textContent='กำลังสร้าง…'; }
+    callBusy('กำลังสร้างใบสั่งจ่าย…', jsonpPost(q)).then(function(r){
+      if(!r||!r.ok){ if(btn){ btn.disabled=false; btn.textContent='สร้างใบสั่งจ่าย'; }
+        mErr((r&&r.error)||'สร้างไม่สำเร็จ'); return; }
+      IMGS['poImg']=[]; IMGS['poCon']=[]; IMGS['poIdCard']=[];
+      toast('✅ สร้างใบสั่งจ่าย '+(r.no||'')+' แล้ว'+(r.docNote?' · '+String(r.docNote).replace(/\n/g,' '):''));
+      PO_EDIT=''; renderPayout();
+    }).catch(function(e){ if(btn){ btn.disabled=false; btn.textContent='สร้างใบสั่งจ่าย'; } mErr(e.message); });
+  }
+  window.poCreateViaStaff=poCreateViaStaff;
+
   function doPayout(){
     var p={action:(PO_EDIT?'waPoEdit':'waPoCreate'), uid:UID,
       entity:(($('poEnt')||{}).value)||'', type:(($('poType')||{}).value)||'',
@@ -12846,6 +12929,9 @@
     if(!p.detail) p.detail=items[0].detail;
     if(!(parseFloat(p.amount)>0)){ mErr('ใส่ราคาในตารางรายการก่อนค่ะ'); return; }
     if(!p.detail){ mErr('กรอกรายการก่อนค่ะ'); return; }
+    /* 🧾 ไม่มีใบเสร็จ / ค่าจ้างคนนอก / จ่ายก่อน → สร้างผ่านเส้นทางใบพนักงาน (ตัวออก SR/RV อยู่ที่นั่นที่เดียว) */
+    var proof=(!PO_EDIT && $('poProof'))?$('poProof').value:'rcp';
+    if(proof!=='rcp'){ poCreateViaStaff(proof, p, items, tt); return; }
     if(PO_PAYEE!=='staff' && !p.payeeName){ mErr('กรอกชื่อผู้รับเงินก่อนค่ะ'); return; }
     // หักภาษี = ต้องมีเลขผู้เสียภาษี + ที่อยู่ (ไปพิมพ์บน 50 ทวิ) — ด่านจริงอยู่ backend อันนี้กันเสียเวลาอัปไฟล์
     if(p.section && parseFloat(p.rate)>0){
@@ -26317,7 +26403,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260928-2043';
+  var APP_BUILD='20260928-2115';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
