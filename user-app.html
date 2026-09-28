@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260928-2228">
+<link rel="stylesheet" href="user.css?v=20260928-2235">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -14724,7 +14724,11 @@
      (พี่กี้เจอ 18 ก.ย. 69: กล่องยืนยันยังบอก "ย้ายไปถังขยะ" ทั้งที่ใบมีเลข SR แล้ว) */
   function exTrash(no){
     var x=exFind(no)||{};
-    var docs=[x.docNo, x.whtNo].filter(Boolean);
+    /* 28 ก.ย. 69 (ข้อ 30): นับ PV ของใบพนักงานด้วย + ใบที่จ่ายเงินแล้วต้องยกเลิกแบบคงร่องรอยเสมอ (ตรงกับหลังบ้าน) */
+    var pvNo=(x.pay&&x.pay.pv&&x.pay.pv.no)||'';
+    var docs=[x.docNo, pvNo, x.whtNo].filter(Boolean);
+    var paid=String(x.status||'').indexOf('จ่ายแล้ว')>=0;
+    if(paid && !docs.length) docs=['ใบที่จ่ายเงินแล้ว'];
     if(docs.length){
       modal('<h3>🚫 ยกเลิกเอกสาร</h3>'+
         '<div class="m-hint" style="margin:0 0 14px">ใบ <b>'+esc(no)+'</b> ออกเอกสารไปแล้ว: <b>'+esc(docs.join(' · '))+'</b>'+
@@ -26446,7 +26450,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260928-2228';
+  var APP_BUILD='20260928-2235';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
