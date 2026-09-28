@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260928-2115">
+<link rel="stylesheet" href="user.css?v=20260928-2126">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -11718,6 +11718,12 @@
     if((mode === 'topay' || stU.indexOf('ไม่อนุมัติ') >= 0) && stU.indexOf('ยกเลิก') < 0 && !x.docNo && !x.whtNo){
       a.push({ key:'undo', label:'↩️ ย้อนเป็นรออนุมัติ', call:'poUndo(' + q + ')' });
     }
+    /* 📄 เปลี่ยนชนิดเอกสารของใบบริษัทที่สร้างไว้แล้ว (28 ก.ย. 69 · พี่กี้) — ด่านตรงกับ companyPoToStaff_
+       ยังไม่จ่าย · ยังไม่ออก PV/50 ทวิ · ไม่หัก ณ ที่จ่าย · SR ต้องไม่มี VAT */
+    if((mode === 'pending' || mode === 'topay') && stU.indexOf('ยกเลิก') < 0 && !x.docNo && !x.whtNo && !(Number(x.whtAmt) > 0)){
+      if(!(Number(x.vatAmt) > 0)) a.push({ key:'tosr', label:'📄 เปลี่ยนเป็นไม่มีใบเสร็จ (ออก SR)', call:'poToProof(' + q + ",'sr')" });
+      a.push({ key:'toadv', label:'⏳ เปลี่ยนเป็นจ่ายก่อน · ใบเสร็จตามมา', call:'poToProof(' + q + ",'adv')" });
+    }
     /* 🔄 ออกเอกสารใหม่ — ทุกสถานะ เหมือนใบเบิก (ก่อนจ่าย = ออกใบสั่งจ่ายทับ · จ่ายแล้ว = ออก PV/50 ทวิ/แฟ้มด้วย)
        ด่านว่าออกอะไรได้บ้างอยู่ที่ handleWaPoDocs_ ฝั่ง backend */
     /* 🔴 ตัด "ออกใบสั่งจ่ายใหม่/ออกเอกสารใหม่" ออกจากเมนู (พี่กี้ 23 ก.ย. 69)
@@ -12984,6 +12990,32 @@
       }).catch(function(e){ if(btn){btn.disabled=false;btn.textContent='ยืนยัน';} mErr(e.message); });
   }
   /** ↩️ ย้อนใบบริษัทเป็น "รออนุมัติ" (27 ก.ย. 69) — ย้อนเสร็จเปิดใบในโหมดแก้ไขให้เลย */
+  /* 📄 ใบบริษัทที่สร้างไว้แล้ว → ไม่มีใบเสร็จ (SR) / จ่ายก่อน (28 ก.ย. 69 · พี่กี้) · หลังบ้าน companyPoToStaff_ + waPoProof */
+  function poToProof(no, proof){
+    var sr=(proof==='sr');
+    modal('<h3>'+(sr?'📄 เปลี่ยนเป็นไม่มีใบเสร็จ':'⏳ เปลี่ยนเป็นจ่ายก่อน · ใบเสร็จตามมา')+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">ใบ <b>'+esc(no)+'</b> · เลขใบคงเดิม'+
+      (sr?'<br>ระบบจะออก <b>ใบรับรองแทนใบเสร็จ</b> ให้ทันที · ผู้รับรอง = คนที่สร้างใบ (ต้องมีลายเซ็นในระบบ)'
+         :'<br>ไม่ออกเอกสารใด ๆ · ใบจะค้างสถานะ "รอใบเสร็จตัวจริง" จนกว่าจะแนบใบเสร็จ')+
+      '<br>หลังเปลี่ยน ในตารางช่องต้นทางจะขึ้น "พนักงาน" (ผู้ขอ = คนที่สร้างใบ)</div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" id="poToProofBtn" onclick="poToProofDo(\''+esc(no)+'\',\''+proof+'\')">เปลี่ยน</button></div>');
+  }
+  function poToProofDo(no, proof){
+    var btn=$('poToProofBtn'); if(btn){ btn.disabled=true; btn.textContent='กำลังเปลี่ยน…'; }
+    callBusy(proof==='sr'?'กำลังออกใบรับรองแทนใบเสร็จ…':'กำลังบันทึก…', jsonpPost({action:'waPoProof', uid:UID, no:no, proof:proof}))
+      .then(function(r){
+        if(!r||!r.ok){ if(btn){btn.disabled=false;btn.textContent='เปลี่ยน';} mErr((r&&r.error)||'เปลี่ยนไม่สำเร็จ'); return; }
+        closeModal();
+        if(proof==='sr'){
+          if(r.issued) toast('📄 ออกใบรับรองแทนใบเสร็จ '+(r.docNo||'')+' แล้ว'+(r.signed?'':' (รอผู้อนุมัติลงนาม)'));
+          else if(r.already) toast('ใบนี้มีใบรับรองแทนใบเสร็จ '+(r.docNo||'')+' อยู่แล้ว');
+          else toast('✍️ ผู้สร้างใบยังไม่มีลายเซ็นในระบบ — เซ็นที่เมนูลายเซ็นของฉันก่อน แล้วระบบจะออก SR ให้อัตโนมัติ');
+        } else toast('⏳ '+no+' เปลี่ยนเป็นจ่ายก่อนแล้ว · รอใบเสร็จตัวจริง');
+        PO_EDIT=''; renderPayout();
+      }).catch(function(e){ if(btn){btn.disabled=false;btn.textContent='เปลี่ยน';} mErr(e.message); });
+  }
+  window.poToProof=poToProof; window.poToProofDo=poToProofDo;
   function poUndo(no){
     var hit=poFindAny(no), x=hit?hit.x:{};
     modal('<h3>↩️ ย้อนกลับเป็น "รออนุมัติ"</h3><div id="mErr" class="m-err hidden"></div>'+
@@ -26403,7 +26435,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260928-2115';
+  var APP_BUILD='20260928-2126';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
