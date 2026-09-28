@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260928-2235">
+<link rel="stylesheet" href="user.css?v=20260928-2321">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -14631,9 +14631,12 @@
         'แต่ใบสำคัญรับเงินกับ 50 ทวิ จะออกให้ตอนผู้รับเซ็นเสร็จ (ระบบรวมแฟ้มใหม่ให้เอง) · อย่าลืมตามลิงก์เซ็นนะคะ</div>':'')+
       poSlipHaveHtml(x0.paidSlip)+
       imgsFldHtml('pSlips','📎 สลิปโอนคืน — รูป หรือ PDF (แนบหลายใบได้ · ผู้แจ้งจะเห็น)')+
+      /* 🧾 ตรวจภาษีก่อนจ่าย (28 ก.ย. 69 · ข้อ 23) — กล่องเดียวกับหน้าจ่ายใบบริษัท · บันทึก ณ วันที่จ่าย */
+      '<div id="taxEdBox"></div>'+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
       '<button class="btn btn-primary" id="pSend" onclick="exDoPay(\''+esc(no)+'\')">บันทึกจ่ายคืน</button></div>');
     imgsFldBind('pSlips');
+    taxEdLoad(no);
   }
   /* ช่องเลือกบัญชีที่เงินออก (ขั้น ④) — รายการมาจากทะเบียนเท่านั้น หน้าเว็บห้ามพิมพ์เอง
      ไม่มีบัญชีในทะเบียน = บอกทางไปเพิ่ม ไม่ใช่ปล่อยช่องว่างให้สงสัย (เหมือนหน้าใบสั่งจ่าย) */
@@ -14664,9 +14667,13 @@
       var b0=$('pSend'); if(b0){ b0.textContent='บันทึกจ่ายคืน (ไม่มีสลิป)'; b0.setAttribute('onclick','exDoPay(\''+esc(no)+'\',1)'); }
       return;
     }
+    /* ภาษีที่แก้ในกล่องตรวจ — ยอดไม่ตรงยอดใบ = หยุด (ตัวเดียวกับหน้าจ่ายใบบริษัท) */
+    var tl=taxEdCollect(); if(tl===false) return;
     var b=$('pSend'); if(b){ b.disabled=true; b.textContent='กำลังบันทึก…'; }
     toast('กำลังบันทึก…');
-    callBusy('กำลังสร้างเอกสาร + แฟ้ม…', jsonpPost({action:'waPoPay',uid:UID,no:no,imgs:JSON.stringify(slips),channel:(($('payCh')||{}).value||''),account:((($('payAcct')||{}).value)||'').trim(),payDate:(($('payDate')||{}).value||'')}), 'บันทึกจ่ายคืนแล้ว').then(function(r){
+    var pq={action:'waPoPay',uid:UID,no:no,imgs:JSON.stringify(slips),channel:(($('payCh')||{}).value||''),account:((($('payAcct')||{}).value)||'').trim(),payDate:(($('payDate')||{}).value||'')};
+    if(tl) pq.taxLines=tl;
+    callBusy('กำลังสร้างเอกสาร + แฟ้ม…', jsonpPost(pq), 'บันทึกจ่ายคืนแล้ว').then(function(r){
       if(!r||!r.ok){ if(b){b.disabled=false;b.textContent='บันทึกจ่ายคืน';} mErr((r&&r.error)||'ไม่สำเร็จ'); return; }
       closeModal(); IMGS['pSlips']=[];
       // แฟ้มครบชุดรวมให้เองตอนนี้ · ไม่เกิด/ขาดชิ้น = ไม่ใช่เรื่องใหญ่ (เงินจ่ายแล้ว) แต่ต้องบอกให้รู้
@@ -26450,7 +26457,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260928-2235';
+  var APP_BUILD='20260928-2321';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
