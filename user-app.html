@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260929-1954">
+<link rel="stylesheet" href="user.css?v=20260929-2057">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -7456,8 +7456,15 @@
           /* ⏳ ขอเงินไปจ่ายก่อน (22 ก.ย. 69 · พี่กี้) — มัดจำ/จองล่วงหน้า ใบเสร็จตัวจริงมาทีหลัง
              เดิมไม่มีทางนี้ พนักงานเลยต้องกด "ไม่มีใบเสร็จ" แล้วระบบออก SR ให้ ซึ่งไม่ควรออก */
           '<button type="button" id="epAdv" class="btn btn-sm" onclick="expSetProof(\'adv\')" style="flex:1">⏳ จ่ายก่อน</button>'+
+          /* 📎 อื่น ๆ (29 ก.ย. 69 · พี่กี้) — ไม่มีใบเสร็จ ไม่ออก SR/RV · ตั้งโอนโดยแนบลิงก์/ไฟล์ */
+          '<button type="button" id="epOth" class="btn btn-sm" onclick="expSetProof(\'oth\')" style="flex:1">📎 อื่น ๆ</button>'+
         '</div></div>'+
       '<div id="epBankBox">'+expMyBankHtml()+'</div>'+
+      '<div id="epOthBox" class="hidden">'+
+        '<div class="fld"><label>🔗 ลิงก์หลักฐาน (ถ้ามี)</label><input id="eOthUrl" type="url" placeholder="https://… เช่น ลิงก์ Drive / หน้าคำสั่งซื้อ / อีเมล"></div>'+
+        imgsFldHtml('eOthImg','📎 ไฟล์หลักฐาน (ถ้ามี) — รูป หรือ PDF')+
+        '<div class="m-hint" style="margin:6px 0 0">📎 ใบนี้<b>ไม่ออกใบรับรองแทนใบเสร็จ/ใบสำคัญรับเงิน</b> · วางลิงก์ หรือแนบไฟล์อย่างน้อย 1 อย่าง</div>'+
+      '</div>'+
       '<div id="epAdvBox" class="hidden">'+
         imgsFldHtml('eAdvImg','📎 ใบวางบิล / ใบเสนอราคา / สัญญา — หลักฐานว่าต้องจ่ายเท่าไหร่')+
         '<div class="m-hint" style="margin:6px 0 0">⏳ ใบนี้จะ<b>ไม่ออกใบรับรองแทนใบเสร็จ</b> '+
@@ -7513,7 +7520,7 @@
       '</div>'+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
       '<button class="btn btn-primary" id="eSend" onclick="doExpense()">แจ้งเบิก</button></div>');
-    imgsFldBind('eImg'); imgsFldBind('eSrImg'); imgsFldBind('eRvCard'); imgsFldBind('eRvImg'); imgsFldBind('eAdvImg');
+    imgsFldBind('eImg'); imgsFldBind('eSrImg'); imgsFldBind('eRvCard'); imgsFldBind('eRvImg'); imgsFldBind('eAdvImg'); imgsFldBind('eOthImg');
     slInit('el', [], { edit:true, defType:typeDef });
     expSetProof('rcp');
   }
@@ -7548,7 +7555,7 @@
     if(mode===true) mode='sr'; if(mode===false) mode='rcp';   // เผื่อ frontend เก่าที่ LINE แคชไว้เรียกแบบ boolean
     EXP_PROOF=mode;
     var on='background:var(--red);color:#fff;border-color:var(--red)', off='background:#fff;color:var(--red);border:1.5px solid var(--red)';
-    [['epRcp','rcp'],['epSr','sr'],['epRv','rv'],['epAdv','adv']].forEach(function(t){
+    [['epRcp','rcp'],['epSr','sr'],['epRv','rv'],['epAdv','adv'],['epOth','oth']].forEach(function(t){
       var el=$(t[0]); if(el) el.style.cssText='flex:1;font-size:13px;padding:9px 4px;'+(mode===t[1]?on:off);
     });
     var rb=$('epRcpBox'), sb=$('epSrBox'), vb=$('epRvBox'), bb=$('epBankBox');
@@ -7558,6 +7565,7 @@
     if(sb) sb.classList.toggle('hidden', mode!=='sr');
     if(vb) vb.classList.toggle('hidden', mode!=='rv');
     var ab=$('epAdvBox'); if(ab) ab.classList.toggle('hidden', mode!=='adv');
+    var ob=$('epOthBox'); if(ob) ob.classList.toggle('hidden', mode!=='oth');
     /* ใบสำคัญรับเงินพิมพ์ได้รายการเดียว → ซ่อนปุ่มเพิ่ม + เก็บเหลือบรรทัดแรก */
     if(SL_OPT.el){ SL_OPT.el.single=(mode==='rv'); if(mode==='rv' && $('el_t1')){ SL.el=slRead('el').slice(0,1); } slPaint('el'); }
     /* ร้านค้า: ใบ RV ใช้ชื่อผู้รับเงินอยู่แล้ว (ซ่อน) · ไม่มีใบเสร็จ = ไม่บังคับ · นอกนั้นบังคับ */
@@ -7609,7 +7617,7 @@
       var eb=readBank('eb','บัญชีรับโอน'); if(!eb) return;
       p.payBankName=eb.name; p.payBankAcct=eb.acct; p.payBankOwner=eb.owner;
       var vd=(($('eVendor')||{}).value||'').trim();
-      if(!vd && EXP_PROOF!=='sr'){ mErr('กรอกชื่อร้านค้า/ผู้ขายก่อนค่ะ (ชื่อบนใบเสร็จหรือใบวางบิล)'); return; }
+      if(!vd && EXP_PROOF!=='sr' && EXP_PROOF!=='oth'){ mErr('กรอกชื่อร้านค้า/ผู้ขายก่อนค่ะ (ชื่อบนใบเสร็จหรือใบวางบิล)'); return; }
       p.vendor=vd;
     }
     if(EXP_PROOF==='rv'){
@@ -7639,6 +7647,12 @@
         if(!arr.length){ mErr('แนบหลักฐานเท่าที่มีก่อนค่ะ (สลิปโอน/บิลเงินสด) — ถ้าไม่มีจริงๆ ติ๊กช่องด้านล่าง'); return; }
         p.imgs=JSON.stringify(arr);
       }
+    } else if(EXP_PROOF==='oth'){
+      /* 📎 อื่น ๆ — ลิงก์ และ/หรือ ไฟล์ อย่างน้อย 1 อย่าง */
+      var ou=(($('eOthUrl')||{}).value||'').trim(), oi=IMGS['eOthImg']||[];
+      if(!ou && !oi.length){ mErr('วางลิงก์ หรือแนบไฟล์หลักฐานอย่างน้อย 1 อย่างค่ะ'); return; }
+      if(ou && !/^https?:\/\/\S+$/i.test(ou)){ mErr('ลิงก์ต้องขึ้นต้นด้วย http:// หรือ https:// ค่ะ'); return; }
+      p.proof='oth'; if(ou) p.refUrl=ou; if(oi.length) p.imgs=JSON.stringify(oi);
     } else if(EXP_PROOF==='adv'){
       /* ขอเงินไปจ่ายก่อน — บังคับแนบหลักฐานว่าต้องจ่ายเท่าไหร่ (ใบวางบิล/ใบเสนอราคา/สัญญา) */
       var adv=IMGS['eAdvImg']||[];
@@ -7666,7 +7680,7 @@
       .then(function(r){ if(!r||!r.ok){ if(b){b.disabled=false;b.textContent='แจ้งเบิก';}
           if(r&&r.needBank){ closeModal(); toast(r.error||'กรอกบัญชีรับโอนก่อนค่ะ'); openBank(); return; }
           if(r&&r.needSign){ mErr((r.error||'')+' '); } else mErr((r&&r.error)||'ส่งไม่สำเร็จ'); return; }
-        closeModal(); IMGS['eImg']=[]; IMGS['eSrImg']=[]; IMGS['eRvCard']=[]; IMGS['eRvImg']=[];
+        closeModal(); IMGS['eImg']=[]; IMGS['eSrImg']=[]; IMGS['eRvCard']=[]; IMGS['eRvImg']=[]; IMGS['eOthImg']=[];
         toast('✅ ส่งคำขอเบิกแล้ว · ได้ใบสั่งจ่าย '+(r.no||'')+(r.merged?' · รวม '+r.files+' ไฟล์เป็น PDF แล้ว':'')+
           (r.sr?' · ออกใบรับรองแทนใบเสร็จให้แล้ว (รอผู้อนุมัติลงนาม)':'')+(r.rv?' · อนุมัติแล้วจะได้ลิงก์ให้ผู้รับเงินเซ็นค่ะ':''));
         renderExpense(); })
@@ -12449,7 +12463,10 @@
                 '<option value="sr">📄 ไม่มีใบเสร็จ → ออกใบรับรองแทนใบเสร็จ (SR)</option>'+
                 '<option value="rv">✍️ จ่ายค่าจ้างคนนอก → ใบสำคัญรับเงิน (RV · ผู้รับเงินเซ็นออนไลน์)</option>'+
                 '<option value="adv">⏳ จ่ายก่อน · ใบเสร็จตามมา</option>'+
+                '<option value="oth">📎 อื่น ๆ · ไม่มีใบเสร็จ (ไม่ออก SR/RV · แนบลิงก์หรือไฟล์)</option>'+
               '</select><div id="poProofNote" class="sf-note"></div></div>'+
+            '<div id="poRefUrlBox" class="sf-f hidden" style="margin-bottom:10px"><label>🔗 ลิงก์หลักฐาน (ถ้ามี)</label>'+
+              '<input id="poRefUrl" type="url" placeholder="https://… เช่น ลิงก์ Drive / หน้าคำสั่งซื้อ / อีเมล"></div>'+
             imgsFldHtml('poImg','ใบแจ้งหนี้ / ใบกำกับภาษี (รูป หรือ PDF · หลายไฟล์ได้)')+
             '<div id="poIdCardBox" class="hidden">'+imgsFldHtml('poIdCard','สำเนาบัตรประชาชนผู้รับเงิน (บังคับ)')+'</div>'+
             '<div id="poNoProofBox" class="hidden"><label style="display:flex;gap:6px;align-items:center;font-size:13px">'+
@@ -12849,7 +12866,8 @@
     rcp:'',
     sr:'ระบบออก <b>ใบรับรองแทนใบเสร็จ</b> ทันทีที่สร้างใบ · ผู้รับรอง = คุณ (ต้องมีลายเซ็นในระบบ) · ผู้อนุมัติลงนามตอนอนุมัติ<br>แนบหลักฐานเท่าที่มี (สลิป/บิลเงินสด) — "ไม่มีใบเสร็จ ≠ ไม่มีหลักฐาน"',
     rv:'ผู้รับเงินต้องเป็น <b>บุคคลธรรมดา</b> · กรอกชื่อ เลขบัตร ที่อยู่ บัญชี + แนบสำเนาบัตร · อนุมัติแล้วได้ลิงก์ให้ผู้รับเงินเซ็นออนไลน์<br>หัก ณ ที่จ่าย เลือกตอนอนุมัติ (ช่องมาตราด้านบนไม่ใช้กับใบนี้)',
-    adv:'ไม่ออกเอกสารใด ๆ — ใบค้างสถานะ "รอใบเสร็จตัวจริง" · แนบใบวางบิล/ใบเสนอราคา (บังคับ)'
+    adv:'ไม่ออกเอกสารใด ๆ — ใบค้างสถานะ "รอใบเสร็จตัวจริง" · แนบใบวางบิล/ใบเสนอราคา (บังคับ)',
+    oth:'ไม่ออกเอกสารใด ๆ และไม่รอใบเสร็จ — ตั้งโอนได้เลย · วางลิงก์ หรือแนบไฟล์หลักฐานอย่างน้อย 1 อย่าง · ไม่มี VAT / ไม่หัก ณ ที่จ่าย'
   };
   function poProofChange(){
     var el=$('poProof'); if(!el) return;
@@ -12859,6 +12877,7 @@
     var np=$('poNoProofBox'); if(np) np.classList.toggle('hidden', m!=='sr');
     var why=$('poNoProofWhy'); if(why) why.classList.toggle('hidden', !(m==='sr' && ($('poNoProof')||{}).checked));
     var cb=$('poConBox'); if(cb) cb.classList.toggle('hidden', m!=='rcp');
+    var ru=$('poRefUrlBox'); if(ru) ru.classList.toggle('hidden', m!=='oth');
     if(m==='rv' && $('poKind')){ $('poKind').value='บุคคลธรรมดา'; }
   }
   window.poProofChange=poProofChange;
@@ -12903,6 +12922,11 @@
           if(!imgs.length){ mErr('แนบหลักฐานเท่าที่มีก่อนค่ะ (สลิป/บิลเงินสด) — ถ้าไม่มีเลยให้ติ๊ก "ไม่มีหลักฐานเลย"'); return; }
           q.imgs=JSON.stringify(imgs);
         }
+      } else if(proof==='oth'){   /* 📎 อื่น ๆ — ลิงก์ และ/หรือ ไฟล์ */
+        var ru2=((($('poRefUrl')||{}).value)||'').trim();
+        if(!ru2 && !imgs.length){ mErr('วางลิงก์ หรือแนบไฟล์หลักฐานอย่างน้อย 1 อย่างค่ะ'); return; }
+        if(ru2 && !/^https?:\/\/\S+$/i.test(ru2)){ mErr('ลิงก์ต้องขึ้นต้นด้วย http:// หรือ https:// ค่ะ'); return; }
+        q.proof='oth'; if(ru2) q.refUrl=ru2; if(imgs.length) q.imgs=JSON.stringify(imgs);
       } else {   /* adv */
         if(!imgs.length){ mErr('แนบใบวางบิล/ใบเสนอราคาก่อนค่ะ (หลักฐานว่าต้องจ่ายเท่าไหร่)'); return; }
         q.proof='adv'; q.imgs=JSON.stringify(imgs);
@@ -14232,6 +14256,7 @@
     var canAmt=!paid, canWht=!!(x.payeeName && !x.whtNo), canEnt=(multiEnt() && !docLock && !(srDoc && paid));
     var proofIsSr=String(x.docType||'').indexOf('ใบรับรอง')>=0;
     var proofIsAdv=String(x.docType||'').indexOf('จ่ายก่อน')>=0;   /* ⏳ ใบเสร็จตามมาทีหลัง (22 ก.ย. 69) */
+    var proofIsOth=String(x.docType||'').indexOf('อื่น ๆ')>=0;     /* 📎 อื่น ๆ · ไม่มีใบเสร็จ (29 ก.ย. 69) */
 
     function cell(label, val, wide){   // ช่องข้อมูลอ่านอย่างเดียว 1 ช่องในกริด
       return '<div class="exd-c'+(wide?' exd-wide':'')+'"><span>'+esc(label)+'</span><b>'+(val||'—')+'</b></div>';
@@ -14378,9 +14403,10 @@
           '<div class="sf-grid">'+
             (rv ? ro('หลักฐานการจ่าย', x.docType, 'wide')
               : '<div class="sf-f wide"><label>หลักฐานการจ่าย</label><select id="exdProof">'+
-                  '<option value="rcp"'+((!proofIsSr&&!proofIsAdv)?' selected':'')+'>🧾 มีใบเสร็จ / ใบกำกับภาษี ในนามบริษัท</option>'+
+                  '<option value="rcp"'+((!proofIsSr&&!proofIsAdv&&!proofIsOth)?' selected':'')+'>🧾 มีใบเสร็จ / ใบกำกับภาษี ในนามบริษัท</option>'+
                   '<option value="sr"'+(proofIsSr?' selected':'')+'>📄 บิลไม่ได้ออกในนามบริษัท / ไม่มีใบเสร็จ → ออกใบรับรองแทนใบเสร็จ</option>'+
                   '<option value="adv"'+(proofIsAdv?' selected':'')+'>⏳ จ่ายก่อน · ใบเสร็จตามมา</option>'+
+                  '<option value="oth"'+(proofIsOth?' selected':'')+'>📎 อื่น ๆ · ไม่มีใบเสร็จ (ไม่ออกเอกสาร)</option>'+
                 '</select></div>')+
             /* บัญชีรับโอน 3 ช่อง (พี่กี้ขอแยก 24 ก.ย. 69) · 25 ก.ย. 69: ผู้เบิกระบุบัญชีเองต่อใบ
                (อาจเป็นบัญชีร้านค้า ไม่ใช่บัญชีพนักงาน) → แก้ได้ทุกใบจนกว่าจะจ่าย · จ่ายแล้วอ่านอย่างเดียว (ต้องตรงกับที่โอนจริง) */
@@ -14526,7 +14552,8 @@
       var pf=val('exdProof');
       var wasSr=String(x.docType||'').indexOf('ใบรับรอง')>=0;
       var wasAdv=String(x.docType||'').indexOf('จ่ายก่อน')>=0;
-      if(pf && pf!==(wasSr?'sr':(wasAdv?'adv':'rcp'))){
+      var wasOth=String(x.docType||'').indexOf('อื่น ๆ')>=0;   /* 📎 อื่น ๆ · ไม่มีใบเสร็จ (29 ก.ย. 69) */
+      if(pf && pf!==(wasSr?'sr':(wasAdv?'adv':(wasOth?'oth':'rcp')))){
         jobs.push({ name:'ประเภทหลักฐาน', req:{action:'waPoProof',uid:UID,no:no,proof:pf} });
       }
     }
@@ -26526,7 +26553,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260929-1954';
+  var APP_BUILD='20260929-2057';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
