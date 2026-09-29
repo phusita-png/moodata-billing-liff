@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260929-2119">
+<link rel="stylesheet" href="user.css?v=20260929-2135">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -7124,12 +7124,15 @@
     if(x.whtLink)    a.push({ key:'wht',   label:'🧾 50 ทวิ ' + (x.whtNo || ''), href:x.whtLink });
     if(x.dossier)    a.push({ key:'dossier', label:'🗂️ แฟ้มครบชุด', href:x.dossier });
     if(x.paidSlip)   a.push({ key:'slip',  label:'💸 สลิปโอน', href:x.paidSlip });
+    /* 📄 สรุปเอกสารเบิกจ่าย ของใบหลายรายการ (29 ก.ย. 69 · ข้อ 38) — ชุดเดียวกับใบบริษัท */
+    if(x.summaryLink) a.push({ key:'summary', label:'📄 สรุปเอกสารเบิกจ่าย', href:x.summaryLink });
     /* ⏳ ใบที่ขอเงินไปจ่ายก่อน — ใบเสร็จตัวจริงตามมาทีหลัง (22 ก.ย. 69 · พี่กี้แนบเอง) */
     if(x.realReceipt) a.push({ key:'realrcp', label:'🧾 ใบเสร็จตัวจริง', href:x.realReceipt });
     if(!isOwner) return payMenuSort(a);   // พนักงานเห็นแค่ลิงก์เอกสารของใบตัวเอง
     /* ยังไม่มีไฟล์ (ใบที่ตั้งก่อนฟีเจอร์นี้ขึ้น) — กดแล้วระบบออกให้แล้วเปิดต่อเอง ไม่ต้องกด 2 จังหวะ
        (พี่กี้ 23 ก.ย. 69: "พี่ต้องกดออกใบสั่งจ่ายก่อนเหรอ") */
     if(!x.reqLink) a.push({ key:'pdf', label:'🖨️ พิมพ์ PDF', call:'poOpenReq(' + q + ',0)' });
+    if(!x.summaryLink && x.multi && !pending) a.push({ key:'mksummary', label:'📄 ออกสรุปเอกสารเบิกจ่าย', call:'poSummary(' + q + ')' });
     if(expAwaitReceipt(x)) a.push({ key:'addrcp', label:'📎 แนบใบเสร็จตัวจริง (ยังไม่ได้รับ)',
       call:'expOpenReceipt(' + q + ')', danger:true });
 
@@ -13256,7 +13259,14 @@
     // จ่ายเงินสด = ไม่มีบัญชีธนาคารเกี่ยวข้อง (เงื่อนไขเดียวกับด่านเตือนฝั่ง backend)
     if(af) af.classList.toggle('hidden', m==='เงินสด');
   }
-  function doPoPay(no){
+  function doPoPay(no,force){
+    /* ไม่มีสลิป = ถามยืนยันก่อน แบบเดียวกับหน้าจ่ายใบพนักงาน (29 ก.ย. 69 · ข้อ 29) — เดิมบันทึกเลยแล้วค่อยเตือน */
+    var x0=((PO.topay||[]).concat(PO.paid||[])).filter(function(y){ return y.no===no; })[0]||{};
+    if(!(IMGS['poSlip']||[]).length && !force && !x0.paidSlip){
+      mErr('ยังไม่ได้แนบสลิปโอน — แฟ้มครบชุดจะไม่มีหลักฐานการจ่าย กด "บันทึกจ่ายแล้ว" อีกครั้งถ้าตั้งใจข้าม');
+      var b0=$('poPayBtn'); if(b0){ b0.textContent='บันทึกจ่ายแล้ว (ไม่มีสลิป)'; b0.setAttribute('onclick','doPoPay(\''+esc(no)+'\',1)'); }
+      return;
+    }
     var p={action:'waPoPay', uid:UID, no:no,
       payDate:(($('poPayDate')||{}).value)||'', method:(($('poMethod')||{}).value)||'',
       chequeNo:((($('poChq')||{}).value)||'').trim(),
@@ -26597,7 +26607,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260929-2119';
+  var APP_BUILD='20260929-2135';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
