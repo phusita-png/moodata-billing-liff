@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260929-2057">
+<link rel="stylesheet" href="user.css?v=20260929-2119">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -7073,7 +7073,7 @@
   var PAY_MENU_ORDER = [
     /* ① ไฟล์ของใบ */       'pdf',
     '|',
-    /* ② แก้ไข + งานถัดไป */ 'edit', 'reissue', 'approve', 'reject', 'undo', 'pay', 'paypetty', 'slipadd', 'slipchg', 'send', 'addrcp', 'relink',
+    /* ② แก้ไข + งานถัดไป */ 'edit', 'reissue', 'approve', 'reject', 'undo', 'pay', 'paypetty', 'slipadd', 'slipchg', 'filechg', 'rebuild', 'send', 'addrcp', 'relink',
                             'recvpush', 'recvlink', 'recvup',   /* ✍️ เซ็นรับเงินสดย่อย (25 ก.ย. 69) */
     '|',
     /* ③ เอกสารที่ออกแล้ว */ 'proof', 'contract', 'src', 'doc', 'pv', 'wht', 'whtpayee',
@@ -7150,7 +7150,9 @@
     /* ↩️ ย้อนเป็นรออนุมัติ — ชุดเดียวกับใบบริษัท (27 ก.ย. 69) · ด่านเดียวกับแถบล่างหน้าใบ + undoExpenseDecision_
        (ใบที่มีแค่ SR ย้อนได้ ระบบออก SR ทับเลขเดิมให้) */
     var srOnlyU = String(x.docType || '').indexOf('ใบรับรอง') >= 0 && !!x.docNo && !x.whtNo;
-    if(!paid && (approved || rejected) && !(hasDoc && !srOnlyU))
+    /* ใบ RV ที่แค่จองเลข (ยังไม่มีไฟล์ · ยังไม่มี 50 ทวิ) ย้อนได้แล้ว (29 ก.ย. 69 · ข้อ 17 · ตรงกับหลังบ้าน) */
+    var rvResU = rv && !!x.docNo && !x.docLink && !x.whtNo;
+    if(!paid && (approved || rejected) && !(hasDoc && !srOnlyU && !rvResU))
       a.push({ key:'undo', label:'↩️ ย้อนเป็นรออนุมัติ', call:'exUndo(' + q + ')' });
     /* ออกใบขออนุมัติใหม่ — ใบเก่าที่ตั้งก่อน 23 ก.ย. ยังไม่มีเอกสารนี้ · ใช้ปุ่มนี้ออกย้อนหลัง
        เส้นเดียวกับใบบริษัท (waPoDocs) · ใบที่จ่ายแล้วออกทับได้ เลขใบเดิม ไฟล์เดิม */
@@ -7176,6 +7178,8 @@
       if(!x.paidSlip) a.push({ key:'slipadd', label:'📎 แนบสลิปโอน (ยังไม่มี)', call:'exEditSlip(' + q + ')', danger:true });
       else a.push({ key:'slipchg', label:'📎 เปลี่ยนสลิปโอน', call:'exEditSlip(' + q + ')' });
     }
+    /* 🗂️ สร้างแฟ้มใหม่ / 📎 เปลี่ยนไฟล์แนบ ของใบพนักงาน อยู่ในหน้า 🔎 เปิดดู/แก้ไข (พี่กี้เคาะ 7 ก.ย. 69 ให้เมนูแถวสั้น)
+       ใบบริษัทไม่มีหน้านั้น จึงอยู่ในเมนู ⋮ (poRowActions) */
     /* ด่านเดียวกับหลังบ้าน: "ยังไม่มีไฟล์เอกสาร" ไม่ใช่ "ยังไม่มีเลข" (เฟส 2d ขั้น ③)
        ใบในเล่มใหม่จองเลข RV ไว้ตั้งแต่ตั้งเรื่อง */
     if(rv && !x.docLink) a.push({ key:'relink', label:'🔗 ส่งลิงก์เซ็นใหม่', call:'exRelink(' + q + ')' });
@@ -11737,6 +11741,9 @@
     } else if(mode === 'done' && x.paidSlip && !(x.pay && x.pay.petty)){
       a.push({ key:'slipchg', label:'📎 เปลี่ยนสลิปโอน', call:'exEditSlip(' + q + ')' });
     }
+    /* 🗂️ รวมแฟ้มใหม่ (29 ก.ย. 69 · ข้อ 33) — เดิมต้องไปกดจากหน้า PV · 📎 เปลี่ยนไฟล์แนบ (ข้อ 8) */
+    if(mode === 'done') a.push({ key:'rebuild', label:'🗂️ สร้างแฟ้มครบชุดใหม่', call:'poDocs(' + q + ')' });
+    if(String(x.status || '').indexOf('ยกเลิก') < 0) a.push({ key:'filechg', label:'📎 เปลี่ยนไฟล์แนบ', call:'poFileEdit(' + q + ')' });
     /* ↩️ ย้อนเป็นรออนุมัติ (พี่กี้ 27 ก.ย. 69 — อนุมัติแล้วอยากแก้ แต่ไม่มีทางกลับ)
        ด่านตรงกับ undoPayoutDecision_: อนุมัติ/ไม่อนุมัติ · ยังไม่จ่าย · ยังไม่มีเลข PV/50 ทวิ */
     var stU = String(x.status || '');
@@ -11874,7 +11881,7 @@
         '<td class="ta-c dt-nw" style="color:#8A94A6">'+(i+1)+'</td>'+
         '<td class="ta-c dt-nw">'+pick+'</td>'+
         '<td class="dt-nw">'+esc(x.no)+(x.sentAt?'<br><span style="font-size:11px;color:#168a52">📤 ส่งแล้ว</span>':'')+'</td>'+
-        '<td class="ta-c dt-nw">'+prKindTag(x.kind)+'</td>'+
+        '<td class="ta-c dt-nw">'+prKindTag(x.coOrigin?'company':x.kind)+'</td>'+
         '<td>'+esc(x.who||'-')+'</td>'+
         '<td>'+esc(x.type||'-')+'</td>'+
         '<td class="dt-detail">'+esc(x.detail||'-')+flag+'</td>'+
@@ -12290,6 +12297,7 @@
   window.poRefOf=poRefOf;
 
   function renderPoForm(){
+    PO_NOFILE_OK=false;
     /* เข้าหน้านี้ตรง ๆ (รีเฟรช/ลิงก์) = ยังไม่มีข้อมูลตั้งต้น → โหลดก่อนแล้ววาดใหม่ */
     if(!PO){
       skel();
@@ -12944,6 +12952,7 @@
   }
   window.poCreateViaStaff=poCreateViaStaff;
 
+  var PO_NOFILE_OK=false;   /* กดยืนยันสร้างโดยไม่มีไฟล์แนบแล้ว (ข้อ 4) · เปิดฟอร์มใหม่ = รีเซ็ต */
   function doPayout(){
     var p={action:(PO_EDIT?'waPoEdit':'waPoCreate'), uid:UID,
       entity:(($('poEnt')||{}).value)||'', type:(($('poType')||{}).value)||'',
@@ -12981,6 +12990,13 @@
     /* 🧾 ไม่มีใบเสร็จ / ค่าจ้างคนนอก / จ่ายก่อน → สร้างผ่านเส้นทางใบพนักงาน (ตัวออก SR/RV อยู่ที่นั่นที่เดียว) */
     var proof=(!PO_EDIT && $('poProof'))?$('poProof').value:'rcp';
     if(proof!=='rcp'){ poCreateViaStaff(proof, p, items, tt); return; }
+    /* 📎 ใบแบบมีใบกำกับแต่ยังไม่แนบไฟล์ — เตือนก่อน (ไม่ห้าม · กดอีกครั้งเพื่อสร้าง) แบบหน้าจ่ายคืน (29 ก.ย. 69 · ข้อ 4) */
+    if(!PO_EDIT && !(IMGS['poImg']||[]).length && !PO_NOFILE_OK){
+      PO_NOFILE_OK=true;
+      mErr('ยังไม่ได้แนบใบแจ้งหนี้/ใบกำกับ — กด "สร้างใบสั่งจ่าย" อีกครั้งถ้าตั้งใจสร้างโดยไม่มีไฟล์');
+      return;
+    }
+    PO_NOFILE_OK=false;
     if(PO_PAYEE!=='staff' && !p.payeeName){ mErr('กรอกชื่อผู้รับเงินก่อนค่ะ'); return; }
     // หักภาษี = ต้องมีเลขผู้เสียภาษี + ที่อยู่ (ไปพิมพ์บน 50 ทวิ) — ด่านจริงอยู่ backend อันนี้กันเสียเวลาอัปไฟล์
     if(p.section && parseFloat(p.rate)>0){
@@ -13284,6 +13300,27 @@
   }
   window.poOpenReq=poOpenReq;
 
+  /* 📎 เปลี่ยนไฟล์แนบ — ใช้ได้ทั้งใบบริษัทและใบพนักงาน (waPoFile · 29 ก.ย. 69 · ข้อ 8) */
+  function poFileEdit(no){
+    modal('<h3>📎 เปลี่ยนไฟล์แนบ '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">ใบแจ้งหนี้ / ใบกำกับ / หลักฐาน — ไฟล์ใหม่จะแทนไฟล์เดิม แล้วระบบออกเอกสารทับเลขเดิมให้</div>'+
+      imgsFldHtml('pfFiles','ไฟล์ใหม่ — รูป หรือ PDF (หลายไฟล์ได้ · รวมเป็น PDF เดียว)')+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" id="pfSend" onclick="poFileSave(\''+esc(no)+'\')">บันทึก</button></div>');
+    imgsFldBind('pfFiles');
+  }
+  function poFileSave(no){
+    var f=IMGS['pfFiles']||[];
+    if(!f.length){ mErr('ยังไม่ได้แนบไฟล์ใหม่ค่ะ'); return; }
+    var b=$('pfSend'); if(b){ b.disabled=true; b.textContent='กำลังบันทึก…'; }
+    callBusy('กำลังบันทึกไฟล์…', jsonpPost({action:'waPoFile',uid:UID,no:no,imgs:JSON.stringify(f)}), 'บันทึกแล้ว').then(function(r){
+      if(!r||!r.ok){ if(b){b.disabled=false;b.textContent='บันทึก';} mErr((r&&r.error)||'ไม่สำเร็จ'); return; }
+      closeModal(); IMGS['pfFiles']=[];
+      toast('📎 เปลี่ยนไฟล์แนบแล้ว'+(r.dossier?' · 🗂️ รวมแฟ้มใหม่ให้แล้ว':'')+((r.warn&&r.warn.length)?' ⚠️ '+r.warn.join(' · '):''));
+      exReload();
+    }).catch(function(e){ if(b){b.disabled=false;b.textContent='บันทึก';} mErr(e.message); });
+  }
+  window.poFileEdit=poFileEdit; window.poFileSave=poFileSave;
   function poDocs(no){
     callBusy('กำลังออกเอกสาร…', jsonpPost({ action:'waPoDocs', uid:UID, no:no }), 'ออกเอกสารแล้ว')
       .then(function(r){
@@ -14629,10 +14666,17 @@
   /** ไม่อนุมัติ → ถามเหตุผลก่อน (ลงคอลัมน์หมายเหตุ + แจ้งผู้แจ้ง) */
   function exReject(no){
     modal('<h3>❌ ไม่อนุมัติใบสั่งจ่าย '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
-      '<div class="fld"><label>เหตุผล (ไม่บังคับ · ผู้แจ้งจะเห็น)</label><textarea id="exNote" placeholder="เช่น ใบเสร็จไม่ชัด ขอถ่ายใหม่"></textarea></div>'+
+      /* เหตุผลบังคับ แบบใบบริษัท (29 ก.ย. 69 · ข้อ 16) — ผู้แจ้งจะได้รู้ว่าต้องแก้อะไร */
+      '<div class="fld"><label>เหตุผล (บังคับ · ผู้แจ้งจะเห็น)</label><textarea id="exNote" placeholder="เช่น ใบเสร็จไม่ชัด ขอถ่ายใหม่"></textarea></div>'+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
-      '<button class="btn btn-danger" onclick="exDecide(\''+esc(no)+'\',\'reject\',$(\'exNote\').value.trim())">ไม่อนุมัติ</button></div>');
+      '<button class="btn btn-danger" onclick="exRejectDo(\''+esc(no)+'\')">ไม่อนุมัติ</button></div>');
   }
+  function exRejectDo(no){
+    var n=(($('exNote')||{}).value||'').trim();
+    if(!n){ mErr('ใส่เหตุผลที่ไม่อนุมัติก่อนค่ะ'); return; }
+    exDecide(no,'reject',n);
+  }
+  window.exRejectDo=exRejectDo;
   function exDecide(no,decision,note,wht,payDate,section,entity,whtAmt){
     toast(decision==='approve'?'กำลังอนุมัติ…':'กำลังบันทึก…');
     callBusy(decision==='approve'?'กำลังสร้างเอกสาร…':'กำลังบันทึก…', jsonpPost({action:'waPoDecide',uid:UID,no:no,decision:decision,note:note||'',wht:wht||'0',payDate:payDate||'',section:section||'',entity:entity||'',whtAmt:whtAmt||''}), decision==='approve'?'อนุมัติแล้ว':'บันทึกแล้ว').then(function(r){
@@ -26553,7 +26597,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260929-2057';
+  var APP_BUILD='20260929-2119';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
