@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260929-2238">
+<link rel="stylesheet" href="user.css?v=20260929-2244">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -7132,6 +7132,11 @@
     /* ยังไม่มีไฟล์ (ใบที่ตั้งก่อนฟีเจอร์นี้ขึ้น) — กดแล้วระบบออกให้แล้วเปิดต่อเอง ไม่ต้องกด 2 จังหวะ
        (พี่กี้ 23 ก.ย. 69: "พี่ต้องกดออกใบสั่งจ่ายก่อนเหรอ") */
     if(!x.reqLink) a.push({ key:'pdf', label:'🖨️ พิมพ์ PDF', call:'poOpenReq(' + q + ',0)' });
+    /* 29 ก.ย. 69 (ข้อ 35) — ชุดเดียวกับใบบริษัท: ใบสำคัญจ่าย · 50 ทวิ ฉบับผู้รับเงิน · คัดลอกเลขบัญชี */
+    if(x.pay && x.pay.pv && x.pay.pv.link) a.push({ key:'pv', label:'📄 ใบสำคัญจ่าย ' + (x.pay.pv.no || ''), href:x.pay.pv.link });
+    if(x.whtPayeeLink) a.push({ key:'whtpayee', label:'🧾 50 ทวิ (ฉบับผู้รับเงิน)', href:x.whtPayeeLink });
+    var acctC = String(x.bankAcct || '').replace(/^'/, '');
+    if(acctC) a.push({ key:'copy', label:'📋 คัดลอกเลขที่บัญชี ' + acctC, call:"copyTxt('" + acctC.replace(/'/g, "\'") + "')" });
     if(!x.summaryLink && x.multi && !pending) a.push({ key:'mksummary', label:'📄 ออกสรุปเอกสารเบิกจ่าย', call:'poSummary(' + q + ')' });
     if(expAwaitReceipt(x)) a.push({ key:'addrcp', label:'📎 แนบใบเสร็จตัวจริง (ยังไม่ได้รับ)',
       call:'expOpenReceipt(' + q + ')', danger:true });
@@ -14557,6 +14562,10 @@
         (pending?'<button class="btn btn-ghost btn-sm" onclick="'+(x.payeeName?'exOpenWht':'exApprove')+'(\''+esc(no)+'\')">✅ อนุมัติ</button>':'')+
         (pending?'<button class="btn btn-ghost btn-sm" onclick="exReject(\''+esc(no)+'\')">❌ ไม่อนุมัติ</button>':'')+
         (approved&&!paid?'<button class="btn btn-ghost btn-sm" onclick="exOpenPay(\''+esc(no)+'\',\''+esc(String(x.nick||''))+'\','+(Number(x.amount)||0)+','+((rv&&!x.docNo)?1:0)+')">💰 บันทึกจ่ายคืน</button>':'')+
+        /* 29 ก.ย. 69 (ข้อ 35) — ปุ่มชุดเดียวกับแถบล่างใบบริษัท */
+        (approved&&!paid?'<button class="btn btn-ghost btn-sm" onclick="exOpenPay(\''+esc(no)+'\',\''+esc(String(x.nick||''))+'\','+(Number(x.amount)||0)+','+((rv&&!x.docNo)?1:0)+',1)">🪙 จ่ายจากเงินสดย่อย</button>':'')+
+        '<button class="btn btn-ghost btn-sm" onclick="poOpenReq(\''+esc(no)+'\','+(x.reqLink?1:0)+')">🖨️ พิมพ์ PDF</button>'+
+        '<button class="btn btn-ghost btn-sm" onclick="poSendOne(\''+esc(no)+'\')">📤 ส่งเข้ากลุ่มการเงิน</button>'+
         (rv&&!x.docNo?'<button class="btn btn-ghost btn-sm" onclick="exRelink(\''+esc(no)+'\')">🔗 ส่งลิงก์เซ็นใหม่</button>':'')+
         '<button class="btn btn-ghost btn-sm" onclick="vatOpen(\'expense\',\''+esc(no)+'\','+(Number(x.amount)||0)+')">🧾 ใบกำกับภาษีซื้อ</button>'+
         ((approved||paid)?'<button class="btn btn-ghost btn-sm" onclick="exRebuild(\''+esc(no)+'\')">🗂️ สร้างแฟ้มใหม่</button>':'')+
@@ -26695,7 +26704,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260929-2238';
+  var APP_BUILD='20260929-2244';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
