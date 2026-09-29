@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260929-2244">
+<link rel="stylesheet" href="user.css?v=20260929-2317">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -7136,7 +7136,7 @@
     if(x.pay && x.pay.pv && x.pay.pv.link) a.push({ key:'pv', label:'📄 ใบสำคัญจ่าย ' + (x.pay.pv.no || ''), href:x.pay.pv.link });
     if(x.whtPayeeLink) a.push({ key:'whtpayee', label:'🧾 50 ทวิ (ฉบับผู้รับเงิน)', href:x.whtPayeeLink });
     var acctC = String(x.bankAcct || '').replace(/^'/, '');
-    if(acctC) a.push({ key:'copy', label:'📋 คัดลอกเลขที่บัญชี ' + acctC, call:"copyTxt('" + acctC.replace(/'/g, "\'") + "')" });
+    if(acctC) a.push({ key:'copy', label:'📋 คัดลอกเลขที่บัญชี ' + acctC, call:"copyTxt('" + acctC.replace(/'/g, "\\'") + "')" });
     if(!x.summaryLink && x.multi && !pending) a.push({ key:'mksummary', label:'📄 ออกสรุปเอกสารเบิกจ่าย', call:'poSummary(' + q + ')' });
     if(expAwaitReceipt(x)) a.push({ key:'addrcp', label:'📎 แนบใบเสร็จตัวจริง (ยังไม่ได้รับ)',
       call:'expOpenReceipt(' + q + ')', danger:true });
@@ -7530,6 +7530,9 @@
         bankFields('erv', {}, 'ผู้รับเงิน — ')+
         '<div class="m-hint">💡 อัตราหัก ณ ที่จ่าย '+esc(OWNERTXT())+'จะเป็นคนเลือกตอนอนุมัติค่ะ</div>'+
       '</div>'+
+      /* 🔗 วางลิงก์แทนแนบไฟล์ได้ทุกชนิด (29 ก.ย. 69 · พี่กี้) — ชนิด "อื่น ๆ" มีช่องของตัวเองอยู่แล้ว */
+      '<div id="epLinkBox" class="fld"><label>🔗 หรือวางลิงก์หลักฐานแทนไฟล์ (ถ้ามี)</label>'+
+        '<input id="eRefUrl" type="url" placeholder="https://… เช่น ลิงก์ Drive / หน้าคำสั่งซื้อ / อีเมลใบเสร็จ"></div>'+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
       '<button class="btn btn-primary" id="eSend" onclick="doExpense()">แจ้งเบิก</button></div>');
     imgsFldBind('eImg'); imgsFldBind('eSrImg'); imgsFldBind('eRvCard'); imgsFldBind('eRvImg'); imgsFldBind('eAdvImg'); imgsFldBind('eOthImg');
@@ -7578,6 +7581,7 @@
     if(vb) vb.classList.toggle('hidden', mode!=='rv');
     var ab=$('epAdvBox'); if(ab) ab.classList.toggle('hidden', mode!=='adv');
     var ob=$('epOthBox'); if(ob) ob.classList.toggle('hidden', mode!=='oth');
+    var lb=$('epLinkBox'); if(lb) lb.classList.toggle('hidden', mode==='oth');
     /* ใบสำคัญรับเงินพิมพ์ได้รายการเดียว → ซ่อนปุ่มเพิ่ม + เก็บเหลือบรรทัดแรก */
     if(SL_OPT.el){ SL_OPT.el.single=(mode==='rv'); if(mode==='rv' && $('el_t1')){ SL.el=slRead('el').slice(0,1); } slPaint('el'); }
     /* ร้านค้า: ใบ RV ใช้ชื่อผู้รับเงินอยู่แล้ว (ซ่อน) · ไม่มีใบเสร็จ = ไม่บังคับ · นอกนั้นบังคับ */
@@ -7632,6 +7636,10 @@
       if(!vd && EXP_PROOF!=='sr' && EXP_PROOF!=='oth'){ mErr('กรอกชื่อร้านค้า/ผู้ขายก่อนค่ะ (ชื่อบนใบเสร็จหรือใบวางบิล)'); return; }
       p.vendor=vd;
     }
+    /* 🔗 ลิงก์แทนไฟล์ (ทุกชนิดยกเว้น "อื่น ๆ" ที่มีช่องของตัวเอง) — มีลิงก์ = ไม่บังคับแนบไฟล์ */
+    var ru=(EXP_PROOF!=='oth') ? ((($('eRefUrl')||{}).value||'').trim()) : '';
+    if(ru && !/^https?:\/\/\S+$/i.test(ru)){ mErr('ลิงก์ต้องขึ้นต้นด้วย http:// หรือ https:// ค่ะ'); return; }
+    if(ru) p.refUrl=ru;
     if(EXP_PROOF==='rv'){
       var rn=($('eRvName')||{}).value.trim(), rid=(($('eRvId')||{}).value||'').replace(/\D/g,'');
       var ra=($('eRvAddr')||{}).value.trim(), card=IMGS['eRvCard']||[];
@@ -7656,8 +7664,8 @@
         if(!why){ mErr('ระบุเหตุผลที่ไม่มีหลักฐานก่อนค่ะ'); return; }
         p.noProofReason=why;
       } else {
-        if(!arr.length){ mErr('แนบหลักฐานเท่าที่มีก่อนค่ะ (สลิปโอน/บิลเงินสด) — ถ้าไม่มีจริงๆ ติ๊กช่องด้านล่าง'); return; }
-        p.imgs=JSON.stringify(arr);
+        if(!arr.length && !ru){ mErr('แนบหลักฐานเท่าที่มีก่อนค่ะ (สลิปโอน/บิลเงินสด) หรือวางลิงก์ — ถ้าไม่มีจริงๆ ติ๊กช่องด้านล่าง'); return; }
+        if(arr.length) p.imgs=JSON.stringify(arr);
       }
     } else if(EXP_PROOF==='oth'){
       /* 📎 อื่น ๆ — ลิงก์ และ/หรือ ไฟล์ อย่างน้อย 1 อย่าง */
@@ -7668,12 +7676,12 @@
     } else if(EXP_PROOF==='adv'){
       /* ขอเงินไปจ่ายก่อน — บังคับแนบหลักฐานว่าต้องจ่ายเท่าไหร่ (ใบวางบิล/ใบเสนอราคา/สัญญา) */
       var adv=IMGS['eAdvImg']||[];
-      if(!adv.length){ mErr('แนบใบวางบิล/ใบเสนอราคาก่อนค่ะ (หลักฐานว่าต้องจ่ายเท่าไหร่)'); return; }
-      p.proof='adv'; p.imgs=JSON.stringify(adv);
+      if(!adv.length && !ru){ mErr('แนบใบวางบิล/ใบเสนอราคา หรือวางลิงก์ก่อนค่ะ (หลักฐานว่าต้องจ่ายเท่าไหร่)'); return; }
+      p.proof='adv'; if(adv.length) p.imgs=JSON.stringify(adv);
     } else {
       var rcp=IMGS['eImg']||[];
-      if(!rcp.length){ mErr('แนบรูปใบเสร็จก่อนค่ะ (หรือเลือก "ไม่มีใบเสร็จ")'); return; }
-      p.imgs=JSON.stringify(rcp);
+      if(!rcp.length && !ru){ mErr('แนบรูปใบเสร็จ หรือวางลิงก์ก่อนค่ะ (หรือเลือก "ไม่มีใบเสร็จ")'); return; }
+      if(rcp.length) p.imgs=JSON.stringify(rcp);
       // ติ๊กหัก ณ ที่จ่าย → ต้องรู้ว่าหักจากใคร (ชื่อ/เลขผู้เสียภาษี/ที่อยู่ ไปอยู่บน 50 ทวิ)
       if(($('eWht')||{}).checked){
         var wk=($('eWhtKind')||{}).value||'', wn=($('eWhtName')||{}).value.trim();
@@ -12489,7 +12497,8 @@
                 '<option value="adv">⏳ จ่ายก่อน · ใบเสร็จตามมา</option>'+
                 '<option value="oth">📎 อื่น ๆ · ไม่มีใบเสร็จ (ไม่ออก SR/RV · แนบลิงก์หรือไฟล์)</option>'+
               '</select><div id="poProofNote" class="sf-note"></div></div>'+
-            '<div id="poRefUrlBox" class="sf-f hidden" style="margin-bottom:10px"><label>🔗 ลิงก์หลักฐาน (ถ้ามี)</label>'+
+            /* 🔗 วางลิงก์แทนแนบไฟล์ได้ทุกชนิด (29 ก.ย. 69 · พี่กี้) — ไม่มีไฟล์ = ลิงก์เป็นหลักฐานหลัก */
+            '<div id="poRefUrlBox" class="sf-f" style="margin-bottom:10px"><label>🔗 วางลิงก์หลักฐานแทนไฟล์ได้ (ถ้ามี)</label>'+
               '<input id="poRefUrl" type="url" placeholder="https://… เช่น ลิงก์ Drive / หน้าคำสั่งซื้อ / อีเมล"></div>'+
             imgsFldHtml('poImg','ใบแจ้งหนี้ / ใบกำกับภาษี (รูป หรือ PDF · หลายไฟล์ได้)')+
             '<div id="poIdCardBox" class="hidden">'+imgsFldHtml('poIdCard','สำเนาบัตรประชาชนผู้รับเงิน (บังคับ)')+'</div>'+
@@ -12904,7 +12913,6 @@
     var np=$('poNoProofBox'); if(np) np.classList.toggle('hidden', m!=='sr');
     var why=$('poNoProofWhy'); if(why) why.classList.toggle('hidden', !(m==='sr' && ($('poNoProof')||{}).checked));
     var cb=$('poConBox'); if(cb) cb.classList.toggle('hidden', m!=='rcp');
-    var ru=$('poRefUrlBox'); if(ru) ru.classList.toggle('hidden', m!=='oth');
     if(m==='rv' && $('poKind')){ $('poKind').value='บุคคลธรรมดา'; }
   }
   window.poProofChange=poProofChange;
@@ -12924,6 +12932,10 @@
       vatInvNo:(typeof PI_HDR!=='undefined'&&PI_HDR.no)||'', vatInvDate:(typeof PI_HDR!=='undefined'&&PI_HDR.date)||''};
     var imgs=IMGS['poImg']||[];
     var payee=p.payeeName||p.vendor;
+    /* 🔗 ลิงก์แทนไฟล์ — ใช้ได้ทุกชนิด (มีลิงก์ = ไม่บังคับแนบไฟล์หลักฐาน) */
+    var ruA=((($('poRefUrl')||{}).value)||'').trim();
+    if(ruA && !/^https?:\/\/\S+$/i.test(ruA)){ mErr('ลิงก์ต้องขึ้นต้นด้วย http:// หรือ https:// ค่ะ'); return; }
+    if(ruA) q.refUrl=ruA;
     if(proof==='rv'){
       if(!payee){ mErr('กรอกชื่อผู้รับเงินก่อนค่ะ'); return; }
       if(p.payeeId.length!==13 || !validThaiId(p.payeeId)){ mErr('เลขบัตรประชาชนผู้รับเงินไม่ถูกต้อง (13 หลัก) ค่ะ'); return; }
@@ -12946,8 +12958,8 @@
           if(!why){ mErr('ระบุเหตุผลที่ไม่มีหลักฐานก่อนค่ะ'); return; }
           q.noProofReason=why;
         } else {
-          if(!imgs.length){ mErr('แนบหลักฐานเท่าที่มีก่อนค่ะ (สลิป/บิลเงินสด) — ถ้าไม่มีเลยให้ติ๊ก "ไม่มีหลักฐานเลย"'); return; }
-          q.imgs=JSON.stringify(imgs);
+          if(!imgs.length && !ruA){ mErr('แนบหลักฐานเท่าที่มี หรือวางลิงก์ก่อนค่ะ (สลิป/บิลเงินสด) — ถ้าไม่มีเลยให้ติ๊ก "ไม่มีหลักฐานเลย"'); return; }
+          if(imgs.length) q.imgs=JSON.stringify(imgs);
         }
       } else if(proof==='oth'){   /* 📎 อื่น ๆ — ลิงก์ และ/หรือ ไฟล์ */
         var ru2=((($('poRefUrl')||{}).value)||'').trim();
@@ -12955,8 +12967,8 @@
         if(ru2 && !/^https?:\/\/\S+$/i.test(ru2)){ mErr('ลิงก์ต้องขึ้นต้นด้วย http:// หรือ https:// ค่ะ'); return; }
         q.proof='oth'; if(ru2) q.refUrl=ru2; if(imgs.length) q.imgs=JSON.stringify(imgs);
       } else {   /* adv */
-        if(!imgs.length){ mErr('แนบใบวางบิล/ใบเสนอราคาก่อนค่ะ (หลักฐานว่าต้องจ่ายเท่าไหร่)'); return; }
-        q.proof='adv'; q.imgs=JSON.stringify(imgs);
+        if(!imgs.length && !ruA){ mErr('แนบใบวางบิล/ใบเสนอราคา หรือวางลิงก์ก่อนค่ะ (หลักฐานว่าต้องจ่ายเท่าไหร่)'); return; }
+        q.proof='adv'; if(imgs.length) q.imgs=JSON.stringify(imgs);
       }
     }
     var btn=$('poSend'); if(btn){ btn.disabled=true; btn.textContent='กำลังสร้าง…'; }
@@ -13011,7 +13023,9 @@
     var proof=(!PO_EDIT && $('poProof'))?$('poProof').value:'rcp';
     if(proof!=='rcp'){ poCreateViaStaff(proof, p, items, tt); return; }
     /* 📎 ใบแบบมีใบกำกับแต่ยังไม่แนบไฟล์ — เตือนก่อน (ไม่ห้าม · กดอีกครั้งเพื่อสร้าง) แบบหน้าจ่ายคืน (29 ก.ย. 69 · ข้อ 4) */
-    if(!PO_EDIT && !(IMGS['poImg']||[]).length && !PO_NOFILE_OK){
+    var ruC=(!PO_EDIT) ? ((($('poRefUrl')||{}).value)||'').trim() : '';
+    if(ruC && !/^https?:\/\/\S+$/i.test(ruC)){ mErr('ลิงก์ต้องขึ้นต้นด้วย http:// หรือ https:// ค่ะ'); return; }
+    if(!PO_EDIT && !(IMGS['poImg']||[]).length && !ruC && !PO_NOFILE_OK){
       PO_NOFILE_OK=true;
       mErr('ยังไม่ได้แนบใบแจ้งหนี้/ใบกำกับ — กด "สร้างใบสั่งจ่าย" อีกครั้งถ้าตั้งใจสร้างโดยไม่มีไฟล์');
       return;
@@ -13030,6 +13044,7 @@
       p.bankName=b.name; p.bankAcct=b.acct; p.bankOwner=b.owner; }
     if(!PO_EDIT){
       var im=IMGS['poImg']||[]; if(im.length) p.imgs=JSON.stringify(im);
+      if(ruC) p.refUrl=ruC;   /* 🔗 ลิงก์แทนไฟล์ (29 ก.ย. 69) */
       var cn=IMGS['poCon']||[]; if(cn.length) p.contract=JSON.stringify(cn);
     }
     var btn=$('poSend'); if(btn){ btn.disabled=true; btn.textContent='กำลังบันทึก…'; }
@@ -13360,15 +13375,17 @@
     modal('<h3>📎 เปลี่ยนไฟล์แนบ '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
       '<div class="m-hint">ใบแจ้งหนี้ / ใบกำกับ / หลักฐาน — ไฟล์ใหม่จะแทนไฟล์เดิม แล้วระบบออกเอกสารทับเลขเดิมให้</div>'+
       imgsFldHtml('pfFiles','ไฟล์ใหม่ — รูป หรือ PDF (หลายไฟล์ได้ · รวมเป็น PDF เดียว)')+
+      '<div class="fld"><label>🔗 หรือวางลิงก์หลักฐานแทนไฟล์</label><input id="pfUrl" type="url" placeholder="https://…"></div>'+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
       '<button class="btn btn-primary" id="pfSend" onclick="poFileSave(\''+esc(no)+'\')">บันทึก</button></div>');
     imgsFldBind('pfFiles');
   }
   function poFileSave(no){
-    var f=IMGS['pfFiles']||[];
-    if(!f.length){ mErr('ยังไม่ได้แนบไฟล์ใหม่ค่ะ'); return; }
+    var f=IMGS['pfFiles']||[], pu=((($('pfUrl')||{}).value)||'').trim();
+    if(!f.length && !pu){ mErr('ยังไม่ได้แนบไฟล์ หรือวางลิงก์ใหม่ค่ะ'); return; }
+    if(pu && !/^https?:\/\/\S+$/i.test(pu)){ mErr('ลิงก์ต้องขึ้นต้นด้วย http:// หรือ https:// ค่ะ'); return; }
     var b=$('pfSend'); if(b){ b.disabled=true; b.textContent='กำลังบันทึก…'; }
-    callBusy('กำลังบันทึกไฟล์…', jsonpPost({action:'waPoFile',uid:UID,no:no,imgs:JSON.stringify(f)}), 'บันทึกแล้ว').then(function(r){
+    callBusy('กำลังบันทึกไฟล์…', jsonpPost({action:'waPoFile',uid:UID,no:no,imgs:JSON.stringify(f),refUrl:pu}), 'บันทึกแล้ว').then(function(r){
       if(!r||!r.ok){ if(b){b.disabled=false;b.textContent='บันทึก';} mErr((r&&r.error)||'ไม่สำเร็จ'); return; }
       closeModal(); IMGS['pfFiles']=[];
       toast('📎 เปลี่ยนไฟล์แนบแล้ว'+(r.dossier?' · 🗂️ รวมแฟ้มใหม่ให้แล้ว':'')+((r.warn&&r.warn.length)?' ⚠️ '+r.warn.join(' · '):''));
@@ -14552,7 +14569,8 @@
 
       '<div class="sf-card"><div class="sf-h">📎 เอกสารแนบ'+(EXD_FILES.length?' ('+EXD_FILES.length+')':'')+'</div>'+
         '<div class="exd-files">'+files+'</div>'+
-        '<div class="exd-upload" style="margin-top:12px">'+imgsFldHtml('exdRcp','📎 เปลี่ยนไฟล์แนบ (เว้นว่าง = ใช้ไฟล์เดิม)')+'</div>'+
+        '<div class="exd-upload" style="margin-top:12px">'+imgsFldHtml('exdRcp','📎 เปลี่ยนไฟล์แนบ (เว้นว่าง = ใช้ไฟล์เดิม)')+
+          '<div class="fld"><label>🔗 หรือวางลิงก์หลักฐานแทนไฟล์</label><input id="exdRefUrl" type="url" placeholder="https://…"></div></div>'+
         (paid?'<div class="exd-upload">'+imgsFldHtml('exdSlip','💸 เปลี่ยนสลิปโอนเงิน (เว้นว่าง = ใช้ของเดิม)')+'</div>':'')+
       '</div>'+
 
@@ -14700,8 +14718,9 @@
     if(Object.keys(ed).length) jobs.unshift({ name:'ข้อมูลใบ', req:Object.assign({action:'waPoEdit',uid:UID,no:no}, ed) });
     /* ผู้รับเงินต้องบันทึกก่อนภาษี — ตัวแก้ภาษี (editExpenseWht_) ปฏิเสธใบที่ยังไม่มีผู้รับเงิน */
     jobs.sort(function(a,b){ return (b.first?1:0)-(a.first?1:0); });
-    var rcp=IMGS['exdRcp']||[];
-    if(rcp.length) jobs.push({ name:'ไฟล์แนบ', req:{action:'waPoFile',uid:UID,no:no,imgs:JSON.stringify(rcp)} });
+    var rcp=IMGS['exdRcp']||[], xru=val('exdRefUrl');
+    if(xru && !/^https?:\/\/\S+$/i.test(xru)){ mErr('ลิงก์ต้องขึ้นต้นด้วย http:// หรือ https:// ค่ะ'); return; }
+    if(rcp.length || xru) jobs.push({ name:'ไฟล์แนบ', req:{action:'waPoFile',uid:UID,no:no,imgs:JSON.stringify(rcp),refUrl:xru} });
 
     var slip=IMGS['exdSlip']||[];
     if(slip.length) jobs.push({ name:'สลิปโอนคืน', req:{action:'waPoSlip',uid:UID,no:no,imgs:JSON.stringify(slip)} });
@@ -26704,7 +26723,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260929-2244';
+  var APP_BUILD='20260929-2317';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
