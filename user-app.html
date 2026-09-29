@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260928-2321">
+<link rel="stylesheet" href="user.css?v=20260929-0941">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -7166,7 +7166,10 @@
     if(approved && !paid){
       a.push({ key:'pay', label:'📑 ออกใบสำคัญจ่าย PV',
         call:'exOpenPay(' + q + ",'" + String(x.nick || '').replace(/'/g, "\\'") + "'," + (Number(x.amount) || 0) + ',' + (rv && !x.docLink ? 1 : 0) + ')' });
-      a.push({ key:'paypetty', label:'🪙 จ่ายจากเงินสดย่อย', call:'poOpenPayPetty(' + q + ')' });
+      /* 🪙 29 ก.ย. 69 (ข้อ 21): ใบพนักงานเปิดหน้าจ่ายคืนของตัวเอง (ตั้งช่องทางเงินสดย่อยไว้ให้)
+         เดิมเรียก poOpenPayPetty ซึ่งหาได้แค่ใบบริษัท → ผู้รับ "-" ยอด 0 วงของทุกบริษัทโผล่หมด */
+      a.push({ key:'paypetty', label:'🪙 จ่ายจากเงินสดย่อย',
+        call:'exOpenPay(' + q + ",'" + String(x.nick || '').replace(/'/g, "\\'") + "'," + (Number(x.amount) || 0) + ',' + (rv && !x.docLink ? 1 : 0) + ',1)' });
     }
     /* ด่านเดียวกับหลังบ้าน: "ยังไม่มีไฟล์เอกสาร" ไม่ใช่ "ยังไม่มีเลข" (เฟส 2d ขั้น ③)
        ใบในเล่มใหม่จองเลข RV ไว้ตั้งแต่ตั้งเรื่อง */
@@ -13112,7 +13115,8 @@
   window.taxEdSet=taxEdSet; window.taxEdAdd=taxEdAdd; window.taxEdDel=taxEdDel;
   function poOpenPay(no){
     var x=((PO.topay||[]).concat(PO.paid||[])).filter(function(y){ return y.no===no; })[0]||{};
-    var mOpts=(PO.methods||[]).map(function(m){ return '<option value="'+esc(m)+'"'+((x.payMethod===m)?' selected':'')+'>'+esc(m)+'</option>'; }).join('');
+    /* 🪙 29 ก.ย. 69 (ข้อ 19): "เงินสดย่อย" ไม่อยู่ในหน้านี้ — จ่ายด้วยวงต้องผ่าน 🪙 จ่ายจากเงินสดย่อย (ตัดวง+ลงรายการ) */
+    var mOpts=(PO.methods||[]).filter(function(m){ return !/เงินสดย่อย/.test(String(m)); }).map(function(m){ return '<option value="'+esc(m)+'"'+((x.payMethod===m)?' selected':'')+'>'+esc(m)+'</option>'; }).join('');
     modal('<h3>💰 บันทึกจ่ายเงิน '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
       '<div class="m-hint">ผู้รับ: <b>'+esc(x.payeeName||'-')+'</b> · จ่ายจริง <b>'+poMoney(x.netAmt||x.amount)+'</b> บาท'+
       (x.bank&&x.bank.acct?'<br>🏦 '+esc(x.bank.name||'')+' <b>'+esc(x.bank.acct)+'</b> ('+esc(x.bank.owner||'')+') '+
@@ -14610,22 +14614,25 @@
   }
   /** จ่ายคืน → แนบสลิปโอน (รูป/PDF · หลายใบได้ · ข้ามได้แต่จะเตือน)
    *  ⚠️ เดิมใช้ช่องรูปเดี่ยว (canvas) → สลิป PDF จากแอปธนาคารแนบไม่ติดแบบเงียบ (พี่กี้เจอจริง 29 ก.ค.) */
-  function exOpenPay(no,nick,amount,unsigned){
+  function exOpenPay(no,nick,amount,unsigned,petty){
     var money=(Number(amount)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
     // ช่องทางจ่ายคืน (E2) — ถามเฉพาะบริษัทที่ตั้งวงเงินเงินสดย่อยไว้แล้ว
     // เงินสดย่อย = ตัดวงเงินในมือ + เข้ารายการรอเบิกคืน · โอนจากบัญชีบริษัท = ไม่แตะวงเงิน
-    var x0=exFind(no)||{}, hasPetty=PETTY_ENTS.indexOf(String(x0.entity||''))>=0;
+    var x0=exFind(no)||{}, hasPetty=PETTY_ENTS.indexOf(String(x0.entity||''))>=0 || !!petty;
+    /* 🪙 29 ก.ย. 69 (ข้อ 21/25/26): มาจากเมนู 🪙 = ตั้งช่องทางเงินสดย่อยไว้ให้ ·
+       เลือกวงได้แบบใบบริษัท · เงินสดย่อยไม่ใช้ "บัญชีที่จ่ายออก" (ซ่อน) */
     var chFld = hasPetty
-      ? '<div class="fld"><label>จ่ายคืนด้วยเงินก้อนไหน</label><select id="payCh">'+
-          PAY_CHANNELS.map(function(c){ return '<option value="'+esc(c)+'">'+esc(c)+'</option>'; }).join('')+
-        '</select><div class="m-hint" style="margin-top:4px">เงินสดย่อย = ตัดวงเงินในมือ แล้วรอเบิกคืนจากบริษัท · โอนจากบัญชีบริษัท = ไม่แตะวงเงิน</div></div>'
+      ? '<div class="fld"><label>จ่ายคืนด้วยเงินก้อนไหน</label><select id="payCh" onchange="exPayChChange(\''+esc(String(x0.entity||''))+'\')">'+
+          PAY_CHANNELS.map(function(c){ return '<option value="'+esc(c)+'"'+((petty && /เงินสดย่อย/.test(c))?' selected':'')+'>'+esc(c)+'</option>'; }).join('')+
+        '</select><div class="m-hint" style="margin-top:4px">เงินสดย่อย = ตัดวงเงินในมือ แล้วรอเบิกคืนจากบริษัท · โอนจากบัญชีบริษัท = ไม่แตะวงเงิน</div></div>'+
+        '<div class="fld hidden" id="payFundFld"><label>จ่ายจากวงไหน</label><select id="payFund"><option value="">กำลังโหลด…</option></select></div>'
       : '';
     modal('<h3>💰 จ่ายคืน '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
       '<div class="m-hint">โอนคืน <b>'+esc(nick)+'</b> · '+money+' บาท</div>'+
       /* 📅 วันที่จ่ายจริง (28 ก.ย. 69 · พี่กี้) — แบบเดียวกับใบบริษัท · ไปเป็นวันที่บนใบสำคัญจ่าย PV */
       '<div class="fld"><label>วันที่จ่ายจริง</label><input id="payDate" type="date" value="'+todayISO()+'">'+
         '<div class="m-hint" style="margin-top:4px">ใช้เป็นวันที่บนใบสำคัญจ่าย (PV) · 50 ทวิ · แฟ้มครบชุด</div></div>'+
-      chFld+exAcctFldHtml()+
+      chFld+'<div id="payAcctBox">'+exAcctFldHtml()+'</div>'+
       // จ่ายก่อนผู้รับเซ็นได้ แต่ต้องรู้ว่ายังต้องตามลายเซ็น (เอกสาร+50 ทวิ ออกตอนเซ็นเสร็จ)
       (unsigned?'<div class="m-hint" style="color:#C8730B">⚠️ ผู้รับเงิน<b>ยังไม่ได้ลงนาม</b> — บันทึกจ่ายได้เลยค่ะ '+
         'แต่ใบสำคัญรับเงินกับ 50 ทวิ จะออกให้ตอนผู้รับเซ็นเสร็จ (ระบบรวมแฟ้มใหม่ให้เอง) · อย่าลืมตามลิงก์เซ็นนะคะ</div>':'')+
@@ -14637,7 +14644,25 @@
       '<button class="btn btn-primary" id="pSend" onclick="exDoPay(\''+esc(no)+'\')">บันทึกจ่ายคืน</button></div>');
     imgsFldBind('pSlips');
     taxEdLoad(no);
+    if($('payCh')) exPayChChange(String(x0.entity||''));
   }
+  /* สลับช่องทางจ่ายคืน — เงินสดย่อย = โชว์ตัวเลือกวง + ซ่อนบัญชีธนาคาร (รายการวงมาจากหลังบ้าน ห้ามคิดเอง) */
+  function exPayChChange(ent){
+    var isPetty=/เงินสดย่อย/.test((($('payCh')||{}).value)||'');
+    var ff=$('payFundFld'); if(ff) ff.classList.toggle('hidden', !isPetty);
+    var ab=$('payAcctBox'); if(ab) ab.classList.toggle('hidden', isPetty);
+    var sel=$('payFund');
+    if(!isPetty || !sel || sel.getAttribute('data-loaded')) return;   /* โหลดครั้งเดียวต่อหน้าต่าง */
+    sel.setAttribute('data-loaded','1');
+    jsonp({action:'waPoPettyFunds', uid:UID, entity:ent}).then(function(r){
+      var el=$('payFund'); if(!el) return;
+      if(!r||!r.ok){ el.innerHTML='<option value="">— โหลดวงเงินไม่สำเร็จ —</option>'; mErr((r&&r.error)||'โหลดวงเงินสดย่อยไม่สำเร็จ'); return; }
+      var list=r.funds||[];
+      if(!list.length){ el.innerHTML='<option value="">— ยังไม่มีวงเงินสดย่อย —</option>'; mErr('บริษัทนี้ยังไม่ได้ตั้งวงเงินสดย่อย — ไปตั้งที่เมนู 💵 เงินสดย่อย ก่อนนะคะ'); return; }
+      el.innerHTML=list.map(function(f){ return '<option value="'+esc(f.id)+'">'+esc(f.label)+' · เหลือ '+money(f.onHand)+' บาท</option>'; }).join('');
+    }).catch(function(e){ var el=$('payFund'); if(el) el.removeAttribute('data-loaded'); mErr(e.message); });
+  }
+  window.exPayChChange=exPayChChange;
   /* ช่องเลือกบัญชีที่เงินออก (ขั้น ④) — รายการมาจากทะเบียนเท่านั้น หน้าเว็บห้ามพิมพ์เอง
      ไม่มีบัญชีในทะเบียน = บอกทางไปเพิ่ม ไม่ใช่ปล่อยช่องว่างให้สงสัย (เหมือนหน้าใบสั่งจ่าย) */
   /** สลิปที่กลุ่มการเงินส่งกลับทางบอทแล้ว (28 ก.ย. 69) — บันทึกจ่ายโดยไม่แนบใหม่ = ระบบใช้ไฟล์นี้ */
@@ -14671,7 +14696,10 @@
     var tl=taxEdCollect(); if(tl===false) return;
     var b=$('pSend'); if(b){ b.disabled=true; b.textContent='กำลังบันทึก…'; }
     toast('กำลังบันทึก…');
-    var pq={action:'waPoPay',uid:UID,no:no,imgs:JSON.stringify(slips),channel:(($('payCh')||{}).value||''),account:((($('payAcct')||{}).value)||'').trim(),payDate:(($('payDate')||{}).value||'')};
+    var chV=(($('payCh')||{}).value||''), isPt=/เงินสดย่อย/.test(chV);
+    var pq={action:'waPoPay',uid:UID,no:no,imgs:JSON.stringify(slips),channel:chV,
+      account:isPt?'':((($('payAcct')||{}).value)||'').trim(),payDate:(($('payDate')||{}).value||'')};
+    if(isPt) pq.fundId=(($('payFund')||{}).value)||'';   /* 🪙 วงที่เลือก (ข้อ 26) · ว่าง = วงแรกของบริษัท */
     if(tl) pq.taxLines=tl;
     callBusy('กำลังสร้างเอกสาร + แฟ้ม…', jsonpPost(pq), 'บันทึกจ่ายคืนแล้ว').then(function(r){
       if(!r||!r.ok){ if(b){b.disabled=false;b.textContent='บันทึกจ่ายคืน';} mErr((r&&r.error)||'ไม่สำเร็จ'); return; }
@@ -26457,7 +26485,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260928-2321';
+  var APP_BUILD='20260929-0941';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
