@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260929-1817">
+<link rel="stylesheet" href="user.css?v=20260929-1954">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -14635,8 +14635,22 @@
         '</select><div class="m-hint" style="margin-top:4px">เงินสดย่อย = ตัดวงเงินในมือ แล้วรอเบิกคืนจากบริษัท · โอนจากบัญชีบริษัท = ไม่แตะวงเงิน</div></div>'+
         '<div class="fld hidden" id="payFundFld"><label>จ่ายจากวงไหน</label><select id="payFund"><option value="">กำลังโหลด…</option></select></div>'
       : '';
+    /* 💵 ยอดที่ต้องโอนจริง + บัญชีปลายทาง แบบหน้าจ่ายใบบริษัท (29 ก.ย. 69 · ข้อ 27)
+       เดิมโชว์ยอดก่อนหักภาษี = เสี่ยงโอนเกินเมื่อมีหัก ณ ที่จ่าย */
+    var net=Number(x0.netAmt)||0, wht=Number(x0.whtAmt)||0;
+    var payNet=(net>0?net:(Number(amount)||0)).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+    var who=(x0.payeeName&&String(x0.docType||'').indexOf('ใบสำคัญ')>=0)?x0.payeeName:nick;
+    var acctRaw=String(x0.bankAcct||'').replace(/^'/,'');
+    var bankLine=acctRaw?('<br>🏦 '+esc(x0.bankName||'')+' <b>'+esc(acctRaw)+'</b> ('+esc(x0.bankOwner||'')+') '+
+      '<a href="#" onclick="copyTxt(\''+esc(acctRaw)+'\');return false">📋 ก๊อป</a>'):'';
+    var mthFld='<div class="fld" id="payMthFld"><label>วิธีจ่าย</label><select id="payMethod" onchange="exPayMethodChange()">'+
+      ['โอนเงิน','เช็ค','เงินสด'].map(function(m){ return '<option value="'+m+'">'+m+'</option>'; }).join('')+'</select></div>'+
+      '<div class="fld hidden" id="payChqFld"><label>เลขที่เช็ค</label><input id="payChq" placeholder="เช่น 0012345"></div>';
     modal('<h3>💰 จ่ายคืน '+esc(no)+'</h3><div id="mErr" class="m-err hidden"></div>'+
-      '<div class="m-hint">โอนคืน <b>'+esc(nick)+'</b> · '+money+' บาท</div>'+
+      '<div class="m-hint">โอนให้ <b>'+esc(who)+'</b> · จ่ายจริง <b>'+payNet+'</b> บาท'+
+        (wht>0?' <span style="color:var(--muted)">(ยอดใบ '+money+' − หัก ณ ที่จ่าย '+wht.toLocaleString('th-TH',{minimumFractionDigits:2})+')</span>':'')+
+        bankLine+'</div>'+
+      mthFld+
       /* 📅 วันที่จ่ายจริง (28 ก.ย. 69 · พี่กี้) — แบบเดียวกับใบบริษัท · ไปเป็นวันที่บนใบสำคัญจ่าย PV */
       '<div class="fld"><label>วันที่จ่ายจริง</label><input id="payDate" type="date" value="'+todayISO()+'">'+
         '<div class="m-hint" style="margin-top:4px">ใช้เป็นวันที่บนใบสำคัญจ่าย (PV) · 50 ทวิ · แฟ้มครบชุด</div></div>'+
@@ -14655,10 +14669,20 @@
     if($('payCh')) exPayChChange(String(x0.entity||''));
   }
   /* สลับช่องทางจ่ายคืน — เงินสดย่อย = โชว์ตัวเลือกวง + ซ่อนบัญชีธนาคาร (รายการวงมาจากหลังบ้าน ห้ามคิดเอง) */
+  /* วิธีจ่าย: เช็ค = ถามเลขเช็ค · เงินสด = ไม่ใช้บัญชีที่จ่ายออก (ด่านเดียวกับหน้าจ่ายใบบริษัท) */
+  function exPayMethodChange(){
+    var m=(($('payMethod')||{}).value)||'';
+    var cf=$('payChqFld'); if(cf) cf.classList.toggle('hidden', m!=='เช็ค');
+    var isPetty=/เงินสดย่อย/.test((($('payCh')||{}).value)||'');
+    var ab=$('payAcctBox'); if(ab) ab.classList.toggle('hidden', isPetty || m==='เงินสด');
+  }
+  window.exPayMethodChange=exPayMethodChange;
   function exPayChChange(ent){
     var isPetty=/เงินสดย่อย/.test((($('payCh')||{}).value)||'');
     var ff=$('payFundFld'); if(ff) ff.classList.toggle('hidden', !isPetty);
-    var ab=$('payAcctBox'); if(ab) ab.classList.toggle('hidden', isPetty);
+    var mf=$('payMthFld'); if(mf) mf.classList.toggle('hidden', isPetty);
+    if(isPetty){ var cf0=$('payChqFld'); if(cf0) cf0.classList.add('hidden'); }
+    var ab=$('payAcctBox'); if(ab) ab.classList.toggle('hidden', isPetty || (($('payMethod')||{}).value)==='เงินสด');
     var sel=$('payFund');
     if(!isPetty || !sel || sel.getAttribute('data-loaded')) return;   /* โหลดครั้งเดียวต่อหน้าต่าง */
     sel.setAttribute('data-loaded','1');
@@ -14708,6 +14732,15 @@
     var pq={action:'waPoPay',uid:UID,no:no,imgs:JSON.stringify(slips),channel:chV,
       account:isPt?'':((($('payAcct')||{}).value)||'').trim(),payDate:(($('payDate')||{}).value||'')};
     if(isPt) pq.fundId=(($('payFund')||{}).value)||'';   /* 🪙 วงที่เลือก (ข้อ 26) · ว่าง = วงแรกของบริษัท */
+    else {
+      /* 💳 วิธีจ่าย + เลขเช็ค (ข้อ 24) */
+      pq.method=(($('payMethod')||{}).value)||'';
+      if(pq.method==='เช็ค'){
+        pq.chequeNo=((($('payChq')||{}).value)||'').trim();
+        if(!pq.chequeNo){ if(b){b.disabled=false;b.textContent='บันทึกจ่ายคืน';} mErr('ใส่เลขที่เช็คด้วยค่ะ'); return; }
+      }
+      if(pq.method==='เงินสด') pq.account='';
+    }
     if(tl) pq.taxLines=tl;
     callBusy('กำลังสร้างเอกสาร + แฟ้ม…', jsonpPost(pq), 'บันทึกจ่ายคืนแล้ว').then(function(r){
       if(!r||!r.ok){ if(b){b.disabled=false;b.textContent='บันทึกจ่ายคืน';} mErr((r&&r.error)||'ไม่สำเร็จ'); return; }
@@ -26493,7 +26526,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260929-1817';
+  var APP_BUILD='20260929-1954';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
