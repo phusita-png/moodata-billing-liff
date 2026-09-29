@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260929-2135">
+<link rel="stylesheet" href="user.css?v=20260929-2238">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -11759,6 +11759,10 @@
       if(!(Number(x.vatAmt) > 0)) a.push({ key:'tosr', label:'📄 เปลี่ยนเป็นไม่มีใบเสร็จ (ออก SR)', call:'poToProof(' + q + ",'sr')" });
       a.push({ key:'toadv', label:'⏳ เปลี่ยนเป็นจ่ายก่อน · ใบเสร็จตามมา', call:'poToProof(' + q + ",'adv')" });
     }
+    /* ✍️ → ใบสำคัญรับเงิน (RV) (29 ก.ย. 69 · ข้อ 11) — รออนุมัติเท่านั้น (ลิงก์เซ็นออกตอนอนุมัติ) · หักภาษีได้ · ไม่มี VAT
+       ด่านละเอียด (บุคคลธรรมดา/เลขบัตร/ที่อยู่/สำเนาบัตร/รายการเดียว) อยู่ที่ rvConvertCheck_ ฝั่งหลังบ้าน */
+    if(mode === 'pending' && stU.indexOf('ยกเลิก') < 0 && !x.docNo && !x.whtNo && !(Number(x.vatAmt) > 0))
+      a.push({ key:'torv', label:'✍️ เปลี่ยนเป็นใบสำคัญรับเงิน (RV)', call:'poToProof(' + q + ",'rv')" });
     /* 🔄 ออกเอกสารใหม่ — ทุกสถานะ เหมือนใบเบิก (ก่อนจ่าย = ออกใบสั่งจ่ายทับ · จ่ายแล้ว = ออก PV/50 ทวิ/แฟ้มด้วย)
        ด่านว่าออกอะไรได้บ้างอยู่ที่ handleWaPoDocs_ ฝั่ง backend */
     /* 🔴 ตัด "ออกใบสั่งจ่ายใหม่/ออกเอกสารใหม่" ออกจากเมนู (พี่กี้ 23 ก.ย. 69)
@@ -12435,8 +12439,12 @@
           '<div class="sf-grid" style="margin-top:14px">'+
             '<div class="sf-f c6"><label>หัก ณ ที่จ่าย (มาตรา)</label>'+
               '<select id="poSect" onchange="poSectChange()">'+sectOpts+'</select></div>'+
-            '<div class="sf-f c6" id="poRateFld"><label>อัตรา</label>'+
-              '<select id="poRate" onchange="poCalc()"></select></div>'+
+            /* อัตรากำหนดเอง + ยอดบาทตรง ๆ แบบใบพนักงาน (29 ก.ย. 69 · ข้อ 9) — เดิมเลือกได้แค่ 0/1/2/3/5% */
+            '<div class="sf-f c3" id="poRateFld"><label>อัตรา %</label>'+
+              '<input id="poRate" type="number" step="0.01" min="0" max="100" list="poRateList" oninput="poCalc()">'+
+              '<datalist id="poRateList"><option value="1"><option value="2"><option value="3"><option value="5"></datalist></div>'+
+            '<div class="sf-f c3" id="poWhtAmtFld"><label>หรือยอดภาษี (บาท)</label>'+
+              '<input id="poWhtAmt" type="number" step="0.01" min="0" placeholder="เว้นว่าง = ใช้อัตรา" oninput="poCalc()"></div>'+
           '</div>'+
         '</div>'+
         '<div><span class="sf-tot-sp" aria-hidden="true" style="margin-bottom:4px">.</span><div class="sf-tot" id="poTot"></div>'+
@@ -12786,11 +12794,10 @@
   function dbdUseGo(){ var f=DBD_ON_USE, d=DBD_SHOWN; closeModal(); if(f&&d) f(d); }
   window.dbdShow=dbdShow; window.dbdUseGo=dbdUseGo;
 
-  /** อัตราให้เลือก — ชุดเดียวกับ RV_WHT_RATES ฝั่ง backend (ค่านอกลิสต์ backend ตีเป็น 0) */
+  /** ตั้งค่าอัตรา (ช่องกรอกเอง · 29 ก.ย. 69 ข้อ 9) — หลังบ้านรับ 0–100% ผ่าน resolveWht_ */
   function poFillRates(sel){
     var el=$('poRate'); if(!el) return;
-    var rates=[0,1,2,3,5];
-    el.innerHTML=rates.map(function(r){ return '<option value="'+r+'"'+((Number(sel)===r)?' selected':'')+'>'+r+'%</option>'; }).join('');
+    el.value=String(Number(sel)||0);
   }
   function poPayeeMode(mode){
     PO_PAYEE=mode;
@@ -12855,8 +12862,12 @@
     var sect=(($('poSect')||{}).value)||'', kind=(($('poKind')||{}).value)||'';
     var rate=sect ? (parseFloat((($('poRate')||{}).value)||'0')||0) : 0;
     var rf=$('poRateFld'); if(rf) rf.classList.toggle('hidden', !sect);
-    /* ⚖️ หักภาษีจากฐานก่อน VAT ตามกฎหมาย — ตรงกับที่หลังบ้านคิด */
-    var wht=r2(t.base*rate/100), net=r2(t.total-wht);
+    var wf=$('poWhtAmtFld'); if(wf) wf.classList.toggle('hidden', !sect);
+    /* ⚖️ หักภาษีจากฐานก่อน VAT ตามกฎหมาย — ตรงกับที่หลังบ้านคิด · ใส่ยอดบาท = ชนะอัตรา (resolveWht_) */
+    var wa=sect ? ((($('poWhtAmt')||{}).value)||'').trim() : '';
+    var wht=r2(t.base*rate/100);
+    if(wa!==''){ wht=r2(parseFloat(wa)||0); rate=t.base>0?Math.round(wht/t.base*1000000)/10000:0; }
+    var net=r2(t.total-wht);
     PI_ROWS.forEach(function(x,i){ var el=$('pi_amt_'+i); if(el){ var a=piCalc(x,m).amt; el.textContent=a?money(a):'—'; } });
     var box=$('poTot'); if(!box) return;
     var fl=rate?poFormLabel(kind, sect):'';
@@ -12964,6 +12975,7 @@
       payeeId:((($('poId')||{}).value)||'').replace(/\D/g,''), payeeAddr:((($('poAddr')||{}).value)||'').trim(),
       amount:(($('poAmt')||{}).value)||'', section:(($('poSect')||{}).value)||'',
       rate:(($('poSect')||{}).value) ? ((($('poRate')||{}).value)||'0') : '0',
+      whtAmt:(($('poSect')||{}).value) ? ((($('poWhtAmt')||{}).value)||'').trim() : '',
       priceMode:(($('poPm')||{}).value)||'none', vatRate:'7',
       vendor:((($('poVendor')||{}).value)||'').trim(),
       vendorTaxId:((($('poVendorTax')||{}).value)||'').replace(/\D/g,''),
@@ -13054,6 +13066,7 @@
   /** ↩️ ย้อนใบบริษัทเป็น "รออนุมัติ" (27 ก.ย. 69) — ย้อนเสร็จเปิดใบในโหมดแก้ไขให้เลย */
   /* 📄 ใบบริษัทที่สร้างไว้แล้ว → ไม่มีใบเสร็จ (SR) / จ่ายก่อน (28 ก.ย. 69 · พี่กี้) · หลังบ้าน companyPoToStaff_ + waPoProof */
   function poToProof(no, proof){
+    if(proof==='rv'){ poToRv(no); return; }
     var sr=(proof==='sr');
     modal('<h3>'+(sr?'📄 เปลี่ยนเป็นไม่มีใบเสร็จ':'⏳ เปลี่ยนเป็นจ่ายก่อน · ใบเสร็จตามมา')+'</h3><div id="mErr" class="m-err hidden"></div>'+
       '<div class="m-hint">ใบ <b>'+esc(no)+'</b> · เลขใบคงเดิม'+
@@ -13078,6 +13091,33 @@
       }).catch(function(e){ if(btn){btn.disabled=false;btn.textContent='เปลี่ยน';} mErr(e.message); });
   }
   window.poToProof=poToProof; window.poToProofDo=poToProofDo;
+  /* ✍️ เปลี่ยนเป็นใบสำคัญรับเงิน (RV) — ใช้ได้ทั้งใบบริษัทและใบพนักงาน (waPoProof · proof=rv · ข้อ 11)
+     ข้อมูลผู้รับเงินต้องครบก่อน (แก้ที่ ✏️ แก้ไข) · สำเนาบัตรแนบในหน้านี้ได้ */
+  function poToRv(no){
+    var hit=poFindAny(no), x=hit?hit.x:{};
+    modal('<h3>✍️ เปลี่ยนเป็นใบสำคัญรับเงิน (RV)</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">ใบ <b>'+esc(no)+'</b> · เลขใบคงเดิม'+
+      '<br>ผู้รับเงิน: <b>'+esc(x.payeeName||x.who||'-')+'</b>'+
+      '<br>ใช้กับการจ่าย<b>บุคคลธรรมดา</b>ที่ออกใบเสร็จไม่ได้ — ต้องมีชื่อ เลขบัตร ที่อยู่ บัญชี และสำเนาบัตร · ไม่มี VAT · รายการเดียว'+
+      '<br>กดอนุมัติแล้วได้ลิงก์ให้ผู้รับเงินเซ็นออนไลน์ · ใบรับรองแทนใบเสร็จ (SR) ที่ออกไว้จะถูกยกเลิก</div>'+
+      imgsFldHtml('toRvId','🪪 สำเนาบัตรประชาชนผู้รับเงิน (เว้นว่าง = ใช้ไฟล์ที่แนบไว้แล้ว)')+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" id="poToRvBtn" onclick="poToRvDo(\''+esc(no)+'\')">เปลี่ยนเป็น RV</button></div>');
+    imgsFldBind('toRvId');
+  }
+  function poToRvDo(no){
+    var btn=$('poToRvBtn'); if(btn){ btn.disabled=true; btn.textContent='กำลังเปลี่ยน…'; }
+    var q={action:'waPoProof', uid:UID, no:no, proof:'rv'};
+    var ids=IMGS['toRvId']||[]; if(ids.length) q.idcard=JSON.stringify(ids);
+    callBusy('กำลังเปลี่ยนเป็นใบสำคัญรับเงิน…', jsonpPost(q)).then(function(r){
+      if(!r||!r.ok){ if(btn){btn.disabled=false;btn.textContent='เปลี่ยนเป็น RV';} mErr((r&&r.error)||'เปลี่ยนไม่สำเร็จ'); return; }
+      closeModal(); IMGS['toRvId']=[];
+      toast('✍️ '+no+' เปลี่ยนเป็นใบสำคัญรับเงินแล้ว'+(r.voidedDoc?' · ยกเลิก '+r.voidedDoc:'')+' · กดอนุมัติเพื่อส่งลิงก์ให้ผู้รับเงินเซ็น');
+      if(r.filedWarn) setTimeout(function(){ toast('⚠️ '+r.filedWarn); }, 1500);
+      PO_EDIT=''; if(VIEW==='payout') renderPayout(); else exReload();
+    }).catch(function(e){ if(btn){btn.disabled=false;btn.textContent='เปลี่ยนเป็น RV';} mErr(e.message); });
+  }
+  window.poToRv=poToRv; window.poToRvDo=poToRvDo;
   function poUndo(no){
     var hit=poFindAny(no), x=hit?hit.x:{};
     modal('<h3>↩️ ย้อนกลับเป็น "รออนุมัติ"</h3><div id="mErr" class="m-err hidden"></div>'+
@@ -14300,7 +14340,8 @@
     var srDoc=String(x.docType||'').indexOf('ใบรับรอง')>=0 && !!x.docNo && !x.whtNo;
     var docLock=hasDoc && !srDoc;
     // ด่านเดียวกับ backend: จ่ายแล้วแก้ยอดไม่ได้ · ออก 50 ทวิ แล้วแก้ภาษีไม่ได้ · ออกกระดาษแล้วเปลี่ยนบริษัทไม่ได้
-    var canAmt=!paid, canWht=!!(x.payeeName && !x.whtNo), canEnt=(multiEnt() && !docLock && !(srDoc && paid));
+    /* หัก ณ ที่จ่าย: ใบที่ยังไม่จ่ายโชว์ช่องได้เลย (ตั้งผู้รับเงินพร้อมกันในการบันทึกเดียว · ข้อ 10) */
+    var canAmt=!paid, canWht=!x.whtNo && (!!x.payeeName || !paid), canEnt=(multiEnt() && !docLock && !(srDoc && paid));
     var proofIsSr=String(x.docType||'').indexOf('ใบรับรอง')>=0;
     var proofIsAdv=String(x.docType||'').indexOf('จ่ายก่อน')>=0;   /* ⏳ ใบเสร็จตามมาทีหลัง (22 ก.ย. 69) */
     var proofIsOth=String(x.docType||'').indexOf('อื่น ๆ')>=0;     /* 📎 อื่น ๆ · ไม่มีใบเสร็จ (29 ก.ย. 69) */
@@ -14449,12 +14490,16 @@
              ⛔ ใบสำคัญรับเงิน (RV) เปลี่ยนไม่ได้ (คนละสายเอกสาร · ตรงกับด่าน handleWaExpSetProof_) */
           '<div class="sf-grid">'+
             (rv ? ro('หลักฐานการจ่าย', x.docType, 'wide')
-              : '<div class="sf-f wide"><label>หลักฐานการจ่าย</label><select id="exdProof">'+
+              : '<div class="sf-f wide"><label>หลักฐานการจ่าย</label><select id="exdProof" onchange="exdProofChange()">'+
                   '<option value="rcp"'+((!proofIsSr&&!proofIsAdv&&!proofIsOth)?' selected':'')+'>🧾 มีใบเสร็จ / ใบกำกับภาษี ในนามบริษัท</option>'+
                   '<option value="sr"'+(proofIsSr?' selected':'')+'>📄 บิลไม่ได้ออกในนามบริษัท / ไม่มีใบเสร็จ → ออกใบรับรองแทนใบเสร็จ</option>'+
                   '<option value="adv"'+(proofIsAdv?' selected':'')+'>⏳ จ่ายก่อน · ใบเสร็จตามมา</option>'+
                   '<option value="oth"'+(proofIsOth?' selected':'')+'>📎 อื่น ๆ · ไม่มีใบเสร็จ (ไม่ออกเอกสาร)</option>'+
-                '</select></div>')+
+                  /* ✍️ → RV (29 ก.ย. 69 · ข้อ 11) — รออนุมัติเท่านั้น · ผู้รับเงินต้องครบ (ช่องผู้รับเงินด้านล่าง) + สำเนาบัตร */
+                  (pending?'<option value="rv">✍️ ใบสำคัญรับเงิน (RV) · จ่ายบุคคลที่ออกใบเสร็จไม่ได้ · ผู้รับเซ็นออนไลน์</option>':'')+
+                '</select></div>'+
+                '<div class="sf-f wide hidden" id="exdIdCardBox">'+imgsFldHtml('exdIdCard','🪪 สำเนาบัตรประชาชนผู้รับเงิน (บังคับสำหรับ RV)')+
+                  '<div class="m-hint">ผู้รับเงินต้องเป็นบุคคลธรรมดา · กรอกชื่อ เลขบัตร ที่อยู่ ในช่องผู้รับเงินด้านล่าง · บัญชีรับโอนต้องเป็นของผู้รับเงิน (ไม่ใช่ของพนักงาน) · ไม่มี VAT · รายการเดียว</div></div>')+
             /* บัญชีรับโอน 3 ช่อง (พี่กี้ขอแยก 24 ก.ย. 69) · 25 ก.ย. 69: ผู้เบิกระบุบัญชีเองต่อใบ
                (อาจเป็นบัญชีร้านค้า ไม่ใช่บัญชีพนักงาน) → แก้ได้ทุกใบจนกว่าจะจ่าย · จ่ายแล้วอ่านอย่างเดียว (ต้องตรงกับที่โอนจริง) */
             ((rv||!paid)
@@ -14478,7 +14523,17 @@
                 '<div class="sf-f c6"><label>เลขบัตรประชาชน</label><input id="exdPayeeId" inputmode="numeric" value="'+esc(x.payeeId||'')+'"></div>'+
                 '<div class="sf-f wide"><label>ที่อยู่ผู้รับเงิน</label><textarea id="exdPayeeAddr">'+esc(x.payeeAddr||'')+'</textarea></div>'+
               '</div>')
-            : '')+
+            /* 👤 ใบอื่นตั้งผู้รับเงินได้ (29 ก.ย. 69 · ข้อ 10) — ร้าน/คนที่ถูกหัก ณ ที่จ่าย · ขึ้นบน 50 ทวิ
+               ว่าง = ไม่มีผู้รับเงิน (หักภาษีไม่ได้) · จ่ายแล้ว/ออก 50 ทวิ แล้ว = อ่านอย่างเดียว */
+            : (!paid && !x.whtNo
+              ? ('<div class="sf-grid" style="margin-top:14px">'+
+                  '<div class="sf-f c6"><label>ผู้รับเงิน (สำหรับหัก ณ ที่จ่าย · ไม่หัก = เว้นว่าง)</label><input id="exdPayee" placeholder="ชื่อร้าน / ผู้รับจ้าง" value="'+esc(x.payeeName||'')+'"></div>'+
+                  '<div class="sf-f c3"><label>ประเภทผู้รับเงิน</label><select id="exdPayeeKind">'+
+                    ['นิติบุคคล','บุคคลธรรมดา'].map(function(k){ return '<option'+(k===(x.payeeKind||'นิติบุคคล')?' selected':'')+'>'+k+'</option>'; }).join('')+'</select></div>'+
+                  '<div class="sf-f c3"><label>เลขผู้เสียภาษี</label><input id="exdPayeeId" inputmode="numeric" maxlength="17" placeholder="13 หลัก" value="'+esc(String(x.payeeId||'').replace(/^\'/,''))+'"></div>'+
+                  '<div class="sf-f wide"><label>ที่อยู่ผู้รับเงิน</label><textarea id="exdPayeeAddr" placeholder="ใช้บน 50 ทวิ">'+esc(x.payeeAddr||'')+'</textarea></div>'+
+                '</div>')
+              : (x.payeeName ? '<div class="sf-grid" style="margin-top:14px">'+ro('ผู้รับเงิน', x.payeeName, 'c6')+ro('ประเภทผู้รับเงิน', x.payeeKind, 'c3')+ro('เลขผู้เสียภาษี', String(x.payeeId||'').replace(/^\'/,''), 'c3')+'</div>' : '')))+
         '</div>'+
         '<div><span class="sf-tot-sp" aria-hidden="true">.</span><div class="sf-tot">'+
           /* 💲 วาดจาก exdTotHtml ตัวเดียว — เปิดหน้าใช้ค่าที่บันทึกไว้ · แก้ยอด/เปลี่ยนประเภทราคา = คิดใหม่ทันที (exdCalc) */
@@ -14524,8 +14579,17 @@
     } else {
       imgsFldBind('exdRcp');
       if($('exdSlip')) imgsFldBind('exdSlip');
+      if($('exdIdCardBox')) imgsFldBind('exdIdCard');
     }
   }
+  /** เลือก RV ในช่องหลักฐาน → โชว์ช่องแนบสำเนาบัตร (ข้อ 11) · ผู้รับเงินของ RV = บุคคลธรรมดา */
+  function exdProofChange(){
+    var rvSel=val0('exdProof')==='rv';
+    var b=$('exdIdCardBox'); if(b) b.classList.toggle('hidden', !rvSel);
+    var k=$('exdPayeeKind'); if(k && rvSel) k.value='บุคคลธรรมดา';
+  }
+  function val0(id){ var el=$(id); return el?String(el.value||'').trim():''; }
+  window.exdProofChange=exdProofChange;
 
   /** บันทึกทุกช่องที่เปลี่ยน — ทีละก้อนตามลำดับ แล้วสรุปว่าอะไรสำเร็จ/อะไรไม่ */
   function exdSave(){
@@ -14578,13 +14642,27 @@
     var ob=String(x.bankAcct||'').replace(/^'/,'');
     var nb=$('exdPbBank') ? { name:(($('exdPbBank')||{}).value||''), acct:val('exdPbAcct'), owner:val('exdPbOwner') } : null;
     var bankChanged=!!nb && (nb.acct.replace(/\D/g,'')!==ob.replace(/\D/g,'') || nb.owner!==String(x.bankOwner||'') || (nb.name&&nb.name!==String(x.bankName||'')));
-    if(!$('exdPayee') && bankChanged){
+    var isRvX=String(x.docType||'').indexOf('ใบสำคัญ')>=0;
+    /* 👤 ใบที่ไม่ใช่ RV ตั้งผู้รับเงินได้แล้ว (29 ก.ย. 69 · ข้อ 10) — ส่งบัญชีเฉพาะตอนแก้บัญชี (บางใบไม่มีบัญชี) */
+    var npChg=false, npReq=null;
+    if(!isRvX && $('exdPayee')){
+      var npn=val('exdPayee'), npk=val('exdPayeeKind'), npi=val('exdPayeeId').replace(/\D/g,''), npa=val('exdPayeeAddr');
+      npChg = npn!==String(x.payeeName||'') || npi!==String(x.payeeId||'').replace(/\D/g,'') || npa!==String(x.payeeAddr||'') ||
+        (!!npn && npk!==String(x.payeeKind||''));
+      if(npChg) npReq={action:'waPoPayee',uid:UID,no:no,payeeName:npn,payeeKind:npk,payeeId:npi,payeeAddr:npa};
+    }
+    if(npReq && bankChanged){
+      var bk2=readBank('exdPb','บัญชีรับโอน'); if(!bk2) return;
+      npReq.payeeBankName=bk2.name; npReq.payeeBankAcct=bk2.acct; npReq.payeeBankOwner=bk2.owner;
+    }
+    if(npReq) jobs.push({ name:'ข้อมูลผู้รับเงิน', req:npReq, first:true });
+    if(!isRvX && !npReq && bankChanged){
       /* ใบพนักงาน (25 ก.ย. 69): แก้บัญชีรับโอนของใบนี้อย่างเดียว — ไม่แตะบัญชีในข้อมูลพนักงาน */
       var bk=readBank('exdPb','บัญชีรับโอน'); if(!bk) return;
       jobs.push({ name:'บัญชีรับโอน',
         req:{action:'waPoPayee',uid:UID,no:no,bankOnly:'1',payeeBankName:bk.name,payeeBankAcct:bk.acct,payeeBankOwner:bk.owner} });
     }
-    if($('exdPayee')){
+    if(isRvX && $('exdPayee')){
       var pn=val('exdPayee'), pi=val('exdPayeeId'), pa=val('exdPayeeAddr');
       if(pn!==String(x.payeeName||'') || pi!==String(x.payeeId||'').replace(/^'/,'') || pa!==String(x.payeeAddr||'') || bankChanged){
         /* 🐞 หลังบ้านบังคับบัญชีผู้รับเงินครบทุกครั้ง — เดิมไม่ส่ง = แก้ผู้รับเงินจากฟอร์มไม่ผ่านเลย */
@@ -14601,13 +14679,18 @@
       var wasAdv=String(x.docType||'').indexOf('จ่ายก่อน')>=0;
       var wasOth=String(x.docType||'').indexOf('อื่น ๆ')>=0;   /* 📎 อื่น ๆ · ไม่มีใบเสร็จ (29 ก.ย. 69) */
       if(pf && pf!==(wasSr?'sr':(wasAdv?'adv':(wasOth?'oth':'rcp')))){
-        jobs.push({ name:'ประเภทหลักฐาน', req:{action:'waPoProof',uid:UID,no:no,proof:pf} });
+        var pfReq={action:'waPoProof',uid:UID,no:no,proof:pf};
+        /* ✍️ → RV: แนบสำเนาบัตรมาด้วย · ผู้รับเงินบันทึกก่อน (first) แล้วด่านหลังบ้านค่อยตรวจครบ (ข้อ 11) */
+        if(pf==='rv'){ var idc=IMGS['exdIdCard']||[]; if(idc.length) pfReq.idcard=JSON.stringify(idc); }
+        jobs.push({ name:'ประเภทหลักฐาน', req:pfReq });
       }
     }
 
     /* ช่องข้อมูลทั้งหมดส่งเป็นคำขอเดียว — หลังบ้าน (poEditStaff_) แก้ทีละก้อน ยอดก่อนภาษีเสมอ
        แล้วบอกกลับว่าก้อนไหนไม่ผ่าน · 🔴 ใส่เฉพาะ key ที่เปลี่ยน (ไม่ใส่ = หลังบ้านไม่แตะช่องนั้น) */
     if(Object.keys(ed).length) jobs.unshift({ name:'ข้อมูลใบ', req:Object.assign({action:'waPoEdit',uid:UID,no:no}, ed) });
+    /* ผู้รับเงินต้องบันทึกก่อนภาษี — ตัวแก้ภาษี (editExpenseWht_) ปฏิเสธใบที่ยังไม่มีผู้รับเงิน */
+    jobs.sort(function(a,b){ return (b.first?1:0)-(a.first?1:0); });
     var rcp=IMGS['exdRcp']||[];
     if(rcp.length) jobs.push({ name:'ไฟล์แนบ', req:{action:'waPoFile',uid:UID,no:no,imgs:JSON.stringify(rcp)} });
 
@@ -14644,8 +14727,13 @@
             toast('🚫 ยกเลิกใบรับรองแทนใบเสร็จ '+r.voidedDoc+' แล้ว · ใบนี้ใช้ใบเสร็จแทน');
             if(r.filedWarn) mErr(r.filedWarn);
           }
+          if(j.req.action==='waPoProof' && r.toRv){
+            exdNote='✍️ เปลี่ยนเป็นใบสำคัญรับเงินแล้ว'+(r.voidedDoc?' · ยกเลิก '+r.voidedDoc:'')+' — กดอนุมัติเพื่อส่งลิงก์ให้ผู้รับเงินเซ็น';
+            IMGS['exdIdCard']=[];
+            if(r.filedWarn) mErr(r.filedWarn);
+          }
           if(j.req.action==='waPoProof'){
-            if(r.issued)        exdNote='📄 ออกใบรับรองแทนใบเสร็จ '+(r.docNo||'')+' ให้แล้ว'+(r.signed?'':' (รอผู้อนุมัติลงนาม)');
+            if(r.issued)       exdNote='📄 ออกใบรับรองแทนใบเสร็จ '+(r.docNo||'')+' ให้แล้ว'+(r.signed?'':' (รอผู้อนุมัติลงนาม)');
             else if(r.already)  exdNote='ใบนี้มีใบรับรองแทน '+(r.docNo||'')+' อยู่แล้ว';
             else if(r.needSign) exdNote='✍️ พนักงานยังไม่มีลายเซ็นในระบบ — ให้เขาเซ็นก่อน แล้วระบบจะออกให้อัตโนมัติ';
             else if(r.pending)  exdNote='จะออกใบรับรองแทนให้ตอนอนุมัติค่ะ';
@@ -26607,7 +26695,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260929-2135';
+  var APP_BUILD='20260929-2238';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
