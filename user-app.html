@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260930-1816">
+<link rel="stylesheet" href="user.css?v=20260930-1827">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -2725,8 +2725,19 @@
   var JSONP_BACKOFF=[2000, 5000, 10000];
   /** รอบคี่ใช้ทางสำรอง (ชุดหลัก) ถ้า action นั้นมี · ไม่มีทางสำรอง = ชุดเดิมทุกรอบ */
   function execUrlTry_(action,t){
-    var fb=(t%2===1)?execUrlFallback_(action):'';
-    return fb||execUrlFor_(action);
+    var main=execUrlFor_(action), fb=execUrlFallback_(action);
+    /* ชุดแยกที่เพิ่งล่ม (10 นาทีล่าสุด) = ไปชุดหลักก่อนเลย ไม่ต้องรอชุดที่ล่ม 17–43 วิทุกคำขอ (วัดจริง 30 ก.ย. 69) */
+    if(fb && execDown_(main)) return (t%2===1)?main:fb;
+    return ((t%2===1)&&fb)?fb:main;
+  }
+  /* 🧭 จำว่าชุดไหนเพิ่งล่ม — เก็บในหน่วยความจำของหน้า (sessionStorage ถ้าใช้ได้) · 10 นาทีแล้วลองชุดเดิมใหม่ */
+  var EXEC_DOWN={}, EXEC_DOWN_MS=600000;
+  try{ EXEC_DOWN=JSON.parse(sessionStorage.getItem('execDown')||'{}')||{}; }catch(e){ EXEC_DOWN={}; }
+  function execDown_(url){ var t=EXEC_DOWN[url]; return !!(t && Date.now()-t<EXEC_DOWN_MS); }
+  function execMarkDown_(url){
+    if(!url || url===EXEC_URL) return;
+    EXEC_DOWN[url]=Date.now();
+    try{ sessionStorage.setItem('execDown', JSON.stringify(EXEC_DOWN)); }catch(e){}
   }               /* รอคำขอเดิมได้นานสุด (ระบบเพิ่งตื่น 60–85 วิ · วัด 30 ก.ย. 69) */
   function jsonpSlowNote_(){
     var msg='ระบบกำลังตื่น อาจใช้เวลาถึง 1 นาที · ยังทำงานอยู่ อย่าเพิ่งปิดหน้านี้นะคะ';
@@ -2772,13 +2783,13 @@
       window[cb]=function(d){ if(done) return; done=true; cleanup(); resolve(d); };
       function cleanup(){clearTimeout(timer);clearTimeout(slowNote);delete window[cb];if(s.parentNode)s.parentNode.removeChild(s);}
       var qs=Object.keys(params).map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(params[k]);}).join('&');
-      var s=document.createElement('script'); s.src=execUrlTry_(params.action,_try)+'?'+qs+'&callback='+cb;
-      s.onerror=function(){ if(done) return; done=true; cleanup();
+      var s=document.createElement('script'); s._u=execUrlTry_(params.action,_try); s.src=s._u+'?'+qs+'&callback='+cb;
+      s.onerror=function(){ if(done) return; done=true; execMarkDown_(s._u); cleanup();
         if(!retry()) reject(new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้')); };
       /* โหลดเสร็จแต่ callback ไม่ถูกเรียก = เซิร์ฟเวอร์ตอบหน้า HTML (404/หน้า error ของ Google)
          อย่ารอจนหมดเวลา ลองใหม่ทันที */
       s.onload=function(){ setTimeout(function(){
-        if(done) return; done=true; cleanup();
+        if(done) return; done=true; execMarkDown_(s._u); cleanup();
         if(!retry()) reject(new Error('เซิร์ฟเวอร์ตอบกลับไม่ครบ ลองอีกครั้งค่ะ'));
       }, 300); };
       document.body.appendChild(s);
@@ -2811,9 +2822,11 @@
     function stop(){ clearTimeout(slow); clearTimeout(timer); }
     var opt={method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:body};
     if(ctl) opt.signal=ctl.signal;
-    return fetch(execUrlTry_(params.action,_try),opt)
+    var postUrl=execUrlTry_(params.action,_try);
+    return fetch(postUrl,opt)
       .then(function(r){
         if(!r.ok){
+          if(POST_RETRY_STATUS.indexOf(r.status)>=0) execMarkDown_(postUrl);
           if(_try<2 && POST_RETRY_STATUS.indexOf(r.status)>=0){
             jsonpRetryNote_(_try+2);
             stop();   // รอบใหม่เริ่มจับเวลาของตัวเอง
@@ -26757,7 +26770,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260930-1816';
+  var APP_BUILD='20260930-1827';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
