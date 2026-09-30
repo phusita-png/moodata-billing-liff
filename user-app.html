@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260930-0831">
+<link rel="stylesheet" href="user.css?v=20260930-1758">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -2707,7 +2707,14 @@
      เซิร์ฟเวอร์ตอบ 404 เป็นหน้า HTML: script tag ไม่ยิง onerror และ callback ไม่ถูกเรียก
      → หน้าค้างที่ "กำลังโหลดข้อมูล…" จนครบ 60 วิ แล้วค่อยขึ้นแดง (อาการที่พี่กี้เจอ)
      ตอนนี้: รอ 25 วิแล้วลองใหม่เอง 3 รอบ (25+30+35 วิ) และบอกผู้ใช้ว่ากำลังลองใหม่รอบไหน */
-  var JSONP_WAIT=[25000, 30000, 35000];
+  var JSONP_WAIT=[25000, 30000, 35000];   /* ใช้นับจำนวนรอบลองใหม่ (3 รอบ) เมื่อเซิร์ฟเวอร์ตอบ error */
+  var JSONP_WAIT_SLOW=90000;               /* รอคำขอเดิมได้นานสุด (ระบบเพิ่งตื่น 60–85 วิ · วัด 30 ก.ย. 69) */
+  function jsonpSlowNote_(){
+    var msg='ระบบกำลังตื่น อาจใช้เวลาถึง 1 นาที · ยังทำงานอยู่ อย่าเพิ่งปิดหน้านี้นะคะ';
+    var b=document.getElementById('busy');
+    if(b && b.classList.contains('show')){ var t=b.querySelector('.busy-text'); if(t) t.textContent=msg; }
+    var lt=document.querySelector('.kp-loadtx, .loader-text'); if(lt) lt.textContent=msg;
+  }
   function jsonpRetryNote_(n){
     var b=document.getElementById('busy');
     if(b && b.classList.contains('show')){
@@ -2726,19 +2733,25 @@
       /* action ที่อ่านชีตหลายใบส่งเวลารอมาเองได้ (เช่น waPnd51Auto) — ของแบบนั้นห้ามลองใหม่ซ้ำ
          เพราะงานหนักจริง ไม่ใช่เซิร์ฟเวอร์หลุด · ที่เหลือใช้เวลารอสั้นลงแล้วลองใหม่แทน */
       var custom=!!timeoutMs;
-      var wait=custom?timeoutMs:(JSONP_WAIT[_try]||35000);
+      /* 🔴 30 ก.ย. 69 (พี่กี้: หน้า PO "ระบบตอบช้าผิดปกติ" เข้าไม่ได้เลย)
+         วัดจริง: คำขอแรกหลังระบบเงียบรอ 60–85 วิ ก่อนโค้ดเริ่ม · โค้ดทำงานจริงแค่ 2–4 วิ
+         เดิม "หมดเวลา 25 วิ → ทิ้งแล้วส่งใหม่" = ไม่มีรอบไหนทัน + งานเดิมยังรันต่อที่เซิร์ฟเวอร์ (งานซ้อน)
+         ตอนนี้: ช้า = รอคำขอเดิมต่อ (รวม 90 วิ · ครบ 15 วิบอกผู้ใช้) · ลองใหม่เฉพาะเซิร์ฟเวอร์ตอบ error (onerror/onload ไม่มีคำตอบ)
+         ซึ่งคำขอเดิมตายไปแล้วจริง ส่งใหม่ไม่ซ้อน */
+      var wait=custom?timeoutMs:JSONP_WAIT_SLOW;
       function retry(){
         if(custom || _try>=JSONP_WAIT.length-1) return false;
         jsonpRetryNote_(_try+2);
         setTimeout(function(){ jsonp(params,_try+1,timeoutMs).then(resolve,reject); }, 600);
         return true;
       }
+      var slowNote=setTimeout(function(){ if(!done) jsonpSlowNote_(); }, 15000);
       var timer=setTimeout(function(){
         if(done) return; done=true; cleanup();
-        if(!retry()) reject(new Error('ระบบตอบช้าผิดปกติ ลองอีกครั้งในอีกสักครู่ค่ะ'));
+        reject(new Error('ระบบตอบช้าผิดปกติ ลองอีกครั้งในอีกสักครู่ค่ะ'));
       }, wait);
       window[cb]=function(d){ if(done) return; done=true; cleanup(); resolve(d); };
-      function cleanup(){clearTimeout(timer);delete window[cb];if(s.parentNode)s.parentNode.removeChild(s);}
+      function cleanup(){clearTimeout(timer);clearTimeout(slowNote);delete window[cb];if(s.parentNode)s.parentNode.removeChild(s);}
       var qs=Object.keys(params).map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(params[k]);}).join('&');
       var s=document.createElement('script'); s.src=execUrlFor_(params.action)+'?'+qs+'&callback='+cb;
       s.onerror=function(){ if(done) return; done=true; cleanup();
@@ -26725,7 +26738,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260930-0831';
+  var APP_BUILD='20260930-1758';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
