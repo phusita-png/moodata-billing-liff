@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20260930-1827">
+<link rel="stylesheet" href="user.css?v=20261003-1735">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -22167,6 +22167,8 @@
   var KP_TH_ABBR=['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
   function kpMon(ym){ var p=String(ym||'').split('-'); return p.length===2?(KP_TH_ABBR[+p[1]]||''):String(ym||''); }
   function kpThisYm(){ var d=new Date(); var m=d.getMonth()+1; return (d.getFullYear()+543)+'-'+(m<10?'0'+m:m); }
+  /** เดือนตั้งต้นของงานประเมิน = เดือนก่อนหน้า (ตรงกับ kpiDefaultRoundYm_ หลังบ้าน · พี่กี้เคาะ 3 ต.ค. 69) */
+  function kpDefRoundYm(){ var d=new Date(); d.setDate(1); d.setMonth(d.getMonth()-1); var m=d.getMonth()+1; return (d.getFullYear()+543)+'-'+(m<10?'0'+m:m); }
   /* ⚠️ เลิกใช้แล้ว — ตัวเลือกเดือนของทั้งระบบใช้ kpYmPicker/kpPeriodBar ชุดเดียว (9 ก.ย. 69)
      เก็บไว้เพราะหน้าตั้งค่ายังใช้เลือก "เดือนที่เริ่มใช้เกณฑ์" ซึ่งเป็นคนละความหมายกับเดือนที่กำลังดู */
   function kpMonthOpts(sel){
@@ -22958,7 +22960,7 @@
   function kpClose(){ KPR_YM=KP_YM||KPR_YM; kpApproveRound(0); }
   function kpReopen(){ KPR_YM=KP_YM||KPR_YM; kpReopenRound(); }
   function renderKpiEntry(){
-    KP_YM=KPR_YM||KP_YM||kpThisYm(); KPR_YM=KP_YM; skel();
+    KP_YM=KPR_YM||KP_YM||kpDefRoundYm(); KPR_YM=KP_YM; skel();
     /* ⏱️ หน้านี้ยิง 2 คำขอต่อกัน = รอ 2 รอบ (~10 วิ) — ใช้แคชช่วยให้รอบถัดไปไม่ต้องรอซ้ำ
        (หน้าใหม่ "ประเมินผลงาน" ยิงครั้งเดียวจบ ใช้ตัวนั้นแทนได้) */
     kpFetch({ action:'waKpiEmps', uid:UID },function(reg){
@@ -23148,7 +23150,7 @@
   /* ── 5 · ให้คะแนนคุณลักษณะ ── */
   var KPS=null, KPS_VAL={};
   function renderKpiScore(){
-    KP_YM=KPR_YM||KP_YM||kpThisYm(); KPR_YM=KP_YM; skel();
+    KP_YM=KPR_YM||KP_YM||kpDefRoundYm(); KPR_YM=KP_YM; skel();
     kpFetch({ action:'waKpiEmps', uid:UID },function(reg){
       if(!reg||!reg.ok) return kpErr(reg&&reg.error);
       var list=(reg.rows||[]).filter(function(e){ return !e.left; });
@@ -26770,7 +26772,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20260930-1827';
+  var APP_BUILD='20261003-1735';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
