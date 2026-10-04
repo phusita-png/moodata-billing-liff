@@ -16,9 +16,9 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20261004-1818">
+<link rel="stylesheet" href="user.css?v=20261004-1828">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<script src="yd-auth.js?v=20261004-1818"></script>
+<script src="yd-auth.js?v=20261004-1828"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
   .date-row{ display:flex; flex-direction:column; gap:14px; margin:4px 0 12px; } .date-row > div{ min-width:0; }
@@ -3204,66 +3204,74 @@
       var reqs=r.reqs||[];
       var pend=reqs.filter(function(x){ return x.status==='รออนุมัติ'; });
       var done=reqs.filter(function(x){ return x.status!=='รออนุมัติ'; });
-      var html='<div class="hm-hero"><h2>คำขอสมัครใช้งาน</h2><span class="hp">รออนุมัติ '+pend.length+' ราย</span></div>';
-      html+= pend.length ? pend.map(hubReqCard).join('')
-        : '<div class="card"><div class="emptybox">ยังไม่มีคำขอใหม่ค่ะ</div></div>';
-      if(done.length){
-        html+='<div class="pt-sec" style="margin:18px 0 10px">ดำเนินการแล้ว ('+done.length+')</div>';
-        html+='<div class="card"><div class="pb">'+done.slice(0,20).map(function(q){
-          return '<div class="hm-row"><div class="hm-l"><b>'+esc(q.company)+'</b><small>'+esc(q.no)+
-            (q.tenant?(' · ห้อง '+esc(q.tenant)):'')+'</small></div>'+
-            '<span class="lvb '+(q.status==='อนุมัติ'?'lvb-ok':'lvb-no')+'">'+esc(q.status)+'</span></div>';
-        }).join('')+'</div></div>';
-      }
+      /* ตารางคำขอ (พี่กี้ขอ 4 ต.ค. 69) — หัวคอลัมน์ + ลำดับ · การ์ดหัว+ตารางแบบเดียวกับหน้าห้องลูกค้า/PO
+         รออนุมัติขึ้นก่อน · กด "อนุมัติ" = เลือกแพ็กในกล่อง (เดิมติ๊กบนการ์ด) · ไม่มีคำขอ = ยังเห็นหัวตาราง */
+      var rows=pend.concat(done.slice(0,50));
+      var QC=[{t:'#',w:'5%'},{t:'เลขที่',w:'9%'},{t:'วันที่',w:'9%'},{t:'บริษัท',w:'19%'},{t:'ผู้ติดต่อ',w:'12%'},
+        {t:'เบอร์ / อีเมล',w:'13%'},{t:'สนใจ',w:'13%'},{t:'สถานะ',w:'9%'},{t:'จัดการ',w:'11%'}];
+      var html='<div class="lst-card"><div class="lst-head">'+
+        '<div class="t"><b>คำขอสมัครใช้งาน <span style="color:#8A94A6;font-weight:600;font-size:13px">รออนุมัติ '+pend.length+' ราย</span></b>'+
+          '<div>บริษัทที่กดสมัครเองจากหน้าเว็บ · อนุมัติ = เลือกแพ็กแล้วเปิดห้องให้ทันที</div></div></div>'+
+        '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl">'+
+        '<colgroup>'+QC.map(function(c){ return '<col style="width:'+c.w+'">'; }).join('')+'</colgroup>'+
+        '<thead><tr>'+QC.map(function(c){ return '<th>'+esc(c.t)+'</th>'; }).join('')+'</tr></thead><tbody>'+
+        (rows.length ? rows.map(function(q,i){
+          var wait=q.status==='รออนุมัติ', okSt=q.status==='อนุมัติ';
+          var qq='&quot;'+esc(q.no)+'&quot;';
+          return '<tr><td>'+(i+1)+'</td><td style="white-space:nowrap">'+esc(q.no)+'</td><td style="white-space:nowrap">'+esc(hqDate(q.at))+'</td>'+
+            '<td><b>'+esc(q.company)+'</b>'+(q.taxId?('<br><span style="font-size:12px;color:#8A94A6">เลขภาษี '+esc(q.taxId)+'</span>'):'')+'</td>'+
+            '<td>'+esc(q.contact||'—')+'</td><td style="word-break:break-all">'+esc(q.phone||'—')+'</td>'+
+            '<td style="font-size:13px;color:#4B5565">'+esc(q.want||'—')+'</td>'+
+            '<td><span class="lvb '+(wait?'lvb-wait':(okSt?'lvb-ok':'lvb-no'))+'">'+esc(q.status)+'</span>'+
+              (q.tenant?('<br><span style="font-size:12px;color:#8A94A6">ห้อง '+esc(q.tenant)+'</span>'):'')+'</td>'+
+            '<td>'+(wait ? '<div style="display:flex;gap:6px;flex-wrap:nowrap">'+
+                '<button class="btn btn-ok btn-sm" style="width:auto" type="button" onclick="hqApprove('+qq+')">อนุมัติ</button>'+
+                '<button class="btn btn-ghost btn-sm" style="width:auto" type="button" onclick="hqReject('+qq+')">ปฏิเสธ</button></div>'
+              : '<span style="color:#8A94A6">—</span>')+'</td></tr>';
+        }).join('') : '<tr class="dt-empty"><td colspan="'+QC.length+'">ยังไม่มีคำขอสมัครค่ะ</td></tr>')+
+        '</tbody></table></div></div>';
+      if(done.length>50) html+='<div class="m-hint">แสดงที่ดำเนินการแล้ว 50 รายการล่าสุด จากทั้งหมด '+done.length+' รายการ</div>';
+      HQ_ROWS=reqs;
       $('main').innerHTML=html;
-      bindHubReq();
     }).catch(function(e){ if(VIEW==='hubreq') $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(e.message)+'</div></div>'; });
   }
-  function hubReqCard(q){
-    var packs=HUB_PACKS.map(function(p){
-      return '<label class="hq-pk"><input type="checkbox" data-pk="'+esc(p.key)+'"> '+esc(p.label)+'</label>';
-    }).join('');
-    return '<div class="card hq" data-no="'+esc(q.no)+'"><div class="pb" style="padding:16px 18px">'+
-      '<div style="font-size:17px;font-weight:800;color:#1F2733">'+esc(q.company)+'</div>'+
-      '<div style="font-size:12.5px;color:var(--muted);margin:3px 0 12px">'+esc(q.no)+
-        (q.taxId?(' · เลขภาษี '+esc(q.taxId)):'')+'</div>'+
-      '<div class="hq-info">'+
-        (q.contact?('<div>👤 '+esc(q.contact)+'</div>'):'')+
-        (q.phone?('<div>📞 '+esc(q.phone)+'</div>'):'')+
-        (q.want?('<div>📦 สนใจ: '+esc(q.want)+'</div>'):'')+
-      '</div>'+
-      '<div class="hq-pks">'+packs+'</div>'+
-      '<div class="hq-btns">'+
-        '<button class="btn-ok" data-act="ok">✅ อนุมัติ + เปิดห้อง</button>'+
-        '<button class="btn-no" data-act="no">ปฏิเสธ</button>'+
-      '</div></div></div>';
+  var HQ_ROWS=[];
+  /** วันที่ยื่นคำขอ (backend ส่ง Date มาเป็นข้อความ ISO) → d/m/พ.ศ. */
+  function hqDate(v){
+    var d=v?new Date(v):null;
+    if(!d||isNaN(d.getTime())) return String(v||'—');
+    return d.getDate()+'/'+(d.getMonth()+1)+'/'+(d.getFullYear()+543);
   }
-  function bindHubReq(){
-    Array.prototype.forEach.call(document.querySelectorAll('.hq'), function(card){
-      var no=card.getAttribute('data-no');
-      var bOk=card.querySelector('.btn-ok'), bNo=card.querySelector('.btn-no');
-      if(bOk) bOk.addEventListener('click', function(){
-        var packs=[];
-        Array.prototype.forEach.call(card.querySelectorAll('input[data-pk]'), function(cb){
-          if(cb.checked) packs.push(cb.getAttribute('data-pk'));
-        });
-        if(!packs.length){ toast('เลือกแพ็กอย่างน้อย 1 อย่างก่อนค่ะ'); return; }
-        if(!confirm('อนุมัติและเปิดห้องให้ลูกค้ารายนี้?')) return;
-        callBusy('กำลังสร้างห้อง…',
-          jsonp({action:'waHubApprove',uid:UID,no:no,packs:packs.join(',')}, 0, 120000), 'เปิดห้องแล้ว')
-          .then(function(r){ if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; } renderHubReq(); })
-          .catch(function(e){ toast(e.message); });
-      });
-      if(bNo) bNo.addEventListener('click', function(){
-        var why=prompt('เหตุผลที่ปฏิเสธ (ไม่บังคับ)');
-        if(why===null) return;
-        jsonp({action:'waHubReject',uid:UID,no:no,reason:why||''}).then(function(r){
-          if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; }
-          toast('ปฏิเสธแล้ว'); renderHubReq();
-        }).catch(function(e){ toast(e.message); });
-      });
-    });
+  /** อนุมัติ = เลือกแพ็กที่ขายในกล่อง แล้วเปิดห้อง (ตัวเดียวกับปุ่มบนการ์ดเดิม · waHubApprove) */
+  function hqApprove(no){
+    var q=HQ_ROWS.filter(function(x){ return x.no===no; })[0]||{};
+    modal('<h3>อนุมัติ + เปิดห้อง</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint" style="margin-top:0"><b>'+esc(q.company||'')+'</b> · '+esc(no)+
+        (q.want?('<br>สนใจ: '+esc(q.want)):'')+'</div>'+
+      '<div class="fld"><label>แพ็กที่ขาย</label><div class="us-perm-list">'+HUB_PACKS.map(function(p){
+        return '<label class="us-perm-it"><input type="checkbox" class="hqPk" value="'+esc(p.key)+'"> '+esc(p.label)+'</label>';
+      }).join('')+'</div></div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" id="hqGo" onclick="hqApproveGo(&quot;'+esc(no)+'&quot;)">อนุมัติ + เปิดห้อง</button></div>');
   }
+  function hqApproveGo(no){
+    var packs=[]; Array.prototype.forEach.call(document.querySelectorAll('.hqPk'), function(c){ if(c.checked) packs.push(c.value); });
+    if(!packs.length){ mErr('เลือกแพ็กอย่างน้อย 1 อย่างก่อนค่ะ'); return; }
+    var b=$('hqGo'); if(b) b.disabled=true;   // กดซ้ำ = เปิดห้องซ้ำ
+    callBusy('กำลังสร้างห้อง…', jsonp({action:'waHubApprove',uid:UID,no:no,packs:packs.join(',')}, 0, 120000), 'เปิดห้องแล้ว')
+      .then(function(r){ if(!r||!r.ok){ if(b) b.disabled=false; mErr((r&&r.error)||'ไม่สำเร็จ'); return; } closeModal(); renderHubReq(); })
+      .catch(function(e){ if(b) b.disabled=false; mErr(e.message); });
+  }
+  function hqReject(no){
+    var why=prompt('เหตุผลที่ปฏิเสธ (ไม่บังคับ)');
+    if(why===null) return;
+    jsonp({action:'waHubReject',uid:UID,no:no,reason:why||''}).then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; }
+      toast('ปฏิเสธแล้ว'); renderHubReq();
+    }).catch(function(e){ toast(e.message); });
+  }
+  window.hqApprove=hqApprove; window.hqApproveGo=hqApproveGo; window.hqReject=hqReject;
+
 
 
   // ═══════════ ⚙️ ตั้งค่าห้อง — โฟลเดอร์เอกสาร (T5) ═══════════
@@ -27980,7 +27988,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20261004-1818';
+  var APP_BUILD='20261004-1828';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
