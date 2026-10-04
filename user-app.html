@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20261004-1654">
+<link rel="stylesheet" href="user.css?v=20261004-1702">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -49,8 +49,11 @@
   .ask-ic{ display:inline-block; flex:0 0 auto; width:28px; height:28px; border-radius:50%;
     background:#fff url(mascot-wave2.png) 56% 30%/170% no-repeat; box-shadow:0 0 0 1px rgba(255,255,255,.6); }
   .ask-ic.lg{ width:30px; height:30px; box-shadow:0 0 0 1px #d7e3f4; }
-  .ask-panel{ position:fixed; top:63px; right:0; bottom:0; width:420px; max-width:100vw; z-index:950;
-    background:#fff; box-shadow:-8px 0 28px rgba(12,52,102,.18); display:flex; flex-direction:column; }
+  /* ครึ่งจอล่างขวา (พี่กี้ขอ 4 ต.ค. 69 — เห็นข้อมูลบนหน้าไปด้วย) · ⤢ = ขยายเต็มความสูง */
+  .ask-panel{ position:fixed; right:16px; bottom:16px; width:420px; max-width:calc(100vw - 32px);
+    height:min(52vh, 560px); z-index:950; border-radius:16px; overflow:hidden;
+    background:#fff; box-shadow:0 12px 40px rgba(12,52,102,.28); border:1px solid #d7e3f4; display:flex; flex-direction:column; }
+  .ask-panel.tall{ top:79px; height:auto; }
   .ask-head{ display:flex; align-items:center; gap:6px; padding:12px 14px; border-bottom:1px solid #e8edf4; font-size:15px; }
   .ask-x{ border:0; background:transparent; font-size:16px; cursor:pointer; padding:4px 8px; border-radius:8px; }
   .ask-x:hover{ background:#f1f5f9; }
@@ -75,7 +78,8 @@
   .ask-cd{ color:#3b4456; margin:4px 0; white-space:pre-wrap; } .ask-cn{ color:#8a5a00; font-size:12.5px; margin-top:4px; }
   .ask-cl{ padding:2px 0; } .ask-cl span{ color:#5b6578; }
   .ask-cb{ display:flex; gap:8px; margin-top:8px; } .ask-cs{ margin-top:8px; color:#5b6578; } .ask-cs.ok{ color:#1d8a55; font-weight:600; }
-  @media (max-width:899px){ .ask-panel{ top:0; left:0; right:0; width:auto; max-width:none; } .ask-btn{ padding:0 10px; } }
+  @media (max-width:899px){ .ask-panel{ left:8px; right:8px; bottom:8px; width:auto; max-width:none; height:60vh; }
+    .ask-panel.tall{ top:8px; height:auto; } .ask-btn{ padding:0 10px 0 4px; } }
   .bell-dot{ position:absolute; top:-5px; right:-5px; min-width:18px; height:18px; padding:0 5px;
     border-radius:999px; background:#DC2626; color:#fff; font-size:11px; font-weight:700;
     line-height:18px; text-align:center; box-shadow:0 0 0 2px #fff; }
@@ -26193,8 +26197,10 @@ function kpImpDraw(){
   function askOpen(){
     if($('askPanel')) return;
     var d=document.createElement('div');
-    d.id='askPanel'; d.className='ask-panel';
+    var tall=false; try{ tall=sessionStorage.getItem('yd-ask-tall')==='1'; }catch(e){}
+    d.id='askPanel'; d.className='ask-panel'+(tall?' tall':'');
     d.innerHTML='<div class="ask-head"><span class="ask-ic lg" aria-hidden="true"></span><b>ผู้ช่วย AI</b><span style="flex:1"></span>'+
+      '<button type="button" class="ask-x" title="ขยาย/ย่อ" onclick="askTall()">⤢</button>'+
       '<button type="button" class="ask-x" title="ล้างแชท" onclick="askClear()">🧹</button>'+
       '<button type="button" class="ask-x" title="ปิด" onclick="askClose()">✕</button></div>'+
       '<div class="ask-chips">'+
@@ -26213,6 +26219,19 @@ function kpImpDraw(){
     setTimeout(function(){ ta.focus(); }, 50);
   }
   function askClose(){ var p=$('askPanel'); if(p) p.parentNode.removeChild(p); }
+  function askTall(){
+    var p=$('askPanel'); if(!p) return;
+    var on=!p.classList.contains('tall'); p.classList.toggle('tall', on);
+    try{ sessionStorage.setItem('yd-ask-tall', on?'1':''); }catch(e){}
+  }
+  /** ข้อความบนหน้าที่ผู้ใช้เปิดอยู่ (เห็นอยู่แล้ว) → ส่งให้ผู้ช่วยอ่านประกอบ · ปิดเลขยาว (บัญชี/บัตร) เหลือ 4 ตัวท้าย — หลังบ้านปิดซ้ำอีกชั้น */
+  function askScreen_(){
+    var m=$('main'); if(!m) return '';
+    var t=String(m.innerText||'').replace(/[ \t]+/g,' ').replace(/\n{3,}/g,'\n\n').trim();
+    t=t.replace(/\d(?:[\d\- ]{8,})\d/g, function(x){ var d=x.replace(/\D/g,''); return d.length>=10 ? '••••'+d.slice(-4) : x; });
+    return t.slice(0,6000);
+  }
+  window.askTall=askTall;
   function askClear(){ ASK_HIST=[]; askSave_(); askPaint_(); }
   function askPaint_(pending){
     var el=$('askList'); if(!el) return;
@@ -26242,7 +26261,7 @@ function kpImpDraw(){
     ASK_HIST.push({r:'u', t:q}); askSave_();
     ASK_BUSY=true; askPaint_(true);
     var sb=$('askSendBtn'); if(sb) sb.disabled=true;
-    jsonpPost({action:'waAsk', uid:UID, q:q, hist:JSON.stringify(hist), nav:JSON.stringify(askNavMap_()), view:VIEW||''})
+    jsonpPost({action:'waAsk', uid:UID, q:q, hist:JSON.stringify(hist), nav:JSON.stringify(askNavMap_()), view:VIEW||'', screen:askScreen_()})
       .then(function(r){
         if(r&&r.ok) ASK_HIST.push({r:'a', t:r.text, cards:(r.cards||[]).slice(0,5)});
         else ASK_HIST.push({r:'a', t:'⚠️ '+((r&&r.error)||'ผู้ช่วยตอบไม่ได้ตอนนี้'), err:1});
@@ -27624,7 +27643,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20261004-1654';
+  var APP_BUILD='20261004-1702';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
