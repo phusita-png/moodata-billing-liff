@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20261004-1424">
+<link rel="stylesheet" href="user.css?v=20261004-1610">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -21658,6 +21658,8 @@
     callBusy('กำลังบันทึก…', jsonpPost(p), 'บันทึกแล้ว').then(function(r){
       if(!r||!r.ok){ mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
       closeModal(); toast('✅ บันทึก '+r.name+' แล้ว'+(r.warn?(' ⚠️ '+r.warn):''));
+      /* 📧 เพิ่มลูกค้าใหม่จากแถวรอจับคู่ → โหลดรายชื่อใหม่ (อีเมลผู้ส่งอยู่ในทะเบียนแล้ว · กดจับคู่ต่อได้เลย) */
+      if(VIEW==='mailtask'){ mtLoad(); return; }
       if(SF_RETURN && VIEW==='salesform'){
         /* เพิ่มจากฟอร์มเอกสาร → โหลดทะเบียนใหม่แล้วกลับมาที่ฟอร์ม พร้อมเลือกชื่อนั้นไว้ให้ */
         SF_RETURN=false;
@@ -26109,8 +26111,8 @@ function kpImpDraw(){
   // ═══════════ 📧 งานจากอีเมล (ส่วนเสริม mailtask · 4 ต.ค. 2569 · spec docs/spec-mail-to-task.md) ═══════════
   // AI คัดงานจากอีเมลมาเสนอ → กด ✅ รับ = เปิดงานในชีตงานลูกค้าตัวเดิม (หลังบ้าน createTaskRow_)
   // 🔴 ใครเห็นแถวไหน หลังบ้านตัดสิน (mailCanSee_) — หน้านี้แค่วาด
-  var MT=null, MT_TAB='wait', MT_SEL={}, MT_SENDERS=null;
-  try{ var _mt=sessionStorage.getItem('yd-mt-tab'); if(_mt) MT_TAB=_mt; }catch(e){}
+  var MT=null, MT_TAB='wait', MT_SEL={}, MT_DAYS=3;
+  try{ var _mt=sessionStorage.getItem('yd-mt-tab'); if(_mt && _mt!=='senders') MT_TAB=_mt; }catch(e){}
 
   function mtWhen(ms){
     if(!ms) return '';
@@ -26133,10 +26135,15 @@ function kpImpDraw(){
       a.push({label:'✅ รับเป็นงาน', call:'mtAccept(\''+id+'\')'});
       a.push({label:'✏️ แก้ก่อนรับ', call:'mtEdit(\''+id+'\')'});
     }
+    if(tab==='match'){
+      a.push({label:'🔗 จับคู่กับลูกค้าที่เลือก', call:'mtMatch(\''+id+'\')'});
+      a.push({label:'➕ เพิ่มเป็นลูกค้าใหม่', call:'mtNewCust(\''+id+'\')'});
+    }
     a.push({label:'📄 ดูอีเมล', call:'mtView(\''+id+'\')'});
     if(x.mailUrl) a.push({label:'✉️ เปิดใน Gmail', href:x.mailUrl});
     if(tab==='skip') a.push({label:'↩️ ย้ายไปรอรับ', call:'mtSkip(\''+id+'\',1)'});
-    if(tab==='wait'){ a.push({sep:1}); a.push({label:'❌ ไม่ใช่งาน', call:'mtSkip(\''+id+'\',0)', danger:1}); }
+    if(tab==='wait' || tab==='match'){ a.push({sep:1}); a.push({label:'❌ ไม่ใช่งาน (ฉบับนี้)', call:'mtSkip(\''+id+'\',0)', danger:1}); }
+    if(tab==='match') a.push({label:'🙈 ไม่สนใจผู้ส่งนี้ (ฉบับต่อไปไม่ขึ้นอีก)', call:'mtIgnore(\''+id+'\')', danger:1});
     return a;
   }
   var MT_COLS = {
@@ -26144,29 +26151,40 @@ function kpImpDraw(){
       {label:'#',cls:'dt-nw',w:'38px'},{label:'รับเข้า',cls:'dt-nw',w:'88px'},{label:'ผู้ส่ง',w:'18%'},
       {label:'หัวข้องาน'},{label:'ลูกค้า',w:'15%'},{label:'กำหนดส่ง',cls:'dt-nw',w:'92px'},
       {label:'ผู้รับผิดชอบแนะนำ',w:'13%'},{label:'',w:'44px'}],
+    match:[{label:'#',cls:'dt-nw',w:'38px'},{label:'รับเข้า',cls:'dt-nw',w:'88px'},{label:'ผู้ส่ง',w:'20%'},
+      {label:'เรื่อง'},{label:'เป็นของลูกค้า',w:'26%'},{label:'',w:'44px'}],
     skip:[{label:'#',cls:'dt-nw',w:'38px'},{label:'รับเข้า',cls:'dt-nw',w:'88px'},{label:'ผู้ส่ง',w:'20%'},
       {label:'หัวเรื่อง'},{label:'เหตุผลที่ AI ข้าม',w:'30%'},{label:'',w:'44px'}],
     hist:[{label:'#',cls:'dt-nw',w:'38px'},{label:'รับเข้า',cls:'dt-nw',w:'88px'},{label:'ผู้ส่ง',w:'18%'},
-      {label:'หัวข้องาน'},{label:'ผล',cls:'dt-nw',w:'92px'},{label:'เลขที่งาน',cls:'dt-nw',w:'90px'},{label:'โดย',w:'13%'},{label:'',w:'44px'}],
-    senders:[{label:'#',cls:'dt-nw',w:'38px'},{label:'ผู้ส่ง',w:'20%'},{label:'อีเมล',w:'24%'},
-      {label:'หัวเรื่องล่าสุด'},{label:'จำนวน',cls:'dt-amt',w:'70px'},{label:'พบล่าสุด',cls:'dt-nw',w:'88px'},{label:'',w:'44px'}]
+      {label:'หัวข้องาน'},{label:'ผล',cls:'dt-nw',w:'92px'},{label:'เลขที่งาน',cls:'dt-nw',w:'90px'},{label:'โดย',w:'13%'},{label:'',w:'44px'}]
   };
 
   function renderMailTask(){
     MT_SEL={};
     $('main').innerHTML='<div class="phead"><h2>📧 งานจากอีเมล</h2>'+
-      '<div class="psub">AI อ่านอีเมลจากผู้ส่งที่อยู่ในทะเบียน แล้วเสนอเป็นงานให้ — กด <b>✅ รับเป็นงาน</b> ถึงจะขึ้นบอร์ดงาน'+
+      '<div class="psub">ระบบดึงอีเมลเองทุกเช้า 7:30 — ระหว่างวันกด <b>🔄 ดึงอีเมลใหม่</b> · อีเมลจากลูกค้าในทะเบียน AI อ่านแล้วเสนอเป็นงานที่แท็บ <b>รอรับ</b>'+
+      ' · อีเมลจากคนที่ระบบยังไม่รู้จัก ไปอยู่แท็บ <b>รอจับคู่</b> ให้เลือกลูกค้าเอง'+
       '<br>อยากให้อีเมลของคุณเข้ามาด้วย: เปิด "อีเมลรับงานของฉัน" ที่หน้า <a href="#" onclick="switchView(\'myset\');return false">🙋 ตั้งค่าของฉัน</a></div></div>'+
+      '<div id="mtPullBar">'+mtPullBarHtml()+'</div>'+
       '<div id="mtTabs">'+mtTabsHtml()+'</div><div id="mtBar"></div>'+
       '<div class="card" id="mtBox">'+dtTable(MT_COLS[MT_TAB]||MT_COLS.wait, [], '', 'กำลังโหลด…')+'</div>';
     mtLoad();
   }
+  function mtPullBarHtml(){
+    var days=(MT&&MT.pullDays)||[1,3,7,14,30];
+    return '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 10px">'+
+      '<button style="width:auto" class="btn btn-primary btn-sm" onclick="mtPull()">🔄 ดึงอีเมลใหม่</button>'+
+      '<label style="display:flex;gap:6px;align-items:center;font-size:14px">ย้อนหลัง'+
+      '<select id="mtDays" onchange="MT_DAYS=+this.value" style="width:auto">'+days.map(function(d){
+        return '<option value="'+d+'"'+(d===MT_DAYS?' selected':'')+'>'+d+' วัน</option>'; }).join('')+'</select></label>'+
+      '<span class="psub" style="margin:0" id="mtPullMsg"></span></div>';
+  }
   function mtTabsHtml(){
-    var n=MT?{ wait:MT.wait.length, skip:MT.skip.length, hist:MT.hist.length }:{};
+    var n=MT?{ wait:MT.wait.length, match:(MT.match||[]).length, skip:MT.skip.length, hist:MT.hist.length }:{};
     var tabs=[{k:'wait',l:'รอรับ'},{k:'skip',l:'AI ข้ามไป'},{k:'hist',l:'ประวัติ'}];
-    if(!MT||MT.isOwner) tabs.splice(1,0,{k:'senders',l:'ผู้ส่งที่ยังไม่รู้จัก'});
+    if(!MT||MT.isOwner) tabs.splice(1,0,{k:'match',l:'รอจับคู่'});
     return '<div class="kp-tabs" role="tablist">'+tabs.map(function(t){
-      var c=(t.k==='senders')?(MT_SENDERS?MT_SENDERS.length:''):(n[t.k]!=null?n[t.k]:'');
+      var c=(n[t.k]!=null?n[t.k]:'');
       return '<button class="kp-tab'+(t.k===MT_TAB?' on':'')+'" role="tab" aria-selected="'+(t.k===MT_TAB)+'" '+
         'onclick="mtGo(\''+t.k+'\')">'+esc(t.l)+(c!==''?' ('+c+')':'')+'</button>';
     }).join('')+'</div>';
@@ -26176,48 +26194,48 @@ function kpImpDraw(){
     try{ sessionStorage.setItem('yd-mt-tab',k); }catch(e){}
     $('mtTabs').innerHTML=mtTabsHtml();
     mtPaint();
-    if(k==='senders' && !MT_SENDERS) mtLoadSenders();
   }
   function mtLoad(){
     return jsonp({action:'waTaskMailList',uid:UID}).then(function(r){
       if(VIEW!=='mailtask') return;
       if(!r||!r.ok){ $('mtBox').innerHTML=dtTable(MT_COLS.wait, [], '', (r&&r.error)||'โหลดไม่สำเร็จ'); return; }
       MT=r;
-      if(MT_TAB==='senders' && !MT.isOwner) MT_TAB='wait';
+      if(MT_TAB==='match' && !MT.isOwner) MT_TAB='wait';
       $('mtTabs').innerHTML=mtTabsHtml();
       mtPaint();
-      if(MT_TAB==='senders' || (MT.isOwner && !MT_SENDERS)) mtLoadSenders();
     }).catch(function(e){ if(VIEW==='mailtask') $('mtBox').innerHTML=dtTable(MT_COLS.wait, [], '', e.message); });
   }
-  function mtLoadSenders(){
-    jsonp({action:'waTaskMailSenders',uid:UID}).then(function(r){
-      MT_SENDERS=(r&&r.ok&&r.senders)||[];
-      if(VIEW!=='mailtask') return;
-      $('mtTabs').innerHTML=mtTabsHtml();
-      if(MT_TAB==='senders') mtPaint();
-    }).catch(function(){});
+  /** 🔄 ดึงอีเมลใหม่ — ชุดหลักอ่าน Gmail ได้ 75 วิต่อครั้ง ที่เหลือกดต่อ (ฉบับที่อ่านแล้วไม่อ่านซ้ำ) */
+  function mtPull(){
+    var d=+(($('mtDays')||{}).value||MT_DAYS)||3;
+    var m=$('mtPullMsg'); if(m) m.textContent='กำลังดึงอีเมล ย้อนหลัง '+d+' วัน… (อาจใช้เวลาถึง 1–2 นาที)';
+    callBusy('กำลังดึงอีเมล…', jsonpPost({action:'waMailPull',uid:UID,days:d}), '').then(function(r){
+      var m2=$('mtPullMsg');
+      if(!r||!r.ok){ if(m2) m2.textContent='⚠️ '+((r&&r.error)||'ดึงไม่สำเร็จ'); return; }
+      if(m2) m2.textContent='✅ '+r.text;
+      toast(r.more?'ดึงได้บางส่วน — กดดึงอีกครั้งเพื่อทำต่อ':'✅ ดึงอีเมลเสร็จแล้ว');
+      mtLoad();
+    });
   }
   function mtFind(id){
-    var all=[].concat((MT&&MT.wait)||[],(MT&&MT.skip)||[],(MT&&MT.hist)||[]);
+    var all=[].concat((MT&&MT.wait)||[],(MT&&MT.match)||[],(MT&&MT.skip)||[],(MT&&MT.hist)||[]);
     for(var i=0;i<all.length;i++) if(all[i].id===id) return all[i];
     return null;
   }
   function mtFrom(x){
     return '<div>'+esc(x.fromName||x.fromEmail)+'</div>'+(x.fromName?'<div class="psub" style="margin:0">'+esc(x.fromEmail)+'</div>':'');
   }
+  function mtCustSelect(x, i){
+    var cs=(MT&&MT.customers)||[];
+    return '<div style="display:flex;gap:6px;align-items:center">'+
+      '<select id="mtC'+i+'" style="flex:1;min-width:0"><option value="">— เลือกลูกค้า —</option>'+
+      cs.map(function(n){ return '<option'+(n===x.customer?' selected':'')+'>'+esc(n)+'</option>'; }).join('')+'</select>'+
+      '<button style="width:auto" class="btn btn-primary btn-sm" onclick="mtMatch(\''+esc(x.id)+'\','+i+')">จับคู่</button></div>'+
+      (x.customer?'<div class="psub" style="margin:2px 0 0">💡 เดาจากโดเมนอีเมล — ตรวจก่อนกด</div>':'');
+  }
   function mtPaint(){
     var box=$('mtBox'); if(!box) return;
     var bar=$('mtBar'); if(bar) bar.innerHTML='';
-    if(MT_TAB==='senders'){
-      var ss=MT_SENDERS;
-      box.innerHTML=dtTable(MT_COLS.senders, (ss||[]).map(function(s,i){
-        return '<tr><td class="dt-nw">'+(i+1)+'</td><td>'+esc(s.name||'—')+'</td><td>'+esc(s.email)+'</td>'+
-          '<td>'+esc(s.subject)+'</td><td class="dt-amt">'+s.count+'</td><td class="dt-nw">'+mtWhen(s.last)+'</td>'+
-          dtActCell('mts:'+i,[{label:'➕ เพิ่มเข้าทะเบียนลูกค้า',call:'mtAddCust('+i+')'},
-            {label:'🙈 ไม่สนใจผู้ส่งนี้',call:'mtIgnore('+i+')',danger:1}])+'</tr>';
-      }), '', ss?'ไม่มีผู้ส่งที่ยังไม่รู้จัก — อีเมลจากคนนอกทะเบียน ระบบไม่อ่านเนื้อความและไม่ส่งให้ AI':'กำลังโหลด…');
-      return;
-    }
     var rows=(MT&&MT[MT_TAB])||[];
     var body=rows.map(function(x,i){
       var title='<div>'+mtKindBadge(x.kind)+' '+esc(x.title||x.subject)+'</div>'+
@@ -26229,6 +26247,11 @@ function kpImpDraw(){
           '<td>'+esc(x.customer||'—')+'</td><td class="dt-nw">'+(mtDue(x.due)||'—')+'</td><td>'+esc(x.assigneeName||'—')+'</td>'+
           dtActCell('mt:'+x.id, mtRowActions(x,'wait'))+'</tr>';
       }
+      if(MT_TAB==='match'){
+        return '<tr><td class="dt-nw">'+(i+1)+'</td><td class="dt-nw">'+mtWhen(x.at)+'</td><td>'+mtFrom(x)+'</td>'+
+          '<td><div><b>'+esc(x.subject||'(ไม่มีหัวเรื่อง)')+'</b></div>'+(x.body?'<div class="psub" style="margin:2px 0 0">'+esc(x.body)+'</div>':'')+'</td>'+
+          '<td>'+mtCustSelect(x,i)+'</td>'+dtActCell('mt:'+x.id, mtRowActions(x,'match'))+'</tr>';
+      }
       if(MT_TAB==='skip'){
         return '<tr><td class="dt-nw">'+(i+1)+'</td><td class="dt-nw">'+mtWhen(x.at)+'</td><td>'+mtFrom(x)+'</td>'+
           '<td>'+esc(x.subject)+'</td><td>'+esc(x.reason||'—')+'</td>'+dtActCell('mt:'+x.id, mtRowActions(x,'skip'))+'</tr>';
@@ -26238,9 +26261,10 @@ function kpImpDraw(){
         '<td class="dt-nw">'+st+'</td><td class="dt-nw">'+esc(x.taskNo||'—')+'</td><td>'+esc(x.decidedBy||'')+'</td>'+
         dtActCell('mt:'+x.id, mtRowActions(x,'hist'))+'</tr>';
     });
-    var empty={ wait:'ยังไม่มีงานจากอีเมลรอรับ — ระบบดึงอีเมลใหม่ทุก 15 นาที (จ–ส 7–21 น.)',
+    var empty={ wait:'ยังไม่มีงานจากอีเมลรอรับ — กด 🔄 ดึงอีเมลใหม่ หรือรอระบบดึงเองตอน 7:30',
+      match:'ไม่มีอีเมลรอจับคู่ — อีเมลจากคนที่ระบบยังไม่รู้จักจะขึ้นที่นี่ (อีเมลโฆษณาและ no-reply ระบบข้ามให้แล้ว)',
       skip:'ยังไม่มีอีเมลที่ AI ข้ามไป', hist:'ยังไม่มีประวัติ' }[MT_TAB];
-    box.innerHTML=dtTable(MT_COLS[MT_TAB], body, '', empty);
+    box.innerHTML=dtTable(MT_COLS[MT_TAB]||MT_COLS.wait, body, '', empty);
     mtBarPaint();
   }
   function mtBarPaint(){
@@ -26249,13 +26273,26 @@ function kpImpDraw(){
     bar.innerHTML = (MT_TAB==='wait' && ids.length) ?
       '<div class="card" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 14px">'+
         '<b>เลือกไว้ '+ids.length+' รายการ</b><span style="flex:1"></span>'+
-        '<button style="width:auto" class="btn btn-primary btn-sm" onclick="mtAccept(\'\')">✅ รับเป็นงานทั้งหมด</button>'+
-        '<button style="width:auto" class="btn btn-ghost btn-sm" onclick="mtSkip(\'\',0)">❌ ไม่ใช่งาน</button></div>' : '';
+        '<button class="btn btn-primary btn-sm" style="width:auto" onclick="mtAccept(\'\')">✅ รับเป็นงานทั้งหมด</button>'+
+        '<button class="btn btn-ghost btn-sm" style="width:auto" onclick="mtSkip(\'\',0)">❌ ไม่ใช่งาน</button></div>' : '';
   }
   function mtPick(id,on){ MT_SEL[id]=!!on; mtBarPaint(); }
   function mtPickAll(on){ MT_SEL={}; if(on) ((MT&&MT.wait)||[]).forEach(function(x){ MT_SEL[x.id]=true; }); mtPaint(); var a=$('mtAll'); if(a) a.checked=!!on; }
   function mtSelIds(id){ return id ? [id] : Object.keys(MT_SEL).filter(function(k){ return MT_SEL[k]; }); }
 
+  /** 🔗 จับคู่ — จำอีเมลไว้กับลูกค้า แล้วให้ AI อ่านฉบับนี้ (และฉบับอื่นของคนเดียวกัน) ต่อทันที */
+  function mtMatch(id, i){
+    var x=mtFind(id); if(!x) return;
+    if(i==null){ ((MT&&MT.match)||[]).forEach(function(y,k){ if(y.id===id) i=k; }); }
+    var c=(($('mtC'+i)||{}).value||'').trim();
+    if(!c){ toast('เลือกลูกค้าก่อนค่ะ'); var s=$('mtC'+i); if(s) s.focus(); return; }
+    callBusy('กำลังจับคู่ + ให้ AI อ่าน…', jsonpPost({action:'waMailMatch',uid:UID,id:id,customer:c}), '').then(function(r){
+      if(!r||!r.ok){ toast('⚠️ '+((r&&r.error)||'จับคู่ไม่สำเร็จ')); return; }
+      toast('🔗 จับคู่กับ '+r.customer+' แล้ว · AI เสนอ '+r.queued+' งาน'+(r.left?(' · ยังเหลือ '+r.left+' ฉบับ กดจับคู่อีกครั้ง'):'')+
+        (r.remembered?' · จำอีเมลนี้ไว้แล้ว':''));
+      mtLoad();
+    });
+  }
   function mtAccept(id, edit){
     var ids=mtSelIds(id); if(!ids.length) return;
     var p={action:'waTaskMailAccept',uid:UID,ids:ids.join(',')};
@@ -26287,8 +26324,8 @@ function kpImpDraw(){
       '<div class="fld"><label>กำหนดส่ง</label><input id="mtDue" type="date" value="'+esc(x.due||'')+'"></div>'+
       '<div class="fld"><label>ผู้รับผิดชอบ</label><select id="mtA"><option value="">— ยังไม่มอบหมาย —</option>'+
         team.map(function(m){ return '<option value="'+esc(m.uid)+'"'+(m.uid===x.assigneeUid?' selected':'')+'>'+esc(m.name)+'</option>'; }).join('')+'</select></div>'+
-      '<div class="m-act"><button style="width:auto" class="btn btn-ghost" onclick="closeModal()">ปิด</button>'+
-      '<button style="width:auto" class="btn btn-primary" onclick="mtEditSave(\''+esc(id)+'\')">✅ รับเป็นงาน</button></div>');
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button>'+
+      '<button class="btn btn-primary" onclick="mtEditSave(\''+esc(id)+'\')">✅ รับเป็นงาน</button></div>');
   }
   function mtEditSave(id){
     var t=($('mtT').value||'').trim();
@@ -26299,6 +26336,7 @@ function kpImpDraw(){
     var x=mtFind(id); if(!x) return;
     modal('<h3>📄 '+esc(x.subject||'(ไม่มีหัวเรื่อง)')+'</h3>'+
       '<div class="m-hint">จาก: '+esc(x.fromName?(x.fromName+' <'+x.fromEmail+'>'):x.fromEmail)+' · รับเข้า '+mtWhen(x.at)+'</div>'+
+      (x.status==='รอจับคู่'?'<div class="m-hint">ยังเห็นแค่ต้นข้อความ — จับคู่ลูกค้าแล้ว AI จะอ่านฉบับเต็ม (หรือเปิดอ่านใน Gmail)</div>':'')+
       '<div style="white-space:pre-wrap;max-height:50vh;overflow:auto;border:1px solid #e5e9f0;border-radius:10px;padding:12px;font-size:14px">'+esc(x.body||'(ไม่มีเนื้อความ)')+'</div>'+
       (x.files&&x.files.length?'<div class="fld" style="margin-top:10px"><label>ไฟล์แนบ</label>'+x.files.map(function(f){
         return '<div>📎 '+(f.url&&/^https:/.test(f.url)?'<a href="'+esc(f.url)+'" target="_blank" rel="noopener">'+esc(f.name)+'</a>':esc(f.name))+'</div>';
@@ -26307,20 +26345,24 @@ function kpImpDraw(){
       (x.mailUrl?'<a style="width:auto" class="btn btn-ghost" href="'+esc(x.mailUrl)+'" target="_blank" rel="noopener">✉️ เปิดใน Gmail</a>':'')+
       (x.status==='รอรับ'?'<button style="width:auto" class="btn btn-primary" onclick="mtEdit(\''+esc(id)+'\')">✅ รับเป็นงาน…</button>':'')+'</div>');
   }
-  function mtAddCust(i){
-    var s=(MT_SENDERS||[])[i]; if(!s) return;
+  /** ➕ ผู้ส่งเป็นลูกค้าใหม่ — เปิดฟอร์มทะเบียนลูกค้าเดิม เติมชื่อ+อีเมลให้ · บันทึกแล้วกลับมากดจับคู่ */
+  function mtNewCust(id){
+    var x=mtFind(id); if(!x) return;
     custForm('');
     setTimeout(function(){
-      var n=$('cuName'); if(n && !n.value) n.value=s.name||'';
-      var e=$('cuEmail'); if(e) e.value=s.email;
+      var n=$('cuName'); if(n && !n.value) n.value=x.fromName||'';
+      var e=$('cuEmail'); if(e) e.value=x.fromEmail;
     }, 0);
+    toast('บันทึกลูกค้าแล้ว กลับมากด "จับคู่" ที่แถวนี้ค่ะ');
   }
-  function mtIgnore(i){
-    var s=(MT_SENDERS||[])[i]; if(!s) return;
-    jsonp({action:'waTaskMailSender',uid:UID,email:s.email}).then(function(r){
+  window.mtNewCust=mtNewCust;
+  /** 🙈 ไม่สนใจผู้ส่งนี้ — ฉบับที่รอจับคู่ของคนนี้กลายเป็นไม่ใช่งานทั้งหมด + ฉบับต่อไปไม่ขึ้นอีก */
+  function mtIgnore(id){
+    var x=mtFind(id); if(!x) return;
+    jsonp({action:'waTaskMailSender',uid:UID,email:x.fromEmail,name:x.fromName||''}).then(function(r){
       if(!r||!r.ok){ toast('⚠️ '+((r&&r.error)||'ไม่สำเร็จ')); return; }
-      MT_SENDERS.splice(i,1); toast('🙈 ซ่อน '+s.email+' แล้ว');
-      $('mtTabs').innerHTML=mtTabsHtml(); mtPaint();
+      toast('🙈 ไม่สนใจ '+x.fromEmail+' แล้ว'+(r.n>1?(' ('+r.n+' ฉบับ)'):''));
+      mtLoad();
     });
   }
 
@@ -26469,7 +26511,7 @@ function kpImpDraw(){
   }
   window.renderMailTask=renderMailTask; window.mtGo=mtGo; window.mtPick=mtPick; window.mtPickAll=mtPickAll;
   window.mtAccept=mtAccept; window.mtSkip=mtSkip; window.mtEdit=mtEdit; window.mtEditSave=mtEditSave; window.mtView=mtView;
-  window.mtAddCust=mtAddCust; window.mtIgnore=mtIgnore; window.mtMeLoad=mtMeLoad; window.mtMeSave=mtMeSave; window.mtMeAllow=mtMeAllow;
+  window.mtPull=mtPull; window.mtMatch=mtMatch; window.mtIgnore=mtIgnore; window.mtMeLoad=mtMeLoad; window.mtMeSave=mtMeSave; window.mtMeAllow=mtMeAllow;
   window.mtRoomSave=mtRoomSave; window.mtCapEdit=mtCapEdit; window.mtCapSave=mtCapSave;
 
   function renderReview(){
@@ -27365,7 +27407,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20261004-1424';
+  var APP_BUILD='20261004-1610';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
