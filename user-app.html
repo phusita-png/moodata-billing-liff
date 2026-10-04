@@ -16,9 +16,9 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20261005-0504">
+<link rel="stylesheet" href="user.css?v=20261005-0543">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<script src="yd-auth.js?v=20261005-0504"></script>
+<script src="yd-auth.js?v=20261005-0543"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
   .date-row{ display:flex; flex-direction:column; gap:14px; margin:4px 0 12px; } .date-row > div{ min-width:0; }
@@ -2707,7 +2707,7 @@
     hubreq:['🏛️','คำขอสมัคร'], hubrooms:['🏢','ห้องลูกค้า'], roomset:['⚙️','ตั้งค่าห้อง'], home:['🏠','ภาพรวมประจำวัน'], clock:['🕐','ลงเวลา'],
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], mailtask:['📧','งานจากอีเมล'], leave:['📝','การลา'],
     expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติใบสั่งจ่าย'], expone:['🔎','ใบสั่งจ่าย'],
-    expdash:['📊','สรุปการเบิกของฉัน'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ใบสั่งจ่าย (PO)'], poform:['📝','สร้างใบสั่งจ่าย'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','รายงานภาษีซื้อ'], vatsale:['🧾','รายงานภาษีขาย'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก (WI)'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ใบสำคัญจ่าย (PV)'], sales:['💰','รายรับ'], salesqt:['📄','ใบเสนอราคา (QT)'], salesiv:['🧾','ใบแจ้งหนี้ (IV)'], salesre:['💵','ใบเสร็จรับเงิน (RE)'], salescn:['↩️','ใบลดหนี้ (CN)'], wtreg:['🧾','ภาษีที่หัก 50 ทวิ (WT)'], datain:['📥','นำเข้าข้อมูล'], airead:['🤖','อ่านเอกสารด้วย AI'], contract:['📑','สัญญาบริการ'], recvkind:['💰','ประเภทการรับเงิน'], statement:['🏦','กระทบยอด Statement'], cashreport:['📊','รายงานเงินสด/ธนาคาร'], ar:['📊','ทะเบียนลูกหนี้'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51'], finhist:['📈','เทียบย้อนหลัง'], docdash:['📊','ภาพรวม'], docreg:['🗂️','จัดการเอกสาร'], doccheck:['✅','ตรวจก่อนส่ง'], docbycat:['📑','รายงานตามประเภท'], docreport:['📦','รายงานประจำเดือน'], doccat:['🏷️','จัดการหมวด'], hubmods:['🧩','โมดูลของแต่ละห้อง'], teamperm:['🔐','สิทธิ์ทีม'], ppl:['👥','ทะเบียนพนักงาน'], pplpvd:['🏦','กองทุนสำรองเลี้ยงชีพ'], pplone:['👤','ข้อมูลพนักงาน'], kpiemp:['👥','ทะเบียนพนักงาน'], kpiperson:['📈','ประวัติรายคน'], kpidash:['📊','ภาพรวม'], kpientry:['✍️','กรอกผลงาน'], kpiscore:['⭐','คะแนนคุณลักษณะ'], kpidoc:['📄','ใบประเมิน'], kpiround:['📋','รอบการประเมิน'], kpifill:['✍️','ประเมินผลงาน'], kpimanage:['📊','จัดการผลการประเมิน'], kpirule:['⚖️','เกณฑ์ทั้งองค์กร'], kpimetric:['🎯','ตัวชี้วัด (KPI)'], kpitrait:['🧭','คุณลักษณะรายบุคคล'], kpiimport:['📥','นำเข้าข้อมูลเดิม'], kpireport:['📄','รายงาน'], kpihelp:['📘','คู่มือการใช้งาน'], myset:['🙋','ตั้งค่าของฉัน'], bank:['🏦','บัญชีธนาคาร'], expcat:['🏷️','ประเภทค่าใช้จ่าย'], vendors:['🏪','ทะเบียนผู้ขาย'], vendorform:['🏪','ข้อมูลผู้ขาย'],
+    expdash:['📊','สรุปการเบิกของฉัน'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ใบสั่งจ่าย (PO)'], poform:['📝','สร้างใบสั่งจ่าย'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','รายงานภาษีซื้อ'], vatsale:['🧾','รายงานภาษีขาย'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก (WI)'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ใบสำคัญจ่าย (PV)'], sales:['💰','รายรับ'], salesqt:['📄','ใบเสนอราคา (QT)'], salesiv:['🧾','ใบแจ้งหนี้ (IV)'], salesre:['💵','ใบเสร็จรับเงิน (RE)'], salescn:['↩️','ใบลดหนี้ (CN)'], wtreg:['🧾','ภาษีที่หัก 50 ทวิ (WT)'], datain:['📥','นำเข้าข้อมูล'], airead:['🤖','อ่านเอกสารด้วย AI'], contract:['📑','สัญญาบริการ'], recvkind:['💰','ประเภทการรับเงิน'], statement:['🏦','กระทบยอด Statement'], cashreport:['📊','รายงานเงินสด/ธนาคาร'], ar:['📊','ทะเบียนลูกหนี้'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51'], finhist:['📈','เทียบย้อนหลัง'], docdash:['📊','ภาพรวม'], docreg:['🗂️','จัดการเอกสาร'], doccheck:['✅','ตรวจก่อนส่ง'], docbycat:['📑','รายงานตามประเภท'], docreport:['📦','รายงานประจำเดือน'], doccat:['🏷️','จัดการหมวด'], hubmods:['🧩','โมดูลของแต่ละห้อง'], teamperm:['🔐','สิทธิ์ทีม'], ppl:['👥','ทะเบียนพนักงาน'], pplmig:['🔄','ย้ายพนักงานเข้าทะเบียน'], pplpvd:['🏦','กองทุนสำรองเลี้ยงชีพ'], pplone:['👤','ข้อมูลพนักงาน'], kpiemp:['👥','ทะเบียนพนักงาน'], kpiperson:['📈','ประวัติรายคน'], kpidash:['📊','ภาพรวม'], kpientry:['✍️','กรอกผลงาน'], kpiscore:['⭐','คะแนนคุณลักษณะ'], kpidoc:['📄','ใบประเมิน'], kpiround:['📋','รอบการประเมิน'], kpifill:['✍️','ประเมินผลงาน'], kpimanage:['📊','จัดการผลการประเมิน'], kpirule:['⚖️','เกณฑ์ทั้งองค์กร'], kpimetric:['🎯','ตัวชี้วัด (KPI)'], kpitrait:['🧭','คุณลักษณะรายบุคคล'], kpiimport:['📥','นำเข้าข้อมูลเดิม'], kpireport:['📄','รายงาน'], kpihelp:['📘','คู่มือการใช้งาน'], myset:['🙋','ตั้งค่าของฉัน'], bank:['🏦','บัญชีธนาคาร'], expcat:['🏷️','ประเภทค่าใช้จ่าย'], vendors:['🏪','ทะเบียนผู้ขาย'], vendorform:['🏪','ข้อมูลผู้ขาย'],
     customers:['👥','ทะเบียนลูกค้า'], custfile:['📂','แฟ้มลูกค้า'], dataimp:['📥','นำเข้าแบบตาราง'],
     svcreg:['🧰','ทะเบียนสินค้า/บริการ'], salesone:['📄','รายละเอียดเอกสาร'], salesform:['✏️','ออกเอกสารขาย'], ctform:['✏️','สร้างสัญญาบริการ']
   };
@@ -2980,7 +2980,7 @@
     if(gi) $('tbIcon').innerHTML=gi.replace('stroke-width="1.9"','stroke-width="2"'); else $('tbIcon').textContent=meta[0];
     $('tbTitle').textContent=meta[1];
     mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
-    ({ bank:renderBank, expcat:renderExpCat, svcreg:renderSvcReg, salesone:renderSalesOne, salesform:renderSalesForm, ctform:renderCtForm, portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, perf:renderPerf, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, mailtask:renderMailTask, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expone:renderExpOne, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, poform:renderPoForm, vendors:renderVendors, vendorform:renderVendorForm, petty:renderPetty, vatbuy:renderVatBuy, vatsale:renderVatSale, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, salesqt:renderSalesQt, salesiv:renderSalesIv, salesre:renderSalesRe, salescn:renderSalesCn, datain:renderDataIn, contract:renderContract, recvkind:renderRecvKind, wtreg:renderWtReg, statement:renderStatement, cashreport:renderCashReport, airead:renderAiRead, ar:renderAr, customers:renderCustomers, custfile:renderCustFile, dataimp:renderDataImp, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51, finhist:renderFinHist, docreg:renderDocReg, doccheck:renderDocCheck, docdash:renderDocDash, docbycat:renderDocByCat, docreport:renderDocReport, doccat:renderDocCat, ppl:renderPpl, pplpvd:renderPplPvd, pplone:renderPplOne, kpiemp:renderKpiEmp, kpiperson:renderKpiPerson, kpidash:renderKpiDash, kpientry:renderKpiEntry, kpiscore:renderKpiScore, kpidoc:renderKpiDoc, kpiround:renderKpiRound, kpifill:renderKpiFill, kpimanage:renderKpiManage, kpirule:renderKpiRule, kpimetric:renderKpiMetric, kpitrait:renderKpiTrait, kpiimport:renderKpiImport, kpireport:renderKpiReport, kpihelp:renderKpiHelp, myset:renderMyset }[v] || soon)();
+    ({ bank:renderBank, expcat:renderExpCat, svcreg:renderSvcReg, salesone:renderSalesOne, salesform:renderSalesForm, ctform:renderCtForm, portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, perf:renderPerf, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, mailtask:renderMailTask, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expone:renderExpOne, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, poform:renderPoForm, vendors:renderVendors, vendorform:renderVendorForm, petty:renderPetty, vatbuy:renderVatBuy, vatsale:renderVatSale, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, salesqt:renderSalesQt, salesiv:renderSalesIv, salesre:renderSalesRe, salescn:renderSalesCn, datain:renderDataIn, contract:renderContract, recvkind:renderRecvKind, wtreg:renderWtReg, statement:renderStatement, cashreport:renderCashReport, airead:renderAiRead, ar:renderAr, customers:renderCustomers, custfile:renderCustFile, dataimp:renderDataImp, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51, finhist:renderFinHist, docreg:renderDocReg, doccheck:renderDocCheck, docdash:renderDocDash, docbycat:renderDocByCat, docreport:renderDocReport, doccat:renderDocCat, ppl:renderPpl, pplmig:renderPplMig, pplpvd:renderPplPvd, pplone:renderPplOne, kpiemp:renderKpiEmp, kpiperson:renderKpiPerson, kpidash:renderKpiDash, kpientry:renderKpiEntry, kpiscore:renderKpiScore, kpidoc:renderKpiDoc, kpiround:renderKpiRound, kpifill:renderKpiFill, kpimanage:renderKpiManage, kpirule:renderKpiRule, kpimetric:renderKpiMetric, kpitrait:renderKpiTrait, kpiimport:renderKpiImport, kpireport:renderKpiReport, kpihelp:renderKpiHelp, myset:renderMyset }[v] || soon)();
   }
 
   // ───── มือถือ: เมนูกลุ่ม (ล่าง) + แท็บย่อย (บน) · คอมใช้ sidebar เดิม ไม่เกี่ยว ─────
@@ -3051,6 +3051,7 @@
     docbycat:'<svg viewBox="0 0 24 24"><path d="M4 5.5h16M4 10h16M4 14.5h10M4 19h10"/></svg>',
     docreport:'<svg viewBox="0 0 24 24"><path d="M6.5 3.5h11a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1v-15a1 1 0 0 1 1-1z"/><path d="M9 8h6M9 12h6M9 16h3.5"/></svg>',
     doccat:'<svg viewBox="0 0 24 24"><path d="M3.5 8.5 10 4l10.5 4.2v7L10 20 3.5 15.5z"/><path d="M10 20V9.2l10.5-1"/></svg>',
+    pplmig:'<svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="9" height="15" rx="1.8"/><path d="M15 9h5.5M18 6.5 20.5 9 18 11.5"/><path d="M20.5 15H15M17.5 12.5 15 15l2.5 2.5"/><path d="M6 9h4M6 12h4M6 15h2.5"/></svg>',
     hubmods:'<svg viewBox="0 0 24 24"><rect x="3" y="3.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3.5" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><path d="M15 17.2h5M17.5 14.7v5"/></svg>',
     teamperm:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19.5c0-3.2 2.6-5 5.5-5 1 0 2 .2 2.8.6"/><rect x="14" y="14" width="7" height="6" rx="1.2"/><path d="M15.8 14v-1.8a1.7 1.7 0 0 1 3.4 0V14"/></svg>'
   };
@@ -3159,7 +3160,7 @@
       soon:'รับคอมเมนต์ · แจ้งบั๊ก · คำขอปรับปรุงจากผู้ใช้และลูกค้า → เก็บเป็นรายการไว้พัฒนาต่อ' },
     /* 🏛️ ผู้ดูแลระบบ — เห็นเฉพาะพี่กี้ (super) · จัดการลูกค้าที่สมัครเข้ามา */
     { key:'admin',   th:'ผู้ดูแลระบบ',   en:'ADMIN',       color:'#0f172a', g:['#475569','#0f172a'],
-      own:true, sup:true, views:['hubreq','hubrooms','hubmods'] },
+      own:true, sup:true, views:['hubreq','hubrooms','hubmods','pplmig'] },
     /* ⚙️ ตั้งค่าห้อง — ผู้ดูแลระบบ + ผู้ดูแลของห้องนั้น (ลูกค้าผูก Drive ตัวเองที่นี่ · T5) */
     { key:'roomcfg', th:'ตั้งค่าห้อง',     en:'ROOM SETUP',   color:'#475569', g:['#94a3b8','#334155'],
       adm:true, views:['roomset'] },
@@ -5118,7 +5119,7 @@
       if(i>=0){ fin.views.splice(i,1); if(me.views.indexOf('expdash')<0) me.views.push('expdash'); }
     });
   }
-  var VIEW_TAB={ portal:'เมนูหลัก', payroll:'ระบบเงินเดือน', modsoon:'กำลังพัฒนา', perf:'วัดความเร็วระบบ', hubreq:'คำขอสมัคร', hubrooms:'ห้องลูกค้า', ppl:'ทะเบียนพนักงาน', pplpvd:'กองทุนสำรองฯ', pplone:'ข้อมูลพนักงาน', roomset:'ตั้งค่าห้อง', myset:'ตั้งค่าของฉัน', home:'ภาพรวมประจำวัน', projects:'บอร์ดงาน', mytasks:'งานของฉัน', review:'รอตรวจ', mailtask:'งานจากอีเมล', trash:'ถังขยะ',
+  var VIEW_TAB={ portal:'เมนูหลัก', payroll:'ระบบเงินเดือน', modsoon:'กำลังพัฒนา', perf:'วัดความเร็วระบบ', hubreq:'คำขอสมัคร', hubrooms:'ห้องลูกค้า', ppl:'ทะเบียนพนักงาน', pplmig:'ย้ายพนักงาน', pplpvd:'กองทุนสำรองฯ', pplone:'ข้อมูลพนักงาน', roomset:'ตั้งค่าห้อง', myset:'ตั้งค่าของฉัน', home:'ภาพรวมประจำวัน', projects:'บอร์ดงาน', mytasks:'งานของฉัน', review:'รอตรวจ', mailtask:'งานจากอีเมล', trash:'ถังขยะ',
     senddoc:'ส่งงานลูกค้า', appt:'นัดประชุม', announce:'ประกาศ',
     leave:'ลาของฉัน', approve:'อนุมัติลา', expense:'เบิกของฉัน', expapprove:'อนุมัติเบิก',
     expdash:'รายจ่าย', reimb:'ตั้งเบิกลูกค้า', petty:'เงินสดย่อย', payout:'ใบสั่งจ่าย', poform:'สร้างใบสั่งจ่าย', expreport:'รายงานรายจ่าย', taxhub:'รายงานภาษี', whtin:'50 ทวิ ที่ถูกหัก', vatbuy:'รายงานภาษีซื้อ', vatsale:'รายงานภาษีขาย',
@@ -5127,7 +5128,7 @@
     bank:'บัญชีธนาคาร', expcat:'ประเภทค่าใช้จ่าย', vendors:'ทะเบียนผู้ขาย', vendorform:'ข้อมูลผู้ขาย', customers:'ทะเบียนลูกค้า', custfile:'แฟ้มลูกค้า', dataimp:'นำเข้าแบบตาราง', svcreg:'สินค้า/บริการ', salesone:'รายละเอียดเอกสาร', salesform:'ออกเอกสาร', ctform:'สร้างสัญญา', datain:'นำเข้าข้อมูล', contract:'สัญญาบริการ', recvkind:'ประเภทการรับเงิน', bizdash:'ภาพรวม', sales:'รายรับ', ar:'ลูกหนี้', salesreport:'รายงานรายรับ', poreport:'ทะเบียนใบสำคัญจ่าย', pnd51:'ภ.ง.ด.51', finhist:'เทียบย้อนหลัง', docdash:'ภาพรวมเอกสาร', docreg:'จัดการเอกสาร', doccheck:'ตรวจความครบก่อนส่งนักบัญชี', docbycat:'รายงานตามประเภทเอกสาร', docreport:'รายงานประจำเดือน (ปิดรอบ)', doccat:'จัดการหมวด', kpiemp:'ทะเบียนพนักงาน', kpiperson:'ประวัติรายคน', kpidash:'ภาพรวม', kpientry:'กรอกผลงาน', kpiscore:'คุณลักษณะ', kpidoc:'ใบประเมิน', kpiround:'รอบการประเมิน', kpifill:'ประเมินผลงาน', kpimanage:'จัดการผลการประเมิน', kpirule:'เกณฑ์ทั้งองค์กร', kpimetric:'ตัวชี้วัด (KPI)', kpitrait:'คุณลักษณะรายบุคคล', kpiimport:'นำเข้าข้อมูลเดิม', kpireport:'รายงาน', kpihelp:'คู่มือ' };
   // แท็บที่เห็นเฉพาะพี่/ผู้ดูแล · reimb = ตั้งเบิกลูกค้า (ชีตไม่มีเจ้าของรายคน + เป็นข้อมูลรายได้)
   // ⚠️ ซ่อนแท็บ ≠ กันข้อมูล — backend กรองสิทธิ์เองอีกชั้นเสมอ
-  var OWNER_VIEWS={ bank:1, expcat:1, vendors:1, vendorform:1, customers:1, custfile:1, dataimp:1, airead:1, perf:1, salesqt:1, salesiv:1, salesre:1, salescn:1, wtreg:1, statement:1, cashreport:1, datain:1, contract:1, recvkind:1, review:1, approve:1, expapprove:1, otapprove:1, reimb:1, taxdoc:1, petty:1, payout:1, vatbuy:1, vatsale:1, expreport:1, taxhub:1, whtin:1, hrreport:1, finreport:1, ar:1, pnd51:1, finhist:1, salesreport:1, hubmods:1, teamperm:1, ppl:1, pplone:1, pplpvd:1 };
+  var OWNER_VIEWS={ bank:1, expcat:1, vendors:1, vendorform:1, customers:1, custfile:1, dataimp:1, airead:1, perf:1, salesqt:1, salesiv:1, salesre:1, salescn:1, wtreg:1, statement:1, cashreport:1, datain:1, contract:1, recvkind:1, review:1, approve:1, expapprove:1, otapprove:1, reimb:1, taxdoc:1, petty:1, payout:1, vatbuy:1, vatsale:1, expreport:1, taxhub:1, whtin:1, hrreport:1, finreport:1, ar:1, pnd51:1, finhist:1, salesreport:1, hubmods:1, teamperm:1, ppl:1, pplone:1, pplpvd:1, pplmig:1 };
   var MGROUP='', MG_LAST={};
   /* view ของโมดูลเสริมที่อยู่ในเมนูของโมดูลอื่น (📧 งานจากอีเมล อยู่ในเมนูงาน แต่ต้องซื้อส่วนเสริม mailtask) */
   var VIEW_MOD={ mailtask:'mailtask' };
@@ -14610,6 +14611,91 @@
     callBusy('กำลังลบ…', jsonpPost(withRoom_({action:'waPplPvdDel',uid:UID,code:PPL_CODE,id:id})), 'ลบแล้ว')
       .then(function(r){ if(!r||!r.ok){ if(b) b.disabled=false; mErr((r&&r.error)||'ลบไม่สำเร็จ'); return; } closeModal(); renderPplOne(); })
       .catch(function(e){ if(b) b.disabled=false; mErr(e.message); });
+  }
+
+  /* ═══════════ 🔄 ย้ายพนักงานห้องเดิมเข้าทะเบียนกลาง (ก้อน 5 · 5 ต.ค. 69 · PeopleMigrate.gs) ═══════════
+     ผู้ดูแลระบบเท่านั้น · ดูผลทุกห้องในหน้าเดียว (ยังไม่เขียน) → ย้ายจริงทีละห้อง
+     คนที่มีแค่ในชีตทีมงาน (ไม่มีรหัส) = พิมพ์รหัสในตาราง · เว้นว่าง = ข้าม */
+  var PPLMIG=null, PPLMIG_CODES={}, PPLMIG_OPEN={};
+  function renderPplMig(){
+    skel();
+    jsonp(withRoom_({action:'waPplMigrate',uid:UID,dry:'1'})).then(function(r){
+      if(VIEW!=='pplmig') return;
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      PPLMIG=r; pplMigPaint();
+    }).catch(function(e){ if(VIEW==='pplmig') $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(/เชื่อมต่อเซิร์ฟเวอร์|ไม่ครบ|ไม่รับคำสั่ง/.test(e.message)?'เมนูนี้ต้องอัปเดตหลังบ้านก่อนค่ะ (ยังไม่ได้ deploy)':e.message)+'</div></div>'; });
+  }
+  var PPLMIG_ACT={ add:['lvb-ok','เพิ่มใหม่'], fill:['lvb-wait','เติมข้อมูล'], same:['','มีครบแล้ว'], needcode:['lvb-wait','ต้องใส่รหัส'], skip:['lvb-no','ข้าม'] };
+  function pplMigCount(rm){
+    var typed=0, c=PPLMIG_CODES[rm.code]||{};
+    (rm.rows||[]).forEach(function(x){ if(x.act==='needcode' && String(c[x.key]||'').trim()) typed++; });
+    return (rm.n?rm.n.add+rm.n.fill:0)+typed;
+  }
+  function pplMigRoomHtml(rm){
+    if(rm.error) return '<div class="card"><div class="pb" style="padding:14px 18px"><b>'+esc(rm.name)+'</b> <span style="color:#8A94A6">'+esc(rm.code)+'</span><div class="m-err" style="margin-top:8px">⚠️ '+esc(rm.error)+'</div></div></div>';
+    var n=rm.n, open=!!PPLMIG_OPEN[rm.code], go=pplMigCount(rm), c=PPLMIG_CODES[rm.code]||{};
+    var chip=function(k){ return n[k]?'<span class="lvb '+PPLMIG_ACT[k][0]+'" style="margin-right:6px">'+PPLMIG_ACT[k][1]+' '+n[k]+'</span>':''; };
+    var rows=(rm.rows||[]).slice().sort(function(a,b){ var o={needcode:0,add:1,fill:2,skip:3,same:4}; return o[a.act]-o[b.act]; });
+    var q='&quot;'+esc(rm.code)+'&quot;';
+    return '<div class="card"><div class="pb" style="padding:14px 18px">'+
+      '<div class="st-head"><div class="st-hx"><div class="rs-h">'+esc(rm.name)+' <span style="color:#8A94A6;font-weight:600;font-size:13px">'+esc(rm.code)+' · '+(rm.rows||[]).length+' คน</span></div>'+
+        '<div class="rs-sub" style="margin-top:4px">'+(rm.rows&&rm.rows.length?['add','fill','needcode','skip','same'].map(chip).join(''):'ไม่มีพนักงานในชีตทีมงาน/KPI')+'</div></div>'+
+        '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+          (rm.rows&&rm.rows.length?'<button class="btn btn-ghost" type="button" onclick="pplMigToggle('+q+')">'+(open?'ซ่อนรายชื่อ':'ดูรายชื่อ')+'</button>':'')+
+          '<button class="btn btn-primary" type="button" id="pplMigGo-'+esc(rm.code)+'" onclick="pplMigRun('+q+')"'+(go?'':' disabled')+'>ย้ายห้องนี้ ('+go+' คน)</button></div></div>'+
+      (open?'<div class="tax-tbl-wrap" style="margin-top:10px"><table class="tax-tbl dt-tbl"><colgroup><col style="width:5%"><col style="width:13%"><col style="width:20%"><col style="width:11%"><col style="width:11%"><col style="width:40%"></colgroup>'+
+        '<thead><tr><th>#</th><th>รหัส</th><th>ชื่อ-นามสกุล</th><th>มาจาก</th><th>ผล</th><th>รายละเอียด</th></tr></thead><tbody>'+
+        rows.map(function(x,i){
+          var a=PPLMIG_ACT[x.act]||['',x.act];
+          var codeCell=x.act==='needcode'
+            ? '<input style="width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:8px;font:inherit;font-size:13px" placeholder="ใส่รหัส" value="'+esc(c[x.key]||'')+'" oninput="pplMigCode('+q+',&quot;'+esc(x.key)+'&quot;,this.value)">'
+            : esc(x.code||'—');
+          var det='';
+          if(x.act==='fill') det='เติม: '+x.fill.map(function(f){ return esc(f.h); }).join(' · ');
+          else if(x.act==='add') det='ข้อมูล '+x.nPatch+' ช่อง'+(x.hasLine?' · ผูก LINE':'');
+          else if(x.act==='same') det='จับคู่ด้วย'+esc(x.match);
+          if(x.match && x.act==='fill') det+=' <span style="color:#8A94A6">(จับคู่ด้วย'+esc(x.match)+')</span>';
+          if(x.why) det+=(det?'<br>':'')+'<span style="color:'+(x.act==='skip'?'#B42318':'#B54708')+'">'+esc(x.why)+'</span>';
+          if(x.warns&&x.warns.length) det+=(det?'<br>':'')+x.warns.map(function(w){ return '<span style="color:#B54708">⚠️ '+esc(w)+'</span>'; }).join('<br>');
+          return '<tr><td>'+(i+1)+'</td><td style="white-space:nowrap">'+codeCell+'</td><td>'+esc(x.name||'')+'</td><td>'+esc(x.from)+'</td>'+
+            '<td><span class="lvb '+a[0]+'">'+a[1]+'</span></td><td style="font-size:13px">'+det+'</td></tr>';
+        }).join('')+'</tbody></table></div>':'')+
+    '</div></div>';
+  }
+  function pplMigPaint(){
+    var rooms=(PPLMIG&&PPLMIG.rooms)||[];
+    var tot={add:0,fill:0,needcode:0};
+    rooms.forEach(function(r){ if(r.n){ tot.add+=r.n.add; tot.fill+=r.n.fill; tot.needcode+=r.n.needcode; } });
+    $('main').innerHTML='<div class="lst-card"><div class="lst-head"><div class="t"><b>ย้ายพนักงานเข้าทะเบียนกลาง</b>'+
+        '<div>ดึงจากชีตทีมงาน + KPI พนักงานของแต่ละห้อง · ตอนนี้ยังไม่ได้บันทึกอะไร · กด "ย้ายห้องนี้" ทีละห้อง</div></div>'+
+        '<div class="lst-tools"><button class="btn btn-ghost" type="button" onclick="renderPplMig()">ตรวจใหม่</button></div></div>'+
+      '<div class="m-hint" style="margin:0 0 4px">• รวมทุกห้อง: เพิ่มใหม่ '+tot.add+' · เติมข้อมูล '+tot.fill+' · ต้องใส่รหัส '+tot.needcode+' คน<br>'+
+        '• คนที่มีในทะเบียนแล้ว = เติมเฉพาะช่องที่ทะเบียนยังว่าง ไม่ทับค่าเดิม<br>'+
+        '• คนที่มีแค่ในชีตทีมงาน (ไม่มีรหัส) — พิมพ์รหัสพนักงานในช่อง "รหัส" · เว้นว่าง = ข้ามคนนั้น (เช่น นักบัญชี/คนนอก)<br>'+
+        '• หลังย้าย ชื่อในชีตทีมงานจะเปลี่ยนเป็นชื่อตามทะเบียน (ตาม KPI) แทนชื่อจาก LINE</div></div>'+
+      rooms.map(pplMigRoomHtml).join('');
+  }
+  function pplMigToggle(code){ PPLMIG_OPEN[code]=!PPLMIG_OPEN[code]; pplMigPaint(); }
+  function pplMigCode(room, key, v){
+    (PPLMIG_CODES[room]=PPLMIG_CODES[room]||{})[key]=String(v||'').trim();
+    var rm=((PPLMIG&&PPLMIG.rooms)||[]).filter(function(r){ return r.code===room; })[0];
+    var b=$('pplMigGo-'+room); if(b&&rm){ var n=pplMigCount(rm); b.disabled=!n; b.textContent='ย้ายห้องนี้ ('+n+' คน)'; }
+  }
+  function pplMigRun(room){
+    var b=$('pplMigGo-'+room); if(b) b.disabled=true;
+    callBusy('กำลังย้ายข้อมูล…', jsonpPost(withRoom_({action:'waPplMigrate',uid:UID,dry:'0',room:room,codes:JSON.stringify(PPLMIG_CODES[room]||{})})), 'ย้ายแล้ว')
+      .then(function(r){
+        if(!r||!r.ok){ if(b) b.disabled=false; toast((r&&r.error)||'ย้ายไม่สำเร็จ'); return; }
+        var x=(r.rooms||[])[0]||{}, d=x.done||{added:0,filled:0,failed:[]};
+        if(x.error){ if(b) b.disabled=false; toast(x.error); return; }
+        var rooms=PPLMIG.rooms; for(var i=0;i<rooms.length;i++) if(rooms[i].code===room){ rooms[i].n=x.after||rooms[i].n; }
+        PPLMIG_CODES[room]={};
+        setTimeout(function(){
+          modal('<h3>ย้าย '+esc(x.name||room)+' แล้ว</h3><div class="m-hint" style="margin-top:0">เพิ่มใหม่ '+d.added+' · เติมข้อมูล '+d.filled+' คน'+
+            (d.failed&&d.failed.length?'<br><b>ไม่สำเร็จ '+d.failed.length+' คน:</b><br>'+d.failed.map(function(f){ return esc((f.code||'')+' '+(f.name||'')+' — '+f.error); }).join('<br>'):'')+'</div>'+
+            '<div class="m-act"><button class="btn btn-primary" onclick="closeModal();renderPplMig()">ปิด</button></div>');
+        }, 1600);
+      }).catch(function(e){ if(b) b.disabled=false; toast(e.message); });
   }
 
   /* ── หน้าข้อมูลรายคน ── */
@@ -28577,7 +28663,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20261005-0504';
+  var APP_BUILD='20261005-0543';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
