@@ -16,9 +16,9 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20261004-1828">
+<link rel="stylesheet" href="user.css?v=20261004-2101">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<script src="yd-auth.js?v=20261004-1828"></script>
+<script src="yd-auth.js?v=20261004-2101"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
   .date-row{ display:flex; flex-direction:column; gap:14px; margin:4px 0 12px; } .date-row > div{ min-width:0; }
@@ -3207,8 +3207,9 @@
       /* ตารางคำขอ (พี่กี้ขอ 4 ต.ค. 69) — หัวคอลัมน์ + ลำดับ · การ์ดหัว+ตารางแบบเดียวกับหน้าห้องลูกค้า/PO
          รออนุมัติขึ้นก่อน · กด "อนุมัติ" = เลือกแพ็กในกล่อง (เดิมติ๊กบนการ์ด) · ไม่มีคำขอ = ยังเห็นหัวตาราง */
       var rows=pend.concat(done.slice(0,50));
-      var QC=[{t:'#',w:'5%'},{t:'เลขที่',w:'9%'},{t:'วันที่',w:'9%'},{t:'บริษัท',w:'19%'},{t:'ผู้ติดต่อ',w:'12%'},
-        {t:'เบอร์ / อีเมล',w:'13%'},{t:'สนใจ',w:'13%'},{t:'สถานะ',w:'9%'},{t:'จัดการ',w:'11%'}];
+      /* รหัสห้องแยกคอลัมน์ (พี่กี้ขอ 4 ต.ค. 69 — เดิมซ้อนใต้ป้ายสถานะ) · เลขที่คำขอยาว (REQ-YYMMDD-HHMMSS) ต้องกว้างพอไม่ทับวันที่ */
+      var QC=[{t:'#',w:'4%'},{t:'เลขที่',w:'13%'},{t:'วันที่',w:'8%'},{t:'บริษัท',w:'15%'},{t:'ผู้ติดต่อ',w:'10%'},
+        {t:'เบอร์ / อีเมล',w:'12%'},{t:'สนใจ',w:'12%'},{t:'สถานะ',w:'7%'},{t:'รหัสห้อง',w:'6%'},{t:'จัดการ',w:'13%'}];
       var html='<div class="lst-card"><div class="lst-head">'+
         '<div class="t"><b>คำขอสมัครใช้งาน <span style="color:#8A94A6;font-weight:600;font-size:13px">รออนุมัติ '+pend.length+' ราย</span></b>'+
           '<div>บริษัทที่กดสมัครเองจากหน้าเว็บ · อนุมัติ = เลือกแพ็กแล้วเปิดห้องให้ทันที</div></div></div>'+
@@ -3222,8 +3223,8 @@
             '<td><b>'+esc(q.company)+'</b>'+(q.taxId?('<br><span style="font-size:12px;color:#8A94A6">เลขภาษี '+esc(q.taxId)+'</span>'):'')+'</td>'+
             '<td>'+esc(q.contact||'—')+'</td><td style="word-break:break-all">'+esc(q.phone||'—')+'</td>'+
             '<td style="font-size:13px;color:#4B5565">'+esc(q.want||'—')+'</td>'+
-            '<td><span class="lvb '+(wait?'lvb-wait':(okSt?'lvb-ok':'lvb-no'))+'">'+esc(q.status)+'</span>'+
-              (q.tenant?('<br><span style="font-size:12px;color:#8A94A6">ห้อง '+esc(q.tenant)+'</span>'):'')+'</td>'+
+            '<td><span class="lvb '+(wait?'lvb-wait':(okSt?'lvb-ok':'lvb-no'))+'">'+esc(q.status)+'</span></td>'+
+            '<td>'+(q.tenant?esc(q.tenant):'<span style="color:#8A94A6">—</span>')+'</td>'+
             '<td>'+(wait ? '<div style="display:flex;gap:6px;flex-wrap:nowrap">'+
                 '<button class="btn btn-ok btn-sm" style="width:auto" type="button" onclick="hqApprove('+qq+')">อนุมัติ</button>'+
                 '<button class="btn btn-ghost btn-sm" style="width:auto" type="button" onclick="hqReject('+qq+')">ปฏิเสธ</button></div>'
@@ -27988,7 +27989,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20261004-1828';
+  var APP_BUILD='20261004-2101';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
