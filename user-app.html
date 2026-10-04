@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20261004-1610">
+<link rel="stylesheet" href="user.css?v=20261004-1620">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -26161,10 +26161,8 @@ function kpImpDraw(){
 
   function renderMailTask(){
     MT_SEL={};
-    $('main').innerHTML='<div class="phead"><h2>📧 งานจากอีเมล</h2>'+
-      '<div class="psub">ระบบดึงอีเมลเองทุกเช้า 7:30 — ระหว่างวันกด <b>🔄 ดึงอีเมลใหม่</b> · อีเมลจากลูกค้าในทะเบียน AI อ่านแล้วเสนอเป็นงานที่แท็บ <b>รอรับ</b>'+
-      ' · อีเมลจากคนที่ระบบยังไม่รู้จัก ไปอยู่แท็บ <b>รอจับคู่</b> ให้เลือกลูกค้าเอง'+
-      '<br>อยากให้อีเมลของคุณเข้ามาด้วย: เปิด "อีเมลรับงานของฉัน" ที่หน้า <a href="#" onclick="switchView(\'myset\');return false">🙋 ตั้งค่าของฉัน</a></div></div>'+
+    /* พี่กี้สั่งเอาข้อความอธิบายใต้หัวข้อออก (4 ต.ค. 69) */
+    $('main').innerHTML='<div class="phead"><h2>📧 งานจากอีเมล</h2></div>'+
       '<div id="mtPullBar">'+mtPullBarHtml()+'</div>'+
       '<div id="mtTabs">'+mtTabsHtml()+'</div><div id="mtBar"></div>'+
       '<div class="card" id="mtBox">'+dtTable(MT_COLS[MT_TAB]||MT_COLS.wait, [], '', 'กำลังโหลด…')+'</div>';
@@ -27407,7 +27405,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20261004-1610';
+  var APP_BUILD='20261004-1620';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
