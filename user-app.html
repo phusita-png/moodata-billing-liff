@@ -16,9 +16,9 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20261004-1809">
+<link rel="stylesheet" href="user.css?v=20261004-1812">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<script src="yd-auth.js?v=20261004-1809"></script>
+<script src="yd-auth.js?v=20261004-1812"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
   .date-row{ display:flex; flex-direction:column; gap:14px; margin:4px 0 12px; } .date-row > div{ min-width:0; }
@@ -3442,7 +3442,8 @@
     { key:'co',    label:'ตั้งค่าบริษัท' },
     { key:'user',  label:'ตั้งค่าผู้ใช้งาน' },
     { key:'docno', label:'ตั้งค่าเลขที่เอกสาร' },
-    { key:'mail',  label:'อีเมลรับงาน', mod:'mailtask' }   // 📧 ส่วนเสริม — โชว์เฉพาะห้องที่ซื้อ
+    { key:'mail',  label:'อีเมลรับงาน', mod:'mailtask' },  // 📧 ส่วนเสริม — โชว์เฉพาะห้องที่ซื้อ
+    { key:'ai',    label:'AI ของบริษัท' }                  // 🔑 วางคีย์ AI ของบริษัทเอง (4 ต.ค. 69)
   ];
   /* 🏦 แท็บ "ตั้งค่าช่องทางการเงิน" ถูกถอดออก 19 ก.ย. 2569 (พี่กี้สั่ง)
      ทะเบียนบัญชีย้ายไปเมนู 🏦 ธนาคาร ครบแล้ว · ช่องทางรับ/จ่ายไม่ใช่ค่าที่ต้องตั้ง
@@ -3714,6 +3715,7 @@
     if(ST_TAB==='user') return stUserHtml();
     if(ST_TAB==='docno')return stDocNoHtml();
     if(ST_TAB==='mail' && modOpen('mailtask')){ setTimeout(mtRoomLoad,0); return '<div id="mtRoomBox">'+mtRoomHtml()+'</div>'; }
+    if(ST_TAB==='ai'){ setTimeout(aiKeyLoad,0); return '<div id="aiKeyBox">'+aiKeyHtml()+'</div>'; }
     return roomDriveHtml(info) + roomModHtml() + roomAiHtml();     // ① Drive
   }
 
@@ -26580,6 +26582,7 @@ function kpImpDraw(){
       a.push({label:'➕ เพิ่มเป็นลูกค้าใหม่', call:'mtNewCust(\''+id+'\')'});
     }
     a.push({label:'📄 ดูอีเมล', call:'mtView(\''+id+'\')'});
+    if(tab!=='match') a.push({label:'✉️ ตอบอีเมล', call:'mtReply(\''+id+'\')'});
     if(x.mailUrl) a.push({label:'✉️ เปิดใน Gmail', href:x.mailUrl});
     if(tab==='skip') a.push({label:'↩️ ย้ายไปรอรับ', call:'mtSkip(\''+id+'\',1)'});
     if(tab==='wait' || tab==='match'){ a.push({sep:1}); a.push({label:'❌ ไม่ใช่งาน (ฉบับนี้)', call:'mtSkip(\''+id+'\',0)', danger:1}); }
@@ -26678,7 +26681,8 @@ function kpImpDraw(){
     var body=rows.map(function(x,i){
       var title='<div>'+mtKindBadge(x.kind)+' '+esc(x.title||x.subject)+'</div>'+
         (x.reason?'<div class="psub" style="margin:2px 0 0">🤖 '+esc(x.reason)+'</div>':'')+
-        (x.files&&x.files.length?'<div class="psub" style="margin:2px 0 0">📎 ไฟล์แนบ '+x.files.length+'</div>':'');
+        (x.files&&x.files.length?'<div class="psub" style="margin:2px 0 0">📎 ไฟล์แนบ '+x.files.length+'</div>':'')+
+        (x.replied?'<div class="psub" style="margin:2px 0 0">✉️ '+esc(x.replied)+'</div>':'');
       if(MT_TAB==='wait'){
         return '<tr><td><input type="checkbox" '+(MT_SEL[x.id]?'checked ':'')+'onclick="mtPick(\''+esc(x.id)+'\',this.checked)" aria-label="เลือก"></td>'+
           '<td class="dt-nw">'+(i+1)+'</td><td class="dt-nw">'+mtWhen(x.at)+'</td><td>'+mtFrom(x)+'</td><td>'+title+'</td>'+
@@ -26695,7 +26699,7 @@ function kpImpDraw(){
           '<td>'+esc(x.subject)+'</td><td>'+esc(x.reason||'—')+'</td>'+dtActCell('mt:'+x.id, mtRowActions(x,'skip'))+'</tr>';
       }
       var st=x.status==='รับแล้ว'?'<span class="tk-badge b-done">✅ รับแล้ว</span>':'<span class="tk-badge b-void">'+esc(x.status)+'</span>';
-      return '<tr><td class="dt-nw">'+(i+1)+'</td><td class="dt-nw">'+mtWhen(x.at)+'</td><td>'+mtFrom(x)+'</td><td>'+esc(x.title||x.subject)+'</td>'+
+      return '<tr><td class="dt-nw">'+(i+1)+'</td><td class="dt-nw">'+mtWhen(x.at)+'</td><td>'+mtFrom(x)+'</td><td>'+title+'</td>'+
         '<td class="dt-nw">'+st+'</td><td class="dt-nw">'+esc(x.taskNo||'—')+'</td><td>'+esc(x.decidedBy||'')+'</td>'+
         dtActCell('mt:'+x.id, mtRowActions(x,'hist'))+'</tr>';
     });
@@ -26781,6 +26785,7 @@ function kpImpDraw(){
       }).join('')+'</div>':'')+
       '<div class="m-act"><button style="width:auto" class="btn btn-ghost" onclick="closeModal()">ปิด</button>'+
       (x.mailUrl?'<a style="width:auto" class="btn btn-ghost" href="'+esc(x.mailUrl)+'" target="_blank" rel="noopener">✉️ เปิดใน Gmail</a>':'')+
+      (x.status!=='รอจับคู่'?'<button style="width:auto" class="btn btn-ghost" onclick="mtReply(\''+esc(id)+'\')">✉️ ตอบ…</button>':'')+
       (x.status==='รอรับ'?'<button style="width:auto" class="btn btn-primary" onclick="mtEdit(\''+esc(id)+'\')">✅ รับเป็นงาน…</button>':'')+'</div>');
   }
   /** ➕ ผู้ส่งเป็นลูกค้าใหม่ — เปิดฟอร์มทะเบียนลูกค้าเดิม เติมชื่อ+อีเมลให้ · บันทึกแล้วกลับมากดจับคู่ */
@@ -26951,6 +26956,133 @@ function kpImpDraw(){
   window.mtAccept=mtAccept; window.mtSkip=mtSkip; window.mtEdit=mtEdit; window.mtEditSave=mtEditSave; window.mtView=mtView;
   window.mtPull=mtPull; window.mtMatch=mtMatch; window.mtIgnore=mtIgnore; window.mtMeLoad=mtMeLoad; window.mtMeSave=mtMeSave; window.mtMeAllow=mtMeAllow;
   window.mtRoomSave=mtRoomSave; window.mtCapEdit=mtCapEdit; window.mtCapSave=mtCapSave;
+
+  /* ── ✉️ ตอบลูกค้ากลับทางอีเมล (M3 · พี่กี้เคาะ 4 ต.ค. 69) ──
+     AI ร่าง → คนแก้ → ส่ง · กล่องพี่ = ระบบตอบในเธรดเดิม · ที่เหลือ = เปิดร่างใน Gmail ของผู้ดูแลแล้วกดส่งเอง
+     🔴 ไม่มีอะไรส่งออกไปเองโดยไม่มีคนกด */
+  var MT_REPLY_ARM=0;
+  /** ลิงก์เปิดร่างใน Gmail — ฟังก์ชันบริสุทธิ์ (เทสเรียกตัวเดียวกัน) · ยาวเกิน = ไม่ใส่เนื้อความ (ให้วางเอง) */
+  function mtComposeUrl(to, subject, body, max){
+    var base='https://mail.google.com/mail/?view=cm&fs=1&tf=1&to='+encodeURIComponent(to||'')+'&su='+encodeURIComponent(subject||'');
+    var full=base+'&body='+encodeURIComponent(body||'');
+    return { url: full.length<=(max||7000) ? full : base, cut: full.length>(max||7000) };
+  }
+  function mtReply(id){
+    var x=mtFind(id); if(!x) return;
+    var send=x.replyMode==='send';
+    MT_REPLY_ARM=0;
+    modal('<h3>✉️ ตอบอีเมล</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint">ถึง: <b>'+esc(x.fromName?(x.fromName+' <'+x.fromEmail+'>'):x.fromEmail)+'</b><br>เรื่อง: '+esc(x.subject||'(ไม่มีหัวเรื่อง)')+'<br>'+
+        (send?'📤 ระบบจะตอบในเธรดเดิม จาก phusita@moodata.me'
+             :'✉️ ระบบจะเปิดร่างใน Gmail ของคุณ ให้ตรวจแล้วกดส่งเอง — อีเมลออกจากเมลของคุณจริง')+'</div>'+
+      (x.replied?'<div class="m-hint" style="background:#ECFDF5;color:#065F46">ตอบไปแล้ว: '+esc(x.replied)+'</div>':'')+
+      '<div class="fld"><label>อยากตอบว่าอะไร (ไม่ใส่ก็ได้ AI จะตอบรับเรื่องให้)</label>'+
+        '<input id="mtRH" maxlength="500" placeholder="เช่น ได้รับเอกสารแล้ว จะส่งงบภายในวันศุกร์นี้"></div>'+
+      (x.status==='รอจับคู่'?'':'<button style="width:auto" class="btn btn-ghost btn-sm" type="button" onclick="mtReplyDraft(\''+esc(id)+'\')">✨ ให้ AI ร่าง</button>')+
+      '<div class="fld" style="margin-top:10px"><label>ข้อความตอบกลับ</label><textarea id="mtRB" rows="10" placeholder="พิมพ์เอง หรือกด ✨ ให้ AI ร่าง"></textarea></div>'+
+      '<div class="m-act"><button style="width:auto" class="btn btn-ghost" onclick="closeModal()">ปิด</button>'+
+      (send
+        ? '<button style="width:auto" class="btn btn-primary" id="mtRSend" onclick="mtReplySend(\''+esc(id)+'\')">📤 ส่งตอบ</button>'
+        : '<button style="width:auto" class="btn btn-ghost" onclick="mtReplyCopy()">📋 คัดลอกข้อความ</button>'+
+          '<button style="width:auto" class="btn btn-primary" onclick="mtReplyCompose(\''+esc(id)+'\')">✉️ เปิดร่างใน Gmail</button>')+'</div>');
+  }
+  function mtReplyDraft(id){
+    var hint=($('mtRH')||{}).value||'';
+    callBusy('AI กำลังร่างคำตอบ…', jsonpPost({action:'waMailReply',uid:UID,op:'draft',id:id,hint:hint}), 'ร่างเสร็จแล้ว').then(function(r){
+      if(!r||!r.ok){ mErr((r&&r.error)||'ร่างไม่สำเร็จ'); return; }
+      var b=$('mtRB'); if(b) b.value=r.body||'';
+    }).catch(function(e){ mErr(e.message); });
+  }
+  function mtReplySend(id){
+    var x=mtFind(id); if(!x) return;
+    var body=(($('mtRB')||{}).value||'').trim();
+    if(!body){ mErr('พิมพ์ข้อความตอบกลับก่อนค่ะ'); return; }
+    if(!MT_REPLY_ARM){
+      MT_REPLY_ARM=1; var bt=$('mtRSend'); if(bt) bt.textContent='กดอีกครั้งเพื่อส่งถึง '+x.fromEmail;
+      setTimeout(function(){ MT_REPLY_ARM=0; var b2=$('mtRSend'); if(b2) b2.textContent='📤 ส่งตอบ'; }, 5000);
+      return;
+    }
+    MT_REPLY_ARM=0;
+    callBusy('กำลังส่งอีเมล…', jsonpPost({action:'waMailReply',uid:UID,op:'send',id:id,body:body}), 'ส่งแล้ว').then(function(r){
+      if(!r||!r.ok){ mErr((r&&r.error)||'ส่งไม่สำเร็จ'); return; }
+      closeModal(); toast(r.again?'อีเมลนี้ส่งไปแล้วก่อนหน้า ('+(r.replied||'')+')':'📤 ตอบลูกค้าแล้ว'); mtLoad();
+    }).catch(function(e){ mErr(e.message); });
+  }
+  function mtReplyCopy(){
+    var t=(($('mtRB')||{}).value||'').trim();
+    if(!t){ mErr('ยังไม่มีข้อความให้คัดลอก'); return; }
+    function done(){ toast('📋 คัดลอกข้อความแล้ว'); }
+    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(done).catch(function(){ copyFallback(t,done); }); }
+    else copyFallback(t,done);
+  }
+  function mtReplyCompose(id){
+    var x=mtFind(id); if(!x) return;
+    var body=(($('mtRB')||{}).value||'').trim();
+    var subj=/^(re|ตอบกลับ)\s*:/i.test(x.subject||'')?x.subject:('Re: '+(x.subject||''));
+    var c=mtComposeUrl(x.fromEmail, subj, body);
+    if(c.cut){ mtReplyCopy(); toast('ข้อความยาวเกินจะใส่ในลิงก์ — คัดลอกให้แล้ว วางในร่างที่เปิดขึ้นได้เลยค่ะ'); }
+    window.open(c.url,'_blank','noopener');
+    jsonp({action:'waMailReply',uid:UID,op:'opened',id:id}).then(function(){ mtLoad(); }).catch(function(){});
+    closeModal();
+  }
+  window.mtReply=mtReply; window.mtReplyDraft=mtReplyDraft; window.mtReplySend=mtReplySend;
+  window.mtReplyCopy=mtReplyCopy; window.mtReplyCompose=mtReplyCompose;
+
+  /* ── 🔑 คีย์ AI ของบริษัท (BYOK · ⚙️ ตั้งค่าห้อง ▸ แท็บ AI ของบริษัท · 4 ต.ค. 69) ──
+     วางคีย์ Anthropic ของบริษัทเอง → AI ทุกตัวในห้องใช้คีย์นี้ ค่าใช้จ่ายตัดบัญชีบริษัทตรง ไม่ติดเพดานรายเดือน
+     🔴 หลังบ้านไม่ส่งคีย์กลับมา — หน้านี้เห็นแค่ 4 ตัวท้าย */
+  var AIK=null, AIK_EDIT=false, AIK_DEL_ARM=0;
+  function aiKeyHtml(){
+    var r=AIK;
+    var head='<div class="card"><div class="pb" style="padding:16px 18px"><div class="rs-h">🔑 คีย์ AI ของบริษัท</div>'+
+      '<div class="rs-sub">ใช้คีย์ Anthropic (Claude) ของบริษัทเอง — AI ทุกตัวในระบบของบริษัทนี้ (อ่านบิล · อีเมลเป็นงาน · ผู้ช่วย AI) '+
+      'จะใช้คีย์นี้ ค่า AI ตัดจากบัญชี Anthropic ของบริษัทโดยตรง</div>';
+    if(!r) return head+'<div class="emptybox">กำลังโหลด…</div></div></div>';
+    if(!r.ok) return head+'<div class="emptybox">'+esc(r.error||'โหลดไม่สำเร็จ')+'</div></div></div>';
+    if(r.isHome) return head+'<div class="rs-st rs-ok"><b>✅ ห้อง Moodata</b><span>ใช้คีย์ของระบบอยู่แล้ว ไม่ต้องตั้ง</span></div></div></div>';
+    var st = r.has
+      ? '<div class="rs-st rs-ok"><b>✅ ใช้คีย์ของบริษัท</b><span>ลงท้าย …'+esc(r.last4)+(r.setBy?(' · ตั้งโดย '+esc(r.setBy)):'')+
+          (r.setAt?(' · '+mtWhen(r.setAt)):'')+'</span></div>'+
+        '<div class="m-hint">ไม่ติดเพดานรายเดือนของ Moodata แล้ว · เพดานรายคนต่อวันยังใช้ตามเดิม</div>'
+      : '<div class="rs-st rs-no"><b>ใช้คีย์ของ Moodata</b><span>เพดานเดือนนี้: อีเมล '+(r.mailCap||0)+' ฉบับ · ผู้ช่วย AI '+(r.aiCap||0)+' คำถาม</span></div>';
+    var steps='<div class="rs-note"><b>เอาคีย์มาจากไหน</b><ol style="margin:6px 0 0;padding-left:20px">'+
+      '<li>สมัครที่ console.anthropic.com (ใช้อีเมลบริษัท)</li>'+
+      '<li>เมนู Billing → เติมเครดิต / ผูกบัตร</li>'+
+      '<li>เมนู API Keys → Create Key → คัดลอก (ขึ้นต้นด้วย sk-ant-)</li>'+
+      '<li>กด "แก้ไข" ด้านล่าง วางคีย์ แล้วกด "ทดสอบและบันทึก"</li></ol></div>';
+    var form='<div class="fld" style="margin-top:12px"><label style="display:flex;align-items:center;gap:8px">'+(r.has?'เปลี่ยนคีย์':'วางคีย์ของบริษัท')+
+        '<button style="width:auto;margin-left:auto" class="btn btn-ghost btn-sm" type="button" data-nolock onclick="aiKeyEdit()">'+(AIK_EDIT?'ยกเลิก':'แก้ไข')+'</button></label>'+
+        '<input id="aiKeyIn" type="password" autocomplete="off" data-nolock '+(AIK_EDIT?'':'readonly style="background:#F4F6F9" ')+'placeholder="sk-ant-…"></div>'+
+      (AIK_EDIT?'<button style="width:100%" class="btn btn-primary" type="button" data-nolock onclick="aiKeySave(\'save\')">ทดสอบและบันทึก</button>':'')+
+      (r.has?'<button style="width:auto;margin-top:10px" class="btn btn-ghost btn-sm" id="aiKeyDel" type="button" data-nolock onclick="aiKeySave(\'del\')">🗑️ เลิกใช้คีย์ของบริษัท (กลับไปใช้คีย์ Moodata)</button>':'');
+    return head+st+(r.has?'':steps)+form+
+      '<div class="rs-note">🔒 ระบบลองคีย์กับ Anthropic ก่อนบันทึกทุกครั้ง · บันทึกแล้วเห็นแค่ 4 ตัวท้าย ไม่มีใครเปิดดูคีย์เต็มจากเว็บได้</div>'+
+      '</div></div>';
+  }
+  function aiKeyPaint(){ var b=$('aiKeyBox'); if(b) b.innerHTML=aiKeyHtml(); }
+  function aiKeyLoad(){
+    AIK=null; AIK_EDIT=false; aiKeyPaint();
+    jsonp({action:'waRoomAiKey',uid:UID}).then(function(r){ AIK=r||{ok:false}; aiKeyPaint(); })
+      .catch(function(e){ AIK={ok:false,error:e.message}; aiKeyPaint(); });
+  }
+  function aiKeyEdit(){ AIK_EDIT=!AIK_EDIT; aiKeyPaint(); if(AIK_EDIT){ var i=$('aiKeyIn'); if(i) i.focus(); } }
+  function aiKeySave(op){
+    var p={action:'waRoomAiKeySave',uid:UID,op:op};
+    if(op==='save'){
+      p.key=(($('aiKeyIn')||{}).value||'').replace(/\s+/g,'');
+      if(!/^sk-ant-/.test(p.key)){ toast('⚠️ คีย์ของ Anthropic ขึ้นต้นด้วย sk-ant- ค่ะ'); return; }
+    } else if(!AIK_DEL_ARM){
+      AIK_DEL_ARM=1; var b=$('aiKeyDel'); if(b) b.textContent='กดอีกครั้งเพื่อยืนยัน — AI จะกลับไปใช้คีย์ Moodata และติดเพดานรายเดือน';
+      setTimeout(function(){ AIK_DEL_ARM=0; aiKeyPaint(); }, 5000); return;
+    }
+    AIK_DEL_ARM=0;
+    callBusy(op==='save'?'กำลังทดสอบคีย์กับ Anthropic…':'กำลังบันทึก…', jsonpPost(p), op==='save'?'คีย์ใช้ได้ บันทึกแล้ว':'เลิกใช้คีย์ของบริษัทแล้ว').then(function(r){
+      if(!r||!r.ok){ toast('⚠️ '+((r&&r.error)||'บันทึกไม่สำเร็จ')); return; }
+      aiKeyLoad();
+    }).catch(function(e){ toast('⚠️ '+e.message); });
+  }
+  window.aiKeyEdit=aiKeyEdit; window.aiKeySave=aiKeySave;
+
 
   function renderReview(){
     if(IS_OWNER){ renderOwnerBoard('review'); return; }   // พี่ → บอร์ดสไตล์เดียวกัน (เฉพาะงานรอตรวจ)
@@ -27846,7 +27978,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20261004-1809';
+  var APP_BUILD='20261004-1812';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
