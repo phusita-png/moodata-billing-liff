@@ -16,9 +16,9 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20261005-0543">
+<link rel="stylesheet" href="user.css?v=20261005-0607">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<script src="yd-auth.js?v=20261005-0543"></script>
+<script src="yd-auth.js?v=20261005-0607"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
   .date-row{ display:flex; flex-direction:column; gap:14px; margin:4px 0 12px; } .date-row > div{ min-width:0; }
@@ -3056,7 +3056,6 @@
     teamperm:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19.5c0-3.2 2.6-5 5.5-5 1 0 2 .2 2.8.6"/><rect x="14" y="14" width="7" height="6" rx="1.2"/><path d="M15.8 14v-1.8a1.7 1.7 0 0 1 3.4 0V14"/></svg>'
   };
   var MOD_ICON={
-    people:'<svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.2"/><circle cx="9" cy="10.5" r="2.3"/><path d="M5.6 16.5c.5-1.8 1.9-2.8 3.4-2.8s2.9 1 3.4 2.8"/><path d="M14.5 9.5h4M14.5 12.5h4M14.5 15.5h2.5"/></svg>',
     kpi:'<svg viewBox="0 0 24 24"><path d="M4 19.5V13M9.3 19.5V8.5M14.7 19.5v-7M20 19.5V5"/><path d="M3 21h18"/></svg>',
     fin:'<svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="11" rx="2"/><circle cx="12" cy="12" r="2.4"/><path d="M6.5 9.5v5M17.5 9.5v5"/></svg>',
     tax:'<svg viewBox="0 0 24 24"><path d="M3 10 12 4l9 6"/><path d="M5 10v9M12 10v9M19 10v9"/><path d="M3 20h18"/></svg>',
@@ -3114,7 +3113,8 @@
     { key:'hr',      th:'ระบบบุคคล',    en:'HR',          color:'#168a52', g:['#34d399','#047857'], own:true,
       /* 🔐 teamperm ย้ายไปรวมใน ⚙️ ตั้งค่าห้อง ▸ ตั้งค่าผู้ใช้งาน (18 ก.ย. 69)
          คง view ไว้ใน extra เผื่อลิงก์เก่า/ปุ่มค้าง — เข้าไปแล้วพาไปที่ใหม่ให้ */
-      views:['approve','otapprove','hrreport'], extra:['teamperm'] },
+      /* 👥 ทะเบียนพนักงาน + กองทุน รวมเข้าระบบบุคคล (5 ต.ค. 69 พี่กี้เคาะแพ็กเดียว · เดิมแยกการ์ด "งานบุคคล") */
+      views:['ppl','pplpvd','approve','otapprove','hrreport'], extra:['teamperm','pplone'] },
     /* 💵 เงินเดือน — แยกจากบุคคล (พี่กี้เคาะ 5 ก.ย. เย็น)
        ลูกค้าแพ็กการเงินก็ต้องทำเงินเดือน (ภ.ง.ด.1 ต้องมี 40(1)) แต่ไม่ต้องพา
        พนักงานทั้งบริษัทมาลงเวลา/ลา — คนละภาระกันคนละเรื่อง */
@@ -3136,10 +3136,6 @@
       sec:[ ['ประเมินผลงาน', ['kpidash','kpiemp','kpiround','kpifill','kpimanage']],
             ['รายงาน', ['kpireport','kpiperson','kpihelp']],
             ['ตั้งค่าแบบประเมิน', ['kpirule','kpimetric','kpitrait','kpiimport']] ] },
-    /* 👥 งานบุคคล (4 ต.ค. 69 · พี่กี้เคาะ D1) — ทะเบียนพนักงานกลาง → แฟ้มเอกสาร/ประกันกลุ่ม/ออกเอกสาร HR ตามมา
-       own:true = ผู้ดูแลห้องเท่านั้น (ข้อมูลส่วนบุคคลทั้งบริษัท) */
-    { key:'people',  th:'งานบุคคล',     en:'PEOPLE',      color:'#0f766e', g:['#2dd4bf','#0f766e'], own:true,
-      views:['ppl','pplpvd'], extra:['pplone'] },
     { key:'docsys',  th:'ระบบเอกสาร',   en:'DOCUMENTS',   color:'#a16207', g:['#fbbf24','#a16207'], own:false,
       views:['docdash','docreg','doccheck','docbycat','docreport','doccat'],
       sec:[ ['ทะเบียนเอกสาร', ['docdash','docreg','doccheck']],
@@ -28663,7 +28659,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20261005-0543';
+  var APP_BUILD='20261005-0607';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
