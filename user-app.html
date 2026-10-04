@@ -16,7 +16,7 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20261004-1649">
+<link rel="stylesheet" href="user.css?v=20261004-1654">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
@@ -44,6 +44,11 @@
     border:1px solid rgba(255,255,255,.45); border-radius:999px; background:rgba(255,255,255,.16);
     color:#fff; font-size:14px; font-weight:600; cursor:pointer; white-space:nowrap; }
   .ask-btn:hover{ background:rgba(255,255,255,.30); }
+  /* หัวยินดี (ตัดจาก mascot-wave2.png ให้เห็นแค่หัวในวงกลม · พี่กี้ขอ 4 ต.ค. 69) */
+  .ask-btn{ display:inline-flex; align-items:center; gap:7px; padding:0 14px 0 4px; }
+  .ask-ic{ display:inline-block; flex:0 0 auto; width:28px; height:28px; border-radius:50%;
+    background:#fff url(mascot-wave2.png) 56% 30%/170% no-repeat; box-shadow:0 0 0 1px rgba(255,255,255,.6); }
+  .ask-ic.lg{ width:30px; height:30px; box-shadow:0 0 0 1px #d7e3f4; }
   .ask-panel{ position:fixed; top:63px; right:0; bottom:0; width:420px; max-width:100vw; z-index:950;
     background:#fff; box-shadow:-8px 0 28px rgba(12,52,102,.18); display:flex; flex-direction:column; }
   .ask-head{ display:flex; align-items:center; gap:6px; padding:12px 14px; border-bottom:1px solid #e8edf4; font-size:15px; }
@@ -2468,7 +2473,7 @@
     <div class="tb-mid"><div class="tb-title" id="tbTitle">การลา</div><div class="tb-sub">Moodata</div></div>
     <!-- 🔔 กระดิ่ง "ของที่รอเราอยู่" (7 ก.ย. 69) — พี่กี้ชี้ตำแหน่ง: ข้าง ๆ ปุ่มห้อง
          กดแล้วรายการหล่นลงมา ไม่ต้องเอาไปกองบนหน้าจอ -->
-    <button class="ask-btn" id="askBtn" type="button" aria-label="ผู้ช่วย AI" style="display:none">✨ ผู้ช่วย</button>
+    <button class="ask-btn" id="askBtn" type="button" aria-label="ผู้ช่วย AI" style="display:none"><span class="ask-ic" aria-hidden="true"></span>ผู้ช่วย AI</button>
     <button class="bell-btn" id="bellBtn" type="button" aria-label="แจ้งเตือน" style="display:none">🔔<span class="bell-dot" id="bellDot" hidden>0</span></button>
     <button class="rm-btn" id="rmBtn" type="button" style="display:none"><span class="rm-ic">🏢</span><span class="rm-lb">Moodata</span><span class="rm-ca">▾</span></button>
     <div class="tb-avatar" id="tbAvatar">🙂</div>
@@ -26189,7 +26194,7 @@ function kpImpDraw(){
     if($('askPanel')) return;
     var d=document.createElement('div');
     d.id='askPanel'; d.className='ask-panel';
-    d.innerHTML='<div class="ask-head"><b>✨ ผู้ช่วยยินดี</b><span style="flex:1"></span>'+
+    d.innerHTML='<div class="ask-head"><span class="ask-ic lg" aria-hidden="true"></span><b>ผู้ช่วย AI</b><span style="flex:1"></span>'+
       '<button type="button" class="ask-x" title="ล้างแชท" onclick="askClear()">🧹</button>'+
       '<button type="button" class="ask-x" title="ปิด" onclick="askClose()">✕</button></div>'+
       '<div class="ask-chips">'+
@@ -27619,7 +27624,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20261004-1649';
+  var APP_BUILD='20261004-1654';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
