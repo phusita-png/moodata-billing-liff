@@ -16,9 +16,9 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20261004-1812">
+<link rel="stylesheet" href="user.css?v=20261004-1818">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<script src="yd-auth.js?v=20261004-1812"></script>
+<script src="yd-auth.js?v=20261004-1818"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
   .date-row{ display:flex; flex-direction:column; gap:14px; margin:4px 0 12px; } .date-row > div{ min-width:0; }
@@ -4451,16 +4451,18 @@
       var cur=(ROOM&&ROOM.code)||'MOODATA';
       /* 🎁 เปิดห้องแทนลูกค้า + 🔗 ลิงก์ของแต่ละห้อง (4 ต.ค. 69) — เดิมมีแต่เมนูในชีต
          นักบัญชีเห็นหน้านี้ด้วย (ห้องที่ถูกเชิญ) แต่ปุ่มพวกนี้เป็นของผู้ดูแลระบบเท่านั้น
-         ปุ่มอยู่มุมขวาบนแถวเดียวกับหัวข้อ (พี่กี้ขอ 4 ต.ค. 69) — เดิมเป็นแถบยาวเต็มจอใต้หัวข้อ */
+         หัวการ์ด + ปุ่มขวาบน แบบเดียวกับหน้าใบสั่งจ่าย PO (lst-card · lst-head · lst-tools · พี่กี้ขอ 4 ต.ค. 69) */
       var sup=!r.acctOnly;
-      var html='<div class="hm-hero"><h2>ห้องลูกค้า</h2><span class="hp">'+rooms.length+' ห้อง</span>'+
-        (sup ? '<button class="btn btn-primary btn-sm" type="button" style="margin-left:auto;width:auto;padding:0 18px;align-self:center" '+
-          'onclick="hrOpenRoom()">+ เปิดห้องใหม่</button>' : '')+'</div>';
+      var html='<div class="lst-card"><div class="lst-head">'+
+        '<div class="t"><b>ห้องลูกค้า <span style="color:#8A94A6;font-weight:600;font-size:13px">'+rooms.length+' ห้อง</span></b>'+
+          '<div>ห้องของลูกค้าแต่ละบริษัท · เปิดห้องให้ลูกค้า ออกลิงก์เชิญ และเข้าไปดูแลแทนได้</div></div>'+
+        (sup ? '<div class="lst-tools"><button class="btn btn-primary" type="button" onclick="hrOpenRoom()">+ เปิดห้องใหม่</button></div>' : '')+
+        '</div>';
       /* ตารางห้อง (พี่กี้ขอ 4 ต.ค. 69) — หัวคอลัมน์ + ลำดับ · ปุ่มอยู่บรรทัดเดียวกับชื่อห้อง (เดิมการ์ดซ้อนปุ่ม 2 ชั้น)
          ชื่อระบบใช้ป้ายจาก backend (modList = MODULE_LABEL) · ไม่มีห้อง = ยังเห็นหัวตาราง */
       var modName={}; (r.modList||[]).forEach(function(m){ modName[m.key]=m.label; });
       var RC=[{t:'#',w:'6%'},{t:'รหัสห้อง',w:'11%'},{t:'ชื่อห้อง',w:'24%'},{t:'ระบบทั้งหมด',w:'31%'},{t:'ลิงก์',w:'12%'},{t:'สถานะ',w:'16%'}];
-      html+='<div class="card"><div class="pb"><div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl">'+
+      html+='<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl">'+   // อยู่ในการ์ดเดียวกับหัว (เหมือนหน้า PO)
         '<colgroup>'+RC.map(function(c){ return '<col style="width:'+c.w+'">'; }).join('')+'</colgroup>'+
         '<thead><tr>'+RC.map(function(c){ return '<th>'+esc(c.t)+'</th>'; }).join('')+'</tr></thead><tbody>'+
         (rooms.length ? rooms.map(function(t,i){
@@ -4474,7 +4476,7 @@
                   : '<button class="hr-go" style="white-space:nowrap" type="button" data-room="'+esc(t.code)+
                     '" data-name="'+esc(t.name||t.code)+'">เข้าห้องนี้ →</button>')+'</td></tr>';
         }).join('') : '<tr class="dt-empty"><td colspan="'+RC.length+'">ยังไม่มีห้องลูกค้าค่ะ</td></tr>')+
-        '</tbody></table></div></div></div>';
+        '</tbody></table></div></div>';   // ปิด tax-tbl-wrap + lst-card
       /* 🩺 วัดความเร็ว — ย้ายไปโมดูล "ระบบพัฒนา" แล้ว (15 ก.ย. 69)
          เดิมแปะท้ายหน้านี้เพราะหาที่วางไม่ได้ · พี่กี้หาไม่เจอ = วางผิดที่ (กฎเดียวกับเมนูในชีต) */
       $('main').innerHTML=html;
@@ -27978,7 +27980,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20261004-1812';
+  var APP_BUILD='20261004-1818';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
