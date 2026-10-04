@@ -16,8 +16,9 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20261004-1702">
+<link rel="stylesheet" href="user.css?v=20261004-1721">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script src="yd-auth.js?v=20261004-1721"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
   .date-row{ display:flex; flex-direction:column; gap:14px; margin:4px 0 12px; } .date-row > div{ min-width:0; }
@@ -523,6 +524,18 @@
     font-weight:700; cursor:pointer; box-shadow:0 12px 26px rgba(27,114,232,.36); transition:transform .08s, box-shadow .16s; }
   .wc-btn:hover{ box-shadow:0 16px 32px rgba(27,114,232,.46); transform:translateY(-1px); }
   .wc-btn:active{ transform:translateY(0) scale(.995); }
+  .wc-btn[disabled]{ opacity:.6; cursor:default; transform:none; }
+  /* ✉️ เข้าด้วยอีเมล (4 ต.ค. 69 · spec-web-login §4) — ปุ่มรองใต้ปุ่ม LINE */
+  .wc-btn2{ display:flex; align-items:center; justify-content:center; gap:8px; width:100%; margin-top:10px; padding:13px 16px;
+    border:1px solid rgba(18,41,77,.18); border-radius:15px; background:rgba(255,255,255,.66); color:#12294d; font:inherit;
+    font-size:14.5px; font-weight:700; cursor:pointer; }
+  .wc-btn2:hover{ background:#fff; }
+  .wc-mail{ display:flex; flex-direction:column; gap:11px; text-align:left; margin-top:4px; }
+  .wc-mail .ap-f input{ letter-spacing:.01em; }
+  .wc-mail #wcCode{ font-size:22px; letter-spacing:8px; text-align:center; font-weight:700; }
+  .wc-msg{ font-size:13px; line-height:1.6; color:#3f5878; min-height:1em; }
+  .wc-msg.err{ color:#b42318; }
+  .wc-link{ background:none; border:none; color:var(--red); font:inherit; font-size:13.5px; cursor:pointer; padding:4px; align-self:center; }
   @media (max-width:760px){
     .wc{ padding:16px; align-items:flex-start; }
     .wc-box{ margin:auto; padding:28px 22px 26px; }
@@ -2420,6 +2433,23 @@
       <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:none;stroke:#fff;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><path d="M21 11.2c0 4-4 7.2-9 7.2-.9 0-1.8-.1-2.6-.3L4.5 20l.9-3.1C3.9 15.5 3 13.5 3 11.2 3 7.2 7 4 12 4s9 3.2 9 7.2z"/><path d="M8.5 9.5v4M8.5 13.5h2.2M13.2 9.5v4M13.2 9.5l2.6 4M15.8 9.5v4"/></svg>
       เข้าสู่ระบบด้วย LINE
     </button>
+    <button class="wc-btn2" id="wcMailBtn" type="button">
+      <svg viewBox="0 0 24 24" style="width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.8 7l8.2 6 8.2-6"/></svg>
+      เข้าด้วยอีเมล
+    </button>
+    <!-- ✉️ เข้าด้วยอีเมล + รหัส 6 หลัก (4 ต.ค. 69) — ซ่อนไว้จนกดปุ่มด้านบน -->
+    <div class="wc-mail hidden" id="wcMail">
+      <label class="ap-f"><span>อีเมลที่บริษัทลงทะเบียนไว้</span>
+        <input id="wcEmail" type="email" inputmode="email" autocomplete="email" placeholder="name@company.com"></label>
+      <button class="wc-btn" id="wcSend" type="button">ส่งรหัสเข้าอีเมล</button>
+      <div class="hidden" id="wcCodeBox" style="display:flex;flex-direction:column;gap:11px">
+        <label class="ap-f"><span>รหัส 6 หลักจากอีเมล</span>
+          <input id="wcCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••"></label>
+        <button class="wc-btn" id="wcVerify" type="button">เข้าสู่ระบบ</button>
+      </div>
+      <div class="wc-msg" id="wcMsg"></div>
+      <button class="wc-link" id="wcBack" type="button">← กลับไปเข้าด้วย LINE</button>
+    </div>
   </div>
 </div>
 
@@ -2796,8 +2826,20 @@
     var lt=document.querySelector('.kp-loadtx, .loader-text');
     if(lt) lt.textContent='ระบบตอบช้า กำลังลองใหม่ (ครั้งที่ '+n+')…';
   }
+  /* 🔐 บัตรผ่าน (yd-auth.js · 4 ต.ค. 69) — แนบที่ตัวยิงคำขอจุดเดียว เหมือน withRoom_
+     หลังบ้านตอบ auth:true (โหมดเข้ม + บัตรหมด/เสีย) = ทิ้งบัตรแล้วโหลดหน้าใหม่ 1 รอบ ให้ LINE ออกบัตรใหม่ */
+  function authAttach_(p){ return (window.YDAuth ? YDAuth.attach(p) : p); }
+  function authCheck_(d){
+    if(!(window.YDAuth && YDAuth.isAuthFail(d))) return d;
+    try{ YDAuth.clear(); }catch(e){}
+    var tried=''; try{ tried=sessionStorage.getItem('yd_relog')||''; }catch(e){}
+    if(tried){ toast('เข้าสู่ระบบไม่สำเร็จ — ปิดหน้านี้แล้วเปิดใหม่อีกครั้งค่ะ'); return d; }
+    try{ sessionStorage.setItem('yd_relog','1'); }catch(e){}
+    setTimeout(function(){ location.reload(); }, 400);
+    return d;
+  }
   function jsonp(params, _try, timeoutMs){
-    _try=_try||0; params=withRoom_(params);
+    _try=_try||0; params=authAttach_(withRoom_(params));
     if(!_try && !roomGuard_(params)) return Promise.reject(new Error('ยกเลิกแล้ว — ยังอยู่ในห้องลูกค้า'));
     return new Promise(function(resolve,reject){
       var cb='cb_'+Date.now()+'_'+Math.floor(Math.random()*1e6);
@@ -2822,7 +2864,7 @@
         if(done) return; done=true; cleanup();
         reject(new Error('ระบบตอบช้าผิดปกติ ลองอีกครั้งในอีกสักครู่ค่ะ'));
       }, wait);
-      window[cb]=function(d){ if(done) return; done=true; cleanup(); resolve(d); };
+      window[cb]=function(d){ if(done) return; done=true; cleanup(); resolve(authCheck_(d)); };
       function cleanup(){clearTimeout(timer);clearTimeout(slowNote);delete window[cb];if(s.parentNode)s.parentNode.removeChild(s);}
       var qs=Object.keys(params).map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(params[k]);}).join('&');
       var s=document.createElement('script'); s._u=execUrlTry_(params.action,_try); s.src=s._u+'?'+qs+'&callback='+cb;
@@ -2854,7 +2896,7 @@
   function jsonpPost(params, _try, timeoutMs){
     _try=_try||0;
     if(!_try){
-      params=withRoom_(params);
+      params=authAttach_(withRoom_(params));
       if(!roomGuard_(params)) return Promise.reject(new Error('ยกเลิกแล้ว — ยังอยู่ในห้องลูกค้า'));
     }
     var body=Object.keys(params).map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(params[k]);}).join('&');
@@ -2889,7 +2931,7 @@
           throw new Error('เซิร์ฟเวอร์ตอบกลับผิดรูปแบบ — กดรีเฟรชแล้วดูว่าบันทึกเข้าไปหรือยัง ก่อนกดซ้ำนะคะ');
         });
       })
-      .then(function(d){ stop(); return d; }, function(err){
+      .then(function(d){ stop(); return authCheck_(d); }, function(err){
         stop();
         /* ตัดเพราะหมดเวลา ≠ บันทึกไม่สำเร็จเสมอไป — คำขออาจถึงเซิร์ฟเวอร์แล้ว
            ข้อความจึงบอกให้ "เปิดดูอีกครั้ง" ก่อนกดซ้ำ กันบันทึกซ้ำสองรอบ */
@@ -3795,6 +3837,7 @@
         ? 'เมนูนี้ต้องอัปเดตหลังบ้านก่อนค่ะ (ยังไม่ได้ deploy)' : e.message;
       var b=$('jnLink'); if(b) b.innerHTML='<div class="m-hint">'+esc(msg)+'</div>';
       var l=$('jnBody'); if(l) l.innerHTML=stEmptyRow(JN_COLS.length, msg);
+      var l2=$('jmBody'); if(l2) l2.innerHTML=stEmptyRow(JM_COLS.length, msg);
     });
   }
   function jnLinkLoad(reset){
@@ -3835,7 +3878,68 @@
           '<button class="btn btn-ghost btn-sm" style="width:auto" type="button" onclick="jnDecide('+q+',0)">ไม่อนุมัติ</button>'+
         '</div></td></tr>';
     }).join('') : stEmptyRow(JN_COLS.length, 'ยังไม่มีคนขอเข้าค่ะ');
+    jmPaint();
   }
+  /* ✉️ ตารางอีเมลเข้าระบบของคนในห้อง */
+  var JM_COLS=[{t:'#',w:'8%'},{t:'ชื่อ',w:'30%'},{t:'เข้าทาง',w:'16%'},{t:'อีเมลเข้าระบบ',w:'32%'},{t:'',w:'14%'}];
+  function jmPaint(){
+    var body=$('jmBody'); if(!body||!JN_DATA) return;
+    var list=JN_DATA.members||[];
+    body.innerHTML = list.length ? list.map(function(x,i){
+      var q="'"+String(x.uid).replace(/'/g,"\\'")+"'";
+      var via = x.line ? (x.email?'LINE + อีเมล':'LINE') : 'อีเมล';
+      return '<tr><td>'+(i+1)+'</td><td><b>'+esc(x.name||'-')+'</b>'+
+          (x.role==='ผู้ดูแลห้อง'?'<br><span style="font-size:12px;color:#8A94A6">เจ้าของห้อง</span>':'')+'</td>'+
+        '<td>'+esc(via)+'</td><td>'+(x.email?esc(x.email):'<span style="color:#8A94A6">—</span>')+'</td>'+
+        '<td style="text-align:right"><button class="btn btn-ghost btn-sm" style="width:auto" type="button" '+
+          'onclick="jnSetEmail('+q+')">'+(x.email?'แก้':'ใส่อีเมล')+'</button></td></tr>';
+    }).join('') : stEmptyRow(JM_COLS.length, 'ยังไม่มีคนในห้องค่ะ');
+  }
+  function jnAddEmail(){
+    modal('<h3>✉️ เพิ่มพนักงานด้วยอีเมล</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="fld"><label>ชื่อ-นามสกุล</label><input id="jeName" placeholder="ชื่อที่ใช้บนเอกสาร"></div>'+
+      '<div class="fld"><label>อีเมล</label><input id="jeMail" type="email" inputmode="email" placeholder="name@company.com"></div>'+
+      '<div class="m-hint">เพิ่มแล้วใช้งานได้ทันที (นับเป็นผู้ใช้ 1 คน) · ระบบส่งอีเมลบอกวิธีเข้าให้เขา · '+
+        'เขาเปิดเว็บ → กด <b>เข้าด้วยอีเมล</b> → กรอกรหัสที่ส่งไปทางอีเมล</div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" id="jeGo" onclick="jnAddEmailGo()">เพิ่ม</button></div>');
+    setTimeout(function(){ var el=$('jeName'); if(el) el.focus(); }, 50);
+  }
+  function jnAddEmailGo(){
+    var nm=((($('jeName')||{}).value)||'').trim(), em=((($('jeMail')||{}).value)||'').trim();
+    if(!nm){ mErr('ใส่ชื่อก่อนค่ะ'); return; }
+    if(!/^[^@\s]+@[^@\s.]+(\.[^@\s.]+)+$/.test(em)){ mErr('รูปแบบอีเมลไม่ถูกต้องค่ะ'); return; }
+    var b=$('jeGo'); if(b) b.disabled=true;
+    callBusy('กำลังเพิ่ม…', jsonpPost(withRoom_({action:'waHubAddEmail',uid:UID,name:nm,email:em})), 'เพิ่มแล้ว')
+      .then(function(r){
+        if(!r||!r.ok){ if(b) b.disabled=false; mErr((r&&r.error)||'เพิ่มไม่สำเร็จ'); return; }
+        closeModal();
+        toast(r.mailed ? ('เพิ่ม '+r.name+' แล้ว — ส่งอีเมลบอกวิธีเข้าให้แล้วค่ะ')
+                       : ('เพิ่ม '+r.name+' แล้ว แต่ส่งอีเมลไม่สำเร็จ — บอกเขาให้เข้าเว็บแล้วกด "เข้าด้วยอีเมล" เองนะคะ'));
+        jnLoad();
+      }).catch(function(e){ if(b) b.disabled=false; mErr(e.message); });
+  }
+  function jnSetEmail(uid){
+    var who=((JN_DATA&&JN_DATA.members)||[]).filter(function(x){ return x.uid===uid; })[0]||{};
+    modal('<h3>✉️ อีเมลเข้าระบบของ '+esc(who.name||'')+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="fld"><label>อีเมล</label><input id="jsMail" type="email" inputmode="email" value="'+esc(who.email||'')+'" placeholder="name@company.com"></div>'+
+      '<div class="m-hint">'+(who.line ? 'คนนี้ใช้ LINE อยู่แล้ว — ใส่อีเมลไว้ = เข้าบนคอมด้วยอีเมลได้ ข้อมูลเดิมครบ · เว้นว่าง = เลิกเข้าด้วยอีเมล'
+        : 'คนนี้เข้าด้วยอีเมลอย่างเดียว — เปลี่ยนอีเมลได้ แต่ลบทิ้งไม่ได้')+'</div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" id="jsGo" onclick="jnSetEmailGo(&quot;'+esc(uid)+'&quot;)">บันทึก</button></div>');
+  }
+  function jnSetEmailGo(uid){
+    var em=((($('jsMail')||{}).value)||'').trim();
+    if(em && !/^[^@\s]+@[^@\s.]+(\.[^@\s.]+)+$/.test(em)){ mErr('รูปแบบอีเมลไม่ถูกต้องค่ะ'); return; }
+    var b=$('jsGo'); if(b) b.disabled=true;
+    callBusy('กำลังบันทึก…', jsonpPost(withRoom_({action:'waHubSetEmail',uid:UID,member:uid,email:em})), 'บันทึกแล้ว')
+      .then(function(r){
+        if(!r||!r.ok){ if(b) b.disabled=false; mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+        closeModal(); jnLoad();
+      }).catch(function(e){ if(b) b.disabled=false; mErr(e.message); });
+  }
+  window.jnAddEmail=jnAddEmail; window.jnAddEmailGo=jnAddEmailGo; window.jnSetEmail=jnSetEmail; window.jnSetEmailGo=jnSetEmailGo;
+
   function jnCopy(){ if(JN_DATA&&JN_DATA.link) copyTxt(JN_DATA.link); }
   function jnReset(){
     if(!confirm('ออกลิงก์พนักงานใหม่?'+String.fromCharCode(10)+
@@ -3878,6 +3982,14 @@
           '<div class="rs-h">รออนุมัติ</div>'+
           '<div class="rs-sub" id="jnSeat">&nbsp;</div>'+
           '<div id="jnList">'+stTableHtml('jnBody', JN_COLS, stSkelRows(JN_COLS.length,2))+'</div>'+
+        '</div></div>'+
+        /* ✉️ คนที่ไม่ใช้ LINE (4 ต.ค. 69 · spec-web-login §4) — เจ้าของเพิ่มเอง = อนุมัติในตัว */
+        '<div class="card"><div class="pb" style="padding:16px 18px">'+
+          '<div class="st-head"><div class="st-hx"><div class="rs-h">เข้าระบบด้วยอีเมล</div>'+
+          '<div class="rs-sub">สำหรับคนที่ไม่ใช้ LINE · หรือคนใช้ LINE ที่อยากเข้าบนคอมด้วยอีเมล · '+
+          'คนที่เข้าด้วยอีเมลจะไม่ได้รับข้อความทาง LINE ให้ดูแจ้งเตือนที่ 🔔 กระดิ่งแทน</div></div>'+
+          '<button class="btn btn-primary btn-sm" style="width:auto;padding:0 16px" type="button" onclick="jnAddEmail()">+ เพิ่มด้วยอีเมล</button></div>'+
+          '<div id="jmList">'+stTableHtml('jmBody', JM_COLS, stSkelRows(JM_COLS.length,2))+'</div>'+
         '</div></div>';
     }
 
@@ -4392,6 +4504,9 @@
         '<div class="fld"><label>จำนวนผู้ใช้ (นับทุกคนที่ล็อกอิน รวมพนักงานที่ใช้ลา/OT/สลิป)</label>'+
           '<input id="hoMax" type="number" min="1" value="'+esc(r.defaultMax||1)+'"></div>'+
         '<div class="fld"><label>ผู้ติดต่อ (ไม่บังคับ)</label><input id="hoContact" placeholder="ชื่อ / เบอร์ / อีเมล"></div>'+
+        '<div class="fld"><label>เจ้าของไม่ใช้ LINE? ใส่อีเมลเจ้าของ (ไม่บังคับ)</label>'+
+          '<input id="hoOwnerMail" type="email" inputmode="email" placeholder="owner@company.com"></div>'+
+        '<div class="fld"><label>ชื่อเจ้าของ (ใช้คู่กับอีเมล)</label><input id="hoOwnerName" placeholder="ชื่อ-นามสกุล"></div>'+
         '<div class="m-hint">กดเปิดแล้วได้ห้องใหม่ทันที + ลิงก์ 2 ตัว (เจ้าของ · พนักงาน) · '+
           'ระหว่างรอลูกค้ากด เข้าไปคีย์ข้อมูลให้ก่อนได้จากปุ่ม "เข้าห้องนี้"</div>'+
         '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
@@ -4406,16 +4521,22 @@
     if(!co){ mErr('ใส่ชื่อบริษัทก่อนค่ะ'); return; }
     if(!packs.length){ mErr('เลือกแพ็กอย่างน้อย 1 อย่างค่ะ'); return; }
     if(max<1){ mErr('จำนวนผู้ใช้ต้องอย่างน้อย 1 คนค่ะ'); return; }
+    var oMail=((($('hoOwnerMail')||{}).value)||'').trim(), oName=((($('hoOwnerName')||{}).value)||'').trim();
+    if(oMail && !/^[^@\s]+@[^@\s.]+(\.[^@\s.]+)+$/.test(oMail)){ mErr('อีเมลเจ้าของไม่ถูกต้องค่ะ'); return; }
     if(!confirm('เปิดห้องใหม่ให้ "'+co+'" ?')) return;   // กดซ้ำ = ได้ห้องซ้ำ 2 ห้อง
     var b=$('hoGo'); if(b) b.disabled=true;
     callBusy('กำลังเปิดห้อง (สร้างไฟล์ห้องใหม่ อาจใช้เวลาเกือบนาที)…',
       jsonpPost({action:'waHubOpenRoom',uid:UID,company:co,packs:packs.join(','),maxUsers:String(max),
-        contact:((($('hoContact')||{}).value)||'').trim()}, 0, 180000), 'เปิดห้องแล้ว')
+        contact:((($('hoContact')||{}).value)||'').trim(), ownerEmail:oMail, ownerName:oName}, 0, 180000), 'เปิดห้องแล้ว')
       .then(function(r){
         if(!r||!r.ok){ if(b) b.disabled=false; mErr((r&&r.error)||'เปิดห้องไม่สำเร็จ'); return; }
         modal('<h3>✅ เปิดห้องแล้ว · '+esc(r.code)+'</h3>'+
           '<div class="m-hint" style="margin-top:0"><b>'+esc(r.name)+'</b> · '+esc((r.modules||[]).join(' · '))+
           ' · ผู้ใช้ '+esc(r.maxUsers)+' คน</div>'+
+          (r.ownerMail ? (r.ownerMail.ok
+            ? '<div class="m-hint">✉️ เจ้าของเข้าด้วยอีเมล <b>'+esc(r.ownerMail.email)+'</b> ได้แล้ว'+
+              (r.ownerMail.mailed?' · ส่งอีเมลบอกวิธีเข้าให้แล้ว':' · ⚠️ ส่งอีเมลไม่สำเร็จ บอกเขาเอง')+'</div>'
+            : '<div class="m-err">⚠️ เพิ่มอีเมลเจ้าของไม่สำเร็จ: '+esc(r.ownerMail.error||'')+' (ห้องเปิดแล้ว ใช้ลิงก์ LINE ด้านล่าง หรือให้เจ้าของเพิ่มทีหลัง)</div>') : '')+
           hrLinkBox('👑 ลิงก์เจ้าของห้อง (ส่งให้เจ้าของคนเดียว · ใช้ได้ครั้งเดียว)', r.ownerLink, '')+
           hrLinkBox('👥 ลิงก์พนักงาน (ส่งลงกลุ่มพนักงาน · ใช้ซ้ำได้ · เจ้าของห้องอนุมัติ)', r.staffLink,
             'ออกลิงก์พนักงานไม่สำเร็จ — กด 🔗 ลิงก์ ที่ห้องนี้เพื่อออกใหม่')+
@@ -4466,7 +4587,8 @@
   ];
   function perfOne(t){
     var t0=Date.now();
-    var body='action=waPerf&uid='+encodeURIComponent(UID)+(ROOM&&ROOM.code?('&room='+encodeURIComponent(ROOM.code)):'');
+    var body='action=waPerf&uid='+encodeURIComponent(UID)+(ROOM&&ROOM.code?('&room='+encodeURIComponent(ROOM.code)):'')+
+      (window.YDAuth&&YDAuth.token()?('&tk='+encodeURIComponent(YDAuth.token())):'');
     return fetch(t.url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:body})
       .then(function(r){ return r.json(); })
       .then(function(j){
@@ -4694,20 +4816,40 @@
     var w=pop.offsetWidth;
     pop.style.left=Math.max(8, Math.min(r.right-w, window.innerWidth-w-8))+'px';
     _bellPop=pop;
-    Array.prototype.forEach.call(pop.querySelectorAll('[data-go]'), function(el){
-      el.addEventListener('click', function(){
-        var v=el.getAttribute('data-go');
-        bellClose_();
-        switchView(v);
-      });
-    });
+    bellBindGo_(pop);
     // โหลดของสดทุกครั้งที่เปิด แล้ววาดทับ (ตัวเลขต้องตรงกับตอนกดเข้าไปดู)
     bellLoad_(true).then(function(){ if(_bellPop===pop) pop.innerHTML=bellHtml_(BELL); bellBindGo_(pop); });
   }
   function bellBindGo_(pop){
     Array.prototype.forEach.call(pop.querySelectorAll('[data-go]'), function(el){
-      el.addEventListener('click', function(){ var v=el.getAttribute('data-go'); bellClose_(); switchView(v); });
+      el.addEventListener('click', function(){ var v=el.getAttribute('data-go'); bellClose_(); bellGo_(v); });
     });
+  }
+  /* ปลายทางพิเศษของกระดิ่ง (4 ต.ค. 69 · Notify.gs)
+     __news     = 📬 ข่าวถึงคุณ (คนเข้าด้วยอีเมล) → กล่องอ่านข่าว + ปิดตัวเลข (พี่กี้เคาะ: เปิดดูแล้วหาย)
+     __roomjoin = 🙋 พนักงานขอเข้าห้อง → ⚙️ ตั้งค่าห้อง ▸ ตั้งค่าผู้ใช้งาน ▸ เชิญพนักงาน */
+  function bellGo_(v){
+    if(v==='__news'){ bellNews_(); return; }
+    if(v==='__roomjoin'){
+      try{ ST_TAB='user'; ST_SUB='join'; ST_SUBS['user']='join';
+        sessionStorage.setItem('yd-st-tab','user'); sessionStorage.setItem('yd-st-subs',JSON.stringify(ST_SUBS)); }catch(e){}
+      switchView('roomset'); return;
+    }
+    switchView(v);
+  }
+  function bellNews_(){
+    var g=((BELL&&BELL.groups)||[]).filter(function(x){ return x.key==='news'; })[0];
+    var all=(g&&g.all)||[];
+    modal('<h3>📬 ข่าวถึงคุณ</h3>'+
+      (all.length ? all.map(function(x){
+        return '<div style="padding:10px 0;border-bottom:1px solid #EEF1F5">'+
+          '<div style="font-size:12px;color:#8A94A6;margin-bottom:4px">'+esc(x.at||'')+'</div>'+
+          '<div style="white-space:pre-wrap;font-size:14px;line-height:1.6">'+esc(x.text||'')+'</div></div>';
+      }).join('') : '<div class="emptybox">ไม่มีข่าวใหม่ค่ะ</div>')+
+      ((g&&g.n>all.length)?'<div class="m-hint">แสดง '+all.length+' ข่าวล่าสุดจากทั้งหมด '+g.n+' ข่าว</div>':'')+
+      '<div class="m-act"><button class="btn btn-primary" onclick="closeModal()">อ่านแล้ว</button></div>');
+    /* เปิดดู = อ่านแล้ว (ไม่ต้องรอกดปุ่ม · ปิดหน้าต่างเฉย ๆ ก็นับว่าเห็นแล้ว) */
+    jsonp(withRoom_({action:'waBellRead', uid:UID})).then(function(){ bellLoad_(true); }).catch(function(){});
   }
 
   /** วาดรายการ — ฟังก์ชันบริสุทธิ์ (ของจริงกับเทสเรียกตัวเดียวกัน · §7.13) */
@@ -4833,6 +4975,58 @@
         location.reload();   // ไม่มี LIFF (เปิดนอกไลน์/เทส) → โหลดใหม่ให้ init ทำงานอีกรอบ
       });
     }
+    wcMailBind();
+  }
+
+  /* ✉️ เข้าด้วยอีเมล + รหัส 6 หลัก (4 ต.ค. 69 · MailLogin.gs · spec-web-login §4)
+     ได้บัตรผ่านแล้วเก็บแบบเดียวกับคน LINE (yd-auth.js) → เปิดครั้งหน้าเข้าเลย 30 วัน */
+  function wcMailBind(){
+    var mb=$('wcMailBtn'); if(!mb || mb.dataset.bound) return;
+    mb.dataset.bound='1';
+    var box=$('wcMail'), lineBtn=$('wcBtn'), hint=document.querySelector('#welcome .wc-hint');
+    function msg(t, err){ var m=$('wcMsg'); if(m){ m.textContent=t||''; m.classList.toggle('err', !!err); } }
+    function mode(mail){
+      box.classList.toggle('hidden', !mail);
+      mb.classList.toggle('hidden', mail);
+      if(lineBtn) lineBtn.classList.toggle('hidden', mail);
+      if(hint) hint.textContent = mail ? 'ใส่อีเมลที่บริษัทเพิ่มไว้ แล้วกรอกรหัสที่ส่งไปทางอีเมล'
+                                       : 'เข้าสู่ระบบเพื่อเริ่มงาน · Sign in to continue';
+      if(mail) setTimeout(function(){ var e=$('wcEmail'); if(e) e.focus(); }, 50);
+    }
+    mb.addEventListener('click', function(){ mode(true); });
+    $('wcBack').addEventListener('click', function(){ msg(''); mode(false); });
+    function send(){
+      var em=(($('wcEmail')||{}).value||'').trim();
+      if(!/^[^@\s]+@[^@\s.]+(\.[^@\s.]+)+$/.test(em)){ msg('รูปแบบอีเมลไม่ถูกต้องค่ะ', true); return; }
+      var b=$('wcSend'); b.disabled=true; b.textContent='กำลังส่ง…'; msg('');
+      jsonp({action:'waMailStart', email:em}).then(function(r){
+        b.disabled=false; b.textContent='ส่งรหัสอีกครั้ง';
+        if(!r||!r.ok){ msg((r&&r.error)||'ส่งไม่สำเร็จ', true); return; }
+        msg(r.msg||'');
+        $('wcCodeBox').classList.remove('hidden');
+        var c=$('wcCode'); if(c){ c.value=''; c.focus(); }
+      }).catch(function(e){ b.disabled=false; b.textContent='ส่งรหัสเข้าอีเมล'; msg(e.message, true); });
+    }
+    function verify(){
+      var em=(($('wcEmail')||{}).value||'').trim(), code=(($('wcCode')||{}).value||'').replace(/\D/g,'');
+      if(code.length!==6){ msg('กรอกรหัส 6 หลักค่ะ', true); return; }
+      var b=$('wcVerify'); b.disabled=true; b.textContent='กำลังตรวจ…'; msg('');
+      jsonp({action:'waMailVerify', email:em, code:code}).then(function(r){
+        b.disabled=false; b.textContent='เข้าสู่ระบบ';
+        if(!r||!r.ok||!r.tk){ msg((r&&r.error)||'เข้าสู่ระบบไม่สำเร็จ', true); return; }
+        YDAuth.setMail(r);
+        UID=r.uid;
+        try{ sessionStorage.removeItem('yd_bye'); }catch(e){}
+        var w=$('welcome'); if(w) w.classList.add('hidden');
+        var lo=$('loader'); if(lo) lo.classList.remove('hidden');
+        start();
+      }).catch(function(e){ b.disabled=false; b.textContent='เข้าสู่ระบบ'; msg(e.message, true); });
+    }
+    $('wcSend').addEventListener('click', send);
+    $('wcVerify').addEventListener('click', verify);
+    $('wcEmail').addEventListener('keydown', function(ev){ if(ev.key==='Enter') send(); });
+    $('wcCode').addEventListener('keydown', function(ev){ if(ev.key==='Enter') verify(); });
+    $('wcCode').addEventListener('input', function(){ if(this.value.replace(/\D/g,'').length===6) verify(); });
   }
 
   /* ⏻ ออกจากระบบ — ยินดีล็อกอินด้วย LINE ไม่มีหน้าล็อกอินของตัวเอง
@@ -4842,6 +5036,7 @@
   function doLogout(){
     if(!confirm('ออกจากระบบ?')) return;
     try{ localStorage.clear(); }catch(e){}
+    try{ if(window.YDAuth) YDAuth.clear(); }catch(e){}   // บัตรผ่านในหน่วยความจำด้วย (localStorage.clear ไม่ถึง)
     try{ sessionStorage.setItem('yd_bye','1'); }catch(e){}   // reload แล้วรู้ว่าเพิ่งกดออก
     try{ if(window.liff && liff.logout) liff.logout(); }catch(e){}
     /* กลับหน้าล็อกอินทันที ไม่พึ่ง reload (พี่กี้ 7 ก.ย.: กดออกแล้วไม่กลับหน้าล็อกอิน)
@@ -4851,8 +5046,8 @@
     ROOM={code:'MOODATA',name:'Moodata',isHome:true}; BELL=null;   // กลับค่าเริ่มต้น ไม่ใช่ null (paintRoom อ่านต่อ)
     var bd=$('bellDot'); if(bd) bd.hidden=true;
     var bb=$('bellBtn'); if(bb) bb.style.display='none';
-    var ab=$('askBtn'); if(ab) ab.style.display='none'; askClose(); ASK_HIST=[]; askSave_();
     showWelcome(true);
+    var ab=$('askBtn'); if(ab) ab.style.display='none'; askClose(); ASK_HIST=[]; askSave_();   // ✨ ผู้ช่วย: ซ่อน + ล้างแชท
   }
   /* โมดูลที่จองที่ไว้ (ยังไม่มีเมนู) — บอกให้ชัดว่าจะมีอะไร ไม่ใช่กดแล้วเจอหน้าว่าง */
   function renderModSoon(){
@@ -27468,7 +27663,6 @@ function kpImpDraw(){
     }catch(e){}
     return '';
   }
-  function uidOverride(){ try{ return new URLSearchParams(location.search).get('uid')||''; }catch(e){ return ''; } }
   /* ลิงก์เชิญเข้าห้อง (6 ก.ย. 69) — เราเปิดห้อง+คีย์ข้อมูลให้ก่อน แล้วส่งลิงก์เดียวให้ลูกค้ากด
      คนแรกที่กด = เจ้าของห้องนั้น · ต้องผูกให้เสร็จ "ก่อน" waBootstrap ไม่งั้นยังถูกมองเป็นคนนอก */
   /* ลิงก์พนักงานเข้าห้อง (4 ต.ค. 69 · HubJoin.gs) — กดแล้ว "รอเจ้าของห้องอนุมัติ" ไม่ได้เข้าทันที
@@ -27526,6 +27720,7 @@ function kpImpDraw(){
         if(/ยังไม่ได้ลงทะเบียน|เฉพาะทีมงาน/.test(_msg)) fatalGuest(_msg); else fatal(_msg);
         return;
       }
+      try{ sessionStorage.removeItem('yd_relog'); }catch(e){}   // เข้าได้แล้ว = รอบหน้าบัตรเสียค่อยลองโหลดใหม่ได้อีก
       NICK=r.nick||''; if(NICK){ $('hdSub').textContent=NICK; }
       MEUID=r.uid||UID||MEUID;   // userId ผู้ใช้ (ใช้กรอง "งานของฉัน" + ตัดตัวเองจาก dropdown)
       IS_OWNER=!!r.isOwner;
@@ -27643,7 +27838,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20261004-1702';
+  var APP_BUILD='20261004-1721';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
@@ -27681,15 +27876,20 @@ function kpImpDraw(){
       var _t=(_p==='enroll'||_p==='face-enroll') ? 'face-enroll.html' : 'face-clock.html';
       location.replace(_t + (_pp.kind ? '?kind='+encodeURIComponent(_pp.kind) : '')); return;
     }
-    var ov=uidOverride();
-    if(ov){ UID=ov; if(startParam()==='apply'){ showApply(); return; } start(); return; }
+    /* ?uid= (เปิดเว็บเป็นใครก็ได้ถ้ารู้ userId) ถูกตัดออกแล้ว 4 ต.ค. 69 — spec-web-login §2 */
     var _bye=''; try{ _bye=sessionStorage.getItem('yd_bye')||''; sessionStorage.removeItem('yd_bye'); }catch(e){}
+    /* ✉️ เคยเข้าด้วยอีเมลบนเครื่องนี้ + บัตรยังไม่หมดอายุ → เข้าเลย ไม่ต้องผ่าน LINE
+       ⚠️ เปิดในแอป LINE ให้ LINE ชนะเสมอ (คนเดียวกันอาจมีทั้งสองทาง · ในแอปไม่มีทางกดเข้าด้วยอีเมลอยู่แล้ว) */
+    var _mt=(window.YDAuth && YDAuth.mail) ? YDAuth.mail() : null;
+    if(_mt && !_bye && !/\bLine\//i.test(navigator.userAgent||'')){ UID=_mt.u; start(); return; }
     liff.init({liffId:LIFF_ID}).then(function(){
       // ยังไม่ล็อกอิน → หน้าต้อนรับ ให้ผู้ใช้กดเอง (ในแอป LINE จะ isLoggedIn อยู่แล้ว = ไม่เห็นหน้านี้)
       if(!liff.isLoggedIn()){ showWelcome(!!_bye); return; }
       // ?p=apply = คนนอกกดจาก Rich Menu ชุดสมัคร → เข้าหน้าสมัครตรง ไม่ผ่านด่านทีม
       if(startParam()==='apply'){
-        return liff.getProfile().then(function(pf){ UID=pf.userId; showApply(); })
+        var _idt=''; try{ _idt=liff.getIDToken()||''; }catch(e){}
+        return liff.getProfile().then(function(pf){ UID=pf.userId;
+          return YDAuth.ensureLine(UID, _idt, jsonp).then(function(){ showApply(); }); })
           .catch(function(){ showApply(); });
       }
       if(_bye){ showWelcome(true); return; }   // เพิ่งกดออกจากระบบบนคอม แต่ LINE ยังจำ session
@@ -27697,7 +27897,9 @@ function kpImpDraw(){
       try{ IDTOKEN=liff.getIDToken()||''; }catch(e){ IDTOKEN=''; }
       return liff.getProfile().then(function(pf){ UID=pf.userId;
         if(pf.pictureUrl){ $('avatar').innerHTML='<img src="'+pf.pictureUrl+'" alt="">'; $('tbAvatar').innerHTML='<img src="'+pf.pictureUrl+'" alt="">'; }
-        start(); });
+        /* 🔐 ขอบัตรผ่านก่อนยิงคำขอแรก (ครั้งแรกต่อ 30 วันเท่านั้น · ที่เหลือใช้บัตรเดิม)
+           ขอไม่สำเร็จก็เปิดต่อ — โหมดบันทึกยังให้ผ่าน · โหมดเข้มจะเด้งให้ล็อกอินใหม่เอง */
+        return (window.YDAuth ? YDAuth.ensureLine(UID, IDTOKEN, jsonp) : Promise.resolve('')).then(function(){ start(); }); });
     }).catch(function(e){ fatal('เปิดผ่านไลน์ไม่สำเร็จ: '+(e.message||e)); });
   })();
 </script>

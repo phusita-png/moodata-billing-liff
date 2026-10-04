@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script src="yd-auth.js?v=20261004"></script>
 <style>
   :root{ --blue:#1B72E8; --bg:#F2F5FA; --card:#fff; --line:#E4E9F2; --muted:#8A94A6; --text:#242B36; }
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
@@ -147,11 +148,11 @@
 
   // เรียก backend (JSONP) + auto-retry: Apps Script redirect บางจังหวะคืน error มั่วๆ (ฝั่ง Google) → ลองซ้ำเอง
   function jsonp(params, _try){
-    _try=_try||0;
+    _try=_try||0; params=(window.YDAuth?YDAuth.attach(params):params);
     return new Promise(function(resolve,reject){
       var cb='cb_'+Date.now()+'_'+Math.floor(Math.random()*1e6);
       var timer=setTimeout(function(){cleanup();reject(new Error('หมดเวลาเชื่อมต่อ'));},60000);
-      window[cb]=function(d){cleanup();resolve(d);};
+      window[cb]=function(d){cleanup();resolve((window.YDAuth?YDAuth.check(d):d));};
       function cleanup(){clearTimeout(timer);delete window[cb];if(s.parentNode)s.parentNode.removeChild(s);}
       var qs=Object.keys(params).map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(params[k]);}).join('&');
       var s=document.createElement('script'); s.src=EXEC_URL+'?'+qs+'&callback='+cb;
@@ -627,7 +628,6 @@
   function listEmpty(m){ $('list').innerHTML='<div class="empty">'+esc(m)+'</div>'; }
 
   // ───── init ─────
-  function uidOverride(){ try{ return new URLSearchParams(location.search).get('uid')||''; }catch(e){ return ''; } }
   function start(){
     jsonp({action:'waBootstrap', uid:UID}).then(function(r){
       if(!r||!r.ok){ fatal((r&&r.error)||'โหลดข้อมูลไม่สำเร็จ'); return; }
@@ -658,12 +658,12 @@
     }).catch(function(e){ fatal(e.message); });
   }
   (function init(){
-    var ov=uidOverride();
-    if(ov){ UID=ov; start(); return; }   // เทสนอกไลน์: ?uid=...
+    /* ?uid= ถูกตัดออก 4 ต.ค. 69 (spec-web-login §2 · เปิดเป็นใครก็ได้ถ้ารู้ userId) */
     liff.init({liffId:LIFF_ID}).then(function(){
       if(!liff.isLoggedIn()){ liff.login({redirectUri:location.href}); return; }
       try{ IDTOKEN=liff.getIDToken()||''; }catch(e){ IDTOKEN=''; }   // ใช้ยืนยันตัวตนก่อนดูสลิป (sensitive)
-      return liff.getProfile().then(function(p){ UID=p.userId; start(); });
+      return liff.getProfile().then(function(p){ UID=p.userId;
+        return (window.YDAuth?YDAuth.ensureLine(UID, IDTOKEN, jsonp):Promise.resolve('')).then(function(){ start(); }); });
     }).catch(function(e){ fatal('เปิดผ่านไลน์ไม่สำเร็จ: '+(e.message||e)); });
   })();
 </script>

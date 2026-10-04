@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script src="yd-auth.js?v=20261004"></script>
 <style>
   :root{
     --bg:#eef2f7; --surface:#fff; --surface-2:#f3f6fa; --surface-3:#e9eef5;
@@ -208,10 +209,11 @@
   function av(n){return (String(n||'?').trim()[0]||'?');}
 
   function jsonp(params){
+    params=(window.YDAuth?YDAuth.attach(params):params);
     return new Promise(function(resolve,reject){
       var cb='cb_'+Date.now()+'_'+Math.floor(Math.random()*1e6);
       var timer=setTimeout(function(){cleanup();reject(new Error('หมดเวลาเชื่อมต่อ'));},40000);
-      window[cb]=function(d){cleanup();resolve(d);};
+      window[cb]=function(d){cleanup();resolve((window.YDAuth?YDAuth.check(d):d));};
       function cleanup(){clearTimeout(timer);delete window[cb];if(s.parentNode)s.parentNode.removeChild(s);}
       var qs=Object.keys(params).map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(params[k]);}).join('&');
       var s=document.createElement('script');s.src=EXEC_URL+'?'+qs+'&callback='+cb;
@@ -219,9 +221,10 @@
     });
   }
   function jsonpPost(params){
+    params=(window.YDAuth?YDAuth.attach(params):params);
     var body=Object.keys(params).map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(params[k]);}).join('&');
     return fetch(EXEC_URL,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:body})
-      .then(function(r){if(!r.ok)throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้');return r.json();});
+      .then(function(r){if(!r.ok)throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้');return r.json();}).then(function(d){return (window.YDAuth?YDAuth.check(d):d);});
   }
 
   // ── helpers สถานะ/วันที่ ──
@@ -467,11 +470,11 @@
     });
   }
   function start(){reload().then(function(){$('boot').classList.add('hide');$('app').classList.remove('hide');}).catch(function(e){fatal(e.message);});}
-  function uidOverride(){try{return new URLSearchParams(location.search).get('uid')||'';}catch(e){return'';}}
   (function init(){
-    var ov=uidOverride();if(ov){UID=ov;start();return;}
+    /* ?uid= ถูกตัดออก 4 ต.ค. 69 (spec-web-login §2) */
     liff.init({liffId:LIFF_ID}).then(function(){if(!liff.isLoggedIn()){liff.login();return;}
-      return liff.getProfile().then(function(p){UID=p.userId;start();});}).catch(function(e){fatal('เปิดผ่านไลน์ไม่สำเร็จ: '+(e.message||e));});
+      return liff.getProfile().then(function(p){UID=p.userId;
+        return (window.YDAuth?YDAuth.ensureLiff(p,jsonp):Promise.resolve(p)).then(function(){start();});});}).catch(function(e){fatal('เปิดผ่านไลน์ไม่สำเร็จ: '+(e.message||e));});
   })();
   window.showView=showView;window.setScopeO=setScopeO;window.setScopeD=setScopeD;window.openCompany=openCompany;
   window.toggleTask=toggleTask;window.openManage=openManage;window.saveManage=saveManage;window.doSend=doSend;window.doSendGo=doSendGo;

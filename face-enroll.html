@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="yd-auth.js?v=20261004"></script>
   <style>
     :root{ --brand:#1B72E8; --brand-dark:#155cba; --bg:#f4f6fb; --line:#e3e8f0;
       --text:#1f2733; --muted:#8a94a6; --ok:#1faa59; --err:#d8463f; --warn:#e88a1b; }
@@ -112,9 +113,11 @@
 
   // POST form (descriptor ยาว → เลี่ยง URL limit) · backend doPost route wa* → ตอบ JSON
   function jsonpPost(params){
+    params=(window.YDAuth?YDAuth.attach(params):params);
     var body=Object.keys(params).map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(params[k]);}).join('&');
     return fetch(EXEC_URL,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:body})
-      .then(function(r){ if(!r.ok) throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้'); return r.json(); });
+      .then(function(r){ if(!r.ok) throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้'); return r.json(); })
+      .then(function(d){ return (window.YDAuth?YDAuth.check(d):d); });
   }
 
   function closeApp(){ try{ if(liff.isInClient()) liff.closeWindow(); else location.href='index.html?p=home'; }catch(e){ location.reload(); } }
@@ -195,7 +198,8 @@
     }
     liff.init({ liffId: LIFF_ID }).then(function(){
       if (!liff.isLoggedIn()){ liff.login(); return null; }
-      return liff.getProfile();
+      /* 🔐 ขอบัตรผ่านก่อนคำขอแรก (yd-auth.js · 4 ต.ค. 69) */
+      return liff.getProfile().then(function(pf){ return window.YDAuth ? YDAuth.ensureLiff(pf, jsonpPost) : pf; });
     }).then(function(profile){
       if (!profile) return;
       UID = profile.userId;

@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="yd-auth.js?v=20261004"></script>
   <style>
     :root{
       --brand:#1B72E8; --brand-dark:#155cba; --bg:#f4f6fb;
@@ -160,10 +161,11 @@
 
   // JSONP — เลี่ยง CORS จาก GitHub Pages → Apps Script
   function jsonp(params){
+    params=(window.YDAuth?YDAuth.attach(params):params);
     return new Promise(function(resolve, reject){
       var cb = 'cb_' + Date.now() + '_' + Math.floor(Math.random()*1e6);
       var timer = setTimeout(function(){ cleanup(); reject(new Error('หมดเวลาเชื่อมต่อ')); }, 30000);
-      window[cb] = function(data){ cleanup(); resolve(data); };
+      window[cb] = function(data){ cleanup(); resolve((window.YDAuth?YDAuth.check(data):data)); };
       function cleanup(){ clearTimeout(timer); delete window[cb]; if(s.parentNode) s.parentNode.removeChild(s); }
       var qs = Object.keys(params).map(function(k){
         return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
@@ -254,7 +256,9 @@
       GID = getQueryGid();
       return liff.getProfile().then(function(profile){
         UID = profile.userId;
-        return jsonp({ action:'apptmeta', uid:UID, gid:GID });
+        /* 🔐 ขอบัตรผ่านก่อนคำขอแรก (yd-auth.js · 4 ต.ค. 69) */
+        return (window.YDAuth ? YDAuth.ensureLiff(profile, jsonp) : Promise.resolve(profile)).then(function(){
+          return jsonp({ action:'apptmeta', uid:UID, gid:GID }); });
       });
     }).then(function(meta){
       if (!meta) return;  // กรณี login redirect
