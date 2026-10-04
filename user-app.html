@@ -16,9 +16,9 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20261004-1721">
+<link rel="stylesheet" href="user.css?v=20261004-1809">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<script src="yd-auth.js?v=20261004-1721"></script>
+<script src="yd-auth.js?v=20261004-1809"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
   .date-row{ display:flex; flex-direction:column; gap:14px; margin:4px 0 12px; } .date-row > div{ min-width:0; }
@@ -4447,24 +4447,32 @@
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
       var rooms=r.rooms||[];
       var cur=(ROOM&&ROOM.code)||'MOODATA';
-      var html='<div class="hm-hero"><h2>ห้องลูกค้า</h2><span class="hp">'+rooms.length+' ห้อง</span></div>';
       /* 🎁 เปิดห้องแทนลูกค้า + 🔗 ลิงก์ของแต่ละห้อง (4 ต.ค. 69) — เดิมมีแต่เมนูในชีต
-         นักบัญชีเห็นหน้านี้ด้วย (ห้องที่ถูกเชิญ) แต่ปุ่มพวกนี้เป็นของผู้ดูแลระบบเท่านั้น */
+         นักบัญชีเห็นหน้านี้ด้วย (ห้องที่ถูกเชิญ) แต่ปุ่มพวกนี้เป็นของผู้ดูแลระบบเท่านั้น
+         ปุ่มอยู่มุมขวาบนแถวเดียวกับหัวข้อ (พี่กี้ขอ 4 ต.ค. 69) — เดิมเป็นแถบยาวเต็มจอใต้หัวข้อ */
       var sup=!r.acctOnly;
-      if(sup) html+='<div style="display:flex;justify-content:flex-end;margin:0 0 10px">'+
-        '<button class="btn btn-primary btn-sm" type="button" onclick="hrOpenRoom()">🎁 เปิดห้องให้ลูกค้า</button></div>';
-      html+='<div class="card"><div class="pb">'+ (rooms.length ? rooms.map(function(t){
-        var mods=(t.modules||'').split(',').filter(Boolean);
-        var here=t.code===cur;
-        return '<div class="hm-row"><div class="hm-l"><b>'+esc(t.name||t.code)+'</b>'+
-          '<small>'+esc(t.code)+' · '+(mods.length?esc(mods.join(' · ')):'เปิดครบทุกโมดูล')+'</small></div>'+
-          '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end">'+
-          (sup && t.code!=='MOODATA' ? '<button class="btn btn-ghost btn-sm" type="button" '+
-              'onclick="hrLinks(&quot;'+esc(t.code)+'&quot;)">🔗 ลิงก์</button>' : '')+
-          (here ? '<span class="lvb lvb-ok">กำลังอยู่</span>'
-                : '<button class="hr-go" type="button" data-room="'+esc(t.code)+
-                  '" data-name="'+esc(t.name||t.code)+'">เข้าห้องนี้ →</button>')+'</div></div>';
-      }).join('') : '<div class="emptybox">ยังไม่มีห้องลูกค้าค่ะ</div>') +'</div></div>';
+      var html='<div class="hm-hero"><h2>ห้องลูกค้า</h2><span class="hp">'+rooms.length+' ห้อง</span>'+
+        (sup ? '<button class="btn btn-primary btn-sm" type="button" style="margin-left:auto;width:auto;padding:0 18px;align-self:center" '+
+          'onclick="hrOpenRoom()">+ เปิดห้องใหม่</button>' : '')+'</div>';
+      /* ตารางห้อง (พี่กี้ขอ 4 ต.ค. 69) — หัวคอลัมน์ + ลำดับ · ปุ่มอยู่บรรทัดเดียวกับชื่อห้อง (เดิมการ์ดซ้อนปุ่ม 2 ชั้น)
+         ชื่อระบบใช้ป้ายจาก backend (modList = MODULE_LABEL) · ไม่มีห้อง = ยังเห็นหัวตาราง */
+      var modName={}; (r.modList||[]).forEach(function(m){ modName[m.key]=m.label; });
+      var RC=[{t:'#',w:'6%'},{t:'รหัสห้อง',w:'11%'},{t:'ชื่อห้อง',w:'24%'},{t:'ระบบทั้งหมด',w:'31%'},{t:'ลิงก์',w:'12%'},{t:'สถานะ',w:'16%'}];
+      html+='<div class="card"><div class="pb"><div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl">'+
+        '<colgroup>'+RC.map(function(c){ return '<col style="width:'+c.w+'">'; }).join('')+'</colgroup>'+
+        '<thead><tr>'+RC.map(function(c){ return '<th>'+esc(c.t)+'</th>'; }).join('')+'</tr></thead><tbody>'+
+        (rooms.length ? rooms.map(function(t,i){
+          var mods=(t.modules||'').split(',').filter(Boolean);
+          var here=t.code===cur;
+          return '<tr><td>'+(i+1)+'</td><td>'+esc(t.code)+'</td><td><b>'+esc(t.name||t.code)+'</b></td>'+
+            '<td style="font-size:13px;color:#4B5565">'+(mods.length ? esc(mods.map(function(k){ return modName[k]||k; }).join(' · ')) : 'ครบทุกระบบ')+'</td>'+
+            '<td>'+(sup && t.code!=='MOODATA' ? '<button class="btn btn-ghost btn-sm" style="width:auto;white-space:nowrap" type="button" '+
+                'onclick="hrLinks(&quot;'+esc(t.code)+'&quot;)">🔗 ลิงก์</button>' : '<span style="color:#8A94A6">—</span>')+'</td>'+
+            '<td>'+(here ? '<span class="lvb lvb-ok">กำลังอยู่</span>'
+                  : '<button class="hr-go" style="white-space:nowrap" type="button" data-room="'+esc(t.code)+
+                    '" data-name="'+esc(t.name||t.code)+'">เข้าห้องนี้ →</button>')+'</td></tr>';
+        }).join('') : '<tr class="dt-empty"><td colspan="'+RC.length+'">ยังไม่มีห้องลูกค้าค่ะ</td></tr>')+
+        '</tbody></table></div></div></div>';
       /* 🩺 วัดความเร็ว — ย้ายไปโมดูล "ระบบพัฒนา" แล้ว (15 ก.ย. 69)
          เดิมแปะท้ายหน้านี้เพราะหาที่วางไม่ได้ · พี่กี้หาไม่เจอ = วางผิดที่ (กฎเดียวกับเมนูในชีต) */
       $('main').innerHTML=html;
@@ -4496,7 +4504,7 @@
     jsonp({action:'waHubLinks',uid:UID}).then(function(r){
       unbusy();
       if(!r||!r.ok){ toast((r&&r.error)||'โหลดไม่สำเร็จ'); return; }
-      modal('<h3>🎁 เปิดห้องให้ลูกค้า</h3><div id="mErr" class="m-err hidden"></div>'+
+      modal('<h3>เปิดห้องใหม่</h3><div id="mErr" class="m-err hidden"></div>'+
         '<div class="fld"><label>ชื่อบริษัทลูกค้า</label><input id="hoCo" placeholder="เช่น บริษัท ตัวอย่าง จำกัด"></div>'+
         '<div class="fld"><label>แพ็กที่ขาย</label><div class="us-perm-list">'+(r.packs||[]).map(function(p){
           return '<label class="us-perm-it"><input type="checkbox" class="hoPack" value="'+esc(p.key)+'"> '+esc(p.label)+'</label>';
@@ -27838,7 +27846,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20261004-1721';
+  var APP_BUILD='20261004-1809';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
