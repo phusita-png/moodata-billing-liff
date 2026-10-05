@@ -16,9 +16,9 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20261005-1531">
+<link rel="stylesheet" href="user.css?v=20261005-1604">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<script src="yd-auth.js?v=20261005-1531"></script>
+<script src="yd-auth.js?v=20261005-1604"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
   .date-row{ display:flex; flex-direction:column; gap:14px; margin:4px 0 12px; } .date-row > div{ min-width:0; }
@@ -15578,14 +15578,21 @@
 
   /* ── 📥 นำเข้าแม่แบบจากไฟล์ต้นทาง (ห้อง Moodata) ── */
   var PTI=null, PTI_TAB=0, PTI_SEL={}, PTI_CAT={}, PTI_Q='';
-  function renderPplTplImp(){
-    skel();
-    $('main').innerHTML='<div class="card"><div class="emptybox">กำลังอ่านไฟล์ต้นทาง (หลายแท็บ อาจใช้เวลา 10–40 วินาที)…</div></div>';
-    jsonp(withRoom_({action:'waPplTplSrc',uid:UID}), 0, 180000).then(function(r){
+  /** กลับเข้าหน้านำเข้า = เห็นรายการเดิม + ที่ติ๊กไว้ทันที แล้วเช็ก "นำเข้าแล้ว" เบื้องหลัง (หลังบ้านจำผลอ่านไฟล์ 6 ชม.)
+      fresh = กด 🔄 อ่านไฟล์ใหม่ (พี่เพิ่งแก้ชีตต้นทาง) */
+  function renderPplTplImp(fresh){
+    fresh=fresh===true;
+    if(PTI && !fresh) ptiPaint();
+    else { skel(); $('main').innerHTML='<div class="card"><div class="emptybox">'+(fresh?'กำลังอ่านไฟล์ต้นทางใหม่':'กำลังอ่านไฟล์ต้นทาง')+' (หลายแท็บ อาจใช้เวลา 10–40 วินาที)…</div></div>'; }
+    jsonp(withRoom_({action:'waPplTplSrc',uid:UID,fresh:fresh?'1':''}), 0, 180000).then(function(r){
       if(VIEW!=='ppltplimp') return;
-      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
-      PTI=r; PTI_SEL={}; PTI_CAT={}; PTI_Q='';
+      if(!r||!r.ok){ if(PTI&&!fresh){ toast((r&&r.error)||'เช็กรายการล่าสุดไม่สำเร็จ'); return; } $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      /* คงที่ติ๊ก/หมวดที่ตั้งไว้ — ตัดเฉพาะใบที่ไม่อยู่ในไฟล์แล้ว หรือนำเข้าไปแล้ว */
+      var live={}; r.tabs.forEach(function(tb){ tb.items.forEach(function(x){ if(!x.done) live[x.fileId]=1; }); });
+      Object.keys(PTI_SEL).forEach(function(f){ if(!live[f]) delete PTI_SEL[f]; });
+      PTI=r;
       if(PTI_TAB>=r.tabs.length) PTI_TAB=0;
+      if(fresh) toast('อ่านไฟล์ใหม่แล้ว');
       ptiPaint();
     }).catch(function(e){ if(VIEW==='ppltplimp') $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(/เชื่อมต่อเซิร์ฟเวอร์|ไม่ครบ|ไม่รับคำสั่ง/.test(e.message)?'เมนูนี้ต้องอัปเดตหลังบ้านก่อนค่ะ (ยังไม่ได้ deploy)':e.message)+'</div></div>'; });
   }
@@ -15606,7 +15613,8 @@
       (picked.length?'<div style="display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin:0 0 12px"><span class="m-hint" style="margin:0">ติ๊กไว้แล้ว:</span>'+picked.join('')+'</div>':'');
     var h='<div class="lst-card"><div class="lst-head"><div class="t"><b>นำเข้าแม่แบบจากไฟล์</b>'+
         '<div>ติ๊กใบที่จะเก็บเข้าคลัง · เลือกได้หลายแท็บก่อนกดนำเข้า · ใบที่นำเข้าแล้วติ๊กซ้ำไม่ได้ · เลือกแท็บจากกล่องด้านล่าง</div></div>'+
-      '<div class="lst-tools"><button class="btn btn-ghost" type="button" onclick="switchView(&quot;ppltpl&quot;)">← กลับคลังแม่แบบ</button></div></div>'+
+      '<div class="lst-tools"><span class="m-hint" style="margin:0">อ่านไฟล์เมื่อ '+esc(ptiAtLabel(r.at))+'</span><button class="btn btn-ghost" type="button" title="ใช้เมื่อเพิ่งแก้ชีตต้นทาง" onclick="renderPplTplImp(true)">🔄 อ่านไฟล์ใหม่</button>'+
+        '<button class="btn btn-ghost" type="button" onclick="switchView(&quot;ppltpl&quot;)">← กลับคลังแม่แบบ</button></div></div>'+
       tabs+
       '<div class="lst-tools" style="margin:0 0 10px;justify-content:flex-start"><input type="search" placeholder="ค้นหาในแท็บนี้" value="'+esc(PTI_Q)+'" oninput="PTI_Q=this.value;ptiPaintBody()">'+
         '<select onchange="ptiSetCatAll(this.value);this.value=&quot;&quot;"><option value="">ตั้งหมวดใบที่ติ๊กในแท็บนี้…</option>'+r.cats.map(function(c){ return '<option value="'+c.k+'">'+esc(c.n)+'</option>'; }).join('')+'</select></div>'+
@@ -15619,6 +15627,12 @@
     $('main').innerHTML=h;
   }
   function ptiPaintBody(){ var b=$('ptiBody'); if(b) b.innerHTML=ptiBody(); }
+  /** '2026-10-05 15:40' → 'วันนี้ 15:40' / '4 ต.ค. 15:40' */
+  function ptiAtLabel(at){
+    var m=String(at||'').match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}:\d{2})/); if(!m) return '—';
+    var d=new Date(), today=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+    return (m[1]+'-'+m[2]+'-'+m[3]===today?'วันนี้':(+m[3])+' '+['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'][+m[2]])+' '+m[4];
+  }
   function ptiBody(){
     var its=ptiItems();
     if(!its.length) return '<tr class="dt-empty"><td colspan="7">'+(PTI_Q?'ไม่พบในแท็บนี้':'แท็บนี้ไม่มีลิงก์เอกสาร')+'</td></tr>';
@@ -29655,7 +29669,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20261005-1531';
+  var APP_BUILD='20261005-1604';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
