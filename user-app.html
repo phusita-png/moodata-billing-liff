@@ -16,9 +16,9 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20261005-1731">
+<link rel="stylesheet" href="user.css?v=20261005-1823">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<script src="yd-auth.js?v=20261005-1731"></script>
+<script src="yd-auth.js?v=20261005-1823"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
   .date-row{ display:flex; flex-direction:column; gap:14px; margin:4px 0 12px; } .date-row > div{ min-width:0; }
@@ -2435,6 +2435,8 @@
      ช่องข้อความ 3 ช่องแบ่งความกว้างที่เหลือเท่า ๆ กัน · ช่องตัวเลขกว้างคงที่
      ไม่บังคับ nowrap: จอแคบจนช่องเล็กกว่าขั้นต่ำ = ตัดบรรทัดเอง (ไม่บีบชื่อตำแหน่งจนอ่านไม่ออก) */
   .kp-tgt{ white-space:nowrap; }
+  .kp-pctc.kp-pct0{ color:#DC2626; font-weight:700; }
+  .kp-capin input{ width:120px; display:block; margin:2px auto; font-size:13px; }
   .kp-cap{ font-size:12px; color:#8A94A6; margin-top:3px; text-align:right; white-space:nowrap; }
   .kp-metbar .kp-lb{ white-space:nowrap; flex:none; }
   .kp-metbar .kp-grow{ display:none; }
@@ -26337,7 +26339,12 @@
         f.metrics.forEach(function(m,mi){
           var v=m.value||{};
           var need=function(t){ return m.type===t; };
-          h+='<tr data-metric="'+esc(m.id)+'"><td class="kp-c">'+(mi+1)+'</td><td>'+esc(m.name)+'<div class="m-hint">น้ำหนัก '+m.weight+'</div></td>'+
+          var cd=kpCapDef(m.type), pv=m.prev||{};
+          /* data-* ให้ kpLivePct คิด % สดตอนพิมพ์ + kpFillWarn เทียบเดือนก่อนตอนกดบันทึก (พี่กี้ 5 ต.ค. 69) */
+          h+='<tr data-metric="'+esc(m.id)+'" data-type="'+esc(m.type)+'" data-target="'+esc(String(m.target||0))+'"'+
+            ' data-name="'+esc(m.name)+'" data-prev-base="'+esc(String(pv.base==null?'':pv.base))+'"'+
+            ' data-prev-total="'+esc(String(pv.total==null?'':pv.total))+'">'+
+            '<td class="kp-c">'+(mi+1)+'</td><td>'+esc(m.name)+'<div class="m-hint">น้ำหนัก '+m.weight+'</div></td>'+
             '<td class="kp-r kp-tgt">'+(m.target?esc(kpFmtNum(m.target)):'—')+' '+esc(m.unit||'')+'</td>'+
             '<td class="kp-r">'+kpIn('total',v.total,(need('daily')||need('monthly')))+'</td>'+
             '<td class="kp-r">'+kpIn('workDays',v.workDays,need('daily'))+'</td>'+
@@ -26345,12 +26352,12 @@
                เดิมหัว "จำนวนที่ผิด" ลูกค้ากรอก 100/100 ในข้อส่งเอกสารตรงเวลา → ได้ 0% · ข้อค่าโฆษณาช่องนี้คือค่าโฆษณา ไม่ใช่ "ที่ผิด"
                🔴 เปลี่ยนแค่คำ — ช่อง errors ยังเป็น "ส่วนที่ผิด/เกิน" เหมือนเดิม (วิธีคิดคะแนนห้ามกลับด้าน) */
             '<td class="kp-r">'+kpIn('base',v.base,(need('ratio')||need('cap')))+
-              ((need('ratio')||need('cap'))?'<div class="kp-cap">ทั้งหมด</div>':'')+'</td>'+
+              (cd[0]?'<div class="kp-cap">'+esc(m.baseLabel||cd[0])+'</div>':'')+'</td>'+
             '<td class="kp-r">'+kpIn('errors',v.errors,(need('ratio')||need('cap')))+
-              (need('ratio')?'<div class="kp-cap">ที่ผิด</div>':need('cap')?'<div class="kp-cap">ที่คลาดเคลื่อน/เกิน</div>':'')+'</td>'+
+              (cd[1]?'<div class="kp-cap">'+esc(m.errLabel||cd[1])+'</div>':'')+'</td>'+
             '<td class="kp-r">'+kpIn('rating',v.rating,need('rating'))+'</td>'+
-            '<td class="kp-c"><input type="checkbox" data-f="skip"'+(m.skip?' checked':'')+'></td>'+
-            '<td class="kp-r">'+(m.pct===null?'—':m.pct+'%')+'</td></tr>';
+            '<td class="kp-c"><input type="checkbox" data-f="skip"'+(m.skip?' checked':'')+' onchange="kpLivePct(this)"></td>'+
+            '<td class="kp-r kp-pctc'+(m.pct===0?' kp-pct0':'')+'">'+(m.pct===null?'—':m.pct+'%')+'</td></tr>';
         });
         h+='</tbody></table></div>';
       }
@@ -26466,7 +26473,64 @@
   function kpIn(field,val,on){
     if(!on) return '<span class="m-hint">—</span>';
     return '<input class="inp kp-nm" type="text" inputmode="decimal" data-f="'+field+'" value="'+
-      esc(kpFmtNum(val))+'" oninput="kpNumInput(this)">';
+      esc(kpFmtNum(val))+'" oninput="kpNumInput(this);kpLivePct(this)">';
+  }
+  /** คำกลางใต้ช่องฐาน/ช่องที่นับ ตามชนิดตัวชี้วัด — ข้อไหนตั้งคำเองในหน้าตั้งค่าจะใช้คำนั้นแทน */
+  function kpCapDef(type){
+    if(type==='ratio') return ['ทั้งหมด','ที่ผิด'];
+    if(type==='cap') return ['ทั้งหมด','ที่คลาดเคลื่อน/เกิน'];
+    return ['',''];
+  }
+  /** % ทำได้ — 🔴 สูตรเดียวกับ kpiMetricPct_ (Kpi.gs) ห้ามแยกกันแก้ · เทสล็อกใน test-kpi-web */
+  function kpPctJs(type,target,d){
+    var n=function(v){ v=Number(v); return isFinite(v)?v:0; }, has=function(v){ return v!==undefined&&v!==null&&v!==''; };
+    var t=n(target), pct;
+    if(type==='daily'){ var days=n(d.workDays); if(!has(d.total)||days<=0||t<=0) return null; pct=(n(d.total)/days)/t*100; }
+    else if(type==='monthly'){ if(!has(d.total)||t<=0) return null; pct=n(d.total)/t*100; }
+    else if(type==='ratio'){ var b=n(d.base); if(!has(d.errors)||b<=0) return null; pct=(b-n(d.errors))/b*100; if(t>0&&pct>=t) return 100; }
+    else if(type==='cap'){ var cb=n(d.base); if(!has(d.errors)||cb<=0) return null; var ep=n(d.errors)/cb*100; if(ep<=t) return 100; pct=100-ep; }
+    else if(type==='rating'){ var r=n(d.rating); if(r<=0) return null; pct=r*20; }
+    else return null;
+    if(pct<0) pct=0; if(pct>100) pct=100;
+    return Math.round(pct*100)/100;
+  }
+  /** % สดตอนพิมพ์ — ลูกค้ากรอก 1/1 ปุ๊บเห็น 0% สีแดงทันที ไม่ต้องรอบันทึก (พี่กี้ 5 ต.ค. 69) */
+  function kpLivePct(el){
+    var tr=el&&el.closest&&el.closest('tr[data-metric]'); if(!tr) return;
+    var cell=tr.querySelector('.kp-pctc'); if(!cell) return;
+    var d={}, skip=false;
+    tr.querySelectorAll('input[data-f]').forEach(function(i){
+      var f=i.getAttribute('data-f');
+      if(f==='skip'){ skip=i.checked; return; }
+      d[f]=kpRawNum(i.value);
+    });
+    var p=skip?null:kpPctJs(tr.getAttribute('data-type'),tr.getAttribute('data-target'),d);
+    cell.textContent=p===null?'—':(p+'%');
+    cell.classList.toggle('kp-pct0',p===0);
+  }
+  /** ตัวเลขที่น่าจะกรอกผิด — คืนรายการข้อความ (ว่าง = ไม่มีอะไรน่าสงสัย) · ไม่บล็อก แค่ถามยืนยัน */
+  function kpFillWarn(){
+    var out=[];
+    document.querySelectorAll('.kp-form').forEach(function(card){
+      if(card.classList.contains('kp-ro')) return;
+      var who=(card.querySelector('.kp-fhead-nm')||{}).textContent||card.getAttribute('data-code')||'';
+      card.querySelectorAll('tr[data-metric]').forEach(function(tr){
+        var sk=tr.querySelector('input[data-f="skip"]'); if(sk&&sk.checked) return;
+        var g=function(f){ var i=tr.querySelector('input[data-f="'+f+'"]'); return i?kpRawNum(i.value):''; };
+        var nm=tr.getAttribute('data-name')||'', base=g('base'), err=g('errors'), tot=g('total');
+        var lb=(tr.querySelectorAll('.kp-cap')[1]||{}).textContent||'ที่ผิด';
+        if(base!==''&&err!==''&&Number(base)>0&&Number(err)>=Number(base))
+          out.push(who+' · '+nm+': ช่อง "'+lb+'" '+kpFmtNum(err)+' จาก '+kpFmtNum(base)+' = ได้ 0% — ถ้าทำได้ครบให้ใส่ 0');
+        var far=function(now,prev,what){
+          now=Number(now); prev=Number(prev);
+          if(!(now>0&&prev>0)) return;
+          if(now<prev/5||now>prev*5) out.push(who+' · '+nm+': '+what+' '+kpFmtNum(now)+' ต่างจากเดือนก่อน ('+kpFmtNum(prev)+') มาก — พิมพ์เลขตก/เกินไหม');
+        };
+        if(base!=='') far(base,tr.getAttribute('data-prev-base'),'ช่องทั้งหมด');
+        if(tot!=='') far(tot,tr.getAttribute('data-prev-total'),'ผลที่ทำได้');
+      });
+    });
+    return out;
   }
 
   /** เก็บค่าจากทุกฟอร์มในหน้า → ส่งครั้งเดียว (POST เพราะ payload ยาวเกิน URL) */
@@ -26507,6 +26571,11 @@
       });
     });
     if(!payload.perf.length&&!payload.stat.length&&!payload.trait.length) return toast('ยังไม่ได้กรอกอะไรเลยค่ะ');
+    /* ถามก่อนบันทึกเมื่อเลขดูผิดปกติ (1/1 = ได้ 0% · 26 จากปกติ 230+) — กดตกลงก็บันทึกต่อได้ ไม่บล็อก */
+    var warn=kpFillWarn();
+    if(warn.length&&!confirm('ตรวจตัวเลขอีกครั้งนะคะ'+String.fromCharCode(10,10)+warn.slice(0,8).join(String.fromCharCode(10))+
+      (warn.length>8?(String.fromCharCode(10)+'… และอีก '+(warn.length-8)+' ข้อ'):'')+
+      String.fromCharCode(10,10)+'ถูกต้องแล้ว กด "ตกลง" เพื่อบันทึก · กด "ยกเลิก" เพื่อกลับไปแก้')) return;
     busy('กำลังบันทึก…');
     jsonpPost({ action:'waKpiFormSave', uid:UID, ym:KPR_YM, payload:JSON.stringify(payload) }).then(function(r){
       if(!r||!r.ok) return toast(r&&r.error||'บันทึกไม่สำเร็จ');
@@ -27096,13 +27165,19 @@
         '<span class="kp-lb">รวม <b'+(Math.abs(wSum-100)<0.001?'':' class="kp-warn"')+'>'+wSum+'%</b></span>'+
       '</div>';
     h+='<div class="kp-wrap"><table class="kp-tbl kp-in" id="kpMetricTbl"><thead><tr><th class="kp-c">ลำดับ</th><th>ตัวชี้วัดผลงาน KPI</th>'+
-      '<th>วิธีวัด</th><th class="kp-c">เป้า</th><th class="kp-c">หน่วย</th><th class="kp-c">น้ำหนัก</th><th class="kp-c">รหัส</th></tr></thead><tbody>';
+      '<th>วิธีวัด</th><th class="kp-c">เป้า</th><th class="kp-c">หน่วย</th><th class="kp-c">น้ำหนัก</th>'+
+      '<th class="kp-c">คำใต้ช่องกรอก<div class="m-hint">ทั้งหมด · ที่นับ</div></th><th class="kp-c">รหัส</th></tr></thead><tbody>';
     ((cur&&cur.metrics)||[]).forEach(function(m,i){
+      /* คำใต้ช่องกรอกรายข้อ (พี่กี้ 5 ต.ค. 69) — ใช้คำเดียวกับฟอร์มเดิมของลูกค้า กันกรอกกลับด้าน
+         ว่าง = ใช้คำกลางตามชนิด (placeholder บอกให้เห็นว่าถ้าไม่ตั้งจะขึ้นว่าอะไร) */
+      var cd=kpCapDef(m.type);
       h+='<tr><td class="kp-c">'+(i+1)+'</td><td><input class="inp kp-wide" data-f="name" value="'+esc(m.name)+'"></td>'+
         '<td>'+kpTypeSel(m.type,r.metricTypes)+'</td>'+
         '<td class="kp-c"><input class="inp kp-nm kp-mid" data-f="target" type="number" step="any" value="'+m.target+'"></td>'+
         '<td class="kp-c"><input class="inp kp-nm kp-mid" data-f="unit" value="'+esc(m.unit||'')+'"></td>'+
         '<td class="kp-c"><input class="inp kp-nm kp-mid" data-f="weight" type="number" step="any" value="'+m.weight+'"></td>'+
+        '<td class="kp-c kp-capin"><input class="inp" data-f="baseLabel" placeholder="'+esc(cd[0]||'ทั้งหมด')+'" value="'+esc(m.baseLabel||'')+'">'+
+          '<input class="inp" data-f="errLabel" placeholder="'+esc(cd[1]||'ที่ผิด')+'" value="'+esc(m.errLabel||'')+'"></td>'+
         '<td class="kp-c">'+kpIdCell(m.id, (r.usedMetricIds||{})[m.id], 'ผลงาน')+'</td></tr>';
     });
     h+='</tbody></table></div>'+kpEffNote(r);
@@ -29682,7 +29757,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20261005-1731';
+  var APP_BUILD='20261005-1823';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
