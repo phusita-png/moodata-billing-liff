@@ -16,9 +16,9 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20261005-1604">
+<link rel="stylesheet" href="user.css?v=20261005-1705">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<script src="yd-auth.js?v=20261005-1604"></script>
+<script src="yd-auth.js?v=20261005-1705"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
   .date-row{ display:flex; flex-direction:column; gap:14px; margin:4px 0 12px; } .date-row > div{ min-width:0; }
@@ -1335,6 +1335,10 @@
     padding:20px 18px calc(24px + env(safe-area-inset-bottom)); max-height:90vh; overflow:auto; }
   @media(min-width:860px){ .mask{ align-items:center; } .sheet{ border-radius:18px; } }
   .sheet h3{ margin:0 0 14px; font-size:18px; }
+  .sheet.sheet-doc{ max-width:min(1180px,96vw); max-height:96vh; }
+  .sheet-doc .m-act{ justify-content:flex-end; } .sheet-doc .m-act .btn{ flex:none; width:auto; padding:9px 18px; font-size:14px; }
+  .sheet-doc .doc-view{ display:block; width:100%; height:calc(100vh - 210px); min-height:420px; border:1px solid var(--line); border-radius:8px; }
+  .sheet-doc .doc-view-img{ display:block; max-width:100%; max-height:calc(100vh - 210px); margin:0 auto; border:1px solid var(--line); border-radius:8px; }
   .fld{ margin-bottom:12px; } .fld label{ display:block; font-size:13px; font-weight:600; margin-bottom:6px; }
   /* คำใบ้ตัวเล็กต่อท้ายชื่อช่อง (ไม่ใช่ตัวหนา) */
   .fld label .lbl-note{ font-weight:500; font-size:12px; color:#7E8CA3; }
@@ -5814,7 +5818,9 @@
   // modal helper
   function modal(html){ closeModal();   // ปิดของเดิมก่อนเสมอ → กัน modal ซ้อนชั้น (เด้ง flow ไปมาแล้วทับกัน)
     var m=document.createElement('div'); m.className='mask'; m.id='modal';
-    m.innerHTML='<div class="sheet">'+html+'</div>'; document.body.appendChild(m); return m; }
+    /* หน้าต่างเปิดดูเอกสาร (PDF/รูป) = กว้างเกือบเต็มจอ (พี่กี้ขอ 5 ต.ค. 69 — ป็อปอัพเดิม 520px อ่านเอกสารไม่ได้) */
+    var wide=/class="doc-view/.test(html);
+    m.innerHTML='<div class="sheet'+(wide?' sheet-doc':'')+'">'+html+'</div>'; document.body.appendChild(m); return m; }
   function closeModal(){ var m; while((m=$('modal'))){ if(!m.parentNode){ break; } m.parentNode.removeChild(m); } }   // ลบทุกชั้นที่ค้าง
   function mErr(msg){ var e=$('mErr'); if(e){ e.textContent='⚠️ '+msg; e.classList.remove('hidden'); } }
 
@@ -14863,8 +14869,8 @@
         var isImg=/^image\//.test(r.mime);
         setTimeout(function(){
           modal('<h3>'+esc((x&&x.typeName)||'เอกสาร')+' · '+esc((x&&x.name)||r.name)+'</h3>'+
-            (isImg?'<img src="'+PPL_DOC_URL+'" alt="" style="max-width:100%;border-radius:8px;border:1px solid var(--line)">'
-                  :'<iframe src="'+PPL_DOC_URL+'" title="เอกสาร" style="width:100%;height:65vh;border:1px solid var(--line);border-radius:8px"></iframe>')+
+            (isImg?'<img class="doc-view-img" src="'+PPL_DOC_URL+'" alt="">'
+                  :'<iframe class="doc-view" src="'+PPL_DOC_URL+'" title="เอกสาร"></iframe>')+
             '<div class="m-act"><a class="btn btn-ghost" href="'+PPL_DOC_URL+'" download="'+esc(r.name)+'">ดาวน์โหลด</a>'+
             '<button class="btn btn-primary" onclick="closeModal()">ปิด</button></div>');
         }, 300);
@@ -15451,8 +15457,8 @@
         if(PPL_DOC_URL){ try{ URL.revokeObjectURL(PPL_DOC_URL); }catch(e){} }
         PPL_DOC_URL=URL.createObjectURL(new Blob([arr],{type:r.mime}));
         setTimeout(function(){
-          modal('<h3>เอกสารเคลม · '+esc(r.name)+'</h3>'+(/^image\//.test(r.mime)?'<img src="'+PPL_DOC_URL+'" alt="" style="max-width:100%;border-radius:8px;border:1px solid var(--line)">'
-            :'<iframe src="'+PPL_DOC_URL+'" title="เอกสาร" style="width:100%;height:65vh;border:1px solid var(--line);border-radius:8px"></iframe>')+
+          modal('<h3>เอกสารเคลม · '+esc(r.name)+'</h3>'+(/^image\//.test(r.mime)?'<img class="doc-view-img" src="'+PPL_DOC_URL+'" alt="">'
+            :'<iframe class="doc-view" src="'+PPL_DOC_URL+'" title="เอกสาร"></iframe>')+
             '<div class="m-act"><a class="btn btn-ghost" href="'+PPL_DOC_URL+'" download="'+esc(r.name)+'">ดาวน์โหลด</a><button class="btn btn-primary" onclick="closeModal()">ปิด</button></div>');
         }, 300);
       }).catch(function(e){ toast(e.message); });
@@ -15569,8 +15575,8 @@
         if(PPL_DOC_URL){ try{ URL.revokeObjectURL(PPL_DOC_URL); }catch(e){} }
         PPL_DOC_URL=URL.createObjectURL(new Blob([arr],{type:r.mime}));
         setTimeout(function(){
-          modal('<h3>'+esc((x&&x.code?x.code+' ':'')+(x?x.name:r.name))+'</h3>'+(/^image\//.test(r.mime)?'<img src="'+PPL_DOC_URL+'" alt="" style="max-width:100%;border-radius:8px;border:1px solid var(--line)">'
-            :'<iframe src="'+PPL_DOC_URL+'" title="แม่แบบ" style="width:100%;height:68vh;border:1px solid var(--line);border-radius:8px"></iframe>')+
+          modal('<h3>'+esc((x&&x.code?x.code+' ':'')+(x?x.name:r.name))+'</h3>'+(/^image\//.test(r.mime)?'<img class="doc-view-img" src="'+PPL_DOC_URL+'" alt="">'
+            :'<iframe class="doc-view" src="'+PPL_DOC_URL+'" title="แม่แบบ"></iframe>')+
             '<div class="m-act"><a class="btn btn-ghost" href="'+PPL_DOC_URL+'" download="'+esc(r.name)+'">ดาวน์โหลด PDF</a>'+(x&&x.url?'<a class="btn btn-ghost" href="'+esc(x.url)+'" target="_blank" rel="noopener">เปิดใน Drive</a>':'')+'<button class="btn btn-primary" onclick="closeModal()">ปิด</button></div>');
         }, 300);
       }).catch(function(e){ toast(e.message); });
@@ -28821,8 +28827,8 @@ function kpImpDraw(){
         MY_FILE_URL=URL.createObjectURL(new Blob([arr],{type:r.mime}));
         setTimeout(function(){
           modal('<h3>'+esc((d.typeName||'เอกสาร')+(d.name?' · '+d.name:''))+'</h3>'+
-            (/^image\//.test(r.mime)?'<img src="'+MY_FILE_URL+'" alt="" style="max-width:100%;border-radius:8px;border:1px solid var(--line)">'
-              :'<iframe src="'+MY_FILE_URL+'" title="เอกสาร" style="width:100%;height:65vh;border:1px solid var(--line);border-radius:8px"></iframe>')+
+            (/^image\//.test(r.mime)?'<img class="doc-view-img" src="'+MY_FILE_URL+'" alt="">'
+              :'<iframe class="doc-view" src="'+MY_FILE_URL+'" title="เอกสาร"></iframe>')+
             '<div class="m-act"><a class="btn btn-ghost" href="'+MY_FILE_URL+'" download="'+esc(r.name)+'">ดาวน์โหลด</a>'+
             '<button class="btn btn-primary" onclick="closeModal()">ปิด</button></div>');
         }, 300);
@@ -29669,7 +29675,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20261005-1604';
+  var APP_BUILD='20261005-1705';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
