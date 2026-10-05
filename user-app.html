@@ -16,9 +16,9 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20261005-0741">
+<link rel="stylesheet" href="user.css?v=20261005-0924">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<script src="yd-auth.js?v=20261005-0741"></script>
+<script src="yd-auth.js?v=20261005-0924"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
   .date-row{ display:flex; flex-direction:column; gap:14px; margin:4px 0 12px; } .date-row > div{ min-width:0; }
@@ -14878,6 +14878,7 @@
     $('main').innerHTML='<div class="lst-card"><div class="lst-head">'+
       '<div class="t"><b>เอกสารพนักงาน</b><div>เอกสารที่ต้องมีทุกคน: '+((r.must||[]).length?(r.must.map(esc).join(' · ')):'ยังไม่ได้กำหนด')+' · กดแถวเพื่อไปแฟ้มของคนนั้น</div></div>'+
       '<div class="lst-tools"><div class="kp-tabs">'+tab('missing','ขาดเอกสาร',miss.length)+tab('expiring','ใกล้หมดอายุ / หมดแล้ว',exp.length)+'</div>'+
+        '<button class="btn btn-ghost" type="button" onclick="pplSlipBf()">💵 ดึงสลิปเก่าเข้าแฟ้ม</button>'+
         '<button class="btn btn-ghost" type="button" onclick="switchView(&quot;ppldoctype&quot;)">⚙️ ตั้งค่าประเภทเอกสาร</button></div></div>'+
       '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl">'+body+'</tbody></table></div></div>';
   }
@@ -14953,6 +14954,46 @@
         if(s.added||s.removed) setTimeout(function(){ toast('ระบบเอกสาร: เพิ่ม '+(s.added||0)+' · ถอน '+(s.removed||0)+' ไฟล์'); }, 1700);
         renderPplDocType();
       }).catch(function(e){ if(b) b.disabled=false; toast(e.message); });
+  }
+
+  /* ── 💵 ดึงสลิปเก่าเข้าแฟ้ม (5 ต.ค. 69) ── นับก่อน (ไม่เขียน) → กดยืนยัน → ทำทีละก้อน 40 ใบจนหมด
+     สลิปเก่า = คลัง "เอกสารทีม" (ผูก LINE) · เข้าแฟ้มเป็นทางลัด ไม่ย้ายไฟล์ ไม่เปลี่ยนลิงก์ที่พนักงานใช้อยู่ */
+  function pplSlipBf(){
+    callBusy('กำลังนับสลิปเก่า…', jsonp(withRoom_({ action:'waPplSlipBackfill', uid:UID, dry:'1' })), 'นับแล้ว')
+      .then(function(r){
+        if(!r||!r.ok){ toast((r&&r.error)||'นับไม่สำเร็จ'); return; }
+        setTimeout(function(){
+          modal('<h3>💵 ดึงสลิปเก่าเข้าแฟ้ม</h3><div id="mErr" class="m-err hidden"></div>'+
+            '<div class="m-hint" style="margin-top:0">'+(r.n?'พบสลิปที่ยังไม่อยู่ในแฟ้ม <b>'+r.n+' ใบ</b> ของ '+r.people+' คน':'ไม่มีสลิปเก่าที่ต้องดึงแล้ว')+
+              (r.have?'<br>อยู่ในแฟ้มแล้ว '+r.have+' ใบ (ข้าม)':'')+
+              (r.noReg?'<br>ข้าม '+r.noReg+' ใบ — เจ้าของสลิปยังไม่อยู่ในทะเบียน/ยังไม่ผูก LINE (ย้ายเข้าทะเบียนก่อนแล้วกดใหม่ได้)':'')+
+              '<br><br>สลิปเข้าแฟ้มเป็นทางลัด ไฟล์จริงไม่ย้าย ลิงก์ที่พนักงานใช้อยู่ไม่เปลี่ยน</div>'+
+            '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button>'+
+            (r.n?'<button class="btn btn-primary" id="sbGo" onclick="pplSlipBfGo('+r.n+')">ดึงเข้าแฟ้ม '+r.n+' ใบ</button>':'')+'</div>');
+        }, 400);
+      }).catch(function(e){ toast(e.message); });
+  }
+  function pplSlipBfGo(total){
+    var b=$('sbGo'); if(b) b.disabled=true;
+    var done=0, fail=[], round=0;
+    busy('กำลังดึงสลิปเข้าแฟ้ม…');
+    function next(){
+      round++;
+      return jsonpPost(withRoom_({ action:'waPplSlipBackfill', uid:UID, dry:'0' })).then(function(r){
+        if(!r||!r.ok) throw new Error((r&&r.error)||'ดึงไม่สำเร็จ');
+        done+=r.done; fail=fail.concat(r.fail||[]);
+        busyNote_('ดึงแล้ว '+done+' / '+total+' ใบ…');
+        if(r.left>0 && r.done>0 && round<50) return next();
+      });
+    }
+    next().then(function(){
+      unbusy(); closeModal(); renderPplDocs();
+      setTimeout(function(){
+        modal('<h3>ดึงสลิปเข้าแฟ้มแล้ว '+done+' ใบ</h3>'+
+          (fail.length?'<div class="m-hint" style="margin-top:0">ไม่สำเร็จ '+fail.length+' ใบ:<br>'+fail.slice(0,20).map(esc).join('<br>')+'</div>':'')+
+          '<div class="m-act"><button class="btn btn-primary" onclick="closeModal()">ปิด</button></div>');
+      }, 300);
+    }).catch(function(e){ unbusy(); if(b) b.disabled=false; mErr(e.message+(done?' (ดึงไปแล้ว '+done+' ใบ · กดใหม่ทำต่อได้)':'')); });
   }
 
   /* ── หน้าข้อมูลรายคน ── */
@@ -28951,7 +28992,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20261005-0741';
+  var APP_BUILD='20261005-0924';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
