@@ -16,9 +16,9 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20261005-1428">
+<link rel="stylesheet" href="user.css?v=20261005-1531">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<script src="yd-auth.js?v=20261005-1428"></script>
+<script src="yd-auth.js?v=20261005-1531"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
   .date-row{ display:flex; flex-direction:column; gap:14px; margin:4px 0 12px; } .date-row > div{ min-width:0; }
@@ -15460,7 +15460,7 @@
 
   /* ── 📚 คลังแม่แบบเอกสาร HR · T1 (5 ต.ค. 69 · PeopleTemplates.gs) ──
      ห้อง Moodata = คลังกลาง (นำเข้า/แก้/เปิดให้ห้องลูกค้า) · ห้องลูกค้าเห็นเฉพาะใบที่เปิดให้ · เปิดดูเป็น PDF ผ่านหลังบ้าน */
-  var PTPL=null, PTPL_CAT='', PTPL_Q='', PTPL_SEL={};
+  var PTPL=null, PTPL_CAT=null, PTPL_Q='', PTPL_SEL={};   // PTPL_CAT '' = ทั้งหมด · null = ยังไม่เลือก (เปิดหมวดแรกที่มีแม่แบบ)
   var PTPL_KIND={ doc:'เอกสาร', sheet:'ชีต', slide:'สไลด์', file:'ไฟล์' };
   function renderPplTpl(){
     skel();
@@ -15468,7 +15468,7 @@
       if(VIEW!=='ppltpl') return;
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
       PTPL=r; PTPL_SEL={};
-      if(!PTPL_CAT || !r.cats.some(function(c){ return c.k===PTPL_CAT; })){
+      if(PTPL_CAT===null || (PTPL_CAT && !r.cats.some(function(c){ return c.k===PTPL_CAT; }))){
         var first=r.cats.filter(function(c){ return r.rows.some(function(x){ return x.cat===c.k; }); })[0];
         PTPL_CAT=(first||r.cats[0]).k;
       }
@@ -15479,19 +15479,22 @@
     var q=PTPL_Q.trim().toLowerCase();
     return PTPL.rows.filter(function(x){
       if(q) return (x.code+' '+x.name+' '+x.group+' '+x.desc).toLowerCase().indexOf(q)>=0;
-      return x.cat===PTPL_CAT;
+      return !PTPL_CAT || x.cat===PTPL_CAT;
     });
   }
   function ptplPaint(){
     var r=PTPL, home=r.home, rows=ptplRows(), nSel=Object.keys(PTPL_SEL).length;
     var cnt={}; r.rows.forEach(function(x){ cnt[x.cat]=(cnt[x.cat]||0)+1; });
-    var tabs=r.cats.map(function(c){ return '<button class="kp-tab'+(!PTPL_Q&&PTPL_CAT===c.k?' on':'')+'" onclick="PTPL_Q=&quot;&quot;;PTPL_CAT=&quot;'+c.k+'&quot;;PTPL_SEL={};ptplPaint()">'+esc(c.n)+' <b>'+(cnt[c.k]||0)+'</b></button>'; }).join('');
+    /* กลุ่มในกล่องเลือก = ใช้ทำอะไร (สร้างเอกสารรายคน · ให้พนักงานอ่าน · อ้างอิง) */
+    var grp=[['สร้างเอกสารรายคน',function(c){ return c.make; }],['ให้พนักงานอ่าน',function(c){ return c.emp; }],['อ้างอิง',function(c){ return !c.make&&!c.emp; }]];
+    var catSel='<select id="ptplCat" title="หมวดแม่แบบ" onchange="PTPL_CAT=this.value;PTPL_Q=&quot;&quot;;PTPL_SEL={};ptplPaint()"><option value=""'+(PTPL_CAT===''?' selected':'')+'>ทุกหมวด ('+r.rows.length+')</option>'+
+      grp.map(function(g){ return '<optgroup label="'+g[0]+'">'+r.cats.filter(g[1]).map(function(c){ return '<option value="'+c.k+'"'+(PTPL_CAT===c.k?' selected':'')+'>'+esc(c.n)+' ('+(cnt[c.k]||0)+')</option>'; }).join('')+'</optgroup>'; }).join('')+'</select>';
+    var curName=PTPL_Q?'ผลค้นหา':(PTPL_CAT?ptplCatName(PTPL_CAT):'ทุกหมวด');
     var cols=home?8:6;
-    var h='<div class="lst-card"><div class="lst-head"><div class="t"><b>แม่แบบเอกสาร <span style="color:#8A94A6;font-weight:600;font-size:13px">ทั้งหมด '+r.rows.length+' ใบ</span></b>'+
+    var h='<div class="lst-card"><div class="lst-head"><div class="t"><b>แม่แบบเอกสาร <span style="color:#8A94A6;font-weight:600;font-size:13px">'+esc(curName)+' '+rows.length+' ใบ · คลังมีทั้งหมด '+r.rows.length+' ใบ</span></b>'+
         '<div>'+(home?'คลังกลางของ Moodata · ติ๊ก "ลูกค้าเห็น" เพื่อเปิดให้ห้องลูกค้าใช้ · ไฟล์ต้นฉบับไม่ถูกแก้':'แม่แบบมาตรฐานจาก Moodata · กดที่แถวเพื่อเปิดดู')+'</div></div>'+
-      '<div class="lst-tools"><input type="search" id="ptplQ" placeholder="ค้นหารหัส / ชื่อ" value="'+esc(PTPL_Q)+'" oninput="PTPL_Q=this.value;PTPL_SEL={};ptplPaintBody()">'+
+      '<div class="lst-tools">'+catSel+'<input type="search" id="ptplQ" placeholder="ค้นหารหัส / ชื่อ (ทุกหมวด)" value="'+esc(PTPL_Q)+'" oninput="PTPL_Q=this.value;PTPL_SEL={};ptplPaintBody();ptplHeadCount()">'+
         (home?'<button class="btn btn-primary" type="button" onclick="switchView(&quot;ppltplimp&quot;)">📥 นำเข้าจากไฟล์</button>':'')+'</div></div>'+
-      '<div class="kp-tabs ptpl-tabs">'+tabs+'</div>'+
       (home?'<div id="ptplBulk" class="pwf-act" style="margin:0 0 10px'+(nSel?'':';display:none')+'"><span class="m-hint" style="margin:0" id="ptplNSel">เลือก '+nSel+' ใบ</span>'+
         '<button class="btn btn-ghost" type="button" onclick="ptplBulk(&quot;share&quot;)">เปิดให้ห้องลูกค้า</button><button class="btn btn-ghost" type="button" onclick="ptplBulk(&quot;unshare&quot;)">ปิดจากห้องลูกค้า</button></div>':'')+
       '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl ptpl-tbl" style="min-width:'+(home?860:700)+'px"><thead><tr>'+
@@ -15501,6 +15504,7 @@
       '<div class="m-hint" style="margin-top:10px">แม่แบบ = ต้นฉบับ ไม่ผูกกับพนักงาน · การสร้างเอกสารใช้จริงจากแม่แบบ (เติมข้อมูลพนักงาน) จะมาในเฟสถัดไป</div></div>';
     $('main').innerHTML=h;
   }
+  function ptplHeadCount(){ var b=document.querySelector('#main .lst-head .t b span'); if(b&&PTPL) b.textContent=(PTPL_Q?'ผลค้นหา':(PTPL_CAT?ptplCatName(PTPL_CAT):'ทุกหมวด'))+' '+ptplRows().length+' ใบ · คลังมีทั้งหมด '+PTPL.rows.length+' ใบ'; }
   function ptplPaintBody(){ var b=$('ptplBody'); if(!b) return; b.innerHTML=ptplBody(ptplRows(), PTPL.home?8:6); ptplBulkBar(); }
   function ptplBody(rows, cols){
     var home=PTPL.home;
@@ -15519,7 +15523,7 @@
         (home?'<td><input type="checkbox"'+(PTPL_SEL[x.id]?' checked':'')+' onclick="ptplSel(&quot;'+esc(x.id)+'&quot;,this.checked)"></td>':'')+
         '<td>'+(i+1)+'</td><td style="white-space:nowrap">'+esc(x.code||'—')+'</td>'+
         '<td style="cursor:pointer" onclick="ptplOpen('+q+')"><b>'+esc(x.name)+'</b>'+(x.off?' <span class="lvb">เลิกใช้</span>':'')+
-          (x.desc?'<div style="font-size:12.5px;color:#8A94A6;margin-top:2px">'+esc(x.desc.length>140?x.desc.slice(0,140)+'…':x.desc)+'</div>':'')+(PTPL_Q?'<div style="font-size:12px;color:#8A94A6">'+esc(ptplCatName(x.cat))+'</div>':'')+'</td>'+
+          (x.desc?'<div style="font-size:12.5px;color:#8A94A6;margin-top:2px">'+esc(x.desc.length>140?x.desc.slice(0,140)+'…':x.desc)+'</div>':'')+(PTPL_Q||!PTPL_CAT?'<div style="font-size:12px;color:#8A94A6">หมวด: '+esc(ptplCatName(x.cat))+'</div>':'')+'</td>'+
         '<td>'+esc(x.group||'—')+'</td><td>'+esc(PTPL_KIND[x.kind]||x.kind||'—')+'</td>'+
         (home?'<td>'+(x.shared?'<span class="lvb lvb-ok">เปิดให้</span>':'<span class="lvb">เฉพาะเรา</span>')+'</td>':'')+
         dtActCell('tp-'+x.id, acts)+'</tr>';
@@ -15592,14 +15596,18 @@
   function ptiCatOf(x){ return PTI_CAT[x.fileId]||x.cat; }
   function ptiPaint(){
     var r=PTI, nSel=Object.keys(PTI_SEL).length;
-    var tabs=r.tabs.map(function(tb,i){
+    var picked=[];
+    var opts=r.tabs.map(function(tb,i){
       var left=tb.items.filter(function(x){ return !x.done; }).length, sel=tb.items.filter(function(x){ return PTI_SEL[x.fileId]; }).length;
-      return '<button class="kp-tab'+(PTI_TAB===i?' on':'')+'" onclick="PTI_TAB='+i+';PTI_Q=&quot;&quot;;ptiPaint()" title="'+esc(tb.name)+'">'+esc(tb.name.length>26?tb.name.slice(0,26)+'…':tb.name)+' <b>'+left+'</b>'+(sel?' <span class="lvb lvb-ok">✓'+sel+'</span>':'')+'</button>';
+      if(sel) picked.push('<button class="dr-chip" type="button" onclick="PTI_TAB='+i+';PTI_Q=&quot;&quot;;ptiPaint()">'+esc(tb.name)+' <span class="dr-n">✓ '+sel+'</span></button>');
+      return '<option value="'+i+'"'+(PTI_TAB===i?' selected':'')+'>'+esc(tb.name)+' · เหลือ '+left+' จาก '+tb.items.length+(sel?' · ติ๊กแล้ว '+sel:'')+'</option>';
     }).join('');
+    var tabs='<div class="fld" style="margin:0 0 10px"><label>แท็บในไฟล์ต้นทาง ('+r.tabs.length+' แท็บ)</label><select id="ptiTab" style="width:100%;max-width:640px" onchange="PTI_TAB=+this.value;PTI_Q=&quot;&quot;;ptiPaint()">'+opts+'</select></div>'+
+      (picked.length?'<div style="display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin:0 0 12px"><span class="m-hint" style="margin:0">ติ๊กไว้แล้ว:</span>'+picked.join('')+'</div>':'');
     var h='<div class="lst-card"><div class="lst-head"><div class="t"><b>นำเข้าแม่แบบจากไฟล์</b>'+
-        '<div>ติ๊กใบที่จะเก็บเข้าคลัง · เลือกได้หลายแท็บก่อนกดนำเข้า · ใบที่นำเข้าแล้วติ๊กซ้ำไม่ได้ · ตัวเลขบนแท็บ = ใบที่ยังไม่นำเข้า</div></div>'+
+        '<div>ติ๊กใบที่จะเก็บเข้าคลัง · เลือกได้หลายแท็บก่อนกดนำเข้า · ใบที่นำเข้าแล้วติ๊กซ้ำไม่ได้ · เลือกแท็บจากกล่องด้านล่าง</div></div>'+
       '<div class="lst-tools"><button class="btn btn-ghost" type="button" onclick="switchView(&quot;ppltpl&quot;)">← กลับคลังแม่แบบ</button></div></div>'+
-      '<div class="kp-tabs ptpl-tabs">'+tabs+'</div>'+
+      tabs+
       '<div class="lst-tools" style="margin:0 0 10px;justify-content:flex-start"><input type="search" placeholder="ค้นหาในแท็บนี้" value="'+esc(PTI_Q)+'" oninput="PTI_Q=this.value;ptiPaintBody()">'+
         '<select onchange="ptiSetCatAll(this.value);this.value=&quot;&quot;"><option value="">ตั้งหมวดใบที่ติ๊กในแท็บนี้…</option>'+r.cats.map(function(c){ return '<option value="'+c.k+'">'+esc(c.n)+'</option>'; }).join('')+'</select></div>'+
       '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl ptpl-tbl" style="min-width:860px"><thead><tr>'+
@@ -15624,8 +15632,10 @@
     }).join('');
   }
   function ptiFoot(){ var n=Object.keys(PTI_SEL).length, t=$('ptiN'), b=$('ptiGo'); if(t) t.textContent='เลือกแล้ว '+n+' ใบ'+(n>150?' · นำเข้าทีละ 150 ใบ (กดซ้ำได้)':''); if(b){ b.disabled=!n; b.textContent='นำเข้า '+n+' ใบ'; } }
-  function ptiSel(fid,on){ if(on) PTI_SEL[fid]=1; else delete PTI_SEL[fid]; ptiFoot(); }
-  function ptiSelAll(on){ ptiItems().forEach(function(x){ if(x.done) return; if(on) PTI_SEL[x.fileId]=1; else delete PTI_SEL[x.fileId]; }); ptiPaintBody(); ptiFoot(); }
+  function ptiSel(fid,on){ if(on) PTI_SEL[fid]=1; else delete PTI_SEL[fid]; ptiFoot(); ptiTabsRefresh(); }
+  /** อัปเดตกล่องเลือกแท็บ + แถบ ติ๊กไว้แล้ว (วาดจากสถานะเดิม · คงตำแหน่งเลื่อนจอ) */
+  function ptiTabsRefresh(){ var sc=window.scrollY; ptiPaint(); window.scrollTo(0,sc); }
+  function ptiSelAll(on){ ptiItems().forEach(function(x){ if(x.done) return; if(on) PTI_SEL[x.fileId]=1; else delete PTI_SEL[x.fileId]; }); ptiTabsRefresh(); ptiPaintBody(); ptiFoot(); var a=$('ptiAll'); if(a) a.checked=on; }
   function ptiSetCatAll(k){ if(!k) return; var n=0; ptiItems().forEach(function(x){ if(PTI_SEL[x.fileId]){ PTI_CAT[x.fileId]=k; n++; } }); if(!n){ toast('ติ๊กใบในแท็บนี้ก่อนค่ะ'); return; } ptiPaintBody(); toast('ตั้งหมวด '+n+' ใบแล้ว'); }
   function ptiImport(){
     var list=[];
@@ -29645,7 +29655,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20261005-1428';
+  var APP_BUILD='20261005-1531';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
