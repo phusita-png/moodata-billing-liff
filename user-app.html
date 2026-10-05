@@ -16,9 +16,9 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20261005-1705">
+<link rel="stylesheet" href="user.css?v=20261005-1731">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<script src="yd-auth.js?v=20261005-1705"></script>
+<script src="yd-auth.js?v=20261005-1731"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
   .date-row{ display:flex; flex-direction:column; gap:14px; margin:4px 0 12px; } .date-row > div{ min-width:0; }
@@ -2434,6 +2434,8 @@
   /* หัวฟอร์มตัวชี้วัด (เกณฑ์·ตำแหน่ง·ระดับ·สัดส่วน 3 ช่อง) ให้อยู่บรรทัดเดียวบนจอคอม — พี่กี้ขอ 5 ต.ค. 69
      ช่องข้อความ 3 ช่องแบ่งความกว้างที่เหลือเท่า ๆ กัน · ช่องตัวเลขกว้างคงที่
      ไม่บังคับ nowrap: จอแคบจนช่องเล็กกว่าขั้นต่ำ = ตัดบรรทัดเอง (ไม่บีบชื่อตำแหน่งจนอ่านไม่ออก) */
+  .kp-tgt{ white-space:nowrap; }
+  .kp-cap{ font-size:12px; color:#8A94A6; margin-top:3px; text-align:right; white-space:nowrap; }
   .kp-metbar .kp-lb{ white-space:nowrap; flex:none; }
   .kp-metbar .kp-grow{ display:none; }
   .kp-metbar input:not([type=number]){ flex:1 1 130px; min-width:130px; width:auto; }
@@ -26330,17 +26332,22 @@
       if(f.metrics){
         h+=kpSecHead(1,'แบบประเมิน KPI',f.pos.weights.perf)+
           '<div class="kp-wrap"><table class="kp-tbl kp-in"><thead><tr><th class="kp-c">ลำดับ</th><th>ตัวชี้วัด</th><th class="kp-r">เป้า</th>'+
-          '<th class="kp-r">ผลที่ทำได้</th><th class="kp-r">วันทำงาน</th><th class="kp-r">ฐาน</th><th class="kp-r">จำนวนที่ผิด</th>'+
+          '<th class="kp-r">ผลที่ทำได้</th><th class="kp-r">วันทำงาน</th><th class="kp-r">ฐาน (จำนวนเต็ม)</th><th class="kp-r">ค่าที่ใช้คำนวณ</th>'+
           '<th class="kp-r">ระดับ 1-5</th><th class="kp-c">ไม่ประเมิน</th><th class="kp-r">%</th></tr></thead><tbody>';
         f.metrics.forEach(function(m,mi){
           var v=m.value||{};
           var need=function(t){ return m.type===t; };
           h+='<tr data-metric="'+esc(m.id)+'"><td class="kp-c">'+(mi+1)+'</td><td>'+esc(m.name)+'<div class="m-hint">น้ำหนัก '+m.weight+'</div></td>'+
-            '<td class="kp-r">'+(m.target?esc(kpFmtNum(m.target)):'—')+' '+esc(m.unit||'')+'</td>'+
+            '<td class="kp-r kp-tgt">'+(m.target?esc(kpFmtNum(m.target)):'—')+' '+esc(m.unit||'')+'</td>'+
             '<td class="kp-r">'+kpIn('total',v.total,(need('daily')||need('monthly')))+'</td>'+
             '<td class="kp-r">'+kpIn('workDays',v.workDays,need('daily'))+'</td>'+
-            '<td class="kp-r">'+kpIn('base',v.base,(need('ratio')||need('cap')))+'</td>'+
-            '<td class="kp-r">'+kpIn('errors',v.errors,(need('ratio')||need('cap')))+'</td>'+
+            /* หัวคอลัมน์กลาง ๆ ใช้ได้ทุกข้อ + คำใต้ช่องตามชนิด (พี่กี้ 5 ต.ค. 69)
+               เดิมหัว "จำนวนที่ผิด" ลูกค้ากรอก 100/100 ในข้อส่งเอกสารตรงเวลา → ได้ 0% · ข้อค่าโฆษณาช่องนี้คือค่าโฆษณา ไม่ใช่ "ที่ผิด"
+               🔴 เปลี่ยนแค่คำ — ช่อง errors ยังเป็น "ส่วนที่ผิด/เกิน" เหมือนเดิม (วิธีคิดคะแนนห้ามกลับด้าน) */
+            '<td class="kp-r">'+kpIn('base',v.base,(need('ratio')||need('cap')))+
+              ((need('ratio')||need('cap'))?'<div class="kp-cap">ทั้งหมด</div>':'')+'</td>'+
+            '<td class="kp-r">'+kpIn('errors',v.errors,(need('ratio')||need('cap')))+
+              (need('ratio')?'<div class="kp-cap">ที่ผิด</div>':need('cap')?'<div class="kp-cap">ที่คลาดเคลื่อน/เกิน</div>':'')+'</td>'+
             '<td class="kp-r">'+kpIn('rating',v.rating,need('rating'))+'</td>'+
             '<td class="kp-c"><input type="checkbox" data-f="skip"'+(m.skip?' checked':'')+'></td>'+
             '<td class="kp-r">'+(m.pct===null?'—':m.pct+'%')+'</td></tr>';
@@ -29675,7 +29682,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20261005-1705';
+  var APP_BUILD='20261005-1731';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
