@@ -16,9 +16,9 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20261005-1022">
+<link rel="stylesheet" href="user.css?v=20261005-1214">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<script src="yd-auth.js?v=20261005-1022"></script>
+<script src="yd-auth.js?v=20261005-1214"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
   .date-row{ display:flex; flex-direction:column; gap:14px; margin:4px 0 12px; } .date-row > div{ min-width:0; }
@@ -897,6 +897,8 @@
   /* 👥 ทะเบียนพนักงาน — หน้าข้อมูลรายคน (4 ต.ค. 69) */
   .ppl-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px 20px; margin-top:12px; }
   .ppl-it{ min-width:0; } .ppl-wide{ grid-column:1 / -1; }
+  /* 🤝 แถวปุ่มใต้ตารางกองทุน — ปุ่มขนาดตามข้อความ ไม่ยืดเต็มแถวแบบ .m-act */
+  .pwf-act{ display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; } .pwf-act .btn{ flex:none; width:auto; padding:9px 16px; font-size:14px; }
   .ppl-k{ font-size:12.5px; color:#8A94A6; margin-bottom:3px; }
   .ppl-v{ font-weight:600; color:#1F2733; word-break:break-word; }
   .ppl-it input,.ppl-it select,.ppl-it textarea{ width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid var(--line); border-radius:10px; font:inherit; font-size:14px; background:#fff; }
@@ -2711,7 +2713,7 @@
     hubreq:['🏛️','คำขอสมัคร'], hubrooms:['🏢','ห้องลูกค้า'], roomset:['⚙️','ตั้งค่าห้อง'], home:['🏠','ภาพรวมประจำวัน'], clock:['🕐','ลงเวลา'],
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], mailtask:['📧','งานจากอีเมล'], leave:['📝','การลา'],
     expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติใบสั่งจ่าย'], expone:['🔎','ใบสั่งจ่าย'],
-    expdash:['📊','สรุปการเบิกของฉัน'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ใบสั่งจ่าย (PO)'], poform:['📝','สร้างใบสั่งจ่าย'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','รายงานภาษีซื้อ'], vatsale:['🧾','รายงานภาษีขาย'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก (WI)'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ใบสำคัญจ่าย (PV)'], sales:['💰','รายรับ'], salesqt:['📄','ใบเสนอราคา (QT)'], salesiv:['🧾','ใบแจ้งหนี้ (IV)'], salesre:['💵','ใบเสร็จรับเงิน (RE)'], salescn:['↩️','ใบลดหนี้ (CN)'], wtreg:['🧾','ภาษีที่หัก 50 ทวิ (WT)'], datain:['📥','นำเข้าข้อมูล'], airead:['🤖','อ่านเอกสารด้วย AI'], contract:['📑','สัญญาบริการ'], recvkind:['💰','ประเภทการรับเงิน'], statement:['🏦','กระทบยอด Statement'], cashreport:['📊','รายงานเงินสด/ธนาคาร'], ar:['📊','ทะเบียนลูกหนี้'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51'], finhist:['📈','เทียบย้อนหลัง'], docdash:['📊','ภาพรวม'], docreg:['🗂️','จัดการเอกสาร'], doccheck:['✅','ตรวจก่อนส่ง'], docbycat:['📑','รายงานตามประเภท'], docreport:['📦','รายงานประจำเดือน'], doccat:['🏷️','จัดการหมวด'], hubmods:['🧩','โมดูลของแต่ละห้อง'], teamperm:['🔐','สิทธิ์ทีม'], ppl:['👥','ทะเบียนพนักงาน'], pplmig:['🔄','ย้ายพนักงานเข้าทะเบียน'], pplpvd:['🏦','กองทุนสำรองเลี้ยงชีพ'], ppldocs:['📁','เอกสารพนักงาน'], ppldocone:['📁','แฟ้มเอกสารพนักงาน'], ppldoctype:['⚙️','ตั้งค่าประเภทเอกสาร'], pplone:['👤','ข้อมูลพนักงาน'], kpiemp:['👥','ทะเบียนพนักงาน'], kpiperson:['📈','ประวัติรายคน'], kpidash:['📊','ภาพรวม'], kpientry:['✍️','กรอกผลงาน'], kpiscore:['⭐','คะแนนคุณลักษณะ'], kpidoc:['📄','ใบประเมิน'], kpiround:['📋','รอบการประเมิน'], kpifill:['✍️','ประเมินผลงาน'], kpimanage:['📊','จัดการผลการประเมิน'], kpirule:['⚖️','เกณฑ์ทั้งองค์กร'], kpimetric:['🎯','ตัวชี้วัด (KPI)'], kpitrait:['🧭','คุณลักษณะรายบุคคล'], kpiimport:['📥','นำเข้าข้อมูลเดิม'], kpireport:['📄','รายงาน'], kpihelp:['📘','คู่มือการใช้งาน'], myset:['🙋','ตั้งค่าของฉัน'], bank:['🏦','บัญชีธนาคาร'], expcat:['🏷️','ประเภทค่าใช้จ่าย'], vendors:['🏪','ทะเบียนผู้ขาย'], vendorform:['🏪','ข้อมูลผู้ขาย'],
+    expdash:['📊','สรุปการเบิกของฉัน'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ใบสั่งจ่าย (PO)'], poform:['📝','สร้างใบสั่งจ่าย'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','รายงานภาษีซื้อ'], vatsale:['🧾','รายงานภาษีขาย'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก (WI)'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ใบสำคัญจ่าย (PV)'], sales:['💰','รายรับ'], salesqt:['📄','ใบเสนอราคา (QT)'], salesiv:['🧾','ใบแจ้งหนี้ (IV)'], salesre:['💵','ใบเสร็จรับเงิน (RE)'], salescn:['↩️','ใบลดหนี้ (CN)'], wtreg:['🧾','ภาษีที่หัก 50 ทวิ (WT)'], datain:['📥','นำเข้าข้อมูล'], airead:['🤖','อ่านเอกสารด้วย AI'], contract:['📑','สัญญาบริการ'], recvkind:['💰','ประเภทการรับเงิน'], statement:['🏦','กระทบยอด Statement'], cashreport:['📊','รายงานเงินสด/ธนาคาร'], ar:['📊','ทะเบียนลูกหนี้'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51'], finhist:['📈','เทียบย้อนหลัง'], docdash:['📊','ภาพรวม'], docreg:['🗂️','จัดการเอกสาร'], doccheck:['✅','ตรวจก่อนส่ง'], docbycat:['📑','รายงานตามประเภท'], docreport:['📦','รายงานประจำเดือน'], doccat:['🏷️','จัดการหมวด'], hubmods:['🧩','โมดูลของแต่ละห้อง'], teamperm:['🔐','สิทธิ์ทีม'], ppl:['👥','ทะเบียนพนักงาน'], pplmig:['🔄','ย้ายพนักงานเข้าทะเบียน'], pplpvd:['🏦','กองทุนสำรองเลี้ยงชีพ'], pplwf:['🤝','กองทุนสงเคราะห์ลูกจ้าง'], pplgi:['🛡️','ประกันกลุ่ม'], ppldocs:['📁','เอกสารพนักงาน'], ppldocone:['📁','แฟ้มเอกสารพนักงาน'], ppldoctype:['⚙️','ตั้งค่าประเภทเอกสาร'], pplone:['👤','ข้อมูลพนักงาน'], kpiemp:['👥','ทะเบียนพนักงาน'], kpiperson:['📈','ประวัติรายคน'], kpidash:['📊','ภาพรวม'], kpientry:['✍️','กรอกผลงาน'], kpiscore:['⭐','คะแนนคุณลักษณะ'], kpidoc:['📄','ใบประเมิน'], kpiround:['📋','รอบการประเมิน'], kpifill:['✍️','ประเมินผลงาน'], kpimanage:['📊','จัดการผลการประเมิน'], kpirule:['⚖️','เกณฑ์ทั้งองค์กร'], kpimetric:['🎯','ตัวชี้วัด (KPI)'], kpitrait:['🧭','คุณลักษณะรายบุคคล'], kpiimport:['📥','นำเข้าข้อมูลเดิม'], kpireport:['📄','รายงาน'], kpihelp:['📘','คู่มือการใช้งาน'], myset:['🙋','ตั้งค่าของฉัน'], bank:['🏦','บัญชีธนาคาร'], expcat:['🏷️','ประเภทค่าใช้จ่าย'], vendors:['🏪','ทะเบียนผู้ขาย'], vendorform:['🏪','ข้อมูลผู้ขาย'],
     customers:['👥','ทะเบียนลูกค้า'], custfile:['📂','แฟ้มลูกค้า'], dataimp:['📥','นำเข้าแบบตาราง'],
     svcreg:['🧰','ทะเบียนสินค้า/บริการ'], salesone:['📄','รายละเอียดเอกสาร'], salesform:['✏️','ออกเอกสารขาย'], ctform:['✏️','สร้างสัญญาบริการ']
   };
@@ -2984,7 +2986,7 @@
     if(gi) $('tbIcon').innerHTML=gi.replace('stroke-width="1.9"','stroke-width="2"'); else $('tbIcon').textContent=meta[0];
     $('tbTitle').textContent=meta[1];
     mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
-    ({ bank:renderBank, expcat:renderExpCat, svcreg:renderSvcReg, salesone:renderSalesOne, salesform:renderSalesForm, ctform:renderCtForm, portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, perf:renderPerf, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, mailtask:renderMailTask, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expone:renderExpOne, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, poform:renderPoForm, vendors:renderVendors, vendorform:renderVendorForm, petty:renderPetty, vatbuy:renderVatBuy, vatsale:renderVatSale, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, salesqt:renderSalesQt, salesiv:renderSalesIv, salesre:renderSalesRe, salescn:renderSalesCn, datain:renderDataIn, contract:renderContract, recvkind:renderRecvKind, wtreg:renderWtReg, statement:renderStatement, cashreport:renderCashReport, airead:renderAiRead, ar:renderAr, customers:renderCustomers, custfile:renderCustFile, dataimp:renderDataImp, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51, finhist:renderFinHist, docreg:renderDocReg, doccheck:renderDocCheck, docdash:renderDocDash, docbycat:renderDocByCat, docreport:renderDocReport, doccat:renderDocCat, ppl:renderPpl, pplmig:renderPplMig, pplpvd:renderPplPvd, ppldocs:renderPplDocs, ppldocone:renderPplDocOne, ppldoctype:renderPplDocType, pplone:renderPplOne, kpiemp:renderKpiEmp, kpiperson:renderKpiPerson, kpidash:renderKpiDash, kpientry:renderKpiEntry, kpiscore:renderKpiScore, kpidoc:renderKpiDoc, kpiround:renderKpiRound, kpifill:renderKpiFill, kpimanage:renderKpiManage, kpirule:renderKpiRule, kpimetric:renderKpiMetric, kpitrait:renderKpiTrait, kpiimport:renderKpiImport, kpireport:renderKpiReport, kpihelp:renderKpiHelp, myset:renderMyset }[v] || soon)();
+    ({ bank:renderBank, expcat:renderExpCat, svcreg:renderSvcReg, salesone:renderSalesOne, salesform:renderSalesForm, ctform:renderCtForm, portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, perf:renderPerf, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, mailtask:renderMailTask, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expone:renderExpOne, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, poform:renderPoForm, vendors:renderVendors, vendorform:renderVendorForm, petty:renderPetty, vatbuy:renderVatBuy, vatsale:renderVatSale, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, salesqt:renderSalesQt, salesiv:renderSalesIv, salesre:renderSalesRe, salescn:renderSalesCn, datain:renderDataIn, contract:renderContract, recvkind:renderRecvKind, wtreg:renderWtReg, statement:renderStatement, cashreport:renderCashReport, airead:renderAiRead, ar:renderAr, customers:renderCustomers, custfile:renderCustFile, dataimp:renderDataImp, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51, finhist:renderFinHist, docreg:renderDocReg, doccheck:renderDocCheck, docdash:renderDocDash, docbycat:renderDocByCat, docreport:renderDocReport, doccat:renderDocCat, ppl:renderPpl, pplmig:renderPplMig, pplpvd:renderPplPvd, pplwf:renderPplWf, pplgi:renderPplGi, ppldocs:renderPplDocs, ppldocone:renderPplDocOne, ppldoctype:renderPplDocType, pplone:renderPplOne, kpiemp:renderKpiEmp, kpiperson:renderKpiPerson, kpidash:renderKpiDash, kpientry:renderKpiEntry, kpiscore:renderKpiScore, kpidoc:renderKpiDoc, kpiround:renderKpiRound, kpifill:renderKpiFill, kpimanage:renderKpiManage, kpirule:renderKpiRule, kpimetric:renderKpiMetric, kpitrait:renderKpiTrait, kpiimport:renderKpiImport, kpireport:renderKpiReport, kpihelp:renderKpiHelp, myset:renderMyset }[v] || soon)();
   }
 
   // ───── มือถือ: เมนูกลุ่ม (ล่าง) + แท็บย่อย (บน) · คอมใช้ sidebar เดิม ไม่เกี่ยว ─────
@@ -3028,6 +3030,8 @@
     ppldoctype:'<svg viewBox="0 0 24 24"><path d="M3.5 7.5a2 2 0 0 1 2-2h4l2 2h7a2 2 0 0 1 2 2v8.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/><circle cx="12" cy="13.5" r="2.2"/><path d="M12 10v1.3M12 15.7V17M8.6 13.5h1.2M14.2 13.5h1.2"/></svg>',
     ppldocone:'<svg viewBox="0 0 24 24"><path d="M3.5 7.5a2 2 0 0 1 2-2h4l2 2h7a2 2 0 0 1 2 2v8.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/><path d="M12 11v3.5M12 17h.01"/></svg>',
     ppldocs:'<svg viewBox="0 0 24 24"><path d="M3.5 7.5a2 2 0 0 1 2-2h4l2 2h7a2 2 0 0 1 2 2v8.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/><path d="M12 11v3.5M12 17h.01"/></svg>',
+    pplgi:'<svg viewBox="0 0 24 24"><path d="M12 3.5 5 6.2v5.3c0 4.4 3 7.6 7 9 4-1.4 7-4.6 7-9V6.2z"/><path d="M9.2 12.2 11.3 14.3 15 10.5"/></svg>',
+    pplwf:'<svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/><path d="M9 11.5h6M12 8.5v6"/></svg>',
     pplpvd:'<svg viewBox="0 0 24 24"><path d="M3.5 9.5 12 4.5l8.5 5"/><path d="M5 10v7.5M9.5 10v7.5M14.5 10v7.5M19 10v7.5"/><path d="M3.5 19.5h17"/></svg>',
     ppl:'<svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.2"/><circle cx="9" cy="10.5" r="2.3"/><path d="M5.6 16.5c.5-1.8 1.9-2.8 3.4-2.8s2.9 1 3.4 2.8"/><path d="M14.5 9.5h4M14.5 12.5h4M14.5 15.5h2.5"/></svg>',
     pplone:'<svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.2"/><circle cx="9" cy="10.5" r="2.3"/><path d="M5.6 16.5c.5-1.8 1.9-2.8 3.4-2.8s2.9 1 3.4 2.8"/><path d="M14.5 9.5h4M14.5 12.5h4M14.5 15.5h2.5"/></svg>',
@@ -3121,7 +3125,7 @@
       /* 🔐 teamperm ย้ายไปรวมใน ⚙️ ตั้งค่าห้อง ▸ ตั้งค่าผู้ใช้งาน (18 ก.ย. 69)
          คง view ไว้ใน extra เผื่อลิงก์เก่า/ปุ่มค้าง — เข้าไปแล้วพาไปที่ใหม่ให้ */
       /* 👥 ทะเบียนพนักงาน + กองทุน รวมเข้าระบบบุคคล (5 ต.ค. 69 พี่กี้เคาะแพ็กเดียว · เดิมแยกการ์ด "งานบุคคล") */
-      views:['ppl','pplpvd','approve','otapprove','hrreport'], extra:['teamperm','pplone','ppldocs','ppldocone','ppldoctype'] },
+      views:['ppl','pplpvd','pplwf','pplgi','approve','otapprove','hrreport'], extra:['teamperm','pplone','ppldocs','ppldocone','ppldoctype'] },
     /* 💵 เงินเดือน — แยกจากบุคคล (พี่กี้เคาะ 5 ก.ย. เย็น)
        ลูกค้าแพ็กการเงินก็ต้องทำเงินเดือน (ภ.ง.ด.1 ต้องมี 40(1)) แต่ไม่ต้องพา
        พนักงานทั้งบริษัทมาลงเวลา/ลา — คนละภาระกันคนละเรื่อง */
@@ -5123,7 +5127,7 @@
       if(i>=0){ fin.views.splice(i,1); if(me.views.indexOf('expdash')<0) me.views.push('expdash'); }
     });
   }
-  var VIEW_TAB={ portal:'เมนูหลัก', payroll:'ระบบเงินเดือน', modsoon:'กำลังพัฒนา', perf:'วัดความเร็วระบบ', hubreq:'คำขอสมัคร', hubrooms:'ห้องลูกค้า', ppl:'ทะเบียนพนักงาน', pplmig:'ย้ายพนักงาน', pplpvd:'กองทุนสำรองฯ', ppldocs:'เอกสารพนักงาน', ppldocone:'แฟ้มเอกสารพนักงาน', ppldoctype:'ตั้งค่าประเภทเอกสาร', pplone:'ข้อมูลพนักงาน', roomset:'ตั้งค่าห้อง', myset:'ตั้งค่าของฉัน', home:'ภาพรวมประจำวัน', projects:'บอร์ดงาน', mytasks:'งานของฉัน', review:'รอตรวจ', mailtask:'งานจากอีเมล', trash:'ถังขยะ',
+  var VIEW_TAB={ portal:'เมนูหลัก', payroll:'ระบบเงินเดือน', modsoon:'กำลังพัฒนา', perf:'วัดความเร็วระบบ', hubreq:'คำขอสมัคร', hubrooms:'ห้องลูกค้า', ppl:'ทะเบียนพนักงาน', pplmig:'ย้ายพนักงาน', pplpvd:'กองทุนสำรองฯ', pplwf:'กองทุนสงเคราะห์', pplgi:'ประกันกลุ่ม', ppldocs:'เอกสารพนักงาน', ppldocone:'แฟ้มเอกสารพนักงาน', ppldoctype:'ตั้งค่าประเภทเอกสาร', pplone:'ข้อมูลพนักงาน', roomset:'ตั้งค่าห้อง', myset:'ตั้งค่าของฉัน', home:'ภาพรวมประจำวัน', projects:'บอร์ดงาน', mytasks:'งานของฉัน', review:'รอตรวจ', mailtask:'งานจากอีเมล', trash:'ถังขยะ',
     senddoc:'ส่งงานลูกค้า', appt:'นัดประชุม', announce:'ประกาศ',
     leave:'ลาของฉัน', approve:'อนุมัติลา', expense:'เบิกของฉัน', expapprove:'อนุมัติเบิก',
     expdash:'รายจ่าย', reimb:'ตั้งเบิกลูกค้า', petty:'เงินสดย่อย', payout:'ใบสั่งจ่าย', poform:'สร้างใบสั่งจ่าย', expreport:'รายงานรายจ่าย', taxhub:'รายงานภาษี', whtin:'50 ทวิ ที่ถูกหัก', vatbuy:'รายงานภาษีซื้อ', vatsale:'รายงานภาษีขาย',
@@ -5132,7 +5136,7 @@
     bank:'บัญชีธนาคาร', expcat:'ประเภทค่าใช้จ่าย', vendors:'ทะเบียนผู้ขาย', vendorform:'ข้อมูลผู้ขาย', customers:'ทะเบียนลูกค้า', custfile:'แฟ้มลูกค้า', dataimp:'นำเข้าแบบตาราง', svcreg:'สินค้า/บริการ', salesone:'รายละเอียดเอกสาร', salesform:'ออกเอกสาร', ctform:'สร้างสัญญา', datain:'นำเข้าข้อมูล', contract:'สัญญาบริการ', recvkind:'ประเภทการรับเงิน', bizdash:'ภาพรวม', sales:'รายรับ', ar:'ลูกหนี้', salesreport:'รายงานรายรับ', poreport:'ทะเบียนใบสำคัญจ่าย', pnd51:'ภ.ง.ด.51', finhist:'เทียบย้อนหลัง', docdash:'ภาพรวมเอกสาร', docreg:'จัดการเอกสาร', doccheck:'ตรวจความครบก่อนส่งนักบัญชี', docbycat:'รายงานตามประเภทเอกสาร', docreport:'รายงานประจำเดือน (ปิดรอบ)', doccat:'จัดการหมวด', kpiemp:'ทะเบียนพนักงาน', kpiperson:'ประวัติรายคน', kpidash:'ภาพรวม', kpientry:'กรอกผลงาน', kpiscore:'คุณลักษณะ', kpidoc:'ใบประเมิน', kpiround:'รอบการประเมิน', kpifill:'ประเมินผลงาน', kpimanage:'จัดการผลการประเมิน', kpirule:'เกณฑ์ทั้งองค์กร', kpimetric:'ตัวชี้วัด (KPI)', kpitrait:'คุณลักษณะรายบุคคล', kpiimport:'นำเข้าข้อมูลเดิม', kpireport:'รายงาน', kpihelp:'คู่มือ' };
   // แท็บที่เห็นเฉพาะพี่/ผู้ดูแล · reimb = ตั้งเบิกลูกค้า (ชีตไม่มีเจ้าของรายคน + เป็นข้อมูลรายได้)
   // ⚠️ ซ่อนแท็บ ≠ กันข้อมูล — backend กรองสิทธิ์เองอีกชั้นเสมอ
-  var OWNER_VIEWS={ bank:1, expcat:1, vendors:1, vendorform:1, customers:1, custfile:1, dataimp:1, airead:1, perf:1, salesqt:1, salesiv:1, salesre:1, salescn:1, wtreg:1, statement:1, cashreport:1, datain:1, contract:1, recvkind:1, review:1, approve:1, expapprove:1, otapprove:1, reimb:1, taxdoc:1, petty:1, payout:1, vatbuy:1, vatsale:1, expreport:1, taxhub:1, whtin:1, hrreport:1, finreport:1, ar:1, pnd51:1, finhist:1, salesreport:1, hubmods:1, teamperm:1, ppl:1, pplone:1, pplpvd:1, ppldocs:1, ppldocone:1, ppldoctype:1, pplmig:1 };
+  var OWNER_VIEWS={ bank:1, expcat:1, vendors:1, vendorform:1, customers:1, custfile:1, dataimp:1, airead:1, perf:1, salesqt:1, salesiv:1, salesre:1, salescn:1, wtreg:1, statement:1, cashreport:1, datain:1, contract:1, recvkind:1, review:1, approve:1, expapprove:1, otapprove:1, reimb:1, taxdoc:1, petty:1, payout:1, vatbuy:1, vatsale:1, expreport:1, taxhub:1, whtin:1, hrreport:1, finreport:1, ar:1, pnd51:1, finhist:1, salesreport:1, hubmods:1, teamperm:1, ppl:1, pplone:1, pplpvd:1, pplwf:1, pplgi:1, ppldocs:1, ppldocone:1, ppldoctype:1, pplmig:1 };
   var MGROUP='', MG_LAST={};
   /* view ของโมดูลเสริมที่อยู่ในเมนูของโมดูลอื่น (📧 งานจากอีเมล อยู่ในเมนูงาน แต่ต้องซื้อส่วนเสริม mailtask) */
   var VIEW_MOD={ mailtask:'mailtask' };
@@ -15041,6 +15045,392 @@
   }
   /** หลังอัป/แก้/ลบในการ์ดแฟ้ม — วาดหน้าที่เปิดอยู่ใหม่ */
   function pplDocRepaint(){ if(VIEW==='ppldocone') pplDocOnePaint(); else pplOnePaint(); }
+  /* ── 🤝 กองทุนสงเคราะห์ลูกจ้าง (เฟส W1 · 5 ต.ค. 69 · PeopleWelfare.gs) ──
+     แท็บ ยอดนำส่ง (แก้ฐานรายคนได้จนกดนำส่งแล้ว) · ยอดหักรายคน (ทุกกองทุน → Excel ไปกรอกชีตเงินเดือนเดิม)
+     ปัดสตางค์แบบตำแหน่งที่ 3 ≥ 5 ปัดขึ้น — ตัวเดียวกับหลังบ้าน (pplMoney2_) ห้าม Math.round(n*100)/100 */
+  var PWF=null, PWF_YM='', PWF_TAB='remit', PWF_BASE={};
+  var PWF_MON=['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  function pwfYmLabel(ym){ var m=String(ym||'').match(/^(\d{4})-(\d{2})$/); return m?(PWF_MON[+m[2]]+' '+(+m[1]+543)):String(ym||''); }
+  function pwfMoney2(n){ var x=Number(n)||0, s=x<0?-1:1; return s*Math.floor(Math.abs(x)*100+0.5+1e-9)/100; }
+  function pwfFmt(n){ return (Number(n)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function renderPplWf(){
+    skel();
+    jsonp(withRoom_({action:'waPplWf',uid:UID,ym:PWF_YM||''})).then(function(r){
+      if(VIEW!=='pplwf') return;
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      PWF=r; PWF_YM=r.month.ym; PWF_BASE={}; pwfPaint();
+    }).catch(function(e){ if(VIEW==='pplwf') $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(/เชื่อมต่อเซิร์ฟเวอร์|ไม่ครบ|ไม่รับคำสั่ง/.test(e.message)?'เมนูนี้ต้องอัปเดตหลังบ้านก่อนค่ะ (ยังไม่ได้ deploy)':e.message)+'</div></div>'; });
+  }
+  function pwfSetYm(v){ if(/^\d{4}-\d{2}$/.test(v||'')){ PWF_YM=v; renderPplWf(); } }
+  function pwfTab(t){ PWF_TAB=t; pwfPaint(); }
+  /** แถวยอดนำส่ง (คิดใหม่ในหน้าเมื่อ HR แก้ฐาน) */
+  function pwfRows(){
+    var m=PWF.month, rate=m.rate||{ee:0,er:0}, cap=Number(m.ceiling)||0;
+    return (m.rows||[]).map(function(x){
+      var base=PWF_BASE[x.code]!=null?Number(String(PWF_BASE[x.code]).replace(/,/g,''))||0:x.base;
+      var b=cap>0&&base>cap?cap:base, ee=pwfMoney2(b*rate.ee/100), er=pwfMoney2(b*rate.er/100);
+      return { code:x.code, name:x.name, idcard:x.idcard, base:base, ee:ee, er:er, total:pwfMoney2(ee+er), warn:x.warn };
+    });
+  }
+  function pwfBase(code,v){
+    PWF_BASE[code]=v;
+    var rows=pwfRows(), t={base:0,ee:0,er:0,total:0};
+    rows.forEach(function(x){ ['base','ee','er','total'].forEach(function(k){ t[k]+=x[k]; });
+      if(x.code===code){ ['ee','er','total'].forEach(function(k){ var el=$('pwf-'+k+'-'+code); if(el) el.textContent=pwfFmt(x[k]); }); } });
+    ['base','ee','er','total'].forEach(function(k){ var el=$('pwf-t-'+k); if(el) el.textContent=pwfFmt(pwfMoney2(t[k])); });
+  }
+  function pwfPaint(){
+    var m=PWF.month, sent=m.status==='นำส่งแล้ว', rows=pwfRows();
+    var tab=function(k,t){ return '<button class="kp-tab'+(PWF_TAB===k?' on':'')+'" onclick="pwfTab(&quot;'+k+'&quot;)">'+t+'</button>'; };
+    var rateTxt=m.rate?('พนักงาน '+m.rate.ee+'% · บริษัท '+m.rate.er+'%'):('ยังไม่ถึงเดือนเริ่มหัก ('+pwfYmLabel(m.start)+')');
+    var h='<div class="lst-card"><div class="lst-head"><div class="t"><b>กองทุนสงเคราะห์ลูกจ้าง</b>'+
+        '<div>เดือน '+esc(pwfYmLabel(m.ym))+' · อัตรา '+esc(rateTxt)+(m.ceiling?' · เพดานฐาน '+pwfFmt(m.ceiling):'')+'</div></div>'+
+      '<div class="lst-tools"><input type="month" id="pwfYm" value="'+esc(m.ym)+'" onchange="pwfSetYm(this.value)">'+
+        '<div class="kp-tabs">'+tab('remit','ยอดนำส่ง')+tab('deduct','ยอดหักรายคน (ทุกกองทุน)')+'</div>'+
+        '<button class="btn btn-ghost" type="button" onclick="pwfCfg()">⚙️ ตั้งค่าอัตรา</button></div></div>';
+    if(m.headcount<10) h+='<div class="m-hint" style="margin:0 0 10px">ลูกจ้างเดือนนี้ '+m.headcount+' คน — ยังไม่ถึงเกณฑ์บังคับ (10 คนขึ้นไป) · บริษัทเข้าเองได้</div>';
+    if(PWF_TAB==='remit'){
+      h+='<div class="m-hint" style="margin:0 0 10px">'+(sent?'🔒 <b>นำส่งแล้ว</b> — ล็อกยอดเดือนนี้':(m.saved?'💾 <b>บันทึกแล้ว</b> · แก้ค่าจ้างรายคนได้จนกด "นำส่งแล้ว"':'ยังไม่บันทึก · คิดจากเงินเดือนในทะเบียน · แก้ค่าจ้างของเดือนนี้ได้ก่อนบันทึก (คนรายวัน/เข้ากลางเดือน)'))+'</div>'+
+        '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl" style="min-width:760px"><colgroup><col style="width:5%"><col style="width:9%"><col style="width:22%"><col style="width:15%"><col style="width:13%"><col style="width:12%"><col style="width:12%"><col style="width:12%"></colgroup>'+
+        '<thead><tr><th>#</th><th>รหัส</th><th>ชื่อ-นามสกุล</th><th>เลขบัตรประชาชน</th><th style="text-align:right">ค่าจ้าง</th><th style="text-align:right">เงินสะสม (พนักงาน)</th><th style="text-align:right">เงินสมทบ (บริษัท)</th><th style="text-align:right">รวมนำส่ง</th></tr></thead><tbody>'+
+        (rows.length?rows.map(function(x,i){
+          var q='&quot;'+esc(x.code)+'&quot;';
+          return '<tr><td>'+(i+1)+'</td><td>'+esc(x.code)+'</td><td><b>'+esc(x.name)+'</b>'+(x.warn?' <span class="lvb lvb-wait">'+esc(x.warn)+'</span>':'')+'</td><td>'+esc(x.idcard||'—')+'</td>'+
+            '<td style="text-align:right">'+(sent||!m.rate?pwfFmt(x.base):'<input inputmode="decimal" style="width:100%;text-align:right;padding:5px 8px;border:1px solid var(--line);border-radius:8px;font:inherit;font-size:13px" value="'+esc(String(x.base))+'" oninput="pwfBase('+q+',this.value)">')+'</td>'+
+            '<td style="text-align:right" id="pwf-ee-'+esc(x.code)+'">'+pwfFmt(x.ee)+'</td><td style="text-align:right" id="pwf-er-'+esc(x.code)+'">'+pwfFmt(x.er)+'</td><td style="text-align:right;font-weight:600" id="pwf-total-'+esc(x.code)+'">'+pwfFmt(x.total)+'</td></tr>';
+        }).join('')+
+        '<tr style="font-weight:700;background:var(--chip,#F1F5F9)"><td></td><td></td><td>รวม '+rows.length+' คน</td><td></td><td style="text-align:right" id="pwf-t-base">'+pwfFmt(m.totals.base)+'</td><td style="text-align:right" id="pwf-t-ee">'+pwfFmt(m.totals.ee)+'</td><td style="text-align:right" id="pwf-t-er">'+pwfFmt(m.totals.er)+'</td><td style="text-align:right" id="pwf-t-total">'+pwfFmt(m.totals.total)+'</td></tr>'
+        :'<tr class="dt-empty"><td colspan="8">'+(m.rate?'ไม่มีสมาชิกในเดือนนี้':'เดือนนี้ยังไม่ถึงเดือนเริ่มหัก')+'</td></tr>')+'</tbody></table></div>'+
+        '<div class="pwf-act">'+
+          (!sent&&m.rate&&rows.length?'<button class="btn btn-primary" type="button" id="pwfGo" onclick="pwfSave(&quot;save&quot;)">บันทึกยอดเดือนนี้</button>'+
+            '<button class="btn btn-ghost" type="button" onclick="pwfSentAsk()">ทำเครื่องหมาย นำส่งแล้ว</button>':'')+
+          (m.saved&&!sent?'<button class="btn btn-ghost" type="button" onclick="pwfSave(&quot;reset&quot;)">คำนวณใหม่จากทะเบียน</button>':'')+
+          (rows.length?'<button class="btn btn-ghost" type="button" onclick="pwfXlsx()">ออกไฟล์ Excel</button>':'')+'</div>'+
+        ((m.skipped||[]).length?'<details style="margin-top:12px"><summary class="m-hint" style="cursor:pointer">ไม่นับ '+m.skipped.length+' คน (ดูเหตุผล)</summary><div class="m-hint">'+
+          m.skipped.map(function(x){ return esc(x.code+' '+x.name)+' — '+esc(x.reason); }).join('<br>')+'</div></details>':'');
+    } else {
+      var d=PWF.deduct||{rows:[]}, t={salary:0,pvd:0,wf:0,gi:0,total:0};
+      d.rows.forEach(function(x){ ['salary','pvd','wf','gi','total'].forEach(function(k){ t[k]+=Number(x[k])||0; }); });
+      h+='<div class="m-hint" style="margin:0 0 10px">ยอดที่ต้องหักจากเงินเดือนของแต่ละคนเดือน '+esc(pwfYmLabel(d.ym))+' · ออก Excel ไปกรอกชีตเงินเดือนเดิมได้</div>'+
+        '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl" style="min-width:720px"><colgroup><col style="width:5%"><col style="width:9%"><col style="width:21%"><col style="width:12%"><col style="width:11%"><col style="width:11%"><col style="width:11%"><col style="width:10%"><col style="width:10%"></colgroup>'+
+        '<thead><tr><th>#</th><th>รหัส</th><th>ชื่อ-นามสกุล</th><th>แผนก</th><th style="text-align:right">เงินเดือน</th><th style="text-align:right">กองทุนสำรองฯ</th><th style="text-align:right">กองทุนสงเคราะห์</th><th style="text-align:right">ประกันกลุ่ม</th><th style="text-align:right">รวมหัก</th></tr></thead><tbody>'+
+        (d.rows.length?d.rows.map(function(x,i){
+          return '<tr style="cursor:pointer" onclick="pplOpen(&quot;'+esc(x.code)+'&quot;)"><td>'+(i+1)+'</td><td>'+esc(x.code)+'</td><td><b>'+esc(x.name)+'</b></td><td>'+esc(x.dept||'')+'</td>'+
+            '<td style="text-align:right">'+pwfFmt(x.salary)+'</td><td style="text-align:right">'+(x.pvd?pwfFmt(x.pvd):'—')+'</td><td style="text-align:right">'+(x.wf?pwfFmt(x.wf):'—')+'</td><td style="text-align:right">'+(x.gi?pwfFmt(x.gi):'—')+'</td><td style="text-align:right;font-weight:600">'+pwfFmt(x.total)+'</td></tr>';
+        }).join('')+'<tr style="font-weight:700;background:var(--chip,#F1F5F9)"><td></td><td></td><td>รวม '+d.rows.length+' คน</td><td></td><td style="text-align:right">'+pwfFmt(t.salary)+'</td><td style="text-align:right">'+pwfFmt(t.pvd)+'</td><td style="text-align:right">'+pwfFmt(t.wf)+'</td><td style="text-align:right">'+pwfFmt(t.gi)+'</td><td style="text-align:right">'+pwfFmt(t.total)+'</td></tr>'
+        :'<tr class="dt-empty"><td colspan="9">ยังไม่มีพนักงานในทะเบียน</td></tr>')+'</tbody></table></div>'+
+        (d.rows.length?'<div class="pwf-act"><button class="btn btn-ghost" type="button" onclick="pwfXlsxDed()">ออกไฟล์ Excel</button></div>':'');
+    }
+    $('main').innerHTML=h+'</div>';
+  }
+  function pwfSave(act){
+    var rows=pwfRows().map(function(x){ return { code:x.code, base:x.base }; });
+    callBusy(act==='reset'?'กำลังคำนวณใหม่…':'กำลังบันทึก…', jsonpPost(withRoom_({ action:'waPplWfSave', uid:UID, ym:PWF_YM, act:act, rows:JSON.stringify(rows) })), act==='sent'?'นำส่งแล้ว':(act==='reset'?'คำนวณใหม่แล้ว':'บันทึกแล้ว'))
+      .then(function(r){ if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; } closeModal(); renderPplWf(); })
+      .catch(function(e){ toast(e.message); });
+  }
+  function pwfSentAsk(){
+    var m=PWF.month;
+    modal('<h3>ทำเครื่องหมายนำส่งแล้ว?</h3><div class="m-hint" style="margin-top:0">เดือน '+esc(pwfYmLabel(m.ym))+' · '+(m.rows||[]).length+' คน · รวมนำส่ง '+pwfFmt(pwfRows().reduce(function(a,x){ return a+x.total; },0))+' บาท<br>หลังจากนี้แก้ยอดเดือนนี้ไม่ได้</div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button><button class="btn btn-primary" onclick="pwfSave(&quot;sent&quot;)">นำส่งแล้ว</button></div>');
+  }
+  function pwfXlsx(){
+    var m=PWF.month, rows=pwfRows();
+    var aoa=[['ลำดับ','ชื่อ-สกุล','เลขบัตรประชาชน','ค่าจ้าง','เงินสะสม (พนักงาน)','เงินสมทบ (นายจ้าง)','รวมนำส่ง']];
+    rows.forEach(function(x,i){ aoa.push([i+1, x.name, x.idcard||'', x.base, x.ee, x.er, x.total]); });
+    var t=rows.reduce(function(a,x){ a[0]+=x.base; a[1]+=x.ee; a[2]+=x.er; a[3]+=x.total; return a; },[0,0,0,0]);
+    aoa.push(['','รวม '+rows.length+' คน','',pwfMoney2(t[0]),pwfMoney2(t[1]),pwfMoney2(t[2]),pwfMoney2(t[3])]);
+    pwfWrite(aoa, 'กองทุนสงเคราะห์_'+m.ym+'.xlsx', 'นำส่ง '+pwfYmLabel(m.ym));
+  }
+  function pwfXlsxDed(){
+    var d=PWF.deduct;
+    var aoa=[['ลำดับ','รหัส','ชื่อ-สกุล','แผนก','เงินเดือน','กองทุนสำรองเลี้ยงชีพ','กองทุนสงเคราะห์','ประกันกลุ่ม (ส่วนพนักงาน)','รวมหัก']];
+    d.rows.forEach(function(x,i){ aoa.push([i+1, x.code, x.name, x.dept||'', x.salary, x.pvd||0, x.wf||0, x.gi||0, x.total]); });
+    pwfWrite(aoa, 'ยอดหักกองทุน_'+d.ym+'.xlsx', 'ยอดหัก '+pwfYmLabel(d.ym));
+  }
+  function pwfWrite(aoa, file, sheet){
+    pplXlsxLib().then(function(X){
+      var ws=X.utils.aoa_to_sheet(aoa), wb=X.utils.book_new();
+      X.utils.book_append_sheet(wb, ws, sheet.slice(0,31));
+      X.writeFile(wb, file);
+    }).catch(function(e){ toast(e.message); });
+  }
+  function pwfCfg(){
+    var c=PWF.cfg||{rates:[]};
+    PWF_CFG_ROWS=c.rates.map(function(r){ return { from:r.from, ee:r.ee, er:r.er }; });
+    pwfCfgPaint(c);
+  }
+  var PWF_CFG_ROWS=[];
+  function pwfCfgPaint(c){
+    c=c||{ start:($('pwfStart')||{}).value, ceiling:($('pwfCap')||{}).value };
+    modal('<h3>ตั้งค่ากองทุนสงเคราะห์</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div style="display:flex;gap:12px;flex-wrap:wrap"><div class="fld" style="flex:1;min-width:160px"><label>เดือนแรกที่เริ่มหัก</label><input type="month" id="pwfStart" value="'+esc(c.start||'')+'"></div>'+
+        '<div class="fld" style="flex:1;min-width:160px"><label>เพดานฐานค่าจ้าง/เดือน <span class="lbl-note">(ว่าง = ไม่มี)</span></label><input id="pwfCap" inputmode="decimal" value="'+esc(c.ceiling||'')+'"></div></div>'+
+      '<div class="fld"><label>อัตราตามช่วงเวลา (%)</label><table class="tax-tbl dt-tbl"><thead><tr><th>มีผลตั้งแต่</th><th>% พนักงาน</th><th>% บริษัท</th><th></th></tr></thead><tbody>'+
+        PWF_CFG_ROWS.map(function(r,i){
+          return '<tr><td><input type="month" value="'+esc(r.from)+'" onchange="PWF_CFG_ROWS['+i+'].from=this.value"></td>'+
+            '<td><input inputmode="decimal" value="'+esc(String(r.ee))+'" oninput="PWF_CFG_ROWS['+i+'].ee=this.value" style="width:80px"></td>'+
+            '<td><input inputmode="decimal" value="'+esc(String(r.er))+'" oninput="PWF_CFG_ROWS['+i+'].er=this.value" style="width:80px"></td>'+
+            '<td><button class="lnk" style="color:#B42318" onclick="PWF_CFG_ROWS.splice('+i+',1);pwfCfgPaint()">ลบ</button></td></tr>';
+        }).join('')+'</tbody></table>'+
+        '<button class="lnk" style="margin-top:6px" onclick="PWF_CFG_ROWS.push({from:\'\',ee:0.5,er:0.5});pwfCfgPaint()">+ เพิ่มช่วงอัตรา</button></div>'+
+      '<div class="m-hint">ค่าเริ่มต้นตามประกาศ: ต.ค. 2569 = 0.25% / 0.25% · ต.ค. 2574 = 0.5% / 0.5%</div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button><button class="btn btn-primary" id="pwfCfgGo" onclick="pwfCfgSave()">บันทึก</button></div>');
+  }
+  function pwfCfgSave(){
+    var d={ start:($('pwfStart')||{}).value||'', ceiling:($('pwfCap')||{}).value||'', rates:PWF_CFG_ROWS };
+    var b=$('pwfCfgGo'); if(b) b.disabled=true;
+    callBusy('กำลังบันทึก…', jsonpPost(withRoom_({ action:'waPplWfCfgSave', uid:UID, data:JSON.stringify(d) })), 'บันทึกแล้ว')
+      .then(function(r){ if(!r||!r.ok){ if(b) b.disabled=false; mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; } closeModal(); renderPplWf(); })
+      .catch(function(e){ if(b) b.disabled=false; mErr(e.message); });
+  }
+
+  /** การ์ด "กองทุนและประกัน (หักเงินเดือน)" ในหน้าข้อมูลพนักงาน (§3.6) */
+  function pplDedCard(d, feat){
+    var row=function(label, val){ return '<div class="ppl-it"><div class="ppl-k">'+label+'</div><div class="ppl-v">'+val+'</div></div>'; };
+    var h='<div class="card"><div class="pb" style="padding:16px 18px"><div class="st-head"><div class="st-hx"><div class="rs-h">กองทุนและประกัน (หักเงินเดือน)</div>'+
+      '<div class="rs-sub">ค่าตั้งการหักของคนนี้ · ระบบเงินเดือนอ่านตัวเลขชุดนี้ไปหัก</div></div></div><div class="ppl-grid">';
+    if(feat.pvd) h+=row('กองทุนสำรองเลี้ยงชีพ', d.pvd?esc(d.pvd.fund)+' · หัก '+esc(d.pvd.ee)+'% · สมทบ '+esc(d.pvd.er)+'%':'<span style="color:#8A94A6">ไม่ได้เป็นสมาชิก</span>');
+    if(feat.wf){
+      var w=d.wf||{}, st={ member:'<span class="lvb lvb-ok">เป็นสมาชิก</span>', pvd:'<span class="lvb">ไม่ต้องเข้า · อยู่กองทุนสำรองฯ แล้ว</span>',
+        exempt:'<span class="lvb lvb-wait">ยกเว้น</span>', out:'<span class="lvb">ไม่นับเดือนนี้</span>' }[w.state]||'—';
+      h+=row('กองทุนสงเคราะห์ลูกจ้าง', st+(w.reason&&w.state!=='pvd'?' <span style="font-size:12.5px;color:#8A94A6">'+esc(w.reason)+'</span>':'')+
+        (w.state==='exempt'?' <button class="lnk" onclick="pwfExempt(0)">ยกเลิกยกเว้น</button>':(w.state==='member'?' <button class="lnk" onclick="pwfExemptAsk()">ยกเว้นคนนี้</button>':'')));
+    }
+    if(feat.gi){
+      var g=d.gi||{rows:[]};
+      h+=row('ประกันกลุ่ม', g.rows.length?g.rows.map(function(x){ return esc(x.rel+(x.name?' '+x.name:''))+' · '+esc(x.plan)+' <span style="font-size:12.5px;color:#8A94A6">พนักงานจ่าย '+pwfFmt(x.emp)+'</span>'; }).join('<br>')+
+        (g.claims&&g.claims.n?'<div style="font-size:12.5px;color:#8A94A6">เคลมปี '+(+g.claims.year+543)+' '+g.claims.n+' ครั้ง · ได้รับ '+pwfFmt(g.claims.paid)+'</div>':'')+
+        ' <button class="lnk" onclick="switchView(&quot;pplgi&quot;)">จัดการ</button>':'<span style="color:#8A94A6">ไม่ได้อยู่ในประกันกลุ่ม</span> <button class="lnk" onclick="switchView(&quot;pplgi&quot;)">เพิ่มเข้าแผน</button>');
+    }
+    h+='</div><div style="margin-top:12px;padding:10px 12px;border-radius:10px;background:var(--chip,#F1F5F9)">'+
+      '<b>เดือนนี้ ('+esc(pwfYmLabel(d.ym))+') หักรวม '+pwfFmt(d.total)+' บาท</b>'+
+      ((d.items||[]).length?'<div style="font-size:13px;color:#5B6472">'+d.items.map(function(x){ return esc(x.label)+' '+pwfFmt(x.amt); }).join(' · ')+' · คิดจากเงินเดือน '+pwfFmt(d.salary)+'</div>':'<div style="font-size:13px;color:#8A94A6">ไม่มีรายการหัก</div>')+
+    '</div></div></div>';
+    return h;
+  }
+  function pwfExemptAsk(){
+    modal('<h3>ยกเว้นกองทุนสงเคราะห์</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="fld"><label>เหตุผล</label><input id="pwfReason" placeholder="เช่น กรรมการบริษัท / ฟรีแลนซ์"></div>'+
+      '<div class="m-hint">คนที่อยู่กองทุนสำรองเลี้ยงชีพ ระบบไม่นับให้อยู่แล้ว ไม่ต้องยกเว้น</div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button><button class="btn btn-primary" onclick="pwfExempt(1)">ยกเว้น</button></div>');
+  }
+  function pwfExempt(on){
+    var reason=on?(($('pwfReason')||{}).value||'').trim():'';
+    if(on && !reason){ mErr('ใส่เหตุผลก่อนค่ะ'); return; }
+    callBusy('กำลังบันทึก…', jsonpPost(withRoom_({ action:'waPplWfExempt', uid:UID, code:PPL_CODE, exempt:on?'1':'0', reason:reason })), 'บันทึกแล้ว')
+      .then(function(r){ if(!r||!r.ok){ if($('mErr')) mErr((r&&r.error)||'ไม่สำเร็จ'); else toast((r&&r.error)||'ไม่สำเร็จ'); return; } closeModal(); renderPplOne(); })
+      .catch(function(e){ toast(e.message); });
+  }
+
+  /* ── 🛡️ ประกันกลุ่ม (เฟส G1 · 5 ต.ค. 69 · PeopleInsurance.gs) ── แท็บ สมาชิก · กรมธรรม์ (G2 เพิ่ม เคลม · สรุปเบี้ย)
+     ครอบครัว = แถวที่ผูกรหัสพนักงานเดิม · คนลาออกไม่ตัดเอง (เตือนให้ใส่วันออก) */
+  var PGI=null, PGI_TAB='mem', PGI_F='active';
+  var PGI_REL=['ตัวพนักงาน','คู่สมรส','บุตร','บิดา','มารดา'];
+  function renderPplGi(){
+    skel();
+    jsonp(withRoom_({action:'waPplGi',uid:UID,ym:PGI_YM||''})).then(function(r){
+      if(VIEW!=='pplgi') return;
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      PGI=r; pgiPaint();
+    }).catch(function(e){ if(VIEW==='pplgi') $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(/เชื่อมต่อเซิร์ฟเวอร์|ไม่ครบ|ไม่รับคำสั่ง/.test(e.message)?'เมนูนี้ต้องอัปเดตหลังบ้านก่อนค่ะ (ยังไม่ได้ deploy)':e.message)+'</div></div>'; });
+  }
+  function pgiTab(t){ PGI_TAB=t; pgiPaint(); }
+  function pgiPlanBadge(p){
+    if(!p.active) return '<span class="lvb">ปิด</span>';
+    if(p.state==='expired') return '<span class="lvb lvb-no">หมดแล้ว</span>';
+    if(p.state==='soon') return '<span class="lvb lvb-wait">ใกล้หมด</span>';
+    return '<span class="lvb lvb-ok">คุ้มครอง</span>';
+  }
+  function pgiPaint(){
+    var r=PGI, tab=function(k,t,n){ return '<button class="kp-tab'+(PGI_TAB===k?' on':'')+'" onclick="pgiTab(&quot;'+k+'&quot;)">'+t+(n!=null?' <b>'+n+'</b>':'')+'</button>'; };
+    var mems=(r.members||[]).filter(function(m){ return PGI_F==='all'||m.active; });
+    var h='<div class="lst-card"><div class="lst-head"><div class="t"><b>ประกันกลุ่ม</b><div>เดือน '+esc(pwfYmLabel(r.ym))+' · คุ้มครอง '+(r.members||[]).filter(function(m){ return m.active; }).length+' รายการ · '+r.plans.length+' แผน</div></div>'+
+      '<div class="lst-tools"><div class="kp-tabs">'+tab('mem','สมาชิก',mems.length)+tab('claim','เคลม',(r.claims||[]).length)+tab('prem','สรุปเบี้ย')+tab('plan','กรมธรรม์',r.plans.length)+'</div>'+
+        (PGI_TAB==='mem'?'<select onchange="PGI_F=this.value;pgiPaint()"><option value="active"'+(PGI_F==='active'?' selected':'')+'>คุ้มครองเดือนนี้</option><option value="all"'+(PGI_F==='all'?' selected':'')+'>ทั้งหมด</option></select>'+
+          '<button class="btn btn-primary" type="button" onclick="pgiMemForm(&quot;&quot;)"'+(r.plans.length?'':' disabled title="เพิ่มกรมธรรม์ก่อน"')+'>+ เพิ่มสมาชิก</button>'
+          :(PGI_TAB==='claim'?'<button class="btn btn-primary" type="button" onclick="pgiClaimForm(&quot;&quot;)"'+((r.members||[]).length?'':' disabled title="เพิ่มสมาชิกก่อน"')+'>+ บันทึกเคลม</button>'
+          :(PGI_TAB==='prem'?'':'<button class="btn btn-primary" type="button" onclick="pgiPlanForm(&quot;&quot;)">+ เพิ่มกรมธรรม์ / แผน</button>')))+'</div></div>';
+    if((r.leftNoOut||[]).length) h+='<div class="m-err" style="margin:0 0 10px">⚠️ พนักงานลาออกแล้ว แต่ยังไม่ใส่วันออกจากประกัน: '+r.leftNoOut.map(function(x){ return esc(x.code+' '+x.name+(x.rel!=='ตัวพนักงาน'?' ('+x.rel+')':'')); }).join(' · ')+' — กดแก้ที่แถวแล้วใส่วันออก</div>';
+    if(PGI_TAB==='claim'){ h+=pgiClaimsHtml(); }
+    else if(PGI_TAB==='prem'){ h+=pgiPremHtml(); }
+    else if(PGI_TAB==='mem'){
+      h+='<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl" style="min-width:820px"><colgroup><col style="width:4%"><col style="width:7%"><col style="width:16%"><col style="width:9%"><col style="width:13%"><col style="width:14%"><col style="width:9%"><col style="width:9%"><col style="width:7%"><col style="width:7%"><col style="width:5%"></colgroup>'+
+        '<thead><tr><th>#</th><th>รหัส</th><th>พนักงาน</th><th>ผู้เอาประกัน</th><th>ชื่อ (ครอบครัว)</th><th>แผน</th><th>วันเข้า</th><th>วันออก</th><th style="text-align:right">บริษัท</th><th style="text-align:right">พนักงาน</th><th></th></tr></thead><tbody>'+
+        (mems.length?mems.map(function(m,i){
+          var q='&quot;'+esc(m.id)+'&quot;';
+          return '<tr'+(m.active?'':' style="opacity:.55"')+'><td>'+(i+1)+'</td><td>'+esc(m.code)+'</td><td><b>'+esc(m.empName)+'</b>'+(m.left?' <span class="lvb lvb-no">ลาออก</span>':'')+'</td>'+
+            '<td>'+esc(m.rel)+'</td><td>'+esc(m.name||'—')+'</td><td title="'+esc(m.planLabel)+'">'+esc(String(m.planLabel).split(' · ')[0])+'</td><td style="white-space:nowrap">'+esc(pplDate(m.join))+'</td><td style="white-space:nowrap">'+(m.out?esc(pplDate(m.out)):'—')+'</td>'+
+            '<td style="text-align:right">'+pwfFmt(m.co)+'</td><td style="text-align:right">'+pwfFmt(m.emp)+'</td>'+
+            dtActCell('gm-'+m.id,[{ key:'edit', label:'✏️ แก้ไข / ใส่วันออก', call:'pgiMemForm('+q+')' },{ sep:true },{ key:'del', label:'🗑️ ลบ (คีย์ผิด)', call:'pgiDelAsk(&quot;member&quot;,'+q+')', danger:true }])+'</tr>';
+        }).join(''):'<tr class="dt-empty"><td colspan="11">'+(r.plans.length?'ยังไม่มีสมาชิก · กด + เพิ่มสมาชิก':'เพิ่มกรมธรรม์ก่อน แล้วค่อยเพิ่มสมาชิก')+'</td></tr>')+'</tbody></table></div>';
+    } else {
+      h+='<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl" style="min-width:820px"><colgroup><col style="width:4%"><col style="width:17%"><col style="width:12%"><col style="width:14%"><col style="width:17%"><col style="width:9%"><col style="width:8%"><col style="width:6%"><col style="width:8%"><col style="width:5%"></colgroup>'+
+        '<thead><tr><th>#</th><th>บริษัทประกัน</th><th>เลขกรมธรรม์</th><th>แผน</th><th>คุ้มครอง</th><th style="text-align:right">เบี้ย/คน/ด.</th><th style="text-align:right">บริษัทจ่าย</th><th style="text-align:right">สมาชิก</th><th>สถานะ</th><th></th></tr></thead><tbody>'+
+        (r.plans.length?r.plans.map(function(p,i){
+          var q='&quot;'+esc(p.id)+'&quot;';
+          return '<tr><td>'+(i+1)+'</td><td><b>'+esc(p.insurer)+'</b></td><td>'+esc(p.policy||'—')+'</td><td>'+esc(p.plan)+'</td>'+
+            '<td style="white-space:nowrap">'+esc(pplDate(p.start))+' – '+(p.end?esc(pplDate(p.end)):'ไม่กำหนด')+'</td><td style="text-align:right">'+pwfFmt(p.premium)+'</td>'+
+            '<td style="text-align:right">'+esc(p.coPct)+'%</td><td style="text-align:right">'+p.members+'</td><td>'+pgiPlanBadge(p)+'</td>'+
+            dtActCell('gp-'+p.id,[{ key:'edit', label:'✏️ แก้ไข', call:'pgiPlanForm('+q+')' },{ sep:true },{ key:'del', label:'🗑️ ลบแผน', call:'pgiDelAsk(&quot;plan&quot;,'+q+')', danger:true }])+'</tr>';
+        }).join(''):'<tr class="dt-empty"><td colspan="10">ยังไม่มีกรมธรรม์ · กด + เพิ่มกรมธรรม์ / แผน</td></tr>')+'</tbody></table></div>'+
+        '<div class="m-hint" style="margin-top:10px">1 แถว = 1 แผน · กรมธรรม์เดียวมีหลายแผน = เพิ่มหลายแถวเลขกรมธรรม์เดียวกัน · กระดิ่งเตือนเมื่อใกล้หมด 60 วัน</div>';
+    }
+    $('main').innerHTML=h+'</div>';
+  }
+  function pgiFld(id,label,val,type,extra){ return '<div class="fld" style="flex:1;min-width:150px"><label>'+label+'</label><input id="'+id+'"'+(type?' type="'+type+'"':'')+' value="'+esc(val==null?'':String(val))+'"'+(extra||'')+'></div>'; }
+  function pgiPlanForm(id){
+    var p=id?PGI.plans.filter(function(x){ return x.id===id; })[0]:{ coPct:100, active:true };
+    modal('<h3>'+(id?'แก้ไขแผนประกัน':'เพิ่มกรมธรรม์ / แผน')+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div style="display:flex;gap:12px;flex-wrap:wrap">'+pgiFld('gpIns','บริษัทประกัน <b style="color:#dc2626">*</b>',p.insurer)+pgiFld('gpPol','เลขกรมธรรม์',p.policy)+'</div>'+
+      '<div style="display:flex;gap:12px;flex-wrap:wrap">'+pgiFld('gpPlan','ชื่อแผน <b style="color:#dc2626">*</b>',p.plan,'',' placeholder="เช่น แผน 2 พนักงาน"')+pgiFld('gpPrem','เบี้ยต่อคน/เดือน (บาท)',p.premium,'',' inputmode="decimal"')+'</div>'+
+      '<div style="display:flex;gap:12px;flex-wrap:wrap">'+pgiFld('gpStart','วันเริ่มคุ้มครอง <b style="color:#dc2626">*</b>',p.start,'date')+pgiFld('gpEnd','วันสิ้นสุด',p.end,'date')+pgiFld('gpPct','บริษัทจ่าย (%)',p.coPct,'',' inputmode="decimal"')+'</div>'+
+      '<div class="fld"><label>หมายเหตุ</label><input id="gpNote" value="'+esc(p.note||'')+'"></div>'+
+      (id?'<div class="fld"><label class="us-perm-it"><input type="checkbox" id="gpAct"'+(p.active!==false?' checked':'')+'> ใช้งานแผนนี้</label></div>':'')+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button><button class="btn btn-primary" id="gpGo" onclick="pgiPlanSave(&quot;'+esc(id||'')+'&quot;)">บันทึก</button></div>');
+  }
+  function pgiPlanSave(id){
+    var v=function(i){ return (($(i)||{}).value||'').trim(); };
+    var d={ id:id, insurer:v('gpIns'), policy:v('gpPol'), plan:v('gpPlan'), premium:v('gpPrem'), start:v('gpStart'), end:v('gpEnd'), coPct:v('gpPct'), note:v('gpNote'), active:$('gpAct')?$('gpAct').checked:true };
+    pgiCall('plan','save',d,$('gpGo'));
+  }
+  function pgiMemForm(id){
+    var m=id?PGI.members.filter(function(x){ return x.id===id; })[0]:{ rel:'ตัวพนักงาน' };
+    var plans=PGI.plans.filter(function(p){ return p.active || p.id===m.planId; });
+    modal('<h3>'+(id?'แก้ไขสมาชิกประกันกลุ่ม':'เพิ่มสมาชิกประกันกลุ่ม')+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div style="display:flex;gap:12px;flex-wrap:wrap"><div class="fld" style="flex:2;min-width:200px"><label>พนักงาน <b style="color:#dc2626">*</b></label><select id="gmCode"'+(id?' disabled':'')+'><option value="">— เลือกพนักงาน —</option>'+
+        PGI.people.filter(function(x){ return x.status!=='ลาออก' || x.code===m.code; }).map(function(x){ return '<option value="'+esc(x.code)+'"'+(x.code===m.code?' selected':'')+'>'+esc(x.code+' · '+x.name)+'</option>'; }).join('')+'</select></div>'+
+        '<div class="fld" style="flex:1;min-width:140px"><label>ผู้เอาประกัน</label><select id="gmRel" onchange="pgiRelChg()">'+PGI_REL.map(function(x){ return '<option'+(x===m.rel?' selected':'')+'>'+x+'</option>'; }).join('')+'</select></div></div>'+
+      '<div style="display:flex;gap:12px;flex-wrap:wrap" id="gmFam"'+(m.rel==='ตัวพนักงาน'?' hidden':'')+'>'+pgiFld('gmName','ชื่อ-สกุล <b style="color:#dc2626">*</b>',m.name)+pgiFld('gmDob','วันเกิด',m.dob,'date')+'</div>'+
+      '<div class="fld"><label>แผน <b style="color:#dc2626">*</b></label><select id="gmPlan" onchange="pgiPlanChg()"><option value="">— เลือกแผน —</option>'+
+        plans.map(function(p){ return '<option value="'+esc(p.id)+'"'+(p.id===m.planId?' selected':'')+'>'+esc(p.plan+' · '+p.insurer+(p.policy?' · '+p.policy:''))+'</option>'; }).join('')+'</select></div>'+
+      '<div style="display:flex;gap:12px;flex-wrap:wrap">'+pgiFld('gmJoin','วันเข้า <b style="color:#dc2626">*</b>',m.join,'date')+pgiFld('gmOut','วันออก (ถ้าออกแล้ว)',m.out,'date')+'</div>'+
+      '<div style="display:flex;gap:12px;flex-wrap:wrap">'+pgiFld('gmPrem','เบี้ย/เดือน',m.premium,'',' inputmode="decimal" oninput="pgiSplit()"')+pgiFld('gmCo','บริษัทจ่าย',m.co,'',' inputmode="decimal" oninput="pgiSplit(1)"')+pgiFld('gmEmp','พนักงานจ่าย (หักเงินเดือน)',m.emp,'',' inputmode="decimal" readonly')+'</div>'+
+      '<div class="fld"><label>หมายเหตุ</label><input id="gmNote" value="'+esc(m.note||'')+'"></div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button><button class="btn btn-primary" id="gmGo" onclick="pgiMemSave(&quot;'+esc(id||'')+'&quot;)">บันทึก</button></div>');
+    if(!id) pgiPlanChg();
+  }
+  function pgiRelChg(){ var f=$('gmFam'); if(f) f.hidden=(($('gmRel')||{}).value==='ตัวพนักงาน'); }
+  /** เลือกแผน = เติมเบี้ย + แยกส่วนบริษัท/พนักงานตาม % ของแผน */
+  function pgiPlanChg(){
+    var p=PGI.plans.filter(function(x){ return x.id===(($('gmPlan')||{}).value||''); })[0]; if(!p) return;
+    $('gmPrem').value=p.premium; $('gmCo').value=pwfMoney2(p.premium*p.coPct/100); pgiSplit(1);
+  }
+  function pgiSplit(keepCo){
+    var prem=Number(String(($('gmPrem')||{}).value||'').replace(/,/g,''))||0;
+    if(!keepCo){ var p=PGI.plans.filter(function(x){ return x.id===(($('gmPlan')||{}).value||''); })[0]; if(p) $('gmCo').value=pwfMoney2(prem*p.coPct/100); }
+    var co=Number(String(($('gmCo')||{}).value||'').replace(/,/g,''))||0;
+    $('gmEmp').value=pwfMoney2(Math.max(0,prem-co));
+  }
+  function pgiMemSave(id){
+    var v=function(i){ return (($(i)||{}).value||'').trim(); };
+    var d={ id:id, code:v('gmCode'), rel:v('gmRel'), name:v('gmName'), dob:v('gmDob'), planId:v('gmPlan'), join:v('gmJoin'), out:v('gmOut'), premium:v('gmPrem'), co:v('gmCo'), emp:v('gmEmp'), note:v('gmNote') };
+    if(!d.code){ mErr('เลือกพนักงานก่อนค่ะ'); return; }
+    pgiCall('member','save',d,$('gmGo'));
+  }
+  function pgiDelAsk(kind,id){
+    if(kind==='claim'){ var c=(PGI.claims||[]).filter(function(z){ return z.id===id; })[0]; if(!c) return;
+      modal('<h3>ลบเคลม?</h3><div id="mErr" class="m-err hidden"></div><div class="m-hint" style="margin-top:0">'+esc(c.empName+' · '+c.who+' · '+c.kind+' · '+pwfFmt(c.claimed))+'<br>ใช้เมื่อคีย์ผิด · ไฟล์แนบยังอยู่ในแฟ้มเอกสารของพนักงาน</div>'+
+        '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button><button class="btn btn-primary" style="background:#B42318" onclick="pgiCall(&quot;claim&quot;,&quot;del&quot;,{id:&quot;'+esc(id)+'&quot;},this)">ลบ</button></div>'); return; }
+    var x=kind==='plan'?PGI.plans.filter(function(p){ return p.id===id; })[0]:PGI.members.filter(function(m){ return m.id===id; })[0]; if(!x) return;
+    modal('<h3>'+(kind==='plan'?'ลบแผนประกัน?':'ลบสมาชิก?')+'</h3><div id="mErr" class="m-err hidden"></div><div class="m-hint" style="margin-top:0">'+
+      (kind==='plan'?esc(x.insurer+' · '+x.plan)+'<br>ลบได้เฉพาะแผนที่ยังไม่มีสมาชิก · เลิกใช้แผน = แก้ไขแล้วติ๊ก "ใช้งาน" ออก':esc(x.empName+' · '+x.rel+(x.name?' '+x.name:'')+' · '+x.planLabel)+'<br>ใช้เมื่อคีย์ผิด · ถ้าออกจากประกันจริง ให้ "แก้ไข" ใส่วันออกแทน')+'</div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button><button class="btn btn-primary" style="background:#B42318" id="gdGo" onclick="pgiCall(&quot;'+kind+'&quot;,&quot;del&quot;,{id:&quot;'+esc(id)+'&quot;},this)">ลบ</button></div>');
+  }
+  function pgiCall(kind, act, d, btn){
+    if(btn) btn.disabled=true;
+    callBusy('กำลังบันทึก…', jsonpPost(withRoom_({ action:'waPplGiSave', uid:UID, kind:kind, act:act, data:JSON.stringify(d) })), act==='del'?'ลบแล้ว':'บันทึกแล้ว')
+      .then(function(r){ if(!r||!r.ok){ if(btn) btn.disabled=false; mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; } closeModal(); renderPplGi(); })
+      .catch(function(e){ if(btn) btn.disabled=false; mErr(e.message); });
+  }
+
+  /* ── 🛡️ G2 · เคลม + สรุปเบี้ยรายเดือน (5 ต.ค. 69) ── เคลม = ข้อมูลสุขภาพ (ผู้ดูแลห้องเท่านั้น · หลังบ้านกันซ้ำ)
+     ไฟล์เคลมเข้าแฟ้มเอกสารพนักงาน (ประเภทเอกสารเคลมประกัน) · เปิดผ่าน waPplDocOpen (ไม่มีลิงก์สาธารณะ) */
+  var PGI_YM='';
+  function pgiClaimStBadge(st){ return '<span class="lvb '+({'จ่ายแล้ว':'lvb-ok','อนุมัติ':'lvb-ok','ปฏิเสธ':'lvb-no'}[st]||'lvb-wait')+'">'+esc(st)+'</span>'; }
+  function pgiClaimsHtml(){
+    var cl=PGI.claims||[];
+    return '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl" style="min-width:820px">'+
+      '<thead><tr><th>#</th><th>วันที่รักษา</th><th>พนักงาน</th><th>ผู้เอาประกัน</th><th>ประเภท</th><th>สถานพยาบาล</th><th style="text-align:right">เรียกร้อง</th><th style="text-align:right">ได้รับ</th><th>สถานะ</th><th>ไฟล์</th><th></th></tr></thead><tbody>'+
+      (cl.length?cl.map(function(c,i){
+        var q='&quot;'+esc(c.id)+'&quot;';
+        return '<tr><td>'+(i+1)+'</td><td style="white-space:nowrap">'+esc(pplDate(c.date))+'</td><td><b>'+esc(c.empName)+'</b></td><td>'+esc(c.who)+'</td><td>'+esc(c.kind)+'</td><td>'+esc(c.hospital||'—')+'</td>'+
+          '<td style="text-align:right">'+pwfFmt(c.claimed)+'</td><td style="text-align:right">'+pwfFmt(c.paid)+'</td><td>'+pgiClaimStBadge(c.status)+'</td>'+
+          '<td style="white-space:nowrap">'+(c.files.length?c.files.map(function(f,j){ return '<button class="lnk" title="เปิดไฟล์" onclick="pgiFileOpen(&quot;'+esc(c.code)+'&quot;,&quot;'+esc(f)+'&quot;)">📎'+(c.files.length>1?(j+1):'')+'</button>'; }).join(' '):'—')+'</td>'+
+          dtActCell('gc-'+c.id,[{ key:'edit', label:'✏️ แก้ไข / อัปเดตสถานะ', call:'pgiClaimForm('+q+')' },{ sep:true },{ key:'del', label:'🗑️ ลบ (คีย์ผิด)', call:'pgiDelAsk(&quot;claim&quot;,'+q+')', danger:true }])+'</tr>';
+      }).join(''):'<tr class="dt-empty"><td colspan="11">ยังไม่มีเคลม · กด + บันทึกเคลม</td></tr>')+'</tbody></table></div>'+
+      '<div class="m-hint" style="margin-top:10px">🔒 ข้อมูลการรักษาเป็นข้อมูลสุขภาพ เห็นเฉพาะผู้ดูแลบริษัท · ไฟล์แนบเก็บในแฟ้มเอกสารของพนักงาน (ประเภท "เอกสารเคลมประกัน")</div>';
+  }
+  function pgiPremHtml(){
+    var pr=PGI.premium||{plans:[],rows:[],totals:{}};
+    return '<div class="lst-tools" style="margin:0 0 10px"><input type="month" value="'+esc(pr.ym)+'" onchange="PGI_YM=this.value;renderPplGi()">'+
+        (pr.rows.length?'<button class="btn btn-ghost" type="button" onclick="pgiPremXlsx()">ออกไฟล์ Excel</button>':'')+'</div>'+
+      '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl" style="min-width:700px"><thead><tr><th style="width:5%">#</th><th>แผน</th><th style="text-align:right">พนักงาน</th><th style="text-align:right">ครอบครัว</th><th style="text-align:right">เบี้ยรวม</th><th style="text-align:right">บริษัทจ่าย</th><th style="text-align:right">หักพนักงาน</th></tr></thead><tbody>'+
+      (pr.plans.length?pr.plans.map(function(b,i){
+        return '<tr><td>'+(i+1)+'</td><td><b>'+esc(b.plan)+'</b> <span style="font-size:12px;color:#8A94A6">'+esc(b.insurer+(b.policy?' · '+b.policy:''))+'</span></td><td style="text-align:right">'+b.staff+'</td><td style="text-align:right">'+b.family+'</td>'+
+          '<td style="text-align:right">'+pwfFmt(b.premium)+'</td><td style="text-align:right">'+pwfFmt(b.co)+'</td><td style="text-align:right">'+pwfFmt(b.emp)+'</td></tr>';
+      }).join('')+'<tr style="font-weight:700;background:var(--chip,#F1F5F9)"><td></td><td>รวม</td><td></td><td></td><td style="text-align:right">'+pwfFmt(pr.totals.premium)+'</td><td style="text-align:right">'+pwfFmt(pr.totals.co)+'</td><td style="text-align:right">'+pwfFmt(pr.totals.emp)+'</td></tr>'
+      :'<tr class="dt-empty"><td colspan="7">เดือนนี้ไม่มีผู้ได้รับความคุ้มครอง</td></tr>')+'</tbody></table></div>'+
+      (pr.rows.length?'<details style="margin-top:12px"><summary class="m-hint" style="cursor:pointer">ดูรายคน '+pr.rows.length+' รายการ</summary><div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl"><thead><tr><th>#</th><th>รหัส</th><th>พนักงาน</th><th>ผู้เอาประกัน</th><th>แผน</th><th style="text-align:right">เบี้ย</th><th style="text-align:right">บริษัท</th><th style="text-align:right">พนักงาน</th></tr></thead><tbody>'+
+        pr.rows.map(function(x,i){ return '<tr><td>'+(i+1)+'</td><td>'+esc(x.code)+'</td><td>'+esc(x.empName)+'</td><td>'+esc(x.who)+'</td><td>'+esc(x.plan)+'</td><td style="text-align:right">'+pwfFmt(x.premium)+'</td><td style="text-align:right">'+pwfFmt(x.co)+'</td><td style="text-align:right">'+pwfFmt(x.emp)+'</td></tr>'; }).join('')+
+        '</tbody></table></div></details>':'');
+  }
+  function pgiPremXlsx(){
+    var pr=PGI.premium;
+    var aoa=[['ลำดับ','รหัส','พนักงาน','ผู้เอาประกัน','แผน','เบี้ย/เดือน','บริษัทจ่าย','พนักงานจ่าย']];
+    pr.rows.forEach(function(x,i){ aoa.push([i+1,x.code,x.empName,x.who,x.plan,x.premium,x.co,x.emp]); });
+    aoa.push(['','','รวม '+pr.rows.length+' รายการ','','',pr.totals.premium,pr.totals.co,pr.totals.emp]);
+    pwfWrite(aoa, 'เบี้ยประกันกลุ่ม_'+pr.ym+'.xlsx', 'เบี้ย '+pwfYmLabel(pr.ym));
+  }
+  function pgiClaimForm(id){
+    var c=id?(PGI.claims||[]).filter(function(x){ return x.id===id; })[0]:{ status:'ยื่นแล้ว', kind:'OPD' };
+    var mems=(PGI.members||[]).filter(function(m){ return m.active || m.id===c.memId; });
+    modal('<h3>'+(id?'แก้ไขเคลม':'บันทึกเคลม')+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="fld"><label>ผู้เอาประกัน <b style="color:#dc2626">*</b></label><select id="gcMem"'+(id?' disabled':'')+'><option value="">— เลือก —</option>'+
+        mems.map(function(m){ return '<option value="'+esc(m.id)+'"'+(m.id===c.memId?' selected':'')+'>'+esc(m.code+' '+m.empName+' · '+m.rel+(m.name?' '+m.name:'')+' · '+String(m.planLabel).split(' · ')[0])+'</option>'; }).join('')+'</select></div>'+
+      '<div style="display:flex;gap:12px;flex-wrap:wrap">'+pgiFld('gcDate','วันที่รักษา <b style="color:#dc2626">*</b>',c.date,'date')+
+        '<div class="fld" style="flex:1;min-width:150px"><label>ประเภท</label><select id="gcKind">'+(PGI.kinds||[]).map(function(k){ return '<option'+(k===c.kind?' selected':'')+'>'+esc(k)+'</option>'; }).join('')+'</select></div>'+
+        pgiFld('gcHosp','สถานพยาบาล',c.hospital)+'</div>'+
+      '<div style="display:flex;gap:12px;flex-wrap:wrap">'+pgiFld('gcClaimed','ยอดเรียกร้อง <b style="color:#dc2626">*</b>',c.claimed,'',' inputmode="decimal"')+pgiFld('gcPaid','ยอดที่ได้รับ',c.paid,'',' inputmode="decimal"')+
+        '<div class="fld" style="flex:1;min-width:150px"><label>สถานะ</label><select id="gcSt">'+(PGI.statuses||[]).map(function(k){ return '<option'+(k===c.status?' selected':'')+'>'+esc(k)+'</option>'; }).join('')+'</select></div></div>'+
+      imgsFldHtml('gcFiles','ใบเสร็จ / ใบรับรองแพทย์ (PDF/รูป · ไม่บังคับ · เก็บเข้าแฟ้มเอกสารของพนักงาน)')+
+      (id&&c.files.length?'<div class="m-hint">มีไฟล์แนบแล้ว '+c.files.length+' ไฟล์ · แนบเพิ่มได้</div>':'')+
+      '<div class="fld"><label>หมายเหตุ</label><input id="gcNote" value="'+esc(c.note||'')+'"></div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button><button class="btn btn-primary" id="gcGo" onclick="pgiClaimSave(&quot;'+esc(id||'')+'&quot;)">บันทึก</button></div>');
+    imgsFldBind('gcFiles'); IMGS_SEP['gcFiles']=true;
+  }
+  function pgiClaimSave(id){
+    var v=function(i){ return (($(i)||{}).value||'').trim(); };
+    var d={ id:id, memId:v('gcMem'), date:v('gcDate'), kind:v('gcKind'), hospital:v('gcHosp'), claimed:v('gcClaimed'), paid:v('gcPaid'), status:v('gcSt'), note:v('gcNote') };
+    if(!d.memId){ mErr('เลือกผู้เอาประกันก่อนค่ะ'); return; }
+    var files=IMGS['gcFiles']||[];
+    if(files.some(function(f){ return f.length*0.75>10*1024*1024; })){ mErr('มีไฟล์ใหญ่เกิน 10 MB'); return; }
+    var b=$('gcGo'); if(b) b.disabled=true;
+    callBusy('กำลังบันทึก…', jsonpPost(withRoom_({ action:'waPplGiSave', uid:UID, kind:'claim', act:'save', data:JSON.stringify(d),
+        files:JSON.stringify(files), names:JSON.stringify(IMGS_NAMES['gcFiles']||[]) })), 'บันทึกแล้ว')
+      .then(function(r){
+        if(!r||!r.ok){ if(b) b.disabled=false; mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+        IMGS['gcFiles']=[]; closeModal(); renderPplGi();
+        if(r.fail&&r.fail.length) setTimeout(function(){ toast('ไฟล์บางไฟล์ไม่สำเร็จ: '+r.fail.join(' · ')); }, 1700);
+      }).catch(function(e){ if(b) b.disabled=false; mErr(e.message); });
+  }
+  /** เปิดไฟล์เคลม (ไฟล์อยู่ในแฟ้มเอกสารพนักงาน · เปิดผ่านหลังบ้าน) */
+  function pgiFileOpen(code, id){
+    callBusy('กำลังเปิดไฟล์…', jsonpPost(withRoom_({ action:'waPplDocOpen', uid:UID, code:code, id:id }), 0, 120000), 'เปิดแล้ว')
+      .then(function(r){
+        if(!r||!r.ok){ toast((r&&r.error)||'เปิดไฟล์ไม่ได้'); return; }
+        var bin=atob(r.data), arr=new Uint8Array(bin.length);
+        for(var i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+        if(PPL_DOC_URL){ try{ URL.revokeObjectURL(PPL_DOC_URL); }catch(e){} }
+        PPL_DOC_URL=URL.createObjectURL(new Blob([arr],{type:r.mime}));
+        setTimeout(function(){
+          modal('<h3>เอกสารเคลม · '+esc(r.name)+'</h3>'+(/^image\//.test(r.mime)?'<img src="'+PPL_DOC_URL+'" alt="" style="max-width:100%;border-radius:8px;border:1px solid var(--line)">'
+            :'<iframe src="'+PPL_DOC_URL+'" title="เอกสาร" style="width:100%;height:65vh;border:1px solid var(--line);border-radius:8px"></iframe>')+
+            '<div class="m-act"><a class="btn btn-ghost" href="'+PPL_DOC_URL+'" download="'+esc(r.name)+'">ดาวน์โหลด</a><button class="btn btn-primary" onclick="closeModal()">ปิด</button></div>');
+        }, 300);
+      }).catch(function(e){ toast(e.message); });
+  }
+
   /* ── หน้าข้อมูลรายคน ── */
   function renderPplOne(){
     skel();
@@ -15107,6 +15497,7 @@
       h+='<div id="mErr" class="m-err hidden"></div><div class="m-act"><button class="btn btn-ghost" type="button" onclick="switchView(&quot;ppl&quot;)">ยกเลิก</button>'+
         '<button class="btn btn-primary" type="button" id="pplNewGo" onclick="pplCreate()">บันทึกพนักงานใหม่</button></div>';
     } else {
+      if(r.ded && r.feat && (r.feat.pvd||r.feat.wf||r.feat.gi)) h+=pplDedCard(r.ded, r.feat);   // 🤝 การ์ดหักเงินเดือน (W1)
       if(r.pvd) h+=pplPvdCard(r.pvd);
       h+=pplSelfCard(rec);
       var hist=r.hist||[];
@@ -29037,7 +29428,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20261005-1022';
+  var APP_BUILD='20261005-1214';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
