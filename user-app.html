@@ -16,9 +16,9 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20261005-1214">
+<link rel="stylesheet" href="user.css?v=20261005-1240">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<script src="yd-auth.js?v=20261005-1214"></script>
+<script src="yd-auth.js?v=20261005-1240"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
   .date-row{ display:flex; flex-direction:column; gap:14px; margin:4px 0 12px; } .date-row > div{ min-width:0; }
@@ -14193,6 +14193,7 @@
       if(VIEW!=='ppl') return;
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
       PPL=r; pplPaint();
+      if(PPL_OPEN_CFG){ PPL_OPEN_CFG=false; pplCfg(); }
     }).catch(function(e){ if(VIEW==='ppl') $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(/เชื่อมต่อเซิร์ฟเวอร์|ไม่ครบ|ไม่รับคำสั่ง/.test(e.message)?'เมนูนี้ต้องอัปเดตหลังบ้านก่อนค่ะ (ยังไม่ได้ deploy)':e.message)+'</div></div>'; });
   }
   function pplCols(){ var hd=pplHasDoc(); return PPL_COLS.filter(function(c){ return (!c.k || pplOn(c.k)) && (!c.doc || hd); }); }
@@ -14528,10 +14529,20 @@
      ตารางรายห้อง (เปิดที่ "เลือกช่องข้อมูล") · 1 แถว = 1 ช่วงอัตรา · ปรับอัตรา = เพิ่มรายการใหม่ "มีผลตั้งแต่" วันใหม่
      หน้าภาพรวม (pplpvd) = สมาชิก ณ วันนี้ · หน้ารายคน = การ์ดรายการทั้งหมดของคนนั้น */
   var PPLPVD=null, PPLPVD_ST='member';
+  /** แถบแจ้ง "ยังไม่เปิดใช้" ด้านบนหน้า — หน้ายังโชว์ตาราง/หัวคอลัมน์ตามปกติ (พี่กี้ 5 ต.ค. 69) */
+  function pplOffBar(r,name){
+    if(!r||!r.off) return '';
+    return '<div style="margin:0 0 12px;padding:10px 14px;border-radius:12px;font-size:13.5px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#FFF7E6;border:1px solid #F5D49A;color:#7A4B00">'+
+      '<span style="flex:1;min-width:220px">⚠️ บริษัทนี้ยังไม่ได้เปิดใช้'+esc(name)+' · ตารางด้านล่างยังว่างจนกว่าจะเปิดใช้</span>'+
+      '<button class="btn btn-primary" type="button" style="width:auto;flex:0 0 auto;padding:8px 18px" onclick="pplGoCfg()">เปิดใช้งาน</button></div>';
+  }
+  var PPL_OPEN_CFG=false;
+  function pplGoCfg(){ PPL_OPEN_CFG=true; switchView('ppl'); }
   function renderPplPvd(){
     skel();
     jsonp(withRoom_({action:'waPplPvdList',uid:UID})).then(function(r){
       if(VIEW!=='pplpvd') return;
+      if(r&&r.off) r={ ok:true, off:true, rows:[] };   // ยังไม่เปิดใช้ = โชว์ตารางว่างพร้อมหัวคอลัมน์ + ปุ่มเปิดใช้
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
       PPLPVD=r; pplPvdPaint();
     }).catch(function(e){ if(VIEW==='pplpvd') $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(/เชื่อมต่อเซิร์ฟเวอร์|ไม่ครบ|ไม่รับคำสั่ง/.test(e.message)?'เมนูนี้ต้องอัปเดตหลังบ้านก่อนค่ะ (ยังไม่ได้ deploy)':e.message)+'</div></div>'; });
@@ -14541,7 +14552,7 @@
   }
   function pplPvdBody(){
     var rows=pplPvdRows();
-    if(!rows.length) return '<tr class="dt-empty"><td colspan="10">'+(((PPLPVD&&PPLPVD.rows)||[]).length?'ไม่มีรายการในตัวกรองนี้':'ยังไม่มีข้อมูลกองทุน · เพิ่มได้ที่หน้าข้อมูลรายคน หรือนำเข้าจากไฟล์')+'</td></tr>';
+    if(!rows.length) return '<tr class="dt-empty"><td colspan="10">'+(((PPLPVD&&PPLPVD.rows)||[]).length?'ไม่มีรายการในตัวกรองนี้':(PPLPVD&&PPLPVD.off?'ยังไม่ได้เปิดใช้ · กดปุ่ม เปิดใช้งาน ด้านบน':'ยังไม่มีข้อมูลกองทุน · เพิ่มได้ที่หน้าข้อมูลรายคน หรือนำเข้าจากไฟล์'))+'</td></tr>';
     return rows.map(function(x,i){
       var q='&quot;'+esc(x.code)+'&quot;';
       return '<tr style="cursor:pointer" onclick="pplOpen('+q+')"><td>'+(i+1)+'</td><td style="white-space:nowrap">'+esc(x.code)+'</td>'+
@@ -14553,7 +14564,7 @@
   }
   function pplPvdPaint(){
     var all=(PPLPVD&&PPLPVD.rows)||[], nMem=all.filter(function(x){ return x.member; }).length;
-    $('main').innerHTML='<div class="lst-card"><div class="lst-head">'+
+    $('main').innerHTML=pplOffBar(PPLPVD,'ตารางกองทุนสำรองเลี้ยงชีพ')+'<div class="lst-card"><div class="lst-head">'+
       '<div class="t"><b>กองทุนสำรองเลี้ยงชีพ <span style="color:#8A94A6;font-weight:600;font-size:13px">สมาชิก '+nMem+' · ทั้งหมด '+all.length+' คน</span></b>'+
         '<div>อัตรา ณ วันนี้ของแต่ละคน · กดที่แถวเพื่อดูประวัติ/ปรับอัตรา</div></div>'+
       '<div class="lst-tools"><select onchange="PPLPVD_ST=this.value;$(\'pplPvdBody\').innerHTML=pplPvdBody()">'+
@@ -15057,6 +15068,8 @@
     skel();
     jsonp(withRoom_({action:'waPplWf',uid:UID,ym:PWF_YM||''})).then(function(r){
       if(VIEW!=='pplwf') return;
+      if(r&&r.off){ var ymOff=PWF_YM||new Date().toISOString().slice(0,7);
+        r={ ok:true, off:true, month:{ ym:ymOff, start:'2026-10', rate:null, ceiling:0, headcount:99, rows:[], skipped:[], totals:{ base:0, ee:0, er:0, total:0 }, saved:false, status:'' }, deduct:{ ym:ymOff, rows:[] }, cfg:{ rates:[] } }; }
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
       PWF=r; PWF_YM=r.month.ym; PWF_BASE={}; pwfPaint();
     }).catch(function(e){ if(VIEW==='pplwf') $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(/เชื่อมต่อเซิร์ฟเวอร์|ไม่ครบ|ไม่รับคำสั่ง/.test(e.message)?'เมนูนี้ต้องอัปเดตหลังบ้านก่อนค่ะ (ยังไม่ได้ deploy)':e.message)+'</div></div>'; });
@@ -15082,7 +15095,7 @@
   function pwfPaint(){
     var m=PWF.month, sent=m.status==='นำส่งแล้ว', rows=pwfRows();
     var tab=function(k,t){ return '<button class="kp-tab'+(PWF_TAB===k?' on':'')+'" onclick="pwfTab(&quot;'+k+'&quot;)">'+t+'</button>'; };
-    var rateTxt=m.rate?('พนักงาน '+m.rate.ee+'% · บริษัท '+m.rate.er+'%'):('ยังไม่ถึงเดือนเริ่มหัก ('+pwfYmLabel(m.start)+')');
+    var rateTxt=PWF.off?'—':m.rate?('พนักงาน '+m.rate.ee+'% · บริษัท '+m.rate.er+'%'):('ยังไม่ถึงเดือนเริ่มหัก ('+pwfYmLabel(m.start)+')');
     var h='<div class="lst-card"><div class="lst-head"><div class="t"><b>กองทุนสงเคราะห์ลูกจ้าง</b>'+
         '<div>เดือน '+esc(pwfYmLabel(m.ym))+' · อัตรา '+esc(rateTxt)+(m.ceiling?' · เพดานฐาน '+pwfFmt(m.ceiling):'')+'</div></div>'+
       '<div class="lst-tools"><input type="month" id="pwfYm" value="'+esc(m.ym)+'" onchange="pwfSetYm(this.value)">'+
@@ -15100,7 +15113,7 @@
             '<td style="text-align:right" id="pwf-ee-'+esc(x.code)+'">'+pwfFmt(x.ee)+'</td><td style="text-align:right" id="pwf-er-'+esc(x.code)+'">'+pwfFmt(x.er)+'</td><td style="text-align:right;font-weight:600" id="pwf-total-'+esc(x.code)+'">'+pwfFmt(x.total)+'</td></tr>';
         }).join('')+
         '<tr style="font-weight:700;background:var(--chip,#F1F5F9)"><td></td><td></td><td>รวม '+rows.length+' คน</td><td></td><td style="text-align:right" id="pwf-t-base">'+pwfFmt(m.totals.base)+'</td><td style="text-align:right" id="pwf-t-ee">'+pwfFmt(m.totals.ee)+'</td><td style="text-align:right" id="pwf-t-er">'+pwfFmt(m.totals.er)+'</td><td style="text-align:right" id="pwf-t-total">'+pwfFmt(m.totals.total)+'</td></tr>'
-        :'<tr class="dt-empty"><td colspan="8">'+(m.rate?'ไม่มีสมาชิกในเดือนนี้':'เดือนนี้ยังไม่ถึงเดือนเริ่มหัก')+'</td></tr>')+'</tbody></table></div>'+
+        :'<tr class="dt-empty"><td colspan="8">'+(PWF.off?'ยังไม่ได้เปิดใช้ · กดปุ่ม เปิดใช้งาน ด้านบน':(m.rate?'ไม่มีสมาชิกในเดือนนี้':'เดือนนี้ยังไม่ถึงเดือนเริ่มหัก'))+'</td></tr>')+'</tbody></table></div>'+
         '<div class="pwf-act">'+
           (!sent&&m.rate&&rows.length?'<button class="btn btn-primary" type="button" id="pwfGo" onclick="pwfSave(&quot;save&quot;)">บันทึกยอดเดือนนี้</button>'+
             '<button class="btn btn-ghost" type="button" onclick="pwfSentAsk()">ทำเครื่องหมาย นำส่งแล้ว</button>':'')+
@@ -15121,7 +15134,7 @@
         :'<tr class="dt-empty"><td colspan="9">ยังไม่มีพนักงานในทะเบียน</td></tr>')+'</tbody></table></div>'+
         (d.rows.length?'<div class="pwf-act"><button class="btn btn-ghost" type="button" onclick="pwfXlsxDed()">ออกไฟล์ Excel</button></div>':'');
     }
-    $('main').innerHTML=h+'</div>';
+    $('main').innerHTML=pplOffBar(PWF,'กองทุนสงเคราะห์ลูกจ้าง')+h+'</div>';
   }
   function pwfSave(act){
     var rows=pwfRows().map(function(x){ return { code:x.code, base:x.base }; });
@@ -15231,6 +15244,8 @@
     skel();
     jsonp(withRoom_({action:'waPplGi',uid:UID,ym:PGI_YM||''})).then(function(r){
       if(VIEW!=='pplgi') return;
+      if(r&&r.off){ var ymG=PGI_YM||new Date().toISOString().slice(0,7);
+        r={ ok:true, off:true, ym:ymG, plans:[], members:[], leftNoOut:[], people:[], claims:[], kinds:[], statuses:[], premium:{ ym:ymG, plans:[], rows:[], totals:{ premium:0, co:0, emp:0 } } }; }
       if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
       PGI=r; pgiPaint();
     }).catch(function(e){ if(VIEW==='pplgi') $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(/เชื่อมต่อเซิร์ฟเวอร์|ไม่ครบ|ไม่รับคำสั่ง/.test(e.message)?'เมนูนี้ต้องอัปเดตหลังบ้านก่อนค่ะ (ยังไม่ได้ deploy)':e.message)+'</div></div>'; });
@@ -15276,7 +15291,7 @@
         }).join(''):'<tr class="dt-empty"><td colspan="10">ยังไม่มีกรมธรรม์ · กด + เพิ่มกรมธรรม์ / แผน</td></tr>')+'</tbody></table></div>'+
         '<div class="m-hint" style="margin-top:10px">1 แถว = 1 แผน · กรมธรรม์เดียวมีหลายแผน = เพิ่มหลายแถวเลขกรมธรรม์เดียวกัน · กระดิ่งเตือนเมื่อใกล้หมด 60 วัน</div>';
     }
-    $('main').innerHTML=h+'</div>';
+    $('main').innerHTML=pplOffBar(PGI,'ประกันกลุ่ม')+h+'</div>';
   }
   function pgiFld(id,label,val,type,extra){ return '<div class="fld" style="flex:1;min-width:150px"><label>'+label+'</label><input id="'+id+'"'+(type?' type="'+type+'"':'')+' value="'+esc(val==null?'':String(val))+'"'+(extra||'')+'></div>'; }
   function pgiPlanForm(id){
@@ -29428,7 +29443,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20261005-1214';
+  var APP_BUILD='20261005-1240';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
