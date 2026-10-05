@@ -16,9 +16,9 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20261005-0607">
+<link rel="stylesheet" href="user.css?v=20261005-0741">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<script src="yd-auth.js?v=20261005-0607"></script>
+<script src="yd-auth.js?v=20261005-0741"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
   .date-row{ display:flex; flex-direction:column; gap:14px; margin:4px 0 12px; } .date-row > div{ min-width:0; }
@@ -2707,7 +2707,7 @@
     hubreq:['🏛️','คำขอสมัคร'], hubrooms:['🏢','ห้องลูกค้า'], roomset:['⚙️','ตั้งค่าห้อง'], home:['🏠','ภาพรวมประจำวัน'], clock:['🕐','ลงเวลา'],
     mytasks:['🗂️','งานของฉัน'], alltasks:['📋','งานทั้งหมด'], review:['🔍','รอตรวจ'], mailtask:['📧','งานจากอีเมล'], leave:['📝','การลา'],
     expense:['💸','เบิกค่าใช้จ่าย'], expapprove:['✅','อนุมัติใบสั่งจ่าย'], expone:['🔎','ใบสั่งจ่าย'],
-    expdash:['📊','สรุปการเบิกของฉัน'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ใบสั่งจ่าย (PO)'], poform:['📝','สร้างใบสั่งจ่าย'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','รายงานภาษีซื้อ'], vatsale:['🧾','รายงานภาษีขาย'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก (WI)'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ใบสำคัญจ่าย (PV)'], sales:['💰','รายรับ'], salesqt:['📄','ใบเสนอราคา (QT)'], salesiv:['🧾','ใบแจ้งหนี้ (IV)'], salesre:['💵','ใบเสร็จรับเงิน (RE)'], salescn:['↩️','ใบลดหนี้ (CN)'], wtreg:['🧾','ภาษีที่หัก 50 ทวิ (WT)'], datain:['📥','นำเข้าข้อมูล'], airead:['🤖','อ่านเอกสารด้วย AI'], contract:['📑','สัญญาบริการ'], recvkind:['💰','ประเภทการรับเงิน'], statement:['🏦','กระทบยอด Statement'], cashreport:['📊','รายงานเงินสด/ธนาคาร'], ar:['📊','ทะเบียนลูกหนี้'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51'], finhist:['📈','เทียบย้อนหลัง'], docdash:['📊','ภาพรวม'], docreg:['🗂️','จัดการเอกสาร'], doccheck:['✅','ตรวจก่อนส่ง'], docbycat:['📑','รายงานตามประเภท'], docreport:['📦','รายงานประจำเดือน'], doccat:['🏷️','จัดการหมวด'], hubmods:['🧩','โมดูลของแต่ละห้อง'], teamperm:['🔐','สิทธิ์ทีม'], ppl:['👥','ทะเบียนพนักงาน'], pplmig:['🔄','ย้ายพนักงานเข้าทะเบียน'], pplpvd:['🏦','กองทุนสำรองเลี้ยงชีพ'], pplone:['👤','ข้อมูลพนักงาน'], kpiemp:['👥','ทะเบียนพนักงาน'], kpiperson:['📈','ประวัติรายคน'], kpidash:['📊','ภาพรวม'], kpientry:['✍️','กรอกผลงาน'], kpiscore:['⭐','คะแนนคุณลักษณะ'], kpidoc:['📄','ใบประเมิน'], kpiround:['📋','รอบการประเมิน'], kpifill:['✍️','ประเมินผลงาน'], kpimanage:['📊','จัดการผลการประเมิน'], kpirule:['⚖️','เกณฑ์ทั้งองค์กร'], kpimetric:['🎯','ตัวชี้วัด (KPI)'], kpitrait:['🧭','คุณลักษณะรายบุคคล'], kpiimport:['📥','นำเข้าข้อมูลเดิม'], kpireport:['📄','รายงาน'], kpihelp:['📘','คู่มือการใช้งาน'], myset:['🙋','ตั้งค่าของฉัน'], bank:['🏦','บัญชีธนาคาร'], expcat:['🏷️','ประเภทค่าใช้จ่าย'], vendors:['🏪','ทะเบียนผู้ขาย'], vendorform:['🏪','ข้อมูลผู้ขาย'],
+    expdash:['📊','สรุปการเบิกของฉัน'], reimb:['🧾','ตั้งเบิกลูกค้า'], payout:['💵','ใบสั่งจ่าย (PO)'], poform:['📝','สร้างใบสั่งจ่าย'], petty:['💵','เงินสดย่อย'], vatbuy:['🧾','รายงานภาษีซื้อ'], vatsale:['🧾','รายงานภาษีขาย'], expreport:['📊','รายงานรายจ่าย'], taxhub:['🏛️','รายงานภาษี'], whtin:['🧾','50 ทวิ ที่ถูกหัก (WI)'], ot:['⏰','ขอ OT'], docs:['📁','เอกสาร'], taxdoc:['🧾','ภาษี/เอกสาร'], projects:['📊','บอร์ดงาน'], trash:['🗑️','ถังขยะ'], announce:['📢','ประกาศ'], appt:['📅','นัดประชุม'], senddoc:['📤','ส่งงานลูกค้า'], approve:['✅','อนุมัติลา'], otapprove:['✅','อนุมัติ OT'], hrreport:['📊','รายงาน HR'], finreport:['📊','รายงานการเงิน'], poreport:['📄','ใบสำคัญจ่าย (PV)'], sales:['💰','รายรับ'], salesqt:['📄','ใบเสนอราคา (QT)'], salesiv:['🧾','ใบแจ้งหนี้ (IV)'], salesre:['💵','ใบเสร็จรับเงิน (RE)'], salescn:['↩️','ใบลดหนี้ (CN)'], wtreg:['🧾','ภาษีที่หัก 50 ทวิ (WT)'], datain:['📥','นำเข้าข้อมูล'], airead:['🤖','อ่านเอกสารด้วย AI'], contract:['📑','สัญญาบริการ'], recvkind:['💰','ประเภทการรับเงิน'], statement:['🏦','กระทบยอด Statement'], cashreport:['📊','รายงานเงินสด/ธนาคาร'], ar:['📊','ทะเบียนลูกหนี้'], salesreport:['📊','รายงานรายรับ'], bizdash:['📊','ภาพรวมธุรกิจ'], pnd51:['📐','ภ.ง.ด.51'], finhist:['📈','เทียบย้อนหลัง'], docdash:['📊','ภาพรวม'], docreg:['🗂️','จัดการเอกสาร'], doccheck:['✅','ตรวจก่อนส่ง'], docbycat:['📑','รายงานตามประเภท'], docreport:['📦','รายงานประจำเดือน'], doccat:['🏷️','จัดการหมวด'], hubmods:['🧩','โมดูลของแต่ละห้อง'], teamperm:['🔐','สิทธิ์ทีม'], ppl:['👥','ทะเบียนพนักงาน'], pplmig:['🔄','ย้ายพนักงานเข้าทะเบียน'], pplpvd:['🏦','กองทุนสำรองเลี้ยงชีพ'], ppldocs:['📁','เอกสารพนักงาน'], ppldoctype:['⚙️','ตั้งค่าประเภทเอกสาร'], pplone:['👤','ข้อมูลพนักงาน'], kpiemp:['👥','ทะเบียนพนักงาน'], kpiperson:['📈','ประวัติรายคน'], kpidash:['📊','ภาพรวม'], kpientry:['✍️','กรอกผลงาน'], kpiscore:['⭐','คะแนนคุณลักษณะ'], kpidoc:['📄','ใบประเมิน'], kpiround:['📋','รอบการประเมิน'], kpifill:['✍️','ประเมินผลงาน'], kpimanage:['📊','จัดการผลการประเมิน'], kpirule:['⚖️','เกณฑ์ทั้งองค์กร'], kpimetric:['🎯','ตัวชี้วัด (KPI)'], kpitrait:['🧭','คุณลักษณะรายบุคคล'], kpiimport:['📥','นำเข้าข้อมูลเดิม'], kpireport:['📄','รายงาน'], kpihelp:['📘','คู่มือการใช้งาน'], myset:['🙋','ตั้งค่าของฉัน'], bank:['🏦','บัญชีธนาคาร'], expcat:['🏷️','ประเภทค่าใช้จ่าย'], vendors:['🏪','ทะเบียนผู้ขาย'], vendorform:['🏪','ข้อมูลผู้ขาย'],
     customers:['👥','ทะเบียนลูกค้า'], custfile:['📂','แฟ้มลูกค้า'], dataimp:['📥','นำเข้าแบบตาราง'],
     svcreg:['🧰','ทะเบียนสินค้า/บริการ'], salesone:['📄','รายละเอียดเอกสาร'], salesform:['✏️','ออกเอกสารขาย'], ctform:['✏️','สร้างสัญญาบริการ']
   };
@@ -2980,7 +2980,7 @@
     if(gi) $('tbIcon').innerHTML=gi.replace('stroke-width="1.9"','stroke-width="2"'); else $('tbIcon').textContent=meta[0];
     $('tbTitle').textContent=meta[1];
     mSyncNav(v);   // มือถือ: อัปเดตกลุ่มล่าง + แท็บบนให้ตรง view
-    ({ bank:renderBank, expcat:renderExpCat, svcreg:renderSvcReg, salesone:renderSalesOne, salesform:renderSalesForm, ctform:renderCtForm, portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, perf:renderPerf, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, mailtask:renderMailTask, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expone:renderExpOne, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, poform:renderPoForm, vendors:renderVendors, vendorform:renderVendorForm, petty:renderPetty, vatbuy:renderVatBuy, vatsale:renderVatSale, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, salesqt:renderSalesQt, salesiv:renderSalesIv, salesre:renderSalesRe, salescn:renderSalesCn, datain:renderDataIn, contract:renderContract, recvkind:renderRecvKind, wtreg:renderWtReg, statement:renderStatement, cashreport:renderCashReport, airead:renderAiRead, ar:renderAr, customers:renderCustomers, custfile:renderCustFile, dataimp:renderDataImp, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51, finhist:renderFinHist, docreg:renderDocReg, doccheck:renderDocCheck, docdash:renderDocDash, docbycat:renderDocByCat, docreport:renderDocReport, doccat:renderDocCat, ppl:renderPpl, pplmig:renderPplMig, pplpvd:renderPplPvd, pplone:renderPplOne, kpiemp:renderKpiEmp, kpiperson:renderKpiPerson, kpidash:renderKpiDash, kpientry:renderKpiEntry, kpiscore:renderKpiScore, kpidoc:renderKpiDoc, kpiround:renderKpiRound, kpifill:renderKpiFill, kpimanage:renderKpiManage, kpirule:renderKpiRule, kpimetric:renderKpiMetric, kpitrait:renderKpiTrait, kpiimport:renderKpiImport, kpireport:renderKpiReport, kpihelp:renderKpiHelp, myset:renderMyset }[v] || soon)();
+    ({ bank:renderBank, expcat:renderExpCat, svcreg:renderSvcReg, salesone:renderSalesOne, salesform:renderSalesForm, ctform:renderCtForm, portal:renderPortal, payroll:renderPayrollStub, modsoon:renderModSoon, perf:renderPerf, hubreq:renderHubReq, hubrooms:renderHubRooms, roomset:renderRoomSet, home:renderHome, clock:renderClock, leave:renderLeave, mytasks:renderMytasks, alltasks:renderProjects, review:renderReview, mailtask:renderMailTask, docs:renderDocs, expense:renderExpense, expapprove:renderExpenseApprove, expone:renderExpOne, expdash:renderExpDash, reimb:renderReimb, taxdoc:renderTaxDoc, payout:renderPayout, poform:renderPoForm, vendors:renderVendors, vendorform:renderVendorForm, petty:renderPetty, vatbuy:renderVatBuy, vatsale:renderVatSale, expreport:renderExpReport, taxhub:renderTaxHub, whtin:renderWhtIn, projects:renderProjects, trash:renderTrash, announce:renderAnnounce, appt:renderAppointment, senddoc:renderSendDoc, approve:renderApprove, ot:renderOt, otapprove:renderOtApprove, hrreport:renderHrReport, finreport:renderFinReport, poreport:renderPoReport, sales:renderSales, salesqt:renderSalesQt, salesiv:renderSalesIv, salesre:renderSalesRe, salescn:renderSalesCn, datain:renderDataIn, contract:renderContract, recvkind:renderRecvKind, wtreg:renderWtReg, statement:renderStatement, cashreport:renderCashReport, airead:renderAiRead, ar:renderAr, customers:renderCustomers, custfile:renderCustFile, dataimp:renderDataImp, salesreport:renderSalesReport, bizdash:renderBizDash, pnd51:renderPnd51, finhist:renderFinHist, docreg:renderDocReg, doccheck:renderDocCheck, docdash:renderDocDash, docbycat:renderDocByCat, docreport:renderDocReport, doccat:renderDocCat, ppl:renderPpl, pplmig:renderPplMig, pplpvd:renderPplPvd, ppldocs:renderPplDocs, ppldoctype:renderPplDocType, pplone:renderPplOne, kpiemp:renderKpiEmp, kpiperson:renderKpiPerson, kpidash:renderKpiDash, kpientry:renderKpiEntry, kpiscore:renderKpiScore, kpidoc:renderKpiDoc, kpiround:renderKpiRound, kpifill:renderKpiFill, kpimanage:renderKpiManage, kpirule:renderKpiRule, kpimetric:renderKpiMetric, kpitrait:renderKpiTrait, kpiimport:renderKpiImport, kpireport:renderKpiReport, kpihelp:renderKpiHelp, myset:renderMyset }[v] || soon)();
   }
 
   // ───── มือถือ: เมนูกลุ่ม (ล่าง) + แท็บย่อย (บน) · คอมใช้ sidebar เดิม ไม่เกี่ยว ─────
@@ -3021,6 +3021,8 @@
     custfile:'<svg viewBox="0 0 24 24"><path d="M3.5 6.5a1.5 1.5 0 0 1 1.5-1.5h4l2 2.2h8a1.5 1.5 0 0 1 1.5 1.5v9.8a1.5 1.5 0 0 1-1.5 1.5H5a1.5 1.5 0 0 1-1.5-1.5z"/><circle cx="12" cy="12.6" r="2"/><path d="M8.6 17.4c0-1.7 1.5-2.7 3.4-2.7s3.4 1 3.4 2.7"/></svg>',
     finhist:'<svg viewBox="0 0 24 24"><path d="M4 20V4"/><path d="M4 20h16"/><path d="M7.5 16.5V12"/><path d="M11.5 16.5V8.5"/><path d="M15.5 16.5v-6"/><path d="M19.5 16.5V6"/></svg>',
     /* 📊 ประเมินผลงาน — ไม่ใส่ที่นี่ = ปุ่มเมนูขึ้นเป็นรูปบ้านทั้งแถว (พี่กี้เจอจริง 6 ก.ย.) */
+    ppldoctype:'<svg viewBox="0 0 24 24"><path d="M3.5 7.5a2 2 0 0 1 2-2h4l2 2h7a2 2 0 0 1 2 2v8.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/><circle cx="12" cy="13.5" r="2.2"/><path d="M12 10v1.3M12 15.7V17M8.6 13.5h1.2M14.2 13.5h1.2"/></svg>',
+    ppldocs:'<svg viewBox="0 0 24 24"><path d="M3.5 7.5a2 2 0 0 1 2-2h4l2 2h7a2 2 0 0 1 2 2v8.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/><path d="M12 11v3.5M12 17h.01"/></svg>',
     pplpvd:'<svg viewBox="0 0 24 24"><path d="M3.5 9.5 12 4.5l8.5 5"/><path d="M5 10v7.5M9.5 10v7.5M14.5 10v7.5M19 10v7.5"/><path d="M3.5 19.5h17"/></svg>',
     ppl:'<svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.2"/><circle cx="9" cy="10.5" r="2.3"/><path d="M5.6 16.5c.5-1.8 1.9-2.8 3.4-2.8s2.9 1 3.4 2.8"/><path d="M14.5 9.5h4M14.5 12.5h4M14.5 15.5h2.5"/></svg>',
     pplone:'<svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.2"/><circle cx="9" cy="10.5" r="2.3"/><path d="M5.6 16.5c.5-1.8 1.9-2.8 3.4-2.8s2.9 1 3.4 2.8"/><path d="M14.5 9.5h4M14.5 12.5h4M14.5 15.5h2.5"/></svg>',
@@ -3114,7 +3116,7 @@
       /* 🔐 teamperm ย้ายไปรวมใน ⚙️ ตั้งค่าห้อง ▸ ตั้งค่าผู้ใช้งาน (18 ก.ย. 69)
          คง view ไว้ใน extra เผื่อลิงก์เก่า/ปุ่มค้าง — เข้าไปแล้วพาไปที่ใหม่ให้ */
       /* 👥 ทะเบียนพนักงาน + กองทุน รวมเข้าระบบบุคคล (5 ต.ค. 69 พี่กี้เคาะแพ็กเดียว · เดิมแยกการ์ด "งานบุคคล") */
-      views:['ppl','pplpvd','approve','otapprove','hrreport'], extra:['teamperm','pplone'] },
+      views:['ppl','ppldocs','pplpvd','approve','otapprove','hrreport'], extra:['teamperm','pplone','ppldoctype'] },
     /* 💵 เงินเดือน — แยกจากบุคคล (พี่กี้เคาะ 5 ก.ย. เย็น)
        ลูกค้าแพ็กการเงินก็ต้องทำเงินเดือน (ภ.ง.ด.1 ต้องมี 40(1)) แต่ไม่ต้องพา
        พนักงานทั้งบริษัทมาลงเวลา/ลา — คนละภาระกันคนละเรื่อง */
@@ -4863,6 +4865,7 @@
      __roomjoin = 🙋 พนักงานขอเข้าห้อง → ⚙️ ตั้งค่าห้อง ▸ ตั้งค่าผู้ใช้งาน ▸ เชิญพนักงาน */
   function bellGo_(v){
     if(v==='__news'){ bellNews_(); return; }
+    if(v==='ppldocs') PPLDOCS_TAB='expiring';   // 📁 กระดิ่งเอกสารใกล้หมดอายุ → เปิดแท็บนั้นเลย
     if(v==='__roomjoin'){
       try{ ST_TAB='user'; ST_SUB='join'; ST_SUBS['user']='join';
         sessionStorage.setItem('yd-st-tab','user'); sessionStorage.setItem('yd-st-subs',JSON.stringify(ST_SUBS)); }catch(e){}
@@ -5115,7 +5118,7 @@
       if(i>=0){ fin.views.splice(i,1); if(me.views.indexOf('expdash')<0) me.views.push('expdash'); }
     });
   }
-  var VIEW_TAB={ portal:'เมนูหลัก', payroll:'ระบบเงินเดือน', modsoon:'กำลังพัฒนา', perf:'วัดความเร็วระบบ', hubreq:'คำขอสมัคร', hubrooms:'ห้องลูกค้า', ppl:'ทะเบียนพนักงาน', pplmig:'ย้ายพนักงาน', pplpvd:'กองทุนสำรองฯ', pplone:'ข้อมูลพนักงาน', roomset:'ตั้งค่าห้อง', myset:'ตั้งค่าของฉัน', home:'ภาพรวมประจำวัน', projects:'บอร์ดงาน', mytasks:'งานของฉัน', review:'รอตรวจ', mailtask:'งานจากอีเมล', trash:'ถังขยะ',
+  var VIEW_TAB={ portal:'เมนูหลัก', payroll:'ระบบเงินเดือน', modsoon:'กำลังพัฒนา', perf:'วัดความเร็วระบบ', hubreq:'คำขอสมัคร', hubrooms:'ห้องลูกค้า', ppl:'ทะเบียนพนักงาน', pplmig:'ย้ายพนักงาน', pplpvd:'กองทุนสำรองฯ', ppldocs:'เอกสารพนักงาน', ppldoctype:'ตั้งค่าประเภทเอกสาร', pplone:'ข้อมูลพนักงาน', roomset:'ตั้งค่าห้อง', myset:'ตั้งค่าของฉัน', home:'ภาพรวมประจำวัน', projects:'บอร์ดงาน', mytasks:'งานของฉัน', review:'รอตรวจ', mailtask:'งานจากอีเมล', trash:'ถังขยะ',
     senddoc:'ส่งงานลูกค้า', appt:'นัดประชุม', announce:'ประกาศ',
     leave:'ลาของฉัน', approve:'อนุมัติลา', expense:'เบิกของฉัน', expapprove:'อนุมัติเบิก',
     expdash:'รายจ่าย', reimb:'ตั้งเบิกลูกค้า', petty:'เงินสดย่อย', payout:'ใบสั่งจ่าย', poform:'สร้างใบสั่งจ่าย', expreport:'รายงานรายจ่าย', taxhub:'รายงานภาษี', whtin:'50 ทวิ ที่ถูกหัก', vatbuy:'รายงานภาษีซื้อ', vatsale:'รายงานภาษีขาย',
@@ -5124,7 +5127,7 @@
     bank:'บัญชีธนาคาร', expcat:'ประเภทค่าใช้จ่าย', vendors:'ทะเบียนผู้ขาย', vendorform:'ข้อมูลผู้ขาย', customers:'ทะเบียนลูกค้า', custfile:'แฟ้มลูกค้า', dataimp:'นำเข้าแบบตาราง', svcreg:'สินค้า/บริการ', salesone:'รายละเอียดเอกสาร', salesform:'ออกเอกสาร', ctform:'สร้างสัญญา', datain:'นำเข้าข้อมูล', contract:'สัญญาบริการ', recvkind:'ประเภทการรับเงิน', bizdash:'ภาพรวม', sales:'รายรับ', ar:'ลูกหนี้', salesreport:'รายงานรายรับ', poreport:'ทะเบียนใบสำคัญจ่าย', pnd51:'ภ.ง.ด.51', finhist:'เทียบย้อนหลัง', docdash:'ภาพรวมเอกสาร', docreg:'จัดการเอกสาร', doccheck:'ตรวจความครบก่อนส่งนักบัญชี', docbycat:'รายงานตามประเภทเอกสาร', docreport:'รายงานประจำเดือน (ปิดรอบ)', doccat:'จัดการหมวด', kpiemp:'ทะเบียนพนักงาน', kpiperson:'ประวัติรายคน', kpidash:'ภาพรวม', kpientry:'กรอกผลงาน', kpiscore:'คุณลักษณะ', kpidoc:'ใบประเมิน', kpiround:'รอบการประเมิน', kpifill:'ประเมินผลงาน', kpimanage:'จัดการผลการประเมิน', kpirule:'เกณฑ์ทั้งองค์กร', kpimetric:'ตัวชี้วัด (KPI)', kpitrait:'คุณลักษณะรายบุคคล', kpiimport:'นำเข้าข้อมูลเดิม', kpireport:'รายงาน', kpihelp:'คู่มือ' };
   // แท็บที่เห็นเฉพาะพี่/ผู้ดูแล · reimb = ตั้งเบิกลูกค้า (ชีตไม่มีเจ้าของรายคน + เป็นข้อมูลรายได้)
   // ⚠️ ซ่อนแท็บ ≠ กันข้อมูล — backend กรองสิทธิ์เองอีกชั้นเสมอ
-  var OWNER_VIEWS={ bank:1, expcat:1, vendors:1, vendorform:1, customers:1, custfile:1, dataimp:1, airead:1, perf:1, salesqt:1, salesiv:1, salesre:1, salescn:1, wtreg:1, statement:1, cashreport:1, datain:1, contract:1, recvkind:1, review:1, approve:1, expapprove:1, otapprove:1, reimb:1, taxdoc:1, petty:1, payout:1, vatbuy:1, vatsale:1, expreport:1, taxhub:1, whtin:1, hrreport:1, finreport:1, ar:1, pnd51:1, finhist:1, salesreport:1, hubmods:1, teamperm:1, ppl:1, pplone:1, pplpvd:1, pplmig:1 };
+  var OWNER_VIEWS={ bank:1, expcat:1, vendors:1, vendorform:1, customers:1, custfile:1, dataimp:1, airead:1, perf:1, salesqt:1, salesiv:1, salesre:1, salescn:1, wtreg:1, statement:1, cashreport:1, datain:1, contract:1, recvkind:1, review:1, approve:1, expapprove:1, otapprove:1, reimb:1, taxdoc:1, petty:1, payout:1, vatbuy:1, vatsale:1, expreport:1, taxhub:1, whtin:1, hrreport:1, finreport:1, ar:1, pnd51:1, finhist:1, salesreport:1, hubmods:1, teamperm:1, ppl:1, pplone:1, pplpvd:1, ppldocs:1, ppldoctype:1, pplmig:1 };
   var MGROUP='', MG_LAST={};
   /* view ของโมดูลเสริมที่อยู่ในเมนูของโมดูลอื่น (📧 งานจากอีเมล อยู่ในเมนูงาน แต่ต้องซื้อส่วนเสริม mailtask) */
   var VIEW_MOD={ mailtask:'mailtask' };
@@ -14151,7 +14154,7 @@
      การ์ดล็อกไว้ก่อน ต้องกด "แก้ไข" ถึงพิมพ์ได้ (feedback-settings-edit-lock) · ช่องรายห้องเลือกเปิดที่ปุ่ม "เลือกช่องข้อมูล" */
   var PPL=null, PPL_CODE='', PPL_Q='', PPL_ST='ทำงาน', PPL_ONE=null, PPL_EDIT={};
   var PPL_COLS=[{t:'#',w:'5%'},{t:'รหัส',w:'10%'},{t:'ชื่อ-นามสกุล',w:'21%'},{t:'ชื่อเล่น',w:'9%'},{t:'แผนก',w:'13%'},
-    {t:'สาขา',w:'11%',k:'branch'},{t:'ตำแหน่ง',w:'12%'},{t:'ประเภท',w:'8%'},{t:'เริ่มงาน',w:'10%'},{t:'สถานะ',w:'8%'}];
+    {t:'สาขา',w:'11%',k:'branch'},{t:'ตำแหน่ง',w:'12%'},{t:'ประเภท',w:'8%'},{t:'เริ่มงาน',w:'10%'},{t:'เอกสาร',w:'11%',doc:1},{t:'สถานะ',w:'8%'}];
 
   function pplFieldsOf(src){ return (src&&src.fields)||[]; }
   function pplOn(k, src){ return pplFieldsOf(src||PPL).some(function(f){ return f.k===k && f.on; }); }
@@ -14181,7 +14184,7 @@
       PPL=r; pplPaint();
     }).catch(function(e){ if(VIEW==='ppl') $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(/เชื่อมต่อเซิร์ฟเวอร์|ไม่ครบ|ไม่รับคำสั่ง/.test(e.message)?'เมนูนี้ต้องอัปเดตหลังบ้านก่อนค่ะ (ยังไม่ได้ deploy)':e.message)+'</div></div>'; });
   }
-  function pplCols(){ return PPL_COLS.filter(function(c){ return !c.k || pplOn(c.k); }); }
+  function pplCols(){ var hd=pplHasDoc(); return PPL_COLS.filter(function(c){ return (!c.k || pplOn(c.k)) && (!c.doc || hd); }); }
   function pplRows(){
     var q=PPL_Q.toLowerCase();
     return ((PPL&&PPL.rows)||[]).filter(function(x){
@@ -14200,7 +14203,7 @@
         '<td><b>'+esc(x.name||'')+'</b>'+(x.selfPending?' <span class="lvb lvb-wait" title="พนักงานแก้ข้อมูลเอง รอ HR ตรวจ">🙋 แก้เอง</span>':'')+'</td><td>'+esc(x.nick||'')+'</td><td>'+esc(x.dept||'')+'</td>'+
         (pplOn('branch')?'<td>'+esc(x.branch||'')+'</td>':'')+
         '<td>'+esc(x.position||'')+'</td><td>'+esc(x.empType||'')+'</td><td style="white-space:nowrap">'+esc(pplDate(x.start))+'</td>'+
-        '<td>'+pplStBadge(x.status)+'</td></tr>';
+        (pplHasDoc()?'<td>'+pplDocCell(x)+'</td>':'')+'<td>'+pplStBadge(x.status)+'</td></tr>';
     }).join('');
   }
   function pplPaint(){
@@ -14694,6 +14697,264 @@
       }).catch(function(e){ if(b) b.disabled=false; toast(e.message); });
   }
 
+  /* ── 📁 แฟ้มเอกสารพนักงาน (เฟส E1 · 5 ต.ค. 69 · PeopleDocs.gs) ──
+     การ์ดในหน้าข้อมูลรายคน · HR อัป/แก้/ซ่อนจากพนักงาน/ลบ · เปิดดูผ่าน backend (ไฟล์ไม่มีลิงก์สาธารณะ — ข้อมูลส่วนบุคคล) */
+  function pplDocExpBadge(x){
+    if(!x.expiry) return '<span style="color:#8A94A6">—</span>';
+    var d=esc(pplDate(x.expiry));
+    if(x.exp==='expired') return '<span class="lvb lvb-no">หมดแล้ว '+d+'</span>';
+    if(x.exp==='soon') return '<span class="lvb lvb-wait">ใกล้หมด '+d+'</span>';
+    return d;
+  }
+  function pplDocCard(doc){
+    doc=doc||{files:[],missing:[],types:[]};
+    var files=doc.files||[];
+    return '<div class="card"><div class="pb" style="padding:16px 18px">'+
+      '<div class="st-head"><div class="st-hx"><div class="rs-h">แฟ้มเอกสาร</div>'+
+        '<div class="rs-sub">'+files.length+' ไฟล์ · เก็บในโฟลเดอร์ "แฟ้มพนักงาน" ของบริษัท · ไม่มีลิงก์สาธารณะ</div></div>'+
+        '<button class="btn btn-primary" type="button" onclick="pplDocUp()">+ อัปเอกสาร</button></div>'+
+      ((doc.missing||[]).length?'<div class="m-err" style="margin-top:10px">ขาด: '+doc.missing.map(esc).join(' · ')+'</div>':'')+
+      '<div class="tax-tbl-wrap" style="margin-top:10px"><table class="tax-tbl dt-tbl"><colgroup><col style="width:5%"><col style="width:20%"><col><col style="width:12%"><col style="width:17%"><col style="width:11%"><col style="width:6%"></colgroup>'+
+        '<thead><tr><th>#</th><th>ประเภท</th><th>ชื่อเอกสาร</th><th>วันที่</th><th>หมดอายุ</th><th>พนักงานเห็น</th><th></th></tr></thead><tbody>'+
+        (files.length?files.map(function(x,i){
+          var q='&quot;'+esc(x.id)+'&quot;';
+          return '<tr><td>'+(i+1)+'</td><td>'+esc(x.typeName)+'</td>'+
+            '<td><button class="lnk" style="text-align:left" onclick="pplDocOpen('+q+')">'+esc(x.name)+'</button>'+(x.note?'<div style="font-size:12px;color:#8A94A6">'+esc(x.note)+'</div>':'')+'</td>'+
+            '<td style="white-space:nowrap">'+(x.docDate?esc(pplDate(x.docDate)):'—')+'</td><td>'+pplDocExpBadge(x)+'</td>'+
+            '<td>'+(x.emp?'ใช่':'<span style="color:#8A94A6">ไม่</span>')+'</td>'+
+            dtActCell('pd-'+x.id,[
+              { key:'open', label:'🔍 เปิดดู', call:'pplDocOpen('+q+')' },
+              { key:'edit', label:'✏️ แก้ข้อมูล', call:'pplDocEditOpen('+q+')' },
+              { key:'emp', label:(x.emp?'🙈 ซ่อนจากพนักงาน':'👁️ ให้พนักงานเห็น'), call:'pplDocEmp('+q+','+(x.emp?0:1)+')' },
+              { sep:true },
+              { key:'del', label:'🗑️ ลบออกจากแฟ้ม', call:'pplDocDelAsk('+q+')', danger:true }])+'</tr>';
+        }).join(''):'<tr class="dt-empty"><td colspan="7">ยังไม่มีเอกสาร · กด + อัปเอกสาร</td></tr>')+
+      '</tbody></table></div>'+
+    '</div></div>';
+  }
+  function pplDocTypes(){ return ((PPL_ONE&&PPL_ONE.doc&&PPL_ONE.doc.types)||[]).filter(function(t){ return !t.sys; }); }
+  function pplDocFind(id){ return (((PPL_ONE&&PPL_ONE.doc)||{}).files||[]).filter(function(x){ return x.id===id; })[0]; }
+  function pplDocTypeOpts(sel){
+    return '<option value="">— เลือกประเภท —</option>'+pplDocTypes().map(function(t){
+      return '<option value="'+esc(t.code)+'"'+(t.code===sel?' selected':'')+'>'+esc(t.name)+(t.must?' (ต้องมี)':'')+'</option>'; }).join('');
+  }
+  /** ประเภทเปลี่ยน → โชว์/ซ่อนช่องวันหมดอายุ + ค่าเริ่มต้น "พนักงานเห็น" */
+  function pplDocTypeChg(setEmp){
+    var c=($('pdType')||{}).value||'', t=pplDocTypes().filter(function(x){ return x.code===c; })[0];
+    var w=$('pdExpWrap'); if(w) w.hidden=!(t&&t.exp);
+    if(setEmp && t && $('pdEmp')) $('pdEmp').checked=!!t.emp;
+  }
+  function pplDocUp(){
+    modal('<h3>อัปเอกสาร</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="fld"><label>ประเภทเอกสาร <b style="color:#dc2626">*</b></label><select id="pdType" onchange="pplDocTypeChg(1)">'+pplDocTypeOpts('')+'</select></div>'+
+      imgsFldHtml('pplDocFiles','ไฟล์ — PDF / JPG / PNG ไฟล์ละไม่เกิน 10 MB (เลือกหลายไฟล์ = เก็บแยกไฟล์ละรายการ)')+
+      '<div class="fld"><label>ชื่อเอกสาร <span class="lbl-note">(ไม่ใส่ = ใช้ชื่อไฟล์)</span></label><input id="pdName" placeholder="เช่น สัญญาจ้างงานฉบับต่อสัญญา 2569"></div>'+
+      '<div style="display:flex;gap:12px;flex-wrap:wrap"><div class="fld" style="flex:1;min-width:150px"><label>วันที่เอกสาร</label><input id="pdDate" type="date"></div>'+
+        '<div class="fld" style="flex:1;min-width:150px" id="pdExpWrap" hidden><label>วันหมดอายุ</label><input id="pdExp" type="date"></div></div>'+
+      '<div class="fld"><label class="us-perm-it" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="pdEmp"> ให้พนักงานเห็นไฟล์นี้</label></div>'+
+      '<div class="fld"><label>หมายเหตุ</label><input id="pdNote"></div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" id="pdGo" onclick="pplDocUpGo()">อัปโหลด</button></div>');
+    imgsFldBind('pplDocFiles'); IMGS_SEP['pplDocFiles']=true;
+  }
+  function pplDocUpGo(){
+    var type=($('pdType')||{}).value||'', files=IMGS['pplDocFiles']||[];
+    if(!type){ mErr('เลือกประเภทเอกสารก่อนค่ะ'); return; }
+    if(!files.length){ mErr('ยังไม่ได้เลือกไฟล์ค่ะ'); return; }
+    var big=files.filter(function(d){ return d.length*0.75>10*1024*1024; });
+    if(big.length){ mErr('มีไฟล์ใหญ่เกิน 10 MB '+big.length+' ไฟล์'); return; }
+    var b=$('pdGo'); if(b) b.disabled=true;
+    var p={ action:'waPplDocUpload', uid:UID, code:PPL_CODE, type:type, files:JSON.stringify(files),
+      names:JSON.stringify(IMGS_NAMES['pplDocFiles']||[]), name:($('pdName')||{}).value||'', docDate:($('pdDate')||{}).value||'',
+      expiry:($('pdExp')||{}).value||'', emp:($('pdEmp')&&$('pdEmp').checked)?'1':'0', note:($('pdNote')||{}).value||'' };
+    callBusy('กำลังอัปโหลด '+files.length+' ไฟล์…', jsonpPost(withRoom_(p)), 'อัปโหลดแล้ว')
+      .then(function(r){
+        if(!r||!r.ok){ if(b) b.disabled=false; mErr((r&&r.error)||'อัปโหลดไม่สำเร็จ'); return; }
+        IMGS['pplDocFiles']=[]; closeModal();
+        if(PPL_ONE) PPL_ONE.doc=r.doc; pplOnePaint();
+        if(r.fail&&r.fail.length) setTimeout(function(){ toast('บางไฟล์ไม่สำเร็จ: '+r.fail.join(' · ')); }, 1700);
+      }).catch(function(e){ if(b) b.disabled=false; mErr(e.message); });
+  }
+  function pplDocEditOpen(id){
+    var x=pplDocFind(id); if(!x) return;
+    modal('<h3>แก้ข้อมูลเอกสาร</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="fld"><label>ประเภทเอกสาร</label><select id="pdType" onchange="pplDocTypeChg(0)">'+pplDocTypeOpts(x.type)+'</select></div>'+
+      '<div class="fld"><label>ชื่อเอกสาร</label><input id="pdName" value="'+esc(x.name)+'"></div>'+
+      '<div style="display:flex;gap:12px;flex-wrap:wrap"><div class="fld" style="flex:1;min-width:150px"><label>วันที่เอกสาร</label><input id="pdDate" type="date" value="'+esc(x.docDate||'')+'"></div>'+
+        '<div class="fld" style="flex:1;min-width:150px" id="pdExpWrap" hidden><label>วันหมดอายุ</label><input id="pdExp" type="date" value="'+esc(x.expiry||'')+'"></div></div>'+
+      '<div class="fld"><label class="us-perm-it" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="pdEmp"'+(x.emp?' checked':'')+'> ให้พนักงานเห็นไฟล์นี้</label></div>'+
+      '<div class="fld"><label>หมายเหตุ</label><input id="pdNote" value="'+esc(x.note||'')+'"></div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" id="pdGo" onclick="pplDocEditGo(&quot;'+esc(id)+'&quot;)">บันทึก</button></div>');
+    pplDocTypeChg(0);
+  }
+  function pplDocEditGo(id){
+    var d={ type:($('pdType')||{}).value||'', name:($('pdName')||{}).value||'', docDate:($('pdDate')||{}).value||'',
+      expiry:($('pdExp')||{}).value||'', emp:($('pdEmp')&&$('pdEmp').checked)?'1':'0', note:($('pdNote')||{}).value||'' };
+    if(!d.type){ mErr('เลือกประเภทเอกสารก่อนค่ะ'); return; }
+    var b=$('pdGo'); if(b) b.disabled=true;
+    pplDocCall({ action:'waPplDocEdit', id:id, data:JSON.stringify(d) }, 'บันทึกแล้ว', b);
+  }
+  function pplDocEmp(id, on){ pplDocCall({ action:'waPplDocEdit', id:id, data:JSON.stringify({ emp:on?'1':'0' }) }, on?'ให้พนักงานเห็นแล้ว':'ซ่อนจากพนักงานแล้ว'); }
+  function pplDocDelAsk(id){
+    var x=pplDocFind(id); if(!x) return;
+    modal('<h3>ลบเอกสารออกจากแฟ้ม?</h3><div class="m-hint" style="margin-top:0">'+esc(x.typeName)+' · '+esc(x.name)+'<br>ไฟล์ยังเก็บอยู่ใน Drive ของบริษัท แค่ไม่แสดงในแฟ้มแล้ว</div><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'+
+      '<button class="btn btn-primary" style="background:#B42318" id="pdGo" onclick="pplDocCall({action:&quot;waPplDocDel&quot;,id:&quot;'+esc(id)+'&quot;},&quot;ลบแล้ว&quot;,this)">ลบออกจากแฟ้ม</button></div>');
+  }
+  function pplDocCall(params, okMsg, btn){
+    params.uid=UID; params.code=PPL_CODE;
+    callBusy('กำลังบันทึก…', jsonpPost(withRoom_(params)), okMsg)
+      .then(function(r){
+        if(!r||!r.ok){ if(btn) btn.disabled=false; if($('mErr')) mErr((r&&r.error)||'ไม่สำเร็จ'); else toast((r&&r.error)||'ไม่สำเร็จ'); return; }
+        closeModal(); if(PPL_ONE) PPL_ONE.doc=r.doc; pplOnePaint();
+      }).catch(function(e){ if(btn) btn.disabled=false; if($('mErr')) mErr(e.message); else toast(e.message); });
+  }
+  /** เปิดดูไฟล์ — ขอตัวไฟล์จาก backend แล้วโชว์ในหน้าต่าง (ไม่มีลิงก์ Drive สาธารณะ) */
+  var PPL_DOC_URL='';
+  function pplDocOpen(id){
+    var x=pplDocFind(id);
+    callBusy('กำลังเปิดไฟล์…', jsonpPost(withRoom_({ action:'waPplDocOpen', uid:UID, code:PPL_CODE, id:id }), 0, 120000), 'เปิดแล้ว')
+      .then(function(r){
+        if(!r||!r.ok){ toast((r&&r.error)||'เปิดไฟล์ไม่ได้'); return; }
+        var bin=atob(r.data), arr=new Uint8Array(bin.length);
+        for(var i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+        if(PPL_DOC_URL){ try{ URL.revokeObjectURL(PPL_DOC_URL); }catch(e){} }
+        PPL_DOC_URL=URL.createObjectURL(new Blob([arr],{type:r.mime}));
+        var isImg=/^image\//.test(r.mime);
+        setTimeout(function(){
+          modal('<h3>'+esc((x&&x.typeName)||'เอกสาร')+' · '+esc((x&&x.name)||r.name)+'</h3>'+
+            (isImg?'<img src="'+PPL_DOC_URL+'" alt="" style="max-width:100%;border-radius:8px;border:1px solid var(--line)">'
+                  :'<iframe src="'+PPL_DOC_URL+'" title="เอกสาร" style="width:100%;height:65vh;border:1px solid var(--line);border-radius:8px"></iframe>')+
+            '<div class="m-act"><a class="btn btn-ghost" href="'+PPL_DOC_URL+'" download="'+esc(r.name)+'">ดาวน์โหลด</a>'+
+            '<button class="btn btn-primary" onclick="closeModal()">ปิด</button></div>');
+        }, 300);
+      }).catch(function(e){ toast(e.message); });
+  }
+
+  /* ── 📁 เอกสารพนักงาน · ภาพรวมทั้งห้อง (เฟส E2 · 5 ต.ค. 69) ── แท็บ ขาดเอกสาร / ใกล้หมดอายุ-หมดแล้ว
+     กระดิ่ง 📁 กดมาที่นี่ (แท็บใกล้หมดอายุ) · กดแถว = หน้าข้อมูลรายคน */
+  var PPLDOCS=null, PPLDOCS_TAB='missing';
+  function pplDocCell(x){
+    var d=x.doc;
+    if(!d || (x.status||'ทำงาน')==='ลาออก') return '<span style="color:#8A94A6">—</span>';
+    var out=[];
+    if(d.miss) out.push('<span class="lvb lvb-no">ขาด '+d.miss+'</span>');
+    if(d.expired) out.push('<span class="lvb lvb-no">หมดอายุ '+d.expired+'</span>');
+    if(d.soon) out.push('<span class="lvb lvb-wait">ใกล้หมด '+d.soon+'</span>');
+    return out.length?out.join(' '):'<span class="lvb lvb-ok">ครบ</span>';
+  }
+  function pplHasDoc(){ return ((PPL&&PPL.rows)||[]).some(function(x){ return !!x.doc; }); }
+  function renderPplDocs(){
+    skel();
+    jsonp(withRoom_({action:'waPplDocOverview',uid:UID})).then(function(r){
+      if(VIEW!=='ppldocs') return;
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      PPLDOCS=r;
+      pplDocsPaint();
+    }).catch(function(e){ if(VIEW==='ppldocs') $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(/เชื่อมต่อเซิร์ฟเวอร์|ไม่ครบ|ไม่รับคำสั่ง/.test(e.message)?'เมนูนี้ต้องอัปเดตหลังบ้านก่อนค่ะ (ยังไม่ได้ deploy)':e.message)+'</div></div>'; });
+  }
+  function pplDocsTab(t){ PPLDOCS_TAB=t; pplDocsPaint(); }
+  function pplDocsPaint(){
+    var r=PPLDOCS||{missing:[],expiring:[],must:[]}, miss=r.missing||[], exp=r.expiring||[];
+    var tab=function(k,t,n){ return '<button class="kp-tab'+(PPLDOCS_TAB===k?' on':'')+'" onclick="pplDocsTab(&quot;'+k+'&quot;)">'+t+' <b>'+n+'</b></button>'; };
+    var body;
+    if(PPLDOCS_TAB==='missing'){
+      body='<colgroup><col style="width:5%"><col style="width:11%"><col style="width:24%"><col style="width:15%"><col></colgroup>'+
+        '<thead><tr><th>#</th><th>รหัส</th><th>ชื่อ-นามสกุล</th><th>แผนก</th><th>ขาดเอกสาร</th></tr></thead><tbody>'+
+        (miss.length?miss.map(function(x,i){
+          return '<tr style="cursor:pointer" onclick="pplOpen(&quot;'+esc(x.code)+'&quot;)"><td>'+(i+1)+'</td><td style="white-space:nowrap">'+esc(x.code)+'</td>'+
+            '<td><b>'+esc(x.name)+'</b></td><td>'+esc(x.dept||'')+'</td><td>'+x.miss.map(function(m){ return '<span class="lvb lvb-no" style="margin:0 4px 4px 0;display:inline-block">'+esc(m)+'</span>'; }).join('')+'</td></tr>';
+        }).join(''):'<tr class="dt-empty"><td colspan="5">'+(r.active?'ทุกคนมีเอกสารที่ต้องมีครบแล้ว':'ยังไม่มีพนักงานในทะเบียน')+'</td></tr>');
+    } else {
+      body='<colgroup><col style="width:5%"><col style="width:11%"><col style="width:22%"><col style="width:20%"><col><col style="width:14%"><col style="width:12%"></colgroup>'+
+        '<thead><tr><th>#</th><th>รหัส</th><th>ชื่อ-นามสกุล</th><th>ประเภท</th><th>ชื่อเอกสาร</th><th>วันหมดอายุ</th><th>สถานะ</th></tr></thead><tbody>'+
+        (exp.length?exp.map(function(x,i){
+          return '<tr style="cursor:pointer" onclick="pplOpen(&quot;'+esc(x.code)+'&quot;)"><td>'+(i+1)+'</td><td style="white-space:nowrap">'+esc(x.code)+'</td>'+
+            '<td><b>'+esc(x.name)+'</b></td><td>'+esc(x.typeName)+'</td><td>'+esc(x.doc||'')+'</td><td style="white-space:nowrap">'+esc(pplDate(x.expiry))+'</td>'+
+            '<td>'+(x.state==='expired'?'<span class="lvb lvb-no">หมดแล้ว '+(-x.days)+' วัน</span>':'<span class="lvb lvb-wait">อีก '+x.days+' วัน</span>')+'</td></tr>';
+        }).join(''):'<tr class="dt-empty"><td colspan="7">ไม่มีเอกสารที่ใกล้หมดอายุใน 30 วัน</td></tr>');
+    }
+    $('main').innerHTML='<div class="lst-card"><div class="lst-head">'+
+      '<div class="t"><b>เอกสารพนักงาน</b><div>เอกสารที่ต้องมีทุกคน: '+((r.must||[]).length?(r.must.map(esc).join(' · ')):'ยังไม่ได้กำหนด')+' · กดแถวเพื่อไปแฟ้มของคนนั้น</div></div>'+
+      '<div class="lst-tools"><div class="kp-tabs">'+tab('missing','ขาดเอกสาร',miss.length)+tab('expiring','ใกล้หมดอายุ / หมดแล้ว',exp.length)+'</div>'+
+        '<button class="btn btn-ghost" type="button" onclick="switchView(&quot;ppldoctype&quot;)">⚙️ ตั้งค่าประเภทเอกสาร</button></div></div>'+
+      '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl">'+body+'</tbody></table></div></div>';
+  }
+
+  /* ── ⚙️ ตั้งค่าประเภทเอกสาร × บทบาท (เฟส E3 · 5 ต.ค. 69) ──
+     ปุ่มอยู่ในหน้า 📁 เอกสารพนักงาน (ไม่ซุกใน ⚙️ ตั้งค่าระบบ) · ล็อกไว้ก่อน ต้องกด "แก้ไข" (feedback-settings-edit-lock)
+     HR เห็นทุกไฟล์เสมอ (ปิดไม่ได้) · นักบัญชีเห็น = เข้าระบบเอกสารตามหมวดที่เลือก · พนักงานเห็น = ค่าเริ่มต้นตอนอัป (เปลี่ยนรายไฟล์ได้) */
+  var PDT=null, PDT_EDIT=false, PDT_ROWS=[];
+  function renderPplDocType(){
+    skel();
+    jsonp(withRoom_({action:'waPplDocTypes',uid:UID})).then(function(r){
+      if(VIEW!=='ppldoctype') return;
+      if(!r||!r.ok){ $('main').innerHTML='<div class="card"><div class="emptybox">'+esc((r&&r.error)||'โหลดไม่สำเร็จ')+'</div></div>'; return; }
+      PDT=r; PDT_EDIT=false; PDT_ROWS=r.types.map(function(t){ return JSON.parse(JSON.stringify(t)); }); pdtPaint();
+    }).catch(function(e){ if(VIEW==='ppldoctype') $('main').innerHTML='<div class="card"><div class="emptybox">'+esc(/เชื่อมต่อเซิร์ฟเวอร์|ไม่ครบ|ไม่รับคำสั่ง/.test(e.message)?'เมนูนี้ต้องอัปเดตหลังบ้านก่อนค่ะ (ยังไม่ได้ deploy)':e.message)+'</div></div>'; });
+  }
+  function pdtCk(i,k,dis){
+    var t=PDT_ROWS[i], on=!!t[k];
+    if(!PDT_EDIT||dis) return on?'<span style="color:var(--green,#168a52);font-weight:700">✓</span>':'<span style="color:#8A94A6">—</span>';
+    return '<input type="checkbox" id="pdt-'+k+'-'+i+'"'+(on?' checked':'')+' onchange="pdtSet('+i+',&quot;'+k+'&quot;,this.checked)">';
+  }
+  function pdtSet(i,k,v){ PDT_ROWS[i][k]=v; if(k==='acc'||k==='active') pdtPaint(); }
+  function pdtPaint(){
+    var cats=(PDT&&PDT.cats)||[], catName={}; cats.forEach(function(c){ catName[c.code]=c.name; });
+    var rows=PDT_ROWS.filter(function(t){ return !t.del; });
+    var body=PDT_ROWS.map(function(t,i){
+      if(t.del) return '';
+      var idx=rows.indexOf(t)+1;
+      var name=PDT_EDIT?'<input id="pdt-name-'+i+'" value="'+esc(t.name)+'" oninput="PDT_ROWS['+i+'].name=this.value" style="width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:8px;font:inherit;font-size:13px">'
+        :'<b>'+esc(t.name)+'</b>';
+      var kind=t.sys?'ระบบสร้าง':(t.kind==='เพิ่มเอง'?'เพิ่มเอง':'มาตรฐาน');
+      var cat=t.acc
+        ? (PDT_EDIT?'<select id="pdt-cat-'+i+'" onchange="PDT_ROWS['+i+'].accCat=this.value" style="font:inherit;font-size:13px;max-width:100%"><option value="">— เลือกหมวด —</option>'+
+            cats.map(function(c){ return '<option value="'+esc(c.code)+'"'+(c.code===t.accCat?' selected':'')+'>'+esc(c.name)+'</option>'; }).join('')+'</select>'
+          :esc(catName[t.accCat]||t.accCat||'—'))
+        : '<span style="color:#8A94A6">ไม่ส่ง</span>';
+      var act=PDT_EDIT
+        ? '<label style="display:flex;gap:6px;align-items:center;font-size:13px"><input type="checkbox"'+(t.active!==false?' checked':'')+' onchange="pdtSet('+i+',&quot;active&quot;,this.checked)"> ใช้งาน</label>'+
+          (t.kind==='เพิ่มเอง'&&!t.n?'<button class="lnk" style="color:#B42318;font-size:12px" onclick="pdtDel('+i+')">ลบ</button>':'')
+        : (t.active!==false?'<span class="lvb lvb-ok">ใช้งาน</span>':'<span class="lvb">ปิด</span>');
+      return '<tr'+(t.active===false?' style="opacity:.6"':'')+'><td>'+idx+'</td><td>'+name+'<div style="font-size:11.5px;color:#8A94A6">'+kind+(t.code?' · '+esc(t.code):'')+'</div></td>'+
+        '<td class="c">'+pdtCk(i,'must',t.sys)+'</td><td class="c">'+pdtCk(i,'exp',t.sys)+'</td>'+
+        '<td class="c"><span style="color:var(--green,#168a52);font-weight:700" title="HR เห็นทุกไฟล์เสมอ">✓</span></td>'+
+        '<td class="c">'+pdtCk(i,'emp')+'</td><td class="c">'+pdtCk(i,'acc')+'</td><td>'+cat+'</td><td>'+act+'</td>'+
+        '<td style="text-align:right">'+(t.n||0)+'</td></tr>';
+    }).join('');
+    $('main').innerHTML='<div class="bc"><button class="lnk" onclick="switchView(&quot;ppldocs&quot;)">เอกสารพนักงาน</button> › ตั้งค่าประเภทเอกสาร</div>'+
+      '<div class="lst-card"><div class="lst-head"><div class="t"><b>ตั้งค่าประเภทเอกสาร</b>'+
+        '<div>กำหนดว่าแต่ละประเภทต้องมีไหม มีวันหมดอายุไหม และใครเห็นได้บ้าง</div></div>'+
+        '<div class="lst-tools">'+(PDT_EDIT
+          ?'<button class="btn btn-ghost" type="button" onclick="renderPplDocType()">ยกเลิก</button><button class="btn btn-ghost" type="button" onclick="pdtAdd()">+ เพิ่มประเภท</button><button class="btn btn-primary" type="button" id="pdtGo" onclick="pdtSave()">บันทึก</button>'
+          :'<button class="btn btn-primary" type="button" onclick="PDT_EDIT=true;pdtPaint()">แก้ไข</button>')+'</div></div>'+
+      '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl" style="min-width:820px"><colgroup><col style="width:4%"><col style="width:22%"><col style="width:8%"><col style="width:8%"><col style="width:6%"><col style="width:9%"><col style="width:8%"><col style="width:16%"><col style="width:11%"><col style="width:7%"></colgroup>'+
+        '<thead><tr><th>#</th><th>ประเภท</th><th class="c">ต้องมีทุกคน</th><th class="c">มีวันหมดอายุ</th><th class="c">HR</th><th class="c">พนักงานเห็น</th><th class="c">นักบัญชีเห็น</th><th>หมวดในระบบเอกสาร</th><th>สถานะ</th><th style="text-align:right">ไฟล์</th></tr></thead>'+
+        '<tbody>'+(body||'<tr class="dt-empty"><td colspan="10">ยังไม่มีประเภทเอกสาร</td></tr>')+'</tbody></table></div>'+
+      '<div class="m-hint" style="margin-top:10px">• <b>HR</b> (ผู้ดูแลบริษัท) เห็นทุกไฟล์เสมอ<br>'+
+        '• <b>พนักงานเห็น</b> = ค่าเริ่มต้นตอนอัป · เปลี่ยนรายไฟล์ได้ในแฟ้มของคนนั้น · เปลี่ยนตรงนี้ไม่กระทบไฟล์ที่อัปไปแล้ว<br>'+
+        '• <b>นักบัญชีเห็น</b> = ไฟล์ประเภทนี้ (ทั้งเก่าและใหม่) ขึ้นในระบบเอกสารตามหมวดที่เลือก และเปิดด้วยลิงก์ได้แบบเอกสารอื่นในระบบเอกสาร · เอาติ๊กออก = ถอนออก ไฟล์กลับเป็นส่วนตัว<br>'+
+        '• ประเภทมาตรฐานลบไม่ได้ (ปิดได้) · ประเภทที่เพิ่มเองลบได้เมื่อยังไม่มีไฟล์ · ปิดประเภท = อัปเพิ่มไม่ได้ แต่ไฟล์เดิมยังอยู่</div></div>';
+  }
+  function pdtAdd(){ PDT_ROWS.push({ code:'', name:'', kind:'เพิ่มเอง', must:false, exp:false, emp:false, acc:false, accCat:'', active:true, n:0 }); pdtPaint();
+    var i=PDT_ROWS.length-1, el=$('pdt-name-'+i); if(el) el.focus(); }
+  function pdtDel(i){ if(PDT_ROWS[i].code) PDT_ROWS[i].del=true; else PDT_ROWS.splice(i,1); pdtPaint(); }
+  function pdtSave(){
+    var rows=PDT_ROWS.map(function(t){ return { code:t.code, name:String(t.name||'').trim(), must:!!t.must, exp:!!t.exp, emp:!!t.emp, acc:!!t.acc, accCat:t.accCat||'', active:t.active!==false, del:!!t.del }; });
+    var bad=rows.filter(function(t){ return !t.del && !t.name; });
+    if(bad.length){ toast('ใส่ชื่อประเภทให้ครบก่อนค่ะ'); return; }
+    var b=$('pdtGo'); if(b) b.disabled=true;
+    callBusy('กำลังบันทึก…', jsonpPost(withRoom_({ action:'waPplDocTypeSave', uid:UID, rows:JSON.stringify(rows) })), 'บันทึกแล้ว')
+      .then(function(r){
+        if(!r||!r.ok){ if(b) b.disabled=false; toast((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+        var s=r.sync||{};
+        if(s.added||s.removed) setTimeout(function(){ toast('ระบบเอกสาร: เพิ่ม '+(s.added||0)+' · ถอน '+(s.removed||0)+' ไฟล์'); }, 1700);
+        renderPplDocType();
+      }).catch(function(e){ if(b) b.disabled=false; toast(e.message); });
+  }
+
   /* ── หน้าข้อมูลรายคน ── */
   function renderPplOne(){
     skel();
@@ -14759,6 +15020,7 @@
       h+='<div id="mErr" class="m-err hidden"></div><div class="m-act"><button class="btn btn-ghost" type="button" onclick="switchView(&quot;ppl&quot;)">ยกเลิก</button>'+
         '<button class="btn btn-primary" type="button" id="pplNewGo" onclick="pplCreate()">บันทึกพนักงานใหม่</button></div>';
     } else {
+      h+=pplDocCard(r.doc);
       if(r.pvd) h+=pplPvdCard(r.pvd);
       h+=pplSelfCard(rec);
       var hist=r.hist||[];
@@ -15015,6 +15277,8 @@
   /* ชื่อไฟล์จริงคู่กับ IMGS (index ตรงกัน) — หน้าทะเบียนเอกสารต้องใช้ตั้งชื่อเอกสาร
      ⚠️ แยก array ไม่ยัดใน IMGS เพราะฟอร์มอื่น (ใบเบิก/สลิป) ใช้ IMGS ร่วมกันอยู่ */
   var IMGS_NAMES={};
+  /* ช่องที่เก็บไฟล์แยกกัน ไม่รวมเป็น PDF (แฟ้มเอกสารพนักงาน) — ข้อความใต้ช่องต้องไม่บอกว่าจะรวม */
+  var IMGS_SEP={};
   function imgsFldHtml(id,label){
     return '<div class="fld"><label>'+esc(label)+'</label>'+
       '<input id="'+id+'" type="file" accept="image/*,application/pdf" multiple style="font-family:inherit;font-size:14px">'+
@@ -15048,7 +15312,7 @@
     var lb=$(id+'List'); if(!lb) return;
     var arr=IMGS[id]||[];
     if(!arr.length){ lb.textContent='ยังไม่ได้แนบไฟล์ (รูป หรือ PDF)'; return; }
-    lb.innerHTML='✅ แนบแล้ว '+arr.length+' รายการ'+(arr.length>1?' · จะรวมเป็น PDF ใบเดียวให้':'')+'<br>'+
+    lb.innerHTML='✅ แนบแล้ว '+arr.length+' รายการ'+(arr.length>1&&!IMGS_SEP[id]?' · จะรวมเป็น PDF ใบเดียวให้':'')+'<br>'+
       arr.map(function(d,i){
         var isPdf=String(d).indexOf('data:application/pdf')===0;
         var thumb=isPdf
@@ -27826,6 +28090,26 @@ function kpImpDraw(){
       if(!bg) paintDocs(r);   // bg = รีเฟรชแคชเงียบ ไม่ทับฟอร์มขอเอกสาร
     }).catch(function(e){ if(!bg) $('main').innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>'; });
   }
+  /** เปิดไฟล์ในแฟ้มของฉัน — ไฟล์ไม่มีลิงก์สาธารณะ ขอตัวไฟล์จากหลังบ้าน (ตรวจว่าเป็นของเราและ HR เปิดให้เห็น) */
+  var MY_FILE_URL='';
+  function myFileOpen(id){
+    var d=(((DOCCACHE&&DOCCACHE.data)||{}).hrDocs||[]).filter(function(x){ return x.id===id; })[0]||{};
+    callBusy('กำลังเปิดไฟล์…', jsonpPost(withRoom_({ action:'waMyFileOpen', uid:UID, id:id }), 0, 120000), 'เปิดแล้ว')
+      .then(function(r){
+        if(!r||!r.ok){ toast((r&&r.error)||'เปิดไฟล์ไม่ได้'); return; }
+        var bin=atob(r.data), arr=new Uint8Array(bin.length);
+        for(var i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+        if(MY_FILE_URL){ try{ URL.revokeObjectURL(MY_FILE_URL); }catch(e){} }
+        MY_FILE_URL=URL.createObjectURL(new Blob([arr],{type:r.mime}));
+        setTimeout(function(){
+          modal('<h3>'+esc((d.typeName||'เอกสาร')+(d.name?' · '+d.name:''))+'</h3>'+
+            (/^image\//.test(r.mime)?'<img src="'+MY_FILE_URL+'" alt="" style="max-width:100%;border-radius:8px;border:1px solid var(--line)">'
+              :'<iframe src="'+MY_FILE_URL+'" title="เอกสาร" style="width:100%;height:65vh;border:1px solid var(--line);border-radius:8px"></iframe>')+
+            '<div class="m-act"><a class="btn btn-ghost" href="'+MY_FILE_URL+'" download="'+esc(r.name)+'">ดาวน์โหลด</a>'+
+            '<button class="btn btn-primary" onclick="closeModal()">ปิด</button></div>');
+        }, 300);
+      }).catch(function(e){ toast(e.message); });
+  }
   function paintDocs(r){
     var html='';
     // สลิปเงินเดือน
@@ -27842,6 +28126,14 @@ function kpImpDraw(){
             '<span class="di-main"><b>'+esc(d.title)+'</b>'+(d.at?'<small>'+esc(d.at)+'</small>':'')+'</span>'+
             '<span class="di-go">›</span></a>'; }).join('')+'</div>'
       : '<div class="card"><div class="emptybox">ยังไม่มีเอกสารในคลัง 🙏</div></div>';
+    /* 🗂️ แฟ้มเอกสารพนักงาน (PeopleDocs.gs E4 · 5 ต.ค. 69) — เฉพาะไฟล์ที่ HR เปิดให้เห็น · ไม่มี = ไม่โชว์หัวข้อ */
+    if((r.hrDocs||[]).length){
+      html+='<div class="section-h">🗂️ แฟ้มเอกสารพนักงานของฉัน</div>';
+      html+='<div class="card" style="padding:6px 12px">'+r.hrDocs.map(function(d){
+        return '<button type="button" class="doc-item" style="width:100%;background:none;border:0;text-align:left;font:inherit;cursor:pointer" onclick="myFileOpen(&quot;'+esc(d.id)+'&quot;)"><span class="di-ic">📄</span>'+
+          '<span class="di-main"><b>'+esc(d.typeName)+' · '+esc(d.name)+'</b>'+(d.expiry?'<small>หมดอายุ '+esc(pplDate(d.expiry))+(d.exp==='expired'?' · หมดแล้ว':(d.exp==='soon'?' · ใกล้หมด':''))+'</small>':'')+'</span>'+
+          '<span class="di-go">›</span></button>'; }).join('')+'</div>';
+    }
     // ขอเอกสารใหม่ (ฟอร์ม)
     html+='<div class="section-h">📝 ขอเอกสารใหม่</div>';
     html+='<div class="card"><div id="rqErr" class="edit-banner hidden" style="background:#fbe7e7;color:#c0392b"></div>'+
@@ -28659,7 +28951,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20261005-0607';
+  var APP_BUILD='20261005-0741';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
