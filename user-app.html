@@ -16,9 +16,9 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20261006-2114">
+<link rel="stylesheet" href="user.css?v=20261006-2143">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<script src="yd-auth.js?v=20261006-2114"></script>
+<script src="yd-auth.js?v=20261006-2143"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
   .date-row{ display:flex; flex-direction:column; gap:14px; margin:4px 0 12px; } .date-row > div{ min-width:0; }
@@ -4898,6 +4898,7 @@
      __roomjoin = 🙋 พนักงานขอเข้าห้อง → ⚙️ ตั้งค่าห้อง ▸ ตั้งค่าผู้ใช้งาน ▸ เชิญพนักงาน */
   function bellGo_(v){
     if(v==='__news'){ bellNews_(); return; }
+    if(v==='__ppldraft'){ PPLDOCS_TAB='drafts'; switchView('ppldocs'); return; }   // ✍️ ร่างเอกสารค้างไม่เซ็น (แม่แบบ T4)
     if(v==='ppldocs') PPLDOCS_TAB='expiring';   // 📁 กระดิ่งเอกสารใกล้หมดอายุ → เปิดแท็บนั้นเลย
     if(v==='__roomjoin'){
       try{ ST_TAB='user'; ST_SUB='join'; ST_SUBS['user']='join';
@@ -10487,9 +10488,26 @@
 
   /** คำสั่งในเมนู ⋮ ของแถว — ฟังก์ชันบริสุทธิ์ (ของจริงกับเทสเรียกตัวเดียวกัน · §7.13)
       เงื่อนไขต้องตรงกับด่าน backend: ไฟล์ของระบบแก้ข้อมูลไม่ได้ · ใบที่ผูกเล่มแล้วลบไม่ได้ */
+  /** เปิดเอกสารบุคคลหมวดเฉพาะเจ้าของ (T3c) — ไฟล์ไม่มีลิงก์แชร์ ขอผ่านหลังบ้านแฟ้มพนักงาน (เจ้าของห้องเท่านั้น) */
+  var DOC_PRIV_URL='';
+  function docPrivOpen(id){
+    callBusy('กำลังเปิดเอกสาร…', jsonpPost(withRoom_({ action:'waPplDocOpen', uid:UID, id:id }), 0, 120000), 'เปิดแล้ว')
+      .then(function(r){
+        if(!r||!r.ok){ toast((r&&r.error)||'เปิดไม่ได้'); return; }
+        var bin=atob(r.data), arr=new Uint8Array(bin.length);
+        for(var i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+        if(DOC_PRIV_URL){ try{ URL.revokeObjectURL(DOC_PRIV_URL); }catch(e){} }
+        DOC_PRIV_URL=URL.createObjectURL(new Blob([arr],{type:r.mime}));
+        setTimeout(function(){
+          modal('<h3>🔒 '+esc(r.name||'เอกสาร')+'</h3>'+(/^image\//.test(r.mime)?'<img class="doc-view-img" src="'+DOC_PRIV_URL+'" alt="">':'<iframe class="doc-view" src="'+DOC_PRIV_URL+'" title="เอกสาร"></iframe>')+
+            '<div class="m-act"><a class="btn btn-ghost" href="'+DOC_PRIV_URL+'" download="'+esc(r.name||'เอกสาร')+'">ดาวน์โหลด</a><button class="btn btn-primary" onclick="closeModal()">ปิด</button></div>');
+        }, 300);
+      }).catch(function(e){ toast(e.message); });
+  }
   function docRowActions(x, isOwner){
     var a=[], q="'"+String(x.no).replace(/'/g,"\\'")+"'";
     if(x.url) a.push({ key:'open', label:'🔍 เปิดไฟล์', href:x.url });
+    else if(x.priv && x.linkKind==='hrdoc' && x.linkNo) a.push({ key:'open', label:'🔍 เปิดไฟล์', call:'docPrivOpen('+"'"+String(x.linkNo).replace(/'/g,"\\'")+"'"+')' });   // หมวดเฉพาะเจ้าของ = เปิดผ่านหลังบ้าน (T3c)
     a.push({ key:'cat', label:'🏷️ เปลี่ยนหมวด', call:'drPickCat('+q+')' });
     // ไฟล์ที่ระบบออกเอง = ข้อมูลเป็นของเล่มนั้น แก้ที่นี่แล้วจะไม่ตรงกับต้นทาง (กฎเหล็กข้อ 1)
     if(!x.isSystem) a.push({ key:'edit', label:'✏️ แก้ข้อมูลบนใบ', call:'drEditForm('+q+')' });
@@ -10713,7 +10731,7 @@
                 '<td class="dt-amt">'+(x.amount?money(x.amount):'—')+'</td>'
             )+
             '<td class="dt-nw" style="font-size:12px;color:#8A94A6">'+esc(x.addedAt||'')+'</td>'+
-            '<td style="text-align:center">'+(x.url?'<a class="ex-lk" href="'+esc(x.url)+'" target="_blank">เปิดเอกสาร</a>':'')+'</td>'+
+            '<td style="text-align:center">'+(x.url?'<a class="ex-lk" href="'+esc(x.url)+'" target="_blank">เปิดเอกสาร</a>':(x.priv&&x.linkNo?'<button type="button" class="lnk" onclick="docPrivOpen(&quot;'+esc(x.linkNo)+'&quot;)">🔒 เปิดเอกสาร</button>':''))+'</td>'+
             dtActCell('dr_'+x.no, docRowActions(x, own))+
             '</tr>';
         }).join('')+'</tbody></table></div>';
@@ -11499,7 +11517,7 @@
             '<td class="dt-amt">'+(base?money(base):'—')+'</td>'+
             '<td class="dt-amt">'+(x.vat?money(x.vat):'—')+'</td>'+
             '<td class="dt-amt">'+(x.amount?money(x.amount):'—')+'</td>'+
-            '<td style="text-align:center">'+(x.url?'<a class="ex-lk" href="'+esc(x.url)+'" target="_blank">เปิด</a>':'')+'</td></tr>';
+            '<td style="text-align:center">'+(x.url?'<a class="ex-lk" href="'+esc(x.url)+'" target="_blank">เปิด</a>':(x.priv&&x.linkNo?'<button type="button" class="lnk" onclick="docPrivOpen(&quot;'+esc(x.linkNo)+'&quot;)">🔒 เปิด</button>':''))+'</td></tr>';
         }).join('')+
         '<tr><td colspan="4"><b>รวม '+esc(g.name)+'</b></td>'+
         '<td class="dt-amt"><b>'+money(g.base||0)+'</b></td>'+
@@ -14913,7 +14931,7 @@
   }
   function pplDocsTab(t){ PPLDOCS_TAB=t; pplDocsPaint(); }
   function pplDocsPaint(){
-    var r=PPLDOCS||{people:[],missing:[],expiring:[],must:[]}, miss=r.missing||[], exp=r.expiring||[], ppl=r.people||[];
+    var r=PPLDOCS||{people:[],missing:[],expiring:[],must:[]}, miss=r.missing||[], exp=r.expiring||[], ppl=r.people||[], drf=r.drafts||[];
     var tab=function(k,t,n){ return '<button class="kp-tab'+(PPLDOCS_TAB===k?' on':'')+'" onclick="pplDocsTab(&quot;'+k+'&quot;)">'+t+' <b>'+n+'</b></button>'; };
     var body;
     if(PPLDOCS_TAB==='all'){
@@ -14931,6 +14949,13 @@
           return '<tr style="cursor:pointer" onclick="pplDocPerson(&quot;'+esc(x.code)+'&quot;)"><td>'+(i+1)+'</td><td style="white-space:nowrap">'+esc(x.code)+'</td>'+
             '<td><b>'+esc(x.name)+'</b></td><td>'+esc(x.dept||'')+'</td><td>'+x.miss.map(function(m){ return '<span class="lvb lvb-no" style="margin:0 4px 4px 0;display:inline-block">'+esc(m)+'</span>'; }).join('')+'</td></tr>';
         }).join(''):'<tr class="dt-empty"><td colspan="5">'+(r.active?'ทุกคนมีเอกสารที่ต้องมีครบแล้ว':'ยังไม่มีพนักงานในทะเบียน')+'</td></tr>');
+    } else if(PPLDOCS_TAB==='drafts'){   /* ✍️ ร่างจากแม่แบบที่ยังไม่เซ็น (T4) */
+      body='<colgroup><col style="width:5%"><col style="width:11%"><col style="width:22%"><col><col style="width:16%"></colgroup>'+
+        '<thead><tr><th>#</th><th>รหัส</th><th>ชื่อ-นามสกุล</th><th>เอกสาร (ร่าง)</th><th>ค้างมา</th></tr></thead><tbody>'+
+        (drf.length?drf.map(function(x,i){
+          return '<tr style="cursor:pointer" onclick="pplDocPerson(&quot;'+esc(x.code)+'&quot;)"><td>'+(i+1)+'</td><td style="white-space:nowrap">'+esc(x.code)+'</td>'+
+            '<td><b>'+esc(x.person)+'</b></td><td>'+esc(x.name)+'</td><td>'+(x.days>=(r.draftDays||7)?'<span class="lvb lvb-no">'+x.days+' วัน</span>':'<span class="lvb lvb-wait">'+x.days+' วัน</span>')+'</td></tr>';
+        }).join(''):'<tr class="dt-empty"><td colspan="5">ไม่มีร่างค้าง · ร่างที่สร้างจากแม่แบบจะขึ้นที่นี่จนกว่าจะแนบฉบับเซ็นหรือยกเลิก</td></tr>');
     } else {
       body='<colgroup><col style="width:5%"><col style="width:11%"><col style="width:22%"><col style="width:20%"><col><col style="width:14%"><col style="width:12%"></colgroup>'+
         '<thead><tr><th>#</th><th>รหัส</th><th>ชื่อ-นามสกุล</th><th>ประเภท</th><th>ชื่อเอกสาร</th><th>วันหมดอายุ</th><th>สถานะ</th></tr></thead><tbody>'+
@@ -14942,7 +14967,7 @@
     }
     $('main').innerHTML=pplRegTabs('ppldocs')+'<div class="lst-card"><div class="lst-head">'+
       '<div class="t"><b>เอกสารพนักงาน</b><div>เอกสารที่ต้องมีทุกคน: '+((r.must||[]).length?(r.must.map(esc).join(' · ')):'ยังไม่ได้กำหนด')+' · กดแถวเพื่อเปิดแฟ้มเอกสารของคนนั้น</div></div>'+
-      '<div class="lst-tools"><div class="kp-tabs">'+tab('all','ทุกคน',ppl.length)+tab('missing','ขาดเอกสาร',miss.length)+tab('expiring','ใกล้หมดอายุ / หมดแล้ว',exp.length)+'</div>'+
+      '<div class="lst-tools"><div class="kp-tabs">'+tab('all','ทุกคน',ppl.length)+tab('missing','ขาดเอกสาร',miss.length)+tab('expiring','ใกล้หมดอายุ / หมดแล้ว',exp.length)+tab('drafts','✍️ ร่างรอเซ็น',drf.length)+'</div>'+
         '<button class="btn btn-ghost" type="button" onclick="pplSlipBf()">💵 ดึงสลิปเก่าเข้าแฟ้ม</button>'+
         '<button class="btn btn-ghost" type="button" onclick="switchView(&quot;ppldoctype&quot;)">⚙️ ตั้งค่าประเภทเอกสาร</button></div></div>'+
       '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl">'+body+'</tbody></table></div></div>';
@@ -30002,7 +30027,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20261006-2114';
+  var APP_BUILD='20261006-2143';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
