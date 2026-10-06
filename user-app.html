@@ -16,9 +16,9 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20261005-1829">
+<link rel="stylesheet" href="user.css?v=20261006-1054">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<script src="yd-auth.js?v=20261005-1829"></script>
+<script src="yd-auth.js?v=20261006-1054"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
   .date-row{ display:flex; flex-direction:column; gap:14px; margin:4px 0 12px; } .date-row > div{ min-width:0; }
@@ -15475,7 +15475,7 @@
   /* ── 📚 คลังแม่แบบเอกสาร HR · T1 (5 ต.ค. 69 · PeopleTemplates.gs) ──
      ห้อง Moodata = คลังกลาง (นำเข้า/แก้/เปิดให้ห้องลูกค้า) · ห้องลูกค้าเห็นเฉพาะใบที่เปิดให้ · เปิดดูเป็น PDF ผ่านหลังบ้าน */
   var PTPL=null, PTPL_CAT=null, PTPL_Q='', PTPL_SEL={};   // PTPL_CAT '' = ทั้งหมด · null = ยังไม่เลือก (เปิดหมวดแรกที่มีแม่แบบ)
-  var PTPL_KIND={ doc:'เอกสาร', sheet:'ชีต', slide:'สไลด์', file:'ไฟล์' };
+  var PTPL_KIND={ doc:'เอกสาร', sheet:'ชีต', slide:'สไลด์', file:'ไฟล์', pdf:'PDF', image:'รูป', word:'Word', excel:'Excel' };
   function renderPplTpl(){
     skel();
     jsonp(withRoom_({action:'waPplTpl',uid:UID})).then(function(r){
@@ -15499,53 +15499,122 @@
   function ptplPaint(){
     var r=PTPL, home=r.home, rows=ptplRows(), nSel=Object.keys(PTPL_SEL).length;
     var cnt={}; r.rows.forEach(function(x){ cnt[x.cat]=(cnt[x.cat]||0)+1; });
+    var empOn={}; (r.emp||[]).forEach(function(k){ empOn[k]=1; });
     /* กลุ่มในกล่องเลือก = ใช้ทำอะไร (สร้างเอกสารรายคน · ให้พนักงานอ่าน · อ้างอิง) */
     var grp=[['สร้างเอกสารรายคน',function(c){ return c.make; }],['ให้พนักงานอ่าน',function(c){ return c.emp; }],['อ้างอิง',function(c){ return !c.make&&!c.emp; }]];
     var catSel='<select id="ptplCat" title="หมวดแม่แบบ" onchange="PTPL_CAT=this.value;PTPL_Q=&quot;&quot;;PTPL_SEL={};ptplPaint()"><option value=""'+(PTPL_CAT===''?' selected':'')+'>ทุกหมวด ('+r.rows.length+')</option>'+
       grp.map(function(g){ return '<optgroup label="'+g[0]+'">'+r.cats.filter(g[1]).map(function(c){ return '<option value="'+c.k+'"'+(PTPL_CAT===c.k?' selected':'')+'>'+esc(c.n)+' ('+(cnt[c.k]||0)+')</option>'; }).join('')+'</optgroup>'; }).join('')+'</select>';
     var curName=PTPL_Q?'ผลค้นหา':(PTPL_CAT?ptplCatName(PTPL_CAT):'ทุกหมวด');
-    var cols=home?8:6;
+    var cols=home?9:8;
+    var empNote=PTPL_CAT&&!PTPL_Q?'<div class="m-hint" style="margin:0 0 10px">'+(empOn[PTPL_CAT]?'👥 หมวดนี้ <b>พนักงานเห็น</b> ในหน้า 📄 เอกสาร ▸ เอกสารบริษัท':'🔒 หมวดนี้พนักงานไม่เห็น (เฉพาะผู้ดูแล)')+' · <button class="lnk" type="button" onclick="ptplEmpForm()">เปลี่ยน</button></div>':'';
     var h='<div class="lst-card"><div class="lst-head"><div class="t"><b>แม่แบบเอกสาร <span style="color:#8A94A6;font-weight:600;font-size:13px">'+esc(curName)+' '+rows.length+' ใบ · คลังมีทั้งหมด '+r.rows.length+' ใบ</span></b>'+
-        '<div>'+(home?'คลังกลางของ Moodata · ติ๊ก "ลูกค้าเห็น" เพื่อเปิดให้ห้องลูกค้าใช้ · ไฟล์ต้นฉบับไม่ถูกแก้':'แม่แบบมาตรฐานจาก Moodata · กดที่แถวเพื่อเปิดดู')+'</div></div>'+
+        '<div>'+(home?'คลังกลางของ Moodata + แม่แบบของบริษัท · ติ๊ก "ลูกค้าเห็น" เพื่อเปิดแม่แบบกลางให้ห้องลูกค้า':'แม่แบบกลางจาก Moodata + แม่แบบของบริษัทเอง · กดที่ชื่อเพื่อเปิดดู')+'</div></div>'+
       '<div class="lst-tools">'+catSel+'<input type="search" id="ptplQ" placeholder="ค้นหารหัส / ชื่อ (ทุกหมวด)" value="'+esc(PTPL_Q)+'" oninput="PTPL_Q=this.value;PTPL_SEL={};ptplPaintBody();ptplHeadCount()">'+
+        '<button class="btn btn-ghost" type="button" onclick="ptplEmpForm()">👥 พนักงานเห็นหมวดไหน</button>'+
+        '<button class="btn btn-ghost" type="button" onclick="ptplRoomForm(&quot;&quot;)">+ แม่แบบของบริษัท</button>'+
         (home?'<button class="btn btn-primary" type="button" onclick="switchView(&quot;ppltplimp&quot;)">📥 นำเข้าจากไฟล์</button>':'')+'</div></div>'+
+      empNote+
       (home?'<div id="ptplBulk" class="pwf-act" style="margin:0 0 10px'+(nSel?'':';display:none')+'"><span class="m-hint" style="margin:0" id="ptplNSel">เลือก '+nSel+' ใบ</span>'+
         '<button class="btn btn-ghost" type="button" onclick="ptplBulk(&quot;share&quot;)">เปิดให้ห้องลูกค้า</button><button class="btn btn-ghost" type="button" onclick="ptplBulk(&quot;unshare&quot;)">ปิดจากห้องลูกค้า</button></div>':'')+
-      '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl ptpl-tbl" style="min-width:'+(home?860:700)+'px"><thead><tr>'+
-        (home?'<th style="width:34px"><input type="checkbox" title="เลือกทั้งหมด" onclick="ptplSelAll(this.checked)"></th>':'')+
-        '<th style="width:44px">#</th><th style="width:130px">รหัส</th><th>ชื่อแม่แบบ</th><th style="width:170px">กลุ่ม</th><th style="width:70px">ชนิด</th>'+
+      '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl ptpl-tbl" style="min-width:'+(home?900:780)+'px"><thead><tr>'+
+        (home?'<th style="width:34px"><input type="checkbox" title="เลือกแม่แบบกลางทั้งหมด" onclick="ptplSelAll(this.checked)"></th>':'')+
+        '<th style="width:44px">#</th><th style="width:130px">รหัส</th><th>ชื่อแม่แบบ</th><th style="width:150px">กลุ่ม</th><th style="width:66px">ชนิด</th><th style="width:96px">ที่มา</th><th style="width:96px">พนักงานเห็น</th>'+
         (home?'<th style="width:92px">ลูกค้าเห็น</th>':'')+'<th style="width:40px"></th></tr></thead><tbody id="ptplBody">'+ptplBody(rows,cols)+'</tbody></table></div>'+
       '<div class="m-hint" style="margin-top:10px">แม่แบบ = ต้นฉบับ ไม่ผูกกับพนักงาน · การสร้างเอกสารใช้จริงจากแม่แบบ (เติมข้อมูลพนักงาน) จะมาในเฟสถัดไป</div></div>';
     $('main').innerHTML=h;
   }
   function ptplHeadCount(){ var b=document.querySelector('#main .lst-head .t b span'); if(b&&PTPL) b.textContent=(PTPL_Q?'ผลค้นหา':(PTPL_CAT?ptplCatName(PTPL_CAT):'ทุกหมวด'))+' '+ptplRows().length+' ใบ · คลังมีทั้งหมด '+PTPL.rows.length+' ใบ'; }
-  function ptplPaintBody(){ var b=$('ptplBody'); if(!b) return; b.innerHTML=ptplBody(ptplRows(), PTPL.home?8:6); ptplBulkBar(); }
+  function ptplPaintBody(){ var b=$('ptplBody'); if(!b) return; b.innerHTML=ptplBody(ptplRows(), PTPL.home?9:8); ptplBulkBar(); }
   function ptplBody(rows, cols){
     var home=PTPL.home;
-    if(!rows.length) return '<tr class="dt-empty"><td colspan="'+cols+'">'+(PTPL_Q?'ไม่พบแม่แบบที่ค้นหา':(home?'หมวดนี้ยังไม่มีแม่แบบ · กด 📥 นำเข้าจากไฟล์':'หมวดนี้ยังไม่มีแม่แบบที่เปิดให้ใช้'))+'</td></tr>';
+    if(!rows.length) return '<tr class="dt-empty"><td colspan="'+cols+'">'+(PTPL_Q?'ไม่พบแม่แบบที่ค้นหา':(home?'หมวดนี้ยังไม่มีแม่แบบ · กด 📥 นำเข้าจากไฟล์ หรือ + แม่แบบของบริษัท':'หมวดนี้ยังไม่มีแม่แบบ · กด + แม่แบบของบริษัท เพื่อเพิ่มของบริษัทเอง'))+'</td></tr>';
     return rows.map(function(x,i){
-      var q='&quot;'+esc(x.id)+'&quot;', acts=[{ key:'open', label:'👁️ เปิดดู', call:'ptplOpen('+q+')' }];
-      if(home){
+      var q='&quot;'+esc(x.id)+'&quot;', central=x.origin!=='room', acts=[{ key:'open', label:'👁️ เปิดดู', call:'ptplOpen('+q+')' }];
+      if(central && home){
         if(x.url) acts.push({ key:'drive', label:'↗️ เปิดใน Drive', call:'window.open(&quot;'+esc(x.url)+'&quot;,&quot;_blank&quot;)' });
         acts.push({ key:'edit', label:'✏️ แก้ไขชื่อ / หมวด', call:'ptplEdit('+q+')' });
         acts.push({ key:'sh', label:x.shared?'🔒 ปิดจากห้องลูกค้า':'🌐 เปิดให้ห้องลูกค้า', call:'ptplCall(&quot;'+(x.shared?'unshare':'share')+'&quot;,['+q+'])' });
-        acts.push({ sep:true });
-        acts.push({ key:'off', label:x.off?'♻️ กลับมาใช้':'⏸️ เลิกใช้', call:'ptplCall(&quot;'+(x.off?'on':'off')+'&quot;,['+q+'])' });
-        acts.push({ key:'del', label:'🗑️ ลบออกจากคลัง', call:'ptplDelAsk('+q+')', danger:true });
       }
-      return '<tr'+(x.off?' style="opacity:.55"':'')+'>'+
-        (home?'<td><input type="checkbox"'+(PTPL_SEL[x.id]?' checked':'')+' onclick="ptplSel(&quot;'+esc(x.id)+'&quot;,this.checked)"></td>':'')+
+      if(central) acts.push({ key:'hide', label:x.hidden?'👁️ แสดงในบริษัทนี้':'🙈 ซ่อนในบริษัทนี้', call:'ptplRoomCall(&quot;'+(x.hidden?'unhide':'hide')+'&quot;,{ids:['+q+']})' });
+      if(!central){
+        if(home && x.url) acts.push({ key:'drive', label:'↗️ เปิดใน Drive', call:'window.open(&quot;'+esc(x.url)+'&quot;,&quot;_blank&quot;)' });
+        acts.push({ key:'edit', label:'✏️ แก้ไขชื่อ / หมวด', call:'ptplRoomForm('+q+')' });
+      }
+      if(central && home || !central){
+        acts.push({ sep:true });
+        acts.push({ key:'off', label:x.off?'♻️ กลับมาใช้':'⏸️ เลิกใช้', call:central?'ptplCall(&quot;'+(x.off?'on':'off')+'&quot;,['+q+'])':'ptplRoomCall(&quot;'+(x.off?'on':'off')+'&quot;,{id:'+q+'})' });
+        acts.push({ key:'del', label:central?'🗑️ ลบออกจากคลัง':'🗑️ ลบแม่แบบของบริษัท', call:'ptplDelAsk('+q+')', danger:true });
+      }
+      var dim=x.off||x.hidden;
+      return '<tr'+(dim?' style="opacity:.55"':'')+'>'+
+        (home?'<td>'+(central?'<input type="checkbox"'+(PTPL_SEL[x.id]?' checked':'')+' onclick="ptplSel(&quot;'+esc(x.id)+'&quot;,this.checked)">':'')+'</td>':'')+
         '<td>'+(i+1)+'</td><td style="white-space:nowrap">'+esc(x.code||'—')+'</td>'+
-        '<td style="cursor:pointer" onclick="ptplOpen('+q+')"><b>'+esc(x.name)+'</b>'+(x.off?' <span class="lvb">เลิกใช้</span>':'')+
+        '<td style="cursor:pointer" onclick="ptplOpen('+q+')"><b>'+esc(x.name)+'</b>'+(x.off?' <span class="lvb">เลิกใช้</span>':'')+(x.hidden?' <span class="lvb">ซ่อนอยู่</span>':'')+
           (x.desc?'<div style="font-size:12.5px;color:#8A94A6;margin-top:2px">'+esc(x.desc.length>140?x.desc.slice(0,140)+'…':x.desc)+'</div>':'')+(PTPL_Q||!PTPL_CAT?'<div style="font-size:12px;color:#8A94A6">หมวด: '+esc(ptplCatName(x.cat))+'</div>':'')+'</td>'+
         '<td>'+esc(x.group||'—')+'</td><td>'+esc(PTPL_KIND[x.kind]||x.kind||'—')+'</td>'+
-        (home?'<td>'+(x.shared?'<span class="lvb lvb-ok">เปิดให้</span>':'<span class="lvb">เฉพาะเรา</span>')+'</td>':'')+
+        '<td>'+(central?'<span class="lvb">กลาง</span>':'<span class="lvb lvb-wait">ของบริษัท</span>')+'</td>'+
+        '<td>'+(x.staff?'<span class="lvb lvb-ok">เห็น</span>':'<span style="color:#8A94A6">—</span>')+'</td>'+
+        (home?'<td>'+(central?(x.shared?'<span class="lvb lvb-ok">เปิดให้</span>':'<span class="lvb">เฉพาะเรา</span>'):'<span style="color:#8A94A6">—</span>')+'</td>':'')+
         dtActCell('tp-'+x.id, acts)+'</tr>';
     }).join('');
   }
+  /** ตั้งว่าพนักงานเห็นหมวดไหน (ต่อบริษัท) — ช่องติ๊กอยู่หน้าข้อความ */
+  function ptplEmpForm(){
+    var on={}; (PTPL.emp||[]).forEach(function(k){ on[k]=1; });
+    var grp=[['สร้างเอกสารรายคน',function(c){ return c.make; }],['ให้พนักงานอ่าน',function(c){ return c.emp; }],['อ้างอิง',function(c){ return !c.make&&!c.emp; }]];
+    modal('<h3>👥 พนักงานเห็นหมวดไหน</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint" style="margin-top:0">หมวดที่ติ๊ก = พนักงานทุกคนในบริษัทเปิดอ่านได้ที่ 📄 เอกสาร ▸ เอกสารบริษัท (เปิดเป็น PDF · แก้ไม่ได้) · แม่แบบที่ซ่อนหรือเลิกใช้ พนักงานไม่เห็น</div>'+
+      grp.map(function(g){ return '<div class="fld"><label>'+g[0]+'</label><div class="us-perm-list">'+PTPL.cats.filter(g[1]).map(function(c){
+        return '<label class="us-perm-it"><input type="checkbox" class="ptplEmp" value="'+c.k+'"'+(on[c.k]?' checked':'')+'> '+esc(c.n)+'</label>'; }).join('')+'</div></div>'; }).join('')+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button><button class="btn btn-primary" onclick="ptplRoomCall(&quot;emp&quot;,{cats:[].map.call(document.querySelectorAll(&quot;.ptplEmp:checked&quot;),function(x){ return x.value; })},this)">บันทึก</button></div>');
+  }
+  /** เพิ่ม/แก้แม่แบบของบริษัท (id ว่าง = เพิ่ม) */
+  var PTPL_UP=null;
+  function ptplRoomForm(id){
+    var x=id?PTPL.rows.filter(function(z){ return z.id===id; })[0]:{ cat:PTPL_CAT||'form' };
+    if(!x) return;
+    PTPL_UP=null;
+    modal('<h3>'+(id?'แก้ไขแม่แบบของบริษัท':'เพิ่มแม่แบบของบริษัท')+'</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="fld"><label>ชื่อแม่แบบ <b style="color:#dc2626">*</b></label><input id="trName" value="'+esc(x.name||'')+'"></div>'+
+      '<div style="display:flex;gap:12px;flex-wrap:wrap"><div class="fld" style="flex:1;min-width:150px"><label>รหัสเอกสาร</label><input id="trCode" value="'+esc(x.code||'')+'"></div>'+
+        '<div class="fld" style="flex:2;min-width:200px"><label>หมวด</label><select id="trCat">'+PTPL.cats.map(function(c){ return '<option value="'+c.k+'"'+(c.k===x.cat?' selected':'')+'>'+esc(c.n)+'</option>'; }).join('')+'</select></div></div>'+
+      '<div class="fld"><label>กลุ่ม (ไม่บังคับ)</label><input id="trGroup" value="'+esc(x.group||'')+'"></div>'+
+      '<div class="fld"><label>คำอธิบาย</label><textarea id="trDesc" rows="2">'+esc(x.desc||'')+'</textarea></div>'+
+      (id?'':'<div class="fld"><label>ไฟล์แม่แบบ</label><div class="us-perm-list">'+
+          '<label class="us-perm-it"><input type="radio" name="trMode" value="file" checked onchange="ptplRoomMode()"> อัปโหลดไฟล์ (PDF / Word / Excel / รูป · ≤10 MB)</label>'+
+          '<label class="us-perm-it"><input type="radio" name="trMode" value="link" onchange="ptplRoomMode()"> วางลิงก์ Google Docs / Sheets</label></div></div>'+
+        '<div class="fld" id="trFileBox"><input type="file" id="trFile" accept=".pdf,.doc,.docx,.xls,.xlsx,image/jpeg,image/png" onchange="ptplRoomPick(this)"><div class="m-hint" id="trFileName" style="margin-top:4px"></div></div>'+
+        '<div class="fld hidden" id="trLinkBox"><input id="trLink" placeholder="https://docs.google.com/document/d/…"><div class="m-hint" style="margin-top:4px">ไฟล์ต้องแชร์ให้บัญชีระบบ หรือตั้ง "ทุกคนที่มีลิงก์ดูได้"</div></div>')+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button><button class="btn btn-primary" id="trGo" onclick="ptplRoomSave(&quot;'+esc(id||'')+'&quot;)">บันทึก</button></div>');
+  }
+  function ptplRoomMode(){ var link=(document.querySelector('input[name=trMode]:checked')||{}).value==='link'; $('trFileBox').classList.toggle('hidden',link); $('trLinkBox').classList.toggle('hidden',!link); }
+  function ptplRoomPick(inp){
+    var f=inp.files&&inp.files[0]; PTPL_UP=null; if(!f) return;
+    if(f.size>10*1024*1024){ mErr('ไฟล์ใหญ่เกิน 10 MB'); inp.value=''; return; }
+    var rd=new FileReader(); rd.onload=function(){ PTPL_UP={ data:rd.result, name:f.name }; $('trFileName').textContent='📎 '+f.name; if(!$('trName').value.trim()) $('trName').value=f.name.replace(/\.[A-Za-z0-9]{2,5}$/,''); }; rd.readAsDataURL(f);
+  }
+  function ptplRoomSave(id){
+    var v=function(i){ return (($(i)||{}).value||'').trim(); };
+    var d={ id:id, name:v('trName'), code:v('trCode'), cat:v('trCat'), group:v('trGroup'), desc:v('trDesc') };
+    if(!d.name){ mErr('ใส่ชื่อแม่แบบ'); return; }
+    if(!id){
+      d.mode=(document.querySelector('input[name=trMode]:checked')||{}).value||'file';
+      if(d.mode==='link'){ d.link=v('trLink'); if(!d.link){ mErr('วางลิงก์ก่อนค่ะ'); return; } }
+      else { if(!PTPL_UP){ mErr('เลือกไฟล์ก่อนค่ะ'); return; } d.data=PTPL_UP.data; d.filename=PTPL_UP.name; }
+    }
+    ptplRoomCall(id?'edit':'add', d, $('trGo'));
+  }
+  function ptplRoomCall(act, d, btn){
+    if(btn) btn.disabled=true;
+    callBusy(act==='add'?'กำลังอัปโหลด…':'กำลังบันทึก…', jsonpPost(withRoom_({ action:'waPplTplRoomSave', uid:UID, act:act, data:JSON.stringify(d||{}) }), 0, 120000),
+        { add:'เพิ่มแม่แบบแล้ว', edit:'บันทึกแล้ว', hide:'ซ่อนในบริษัทนี้แล้ว', unhide:'แสดงแล้ว', emp:'บันทึกแล้ว', off:'เลิกใช้แล้ว', on:'กลับมาใช้แล้ว', del:'ลบแล้ว' }[act]||'บันทึกแล้ว')
+      .then(function(r){ if(!r||!r.ok){ if(btn) btn.disabled=false; if($('mErr')) mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); else toast((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+        PTPL_UP=null; closeModal(); renderPplTpl(); })
+      .catch(function(e){ if(btn) btn.disabled=false; if($('mErr')) mErr(e.message); else toast(e.message); });
+  }
   function ptplCatName(k){ var c=(PTPL&&PTPL.cats||[]).filter(function(c){ return c.k===k; })[0]; return c?c.n:k; }
   function ptplSel(id,on){ if(on) PTPL_SEL[id]=1; else delete PTPL_SEL[id]; ptplBulkBar(); }
-  function ptplSelAll(on){ PTPL_SEL={}; if(on) ptplRows().forEach(function(x){ PTPL_SEL[x.id]=1; }); ptplPaintBody(); }
+  function ptplSelAll(on){ PTPL_SEL={}; if(on) ptplRows().forEach(function(x){ if(x.origin!=='room') PTPL_SEL[x.id]=1; }); ptplPaintBody(); }
   function ptplBulkBar(){ var b=$('ptplBulk'), n=Object.keys(PTPL_SEL).length; if(!b) return; b.style.display=n?'':'none'; var t=$('ptplNSel'); if(t) t.textContent='เลือก '+n+' ใบ'; }
   function ptplBulk(act){ var ids=Object.keys(PTPL_SEL); if(ids.length) ptplCall(act, ids); }
   function ptplCall(act, ids, d, btn){
@@ -15570,8 +15639,8 @@
   function ptplDelAsk(id){
     var x=PTPL.rows.filter(function(z){ return z.id===id; })[0]; if(!x) return;
     modal('<h3>ลบออกจากคลัง?</h3><div id="mErr" class="m-err hidden"></div><div class="m-hint" style="margin-top:0">'+esc((x.code?x.code+' ':'')+x.name)+
-      '<br>ห้องลูกค้าจะไม่เห็นแม่แบบนี้อีก · ไฟล์ต้นฉบับใน Drive ไม่ถูกลบ · นำเข้าใหม่ได้ภายหลัง</div>'+
-      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button><button class="btn btn-primary" style="background:#B42318" onclick="ptplCall(&quot;del&quot;,[&quot;'+esc(id)+'&quot;],null,this)">ลบ</button></div>');
+      (x.origin==='room'?'<br>พนักงานและผู้ดูแลจะไม่เห็นแม่แบบนี้อีก · ไฟล์ใน Drive ไม่ถูกลบ':'<br>ห้องลูกค้าจะไม่เห็นแม่แบบนี้อีก · ไฟล์ต้นฉบับใน Drive ไม่ถูกลบ · นำเข้าใหม่ได้ภายหลัง')+'</div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button><button class="btn btn-primary" style="background:#B42318" onclick="'+(x.origin==='room'?'ptplRoomCall(&quot;del&quot;,{id:&quot;'+esc(id)+'&quot;},this)':'ptplCall(&quot;del&quot;,[&quot;'+esc(id)+'&quot;],null,this)')+'">ลบ</button></div>');
   }
   function ptplOpen(id){
     var x=PTPL.rows.filter(function(z){ return z.id===id; })[0];
@@ -15582,6 +15651,7 @@
         for(var i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
         if(PPL_DOC_URL){ try{ URL.revokeObjectURL(PPL_DOC_URL); }catch(e){} }
         PPL_DOC_URL=URL.createObjectURL(new Blob([arr],{type:r.mime}));
+        if(r.dl){ setTimeout(function(){ modal('<h3>'+esc((x&&x.code?x.code+' ':'')+(x?x.name:r.name))+'</h3><div class="m-hint" style="margin-top:0">ไฟล์ '+esc(r.name)+' เป็นไฟล์ Word/Excel เปิดดูในเว็บไม่ได้ · ดาวน์โหลดไปเปิดในเครื่อง</div><div class="m-act"><a class="btn btn-primary" href="'+PPL_DOC_URL+'" download="'+esc(r.name)+'">ดาวน์โหลด</a><button class="btn btn-ghost" onclick="closeModal()">ปิด</button></div>'); }, 300); return; }
         setTimeout(function(){
           modal('<h3>'+esc((x&&x.code?x.code+' ':'')+(x?x.name:r.name))+'</h3>'+(/^image\//.test(r.mime)?'<img class="doc-view-img" src="'+PPL_DOC_URL+'" alt="">'
             :'<iframe class="doc-view" src="'+PPL_DOC_URL+'" title="แม่แบบ"></iframe>')+
@@ -28902,6 +28972,23 @@ function kpImpDraw(){
   }
   /** เปิดไฟล์ในแฟ้มของฉัน — ไฟล์ไม่มีลิงก์สาธารณะ ขอตัวไฟล์จากหลังบ้าน (ตรวจว่าเป็นของเราและ HR เปิดให้เห็น) */
   var MY_FILE_URL='';
+  /** พนักงานเปิดเอกสารบริษัท (นโยบาย/คู่มือ) — หลังบ้านตรวจว่าเปิดให้พนักงานเห็นจริง */
+  function myTplOpen(id){
+    var d=(((DOCCACHE&&DOCCACHE.data)||{}).coDocs||[]).filter(function(x){ return x.id===id; })[0]||{};
+    callBusy('กำลังเปิดเอกสาร…', jsonpPost(withRoom_({ action:'waMyTplOpen', uid:UID, id:id }), 0, 120000), 'เปิดแล้ว')
+      .then(function(r){
+        if(!r||!r.ok){ toast((r&&r.error)||'เปิดไม่ได้'); return; }
+        var bin=atob(r.data), arr=new Uint8Array(bin.length);
+        for(var i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+        if(MY_FILE_URL){ try{ URL.revokeObjectURL(MY_FILE_URL); }catch(e){} }
+        MY_FILE_URL=URL.createObjectURL(new Blob([arr],{type:r.mime}));
+        setTimeout(function(){
+          modal('<h3>'+esc(d.name||r.name)+'</h3>'+(r.dl?'<div class="m-hint" style="margin-top:0">ไฟล์นี้เปิดดูในเว็บไม่ได้ · ดาวน์โหลดไปเปิดในเครื่อง</div>'
+            :(/^image\//.test(r.mime)?'<img class="doc-view-img" src="'+MY_FILE_URL+'" alt="">':'<iframe class="doc-view" src="'+MY_FILE_URL+'" title="เอกสารบริษัท"></iframe>'))+
+            '<div class="m-act"><a class="btn btn-ghost" href="'+MY_FILE_URL+'" download="'+esc(r.name)+'">ดาวน์โหลด</a><button class="btn btn-primary" onclick="closeModal()">ปิด</button></div>');
+        }, 300);
+      }).catch(function(e){ toast(e.message); });
+  }
   function myFileOpen(id){
     var d=(((DOCCACHE&&DOCCACHE.data)||{}).hrDocs||[]).filter(function(x){ return x.id===id; })[0]||{};
     callBusy('กำลังเปิดไฟล์…', jsonpPost(withRoom_({ action:'waMyFileOpen', uid:UID, id:id }), 0, 120000), 'เปิดแล้ว')
@@ -28943,6 +29030,15 @@ function kpImpDraw(){
         return '<button type="button" class="doc-item" style="width:100%;background:none;border:0;text-align:left;font:inherit;cursor:pointer" onclick="myFileOpen(&quot;'+esc(d.id)+'&quot;)"><span class="di-ic">📄</span>'+
           '<span class="di-main"><b>'+esc(d.typeName)+' · '+esc(d.name)+'</b>'+(d.expiry?'<small>หมดอายุ '+esc(pplDate(d.expiry))+(d.exp==='expired'?' · หมดแล้ว':(d.exp==='soon'?' · ใกล้หมด':''))+'</small>':'')+'</span>'+
           '<span class="di-go">›</span></button>'; }).join('')+'</div>';
+    }
+    /* 📚 เอกสารบริษัท (PeopleTemplates.gs T2 · 6 ต.ค. 69) — นโยบาย/คู่มือที่บริษัทเปิดให้อ่าน · ไม่มี = ไม่โชว์หัวข้อ */
+    if((r.coDocs||[]).length){
+      html+='<div class="section-h">📚 เอกสารบริษัท</div>';
+      var lastCat='';
+      html+='<div class="card" style="padding:6px 12px">'+r.coDocs.map(function(d){
+        var head=d.catName!==lastCat?'<div style="font-size:12.5px;color:#8A94A6;font-weight:600;margin:10px 0 2px">'+esc(d.catName)+'</div>':''; lastCat=d.catName;
+        return head+'<button type="button" class="doc-item" style="width:100%;background:none;border:0;text-align:left;font:inherit;cursor:pointer" onclick="myTplOpen(&quot;'+esc(d.id)+'&quot;)"><span class="di-ic">📘</span>'+
+          '<span class="di-main"><b>'+esc(d.name)+'</b>'+(d.code||d.desc?'<small>'+esc([d.code,d.desc&&d.desc.length>80?d.desc.slice(0,80)+'…':d.desc].filter(Boolean).join(' · '))+'</small>':'')+'</span><span class="di-go">›</span></button>'; }).join('')+'</div>';
     }
     // ขอเอกสารใหม่ (ฟอร์ม)
     html+='<div class="section-h">📝 ขอเอกสารใหม่</div>';
@@ -29761,7 +29857,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20261005-1829';
+  var APP_BUILD='20261006-1054';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
