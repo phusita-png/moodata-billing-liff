@@ -16,9 +16,9 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20261006-1819">
+<link rel="stylesheet" href="user.css?v=20261006-2114">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<script src="yd-auth.js?v=20261006-1819"></script>
+<script src="yd-auth.js?v=20261006-2114"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
   .date-row{ display:flex; flex-direction:column; gap:14px; margin:4px 0 12px; } .date-row > div{ min-width:0; }
@@ -15519,7 +15519,7 @@
         (home?'<button class="btn btn-primary" type="button" onclick="switchView(&quot;ppltplimp&quot;)">📥 นำเข้าจากไฟล์</button>':'')+'</div></div>'+
       empNote+
       (home?'<div id="ptplBulk" class="pwf-act" style="margin:0 0 10px'+(nSel?'':';display:none')+'"><span class="m-hint" style="margin:0" id="ptplNSel">เลือก '+nSel+' ใบ</span>'+
-        '<button class="btn btn-ghost" type="button" onclick="ptplBulk(&quot;share&quot;)">เปิดให้ห้องลูกค้า</button><button class="btn btn-ghost" type="button" onclick="ptplBulk(&quot;unshare&quot;)">ปิดจากห้องลูกค้า</button></div>':'')+
+        '<button class="btn btn-ghost" type="button" onclick="ptsysRun(Object.keys(PTPL_SEL))">✨ เตรียมฉบับระบบ (AI)</button><button class="btn btn-ghost" type="button" onclick="ptplBulk(&quot;share&quot;)">เปิดให้ห้องลูกค้า</button><button class="btn btn-ghost" type="button" onclick="ptplBulk(&quot;unshare&quot;)">ปิดจากห้องลูกค้า</button></div>':'')+
       '<div class="tax-tbl-wrap"><table class="tax-tbl dt-tbl ptpl-tbl" style="min-width:'+(home?900:780)+'px"><thead><tr>'+
         (home?'<th style="width:34px"><input type="checkbox" title="เลือกแม่แบบกลางทั้งหมด" onclick="ptplSelAll(this.checked)"></th>':'')+
         '<th style="width:44px">#</th><th style="width:130px">รหัส</th><th>ชื่อแม่แบบ</th><th style="width:150px">กลุ่ม</th><th style="width:66px">ชนิด</th><th style="width:96px">ที่มา</th><th style="width:96px">พนักงานเห็น</th>'+
@@ -15535,7 +15535,15 @@
     return rows.map(function(x,i){
       var q='&quot;'+esc(x.id)+'&quot;', central=x.origin!=='room', acts=[{ key:'open', label:'👁️ เปิดดู', call:'ptplOpen('+q+')' }];
       var cdef=PTPL.cats.filter(function(c){ return c.k===x.cat; })[0];
-      if(cdef&&cdef.make&&!x.off&&!x.hidden) acts.push({ key:'make', label:'📝 สร้างเอกสารให้พนักงาน', call:'ptmkFromTpl('+q+')' });
+      if(cdef&&cdef.make&&!x.off&&!x.hidden&&x.ready!==false) acts.push({ key:'make', label:'📝 สร้างเอกสารให้พนักงาน', call:'ptmkFromTpl('+q+')' });
+      if(home&&central&&x.needSys){   /* ✨ ฉบับระบบ (T3b) */
+        acts.push({ key:'sys', label:x.sysState?'✨ เตรียมฉบับระบบใหม่ (AI)':'✨ เตรียมฉบับระบบ (AI)', call:'ptsysRun(['+q+'])' });
+        if(x.sysState){
+          acts.push({ key:'sysv', label:'👁️ ดูฉบับระบบ', call:'ptplOpen('+q+',&quot;sys&quot;)' });
+          if(x.sysUrl) acts.push({ key:'syse', label:'📝 แก้ฉบับระบบใน Google Docs', call:'window.open(&quot;'+esc(x.sysUrl)+'&quot;,&quot;_blank&quot;)' });
+          acts.push(x.sysState==='พร้อมใช้'?{ key:'sysb', label:'↩️ ถอนอนุมัติฉบับระบบ', call:'ptsysSet('+q+',&quot;back&quot;)' }:{ key:'syso', label:'✅ อนุมัติฉบับระบบ', call:'ptsysSet('+q+',&quot;ok&quot;)' });
+        }
+      }
       if(central && home){
         if(x.url) acts.push({ key:'drive', label:'↗️ เปิดใน Drive', call:'window.open(&quot;'+esc(x.url)+'&quot;,&quot;_blank&quot;)' });
         acts.push({ key:'edit', label:'✏️ แก้ไขชื่อ / หมวด', call:'ptplEdit('+q+')' });
@@ -15556,6 +15564,8 @@
         (home?'<td>'+(central?'<input type="checkbox"'+(PTPL_SEL[x.id]?' checked':'')+' onclick="ptplSel(&quot;'+esc(x.id)+'&quot;,this.checked)">':'')+'</td>':'')+
         '<td>'+(i+1)+'</td><td style="white-space:nowrap">'+esc(x.code||'—')+'</td>'+
         '<td style="cursor:pointer" onclick="ptplOpen('+q+')"><b>'+esc(x.name)+'</b>'+(x.off?' <span class="lvb">เลิกใช้</span>':'')+(x.hidden?' <span class="lvb">ซ่อนอยู่</span>':'')+
+          (home&&x.needSys?(x.sysState==='พร้อมใช้'?' <span class="lvb lvb-ok">ฉบับระบบพร้อม</span>':(x.sysState?' <span class="lvb lvb-wait">ฉบับระบบรอตรวจ</span>':' <span class="lvb lvb-no">ยังไม่มีฉบับระบบ</span>')):'')+
+          (home&&x.sysNote?'<div style="font-size:12px;color:#6B4FD8;margin-top:2px">✨ '+esc(x.sysNote.length>160?x.sysNote.slice(0,160)+'…':x.sysNote)+'</div>':'')+
           (x.desc?'<div style="font-size:12.5px;color:#8A94A6;margin-top:2px">'+esc(x.desc.length>140?x.desc.slice(0,140)+'…':x.desc)+'</div>':'')+(PTPL_Q||!PTPL_CAT?'<div style="font-size:12px;color:#8A94A6">หมวด: '+esc(ptplCatName(x.cat))+'</div>':'')+'</td>'+
         '<td>'+esc(x.group||'—')+'</td><td>'+esc(PTPL_KIND[x.kind]||x.kind||'—')+'</td>'+
         '<td>'+(central?'<span class="lvb">กลาง</span>':'<span class="lvb lvb-wait">ของบริษัท</span>')+'</td>'+
@@ -15618,6 +15628,35 @@
         PTPL_UP=null; closeModal(); renderPplTpl(); })
       .catch(function(e){ if(btn) btn.disabled=false; if($('mErr')) mErr(e.message); else toast(e.message); });
   }
+  /** ✨ เตรียมฉบับระบบทีละใบ (AI ใบละ ~20–60 วิ) · ข้ามที่ไม่ต้องเตรียม */
+  function ptsysRun(ids){
+    var list=ids.map(function(id){ return PTPL.rows.filter(function(z){ return z.id===id; })[0]; }).filter(function(x){ return x&&x.needSys; });
+    if(!list.length){ toast('ใบที่เลือกไม่ต้องเตรียมฉบับระบบ (เตรียมได้เฉพาะ Google Docs หมวดสร้างรายคน)'); return; }
+    if(list.length>20){ toast('เตรียมได้ครั้งละไม่เกิน 20 ใบ'); return; }
+    var done=[], fail=[], i=0;
+    function next(){
+      if(i>=list.length){
+        unbusy(); renderPplTpl();
+        setTimeout(function(){ modal('<h3>✨ เตรียมฉบับระบบเสร็จ '+done.length+' / '+list.length+' ใบ</h3>'+
+          '<div class="m-hint" style="margin-top:0">สถานะ <b>รอตรวจ</b> · เปิด ⋮ ▸ 👁️ ดูฉบับระบบ ตรวจว่าตัดคำแนะนำ/ตัวอย่างถูก และช่อง {{…}} ครบ → ✅ อนุมัติ<br>แก้เองได้ที่ ⋮ ▸ 📝 แก้ฉบับระบบใน Google Docs'+
+          (done.length?'<br><br>'+done.map(function(d){ return '• '+esc(d.n)+' — '+d.f+' ช่อง'+(d.note?' · '+esc(d.note):''); }).join('<br>'):'')+
+          (fail.length?'<br><br><b style="color:#B42318">ไม่สำเร็จ</b><br>'+fail.map(function(f){ return '• '+esc(f.n)+' — '+esc(f.e); }).join('<br>'):'')+'</div>'+
+          '<div class="m-act"><button class="btn btn-primary" onclick="closeModal()">ตกลง</button></div>'); }, 300);
+        return;
+      }
+      var x=list[i++];
+      busy('✨ AI กำลังเตรียม '+i+'/'+list.length+' · '+(x.code||x.name));
+      jsonpPost(withRoom_({ action:'waHrTplSys', uid:UID, act:'prepare', id:x.id }), 0, 330000).then(function(r){
+        if(r&&r.ok) done.push({ n:(x.code?x.code+' ':'')+x.name, f:(r.fields||[]).length, note:r.note||'' }); else fail.push({ n:x.code||x.name, e:(r&&r.error)||'ไม่สำเร็จ' });
+        next();
+      }).catch(function(e){ fail.push({ n:x.code||x.name, e:e.message }); next(); });
+    }
+    next();
+  }
+  function ptsysSet(id, act){
+    callBusy(act==='ok'?'กำลังอนุมัติ…':'กำลังถอนอนุมัติ…', jsonpPost(withRoom_({ action:'waHrTplSys', uid:UID, act:act, id:id })), act==='ok'?'อนุมัติแล้ว · ใช้สร้างเอกสารได้':'ถอนอนุมัติแล้ว')
+      .then(function(r){ if(!r||!r.ok){ toast((r&&r.error)||'ไม่สำเร็จ'); return; } renderPplTpl(); }).catch(function(e){ toast(e.message); });
+  }
   function ptplCatName(k){ var c=(PTPL&&PTPL.cats||[]).filter(function(c){ return c.k===k; })[0]; return c?c.n:k; }
   function ptplSel(id,on){ if(on) PTPL_SEL[id]=1; else delete PTPL_SEL[id]; ptplBulkBar(); }
   function ptplSelAll(on){ PTPL_SEL={}; if(on) ptplRows().forEach(function(x){ if(x.origin!=='room') PTPL_SEL[x.id]=1; }); ptplPaintBody(); }
@@ -15648,9 +15687,9 @@
       (x.origin==='room'?'<br>พนักงานและผู้ดูแลจะไม่เห็นแม่แบบนี้อีก · ไฟล์ใน Drive ไม่ถูกลบ':'<br>ห้องลูกค้าจะไม่เห็นแม่แบบนี้อีก · ไฟล์ต้นฉบับใน Drive ไม่ถูกลบ · นำเข้าใหม่ได้ภายหลัง')+'</div>'+
       '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button><button class="btn btn-primary" style="background:#B42318" onclick="'+(x.origin==='room'?'ptplRoomCall(&quot;del&quot;,{id:&quot;'+esc(id)+'&quot;},this)':'ptplCall(&quot;del&quot;,[&quot;'+esc(id)+'&quot;],null,this)')+'">ลบ</button></div>');
   }
-  function ptplOpen(id){
+  function ptplOpen(id, ver){
     var x=PTPL.rows.filter(function(z){ return z.id===id; })[0];
-    callBusy('กำลังเปิดแม่แบบ…', jsonpPost(withRoom_({ action:'waPplTplOpen', uid:UID, id:id }), 0, 120000), 'เปิดแล้ว')
+    callBusy(ver==='sys'?'กำลังเปิดฉบับระบบ…':'กำลังเปิดแม่แบบ…', jsonpPost(withRoom_({ action:'waPplTplOpen', uid:UID, id:id, ver:ver||'' }), 0, 120000), 'เปิดแล้ว')
       .then(function(r){
         if(!r||!r.ok){ toast((r&&r.error)||'เปิดไม่ได้'); return; }
         var bin=atob(r.data), arr=new Uint8Array(bin.length);
@@ -29963,7 +30002,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20261006-1819';
+  var APP_BUILD='20261006-2114';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
