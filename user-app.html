@@ -16,9 +16,9 @@
 <!-- ⚠️ เลขท้าย user.css ต้องขยับทุกครั้งที่แก้ CSS ไม่งั้นเบราว์เซอร์ใช้ของเก่าค้าง
      เดิมตรึงไว้ที่ v=13 ด้วยมือ → แก้ CSS แล้วเครื่องผู้ใช้ไม่เห็น (จอเพี้ยนคนละแบบกับที่เราเห็น)
      sync-web.sh เขียนเลข build ลงตรงนี้ให้อัตโนมัติแล้ว (7 ก.ย. 69) -->
-<link rel="stylesheet" href="user.css?v=20261006-1054">
+<link rel="stylesheet" href="user.css?v=20261006-1819">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<script src="yd-auth.js?v=20261006-1054"></script>
+<script src="yd-auth.js?v=20261006-1819"></script>
 <style>
   /* Moodata เพิ่มเติมจาก CSS ดิเอลฟ์ (date input + badge สถานะลา) */
   .date-row{ display:flex; flex-direction:column; gap:14px; margin:4px 0 12px; } .date-row > div{ min-width:0; }
@@ -14765,22 +14765,26 @@
     return '<div class="card"><div class="pb" style="padding:16px 18px">'+
       '<div class="st-head"><div class="st-hx"><div class="rs-h">แฟ้มเอกสาร</div>'+
         '<div class="rs-sub">'+files.length+' ไฟล์ · เก็บในโฟลเดอร์ "แฟ้มพนักงาน" ของบริษัท · ไม่มีลิงก์สาธารณะ</div></div>'+
-        '<button class="btn btn-primary" type="button" onclick="pplDocUp()">+ อัปเอกสาร</button></div>'+
+        '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost" type="button" onclick="ptmkPick(PPL_CODE)">📝 สร้างจากแม่แบบ</button><button class="btn btn-primary" type="button" onclick="pplDocUp()">+ อัปเอกสาร</button></div></div>'+
       ((doc.missing||[]).length?'<div class="m-err" style="margin-top:10px">ขาด: '+doc.missing.map(esc).join(' · ')+'</div>':'')+
       '<div class="tax-tbl-wrap" style="margin-top:10px"><table class="tax-tbl dt-tbl"><colgroup><col style="width:5%"><col style="width:20%"><col><col style="width:12%"><col style="width:17%"><col style="width:11%"><col style="width:6%"></colgroup>'+
         '<thead><tr><th>#</th><th>ประเภท</th><th>ชื่อเอกสาร</th><th>วันที่</th><th>หมดอายุ</th><th>พนักงานเห็น</th><th></th></tr></thead><tbody>'+
         (files.length?files.map(function(x,i){
           var q='&quot;'+esc(x.id)+'&quot;';
-          return '<tr><td>'+(i+1)+'</td><td>'+esc(x.typeName)+'</td>'+
-            '<td><button class="lnk" style="text-align:left" onclick="pplDocOpen('+q+')">'+esc(x.name)+'</button>'+(x.note?'<div style="font-size:12px;color:#8A94A6">'+esc(x.note)+'</div>':'')+'</td>'+
+          var st=x.dstate==='ร่าง'?' <span class="lvb lvb-wait">ร่าง</span>':(x.dstate==='เซ็นแล้ว'?' <span class="lvb lvb-ok">เซ็นแล้ว · '+esc(x.hrNo)+'</span>':(x.dstate==='ยกเลิก'?' <span class="lvb lvb-no">ยกเลิก'+(x.hrNo?' · '+esc(x.hrNo):'')+'</span>':''));
+          var mk=[];   /* เอกสารจากแม่แบบ (T3a) */
+          if(x.dstate==='ร่าง'){ if(x.edit) mk.push({ key:'gdoc', label:'📝 แก้ใน Google Docs', call:'window.open(&quot;'+esc(x.edit)+'&quot;,&quot;_blank&quot;)' }); mk.push({ key:'sign', label:'✍️ แนบฉบับเซ็นแล้ว', call:'ptmkSignForm('+q+')' }); }
+          if(x.dstate==='ร่าง'||x.dstate==='เซ็นแล้ว') mk.push({ key:'void', label:'✖ ยกเลิกเอกสาร', call:'ptmkVoidAsk('+q+')' });
+          return '<tr'+(x.dstate==='ยกเลิก'?' style="opacity:.55"':'')+'><td>'+(i+1)+'</td><td>'+esc(x.typeName)+'</td>'+
+            '<td><button class="lnk" style="text-align:left" onclick="pplDocOpen('+q+')">'+esc(x.name)+'</button>'+st+(x.note?'<div style="font-size:12px;color:#8A94A6">'+esc(x.note)+'</div>':'')+'</td>'+
             '<td style="white-space:nowrap">'+(x.docDate?esc(pplDate(x.docDate)):'—')+'</td><td>'+pplDocExpBadge(x)+'</td>'+
             '<td>'+(x.emp?'ใช่':'<span style="color:#8A94A6">ไม่</span>')+'</td>'+
             dtActCell('pd-'+x.id,[
-              { key:'open', label:'🔍 เปิดดู', call:'pplDocOpen('+q+')' },
+              { key:'open', label:'🔍 เปิดดู', call:'pplDocOpen('+q+')' }].concat(mk).concat([
               { key:'edit', label:'✏️ แก้ข้อมูล', call:'pplDocEditOpen('+q+')' },
               { key:'emp', label:(x.emp?'🙈 ซ่อนจากพนักงาน':'👁️ ให้พนักงานเห็น'), call:'pplDocEmp('+q+','+(x.emp?0:1)+')' },
               { sep:true },
-              { key:'del', label:'🗑️ ลบออกจากแฟ้ม', call:'pplDocDelAsk('+q+')', danger:true }])+'</tr>';
+              { key:'del', label:'🗑️ ลบออกจากแฟ้ม', call:'pplDocDelAsk('+q+')', danger:true }]))+'</tr>';
         }).join(''):'<tr class="dt-empty"><td colspan="7">ยังไม่มีเอกสาร · กด + อัปเอกสาร</td></tr>')+
       '</tbody></table></div>'+
     '</div></div>';
@@ -15530,6 +15534,8 @@
     if(!rows.length) return '<tr class="dt-empty"><td colspan="'+cols+'">'+(PTPL_Q?'ไม่พบแม่แบบที่ค้นหา':(home?'หมวดนี้ยังไม่มีแม่แบบ · กด 📥 นำเข้าจากไฟล์ หรือ + แม่แบบของบริษัท':'หมวดนี้ยังไม่มีแม่แบบ · กด + แม่แบบของบริษัท เพื่อเพิ่มของบริษัทเอง'))+'</td></tr>';
     return rows.map(function(x,i){
       var q='&quot;'+esc(x.id)+'&quot;', central=x.origin!=='room', acts=[{ key:'open', label:'👁️ เปิดดู', call:'ptplOpen('+q+')' }];
+      var cdef=PTPL.cats.filter(function(c){ return c.k===x.cat; })[0];
+      if(cdef&&cdef.make&&!x.off&&!x.hidden) acts.push({ key:'make', label:'📝 สร้างเอกสารให้พนักงาน', call:'ptmkFromTpl('+q+')' });
       if(central && home){
         if(x.url) acts.push({ key:'drive', label:'↗️ เปิดใน Drive', call:'window.open(&quot;'+esc(x.url)+'&quot;,&quot;_blank&quot;)' });
         acts.push({ key:'edit', label:'✏️ แก้ไขชื่อ / หมวด', call:'ptplEdit('+q+')' });
@@ -15752,6 +15758,100 @@
         if((r.fail||[]).length) modal('<h3>'+esc(msg)+'</h3><div class="m-hint" style="margin-top:0">เปิดไฟล์ไม่ได้ '+r.fail.length+' ใบ (ไฟล์ไม่ได้เป็นของบัญชีระบบ หรือไม่ได้แชร์ให้) — ยังติ๊กค้างไว้ แชร์ไฟล์แล้วกดนำเข้าอีกครั้งได้<br><br>'+r.fail.map(esc).join('<br>')+'</div><div class="m-act"><button class="btn btn-primary" onclick="closeModal()">ตกลง</button></div>');
         else setTimeout(function(){ toast(msg+(Object.keys(PTI_SEL).length?' · เหลือที่ติ๊ก '+Object.keys(PTI_SEL).length+' ใบ กดนำเข้าต่อได้':'')); }, 1600);
       }).catch(function(e){ if(b) b.disabled=false; toast(e.message); });
+  }
+
+  /* ── 📝 สร้างเอกสารจากแม่แบบ (T3a · 6 ต.ค. 69 · PeopleTemplates.gs) ──
+     เริ่มได้ 2 ทาง: แฟ้มพนักงานรายคน (เลือกแม่แบบ) · ⋮ ในหน้าแม่แบบ (เลือกพนักงาน) → ตรวจช่องเติม → ร่าง → แนบฉบับเซ็น → เลขที่ */
+  function ptmkAfter(){ if(VIEW==='ppldocone') renderPplDocOne(); }
+  /** จากแฟ้มพนักงาน: เลือกแม่แบบ */
+  function ptmkPick(code){
+    callBusy('กำลังโหลดแม่แบบ…', jsonp(withRoom_({ action:'waPplTplPrep', uid:UID, list:'1' })), 'พร้อม').then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'โหลดไม่สำเร็จ'); return; }
+      if(!r.tpls.length){ modal('<h3>ยังไม่มีแม่แบบที่สร้างเอกสารรายคนได้</h3><div class="m-hint" style="margin-top:0">หมวดที่สร้างได้: แบบฟอร์ม · JD · สัญญาจ้าง · ทดลองงาน · จ้างทำของ · หนังสือเตือน · หนังสือเลิกจ้าง<br>เพิ่มได้ที่ ระบบบุคคล ▸ 📚 แม่แบบเอกสาร</div><div class="m-act"><button class="btn btn-primary" onclick="closeModal()">ตกลง</button></div>'); return; }
+      var by={}, order=[]; r.tpls.forEach(function(t){ if(!by[t.catName]){ by[t.catName]=[]; order.push(t.catName); } by[t.catName].push(t); });
+      modal('<h3>📝 สร้างเอกสารจากแม่แบบ</h3><div id="mErr" class="m-err hidden"></div>'+
+        '<div class="fld"><label>แม่แบบ <b style="color:#dc2626">*</b></label><select id="mkTpl"><option value="">— เลือกแม่แบบ —</option>'+
+          order.map(function(c){ return '<optgroup label="'+esc(c)+'">'+by[c].map(function(t){ return '<option value="'+esc(t.id)+'">'+esc((t.code?t.code+' ':'')+t.name)+(t.origin==='room'?' (ของบริษัท)':'')+'</option>'; }).join('')+'</optgroup>'; }).join('')+'</select></div>'+
+        '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button><button class="btn btn-primary" onclick="var v=$(&quot;mkTpl&quot;).value;if(!v){mErr(&quot;เลือกแม่แบบก่อนค่ะ&quot;);return;}ptmkPrep(v,&quot;'+esc(code)+'&quot;)">ถัดไป</button></div>');
+    }).catch(function(e){ toast(e.message); });
+  }
+  /** จากหน้าแม่แบบ: เลือกพนักงาน */
+  function ptmkFromTpl(tplId){
+    callBusy('กำลังโหลดรายชื่อ…', jsonp(withRoom_({ action:'waPplList', uid:UID })), 'พร้อม').then(function(r){
+      if(!r||!r.ok){ toast((r&&r.error)||'โหลดไม่สำเร็จ'); return; }
+      var x=PTPL.rows.filter(function(z){ return z.id===tplId; })[0]||{};
+      var ppl=(r.rows||[]).filter(function(p){ return p.status!=='ลาออก'; });
+      modal('<h3>📝 '+esc((x.code?x.code+' ':'')+(x.name||''))+'</h3><div id="mErr" class="m-err hidden"></div>'+
+        '<div class="fld"><label>สร้างให้พนักงาน <b style="color:#dc2626">*</b></label><select id="mkCode"><option value="">— เลือกพนักงาน ('+ppl.length+' คน) —</option>'+
+          ppl.map(function(p){ return '<option value="'+esc(p.code)+'">'+esc(p.code+' '+p.name+(p.position?' · '+p.position:''))+'</option>'; }).join('')+'</select></div>'+
+        '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button><button class="btn btn-primary" onclick="var v=$(&quot;mkCode&quot;).value;if(!v){mErr(&quot;เลือกพนักงานก่อนค่ะ&quot;);return;}ptmkPrep(&quot;'+esc(tplId)+'&quot;,v)">ถัดไป</button></div>');
+    }).catch(function(e){ toast(e.message); });
+  }
+  /** ตรวจช่องเติม (ระบบเติมจากทะเบียน · ที่ขาดให้ HR กรอก) */
+  var PTMK=null;
+  function ptmkPrep(tplId, code){
+    callBusy('กำลังอ่านแม่แบบ…', jsonp(withRoom_({ action:'waPplTplPrep', uid:UID, tpl:tplId, code:code }), 0, 120000), 'พร้อม').then(function(r){
+      if(!r||!r.ok){ if($('mErr')) mErr((r&&r.error)||'อ่านแม่แบบไม่ได้'); else toast((r&&r.error)||'อ่านแม่แบบไม่ได้'); return; }
+      PTMK=r;
+      var miss=r.fields.filter(function(f){ return !f.auto; }).length;
+      var note=!r.fillable?'⚠️ แม่แบบชนิดนี้ (Word / PDF) เติมข้อมูลอัตโนมัติไม่ได้ · ระบบคัดลอกเข้าแฟ้มให้ แล้วแก้เองได้'
+        :(!r.fields.length?'ℹ️ แม่แบบนี้ยังไม่มีช่องเติม {{…}} · ระบบคัดลอกเปล่าเข้าแฟ้มให้ไปแก้ใน Google Docs (เฟสถัดไป AI ช่วยเติมให้)'
+        :'ระบบเติม '+(r.fields.length-miss)+' ช่องจากทะเบียนให้แล้ว'+(miss?' · <b>กรอกอีก '+miss+' ช่อง</b> (เว้นว่างได้ ไปเติมใน Google Docs ทีหลัง)':'')+' · แก้ค่าได้ก่อนสร้าง');
+      modal('<h3>📝 '+esc((r.tpl.code?r.tpl.code+' ':'')+r.tpl.name)+'</h3><div id="mErr" class="m-err hidden"></div>'+
+        '<div class="m-hint" style="margin-top:0">สร้างให้ <b>'+esc(r.person.code+' '+r.person.name)+'</b> · '+note+'</div>'+
+        r.fields.map(function(f,i){
+          return '<div class="fld"><label>'+esc(f.key)+(f.auto?' <span class="lvb lvb-ok" style="font-size:11px">จากทะเบียน</span>':' <span class="lvb lvb-wait" style="font-size:11px">ต้องกรอก</span>')+'</label>'+
+            '<input id="mkF'+i+'" value="'+esc(f.value)+'"'+(f.auto?'':' placeholder="กรอก '+esc(f.key)+'"')+'></div>';
+        }).join('')+
+        '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button><button class="btn btn-primary" id="mkGo" onclick="ptmkMake()">สร้างร่าง</button></div>');
+    }).catch(function(e){ toast(e.message); });
+  }
+  function ptmkMake(){
+    var r=PTMK, vals={}; if(!r) return;
+    r.fields.forEach(function(f,i){ vals[f.key]=(($('mkF'+i)||{}).value||'').trim(); });
+    var b=$('mkGo'); if(b) b.disabled=true;
+    callBusy('กำลังสร้างร่าง (คัดลอก + เติมข้อมูล)…', jsonpPost(withRoom_({ action:'waPplTplMake', uid:UID, act:'make', data:JSON.stringify({ tpl:r.tpl.id, code:r.person.code, vals:vals }) }), 0, 180000), 'สร้างร่างแล้ว')
+      .then(function(x){
+        if(!x||!x.ok){ if(b) b.disabled=false; mErr((x&&x.error)||'สร้างไม่สำเร็จ'); return; }
+        setTimeout(function(){
+          modal('<h3>✅ สร้างร่างแล้ว</h3><div class="m-hint" style="margin-top:0">เก็บในแฟ้มเอกสารของ <b>'+esc(r.person.name)+'</b> สถานะ <b>ร่าง</b> (พนักงานยังไม่เห็น)'+
+              (x.missing&&x.missing.length?'<br>ยังไม่ได้เติม: '+x.missing.map(esc).join(' · '):'')+
+              '<br><br>ขั้นต่อไป: แก้ร่างให้เรียบร้อย → พิมพ์ให้เซ็น → แฟ้มพนักงาน ⋮ <b>✍️ แนบฉบับเซ็นแล้ว</b> ระบบออกเลขที่ให้'+
+              (x.edit?'':'<br><br>⚠️ บัญชีของคุณยังไม่มีสิทธิ์แก้ไฟล์นี้ใน Google Docs (ระบบไม่รู้อีเมล Google ของคุณ) · เปิดดู/ดาวน์โหลดจากแฟ้มได้')+'</div>'+
+            '<div class="m-act">'+(x.edit?'<a class="btn btn-primary" href="'+esc(x.url)+'" target="_blank" rel="noopener" onclick="closeModal();ptmkAfter()">📝 เปิดแก้ใน Google Docs</a>':'')+
+              '<button class="btn btn-ghost" onclick="closeModal();ptmkGoPerson(&quot;'+esc(r.person.code)+'&quot;)">ไปที่แฟ้มพนักงาน</button></div>');
+        }, 1500);
+      }).catch(function(e){ if(b) b.disabled=false; mErr(e.message); });
+  }
+  function ptmkGoPerson(code){ PPL_CODE=code; if(VIEW==='ppldocone') renderPplDocOne(); else switchView('ppldocone'); }
+  /** แนบฉบับเซ็น → เซ็นแล้ว + เลขที่ */
+  var PTMK_FILE=null;
+  function ptmkSignForm(id){
+    var x=pplDocFind(id)||{}; PTMK_FILE=null;
+    modal('<h3>✍️ แนบฉบับเซ็นแล้ว</h3><div id="mErr" class="m-err hidden"></div>'+
+      '<div class="m-hint" style="margin-top:0">'+esc(x.name||'')+' · สแกน/ถ่ายรูปฉบับที่เซ็นครบแล้ว (PDF / JPG / PNG ≤10 MB) · ระบบออกเลขที่เอกสารให้ และเปลี่ยนสถานะเป็น <b>เซ็นแล้ว</b></div>'+
+      '<div class="fld"><input type="file" id="mkSign" accept="application/pdf,image/jpeg,image/png" onchange="ptmkSignPick(this)"><div class="m-hint" id="mkSignName" style="margin-top:4px"></div></div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button><button class="btn btn-primary" id="mkSignGo" onclick="ptmkSign(&quot;'+esc(id)+'&quot;)">บันทึก</button></div>');
+  }
+  function ptmkSignPick(inp){
+    var f=inp.files&&inp.files[0]; PTMK_FILE=null; if(!f) return;
+    if(f.size>10*1024*1024){ mErr('ไฟล์ใหญ่เกิน 10 MB'); inp.value=''; return; }
+    var rd=new FileReader(); rd.onload=function(){ PTMK_FILE={ data:rd.result, name:f.name }; $('mkSignName').textContent='📎 '+f.name; }; rd.readAsDataURL(f);
+  }
+  function ptmkSign(id){
+    if(!PTMK_FILE){ mErr('เลือกไฟล์ฉบับเซ็นก่อนค่ะ'); return; }
+    var b=$('mkSignGo'); if(b) b.disabled=true;
+    callBusy('กำลังบันทึกฉบับเซ็น…', jsonpPost(withRoom_({ action:'waPplTplMake', uid:UID, act:'sign', data:JSON.stringify({ id:id, file:PTMK_FILE.data, filename:PTMK_FILE.name }) }), 0, 120000), 'บันทึกแล้ว')
+      .then(function(r){ if(!r||!r.ok){ if(b) b.disabled=false; mErr((r&&r.error)||'บันทึกไม่สำเร็จ'); return; }
+        PTMK_FILE=null; closeModal(); setTimeout(function(){ toast('เซ็นแล้ว · เลขที่ '+r.no); }, 1500); ptmkAfter(); })
+      .catch(function(e){ if(b) b.disabled=false; mErr(e.message); });
+  }
+  function ptmkVoidAsk(id){
+    var x=pplDocFind(id)||{};
+    modal('<h3>ยกเลิกเอกสาร?</h3><div id="mErr" class="m-err hidden"></div><div class="m-hint" style="margin-top:0">'+esc(x.name||'')+(x.hrNo?' · เลขที่ '+esc(x.hrNo):'')+
+      '<br>สถานะเป็น <b>ยกเลิก</b> · เลขที่เอกสารยังคงอยู่ (ไม่นำกลับมาใช้) · พนักงานไม่เห็น · ไฟล์ยังอยู่ในแฟ้ม</div>'+
+      '<div class="fld"><label>เหตุผล</label><input id="mkVoidWhy" placeholder="เช่น ออกผิดคน / ข้อมูลผิด"></div>'+
+      '<div class="m-act"><button class="btn btn-ghost" onclick="closeModal()">ปิด</button><button class="btn btn-primary" style="background:#B42318" onclick="this.disabled=true;callBusy(&quot;กำลังยกเลิก…&quot;,jsonpPost(withRoom_({action:&quot;waPplTplMake&quot;,uid:UID,act:&quot;void&quot;,data:JSON.stringify({id:&quot;'+esc(id)+'&quot;,reason:$(&quot;mkVoidWhy&quot;).value})})),&quot;ยกเลิกแล้ว&quot;).then(function(r){ if(!r||!r.ok){ mErr((r&&r.error)||&quot;ยกเลิกไม่สำเร็จ&quot;); return; } closeModal(); ptmkAfter(); })">ยกเลิกเอกสาร</button></div>');
   }
 
   /* ── หน้าข้อมูลรายคน ── */
@@ -25464,7 +25564,13 @@
         '<th style="width:10%">ทำได้จริง<small>(3)</small></th>'+
         '<th style="width:11%">คะแนนเต็ม<small>(1) x (2)/100</small></th>'+
         '<th style="width:11%">คะแนนที่ได้<small>(1) x (3)/(2)</small></th></tr></thead><tbody>';
-    (res.detail||[]).forEach(function(d,i){
+    /* ครบทุกข้อตามลำดับชุด (perfRows) — 🔴 ต้องตรงกับ kpiBookOnePerson_ ใน KpiBook.gs */
+    (res.perfRows||res.detail||[]).forEach(function(d,i){
+      if(d.pct===null||d.pct===undefined){
+        h+='<tr><td class="c">'+(i+1)+'</td><td>'+esc(d.name)+'</td><td class="n">—</td><td class="n">—</td>'+
+          '<td class="n">'+(d.skip?'ไม่ประเมิน':'ยังไม่กรอก')+'</td><td class="n">—</td><td class="n">—</td></tr>';
+        return;
+      }
       h+='<tr><td class="c">'+(i+1)+'</td><td>'+esc(d.name)+'</td>'+
         '<td class="n">'+d.weight.toFixed(2)+'</td><td class="n">100</td>'+
         '<td class="n">'+d.pct.toFixed(2)+'</td>'+
@@ -29857,7 +29963,7 @@ function kpImpDraw(){
     setInterval(look, 10*60*1000);   // เผื่อแท็บเปิดค้างหน้าเดียวทั้งวัน
   }
 
-  var APP_BUILD='20261006-1054';
+  var APP_BUILD='20261006-1819';
   /* หน้าที่กำลังทำ "ภารกิจเฉพาะ" ห้ามโหลดใหม่กลางคัน (7 ก.ย. 69)
      · ?p=apply  คนนอกกำลังกรอกใบสมัคร — reload = ฟอร์มที่กรอกหาย
      · ?invite=  ลิงก์เชิญใช้ได้ครั้งเดียว — reload ผิดจังหวะ = ผูกห้องไม่สำเร็จ
