@@ -588,6 +588,7 @@
     inc+=srow('รวมรายรับ',s.gross,true);
     var ded='<div class="ssec ded">รายการหัก</div>'+srow('ประกันสังคม',s.sso);
     if(s.tax) ded+=srow('ภาษีหัก ณ ที่จ่าย',s.tax);
+    if(s.fundDeduct) ded+=srow('กองทุน/ประกันกลุ่ม',s.fundDeduct);
     if(s.other) ded+=srow('หักอื่น ๆ',s.other);
     ded+=srow('รวมหัก',s.deduct,true);
     var net='<div class="snet"><span>เงินสุทธิ</span><span>'+money(s.net)+' บาท</span></div>';
