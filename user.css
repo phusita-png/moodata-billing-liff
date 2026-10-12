@@ -594,7 +594,7 @@ textarea:focus,input[type=time]:focus{border-color:var(--red)}
   border-bottom:2px solid var(--line);white-space:nowrap;vertical-align:middle}
 /* หัวตารางโควต้า (ตั้งค่า) — สไตล์เดียวกับสรุปการลา */
 .mg-qt th{background:var(--slate-tint);color:var(--slate);font-size:11.5px;border-bottom:1px solid var(--line)}
-.mg-table td{padding:10px;border-bottom:1px solid var(--line);vertical-align:middle}
+.mg-table td{padding:10px;border-bottom:1px solid var(--line);vertical-align:baseline}
 .mg-table .ce{text-align:center}
 .mg-tr{cursor:pointer;transition:background .12s}
 .mg-tr:hover{background:var(--red-tint)}
