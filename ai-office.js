@@ -253,6 +253,16 @@
           '<td><span class="aio-s s-'+esc(x.status)+'">'+esc(x.statusTh)+'</span></td><td'+(x.late?' class="bad"':'')+'>'+thDate(x.due_date)+(x.late?' · เลย':'')+'</td></tr>'; }).join('');
       var quick=(d.quick||[]).map(function(x){ return '<button class="aio-q" data-q="'+esc(x.id)+'">'+esc(x.label)+'</button>'; }).join('');
       var ap=d.approvals||{};
+      // โต๊ะ 6 ตัว ยอดรวมทุกห้อง · กดแล้วเห็นงานของโต๊ะนั้นจากทุกห้อง (คุย/สั่งงานต้องเข้าโต๊ะในห้องใดห้องหนึ่ง)
+      var desks=(d.desks||[]).map(function(x){
+        return '<button class="aio-desk'+(S.allDesk===x.id?' on':'')+'" data-desk="'+esc(x.id)+'" style="--c:'+esc(x.color||COLOR[x.id])+'">'+
+          '<div class="aio-bub'+(x.open?'':' idle')+'">'+(x.open?'ค้าง '+x.open+' งาน ใน '+x.rooms+' ห้อง'+
+            (x.blocked||x.waiting?'<small>'+(x.blocked?'ติดปัญหา '+x.blocked:'')+(x.blocked&&x.waiting?' · ':'')+(x.waiting?'รอพี่ '+x.waiting:'')+'</small>':''):'ว่างทุกห้องค่ะ')+'</div>'+
+          '<div class="aio-stage"><img class="aio-ch" src="'+img(x.id,true)+'" alt=""><img class="aio-tb" src="'+H.base+'desk.webp?v='+H.v+'" alt=""></div>'+
+          '<span class="aio-st st-'+esc(x.status)+'">'+esc(ST[x.status]||x.status)+'</span>'+
+          '<div class="aio-nm">'+esc(x.role)+'</div><div class="aio-id">'+esc(x.id)+' · ค้างรวม '+(x.open||0)+'</div>'+
+          '<div class="aio-duty">'+esc(x.duty)+'</div></button>';
+      }).join('');
       H.main.innerHTML='<div class="aio aio-lobby aio-all">'+
         '<section class="aio-hero" style="background-image:url('+H.base+'office-bg.webp?v='+H.v+')">'+
           '<div class="aio-hero-tx"><h2>ห้องทำงาน AI · ทุกห้อง</h2><p>ดูรวมได้ทุกห้อง · สั่งงานให้เลือกห้องก่อน</p></div>'+
@@ -263,6 +273,8 @@
         '<button class="aio-sign" id="aioSign"><span class="pen">✍️</span><span>รอพี่เซ็น <b>'+(ap.pending||0)+'</b> งาน</span>'+
           (ap.demo?'<em>ข้อมูลตัวอย่าง</em>':'')+'<span class="go">เปิดห้องอนุมัติ ›</span></button>'+
         '<div class="aio-tiles">'+tiles+'</div>'+
+        '<h3 class="aio-h">โต๊ะทำงาน <span class="aio-sub">รวมทุกห้อง · กดโต๊ะเพื่อดูงานของโต๊ะนั้นจากทุกห้อง</span></h3><div class="aio-desks">'+desks+'</div>'+
+        '<div id="aioAllDesk"></div>'+
         '<section class="card aio-sec"><div class="aio-lbl big">สรุปแยกห้อง <span class="aio-sub">กดแถวเพื่อเข้าห้องนั้น</span></div>'+
           '<div class="aio-tw"><table class="aio-t"><thead><tr><th class="n">#</th><th>ห้อง</th><th class="num">ค้าง</th><th class="num">ติดปัญหา</th><th class="num">รอพี่</th>'+
           '<th class="num hm">ถึงกำหนด 7 วัน</th><th class="num">เลยกำหนด</th><th class="num hm">เสร็จวันนี้</th><th></th></tr></thead><tbody>'+
@@ -283,7 +295,45 @@
       Array.prototype.forEach.call(H.main.querySelectorAll('.aio-q'), function(el){
         el.onclick=function(){ allAsk(el.getAttribute('data-q'), el.textContent); };
       });
+      Array.prototype.forEach.call(H.main.querySelectorAll('.aio-desk'), function(el){
+        el.onclick=function(){ allDesk(el.getAttribute('data-desk')); };
+      });
+      if(S.allDesk) allDesk(S.allDesk, true);
     });
+  }
+  /* งานของโต๊ะเดียวจากทุกห้อง · กดงาน/ปุ่มห้อง = เปิดโต๊ะนั้นในห้องนั้น (กลับล็อบบี้แล้วกลับมาทุกห้อง) */
+  function allDesk(id, keep){
+    var box=$('aioAllDesk'); if(!box) return;
+    if(S.allDesk===id && !keep){ S.allDesk=''; box.innerHTML=''; mark(); return; }
+    S.allDesk=id; mark();
+    box.innerHTML='<section class="card aio-sec aio-alldesk"><div class="aio-typing"><i></i><i></i><i></i> กำลังดูงานของโต๊ะ '+esc(ROLE[id]||id)+'…</div></section>';
+    api('GET','/overview/desks/'+encodeURIComponent(id)).then(function(d){
+      if(S.allDesk!==id || !$('aioAllDesk')) return;
+      var rows=(d.items||[]).map(function(x,i){
+        return '<tr class="aio-row" data-room="'+esc(x.room)+'"><td class="n">'+(i+1)+'</td><td>'+esc(x.roomName)+'</td><td><b>'+esc(x.title)+'</b></td>'+
+          '<td><span class="aio-s s-'+esc(x.status)+'">'+esc(x.statusTh)+'</span></td><td'+(x.late?' class="bad"':'')+'>'+thDate(x.due_date)+(x.late?' · เลย':'')+'</td><td class="go">›</td></tr>'; }).join('');
+      var rooms=(d.rooms||[]).map(function(r){ return '<button class="aio-btn ghost sm" data-room="'+esc(r.code)+'">'+esc(r.name)+'</button>'; }).join('');
+      $('aioAllDesk').innerHTML='<section class="card aio-sec aio-alldesk" style="--c:'+(COLOR[id]||'#7c5cf0')+'">'+
+        '<div class="aio-alldesk-h"><img src="'+img(id,true)+'" alt=""><div><b>'+esc(d.role||ROLE[id])+' · งานค้างทุกห้อง '+(d.items||[]).length+' งาน</b>'+
+          '<span>กดงานเพื่อเข้าโต๊ะนี้ในห้องนั้น · คุยและสั่งงานได้ในห้องเท่านั้น</span></div><button class="aio-x" id="aioAllDeskX" aria-label="ปิด">×</button></div>'+
+        '<div class="aio-tw"><table class="aio-t"><thead><tr><th class="n">#</th><th>ห้อง</th><th>งาน</th><th>สถานะ</th><th>กำหนด</th><th></th></tr></thead><tbody>'+
+          (rows||'<tr><td colspan="6" class="aio-empty">โต๊ะนี้ไม่มีงานค้างในห้องไหนเลยค่ะ</td></tr>')+'</tbody></table></div>'+
+        '<div class="aio-alldesk-go"><span>เปิดโต๊ะนี้ในห้อง</span>'+rooms+'</div></section>';
+      $('aioAllDeskX').onclick=function(){ allDesk(id); };
+      Array.prototype.forEach.call($('aioAllDesk').querySelectorAll('[data-room]'), function(el){
+        el.onclick=function(){ openDeskIn(id, el.getAttribute('data-room')); };
+      });
+      if(!keep){ var sec=$('aioAllDesk'); if(sec.scrollIntoView) sec.scrollIntoView({ block:'nearest', behavior:'smooth' }); }
+    }).catch(function(e){
+      if($('aioAllDesk')) $('aioAllDesk').innerHTML='<div class="aio-warn">'+esc(busyMsg(e))+'</div>';
+    });
+    function mark(){
+      Array.prototype.forEach.call(H.main.querySelectorAll('.aio-desk'), function(el){ el.classList.toggle('on', el.getAttribute('data-desk')===S.allDesk); });
+    }
+  }
+  function openDeskIn(id, room){
+    setRoom(room); S.backAll=true; S.desk=id;
+    H.go('aidesk');
   }
   function allAsk(quick, label){
     var out=$('aioMgrOut');

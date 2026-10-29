@@ -203,6 +203,17 @@
 .aio-t td.bad, .aio-t .num.bad{ color:#C53030; font-weight:700; }
 .aio-t td.go{ text-align:right; white-space:nowrap; color:#1B72E8; font-weight:600; }
 .aio-all-note{ margin-top:8px; font-size:13px; color:var(--aio-mut); }
+.aio-h .aio-sub{ display:inline; margin-left:6px; font-weight:400; }
+.aio-all .aio-desk.on{ outline:3px solid var(--c); outline-offset:2px; }
+.aio-alldesk{ border-top:4px solid var(--c); }
+.aio-alldesk-h{ display:flex; gap:12px; align-items:center; margin-bottom:8px; }
+.aio-alldesk-h img{ width:52px; height:52px; object-fit:contain; border-radius:14px; background:#F3F0FF; }
+.aio-alldesk-h > div{ flex:1; min-width:0; }
+.aio-alldesk-h b{ display:block; font-size:16px; }
+.aio-alldesk-h span{ font-size:13px; color:var(--aio-mut); }
+.aio-x{ width:36px; height:36px; border:none; border-radius:10px; background:#F1F3F8; font-size:20px; line-height:1; cursor:pointer; color:#5A6478; }
+.aio-alldesk-go{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:12px; font-size:13px; color:var(--aio-mut); }
+.aio-btn.sm{ min-height:36px; padding:0 14px; font-size:13px; }
 
 /* ── จอกลาง ── */
 @media (max-width:1180px){
