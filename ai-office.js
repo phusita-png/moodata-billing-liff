@@ -119,6 +119,15 @@
     if(last){ S.room=last; return Promise.resolve(last); }
     S.room=''; return ensureRoom();
   }
+  /* คำสั่งพูดถึงบริษัทห้องอื่น (Worker ตอบ switchRoom) → ปุ่มเปลี่ยนห้อง แล้วเติมคำสั่งเดิมให้กดส่งใหม่ */
+  function switchBtn(sw){
+    if(!sw) return '';
+    return '<div class="aio-switch"><button class="aio-btn" data-switch="'+esc(sw.code)+'">เปลี่ยนไปห้อง '+esc(sw.name)+' ›</button></div>';
+  }
+  function bindSwitch(root, text, after){
+    var b=root.querySelector('[data-switch]'); if(!b) return;
+    b.onclick=function(){ S.carry=text||''; setRoom(b.getAttribute('data-switch')); after().catch(fail); window.scrollTo(0,0); };
+  }
   function badge(m){
     if(!m) return '';
     if(m.answeredBy==='local' || m.answered_by==='local') return '<span class="aio-bdg loc">ตอบจากข้อมูล · ฟรี</span>';
@@ -223,10 +232,11 @@
     api('POST','/desks/MGR-001/ask', body).then(function(r){
       var html='<div class="aio-msg me"><div class="tx">'+esc(label)+'</div></div>'+
         '<div class="aio-msg ai"><img src="'+img('MGR-001',true)+'" alt=""><div class="tx">'+esc(r.reply)+'<div class="aio-meta">'+badge(r.meta)+'</div></div></div>'+
-        (r.plan?planCard(r.taskId, r.plan, 'plan_proposed'):'');
-      S.mgrOut=html; out.innerHTML=html;
+        (r.plan?planCard(r.taskId, r.plan, 'plan_proposed'):'')+switchBtn(r.switchRoom);
+      S.mgrOut=r.switchRoom?'':html; out.innerHTML=html;
       if(out.scrollIntoView) out.scrollIntoView({ block:'start', behavior:'smooth' });   // มือถือ: คำตอบอยู่ท้ายหน้า เลื่อนไปให้เห็น
-      if(body.text) $('aioCmd').value='';
+      if(body.text && !r.switchRoom) $('aioCmd').value='';
+      bindSwitch(out, body.text, function(){ return renderLobby().then(function(){ if($('aioCmd')) $('aioCmd').value=S.carry||''; S.carry=''; }); });
       bindPlans(out, function(){ S.mgrOut=''; renderLobby(); });
     }).catch(function(e){
       out.innerHTML='<div class="aio-msg me"><div class="tx">'+esc(label)+'</div></div><div class="aio-warn">'+esc(busyMsg(e))+'</div>';
@@ -418,9 +428,13 @@
     box.insertAdjacentHTML('beforeend','<div class="aio-msg me"><div class="tx">'+esc(label)+'</div></div><div class="aio-typing" id="aioTyping"><i></i><i></i><i></i> กำลังดู…</div>');
     box.scrollTop=box.scrollHeight;
     go.disabled=true;
-    api('POST','/desks/'+S.desk+'/ask', body).then(function(){
-      if(body.text) $('aioAsk').value='';
-      return renderDesk(true);
+    api('POST','/desks/'+S.desk+'/ask', body).then(function(r){
+      if(body.text && !r.switchRoom) $('aioAsk').value='';
+      return renderDesk(true).then(function(){
+        var b=$('aioMsgs'); if(!b || !r.switchRoom) return;
+        b.insertAdjacentHTML('beforeend', switchBtn(r.switchRoom)); b.scrollTop=b.scrollHeight;
+        bindSwitch(b, body.text, function(){ S.backAll=false; return renderDesk().then(function(){ if($('aioAsk')) $('aioAsk').value=S.carry||''; S.carry=''; }); });
+      });
     }).catch(function(e){
       var t=$('aioTyping'); if(t) t.parentNode.removeChild(t);
       box.insertAdjacentHTML('beforeend','<div class="aio-warn">'+esc(busyMsg(e))+'</div>');

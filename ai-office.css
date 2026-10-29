@@ -275,3 +275,5 @@
   .aio-t .hm{ display:none; }   /* คอลัมน์รองซ่อนบนมือถือ */
   .aio-all .aio-cmd .aio-all-note{ margin-top:4px; font-size:12px; }
 }
+.aio-switch{ margin:8px 0 4px 52px; }
+@media (max-width:899px){ .aio-switch{ margin-left:0; } .aio-switch .aio-btn{ width:100%; } }
