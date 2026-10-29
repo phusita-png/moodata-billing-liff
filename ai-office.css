@@ -190,6 +190,16 @@
 .aio-toast.bad{ background:#B42318; }
 .aio-toast.out{ opacity:0; }
 
+
+/* ── ภาพรวมทุกห้อง (spec §13) ── */
+.aio-sec{ margin-top:14px; }
+.aio-sec .aio-lbl.big .aio-sub{ display:inline; margin-left:6px; font-weight:400; }
+.aio-row{ cursor:pointer; }
+.aio-row:hover td{ background:#F6FAFF; }
+.aio-t td.bad, .aio-t .num.bad{ color:#C53030; font-weight:700; }
+.aio-t td.go{ text-align:right; white-space:nowrap; color:#1B72E8; font-weight:600; }
+.aio-all-note{ margin-top:8px; font-size:13px; color:var(--aio-mut); }
+
 /* ── จอกลาง ── */
 @media (max-width:1180px){
   .aio-dk-grid{ grid-template-columns:260px minmax(0,1fr); }
@@ -246,4 +256,6 @@
   .aio-ap-act{ position:sticky; bottom:calc(62px + env(safe-area-inset-bottom,0px)); margin:16px -16px -16px; padding:10px 12px;
     background:rgba(255,255,255,.96); border-top:1px solid var(--aio-line); border-radius:0 0 18px 18px; }
   .aio-ap-act .aio-btn{ flex:1; min-width:0; }
+  .aio-t .hm{ display:none; }   /* คอลัมน์รองซ่อนบนมือถือ */
+  .aio-all .aio-cmd .aio-all-note{ margin-top:4px; font-size:12px; }
 }

@@ -82,7 +82,7 @@
       S.rooms=r.rooms||[];
       var home=S.rooms.filter(function(x){ return x.code==='MOODATA'; })[0]||S.rooms[0];
       if(!home) throw new Error('ตั๋วนี้ไม่มีห้องที่เข้าได้');
-      S.room=home.code; ss('aio.room', S.room);
+      setRoom(home.code);
       return S.room;
     });
   }
@@ -91,14 +91,33 @@
   }
 
   // ───── ชิ้นส่วนที่ใช้ซ้ำ ─────
-  function roomPicker(rooms){
+  /* allowAll = ล็อบบี้เท่านั้น (ตัวเลือก "ทุกห้อง" · spec §13) · หน้าโต๊ะ/ห้องอนุมัติต้องเป็นห้องจริงเสมอ */
+  function roomPicker(rooms, allowAll){
     if(!rooms || rooms.length<2) return '<span class="aio-chip">ห้อง '+esc((rooms&&rooms[0]&&rooms[0].name)||S.room)+'</span>';
-    return '<label class="aio-room"><span>ห้อง</span><select id="aioRoom">'+rooms.map(function(r){
+    return '<label class="aio-room"><span>ห้อง</span><select id="aioRoom">'+
+      (allowAll?'<option value="*"'+(S.room==='*'?' selected':'')+'>ทุกห้อง (ภาพรวม)</option>':'')+
+      rooms.map(function(r){
       return '<option value="'+esc(r.code)+'"'+(r.code===S.room?' selected':'')+'>'+esc(r.name)+' ('+esc(r.code)+')</option>'; }).join('')+'</select></label>';
+  }
+  function setRoom(code){
+    S.room=code; ss('aio.room', code); S.mgrOut='';
+    if(code!=='*'){ S.lastRoom=code; ss('aio.lastRoom', code); }
+  }
+  function backToLobby(){
+    if(S.backAll){ S.backAll=false; setRoom('*'); }
+    H.go('aiofc');
   }
   function bindRoom(){
     var el=$('aioRoom'); if(!el) return;
-    el.onchange=function(){ S.room=el.value; ss('aio.room', S.room); S.mgrOut=''; render(H.view(), H); };
+    el.onchange=function(){ S.backAll=false; setRoom(el.value); render(H.view(), H); };
+  }
+  /* หน้าโต๊ะ/ห้องอนุมัติเปิดจากโหมดทุกห้อง → ใช้ห้องจริงล่าสุดที่เคยเลือก (ไม่มี = ห้องแรกในตั๋ว) */
+  function concreteRoom(){
+    if(S.room!=='*') return Promise.resolve(S.room);
+    var last=S.lastRoom||ss('aio.lastRoom');
+    S.backAll=true;
+    if(last){ S.room=last; return Promise.resolve(last); }
+    S.room=''; return ensureRoom();
   }
   function badge(m){
     if(!m) return '';
@@ -142,6 +161,7 @@
 
   // ═══════════ ล็อบบี้ ═══════════
   function renderLobby(){
+    if(S.room==='*') return renderOverview();
     return ensureRoom().then(function(){ return api('GET','/lobby'+q()); }).then(function(d){
       if(H.view()!=='aiofc') return;
       S.rooms=d.rooms;
@@ -162,7 +182,7 @@
       H.main.innerHTML='<div class="aio aio-lobby">'+
         '<section class="aio-hero" style="background-image:url('+H.base+'office-bg.webp?v='+H.v+')">'+
           '<div class="aio-hero-tx"><h2>ห้องทำงาน AI</h2><p>ทีม AI 6 โต๊ะ ร่างงานให้พี่ · พี่เป็นคนอนุมัติทุกชิ้น</p></div>'+
-          '<div class="aio-hero-side">'+roomPicker(d.rooms)+
+          '<div class="aio-hero-side">'+roomPicker(d.rooms, true)+
             '<div class="aio-cost"><div class="aio-cost-t">ค่า AI วันนี้ <b>'+money(c.spentThb)+'</b> / '+money(c.budgetThb)+' บาท</div>'+
             '<div class="aio-bar"><i style="width:'+pct+'%"></i></div>'+
             '<div class="aio-cost-s">'+(c.perDoneThb!=null?'เฉลี่ย '+money(c.perDoneThb)+' บาท/งานที่เสร็จ':'ยังไม่มีงานเสร็จวันนี้')+'</div></div>'+
@@ -213,11 +233,76 @@
     }).then(function(){ if(go) go.disabled=false; });
   }
 
+  // ═══════════ ภาพรวมทุกห้อง (spec §13 · คนดูรวมได้ · AI ทำงานทีละห้อง) ═══════════
+  function renderOverview(){
+    return api('GET','/overview').then(function(d){
+      if(H.view()!=='aiofc' || S.room!=='*') return;
+      S.rooms=d.rooms.map(function(r){ return { code:r.code, name:r.name }; });
+      var c=d.cost||{}, pct=c.budgetThb?Math.min(100, Math.round(c.spentThb/c.budgetThb*100)):0, t=d.totals||{};
+      var tiles=[[t.open,'งานค้างทุกห้อง','t-blue'],[t.blocked,'ติดปัญหา','t-orange'],[t.waiting,'รอพี่','t-purple'],[t.late,'เลยกำหนด','t-orange']].map(function(x){
+        return '<div class="aio-tile '+x[2]+'"><div class="v">'+(x[0]||0)+'</div><div class="l">'+x[1]+'</div></div>'; }).join('');
+      var rows=(d.rooms||[]).map(function(r,i){
+        var warn=r.blocked||r.late;
+        return '<tr class="aio-row" data-room="'+esc(r.code)+'"><td class="n">'+(i+1)+'</td><td><b>'+esc(r.name)+'</b><div class="aio-sub">'+esc(r.code)+'</div></td>'+
+          '<td class="num">'+r.open+'</td><td class="num'+(r.blocked?' bad':'')+'">'+r.blocked+'</td><td class="num">'+r.waiting+'</td>'+
+          '<td class="num hm">'+r.due7+'</td><td class="num'+(r.late?' bad':'')+'">'+r.late+'</td><td class="num hm">'+r.doneToday+'</td>'+
+          '<td class="go">'+(warn?'<span class="aio-s s-blocked">ต้องดู</span>':'')+' ›</td></tr>'; }).join('');
+      var items=(d.items||[]).map(function(x,i){
+        return '<tr class="aio-row" data-room="'+esc(x.room)+'"><td class="n">'+(i+1)+'</td><td>'+esc(x.roomName)+'</td>'+
+          '<td><b>'+esc(x.title)+'</b></td><td class="hm"><span class="aio-dot" style="background:'+(COLOR[x.agent]||'#ccc')+'"></span>'+esc(ROLE[x.agent]||x.agent||'-')+'</td>'+
+          '<td><span class="aio-s s-'+esc(x.status)+'">'+esc(x.statusTh)+'</span></td><td'+(x.late?' class="bad"':'')+'>'+thDate(x.due_date)+(x.late?' · เลย':'')+'</td></tr>'; }).join('');
+      var quick=(d.quick||[]).map(function(x){ return '<button class="aio-q" data-q="'+esc(x.id)+'">'+esc(x.label)+'</button>'; }).join('');
+      var ap=d.approvals||{};
+      H.main.innerHTML='<div class="aio aio-lobby aio-all">'+
+        '<section class="aio-hero" style="background-image:url('+H.base+'office-bg.webp?v='+H.v+')">'+
+          '<div class="aio-hero-tx"><h2>ห้องทำงาน AI · ทุกห้อง</h2><p>ดูรวมได้ทุกห้อง · สั่งงานให้เลือกห้องก่อน</p></div>'+
+          '<div class="aio-hero-side">'+roomPicker(S.rooms, true)+
+            '<div class="aio-cost"><div class="aio-cost-t">ค่า AI วันนี้ <b>'+money(c.spentThb)+'</b> / '+money(c.budgetThb)+' บาท</div>'+
+            '<div class="aio-bar"><i style="width:'+pct+'%"></i></div><div class="aio-cost-s">รวมทุกห้อง · งานเสร็จวันนี้ '+(t.doneToday||0)+' งาน</div></div>'+
+          '</div></section>'+
+        '<button class="aio-sign" id="aioSign"><span class="pen">✍️</span><span>รอพี่เซ็น <b>'+(ap.pending||0)+'</b> งาน</span>'+
+          (ap.demo?'<em>ข้อมูลตัวอย่าง</em>':'')+'<span class="go">เปิดห้องอนุมัติ ›</span></button>'+
+        '<div class="aio-tiles">'+tiles+'</div>'+
+        '<section class="card aio-sec"><div class="aio-lbl big">สรุปแยกห้อง <span class="aio-sub">กดแถวเพื่อเข้าห้องนั้น</span></div>'+
+          '<div class="aio-tw"><table class="aio-t"><thead><tr><th class="n">#</th><th>ห้อง</th><th class="num">ค้าง</th><th class="num">ติดปัญหา</th><th class="num">รอพี่</th>'+
+          '<th class="num hm">ถึงกำหนด 7 วัน</th><th class="num">เลยกำหนด</th><th class="num hm">เสร็จวันนี้</th><th></th></tr></thead><tbody>'+
+          (rows||'<tr><td colspan="9" class="aio-empty">ตั๋วนี้ยังไม่มีห้อง</td></tr>')+'</tbody></table></div></section>'+
+        '<section class="card aio-sec"><div class="aio-lbl big">งานที่ต้องดู <span class="aio-sub">ติดปัญหา · ถึงกำหนดใน 7 วัน · เลยกำหนด</span></div>'+
+          '<div class="aio-tw"><table class="aio-t"><thead><tr><th class="n">#</th><th>ห้อง</th><th>งาน</th><th class="hm">โต๊ะ</th><th>สถานะ</th><th>กำหนด</th></tr></thead><tbody>'+
+          (items||'<tr><td colspan="6" class="aio-empty">ไม่มีงานติดปัญหาหรือใกล้ถึงกำหนดค่ะ</td></tr>')+'</tbody></table></div></section>'+
+        '<section class="card aio-mgr">'+
+          '<div class="aio-mgr-h"><img src="'+img('MGR-001',true)+'" alt=""><div><b>ถามหัวหน้า AI (ทุกห้อง)</b><span>ปุ่มด้านล่างตอบรวมทุกห้องจากข้อมูล ไม่เสียเงิน · จะสั่งงานให้เลือกห้องก่อน</span></div></div>'+
+          '<div id="aioMgrOut" class="aio-out">'+S.mgrOut+'</div>'+
+          '<div class="aio-cmd"><div class="aio-qs">'+quick+'</div><div class="aio-all-note">สั่งงานใหม่: เลือกห้องที่ช่อง "ห้อง" ด้านบนก่อนค่ะ</div></div>'+
+        '</section></div>';
+      bindRoom();
+      $('aioSign').onclick=function(){ H.go('aiappr'); };
+      Array.prototype.forEach.call(H.main.querySelectorAll('.aio-row'), function(el){
+        el.onclick=function(){ setRoom(el.getAttribute('data-room')); renderLobby().catch(fail); window.scrollTo(0,0); };
+      });
+      Array.prototype.forEach.call(H.main.querySelectorAll('.aio-q'), function(el){
+        el.onclick=function(){ allAsk(el.getAttribute('data-q'), el.textContent); };
+      });
+    });
+  }
+  function allAsk(quick, label){
+    var out=$('aioMgrOut');
+    out.innerHTML='<div class="aio-msg me"><div class="tx">'+esc(label)+' (ทุกห้อง)</div></div><div class="aio-typing"><i></i><i></i><i></i> หัวหน้า AI กำลังดู…</div>';
+    if(out.scrollIntoView) out.scrollIntoView({ block:'start', behavior:'smooth' });
+    api('POST','/overview/ask', { quick:quick }).then(function(r){
+      var html='<div class="aio-msg me"><div class="tx">'+esc(label)+' (ทุกห้อง)</div></div>'+
+        '<div class="aio-msg ai"><img src="'+img('MGR-001',true)+'" alt=""><div class="tx">'+esc(r.reply)+'<div class="aio-meta">'+badge(r.meta)+'</div></div></div>';
+      S.mgrOut=html; out.innerHTML=html;
+    }).catch(function(e){
+      out.innerHTML='<div class="aio-warn">'+esc(busyMsg(e))+'</div>';
+    });
+  }
+
   // ═══════════ หน้าโต๊ะ ═══════════
   function renderDesk(keepInput){
     if(DESKS.indexOf(S.desk)<0) S.desk='MGR-001';
     var id=S.desk;
-    return ensureRoom().then(function(){ return api('GET','/desks/'+id+q()); }).then(function(d){
+    return concreteRoom().then(function(){ return api('GET','/desks/'+id+q()); }).then(function(d){
       if(H.view()!=='aidesk' || S.desk!==id) return;
       var k=d.desk, st=d.stats||{};
       var tabs=DESKS.map(function(x){
@@ -262,7 +347,7 @@
       if(old) $('aioAsk').value=old;
       var box=$('aioMsgs'); box.scrollTop=box.scrollHeight;
       bindRoom();
-      $('aioBack').onclick=function(){ H.go('aiofc'); };
+      $('aioBack').onclick=backToLobby;
       Array.prototype.forEach.call(H.main.querySelectorAll('.aio-tab'), function(el){
         el.onclick=function(){ if(S.desk===el.getAttribute('data-desk')) return; S.desk=el.getAttribute('data-desk'); renderDesk().catch(fail); };
       });
@@ -296,7 +381,7 @@
 
   // ═══════════ ห้องอนุมัติ (เฟส 1 = ข้อมูลตัวอย่าง) ═══════════
   function renderAppr(){
-    return ensureRoom().then(function(){ return api('GET','/approvals'+q()); }).then(function(d){
+    return concreteRoom().then(function(){ return api('GET','/approvals'+q()); }).then(function(d){
       if(H.view()!=='aiappr') return;
       var items=d.items||[];
       var cur=items.filter(function(x){ return x.id===S.appr; })[0];
@@ -329,7 +414,7 @@
         (d.demo?'<div class="aio-demo">ข้อมูลตัวอย่าง (เฟส 1) — ปุ่มอนุมัติ/ตีกลับยังไม่สั่งงานจริง ทำไว้ให้พี่ดูหน้าตาก่อนค่ะ</div>':'')+
         '<div class="aio-ap-grid"><div class="card aio-ap-list">'+list+'</div>'+
         '<div class="card aio-ap-det">'+(det||'<div class="aio-empty">เลือกงานทางซ้ายเพื่อดูรายละเอียด</div>')+'</div></div></div>';
-      $('aioBack').onclick=function(){ S.appr=''; H.go('aiofc'); };
+      $('aioBack').onclick=function(){ S.appr=''; backToLobby(); };
       var bk=$('aioApBack'); if(bk) bk.onclick=function(){ S.appr=''; renderAppr().catch(fail); };
       Array.prototype.forEach.call(H.main.querySelectorAll('.aio-ap-i'), function(el){
         el.onclick=function(){ S.appr=el.getAttribute('data-ap'); renderAppr().catch(fail); window.scrollTo(0,0); };
