@@ -31,6 +31,10 @@
 .aio-hero h2{ margin:0 0 4px; font-size:28px; font-weight:700; letter-spacing:.2px; }
 .aio-hero p{ margin:0; opacity:.92; font-size:15px; }
 .aio-hero-side{ display:flex; flex-direction:column; align-items:flex-end; gap:10px; }
+/* ช่องห้อง + ค่า AI ไว้มุมขวาบน (พี่กี้ 29 ต.ค.) · พื้นกระจกเข้มเพราะมุมบนภาพสว่าง */
+.aio-hero > .aio-hero-side{ position:absolute; top:18px; right:20px; }
+.aio-hero-side .aio-room{ background:rgba(28,22,72,.55); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); border-radius:12px; padding:5px 6px 5px 12px; }
+.aio-hero-side .aio-cost{ background:rgba(28,22,72,.55); }
 .aio-hero .aio-chip{ background:rgba(255,255,255,.18); color:#fff; backdrop-filter:blur(6px); }
 .aio-hero .aio-room span{ color:#fff; }
 .aio-cost{ background:rgba(255,255,255,.16); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,.28);
@@ -211,6 +215,7 @@
   .aio-hero{ display:block; min-height:0; padding:calc(56.3% + 4px) 14px 14px; border-radius:18px; background-size:100% auto; background-position:top center; background-repeat:no-repeat; }
   .aio-hero::before{ display:none; }   /* ใต้ภาพเป็นพื้นม่วงอยู่แล้ว (background-color) */
   .aio-hero-side{ margin-top:12px; }
+  .aio-hero > .aio-hero-side{ position:relative; top:auto; right:auto; }
   .aio-hero h2{ font-size:22px; }
   .aio-hero p{ font-size:13px; }
   .aio-hero-side{ align-items:stretch; width:100%; }
