@@ -313,3 +313,6 @@
 .aio-ff-h{ grid-column:1 / -1; font-weight:600; color:#1F2937; margin-top:4px; }
 .aio-ff-warn{ margin:4px 0 8px; padding-left:20px; color:#C8730B; font-size:13px; }
 a.aio-chip{ text-decoration:none; }
+
+/* §19.4 กันส่งงานซ้ำ — ปุ่มดูร่างเดิม/ส่งซ้ำตั้งใจ ใต้ข้อความเตือน */
+.aio-dup .aio-drafts{ display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }

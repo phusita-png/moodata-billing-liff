@@ -539,19 +539,65 @@
       return d;
     });
   }
-  function uploadOne(f, q){
+  /* §19.4 ลายนิ้วมือไฟล์ (sha-256 ไฟล์ต้นฉบับ ก่อนย่อรูป) → Worker เช็คว่าเคยส่งไฟล์นี้หรือยัง ก่อนเสียค่าอ่าน
+     เบราว์เซอร์ทำไม่ได้ = ส่งว่าง (ยังมีด่านเอกสารเดียวกันหลังอ่านอยู่) */
+  function fileHash(f){
+    try{
+      if(!(window.crypto&&crypto.subtle&&f.arrayBuffer)) return Promise.resolve('');
+      return f.arrayBuffer().then(function(b){ return crypto.subtle.digest('SHA-256', b); }).then(function(h){
+        return Array.prototype.map.call(new Uint8Array(h), function(x){ return ('0'+x.toString(16)).slice(-2); }).join('');
+      }).catch(function(){ return ''; });
+    }catch(e){ return Promise.resolve(''); }
+  }
+  /* ซ้ำ = คืน { duplicate, reply, approvalId, redo } · redo() = "ส่งซ้ำตั้งใจ" (ด่านไฟล์ = อ่านใหม่ · ด่านหลังอ่าน = ใช้ผลอ่านเดิม) */
+  function uploadOne(f, q, force){
     if(f.size>ATT_BYTES && !/^image\//.test(f.type||'')) return Promise.reject(new Error('ไฟล์ใหญ่เกิน 8 MB'));
-    return fileData(f).then(function(data){
-      return api('POST','/attach/ticket',{ room:S.room }).then(function(t){
+    var hash='';
+    return fileHash(f).then(function(h){ hash=h;
+      return api('POST','/attach/ticket',{ room:S.room, hash:hash, force:!!force });
+    }).then(function(t){
+      if(t.duplicate) return { dup:t, redo:function(){ return uploadOne(f, q, true); } };
+      return fileData(f).then(function(data){
         var body=new URLSearchParams({ action:'officeupload', tk:t.tk, room:S.room, name:f.name||'', data:data, q:q||'' });
         return fetch(t.exec,{ method:'POST', headers:{ 'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8' }, body:body.toString() })
           .catch(function(){ throw new Error('ส่งไฟล์ไปยินดีไม่ได้ (ตรวจอินเทอร์เน็ต)'); })
           .then(function(res){ return res.text(); })
           .then(function(tx){ try{ return JSON.parse(tx); }catch(e){ throw new Error('ยินดีตอบผิดรูปแบบ — ลองแนบใหม่อีกครั้ง'); } });
+      }).then(function(r){
+        if(!r || !r.ok) throw new Error((r&&r.error)||'อ่านไฟล์ไม่สำเร็จ');
+        var send=function(fc){ return api('POST','/attach',{ room:S.room, desk:S.desk, result:r, hash:hash, force:!!fc }); };
+        return send(force).then(function(a){
+          if(a.duplicate && a.stage){ a.redo=function(){ return send(true); }; a.name=f.name||'ไฟล์'; }
+          return a;
+        });
       });
-    }).then(function(r){
-      if(!r || !r.ok) throw new Error((r&&r.error)||'อ่านไฟล์ไม่สำเร็จ');
-      return api('POST','/attach',{ room:S.room, desk:S.desk, result:r });
+    }).then(function(a){
+      if(a.dup) return { duplicate:true, stage:'file', reply:(f.name||'ไฟล์')+' — '+a.dup.reply, approvalId:a.dup.approvalId, redo:a.redo, local:true };
+      return a;
+    });
+  }
+  /* กล่องเตือนซ้ำ + ปุ่ม "ส่งซ้ำตั้งใจ" (ด่านไฟล์ไม่ได้ลงแชท → โชว์ข้อความด้วย · ด่านหลังอ่านลงแชทแล้ว → โชว์แค่ปุ่ม) */
+  function dupBox(list){
+    if(!list.length) return '';
+    return list.map(function(d,i){
+      return '<div class="aio-warn aio-dup">'+(d.local?esc(d.reply)+'<br>':'🔁 '+esc(d.name)+' — ซ้ำกับงานเดิม (ดูข้อความด้านบน) ')+
+        '<span class="aio-drafts">'+(d.approvalId?'<button class="aio-btn ghost sm" data-goap="'+esc(d.approvalId)+'">ดูร่างเดิม ›</button>':'')+
+        '<button class="aio-btn ghost sm" data-redo="'+i+'">ส่งซ้ำตั้งใจ</button></span></div>';
+    }).join('');
+  }
+  function bindDup(b, list){
+    Array.prototype.forEach.call(b.querySelectorAll('[data-redo]'), function(x){
+      x.onclick=function(){
+        var d=list[+x.getAttribute('data-redo')]; if(!d || !d.redo) return;
+        x.disabled=true; x.textContent='กำลังส่ง…';
+        d.redo().then(function(a){
+          if(a.approvalId && !a.duplicate) toast('ร่างเข้าห้องอนุมัติแล้ว');
+          return renderDesk();
+        }).catch(function(e){ toast(busyMsg(e), true); x.disabled=false; x.textContent='ส่งซ้ำตั้งใจ'; });
+      };
+    });
+    Array.prototype.forEach.call(b.querySelectorAll('.aio-dup [data-goap]'), function(x){
+      x.onclick=function(){ S.appr=x.getAttribute('data-goap'); H.go('aiappr'); };
     });
   }
   function deskAttach(q){
@@ -562,11 +608,11 @@
       '<div class="aio-typing" id="aioTyping"><i></i><i></i><i></i> <span id="aioAttSt"></span></div>');
     box.scrollTop=box.scrollHeight;
     go.disabled=true;
-    var done=0, sw=null, errs=[], chain=Promise.resolve();
+    var done=0, sw=null, errs=[], dups=[], chain=Promise.resolve();
     files.forEach(function(f,i){
       chain=chain.then(function(){
         var st=$('aioAttSt'); if(st) st.textContent='กำลังอ่านไฟล์ '+(i+1)+'/'+files.length+' · '+(f.name||'')+' (~15–60 วิ)';
-        return uploadOne(f, q).then(function(a){ if(a.approvalId && !a.duplicate) done++; if(a.switchRoom) sw=a.switchRoom; })
+        return uploadOne(f, q).then(function(a){ if(a.approvalId && !a.duplicate) done++; if(a.switchRoom) sw=a.switchRoom; if(a.duplicate && a.redo) dups.push(a); })
           .catch(function(e){ errs.push((f.name||'ไฟล์')+': '+busyMsg(e)); });
       });
     });
@@ -574,6 +620,7 @@
       return renderDesk().then(function(){
         var b=$('aioMsgs'); if(!b) return;
         if(errs.length) b.insertAdjacentHTML('beforeend','<div class="aio-warn">'+errs.map(esc).join('<br>')+'</div>');
+        if(dups.length){ b.insertAdjacentHTML('beforeend', dupBox(dups)); bindDup(b, dups); }
         if(sw){ b.insertAdjacentHTML('beforeend', switchBtn(sw)); bindSwitch(b, '', function(){ S.backAll=false; return renderDesk(); }); }
         b.scrollTop=b.scrollHeight;
         if(done) toast('ร่างเข้าห้องอนุมัติแล้ว '+done+' ชิ้น');
