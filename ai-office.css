@@ -277,3 +277,11 @@
 }
 .aio-switch{ margin:8px 0 4px 52px; }
 @media (max-width:899px){ .aio-switch{ margin-left:0; } .aio-switch .aio-btn{ width:100%; } }
+
+/* เฟส 3A (30 ต.ค. 69) — ปุ่มร่างในแชทโต๊ะบัญชี + ห้องอนุมัติแก้ร่างได้ */
+.aio-drafts{ display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+.aio-drafts .aio-btn{ white-space:normal; text-align:left; }
+.aio-draft-ed{ display:block; width:100%; box-sizing:border-box; min-height:220px; resize:vertical; font:inherit; font-size:14.5px; color:inherit; }
+.aio-draft-ed:focus{ outline:2px solid #9CC9F5; outline-offset:1px; }
+.aio-reason{ display:block; width:100%; box-sizing:border-box; margin-top:10px; padding:9px 12px; border-radius:10px; border:1px solid var(--aio-line); font:inherit; font-size:14px; }
+.aio-lbl small{ font-weight:400; opacity:.7; margin-left:6px; }

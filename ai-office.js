@@ -11,7 +11,7 @@
   var COLOR={ 'MGR-001':'#6EC1F0', 'AUD-001':'#F2726B', 'ACC-001':'#F48FB1', 'HR-001':'#57C28B', 'DEV-001':'#B8BCC8', 'PM-001':'#A78BFA' };
   var DESKS=['MGR-001','AUD-001','ACC-001','HR-001','DEV-001','PM-001'];
   var ST={ idle:'ว่าง', working:'กำลังทำ', waiting:'รอพี่', blocked:'ติดปัญหา' };
-  var TOOL={ board_read:'ดูกระดานงาน', task_status:'ดูสถานะงาน', plan_propose:'เสนอแผนงาน', draft_text:'ร่างข้อความ' };
+  var TOOL={ board_read:'ดูกระดานงาน', task_status:'ดูสถานะงาน', plan_propose:'เสนอแผนงาน', draft_text:'ร่างข้อความ', acc_read:'อ่านตัวเลขบัญชีจากยินดี', draft_approval:'ร่างเข้าห้องอนุมัติ' };
   var EFFORT={ low:'ต่ำ', medium:'กลาง', high:'สูง', xhigh:'สูงมาก', max:'สูงสุด' };
   var RISK={ 1:'อ่านอย่างเดียว', 2:'ร่างงาน', 3:'ต้องอนุมัติ' };
 
@@ -153,6 +153,33 @@
       (rows||'<tr><td colspan="5" class="aio-empty">ยังแตกงานไม่ได้</td></tr>')+'</tbody></table></div>'+
       (qs.length?'<div class="aio-plan-q"><b>หัวหน้า AI ขอถามพี่ก่อน</b><ul>'+qs.map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+'</ul></div>':'')+
       act+'</div>';
+  }
+  /* เฟส 3A (spec §17): โต๊ะบัญชีตอบตัวเลขแล้วเสนอปุ่มร่าง → กดแล้วร่างเข้าห้องอนุมัติ (ใช้ AI · มีค่าใช้จ่าย) */
+  function draftBtns(at){
+    if(!at || at.type!=='acc' || !(at.drafts||[]).length) return '';
+    return '<div class="aio-drafts">'+at.drafts.map(function(d){
+      return '<button class="aio-btn ghost sm" data-draft="'+esc(d.kind)+'" data-ym="'+esc(at.ym)+'">✍️ '+esc(d.label)+'</button>'; }).join('')+'</div>';
+  }
+  function bindDrafts(root, after){
+    Array.prototype.forEach.call(root.querySelectorAll('[data-draft]'), function(b){
+      b.onclick=function(){
+        Array.prototype.forEach.call(root.querySelectorAll('[data-draft]'), function(x){ x.disabled=true; });
+        b.textContent='โต๊ะบัญชีกำลังร่าง… (ดึงตัวเลขใหม่ ~20 วิ)';
+        api('POST','/acc/drafts', { room:S.room, kind:b.getAttribute('data-draft'), ym:b.getAttribute('data-ym') }).then(function(r){
+          toast('ร่างเข้าห้องอนุมัติแล้ว '+((r.created&&r.created.length)||0)+' ชิ้น');
+          after();
+        }).catch(function(e){ toast(busyMsg(e), true); after(); });
+      };
+    });
+  }
+  function copyText(s){
+    var done=function(){ toast('คัดลอกแล้ว'); };
+    if(navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(s).then(done, function(){ copyOld(s); done(); });
+    copyOld(s); done();
+  }
+  function copyOld(s){
+    var t=document.createElement('textarea'); t.value=s; t.style.position='fixed'; t.style.opacity='0';
+    document.body.appendChild(t); t.select(); try{ document.execCommand('copy'); }catch(e){} document.body.removeChild(t);
   }
   function bindPlans(root, after){
     Array.prototype.forEach.call(root.querySelectorAll('[data-plan-ok],[data-plan-cancel]'), function(b){
@@ -371,7 +398,7 @@
         if(m.mine) return '<div class="aio-msg me"><div class="tx">'+esc(m.content)+'</div></div>';
         var at=m.attachments||{}, plan=at.type==='plan' && d.plans && d.plans[at.taskId];
         return '<div class="aio-msg ai"><img src="'+img(id,true)+'" alt=""><div class="tx">'+esc(m.content)+
-          '<div class="aio-meta">'+badge(m)+'</div></div></div>'+(plan?planCard(at.taskId, plan.plan, plan.status):'');
+          '<div class="aio-meta">'+badge(m)+'</div>'+draftBtns(at)+'</div></div>'+(plan?planCard(at.taskId, plan.plan, plan.status):'');
       }).join('') || '<div class="aio-hello">ยังไม่มีข้อความ · ลองกดปุ่มคำถามด้านล่าง หรือพิมพ์ถาม '+esc(k.role)+' ได้เลยค่ะ</div>';
       var queue=(d.queue||[]).map(function(t,i){
         return '<tr><td class="n">'+(i+1)+'</td><td><b>'+esc(t.title)+'</b>'+(t.parent_task_id?'<div class="aio-sub">งานย่อย</div>':'')+'</td>'+
@@ -419,6 +446,7 @@
         deskAsk({ text:t }, t);
       };
       bindPlans(box, function(){ renderDesk().catch(fail); });
+      bindDrafts(box, function(){ renderDesk().catch(fail); });
     });
   }
   function deskAsk(body, label){
@@ -443,53 +471,71 @@
     });
   }
 
-  // ═══════════ ห้องอนุมัติ (เฟส 1 = ข้อมูลตัวอย่าง) ═══════════
+  // ═══════════ ห้องอนุมัติ (เฟส 3A ของจริง · spec §17) ═══════════
+  /* ร่างแก้ได้ในกล่อง → อนุมัติ = เก็บข้อความที่พี่เห็นตอนกด (แก้ = นับว่าแก้ร่าง) · ตีกลับใส่เหตุผลได้
+     เฟส 3A ยังไม่ส่ง/ไม่บันทึกลงระบบ พี่คัดลอกไปใช้เอง */
+  var DEC={ approved:'ผ่าน (ไม่แก้)', approved_edited:'ผ่าน (พี่แก้)', rejected:'ตีกลับ' };
   function renderAppr(){
     return concreteRoom().then(function(){ return api('GET','/approvals'+q()); }).then(function(d){
       if(H.view()!=='aiappr') return;
-      var items=d.items||[];
-      var cur=items.filter(function(x){ return x.id===S.appr; })[0];
+      var items=d.items||[], recent=d.recent||[];
+      var cur=items.filter(function(x){ return x.id===S.appr; })[0] || recent.filter(function(x){ return x.id===S.appr; })[0];
       var wide=window.matchMedia && window.matchMedia('(min-width:900px)').matches;
       if(!cur && wide) cur=items[0];   // จอคอม = เปิดใบแรกให้เลย · มือถือ = เริ่มที่รายการ
-      var list=items.map(function(x,i){
+      function li(x,i,done){
         return '<button class="aio-ap-i'+(cur&&cur.id===x.id?' on':'')+'" data-ap="'+esc(x.id)+'" style="--c:'+(COLOR[x.agent]||'#ccc')+'">'+
           '<span class="n">'+(i+1)+'</span><img src="'+img(x.agent,true)+'" alt="">'+
-          '<span class="tx"><b>'+esc(x.title)+'</b><small>'+esc(ROLE[x.agent]||x.agent)+' · '+esc(x.client)+'</small></span>'+
-          '<span class="aio-au a-'+esc(x.audit)+'">'+(x.audit==='pass'?'ตรวจผ่าน':'ต้องดู')+'</span></button>'; }).join('') ||
-        '<div class="aio-empty">ไม่มีงานรอพี่เซ็นค่ะ</div>';
+          '<span class="tx"><b>'+esc(x.title)+'</b><small>'+esc(x.label||ROLE[x.agent]||x.agent)+' · '+esc(x.client)+'</small></span>'+
+          (done?'<span class="aio-au a-'+(x.decision==='rejected'?'check':'pass')+'">'+esc(DEC[x.decision]||x.decision)+'</span>'
+            :'<span class="aio-au a-'+esc(x.audit)+'">'+(x.audit==='pass'?'ตรวจผ่าน':'ต้องดู')+'</span>')+'</button>'; }
+      var list=(items.map(function(x,i){ return li(x,i,false); }).join('') || '<div class="aio-empty">ไม่มีงานรอพี่เซ็นค่ะ</div>')+
+        (recent.length?'<div class="aio-lbl">ตัดสินล่าสุด</div>'+recent.map(function(x,i){ return li(x,i,true); }).join(''):'');
       var det='';
       if(cur){
+        var open=!cur.decision;
         var rows=(cur.checks||[]).map(function(c,i){
           return '<tr><td class="n">'+(i+1)+'</td><td>'+esc(c.item)+'</td><td class="num">'+esc(c.draft)+'</td><td class="num">'+esc(c.source)+'</td>'+
-            '<td><span class="aio-au a-'+esc(c.result)+'">'+(c.result==='pass'?'ตรง':'ไม่ตรง')+'</span></td></tr>'; }).join('');
+            '<td><span class="aio-au a-'+esc(c.result)+'">'+(c.result==='pass'?'ตรง':'ต้องดู')+'</span></td></tr>'; }).join('');
         det='<button class="aio-back aio-ap-back" id="aioApBack">‹ รายการ</button>'+
           '<div class="aio-ap-hd"><img src="'+img(cur.agent,true)+'" alt=""><div><h3>'+esc(cur.title)+'</h3>'+
-          '<span>ร่างโดย '+esc(ROLE[cur.agent]||cur.agent)+' · จากงาน '+esc(cur.fromTask)+' · '+esc(cur.client)+'</span></div></div>'+
+          '<span>ร่างโดย '+esc(ROLE[cur.agent]||cur.agent)+' · '+esc(cur.label||'')+' · '+esc(cur.client)+'</span></div></div>'+
           '<div class="aio-chips"><span class="aio-risk r'+(+cur.risk||3)+'">ระดับ '+esc(cur.risk)+' · '+esc(RISK[cur.risk]||'')+'</span>'+
-          '<span class="aio-au a-'+esc(cur.audit)+'">ผู้ตรวจสอบ AI: '+(cur.audit==='pass'?'ผ่านทุกข้อ':'มีข้อต้องดู')+'</span></div>'+
-          '<div class="aio-lbl">ผลตรวจเทียบข้อมูลต้นทาง</div>'+
-          '<div class="aio-tw"><table class="aio-t"><thead><tr><th class="n">#</th><th>รายการ</th><th class="num">ในร่าง</th><th class="num">ต้นทาง</th><th>ผล</th></tr></thead><tbody>'+
-          (rows||'<tr><td colspan="5" class="aio-empty">ไม่มีข้อตรวจ</td></tr>')+'</tbody></table></div>'+
-          '<div class="aio-lbl">ร่างงาน</div><div class="aio-draft">'+esc(cur.draft)+'</div>'+
-          '<div class="aio-ap-act"><button class="aio-btn ghost" data-dec="reject">ตีกลับ</button><button class="aio-btn" data-dec="approve">อนุมัติ</button></div>';
+          (open?'<span class="aio-au a-'+esc(cur.audit)+'">ระบบตรวจตัวเลข: '+(cur.audit==='pass'?'ตรงข้อมูลทุกตัว':'มีข้อต้องดู')+'</span>'
+            :'<span class="aio-chip">'+esc(DEC[cur.decision]||cur.decision)+(cur.reason?' · '+esc(cur.reason):'')+'</span>')+'</div>'+
+          '<div class="aio-lbl">ผลตรวจเทียบข้อมูลจากยินดี</div>'+
+          '<div class="aio-tw"><table class="aio-t"><thead><tr><th class="n">#</th><th>รายการ</th><th class="num">ในร่าง</th><th class="num">ข้อมูลต้นทาง</th><th>ผล</th></tr></thead><tbody>'+
+          (rows||'<tr><td colspan="5" class="aio-empty">ร่างนี้ไม่มียอดเงินให้ตรวจ</td></tr>')+'</tbody></table></div>'+
+          (open
+            ?'<div class="aio-lbl">ร่างงาน <small>แก้ได้ก่อนกดอนุมัติ (ถ้าแก้ = นับว่าร่างยังไม่ดีพอ)</small></div>'+
+              '<textarea class="aio-draft aio-draft-ed" id="aioDraft" rows="12">'+esc(cur.draft)+'</textarea>'+
+              '<input class="aio-reason" id="aioReason" maxlength="500" placeholder="เหตุผลที่ตีกลับ (ไม่ใส่ก็ได้)">'+
+              '<div class="aio-ap-act"><button class="aio-btn ghost" id="aioCopy">คัดลอก</button><button class="aio-btn ghost" data-dec="reject">ตีกลับ</button><button class="aio-btn" data-dec="approve">อนุมัติ</button></div>'
+            :'<div class="aio-lbl">'+(cur.final?'ข้อความที่อนุมัติ':'ร่างที่ตีกลับ')+'</div><div class="aio-draft">'+esc(cur.final||cur.draft)+'</div>'+
+              '<div class="aio-ap-act"><button class="aio-btn" id="aioCopy">คัดลอก</button></div>');
       }
+      var r=d.rate||{};
+      var rate=r.total?'ผ่านโดยไม่แก้ '+r.approved+' จาก '+r.total+' ('+r.pct+'%) · เป้าเฟส 3 ≥ 70%':'ยังไม่มีร่างที่ตัดสิน';
       H.main.innerHTML='<div class="aio aio-ap'+(S.appr?' sel':'')+'">'+
-        '<div class="aio-top"><button class="aio-back" id="aioBack">‹ ล็อบบี้</button><span class="aio-chip">'+items.length+' งานรอพี่เซ็น</span></div>'+
-        (d.demo?'<div class="aio-demo">ข้อมูลตัวอย่าง (เฟส 1) — ปุ่มอนุมัติ/ตีกลับยังไม่สั่งงานจริง ทำไว้ให้พี่ดูหน้าตาก่อนค่ะ</div>':'')+
+        '<div class="aio-top"><button class="aio-back" id="aioBack">‹ ล็อบบี้</button>'+roomPicker(d.rooms||S.rooms)+'<span class="aio-chip">'+items.length+' งานรอพี่เซ็น</span><span class="aio-chip">'+esc(rate)+'</span></div>'+
+        '<div class="aio-demo">เฟส 3A: กดอนุมัติแล้วระบบยังไม่ส่งหาใครและไม่บันทึกลงยินดี — กด "คัดลอก" แล้วนำไปใช้เองนะคะ</div>'+
         '<div class="aio-ap-grid"><div class="card aio-ap-list">'+list+'</div>'+
         '<div class="card aio-ap-det">'+(det||'<div class="aio-empty">เลือกงานทางซ้ายเพื่อดูรายละเอียด</div>')+'</div></div></div>';
+      bindRoom();
       $('aioBack').onclick=function(){ S.appr=''; backToLobby(); };
       var bk=$('aioApBack'); if(bk) bk.onclick=function(){ S.appr=''; renderAppr().catch(fail); };
       Array.prototype.forEach.call(H.main.querySelectorAll('.aio-ap-i'), function(el){
         el.onclick=function(){ S.appr=el.getAttribute('data-ap'); renderAppr().catch(fail); window.scrollTo(0,0); };
       });
+      var cp=$('aioCopy'); if(cp) cp.onclick=function(){ copyText($('aioDraft')?$('aioDraft').value:(cur.final||cur.draft)); };
       Array.prototype.forEach.call(H.main.querySelectorAll('[data-dec]'), function(b){
         b.onclick=function(){
-          b.disabled=true;
-          api('POST','/approvals/'+encodeURIComponent(cur.id)+'/decide', { room:S.room, decision:b.getAttribute('data-dec') })
-            .then(function(r){ toast(r.message||'บันทึกแล้ว'); })
-            .catch(function(e){ toast(busyMsg(e), true); })
-            .then(function(){ b.disabled=false; });
+          var dec=b.getAttribute('data-dec'), body={ room:S.room, decision:dec };
+          if(dec==='approve') body.text=$('aioDraft').value;
+          else body.reason=$('aioReason').value;
+          Array.prototype.forEach.call(H.main.querySelectorAll('[data-dec]'), function(x){ x.disabled=true; });
+          api('POST','/approvals/'+encodeURIComponent(cur.id)+'/decide', body)
+            .then(function(r){ toast(r.message||'บันทึกแล้ว'); S.appr=cur.id; renderAppr().catch(fail); })
+            .catch(function(e){ toast(busyMsg(e), true); Array.prototype.forEach.call(H.main.querySelectorAll('[data-dec]'), function(x){ x.disabled=false; }); });
         };
       });
     });
