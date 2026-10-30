@@ -281,6 +281,16 @@
 /* เฟส 3A (30 ต.ค. 69) — ปุ่มร่างในแชทโต๊ะบัญชี + ห้องอนุมัติแก้ร่างได้ */
 .aio-drafts{ display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
 .aio-drafts .aio-btn{ white-space:normal; text-align:left; }
+/* §18 ลิงก์ไฟล์รายงานใน Drive ห้อง */
+.aio-files{ display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+.aio-files a{ display:inline-flex; align-items:center; gap:6px; max-width:100%; padding:7px 11px; border-radius:10px; border:1px solid var(--aio-line);
+  background:#F5F9FF; color:#1F5FA8; font-size:13.5px; text-decoration:none; overflow-wrap:anywhere; }
+.aio-files a:hover{ background:#E8F1FD; }
+.aio-files.col{ flex-direction:column; }
+.aio-files.col a{ width:100%; box-sizing:border-box; }
+.aio-files .n{ min-width:18px; color:#8A94A6; font-size:12px; }
+.aio-files small{ margin-left:auto; color:#8A94A6; font-size:12px; white-space:nowrap; }
+#aioFileOut .aio-files{ margin-top:12px; }
 .aio-draft-ed{ display:block; width:100%; box-sizing:border-box; min-height:220px; resize:vertical; font:inherit; font-size:14.5px; color:inherit; }
 .aio-draft-ed:focus{ outline:2px solid #9CC9F5; outline-offset:1px; }
 .aio-reason{ display:block; width:100%; box-sizing:border-box; margin-top:10px; padding:9px 12px; border-radius:10px; border:1px solid var(--aio-line); font:inherit; font-size:14px; }

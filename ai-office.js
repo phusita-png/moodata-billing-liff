@@ -11,7 +11,7 @@
   var COLOR={ 'MGR-001':'#6EC1F0', 'AUD-001':'#F2726B', 'ACC-001':'#F48FB1', 'HR-001':'#57C28B', 'DEV-001':'#B8BCC8', 'PM-001':'#A78BFA' };
   var DESKS=['MGR-001','AUD-001','ACC-001','HR-001','DEV-001','PM-001'];
   var ST={ idle:'ว่าง', working:'กำลังทำ', waiting:'รอพี่', blocked:'ติดปัญหา' };
-  var TOOL={ board_read:'ดูกระดานงาน', task_status:'ดูสถานะงาน', plan_propose:'เสนอแผนงาน', draft_text:'ร่างข้อความ', acc_read:'อ่านตัวเลขบัญชีจากยินดี', draft_approval:'ร่างเข้าห้องอนุมัติ' };
+  var TOOL={ board_read:'ดูกระดานงาน', task_status:'ดูสถานะงาน', plan_propose:'เสนอแผนงาน', draft_text:'ร่างข้อความ', acc_read:'อ่านตัวเลขบัญชีจากยินดี', draft_approval:'ร่างเข้าห้องอนุมัติ', report_file:'ทำไฟล์รายงาน Excel/PDF' };
   var EFFORT={ low:'ต่ำ', medium:'กลาง', high:'สูง', xhigh:'สูงมาก', max:'สูงสุด' };
   var RISK={ 1:'อ่านอย่างเดียว', 2:'ร่างงาน', 3:'ต้องอนุมัติ' };
 
@@ -156,9 +156,33 @@
   }
   /* เฟส 3A (spec §17): โต๊ะบัญชีตอบตัวเลขแล้วเสนอปุ่มร่าง → กดแล้วร่างเข้าห้องอนุมัติ (ใช้ AI · มีค่าใช้จ่าย) */
   function draftBtns(at){
-    if(!at || at.type!=='acc' || !(at.drafts||[]).length) return '';
-    return '<div class="aio-drafts">'+at.drafts.map(function(d){
-      return '<button class="aio-btn ghost sm" data-draft="'+esc(d.kind)+'" data-ym="'+esc(at.ym)+'">✍️ '+esc(d.label)+'</button>'; }).join('')+'</div>';
+    if(!at) return '';
+    if(at.type==='files') return fileLinks(at.files);
+    if(at.type!=='acc') return '';
+    var ds=(at.drafts||[]).map(function(d){
+      return '<button class="aio-btn ghost sm" data-draft="'+esc(d.kind)+'" data-ym="'+esc(at.ym)+'">✍️ '+esc(d.label)+'</button>'; }).join('');
+    /* §18 ขอไฟล์รายงานของหัวข้อนี้ (ไม่ใช้ AI · ไฟล์อยู่ใน Drive ห้อง) */
+    var fs=at.files?['xlsx','pdf'].map(function(f){
+      return '<button class="aio-btn ghost sm" data-file="'+esc(at.topic)+'" data-ym="'+esc(at.ym)+'" data-fmt="'+f+'">'+(f==='xlsx'?'📊 ไฟล์ Excel':'📄 ไฟล์ PDF')+'</button>'; }).join(''):'';
+    return ds||fs?'<div class="aio-drafts">'+ds+fs+'</div>':'';
+  }
+  var FMT_ICON={ xlsx:'📊', pdf:'📄', doc:'📝' };
+  function fileLinks(files){
+    if(!(files||[]).length) return '';
+    return '<div class="aio-files">'+files.map(function(f){
+      return '<a href="'+esc(f.url)+'" target="_blank" rel="noopener">'+(FMT_ICON[f.fmt]||'📁')+' '+esc(f.name)+'</a>'; }).join('')+'</div>';
+  }
+  function bindFiles(root, after){
+    Array.prototype.forEach.call(root.querySelectorAll('[data-file]'), function(b){
+      b.onclick=function(){
+        Array.prototype.forEach.call(root.querySelectorAll('[data-file]'), function(x){ x.disabled=true; });
+        b.textContent='กำลังทำไฟล์… (~20–60 วิ)';
+        api('POST','/files', { room:S.room, desk:S.desk, report:b.getAttribute('data-file'), ym:b.getAttribute('data-ym'), fmt:b.getAttribute('data-fmt') }).then(function(r){
+          toast((r.files&&r.files.length)?'ทำไฟล์แล้ว '+r.files.length+' ไฟล์':'ไม่มีข้อมูลให้ทำไฟล์');
+          after();
+        }).catch(function(e){ toast(busyMsg(e), true); after(); });
+      };
+    });
   }
   function bindDrafts(root, after){
     Array.prototype.forEach.call(root.querySelectorAll('[data-draft]'), function(b){
@@ -447,6 +471,7 @@
       };
       bindPlans(box, function(){ renderDesk().catch(fail); });
       bindDrafts(box, function(){ renderDesk().catch(fail); });
+      bindFiles(box, function(){ renderDesk().catch(fail); });
     });
   }
   function deskAsk(body, label){
@@ -476,7 +501,11 @@
      เฟส 3A ยังไม่ส่ง/ไม่บันทึกลงระบบ พี่คัดลอกไปใช้เอง */
   var DEC={ approved:'ผ่าน (ไม่แก้)', approved_edited:'ผ่าน (พี่แก้)', rejected:'ตีกลับ' };
   function renderAppr(){
-    return concreteRoom().then(function(){ return api('GET','/approvals'+q()); }).then(function(d){
+    return concreteRoom().then(function(){
+      // ไฟล์ที่เคยทำ (§18) พังได้ ไม่ให้ห้องอนุมัติพังตาม
+      return Promise.all([api('GET','/approvals'+q()), api('GET','/files'+q()).catch(function(){ return { files:[] }; })]);
+    }).then(function(both){
+      var d=both[0], made=(both[1]&&both[1].files)||[];
       if(H.view()!=='aiappr') return;
       var items=d.items||[], recent=d.recent||[];
       var cur=items.filter(function(x){ return x.id===S.appr; })[0] || recent.filter(function(x){ return x.id===S.appr; })[0];
@@ -489,7 +518,11 @@
           (done?'<span class="aio-au a-'+(x.decision==='rejected'?'check':'pass')+'">'+esc(DEC[x.decision]||x.decision)+'</span>'
             :'<span class="aio-au a-'+esc(x.audit)+'">'+(x.audit==='pass'?'ตรวจผ่าน':'ต้องดู')+'</span>')+'</button>'; }
       var list=(items.map(function(x,i){ return li(x,i,false); }).join('') || '<div class="aio-empty">ไม่มีงานรอพี่เซ็นค่ะ</div>')+
-        (recent.length?'<div class="aio-lbl">ตัดสินล่าสุด</div>'+recent.map(function(x,i){ return li(x,i,true); }).join(''):'');
+        (recent.length?'<div class="aio-lbl">ตัดสินล่าสุด</div>'+recent.map(function(x,i){ return li(x,i,true); }).join(''):'')+
+        '<div class="aio-lbl">📁 ไฟล์ที่เคยทำ <small>เก็บใน Drive ของห้อง · เปิดได้เฉพาะคนที่มีสิทธิ์โฟลเดอร์</small></div>'+
+        (made.length?'<div class="aio-files col">'+made.slice(0,15).map(function(f,i){
+          return '<a href="'+esc(f.url)+'" target="_blank" rel="noopener"><span class="n">'+(i+1)+'</span>'+(FMT_ICON[f.fmt]||'📁')+' '+esc(f.name)+'<small>'+esc(thDate(String(f.createdAt||'').slice(0,10)))+'</small></a>'; }).join('')+'</div>'
+          :'<div class="aio-empty">ยังไม่เคยทำไฟล์ · ขอได้จากปุ่ม 📊/📄 ใต้คำตอบโต๊ะบัญชี หรือพิมพ์ "ขอไฟล์…"</div>');
       var det='';
       if(cur){
         var open=!cur.decision;
@@ -511,13 +544,15 @@
               '<input class="aio-reason" id="aioReason" maxlength="500" placeholder="เหตุผลที่ตีกลับ (ไม่ใส่ก็ได้)">'+
               '<div class="aio-ap-act"><button class="aio-btn ghost" id="aioCopy">คัดลอก</button><button class="aio-btn ghost" data-dec="reject">ตีกลับ</button><button class="aio-btn" data-dec="approve">อนุมัติ</button></div>'
             :'<div class="aio-lbl">'+(cur.final?'ข้อความที่อนุมัติ':'ร่างที่ตีกลับ')+'</div><div class="aio-draft">'+esc(cur.final||cur.draft)+'</div>'+
-              '<div class="aio-ap-act"><button class="aio-btn" id="aioCopy">คัดลอก</button></div>');
+              '<div class="aio-ap-act"><button class="aio-btn ghost" id="aioCopy">คัดลอก</button>'+
+              (cur.final?'<button class="aio-btn" id="aioMkFile">📄 ทำไฟล์ (Google Doc + PDF)</button>':'')+'</div>'+
+              '<div id="aioFileOut"></div>');
       }
       var r=d.rate||{};
       var rate=r.total?'ผ่านโดยไม่แก้ '+r.approved+' จาก '+r.total+' ('+r.pct+'%) · เป้าเฟส 3 ≥ 70%':'ยังไม่มีร่างที่ตัดสิน';
       H.main.innerHTML='<div class="aio aio-ap'+(S.appr?' sel':'')+'">'+
         '<div class="aio-top"><button class="aio-back" id="aioBack">‹ ล็อบบี้</button>'+roomPicker(d.rooms||S.rooms)+'<span class="aio-chip">'+items.length+' งานรอพี่เซ็น</span><span class="aio-chip">'+esc(rate)+'</span></div>'+
-        '<div class="aio-demo">เฟส 3A: กดอนุมัติแล้วระบบยังไม่ส่งหาใครและไม่บันทึกลงยินดี — กด "คัดลอก" แล้วนำไปใช้เองนะคะ</div>'+
+        '<div class="aio-demo">เฟส 3A: กดอนุมัติแล้วระบบยังไม่ส่งหาใครและไม่บันทึกลงยินดี — กด "คัดลอก" หรือ "📄 ทำไฟล์" แล้วนำไปใช้เองนะคะ</div>'+
         '<div class="aio-ap-grid"><div class="card aio-ap-list">'+list+'</div>'+
         '<div class="card aio-ap-det">'+(det||'<div class="aio-empty">เลือกงานทางซ้ายเพื่อดูรายละเอียด</div>')+'</div></div></div>';
       bindRoom();
@@ -527,6 +562,13 @@
         el.onclick=function(){ S.appr=el.getAttribute('data-ap'); renderAppr().catch(fail); window.scrollTo(0,0); };
       });
       var cp=$('aioCopy'); if(cp) cp.onclick=function(){ copyText($('aioDraft')?$('aioDraft').value:(cur.final||cur.draft)); };
+      var mk=$('aioMkFile'); if(mk) mk.onclick=function(){
+        mk.disabled=true; mk.textContent='กำลังทำไฟล์… (~20 วิ)';
+        api('POST','/approvals/'+encodeURIComponent(cur.id)+'/file', { room:S.room }).then(function(r){
+          toast(r.message||'ทำไฟล์แล้ว'); S.appr=cur.id;
+          return renderAppr().then(function(){ var o=$('aioFileOut'); if(o) o.innerHTML=fileLinks(r.files); });
+        }).catch(function(e){ toast(busyMsg(e), true); mk.disabled=false; mk.textContent='📄 ทำไฟล์ (Google Doc + PDF)'; });
+      };
       Array.prototype.forEach.call(H.main.querySelectorAll('[data-dec]'), function(b){
         b.onclick=function(){
           var dec=b.getAttribute('data-dec'), body={ room:S.room, decision:dec };
