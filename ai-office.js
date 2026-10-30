@@ -693,6 +693,7 @@
       (open
         ?'<input class="aio-reason" id="aioReason" maxlength="500" placeholder="เหตุผลที่ตีกลับ (ไม่ใส่ก็ได้)">'+
           '<div class="aio-ap-act"><button class="aio-btn ghost" data-dec="reject">ตีกลับ</button><button class="aio-btn" data-dec="approve">'+esc(ACT_LABEL[a.kind]||'อนุมัติ')+'</button></div>'
+        :cur.decision==='acting'?'<div class="aio-warn">⏳ ยินดีกำลังทำงานนี้อยู่ — หนูเช็คผลให้เองทุก 20 วิ ไม่ต้องกดซ้ำค่ะ</div>'
         :(res?'<div class="aio-lbl">ผลในยินดี</div><div class="aio-draft">'+esc(res.text)+'</div>'+
           (res.view?'<div class="aio-ap-act"><button class="aio-btn ghost" id="aioGoYd" data-view="'+esc(res.view)+'">เปิดหน้านี้ในยินดี ›</button></div>':''):''));
   }
@@ -783,7 +784,29 @@
             });
         };
       });
+      pollActing(recent);
     });
+  }
+  /* §19.5 ร่างที่ค้าง "ยินดีกำลังทำ" (ยินดีตอบไม่ทัน) → ถามผลเองทุก 20 วิ ขณะเปิดห้องอนุมัติอยู่ · ได้ผล/ล้ม = วาดใหม่ */
+  function pollActing(recent){
+    clearTimeout(S.actT);
+    var ids=(recent||[]).filter(function(x){ return x.decision==='acting'; }).map(function(x){ return x.id; });
+    if(!ids.length) return;
+    S.actT=setTimeout(function(){
+      if(H.view()!=='aiappr') return;
+      var changed=false, chain=Promise.resolve();
+      ids.forEach(function(id){
+        chain=chain.then(function(){
+          return api('POST','/approvals/'+encodeURIComponent(id)+'/check',{ room:S.room }).then(function(r){
+            if(!r.acting){ changed=true; if(r.message) toast(r.message); }
+          }).catch(function(e){ changed=true; toast(busyMsg(e), true); });
+        });
+      });
+      chain.then(function(){
+        if(H.view()!=='aiappr') return;
+        if(changed) renderAppr().catch(fail); else pollActing(recent);
+      });
+    }, 20000);
   }
 
   function render(view, host){
