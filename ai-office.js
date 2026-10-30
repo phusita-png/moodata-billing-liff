@@ -11,7 +11,7 @@
   var COLOR={ 'MGR-001':'#6EC1F0', 'AUD-001':'#F2726B', 'ACC-001':'#F48FB1', 'HR-001':'#57C28B', 'DEV-001':'#B8BCC8', 'PM-001':'#A78BFA' };
   var DESKS=['MGR-001','AUD-001','ACC-001','HR-001','DEV-001','PM-001'];
   var ST={ idle:'ว่าง', working:'กำลังทำ', waiting:'รอพี่', blocked:'ติดปัญหา' };
-  var TOOL={ board_read:'ดูกระดานงาน', task_status:'ดูสถานะงาน', plan_propose:'เสนอแผนงาน', draft_text:'ร่างข้อความ', acc_read:'อ่านตัวเลขบัญชีจากยินดี', draft_approval:'ร่างเข้าห้องอนุมัติ', report_file:'ทำไฟล์รายงาน Excel/PDF' };
+  var TOOL={ board_read:'ดูกระดานงาน', task_status:'ดูสถานะงาน', plan_propose:'เสนอแผนงาน', draft_text:'ร่างข้อความ', acc_read:'อ่านตัวเลขบัญชีจากยินดี', draft_approval:'ร่างเข้าห้องอนุมัติ', report_file:'ทำไฟล์รายงาน Excel/PDF', file_read:'อ่านไฟล์แนบ' };
   var EFFORT={ low:'ต่ำ', medium:'กลาง', high:'สูง', xhigh:'สูงมาก', max:'สูงสุด' };
   var RISK={ 1:'อ่านอย่างเดียว', 2:'ร่างงาน', 3:'ต้องอนุมัติ' };
 
@@ -158,6 +158,8 @@
   function draftBtns(at){
     if(!at) return '';
     if(at.type==='files') return fileLinks(at.files);
+    if(at.type==='attach') return '<div class="aio-drafts">'+(at.approvalId?'<button class="aio-btn ghost sm" data-goap="'+esc(at.approvalId)+'">ไปห้องอนุมัติ ›</button>':'')+
+      (at.url?'<a class="aio-btn ghost sm" href="'+esc(at.url)+'" target="_blank" rel="noopener">📄 เปิดไฟล์</a>':'')+'</div>';
     if(at.type!=='acc') return '';
     var ds=(at.drafts||[]).map(function(d){
       return '<button class="aio-btn ghost sm" data-draft="'+esc(d.kind)+'" data-ym="'+esc(at.ym)+'">✍️ '+esc(d.label)+'</button>'; }).join('');
@@ -448,8 +450,10 @@
             '<div class="aio-chat-h"><img src="'+img(id,true)+'" alt=""><div><b>คุยกับ'+esc(k.role)+'</b><span>ห้อง '+esc((d.room&&d.room.name)||S.room)+'</span></div></div>'+
             '<div class="aio-msgs" id="aioMsgs">'+msgs+'</div>'+
             '<div class="aio-cmd"><div class="aio-qs">'+quick+'</div>'+
-            '<div class="aio-in"><textarea id="aioAsk" rows="2" maxlength="4000" placeholder="'+(id==='MGR-001'?'ถามสถานะ หรือสั่งงาน — หัวหน้าจะเสนอแผนให้พี่ยืนยันก่อน':'พิมพ์ถาม'+esc(k.role))+'"></textarea>'+
-            '<button class="aio-btn" id="aioAskGo">ส่ง</button></div></div>'+
+            '<div class="aio-in"><button class="aio-btn ghost aio-clip" id="aioClip" type="button" title="แนบไฟล์ (สูงสุด '+ATT_MAX+' ไฟล์)">📎</button>'+
+            '<input type="file" id="aioFileIn" multiple accept="image/*,application/pdf,.xlsx,.xls,.csv,.docx,.doc" hidden>'+
+            '<textarea id="aioAsk" rows="2" maxlength="4000" placeholder="'+(id==='MGR-001'?'ถามสถานะ หรือสั่งงาน — หัวหน้าจะเสนอแผนให้พี่ยืนยันก่อน':'พิมพ์ถาม'+esc(k.role))+'"></textarea>'+
+            '<button class="aio-btn" id="aioAskGo">ส่ง</button></div><div class="aio-att" id="aioAtt"></div></div>'+
           '</section>'+
           '<aside class="card aio-queue"><div class="aio-lbl big">คิวงานของโต๊ะนี้</div>'+
             '<div class="aio-tw"><table class="aio-t"><thead><tr><th class="n">#</th><th>งาน</th><th>สถานะ</th><th>กำหนด</th></tr></thead><tbody>'+
@@ -466,12 +470,25 @@
         el.onclick=function(){ deskAsk({ quick:el.getAttribute('data-q') }, el.textContent); };
       });
       $('aioAskGo').onclick=function(){
-        var t=$('aioAsk').value.trim(); if(!t){ $('aioAsk').focus(); return; }
+        var t=$('aioAsk').value.trim();
+        if(S.att.length){ deskAttach(t); return; }
+        if(!t){ $('aioAsk').focus(); return; }
         deskAsk({ text:t }, t);
       };
+      $('aioClip').onclick=function(){ $('aioFileIn').click(); };
+      $('aioFileIn').onchange=function(){
+        var fs=Array.prototype.slice.call(this.files||[]); this.value='';
+        fs.forEach(function(f){ if(S.att.length<ATT_MAX) S.att.push(f); });
+        if(fs.length>ATT_MAX) toast('แนบได้ครั้งละ '+ATT_MAX+' ไฟล์ค่ะ', true);
+        paintAtt();
+      };
+      paintAtt();
       bindPlans(box, function(){ renderDesk().catch(fail); });
       bindDrafts(box, function(){ renderDesk().catch(fail); });
       bindFiles(box, function(){ renderDesk().catch(fail); });
+      Array.prototype.forEach.call(box.querySelectorAll('[data-goap]'), function(b){
+        b.onclick=function(){ S.appr=b.getAttribute('data-goap'); H.go('aiappr'); };
+      });
     });
   }
   function deskAsk(body, label){
@@ -496,10 +513,142 @@
     });
   }
 
+  // ═══════════ 📎 แนบไฟล์ (spec §19) ═══════════
+  /* ไฟล์ส่งตรงไปยินดี (ไม่ผ่าน Worker): ขอตั๋ว upload → POST officeupload → ส่งผลอ่าน (rt เซ็นแล้ว) ให้ Worker ร่างเข้าห้องอนุมัติ
+     ทีละไฟล์ตามคิว · ไฟล์ละ 15–60 วิ · ไฟล์ไหนพังไม่ล้มทั้งชุด */
+  var ATT_MAX=5, ATT_BYTES=8*1024*1024;
+  var MIME={ pdf:'application/pdf', xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', xls:'application/vnd.ms-excel',
+    csv:'text/csv', docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document', doc:'application/msword' };
+  S.att=[];
+  function paintAtt(){
+    var el=$('aioAtt'); if(!el) return;
+    el.innerHTML=S.att.map(function(f,i){
+      return '<span class="aio-att-f">'+(/^image\//.test(f.type||'')?'🖼️':'📄')+' '+esc(String(f.name||('ไฟล์ '+(i+1))).slice(0,28))+
+        '<button type="button" data-att-del="'+i+'" title="เอาออก">×</button></span>'; }).join('')+
+      (S.att.length?'<div class="aio-att-h">บิล/ใบกำกับ · สลิปลูกค้าโอน · 50 ทวิ · statement · เอกสารทั่วไป — พิมพ์บอกชนิดได้ หรือกดส่งเลยให้ AI ดูเอง · ร่างเข้าห้องอนุมัติ ไฟล์ละ 1 ร่าง</div>':'');
+    Array.prototype.forEach.call(el.querySelectorAll('[data-att-del]'), function(b){
+      b.onclick=function(){ S.att.splice(+b.getAttribute('data-att-del'),1); paintAtt(); };
+    });
+  }
+  function fileData(f){
+    var isImg=/^image\//.test(f.type||'');
+    return (isImg ? H.shrink(f) : H.readFile(f)).then(function(d){
+      var ext=((String(f.name||'').match(/\.(\w+)$/)||[])[1]||'').toLowerCase();
+      /* Windows บางเครื่องไม่บอกชนิด Excel/CSV → เติมจากนามสกุล (ยินดีแปลงไฟล์ตามชนิดนี้) */
+      if(MIME[ext]) d=String(d).replace(/^data:(application\/octet-stream)?;base64,/, 'data:'+MIME[ext]+';base64,');
+      return d;
+    });
+  }
+  function uploadOne(f, q){
+    if(f.size>ATT_BYTES && !/^image\//.test(f.type||'')) return Promise.reject(new Error('ไฟล์ใหญ่เกิน 8 MB'));
+    return fileData(f).then(function(data){
+      return api('POST','/attach/ticket',{ room:S.room }).then(function(t){
+        var body=new URLSearchParams({ action:'officeupload', tk:t.tk, room:S.room, name:f.name||'', data:data, q:q||'' });
+        return fetch(t.exec,{ method:'POST', headers:{ 'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8' }, body:body.toString() })
+          .catch(function(){ throw new Error('ส่งไฟล์ไปยินดีไม่ได้ (ตรวจอินเทอร์เน็ต)'); })
+          .then(function(res){ return res.text(); })
+          .then(function(tx){ try{ return JSON.parse(tx); }catch(e){ throw new Error('ยินดีตอบผิดรูปแบบ — ลองแนบใหม่อีกครั้ง'); } });
+      });
+    }).then(function(r){
+      if(!r || !r.ok) throw new Error((r&&r.error)||'อ่านไฟล์ไม่สำเร็จ');
+      return api('POST','/attach',{ room:S.room, desk:S.desk, result:r });
+    });
+  }
+  function deskAttach(q){
+    var files=S.att.slice(0,ATT_MAX), box=$('aioMsgs'), go=$('aioAskGo');
+    S.att=[]; paintAtt(); $('aioAsk').value='';
+    var hello=box.querySelector('.aio-hello'); if(hello) hello.parentNode.removeChild(hello);
+    box.insertAdjacentHTML('beforeend','<div class="aio-msg me"><div class="tx">📎 '+esc(files.map(function(f){ return f.name||'ไฟล์'; }).join(', '))+(q?'\n'+esc(q):'')+'</div></div>'+
+      '<div class="aio-typing" id="aioTyping"><i></i><i></i><i></i> <span id="aioAttSt"></span></div>');
+    box.scrollTop=box.scrollHeight;
+    go.disabled=true;
+    var done=0, sw=null, errs=[], chain=Promise.resolve();
+    files.forEach(function(f,i){
+      chain=chain.then(function(){
+        var st=$('aioAttSt'); if(st) st.textContent='กำลังอ่านไฟล์ '+(i+1)+'/'+files.length+' · '+(f.name||'')+' (~15–60 วิ)';
+        return uploadOne(f, q).then(function(a){ if(a.approvalId && !a.duplicate) done++; if(a.switchRoom) sw=a.switchRoom; })
+          .catch(function(e){ errs.push((f.name||'ไฟล์')+': '+busyMsg(e)); });
+      });
+    });
+    chain.then(function(){
+      return renderDesk().then(function(){
+        var b=$('aioMsgs'); if(!b) return;
+        if(errs.length) b.insertAdjacentHTML('beforeend','<div class="aio-warn">'+errs.map(esc).join('<br>')+'</div>');
+        if(sw){ b.insertAdjacentHTML('beforeend', switchBtn(sw)); bindSwitch(b, '', function(){ S.backAll=false; return renderDesk(); }); }
+        b.scrollTop=b.scrollHeight;
+        if(done) toast('ร่างเข้าห้องอนุมัติแล้ว '+done+' ชิ้น');
+      });
+    }).catch(fail);
+  }
+
   // ═══════════ ห้องอนุมัติ (เฟส 3A ของจริง · spec §17) ═══════════
   /* ร่างแก้ได้ในกล่อง → อนุมัติ = เก็บข้อความที่พี่เห็นตอนกด (แก้ = นับว่าแก้ร่าง) · ตีกลับใส่เหตุผลได้
      เฟส 3A ยังไม่ส่ง/ไม่บันทึกลงระบบ พี่คัดลอกไปใช้เอง */
-  var DEC={ approved:'ผ่าน (ไม่แก้)', approved_edited:'ผ่าน (พี่แก้)', rejected:'ตีกลับ' };
+  var DEC={ approved:'ผ่าน (ไม่แก้)', approved_edited:'ผ่าน (พี่แก้)', rejected:'ตีกลับ', acting:'ยินดีกำลังทำ' };
+
+  /* §19 ร่างจากไฟล์แนบ: ช่องที่อ่านได้แก้ได้ก่อนอนุมัติ (แก้ = นับว่า AI อ่านพลาด) · อนุมัติ = ยินดีทำจริง */
+  var ACT_LABEL={ purchase_invoice:'อนุมัติ → เปิดใบสั่งจ่าย', bank_slip:'อนุมัติ → บันทึกรับชำระ', wht_received:'อนุมัติ → ลงทะเบียน 50 ทวิ',
+    bank_statement:'อนุมัติ → นำเข้า statement', stmt_table:'อนุมัติ → นำเข้า statement' };
+  function ffIn(key, label, val, open, numeric, cert){
+    return '<label class="aio-ff"><span>'+esc(label)+'</span><input data-f="'+esc(key)+'"'+(cert!=null?' data-c="'+cert+'"':'')+
+      ' value="'+esc(val==null?'':(numeric&&val!==''&&isFinite(+String(val).replace(/,/g,''))?money(String(val).replace(/,/g,'')):val))+'"'+
+      (numeric?' inputmode="decimal"':'')+(open?'':' disabled')+'></label>';
+  }
+  function ffSel(key, label, list, val, open, empty){
+    return '<label class="aio-ff wide"><span>'+esc(label)+'</span><select data-f="'+esc(key)+'"'+(open?'':' disabled')+'><option value="">'+esc(empty)+'</option>'+
+      list.map(function(o){ return '<option value="'+esc(o.v)+'"'+(String(o.v)===String(val)?' selected':'')+'>'+esc(o.t)+'</option>'; }).join('')+'</select></label>';
+  }
+  function fileForm(a, open){
+    var f=a.fields||{}, o=a.opts||{}, k=a.kind, h='';
+    if(k==='purchase_invoice'){
+      h=ffIn('seller_name','ผู้ขาย',f.seller_name,open)+ffIn('seller_tax_id','เลขผู้เสียภาษีผู้ขาย',f.seller_tax_id,open)+
+        ffIn('doc_no','เลขที่บิล',f.doc_no,open)+ffIn('doc_date','วันที่บิล (ค.ศ. ปปปป-ดด-วว)',f.doc_date,open)+
+        ffIn('subtotal','ก่อน VAT',f.subtotal,open,1)+ffIn('vat_amount','VAT',f.vat_amount,open,1)+ffIn('total','ยอดรวม',f.total,open,1);
+    } else if(k==='bank_slip'){
+      h=ffIn('amount','ยอดโอน',f.amount,open,1)+ffIn('from_name','ผู้โอน',f.from_name,open)+ffIn('transfer_date','วันที่โอน (ค.ศ.)',f.transfer_date,open)+
+        ffSel('iv','ใบแจ้งหนี้ที่รับชำระ',(o.ivs||[]).map(function(iv){ return { v:iv.no, t:iv.no+' · '+iv.customer+' · ค้าง '+money(iv.balance) }; }),f.iv,open,
+          (o.ivs||[]).length?'— เลือกใบแจ้งหนี้ —':'ไม่มีใบแจ้งหนี้ค้างรับ');
+    } else if(k==='wht_received'){
+      h=(f.certs||[]).map(function(c,i){
+        return '<div class="aio-ff-h">ใบที่ '+(i+1)+'</div>'+ffIn('payer','ผู้หัก (ลูกค้า)',c.payer,open,0,i)+ffIn('payerId','เลขผู้เสียภาษีผู้หัก',c.payerId,open,0,i)+
+          ffIn('docNo','เล่มที่/เลขที่',c.docNo,open,0,i)+ffIn('payDate','วันที่จ่าย (ค.ศ.)',c.payDate,open,0,i)+
+          ffIn('amount','เงินได้',c.amount,open,1,i)+ffIn('tax','ภาษีที่หัก',c.tax,open,1,i);
+      }).join('');
+    } else {
+      var s=a.stmt||{};
+      h='<div class="aio-ff-h">'+esc((s.n||0)+' รายการ · '+(s.from||'-')+' ถึง '+(s.to||'-'))+'</div>'+
+        ffSel('account','บัญชีธนาคารของ statement นี้',(o.accounts||[]).map(function(x){ return { v:x.id, t:x.label }; }),f.account,open,
+          (o.accounts||[]).length?'— เลือกบัญชี —':'ห้องนี้ยังไม่มีบัญชีธนาคาร (เพิ่มในยินดีก่อน)');
+    }
+    return '<div class="aio-ff-grid">'+h+'</div>';
+  }
+  function readForm(a){
+    var out=JSON.parse(JSON.stringify(a.fields||{}));
+    Array.prototype.forEach.call(H.main.querySelectorAll('.aio-ff-grid [data-f]'), function(el){
+      var k=el.getAttribute('data-f'), c=el.getAttribute('data-c'), v=el.value.trim();
+      if(c!=null){ out.certs=out.certs||[]; out.certs[+c]=out.certs[+c]||{}; out.certs[+c][k]=v; } else out[k]=v;
+    });
+    return out;
+  }
+  function fileDet(cur){
+    var a=cur.action, open=!cur.decision, res=a.result;
+    var warn=(a.warn||[]).map(function(w,i){ return '<li>'+esc(w)+'</li>'; }).join('');
+    return '<button class="aio-back aio-ap-back" id="aioApBack">‹ รายการ</button>'+
+      '<div class="aio-ap-hd"><img src="'+img(cur.agent,true)+'" alt=""><div><h3>'+esc(cur.title)+'</h3>'+
+      '<span>📎 '+esc(a.name||'ไฟล์แนบ')+' · '+esc(cur.label||'')+' · '+esc(cur.client)+'</span></div></div>'+
+      '<div class="aio-chips"><span class="aio-risk r3">ระดับ 3 · '+esc(RISK[3])+'</span>'+
+      (open?'<span class="aio-au a-'+esc(cur.audit)+'">'+(cur.audit==='pass'?'อ่านครบ':'มีข้อต้องดู')+'</span>'
+        :'<span class="aio-chip">'+esc(DEC[cur.decision]||cur.decision)+(cur.reason?' · '+esc(cur.reason):'')+'</span>')+
+      (a.url?'<a class="aio-chip" href="'+esc(a.url)+'" target="_blank" rel="noopener">📄 เปิดไฟล์ต้นฉบับ</a>':'')+'</div>'+
+      (warn?'<div class="aio-lbl">ตัวอ่านเตือน</div><ul class="aio-ff-warn">'+warn+'</ul>':'')+
+      '<div class="aio-lbl">ค่าที่อ่านได้ <small>'+(open?'แก้ได้ก่อนกดอนุมัติ (แก้ = นับว่า AI อ่านพลาด)':'ค่าที่ใช้ตอนอนุมัติ')+'</small></div>'+
+      fileForm(a, open)+
+      (open
+        ?'<input class="aio-reason" id="aioReason" maxlength="500" placeholder="เหตุผลที่ตีกลับ (ไม่ใส่ก็ได้)">'+
+          '<div class="aio-ap-act"><button class="aio-btn ghost" data-dec="reject">ตีกลับ</button><button class="aio-btn" data-dec="approve">'+esc(ACT_LABEL[a.kind]||'อนุมัติ')+'</button></div>'
+        :(res?'<div class="aio-lbl">ผลในยินดี</div><div class="aio-draft">'+esc(res.text)+'</div>'+
+          (res.view?'<div class="aio-ap-act"><button class="aio-btn ghost" id="aioGoYd" data-view="'+esc(res.view)+'">เปิดหน้านี้ในยินดี ›</button></div>':''):''));
+  }
   function renderAppr(){
     return concreteRoom().then(function(){
       // ไฟล์ที่เคยทำ (§18) พังได้ ไม่ให้ห้องอนุมัติพังตาม
@@ -524,7 +673,8 @@
           return '<a href="'+esc(f.url)+'" target="_blank" rel="noopener"><span class="n">'+(i+1)+'</span>'+(FMT_ICON[f.fmt]||'📁')+' '+esc(f.name)+'<small>'+esc(thDate(String(f.createdAt||'').slice(0,10)))+'</small></a>'; }).join('')+'</div>'
           :'<div class="aio-empty">ยังไม่เคยทำไฟล์ · ขอได้จากปุ่ม 📊/📄 ใต้คำตอบโต๊ะบัญชี หรือพิมพ์ "ขอไฟล์…"</div>');
       var det='';
-      if(cur){
+      if(cur && cur.action){ det=fileDet(cur); }
+      else if(cur){
         var open=!cur.decision;
         var rows=(cur.checks||[]).map(function(c,i){
           return '<tr><td class="n">'+(i+1)+'</td><td>'+esc(c.item)+'</td><td class="num">'+esc(c.draft)+'</td><td class="num">'+esc(c.source)+'</td>'+
@@ -552,7 +702,7 @@
       var rate=r.total?'ผ่านโดยไม่แก้ '+r.approved+' จาก '+r.total+' ('+r.pct+'%) · เป้าเฟส 3 ≥ 70%':'ยังไม่มีร่างที่ตัดสิน';
       H.main.innerHTML='<div class="aio aio-ap'+(S.appr?' sel':'')+'">'+
         '<div class="aio-top"><button class="aio-back" id="aioBack">‹ ล็อบบี้</button>'+roomPicker(d.rooms||S.rooms)+'<span class="aio-chip">'+items.length+' งานรอพี่เซ็น</span><span class="aio-chip">'+esc(rate)+'</span></div>'+
-        '<div class="aio-demo">เฟส 3A: กดอนุมัติแล้วระบบยังไม่ส่งหาใครและไม่บันทึกลงยินดี — กด "คัดลอก" หรือ "📄 ทำไฟล์" แล้วนำไปใช้เองนะคะ</div>'+
+        '<div class="aio-demo">ร่างข้อความ: อนุมัติแล้วยังไม่ส่งหาใคร — กด "คัดลอก" หรือ "📄 ทำไฟล์" ไปใช้เอง · ร่างจากไฟล์แนบ 📎: อนุมัติแล้วยินดีบันทึกให้จริง (ตรวจ/แก้ค่าก่อนกด)</div>'+
         '<div class="aio-ap-grid"><div class="card aio-ap-list">'+list+'</div>'+
         '<div class="card aio-ap-det">'+(det||'<div class="aio-empty">เลือกงานทางซ้ายเพื่อดูรายละเอียด</div>')+'</div></div></div>';
       bindRoom();
@@ -562,6 +712,7 @@
         el.onclick=function(){ S.appr=el.getAttribute('data-ap'); renderAppr().catch(fail); window.scrollTo(0,0); };
       });
       var cp=$('aioCopy'); if(cp) cp.onclick=function(){ copyText($('aioDraft')?$('aioDraft').value:(cur.final||cur.draft)); };
+      var gy=$('aioGoYd'); if(gy) gy.onclick=function(){ H.go(gy.getAttribute('data-view')); };
       var mk=$('aioMkFile'); if(mk) mk.onclick=function(){
         mk.disabled=true; mk.textContent='กำลังทำไฟล์… (~20 วิ)';
         api('POST','/approvals/'+encodeURIComponent(cur.id)+'/file', { room:S.room }).then(function(r){
@@ -572,12 +723,17 @@
       Array.prototype.forEach.call(H.main.querySelectorAll('[data-dec]'), function(b){
         b.onclick=function(){
           var dec=b.getAttribute('data-dec'), body={ room:S.room, decision:dec };
-          if(dec==='approve') body.text=$('aioDraft').value;
+          if(dec==='approve'){ if(cur.action) body.fields=readForm(cur.action); else body.text=$('aioDraft').value; }
           else body.reason=$('aioReason').value;
           Array.prototype.forEach.call(H.main.querySelectorAll('[data-dec]'), function(x){ x.disabled=true; });
+          if(cur.action && dec==='approve') b.textContent='ยินดีกำลังทำ… (~20–60 วิ)';
           api('POST','/approvals/'+encodeURIComponent(cur.id)+'/decide', body)
             .then(function(r){ toast(r.message||'บันทึกแล้ว'); S.appr=cur.id; renderAppr().catch(fail); })
-            .catch(function(e){ toast(busyMsg(e), true); Array.prototype.forEach.call(H.main.querySelectorAll('[data-dec]'), function(x){ x.disabled=false; }); });
+            .catch(function(e){
+              toast(busyMsg(e), true);
+              Array.prototype.forEach.call(H.main.querySelectorAll('[data-dec]'), function(x){ x.disabled=false; });
+              if(cur.action && dec==='approve') b.textContent=ACT_LABEL[cur.action.kind]||'อนุมัติ';
+            });
         };
       });
     });

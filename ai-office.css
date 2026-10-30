@@ -295,3 +295,19 @@
 .aio-draft-ed:focus{ outline:2px solid #9CC9F5; outline-offset:1px; }
 .aio-reason{ display:block; width:100%; box-sizing:border-box; margin-top:10px; padding:9px 12px; border-radius:10px; border:1px solid var(--aio-line); font:inherit; font-size:14px; }
 .aio-lbl small{ font-weight:400; opacity:.7; margin-left:6px; }
+
+/* §19 📎 แนบไฟล์ในแชท + ฟอร์มแก้ค่าที่อ่านได้ในห้องอนุมัติ */
+.aio-clip{ flex:0 0 auto; min-width:44px; font-size:18px; padding:0 10px; }
+.aio-att{ display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+.aio-att:empty{ display:none; }
+.aio-att-f{ display:inline-flex; align-items:center; gap:4px; max-width:100%; padding:4px 4px 4px 10px; border-radius:999px; background:#E8F1FD; font-size:13px; }
+.aio-att-f button{ border:0; background:transparent; font-size:16px; line-height:1; padding:2px 6px; cursor:pointer; color:#5B6472; }
+.aio-att-h{ flex-basis:100%; font-size:12px; color:#8A94A6; }
+.aio-ff-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:8px 12px; margin:6px 0 10px; }
+.aio-ff{ display:flex; flex-direction:column; gap:4px; font-size:13px; color:#5B6472; min-width:0; }
+.aio-ff.wide{ grid-column:1 / -1; }
+.aio-ff input, .aio-ff select{ font:inherit; font-size:15px; color:#1F2937; padding:8px 10px; border:1.5px solid #CFE0F5; border-radius:10px; background:#fff; min-width:0; }
+.aio-ff input:disabled, .aio-ff select:disabled{ background:#F4F7FB; color:#5B6472; }
+.aio-ff-h{ grid-column:1 / -1; font-weight:600; color:#1F2937; margin-top:4px; }
+.aio-ff-warn{ margin:4px 0 8px; padding-left:20px; color:#C8730B; font-size:13px; }
+a.aio-chip{ text-decoration:none; }
