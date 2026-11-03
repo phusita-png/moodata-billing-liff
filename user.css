@@ -963,6 +963,25 @@ textarea:focus,input[type=time]:focus{border-color:var(--red)}
 .lch-gone{color:var(--muted)}
 .lch-tag{font-size:12px;color:var(--green);margin-top:3px}
 .lch-more{text-align:center;margin:0 0 6px}
+.lch-head .lch-pickbtn{margin-left:auto;width:auto;white-space:nowrap}
+.lch-row.pick{cursor:pointer;align-items:center;gap:8px}
+.lch-row.pick:focus-visible{outline:2px solid var(--red);outline-offset:2px;border-radius:12px}
+.lch-chk{flex:none;width:20px;height:20px;border:2px solid var(--muted);border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;color:#fff;background:var(--card)}
+.lch-row.me .lch-chk{order:2}
+.lch-row.sel .lch-chk{background:var(--red);border-color:var(--red)}
+.lch-row.sel .lch-bub{outline:2px solid var(--red)}
+.lch-selbar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;background:var(--red-tint);border-top:1px solid var(--line);font-size:14px}
+.lch-sugg{margin:10px 12px 0;border:1px solid var(--line);border-radius:12px;background:#FFFBEB;padding:10px 12px}
+.lch-sugg-h{font-weight:600;font-size:14px;margin:0 0 6px}
+.lch-sg{padding:8px 0;border-top:1px dashed var(--line)}
+.lch-sg:first-of-type{border-top:0}
+.lch-sg-t{font-size:14px}
+.lch-sg-d{font-size:13px;color:var(--ink);margin:3px 0;white-space:pre-wrap}
+.lch-sg-r{font-size:12px;color:var(--muted)}
+.lch-sg-a{display:flex;gap:6px;margin-top:6px}
+.lch-kind{display:inline-block;font-size:11.5px;background:var(--red-soft);color:var(--red-deep);border-radius:99px;padding:0 8px}
+.lch-ai{display:inline-block;font-size:11.5px;background:#FFF4D6;color:#8A5A00;border-radius:99px;padding:0 6px;margin-right:6px}
+.lch-usage{margin:10px 6px 2px;padding:8px 10px;border-radius:10px;background:var(--bg);font-size:12.5px;color:var(--muted);line-height:1.5}
 .lch-late{display:inline-block;background:#FDECEA;color:#B42318;font-size:11.5px;font-weight:600;border-radius:99px;padding:0 7px;margin-right:6px}
 .lch-compose{display:flex;gap:8px;align-items:flex-end;padding:10px 12px;border-top:1px solid var(--line);background:var(--card)}
 .lch-compose textarea{flex:1;min-width:0;resize:vertical;min-height:42px;max-height:180px}
