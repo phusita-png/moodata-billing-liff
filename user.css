@@ -982,6 +982,15 @@ textarea:focus,input[type=time]:focus{border-color:var(--red)}
 .lch-kind{display:inline-block;font-size:11.5px;background:var(--red-soft);color:var(--red-deep);border-radius:99px;padding:0 8px}
 .lch-ai{display:inline-block;font-size:11.5px;background:#FFF4D6;color:#8A5A00;border-radius:99px;padding:0 6px;margin-right:6px}
 .lch-usage{margin:10px 6px 2px;padding:8px 10px;border-radius:10px;background:var(--bg);font-size:12.5px;color:var(--muted);line-height:1.5}
+.lch-attach{display:flex;gap:6px;padding:8px 12px 0;border-top:1px solid var(--line);background:var(--card)}
+.lch-attach .btn{width:auto}
+.lch-attach + .lch-compose{border-top:0}
+.lch-stk{display:block;width:110px;height:auto}
+.lch-stkgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:6px;max-height:50vh;overflow-y:auto;margin:8px 0}
+.lch-stkbtn{background:none;border:2px solid transparent;border-radius:10px;padding:4px;cursor:pointer}
+.lch-stkbtn img{width:100%;height:auto;display:block}
+.lch-stkbtn.on,.lch-stkbtn:focus-visible{border-color:var(--red);background:var(--red-tint)}
+.lch-pvimg{display:block;max-width:100%;max-height:50vh;border-radius:10px;margin:10px auto}
 .lch-late{display:inline-block;background:#FDECEA;color:#B42318;font-size:11.5px;font-weight:600;border-radius:99px;padding:0 7px;margin-right:6px}
 .lch-compose{display:flex;gap:8px;align-items:flex-end;padding:10px 12px;border-top:1px solid var(--line);background:var(--card)}
 .lch-compose textarea{flex:1;min-width:0;resize:vertical;min-height:42px;max-height:180px}
