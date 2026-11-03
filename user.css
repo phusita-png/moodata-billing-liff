@@ -921,3 +921,6 @@ textarea:focus,input[type=time]:focus{border-color:var(--red)}
 .help-leg .sw.off{background:#fff;border:1px solid var(--red)}
 .help-leg .sw.today{background:var(--red-tint);border:1px solid var(--red-tint)}
 .help-leg .sw.sel{background:var(--red)}
+/* 📤 ไฟล์นำเข้า Humansoft (3 พ.ย. 69) — ปุ่มกว้างพอดีตัว ไม่ยืดเต็มแถว (.btn ทั้งแอปกว้าง 100%) */
+.phs .btn{width:auto;display:inline-flex;padding-left:16px;padding-right:16px}
+.phs label select,.phs label input{min-width:150px}
