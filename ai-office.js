@@ -1,6 +1,6 @@
 /* ai-office.js — 🤖 ห้องทำงาน AI (เฟส 1 · 29 ต.ค. 69 · spec yindee-ai-office/docs/spec-phase1.md §9)
    โหลดตอนเปิดเมนูครั้งแรก (renderAiOffice ใน user-app.html) · หน้าหลักไม่ต้องแบกโค้ดนี้ทุกครั้ง
-   3 หน้า: aiofc ล็อบบี้ · aidesk หน้าโต๊ะ · aiappr ห้องอนุมัติ
+   4 หน้า: aiofc ล็อบบี้ · aidesk หน้าโต๊ะ · aiappr ห้องอนุมัติ · aisched ตารางงาน (§20)
    คุยกับ Worker yindee-ai-office ด้วย "ตั๋ว" ที่ขอจากยินดี (waOfficeTicket) — ไม่ใช้บัตรผ่านของยินดีตรง ๆ
    ⚠️ ข้อความที่มาจาก Worker/AI ผ่าน esc() ทุกชิ้น · ห้ามต่อ HTML จากข้อความ AI ตรง ๆ */
 (function(){
@@ -11,7 +11,7 @@
   var COLOR={ 'MGR-001':'#6EC1F0', 'AUD-001':'#F2726B', 'ACC-001':'#F48FB1', 'HR-001':'#57C28B', 'DEV-001':'#B8BCC8', 'PM-001':'#A78BFA' };
   var DESKS=['MGR-001','AUD-001','ACC-001','HR-001','DEV-001','PM-001'];
   var ST={ idle:'ว่าง', working:'กำลังทำ', waiting:'รอพี่', blocked:'ติดปัญหา' };
-  var TOOL={ board_read:'ดูกระดานงาน', task_status:'ดูสถานะงาน', plan_propose:'เสนอแผนงาน', draft_text:'ร่างข้อความ', acc_read:'อ่านตัวเลขบัญชีจากยินดี', draft_approval:'ร่างเข้าห้องอนุมัติ', report_file:'ทำไฟล์รายงาน Excel/PDF', file_read:'อ่านไฟล์แนบ' };
+  var TOOL={ board_read:'ดูกระดานงาน', task_status:'ดูสถานะงาน', plan_propose:'เสนอแผนงาน', draft_text:'ร่างข้อความ', acc_read:'อ่านตัวเลขบัญชีจากยินดี', draft_approval:'ร่างเข้าห้องอนุมัติ', report_file:'ทำไฟล์รายงาน Excel/PDF', file_read:'อ่านไฟล์แนบ', schedule_send:'ตั้งเวลาส่งเอกสารขาย' };
   var EFFORT={ low:'ต่ำ', medium:'กลาง', high:'สูง', xhigh:'สูงมาก', max:'สูงสุด' };
   var RISK={ 1:'อ่านอย่างเดียว', 2:'ร่างงาน', 3:'ต้องอนุมัติ' };
 
@@ -285,8 +285,12 @@
     api('POST','/desks/MGR-001/ask', body).then(function(r){
       var html='<div class="aio-msg me"><div class="tx">'+esc(label)+'</div></div>'+
         '<div class="aio-msg ai"><img src="'+img('MGR-001',true)+'" alt=""><div class="tx">'+esc(r.reply)+'<div class="aio-meta">'+badge(r.meta)+'</div></div></div>'+
-        (r.plan?planCard(r.taskId, r.plan, 'plan_proposed'):'')+switchBtn(r.switchRoom);
-      S.mgrOut=r.switchRoom?'':html; out.innerHTML=html;
+        (r.plan?planCard(r.taskId, r.plan, 'plan_proposed'):'')+switchBtn(r.switchRoom)+
+        (r.approvalId?'<div class="aio-drafts"><button class="aio-btn ghost sm" data-goap="'+esc(r.approvalId)+'">ไปห้องอนุมัติ ›</button></div>':'');
+      S.mgrOut=r.switchRoom||r.approvalId?'':html; out.innerHTML=html;
+      Array.prototype.forEach.call(out.querySelectorAll('[data-goap]'), function(x){
+        x.onclick=function(){ S.appr=x.getAttribute('data-goap'); H.go('aiappr'); };
+      });
       if(out.scrollIntoView) out.scrollIntoView({ block:'start', behavior:'smooth' });   // มือถือ: คำตอบอยู่ท้ายหน้า เลื่อนไปให้เห็น
       if(body.text && !r.switchRoom) $('aioCmd').value='';
       bindSwitch(out, body.text, function(){ return renderLobby().then(function(){ if($('aioCmd')) $('aioCmd').value=S.carry||''; S.carry=''; }); });
@@ -697,6 +701,53 @@
         :(res?'<div class="aio-lbl">ผลในยินดี</div><div class="aio-draft">'+esc(res.text)+'</div>'+
           (res.view?'<div class="aio-ap-act"><button class="aio-btn ghost" id="aioGoYd" data-view="'+esc(res.view)+'">เปิดหน้านี้ในยินดี ›</button></div>':''):''));
   }
+  /* §20 การ์ดตั้งเวลาส่ง · อนุมัติครั้งเดียว ถึงเวลาไม่ถามซ้ำ · ไม่มีช่องแก้ (เปลี่ยนเวลา = ตีกลับแล้วสั่งใหม่) */
+  function schedDet(cur){
+    var a=cur.sched, open=!cur.decision;
+    function row(k,v){ return '<tr><th>'+esc(k)+'</th><td>'+esc(v||'-')+'</td></tr>'; }
+    return '<button class="aio-back aio-ap-back" id="aioApBack">‹ รายการ</button>'+
+      '<div class="aio-ap-hd"><img src="'+img(cur.agent,true)+'" alt=""><div><h3>'+esc(cur.title)+'</h3>'+
+      '<span>หัวหน้า AI มอบให้ '+esc(ROLE[cur.agent]||cur.agent)+' · '+esc(cur.client)+'</span></div></div>'+
+      '<div class="aio-chips"><span class="aio-risk r3">ส่งถึงลูกค้า · ต้องอนุมัติ</span>'+
+      (open?'':'<span class="aio-chip">'+esc(DEC[cur.decision]||cur.decision)+(cur.reason?' · '+esc(cur.reason):'')+'</span>')+'</div>'+
+      '<div class="aio-tw"><table class="aio-t aio-sched-card"><tbody>'+
+        row('เอกสาร',(a.docTitle?a.docTitle+' ':'')+a.no)+row('ลูกค้า',a.name)+row('ยอด',a.amount)+row('กลุ่มปลายทาง',a.group)+row('เวลาส่ง',a.when)+
+      '</tbody></table></div>'+
+      (open
+        ?'<div class="aio-demo">ถึงเวลาระบบจะตรวจซ้ำก่อนส่ง ถ้าใบถูกยกเลิก เคยส่งแล้ว หรือยอดเปลี่ยน จะไม่ส่งและแจ้งพี่ทาง LINE · เปลี่ยนเวลา = ตีกลับแล้วสั่งใหม่</div>'+
+          '<input class="aio-reason" id="aioReason" maxlength="500" placeholder="เหตุผลที่ตีกลับ (ไม่ใส่ก็ได้)">'+
+          '<div class="aio-ap-act"><button class="aio-btn ghost" data-dec="reject">ตีกลับ</button><button class="aio-btn" data-dec="approve">อนุมัติ ตั้งเวลาส่ง</button></div>'
+        :(cur.decision==='rejected'?'':'<div class="aio-ap-act"><button class="aio-btn ghost" id="aioGoYd" data-view="aisched">เปิด 🗓️ ตารางงาน ›</button></div>'));
+  }
+  /* §20 🗓️ ตารางงาน · งานรอส่งก่อน แล้วตามด้วยงานล่าสุด · ยกเลิกต้องกด 2 ครั้ง */
+  function renderSched(){
+    return concreteRoom().then(function(){ return api('GET','/schedule'+q()); }).then(function(d){
+      if(H.view()!=='aisched') return;
+      var items=d.items||[];
+      var tone={ sent:'a-pass', skipped:'a-check', failed:'a-check' };
+      var rows=items.map(function(x,i){
+        var st=tone[x.status]?'<span class="aio-au '+tone[x.status]+'">'+esc(x.statusText)+'</span>':'<span class="aio-chip">'+esc(x.statusText)+'</span>';
+        return '<tr><td class="n">'+(i+1)+'</td><td>'+esc(x.when)+'</td><td>'+esc(x.title)+'</td><td>'+esc(x.customer||'-')+'</td><td>'+st+'</td><td>'+esc(x.result||'-')+'</td>'+
+          '<td>'+(x.canCancel?'<button class="aio-btn ghost sm" data-sch-cancel="'+esc(x.id)+'">ยกเลิก</button>':'')+'</td></tr>';
+      }).join('');
+      H.main.innerHTML='<div class="aio"><div class="aio-top"><button class="aio-back" id="aioBack">‹ ล็อบบี้</button>'+roomPicker(d.rooms||S.rooms)+
+        '<span class="aio-chip">รอส่ง '+items.filter(function(x){ return x.canCancel; }).length+' งาน</span></div>'+
+        '<div class="aio-demo">สั่งงานที่โต๊ะหัวหน้า เช่น "ส่ง RE-2611-002 วันที่ 6/11/2026 เวลา 8.00 น." แล้วกดอนุมัติในห้องอนุมัติ · ถึงเวลาระบบตรวจซ้ำแล้วส่งเอง · ถ้าเลยเวลาเกิน 30 นาทีจะไม่ส่ง · ส่งสำเร็จหรือไม่ได้ส่งจะแจ้งทาง LINE</div>'+
+        '<div class="card"><div class="aio-tw"><table class="aio-t"><thead><tr><th class="n">#</th><th>เวลาส่ง</th><th>งาน</th><th>ลูกค้า</th><th>สถานะ</th><th>ผล</th><th></th></tr></thead><tbody>'+
+        (rows||'<tr><td colspan="7" class="aio-empty">ยังไม่มีงานตั้งเวลาในห้องนี้ค่ะ</td></tr>')+'</tbody></table></div></div></div>';
+      bindRoom();
+      $('aioBack').onclick=backToLobby;
+      Array.prototype.forEach.call(H.main.querySelectorAll('[data-sch-cancel]'), function(b){
+        b.onclick=function(){
+          if(!b.getAttribute('data-sure')){ b.setAttribute('data-sure','1'); b.textContent='กดอีกครั้งเพื่อยกเลิก'; return; }
+          b.disabled=true;
+          api('POST','/schedule/'+encodeURIComponent(b.getAttribute('data-sch-cancel'))+'/cancel',{ room:S.room })
+            .then(function(r){ toast(r.message||'ยกเลิกแล้ว'); renderSched().catch(fail); })
+            .catch(function(e){ toast(busyMsg(e), true); renderSched().catch(fail); });
+        };
+      });
+    });
+  }
   function renderAppr(){
     return concreteRoom().then(function(){
       // ไฟล์ที่เคยทำ (§18) พังได้ ไม่ให้ห้องอนุมัติพังตาม
@@ -722,6 +773,7 @@
           :'<div class="aio-empty">ยังไม่เคยทำไฟล์ · ขอได้จากปุ่ม 📊/📄 ใต้คำตอบโต๊ะบัญชี หรือพิมพ์ "ขอไฟล์…"</div>');
       var det='';
       if(cur && cur.action){ det=fileDet(cur); }
+      else if(cur && cur.sched){ det=schedDet(cur); }
       else if(cur){
         var open=!cur.decision;
         var rows=(cur.checks||[]).map(function(c,i){
@@ -771,7 +823,7 @@
       Array.prototype.forEach.call(H.main.querySelectorAll('[data-dec]'), function(b){
         b.onclick=function(){
           var dec=b.getAttribute('data-dec'), body={ room:S.room, decision:dec };
-          if(dec==='approve'){ if(cur.action) body.fields=readForm(cur.action); else body.text=$('aioDraft').value; }
+          if(dec==='approve'){ if(cur.action) body.fields=readForm(cur.action); else if(!cur.sched) body.text=$('aioDraft').value; }
           else body.reason=$('aioReason').value;
           Array.prototype.forEach.call(H.main.querySelectorAll('[data-dec]'), function(x){ x.disabled=true; });
           if(cur.action && dec==='approve') b.textContent='ยินดีกำลังทำ… (~20–60 วิ)';
@@ -812,7 +864,7 @@
   function render(view, host){
     H=host;
     if(!S.room) S.room=ss('aio.room')||'';
-    var p = view==='aidesk' ? renderDesk() : view==='aiappr' ? renderAppr() : renderLobby();
+    var p = view==='aidesk' ? renderDesk() : view==='aiappr' ? renderAppr() : view==='aisched' ? renderSched() : renderLobby();
     return p.catch(function(e){
       // ห้องที่จำไว้ไม่อยู่ในตั๋วแล้ว → ล้างแล้วลองใหม่ครั้งเดียว
       if(S.room && /เข้าห้อง/.test(e.message||'')){ S.room=''; ss('aio.room',null); return render(view, host); }
