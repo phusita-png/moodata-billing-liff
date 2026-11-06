@@ -732,7 +732,7 @@
       }).join('');
       H.main.innerHTML='<div class="aio"><div class="aio-top"><button class="aio-back" id="aioBack">‹ ล็อบบี้</button>'+roomPicker(d.rooms||S.rooms)+
         '<span class="aio-chip">รอส่ง '+items.filter(function(x){ return x.canCancel; }).length+' งาน</span></div>'+
-        '<div class="aio-demo">สั่งงานที่โต๊ะหัวหน้า เช่น "ส่ง RE-2611-002 วันที่ 6/11/2026 เวลา 8.00 น." แล้วกดอนุมัติในห้องอนุมัติ · ถึงเวลาระบบตรวจซ้ำแล้วส่งเอง · ถ้าเลยเวลาเกิน 30 นาทีจะไม่ส่ง · ส่งสำเร็จหรือไม่ได้ส่งจะแจ้งทาง LINE</div>'+
+        '<div class="aio-demo">สั่งงานที่โต๊ะหัวหน้า เช่น "ส่ง RE-XXXX-XXX วันที่ 15/12/2569 เวลา 8.00 น." แล้วกดอนุมัติในห้องอนุมัติ · ถึงเวลาระบบตรวจซ้ำแล้วส่งเอง · ถ้าเลยเวลาเกิน 30 นาทีจะไม่ส่ง · ส่งสำเร็จหรือไม่ได้ส่งจะแจ้งทาง LINE</div>'+
         '<div class="card"><div class="aio-tw"><table class="aio-t"><thead><tr><th class="n">#</th><th>เวลาส่ง</th><th>งาน</th><th>ลูกค้า</th><th>สถานะ</th><th>ผล</th><th></th></tr></thead><tbody>'+
         (rows||'<tr><td colspan="7" class="aio-empty">ยังไม่มีงานตั้งเวลาในห้องนี้ค่ะ</td></tr>')+'</tbody></table></div></div></div>';
       bindRoom();
