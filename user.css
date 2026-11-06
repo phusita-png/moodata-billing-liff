@@ -1004,3 +1004,6 @@ textarea:focus,input[type=time]:focus{border-color:var(--red)}
   .lch-back{display:inline-flex}
   #lchList,.lch-msgs{max-height:none}
 }
+
+/* ⑥ งบหลังปรับปรุง: ตัวเลขชิดขวา */
+.wp-stmt td.n,.wp-stmt th.n{text-align:right!important;white-space:nowrap}
